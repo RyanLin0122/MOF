@@ -199,6 +199,14 @@ int nfs_iio_channel_size(NfsIioChannel* channel);
 int nfs_iio_channel_blocks(NfsIioChannel* channel);
 int nfs_iio_channel_truncate(NfsIioFile* file, int channel_idx);
 int nfs_iio_blocks_per_chunk(NfsIioFile* file); // Computes total blocks in one interleaved stripe
+int cache_expand(NfsIioFile* file, int channel_idx, int required_page_array_idx);
+void* cache_page_get_buffer(NfsIioCachePage* page);
+void cache_page_set_sync(NfsIioCachePage* page, int sync_status);
+int cache_page_get_sync(NfsIioCachePage* page);
+int cache_page_choose_best_to_reuse(NfsIioFile* file, int channel_idx, int exclude_page_idx);
+int write_header(NfsIioFile* file);
+int write_absolute_block_n(NfsIioFile* file, int absolute_block_index, int num_blocks_to_write, const void* buffer);
+int read_absolute_block_n(NfsIioFile* file, int absolute_block_index, int num_blocks_to_read, void* buffer);
 
 
 // Layer 3 (Data File I/O with Cache - .pak files)

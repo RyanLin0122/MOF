@@ -18,13 +18,12 @@
 // int nfs_iio_BLOCK_SIZEv; // 系統分頁大小或固定的區塊大小
 // int nfs_iio_CLOCK;     // IIO 操作時鐘，用於快取回收演算法 (LRU)
 
-// --- 為了使範例可獨立編譯，提供虛擬的全域變數定義 ---
-// 在您的實際專案中，請確保這些變數有正確的初始化和管理。
 int nfs_iio_BLOCK_SIZEv = 4096; // 範例值，通常由 get_page_size() 初始化
 int nfs_iio_CLOCK = 0;          // 範例值
 int nfs_iio_IOMODE = 0;         // 範例值，影響開啟模式和 auto_truncate
 int nfs_data_IOMODE = 0;        // 範例值，影響 nfs_data_open 的開啟模式
 char nfs_glob_key_buffer[4096]; // 假設檔名不太可能超過此長度
+int nfs_errno = 0;	// 假設 nfs_errno 是一個全域變數，用於儲存錯誤碼。
 
 /* public function */
 
@@ -112,15 +111,6 @@ int blockno(int offset)
 {
 	return offset / 512;
 }
-
-// 假設 nfs_errno 是一個全域變數，用於儲存錯誤碼。
-// 在一個完整的專案中，這個變數應該在適當的標頭檔中宣告 (例如 extern int nfs_errno;)，
-// 並在某個 .cpp 檔案中定義。
-// 為了讓 nfs_perror 能夠編譯，此處提供一個範例定義：
-int nfs_errno = 0;
-
-// forward declaration for lock_remove, as lock_leave calls it.
-int lock_remove(const char* baseName);
 
 /**
  * @brief 移除鎖定檔案。
