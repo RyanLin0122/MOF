@@ -137,10 +137,12 @@
   <ItemGroup>
     <ClCompile Include="main.cpp" />
     <ClCompile Include="src\nfs.cpp" />
+    <ClCompile Include="src\nfs_integration_test.cpp" />
     <ClCompile Include="src\nfs_test.cpp" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="inc\nfs.h" />
+    <ClInclude Include="inc\nfs_integration_test.h" />
     <ClInclude Include="inc\nfs_test.h" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />

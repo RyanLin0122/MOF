@@ -210,6 +210,14 @@ int is_in_cache(NfsIioFile* file, int channel_idx, int channel_relative_block_id
 void cache_update(NfsIioFile* file, int channel_idx, int channel_relative_byte_pos);
 void cacheflush(NfsIioFile* file, int channel_idx);
 void flush_data(NfsIioFile* file);
+int cache_read_channel_block(NfsIioFile* file, int channel_idx, int channel_relative_block_idx, void* buffer);
+unsigned int cache_read_partial_channel_block(NfsIioFile* file, int channel_idx, int channel_relative_block_idx,
+	int offset_in_block, int end_offset_in_block, void* buffer);
+int cache_write_channel_block(NfsIioFile* file, int channel_idx, int channel_relative_block_idx, const void* buffer);
+int cache_write_partial_channel_block(NfsIioFile* file, int channel_idx, int channel_relative_block_idx,
+	int offset_in_block, int end_offset_in_block, const void* buffer);
+int read_header(NfsIioFile* file);
+void auto_truncate(NfsIioFile* file);
 
 int nfs_iio_blocks_per_chunk(NfsIioFile* file); // Computes total blocks in one interleaved stripe
 int cache_expand(NfsIioFile* file, int channel_idx, int required_page_array_idx);

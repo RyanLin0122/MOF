@@ -1477,8 +1477,6 @@ void auto_truncate(NfsIioFile* file) {
 	}
 }
 
-
-
 /**
  * @brief 建立一個新的 IIO 檔案。
  * @param fileName 要建立的檔案的名稱。
@@ -1620,6 +1618,7 @@ int nfs_iio_read(NfsIioFile* file, int channel_idx, void* buffer, int bytes_to_r
 	int remaining_bytes_to_read = bytes_to_read;
 
 	while (remaining_bytes_to_read > 0) {
+		nfs_iio_CLOCK++;
 		int current_block_idx = current_pos / nfs_iio_BLOCK_SIZEv;
 		int offset_in_block = current_pos % nfs_iio_BLOCK_SIZEv;
 		int bytesfrom_this_block = nfs_iio_BLOCK_SIZEv - offset_in_block;
@@ -1680,6 +1679,7 @@ int nfs_iio_write(NfsIioFile* file, int channel_idx, const void* buffer, int byt
 	int remaining_bytes_to_write = bytes_to_write;
 
 	while (remaining_bytes_to_write > 0) {
+		nfs_iio_CLOCK++;
 		int current_block_idx = current_pos / nfs_iio_BLOCK_SIZEv;
 		int offset_in_block = current_pos % nfs_iio_BLOCK_SIZEv;
 		int bytes_to_this_block = nfs_iio_BLOCK_SIZEv - offset_in_block;
