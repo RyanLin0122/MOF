@@ -198,8 +198,22 @@ NfsIioChannel* nfs_iio_get_channel(NfsIioFile* file, int channel_idx);
 int nfs_iio_channel_size(NfsIioChannel* channel);
 int nfs_iio_channel_blocks(NfsIioChannel* channel);
 int nfs_iio_channel_truncate(NfsIioFile* file, int channel_idx);
+int channel_block_to_absolute_block(NfsIioFile* file, int channel_idx, int channel_relative_block_idx);
+int channel_pos_to_absolute_block(NfsIioFile* file, int channel_idx, int channel_relative_byte_pos);
+int cache_page_dump(NfsIioFile* file, int channel_idx, int page_array_idx);
+void cache_pageflush(NfsIioFile* file, int channel_idx, int page_array_idx);
+void cache_page_create(NfsIioFile* file, int channel_idx, int page_array_idx_to_create_at);
+int cache_page_refresh(NfsIioFile* file, int channel_idx, int channel_relative_byte_pos);
+int cache_create(NfsIioFile* file, int channel_idx);
+int cache_destroy(NfsIioCache* cache_to_destroy);
+int is_in_cache(NfsIioFile* file, int channel_idx, int channel_relative_block_idx);
+void cache_update(NfsIioFile* file, int channel_idx, int channel_relative_byte_pos);
+void cacheflush(NfsIioFile* file, int channel_idx);
+void flush_data(NfsIioFile* file);
+
 int nfs_iio_blocks_per_chunk(NfsIioFile* file); // Computes total blocks in one interleaved stripe
 int cache_expand(NfsIioFile* file, int channel_idx, int required_page_array_idx);
+int header_size(NfsIioFile* file);
 void* cache_page_get_buffer(NfsIioCachePage* page);
 void cache_page_set_sync(NfsIioCachePage* page, int sync_status);
 int cache_page_get_sync(NfsIioCachePage* page);
