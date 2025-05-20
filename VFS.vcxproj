@@ -115,6 +115,8 @@
     <Link>
       <SubSystem>Console</SubSystem>
       <GenerateDebugInformation>true</GenerateDebugInformation>
+      <AdditionalLibraryDirectories>D:\mof_module\VFS\lib;%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
+      <AdditionalDependencies>fmod64vc.lib;%(AdditionalDependencies)</AdditionalDependencies>
     </Link>
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'">
@@ -132,18 +134,28 @@
       <EnableCOMDATFolding>true</EnableCOMDATFolding>
       <OptimizeReferences>true</OptimizeReferences>
       <GenerateDebugInformation>true</GenerateDebugInformation>
+      <AdditionalLibraryDirectories>D:\mof_module\VFS\lib;%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
+      <AdditionalDependencies>fmod64vc.lib;%(AdditionalDependencies)</AdditionalDependencies>
     </Link>
   </ItemDefinitionGroup>
   <ItemGroup>
     <ClCompile Include="main.cpp" />
+    <ClCompile Include="src\CMOFPacking.cpp" />
     <ClCompile Include="src\nfs.cpp" />
     <ClCompile Include="src\nfs_integration_test.cpp" />
     <ClCompile Include="src\nfs_test.cpp" />
+    <ClCompile Include="src\Sound\COgg.cpp" />
   </ItemGroup>
   <ItemGroup>
+    <ClInclude Include="inc\CMOFPacking.h" />
+    <ClInclude Include="inc\fmod\fmod.h" />
+    <ClInclude Include="inc\fmod\fmoddyn.h" />
+    <ClInclude Include="inc\fmod\fmod_errors.h" />
+    <ClInclude Include="inc\fmod\wincompat.h" />
     <ClInclude Include="inc\nfs.h" />
     <ClInclude Include="inc\nfs_integration_test.h" />
     <ClInclude Include="inc\nfs_test.h" />
+    <ClInclude Include="inc\Sound\COgg.h" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">

@@ -218,7 +218,6 @@ int cache_write_partial_channel_block(NfsIioFile* file, int channel_idx, int cha
 	int offset_in_block, int end_offset_in_block, const void* buffer);
 int read_header(NfsIioFile* file);
 void auto_truncate(NfsIioFile* file);
-
 int nfs_iio_blocks_per_chunk(NfsIioFile* file); // Computes total blocks in one interleaved stripe
 int cache_expand(NfsIioFile* file, int channel_idx, int required_page_array_idx);
 int header_size(NfsIioFile* file);
@@ -232,6 +231,15 @@ int read_absolute_block_n(NfsIioFile* file, int absolute_block_index, int num_bl
 
 
 // Layer 3 (Data File I/O with Cache - .pak files)
+int is_in_cache(NfsDataHandle* handle, int block_index_to_check);
+int cache_flush(NfsDataHandle* handle);
+int cache_slide(NfsDataHandle* handle, int new_desired_start_offset);
+int cache_create(NfsDataHandle* handle);
+int cache_resize(NfsDataHandle* handle, size_t new_capacity);
+int cache_destroy(NfsDataHandle* handle);
+int cache_get(NfsDataHandle* handle, int file_offset_to_read_from, int num_bytes_to_read, void* output_buffer);
+int cache_put(NfsDataHandle* handle, int file_offset_to_write_to, int num_bytes_to_write, const void* input_buffer);
+
 NfsDataHandle* nfs_data_create(const char* fileName);
 NfsDataHandle* nfs_data_open(const char* fileName);
 void nfs_data_close(NfsDataHandle* handle);

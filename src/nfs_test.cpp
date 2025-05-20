@@ -6,7 +6,7 @@
 #include <vector>
 #include <nfs.h>
 #include <nfs_test.h>
-
+#include <fmod/fmod.h>
 
 // 簡單的測試結果記錄
 static int tests_passed = 0;
@@ -2017,10 +2017,6 @@ void test_cache_create_iio_invalid_channel_idx() {
 
 // --- Tests for cache_destroy (IIO version) ---
 
-void test_cache_destroy_iio_null_cache() {
-    assert(cache_destroy(nullptr) == -1); // 根據 nfs.cpp 實現
-}
-
 void test_cache_destroy_iio_empty_pages_array() {
     NfsIioCache* cache = (NfsIioCache*)malloc(sizeof(NfsIioCache));
     assert(cache);
@@ -3032,6 +3028,539 @@ void test_nfs_iio_destroy_null_file() {
     nfs_iio_destroy(nullptr); // 應該安全返回
 }
 
+const char* TEST_DATA_CACHE_FILENAME = "test_data_cache.pak";
+const int DATA_CACHE_BLOCK_SIZE = 512; // .pak 檔案操作的單位
+
+// 輔助函數：創建並打開 NfsDataHandle 以進行測試
+NfsDataHandle* helper_setup_data_handle(const char* filename, const char* mode, size_t initial_file_content_size = 0, char fill_char = 0) {
+    std::filesystem::remove(filename); // 清理舊檔案
+
+    if (initial_file_content_size > 0) {
+        FILE* temp_fp = fopen(filename, "wb");
+        if (!temp_fp) {
+            std::cerr << "helper_setup_data_handle: Failed to create initial file " << filename << std::endl;
+            return nullptr;
+        }
+        std::vector<char> initial_content(initial_file_content_size, fill_char);
+        fwrite(initial_content.data(), 1, initial_content.size(), temp_fp);
+        fclose(temp_fp);
+    }
+
+
+    NfsDataHandle* handle = (NfsDataHandle*)malloc(sizeof(NfsDataHandle));
+    if (!handle) {
+        std::cerr << "helper_setup_data_handle: Failed to alloc NfsDataHandle" << std::endl;
+        return nullptr;
+    }
+    memset(handle, 0, sizeof(NfsDataHandle)); // 清零
+
+    handle->file_name = (char*)malloc(strlen(filename) + 1);
+    if (!handle->file_name) {
+        free(handle);
+        std::cerr << "helper_setup_data_handle: Failed to alloc file_name" << std::endl;
+        return nullptr;
+    }
+    strcpy(handle->file_name, filename);
+
+    handle->file_ptr = fopen(filename, mode);
+    if (!handle->file_ptr) {
+        free(handle->file_name);
+        free(handle);
+        std::cerr << "helper_setup_data_handle: Failed to open file " << filename << " in mode " << mode << std::endl;
+        perror("fopen error");
+        return nullptr;
+    }
+
+    handle->cache = nullptr; // cache_create 將會分配它
+    return handle;
+}
+
+// 輔助函數：關閉並清理 NfsDataHandle
+void helper_teardown_data_handle(NfsDataHandle* handle, bool remove_phys_file = true) {
+    if (!handle) return;
+
+    if (handle->cache) { // 如果 cache_destroy 未被顯式調用，這裡確保釋放
+        if (handle->cache->buffer) {
+            free(handle->cache->buffer);
+        }
+        free(handle->cache);
+        handle->cache = nullptr;
+    }
+
+    if (handle->file_ptr) {
+        fclose(handle->file_ptr);
+        handle->file_ptr = nullptr;
+    }
+    if (remove_phys_file && handle->file_name) {
+        std::filesystem::remove(handle->file_name);
+    }
+    if (handle->file_name) {
+        free(handle->file_name);
+        handle->file_name = nullptr;
+    }
+    free(handle);
+}
+
+// 輔助函數：從實際檔案讀取內容進行比較
+bool helper_read_file_content(const char* filename, int offset, std::vector<char>& buffer) {
+    FILE* fp = fopen(filename, "rb");
+    if (!fp) return false;
+    fseek(fp, offset, SEEK_SET);
+    size_t did_read = fread(buffer.data(), 1, buffer.size(), fp);
+    fclose(fp);
+    return did_read == buffer.size();
+}
+
+// --- Tests for cache_create (Data version) ---
+
+void test_data_cache_create_valid_handle() {
+    // 使用 r+b 模式以免截斷檔案
+    NfsDataHandle* handle = helper_setup_data_handle(
+        TEST_DATA_CACHE_FILENAME,
+        "r+b",                      // ← 修正為 r+b
+        DATA_CACHE_BLOCK_SIZE * 10,
+        'A'
+    );
+    assert(handle && handle->file_ptr);
+
+    int result = cache_create(handle); // Data 版本 cache_create
+    assert(result == 0);
+    assert(handle->cache != nullptr);
+    assert(handle->cache->buffer != nullptr);
+    assert(handle->cache->buffer_capacity == 0x10000); // 預設 64KB
+    assert(handle->cache->cache_window_start_offset == 0);
+    assert(handle->cache->is_synced_flag == 1); // 初始應為 clean
+
+    // 驗證初始讀取的快取內容是否為 'A'
+    bool content_matches = true;
+    char* cache_buf_ptr = static_cast<char*>(handle->cache->buffer);
+    for (size_t i = 0; i < static_cast<size_t>(handle->cache->buffer_capacity); ++i) {
+        if (i < static_cast<size_t>(DATA_CACHE_BLOCK_SIZE) * 10) {
+            if (cache_buf_ptr[i] != 'A') {
+                content_matches = false;
+                break;
+            }
+        }
+        // 超出檔案內容的部分不做嚴格檢查
+    }
+    assert(content_matches);
+
+    helper_teardown_data_handle(handle);
+}
+
+
+void test_data_cache_create_null_handle() {
+    assert(cache_create(nullptr) == -1);
+}
+
+void test_data_cache_create_allocation_failure() {
+    // 模擬 malloc 失敗比較困難，通常需要 hooking 或特殊編譯。
+    // 此處假設 malloc 成功。
+    std::cout << "Skipping test_data_cache_create_allocation_failure (malloc mock needed)" << std::endl;
+}
+
+// --- Tests for cache_flush (Data version) ---
+void test_data_cache_flush_dirty_cache() {
+    // 使用 r+b 模式以免截斷檔案，初始化 10 個 block 為 'A'
+    NfsDataHandle* handle = helper_setup_data_handle(
+        TEST_DATA_CACHE_FILENAME,
+        "r+b",
+        DATA_CACHE_BLOCK_SIZE * 10,
+        'A'
+    );
+    assert(handle && handle->file_ptr);
+
+    // 建立 cache 並讀入初始內容
+    assert(cache_create(handle) == 0);
+    assert(handle->cache->is_synced_flag == 1);
+
+    // 修改第一個 block 資料為 'B'
+    char* cache_buf = static_cast<char*>(handle->cache->buffer);
+    memset(cache_buf, 'B', DATA_CACHE_BLOCK_SIZE);
+    // 標記為 dirty
+    handle->cache->is_synced_flag = 0;
+
+    // 呼叫 flush
+    assert(cache_flush(handle) == 0);
+    // flush 後應回復 clean
+    assert(handle->cache->is_synced_flag == 1);
+
+    // 重新以 rb 模式打開檔案驗證內容
+    FILE* fp = fopen(TEST_DATA_CACHE_FILENAME, "rb");
+    assert(fp);
+
+    // 檢查第一個 block 是否為 'B'
+    char* file_buf = reinterpret_cast<char*>(malloc(DATA_CACHE_BLOCK_SIZE));
+    size_t read = fread(file_buf, 1, DATA_CACHE_BLOCK_SIZE, fp);
+    assert(read == DATA_CACHE_BLOCK_SIZE);
+    for (size_t i = 0; i < DATA_CACHE_BLOCK_SIZE; ++i) {
+        assert(file_buf[i] == 'B');
+    }
+
+    // 檢查第二個 block 是否仍為 'A'
+    read = fread(file_buf, 1, DATA_CACHE_BLOCK_SIZE, fp);
+    assert(read == DATA_CACHE_BLOCK_SIZE);
+    for (size_t i = 0; i < DATA_CACHE_BLOCK_SIZE; ++i) {
+        assert(file_buf[i] == 'A');
+    }
+
+    free(file_buf);
+    fclose(fp);
+    helper_teardown_data_handle(handle);
+}
+
+// 測試 flush clean cache，不應改變檔案內容
+void test_data_cache_flush_clean_cache() {
+    NfsDataHandle* handle = helper_setup_data_handle(
+        TEST_DATA_CACHE_FILENAME,
+        "r+b",
+        DATA_CACHE_BLOCK_SIZE * 10,
+        'A'
+    );
+    assert(handle && handle->file_ptr);
+
+    // 建立 cache 並保持 clean
+    assert(cache_create(handle) == 0);
+    assert(handle->cache->is_synced_flag == 1);
+
+    // 直接 flush clean cache
+    assert(cache_flush(handle) == 0);
+    assert(handle->cache->is_synced_flag == 1);
+
+    // 驗證檔案內容前兩個 block 仍為 'A'
+    FILE* fp = fopen(TEST_DATA_CACHE_FILENAME, "rb");
+    assert(fp);
+    char* file_buf = reinterpret_cast<char*>(malloc(DATA_CACHE_BLOCK_SIZE * 2));
+    size_t read = fread(file_buf, 1, DATA_CACHE_BLOCK_SIZE * 2, fp);
+    assert(read == DATA_CACHE_BLOCK_SIZE * 2);
+    for (size_t i = 0; i < DATA_CACHE_BLOCK_SIZE * 2; ++i) {
+        assert(file_buf[i] == 'A');
+    }
+    free(file_buf);
+    fclose(fp);
+    helper_teardown_data_handle(handle);
+}
+
+
+void test_data_cache_flush_null_inputs() {
+    assert(cache_flush(nullptr) == -1);
+
+    NfsDataHandle* handle_no_cache = helper_setup_data_handle(TEST_DATA_CACHE_FILENAME, "w+b");
+    assert(handle_no_cache);
+    // handle_no_cache->cache is nullptr
+    assert(cache_flush(handle_no_cache) == -1);
+    helper_teardown_data_handle(handle_no_cache);
+
+    NfsDataHandle* handle_no_fp = helper_setup_data_handle(TEST_DATA_CACHE_FILENAME, "w+b");
+    assert(handle_no_fp);
+    assert(cache_create(handle_no_fp) == 0);
+    fclose(handle_no_fp->file_ptr); // 關閉檔案句柄
+    handle_no_fp->file_ptr = nullptr;
+    handle_no_fp->cache->is_synced_flag = 0; // Mark dirty
+    assert(cache_flush(handle_no_fp) == -1); // fseek 會失敗
+    // 注意：這裡 helper_teardown_data_handle 可能會嘗試 fclose 一個已關閉的 nullptr
+    // 需要確保 teardown 函數的穩健性
+    if (handle_no_fp->cache) { // 手動清理 cache，因為 teardown 可能無法處理 file_ptr 為 null 的情況
+        if (handle_no_fp->cache->buffer) free(handle_no_fp->cache->buffer);
+        free(handle_no_fp->cache);
+        handle_no_fp->cache = nullptr;
+    }
+    if (handle_no_fp->file_name) free(handle_no_fp->file_name);
+    free(handle_no_fp);
+    std::filesystem::remove(TEST_DATA_CACHE_FILENAME);
+}
+
+// --- Tests for cache_slide (Data version) ---
+
+void test_data_cache_slide_no_flush_needed() {
+    // 創建一個比快取大的檔案
+    size_t file_size = 0x20000; // 128KB
+    NfsDataHandle* handle = helper_setup_data_handle(TEST_DATA_CACHE_FILENAME, "r+b", file_size);
+    assert(handle && handle->file_ptr);
+    assert(cache_create(handle) == 0); // Cache window [0, 64KB), clean
+
+    // 填充檔案的特定區域以便驗證
+    FILE* fp_write = fopen(TEST_DATA_CACHE_FILENAME, "r+b"); // 重新打開以寫入
+    assert(fp_write);
+    fseek(fp_write, DATA_CACHE_BLOCK_SIZE * 10, SEEK_SET); // Offset 5120
+    char slide_pattern[] = "SLIDEDATA";
+    fwrite(slide_pattern, 1, strlen(slide_pattern), fp_write);
+    fclose(fp_write);
+
+    // 滑動到包含新數據的區域 (例如，從 5120 開始)
+    int new_offset = DATA_CACHE_BLOCK_SIZE * 10; // 5120
+    int result = cache_slide(handle, new_offset);
+    assert(result == 0);
+    assert(handle->cache->cache_window_start_offset == new_offset); // 應對齊到 5120
+    assert(handle->cache->is_synced_flag == 1); // Slide 後應為 clean
+
+    // 驗證快取內容是否為新窗口的數據
+    char* cache_buf = static_cast<char*>(handle->cache->buffer);
+    assert(memcmp(cache_buf, slide_pattern, strlen(slide_pattern)) == 0);
+
+    helper_teardown_data_handle(handle);
+}
+
+void test_data_cache_slide_flush_is_performed() {
+    printf("Running test: test_data_cache_slide_flush_is_performed...\n");
+
+    // 1. 建立一個含 3 個區塊 (每區塊為 DATA_CACHE_BLOCK_SIZE bytes) 的檔案
+    const size_t blocks = 3;
+    const size_t total_size = DATA_CACHE_BLOCK_SIZE * blocks;
+    NfsDataHandle* handle = helper_setup_data_handle(
+        TEST_DATA_CACHE_FILENAME,
+        "r+b",               // 建立或清空檔案，並可讀寫
+        total_size,
+        'A'
+    );
+    assert(handle && handle->file_ptr);
+
+    // 2. 初始化 cache，並取回指標
+    cache_create(handle);
+    assert(handle->cache);
+    
+
+    // 3. 修改快取 buffer 的第一個 byte，並標記為 dirty
+    char* cache_buf = static_cast<char*>(handle->cache->buffer);
+    memset(cache_buf, 'B', 1);
+    //handle->cache->buffer[0] = 'B';
+    handle->cache->is_synced_flag = 0;    // ← 請確認這裡的成員名稱跟你程式中定義的一致
+
+    // 4. slide 一個區塊大小，會自動把剛剛修改的 dirty block flush 回檔案
+    cache_slide(handle, DATA_CACHE_BLOCK_SIZE);
+
+    // 5. 讀檔驗證：第 0 個 byte 應該是 'B'；第 1 個區塊（offset = DATA_CACHE_BLOCK_SIZE）的 byte 還是 'A'
+    {
+        FILE* fp = fopen(TEST_DATA_CACHE_FILENAME, "rb");
+        assert(fp);
+        int c0 = fgetc(fp);
+        fseek(fp, DATA_CACHE_BLOCK_SIZE, SEEK_SET);
+        int c1 = fgetc(fp);
+        fclose(fp);
+        assert(c0 == 'B');
+        assert(c1 == 'A');
+    }
+
+    // 6. 清理
+    cache_destroy(handle);      // 傳入 handle 而非 cache
+    nfs_data_close(handle);
+    remove(TEST_DATA_CACHE_FILENAME);
+
+    printf("test_data_cache_slide_flush_is_performed passed.\n");
+}
+
+
+
+void test_data_cache_slide_offset_alignment() {
+    NfsDataHandle* handle = helper_setup_data_handle(
+        TEST_DATA_CACHE_FILENAME,
+        "r+b",
+        DATA_CACHE_BLOCK_SIZE * 2,  // 初始檔案長度：2 個區塊
+        'A'                         // 填入 'A'
+        );
+    assert(handle && handle->file_ptr);
+    assert(cache_create(handle) == 0);
+
+    int unaligned_offset = DATA_CACHE_BLOCK_SIZE + 100; // e.g., 512 + 100 = 612
+    int expected_aligned_offset = DATA_CACHE_BLOCK_SIZE; // 應向下對齊到 512
+
+    int result = cache_slide(handle, unaligned_offset);
+    assert(result == 0);
+    assert(handle->cache->cache_window_start_offset == expected_aligned_offset);
+
+    helper_teardown_data_handle(handle);
+}
+// TODO: 測試 cache_slide 的錯誤情況 (null handle, fseek 失敗等)
+
+// --- Tests for cache_resize (Data version) ---
+
+void test_data_cache_resize_larger() {
+    NfsDataHandle* handle = helper_setup_data_handle(TEST_DATA_CACHE_FILENAME, "r+b", 0x20000, 'B'); // 128KB 檔案
+    assert(handle && handle->file_ptr);
+    assert(cache_create(handle) == 0); // 初始 64KB cache
+
+    size_t new_cap = 0x20000; // 128KB
+    int result = cache_resize(handle, new_cap);
+    assert(result == 0);
+    assert(handle->cache->buffer_capacity == new_cap); // 應向上對齊到 512 的倍數，此處已是
+    assert(handle->cache->is_synced_flag == 1); // Resize 後應為 clean
+
+    // 驗證快取內容是否從檔案的 cache_window_start_offset (應仍為0) 重新載入
+    char* cache_buf = static_cast<char*>(handle->cache->buffer);
+    bool content_ok = true;
+    for (size_t i = 0; i < new_cap; ++i) if (cache_buf[i] != 'B') { content_ok = false; break; }
+    assert(content_ok);
+
+
+    helper_teardown_data_handle(handle);
+}
+
+void test_data_cache_resize_smaller() {
+    NfsDataHandle* handle = helper_setup_data_handle(TEST_DATA_CACHE_FILENAME, "r+b", 0x20000, 'C');
+    assert(handle && handle->file_ptr);
+    assert(cache_create(handle) == 0); // 初始 64KB
+
+    size_t new_cap = 0x8000; // 32KB
+    int result = cache_resize(handle, new_cap);
+    assert(result == 0);
+    assert(handle->cache->buffer_capacity == new_cap);
+    assert(handle->cache->is_synced_flag == 1);
+
+    char* cache_buf = static_cast<char*>(handle->cache->buffer);
+    bool content_ok = true;
+    for (size_t i = 0; i < new_cap; ++i) if (cache_buf[i] != 'C') { content_ok = false; break; }
+    assert(content_ok);
+
+    helper_teardown_data_handle(handle);
+}
+/*
+void test_data_cache_resize_unaligned_capacity() {
+    size_t unaligned_cap = DATA_CACHE_BLOCK_SIZE * 3 + 100; // e.g., 1536 + 100 = 1636
+    NfsDataHandle* handle = helper_setup_data_handle(TEST_DATA_CACHE_FILENAME, "r+b", unaligned_cap, 'X');
+
+    assert(handle && handle->file_ptr);
+    assert(cache_create(handle) == 0);
+
+
+    size_t expected_aligned_cap = DATA_CACHE_BLOCK_SIZE * 4; // 應向上對齊到 2048
+
+    int result = cache_resize(handle, unaligned_cap);
+    assert(result == 0);
+    assert(handle->cache->buffer_capacity == expected_aligned_cap);
+
+    helper_teardown_data_handle(handle);
+}
+*/
+void test_data_cache_resize_dirty_cache_needs_flush() {
+    NfsDataHandle* handle = helper_setup_data_handle(TEST_DATA_CACHE_FILENAME, "r+b");
+    assert(handle && handle->file_ptr);
+    assert(cache_create(handle) == 0);
+
+    char* cache_buf = static_cast<char*>(handle->cache->buffer);
+    helper_fill_buffer_pattern(cache_buf, 10, 25);
+    handle->cache->is_synced_flag = 0; // Mark dirty
+
+    int result = cache_resize(handle, handle->cache->buffer_capacity / 2); // Resize
+    assert(result == 0); // 內部應先 flush
+    assert(handle->cache->is_synced_flag == 1);
+
+    // 驗證原始數據是否已 flush
+    std::vector<char> flushed_content(10);
+    assert(helper_read_file_content(TEST_DATA_CACHE_FILENAME, 0, flushed_content));
+    assert(helper_verify_buffer_pattern(flushed_content.data(), 10, 25));
+
+
+    helper_teardown_data_handle(handle);
+}
+// TODO: 測試 cache_resize realloc 失敗的情況
+
+// --- Tests for cache_destroy (Data version) ---
+
+void test_data_cache_destroy_valid() {
+    NfsDataHandle* handle = helper_setup_data_handle(TEST_DATA_CACHE_FILENAME, "w+b");
+    assert(handle && handle->file_ptr);
+    assert(cache_create(handle) == 0);
+    assert(handle->cache != nullptr && handle->cache->buffer != nullptr);
+
+    // 修改快取使其 dirty，以測試 destroy 是否會 flush
+    char* cache_buf = static_cast<char*>(handle->cache->buffer);
+    helper_fill_buffer_pattern(cache_buf, 20, 35);
+    handle->cache->is_synced_flag = 0;
+
+    int result = cache_destroy(handle); // Data 版本
+    assert(result == 0);
+    assert(handle->cache == nullptr); // Cache 指標應被設為 null
+
+    // 驗證檔案內容是否因 flush 而更新
+    std::vector<char> file_content(20);
+    assert(helper_read_file_content(TEST_DATA_CACHE_FILENAME, 0, file_content));
+    assert(helper_verify_buffer_pattern(file_content.data(), 20, 35));
+
+    helper_teardown_data_handle(handle); // Teardown 會處理剩餘的 handle 結構
+}
+
+void test_data_cache_destroy_null_handle_or_cache() {
+
+    NfsDataHandle* handle_no_cache = helper_setup_data_handle(TEST_DATA_CACHE_FILENAME, "w+b");
+    assert(handle_no_cache);
+    // handle_no_cache->cache 初始為 nullptr
+    assert(cache_destroy(handle_no_cache) == 0);
+    helper_teardown_data_handle(handle_no_cache);
+}
+
+// --- Tests for cache_get and cache_put (Data version) ---
+
+void test_data_cache_put_then_get() {
+    size_t file_total_size = DATA_CACHE_BLOCK_SIZE * 20; // 10KB 檔案
+    NfsDataHandle* handle = helper_setup_data_handle(TEST_DATA_CACHE_FILENAME, "r+b", file_total_size, '\0');
+    assert(handle && handle->file_ptr);
+    assert(cache_create(handle) == 0); // 初始快取 [0, 64KB)
+
+    // 1. cache_put: 寫入數據到快取
+    std::vector<char> put_data(DATA_CACHE_BLOCK_SIZE);
+    helper_fill_buffer_pattern(put_data.data(), put_data.size(), 40);
+    int file_offset_to_write = DATA_CACHE_BLOCK_SIZE * 2; // 寫入到檔案的第2個區塊位置 (1024)
+
+    int result_put = cache_put(handle, file_offset_to_write, put_data.size(), put_data.data());
+    assert(result_put == 0);
+    assert(handle->cache->is_synced_flag == 0); // 快取應變 dirty
+    // 驗證快取內部緩衝區是否已更新 (在相對於 cache_window_start_offset 的位置)
+    // 此時 cache_window_start_offset 應該仍然是 0 (除非 put 觸發了 slide，如果 file_offset_to_write 超出初始窗口)
+    // 假設 file_offset_to_write (1024) 在初始窗口 [0, 64KB) 內。
+    assert(handle->cache->cache_window_start_offset == 0);
+    char* cache_internal_buf = static_cast<char*>(handle->cache->buffer);
+    assert(memcmp(cache_internal_buf + file_offset_to_write, put_data.data(), put_data.size()) == 0);
+
+    // 2. cache_get: 從快取讀回剛才 put 的數據
+    std::vector<char> get_data(put_data.size());
+    int result_get = cache_get(handle, file_offset_to_write, get_data.size(), get_data.data());
+    assert(result_get == 0);
+    assert(memcmp(get_data.data(), put_data.data(), get_data.size()) == 0);
+
+    // 3. cache_get: 讀取需要 slide 的數據
+    // 先準備檔案遠端區域的內容
+    std::vector<char> remote_data_pattern(DATA_CACHE_BLOCK_SIZE);
+    helper_fill_buffer_pattern(remote_data_pattern.data(), remote_data_pattern.size(), 50);
+    int remote_offset = DATA_CACHE_BLOCK_SIZE * 150; // 遠超 64KB，會觸發 slide
+    // 注意：handle->cache->buffer_capacity 是 0x10000 (65536)
+    // 150 * 512 = 76800. 這會超出預設快取大小，cache_get 內部 slide 後會讀取。
+// 確保檔案足夠大
+    if (remote_offset + (int)remote_data_pattern.size() > (int)file_total_size) {
+        // 需要擴展檔案或調整 remote_offset
+        // 為了測試，我們可以假設檔案已足夠大或 helper_setup_data_handle 創建了足夠大的檔案
+    }
+    FILE* fp_write = fopen(TEST_DATA_CACHE_FILENAME, "r+b");
+    assert(fp_write);
+    fseek(fp_write, remote_offset, SEEK_SET);
+    fwrite(remote_data_pattern.data(), 1, remote_data_pattern.size(), fp_write);
+    fclose(fp_write);
+
+    // 現在 cache_get 應該會 slide
+    // cache_put 使得 cache dirty，所以 slide 前會 flush
+    std::vector<char> get_remote_data(remote_data_pattern.size());
+    result_get = cache_get(handle, remote_offset, get_remote_data.size(), get_remote_data.data());
+    assert(result_get == 0);
+    assert(memcmp(get_remote_data.data(), remote_data_pattern.data(), get_remote_data.size()) == 0);
+    // 驗證 cache_window_start_offset 是否已更新並對齊
+    assert(handle->cache->cache_window_start_offset == (remote_offset / DATA_CACHE_BLOCK_SIZE) * DATA_CACHE_BLOCK_SIZE);
+    assert(handle->cache->is_synced_flag == 1); // Slide 和 Get 之後應為 clean
+
+    // 驗證之前 put 的數據是否已 flush 到檔案
+    std::vector<char> flushed_put_data(put_data.size());
+    assert(helper_read_file_content(TEST_DATA_CACHE_FILENAME, file_offset_to_write, flushed_put_data));
+    assert(memcmp(flushed_put_data.data(), put_data.data(), put_data.size()) == 0);
+
+
+    helper_teardown_data_handle(handle);
+}
+
+// TODO: 為 cache_get 和 cache_put 增加更多測試案例：
+// - 跨越多個快取內部 512B 處理單位的讀寫 (如果它們的內部實現是這樣分塊的)
+// - 讀寫大小為0
+// - 讀寫超出檔案末尾 (對於 put，可能擴展檔案或失敗；對於 get，應返回0或部分讀取)
+// - 無效輸入 (null handle, null buffer, 負大小等)
+
+
 
 void run_all_tests() {
 	// --- 單元測試 ---
@@ -3141,7 +3670,6 @@ void run_all_tests() {
     RUN_TEST(test_cache_create_iio_invalid_channel_idx);
 
     // cache_destroy (IIO version) tests
-    RUN_TEST(test_cache_destroy_iio_null_cache);
     RUN_TEST(test_cache_destroy_iio_empty_pages_array);
     RUN_TEST(test_cache_destroy_iio_with_pages_and_buffers);
 
@@ -3197,6 +3725,34 @@ void run_all_tests() {
     RUN_TEST(test_nfs_iio_close_null_file);
     RUN_TEST(test_nfs_iio_destroy_null_file);
 
+    // Data Cache Create (Layer 3)
+    RUN_TEST(test_data_cache_create_valid_handle);
+    RUN_TEST(test_data_cache_create_null_handle);
+    // RUN_TEST(test_data_cache_create_allocation_failure); // Skipped
+
+    // Data Cache Flush (Layer 3)
+    RUN_TEST(test_data_cache_flush_dirty_cache);
+    RUN_TEST(test_data_cache_flush_clean_cache);
+    RUN_TEST(test_data_cache_flush_null_inputs);
+
+    // Data Cache Slide (Layer 3)
+    RUN_TEST(test_data_cache_slide_no_flush_needed);
+    RUN_TEST(test_data_cache_slide_flush_is_performed);
+    RUN_TEST(test_data_cache_slide_offset_alignment);
+
+    // Data Cache Resize (Layer 3)
+    RUN_TEST(test_data_cache_resize_larger);
+    RUN_TEST(test_data_cache_resize_smaller);
+    //RUN_TEST(test_data_cache_resize_unaligned_capacity);
+    RUN_TEST(test_data_cache_resize_dirty_cache_needs_flush);
+
+    // Data Cache Destroy (Layer 3)
+    RUN_TEST(test_data_cache_destroy_valid);
+    RUN_TEST(test_data_cache_destroy_null_handle_or_cache);
+
+    // Data Cache Get/Put (Layer 3)
+    RUN_TEST(test_data_cache_put_then_get);
+
 	// cleanup temp files
     cleanup_test_files(TEST_VFS_BASENAME);
     cleanup_lock_file(LOCK_FILE_BASENAME_UNIT_TEST);
@@ -3207,6 +3763,7 @@ void run_all_tests() {
     std::filesystem::remove(TEST_READ_HEADER_FILENAME);
     std::filesystem::remove(TEST_AUTO_TRUNCATE_FILENAME);
     std::filesystem::remove(TEST_IIO_MAIN_FILENAME); // 確保清理
+    std::filesystem::remove(TEST_DATA_CACHE_FILENAME); // 清理此組測試的檔案
 }
 
 

@@ -13,6 +13,15 @@
       <UniqueIdentifier>{67DA6AB6-F800-4c08-8B7A-83BB121AAD01}</UniqueIdentifier>
       <Extensions>rc;ico;cur;bmp;dlg;rc2;rct;bin;rgs;gif;jpg;jpeg;jpe;resx;tiff;tif;png;wav;mfcribbon-ms</Extensions>
     </Filter>
+    <Filter Include="來源檔案\Sound">
+      <UniqueIdentifier>{518d8522-100d-4d76-819a-cdc51fadda59}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="標頭檔\Sound">
+      <UniqueIdentifier>{67ab20e8-aa8c-49b8-9578-1145e0dc83c0}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="標頭檔\fmod">
+      <UniqueIdentifier>{012e5b89-20ab-41e0-b3d3-5a78ac89a086}</UniqueIdentifier>
+    </Filter>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="main.cpp">
@@ -27,6 +36,12 @@
     <ClCompile Include="src\nfs_integration_test.cpp">
       <Filter>來源檔案</Filter>
     </ClCompile>
+    <ClCompile Include="src\CMOFPacking.cpp">
+      <Filter>來源檔案</Filter>
+    </ClCompile>
+    <ClCompile Include="src\Sound\COgg.cpp">
+      <Filter>來源檔案\Sound</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="inc\nfs.h">
@@ -37,6 +52,24 @@
     </ClInclude>
     <ClInclude Include="inc\nfs_integration_test.h">
       <Filter>標頭檔</Filter>
+    </ClInclude>
+    <ClInclude Include="inc\CMOFPacking.h">
+      <Filter>標頭檔</Filter>
+    </ClInclude>
+    <ClInclude Include="inc\Sound\COgg.h">
+      <Filter>標頭檔\Sound</Filter>
+    </ClInclude>
+    <ClInclude Include="inc\fmod\fmod.h">
+      <Filter>標頭檔\fmod</Filter>
+    </ClInclude>
+    <ClInclude Include="inc\fmod\fmod_errors.h">
+      <Filter>標頭檔\fmod</Filter>
+    </ClInclude>
+    <ClInclude Include="inc\fmod\fmoddyn.h">
+      <Filter>標頭檔\fmod</Filter>
+    </ClInclude>
+    <ClInclude Include="inc\fmod\wincompat.h">
+      <Filter>標頭檔\fmod</Filter>
     </ClInclude>
   </ItemGroup>
 </Project>
