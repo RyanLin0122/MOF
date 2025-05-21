@@ -4,9 +4,7 @@
 #include <cstdlib>      // 為了 malloc (cogg.c 中的 _malloc)
 
 // 全域變數定義 (這些應在專案的其他地方定義，此處僅為使 COgg.cpp 能編譯的範例)
-// HWND hWnd = nullptr; // 實際應用中應由視窗系統初始化
-// int dword_829254 = 0; // 預設值，實際應由應用程式設定
-// CMofPacking g_clMofPacking; // 全域實例
+int g_bLoadOggFromMofPack = 1;                 // 根據您的應用程式邏輯初始化
 
 COgg::COgg() : m_pStream(nullptr), m_nVolume(255), m_nChannelId(0), m_nStreamOpenMode(0) {
     // 建構函式，初始化成員變數
@@ -29,6 +27,7 @@ COgg::~COgg() {
 }
 
 void COgg::Initalize(int loopEnabled) {
+    HWND hWnd = GetConsoleWindow();
     FSOUND_SetHWND(hWnd);
     FSOUND_SetOutput(FSOUND_OUTPUT_DSOUND); // 2 對應 FSOUND_OUTPUT_DSOUND
     FSOUND_Init(44100, 32, 0);    // 初始化 FMOD，44.1kHz, 32個軟體聲道, 無特殊旗標
@@ -98,15 +97,16 @@ void COgg::Stop() {
 }
 
 void COgg::OpenStreem(const char* filePath) {
+    CMofPacking* g_clMofPacking = CMofPacking::GetInstance();
     if (g_bLoadOggFromMofPack) { // 從 CMofPacking 載入並從記憶體開啟串流
         char tempPath[256];
         strcpy_s(tempPath, sizeof(tempPath), filePath); // 複製檔案路徑以供修改
 
         // CMofPacking::ChangeString 將字串轉為小寫
         // 假設 g_clMofPacking 的 ChangeString 修改傳入的緩衝區
-        char* processedPath = g_clMofPacking.ChangeString(tempPath);
+        char* processedPath = g_clMofPacking->ChangeString(tempPath);
 
-        g_clMofPacking.FileReadBackGroundLoading(processedPath);
+        g_clMofPacking->FileReadBackGroundLoading(processedPath);
 
         // cogg.c 中此處有 `if ( &dword_C24CF4 )` 檢查
         // dword_C24CF4 在 IDA 中可能是 g_clMofPacking.m_backgroundLoadBufferField 的別名。
@@ -116,14 +116,14 @@ void COgg::OpenStreem(const char* filePath) {
         // 如果 g_clMofPacking.m_backgroundLoadBufferField 是公開的，可以直接存取。
         // 在提供的 CMOFPacking.h 中，m_backgroundLoadBufferField 是 public char array。
         if (true) { // 代表 cogg.c 中的 `if (&dword_C24CF4)`，該位址檢查通常為真
-            size_t bufferSize = g_clMofPacking.GetBufferSize();
+            size_t bufferSize = g_clMofPacking->GetBufferSize();
             if (bufferSize > 0) { // 只有在實際讀到資料時才嘗試分配和開啟
                 void* pMemoryBuffer = malloc(bufferSize); // cogg.c 使用 _malloc
                 if (pMemoryBuffer) {
                     // cogg.c 使用 qmemcpy(v5, &dword_C24CF4, size)
                     // &dword_C24CF4 指向 g_clMofPacking 的內部緩衝區資料
                     // 假設 m_backgroundLoadBufferField 是公開的，或者有一個 getter
-                    memcpy(pMemoryBuffer, g_clMofPacking.m_backgroundLoadBufferField, bufferSize);
+                    memcpy(pMemoryBuffer, g_clMofPacking->m_backgroundLoadBufferField, bufferSize);
 
                     // 使用載入到記憶體的資料開啟 FMOD 串流
                     // m_nStreamOpenMode 應包含 FSOUND_LOADMEMORY 旗標 (已在 Initalize 中處理)

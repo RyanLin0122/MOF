@@ -1,46 +1,61 @@
 #include "CMOFPacking.h"
 #include <string> // 可用於更安全的字串操作，但此處盡量維持C風格以符合原始碼
+#include <new> // 為了 std::nothrow
 
 // 從CMOFPacking.c中觀察到的全域字串 (原始碼中使用的是字串字面量)
 const char STR_DOT[] = ".";
 const char STR_DOTDOT[] = "..";
 // const char STR_MOF_INI[] = "mof.ini"; // 在DataPacking中直接使用 "mof.ini"
 
-// 建構函式
-CMofPacking::CMofPacking() {
-    // *(_DWORD *)this = &CMofPacking::`vftable'; // vfptr由編譯器自動設定
-    m_pNfsHandle = nullptr;                     // *((_DWORD *)this + 1) = 0;
-    m_pReadBuffer = nullptr;                    // *((_DWORD *)this + 2) = 0;
-    m_pBuffer1 = nullptr;                       // *((_DWORD *)this + 3) = 0;
-    m_nReadBytes = 0;                           // *((_DWORD *)this + 68) = 0;
+// 初始化靜態成員指標
+CMofPacking* CMofPacking::s_pInstance = nullptr;
 
-    // 初始化 m_globResults 的成員
-    // *((_DWORD *)this + 72) = 0; // -> m_globResults.internal_callback_error_flag
+// 靜態 GetInstance 方法的實現
+CMofPacking* CMofPacking::GetInstance() {
+    if (s_pInstance == nullptr) {
+        // 使用 std::nothrow 版本，如果 new 失敗會返回 nullptr，而不是拋出異常
+        s_pInstance = new (std::nothrow) CMofPacking();
+        if (s_pInstance) {
+            // 可以在這裡呼叫初始化函式，如果需要的話
+            // s_pInstance->Init();
+        }
+    }
+    return s_pInstance;
+}
+
+// 靜態 DestroyInstance 方法的實現
+void CMofPacking::DestroyInstance() {
+    delete s_pInstance; // delete nullptr 是安全的
+    s_pInstance = nullptr;
+}
+
+// 建構函式 (現在是私有的)
+CMofPacking::CMofPacking() {
+    m_pNfsHandle = nullptr;
+    m_pReadBuffer = nullptr;
+    m_pBuffer1 = nullptr;
+    m_nReadBytes = 0;
+
     m_globResults.gl_pathc = 0;
     m_globResults.gl_pathv = nullptr;
     m_globResults.gl_offs = 0;
     m_globResults.internal_callback_error_flag = 0;
 
-    m_isLoadingFlag = false;                    // byte_7A1324[(_DWORD)this] = 0;
+    m_isLoadingFlag = false;
 
-    // memset((char *)this + 292, 0, 0x7A1200u);
     memset(m_backgroundLoadBufferField, 0, sizeof(m_backgroundLoadBufferField));
-
-    // memset((char *)this + 16, 0, 0x100u);
     memset(m_tempPathBuffer, 0, sizeof(m_tempPathBuffer));
 }
 
-// 解構函式
+// 解構函式 (現在是私有的)
 CMofPacking::~CMofPacking() {
-    // *(_DWORD *)this = &CMofPacking::`vftable'; // vfptr由編譯器自動設定
-    DeleteBuffer();  // 清理 m_pReadBuffer
-    // DeleteBuffer1(); // 也應該清理 m_pBuffer1，如果它被使用了
-    PackFileClose(); // 關閉NFS檔案
+    DeleteBuffer();
+    // DeleteBuffer1(); // 如果 m_pBuffer1 有被使用，也應在此清理
+    PackFileClose();
 }
 
-// 初始化 (似乎沒做特別的事)
 bool CMofPacking::Init() {
-    return true; // 原始碼返回1
+    return true;
 }
 
 // 開啟NFS封裝檔案

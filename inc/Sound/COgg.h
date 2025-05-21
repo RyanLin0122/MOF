@@ -4,11 +4,6 @@
 #include <fmod/fmod.h>      // FMOD 音效庫 API
 #include <windows.h>   // FSOUND_SetHWND 需要 HWND
 
-// 全域變數的定義
-HWND hWnd = nullptr;                    // 初始化為 nullptr，實際值應在程式初始化時設定
-int g_bLoadOggFromMofPack = 0;                 // 根據您的應用程式邏輯初始化
-CMofPacking g_clMofPacking;           // CMofPacking 的全域實例
-
 class COgg {
 public:
     COgg();                          // 建構函式
