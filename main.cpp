@@ -8,28 +8,14 @@
 #include "Sound/COgg.h"  // 您的 COgg 類別標頭檔
 #include "CMOFPacking.h" // 您的 CMofPacking 類別標頭檔 (單例版本)
 
-int main() {
-	std::cout << "Starting Virtual File System Tests..." << std::endl;
-	std::cout << "========================================" << std::endl;
-
-	// 執行所有測試
-	//run_all_tests();
-	//return print_test_result();
-	/*
-	test_create_write_read_small();
-	test_cross_block_write_read();
-	test_multi_channel_isolation();
-	test_channel_truncate();
-	printf("ALL INTEGRATION TESTS PASSED\n");
-	*/
-
-	// 測試音樂
-	HWND hWnd = GetConsoleWindow();
-	if (hWnd == nullptr) {
-		printf("警告：無法獲取主控台視窗句柄。FSOUND_SetHWND 將使用 nullptr。\n");
-		// 在某些情況下，FMOD 可能仍然可以運作，或者需要一個有效的視窗。
-		// 對於簡單測試，這可能不是主要問題。
-	}
+void ogg_play_test() {
+    // 測試音樂
+    HWND hWnd = GetConsoleWindow();
+    if (hWnd == nullptr) {
+        printf("警告：無法獲取主控台視窗句柄。FSOUND_SetHWND 將使用 nullptr。\n");
+        // 在某些情況下，FMOD 可能仍然可以運作，或者需要一個有效的視窗。
+        // 對於簡單測試，這可能不是主要問題。
+    }
     printf("FMOD OGG 播放測試\n");
     printf("------------------------\n");
 
@@ -65,6 +51,22 @@ int main() {
     CMofPacking::DestroyInstance();
 
     printf("測試程式結束。\n");
+}
 
+int main() {
+	std::cout << "Starting Virtual File System Tests..." << std::endl;
+	std::cout << "========================================" << std::endl;
+
+	// 執行所有測試
+	run_all_tests();
+	print_test_result();
+	/*
+	test_create_write_read_small();
+	test_cross_block_write_read();
+	test_multi_channel_isolation();
+	test_channel_truncate();
+	printf("ALL INTEGRATION TESTS PASSED\n");
+	*/
+    ogg_play_test();
 	return 0;
 }

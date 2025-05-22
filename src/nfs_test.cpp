@@ -3413,7 +3413,7 @@ void test_data_cache_resize_smaller() {
 
     helper_teardown_data_handle(handle);
 }
-/*
+
 void test_data_cache_resize_unaligned_capacity() {
     size_t unaligned_cap = DATA_CACHE_BLOCK_SIZE * 3 + 100; // e.g., 1536 + 100 = 1636
     NfsDataHandle* handle = helper_setup_data_handle(TEST_DATA_CACHE_FILENAME, "r+b", unaligned_cap, 'X');
@@ -3430,9 +3430,9 @@ void test_data_cache_resize_unaligned_capacity() {
 
     helper_teardown_data_handle(handle);
 }
-*/
+
 void test_data_cache_resize_dirty_cache_needs_flush() {
-    NfsDataHandle* handle = helper_setup_data_handle(TEST_DATA_CACHE_FILENAME, "r+b");
+    NfsDataHandle* handle = helper_setup_data_handle(TEST_DATA_CACHE_FILENAME, "r+b", DATA_CACHE_BLOCK_SIZE * 128, 'X');
     assert(handle && handle->file_ptr);
     assert(cache_create(handle) == 0);
 
@@ -3560,7 +3560,471 @@ void test_data_cache_put_then_get() {
 // - 讀寫超出檔案末尾 (對於 put，可能擴展檔案或失敗；對於 get，應返回0或部分讀取)
 // - 無效輸入 (null handle, null buffer, 負大小等)
 
+const char* TEST_DATA_API_FILENAME = "test_nfs_data_api.pak";
+const int DATA_API_BLOCK_SIZE = 512; // Consistent with nfs_data_* operations
 
+// --- Helper Functions (adapted from your nfs_test.cpp structure) ---
+
+// (Assuming helper_fill_buffer_pattern, helper_verify_buffer_pattern are available
+//  and work with char* and pattern_seed)
+
+// Simplified helper to create a file with specific content
+bool helper_create_raw_file_with_content(const char* filename, size_t size, char fill_char) {
+    std::ofstream outfile(filename, std::ios::binary | std::ios::out | std::ios::trunc);
+    if (!outfile.is_open()) {
+        std::cerr << "helper_create_raw_file_with_content: Failed to open " << filename << " for writing." << std::endl;
+        return false;
+    }
+    std::vector<char> content(size, fill_char);
+    outfile.write(content.data(), size);
+    outfile.close();
+    return outfile.good();
+}
+
+// Simplified helper to get file size
+long helper_get_actual_file_size(const char* filename) {
+    std::ifstream infile(filename, std::ios::binary | std::ios::ate);
+    if (!infile.is_open()) {
+        return -1;
+    }
+    long size = infile.tellg();
+    infile.close();
+    return size;
+}
+
+// Helper to read raw file content for verification
+bool helper_read_raw_file_segment(const char* filename, long offset, char* buffer, size_t length) {
+    std::ifstream infile(filename, std::ios::binary);
+    if (!infile.is_open()) return false;
+    infile.seekg(offset, std::ios::beg);
+    infile.read(buffer, length);
+    bool success = infile.gcount() == static_cast<std::streamsize>(length);
+    infile.close();
+    return success;
+}
+
+
+// --- Test Cases ---
+
+// --- nfs_data_create ---
+void test_nfs_data_create_new() {
+    std::filesystem::remove(TEST_DATA_API_FILENAME);
+    NfsDataHandle* handle = nfs_data_create(TEST_DATA_API_FILENAME);
+    assert(handle != nullptr); //
+    assert(handle->file_ptr != nullptr); //
+    assert(handle->file_name != nullptr && strcmp(handle->file_name, TEST_DATA_API_FILENAME) == 0); //
+    assert(handle->cache != nullptr); //
+    assert(handle->cache->buffer_capacity == 0x10000); //
+    assert(handle->cache->is_synced_flag == 1); //
+    assert(handle->cache->cache_window_start_offset == 0); //
+    assert(std::filesystem::exists(TEST_DATA_API_FILENAME));
+
+    nfs_data_close(handle); //
+    std::filesystem::remove(TEST_DATA_API_FILENAME);
+}
+
+void test_nfs_data_create_overwrite() {
+    assert(helper_create_raw_file_with_content(TEST_DATA_API_FILENAME, 1024, 'X'));
+    long old_size = helper_get_actual_file_size(TEST_DATA_API_FILENAME);
+    assert(old_size == 1024);
+
+    NfsDataHandle* handle = nfs_data_create(TEST_DATA_API_FILENAME); //
+    assert(handle != nullptr);
+    // The file is opened with "w+b", which truncates it. cache_create might read from an empty file.
+    // The size of the file would be 0 after fopen with "w+b", and cache_create reads from this.
+    // If cache_create writes something (e.g. metadata, unlikely for .pak), size could change.
+    // Assuming .pak has no explicit header written by nfs_data_create itself.
+    // fseek(handle->file_ptr, 0, SEEK_END); long current_size = ftell(handle->file_ptr);
+    // assert(current_size == 0); // Or some minimal size if cache_create writes
+
+    nfs_data_close(handle);
+    std::filesystem::remove(TEST_DATA_API_FILENAME);
+}
+
+void test_nfs_data_create_null_filename() {
+    NfsDataHandle* handle = nfs_data_create(nullptr);
+    assert(handle == nullptr);
+}
+
+// --- nfs_data_open ---
+void test_nfs_data_open_existing() {
+    // 1. Create a file with known content
+    NfsDataHandle* create_handle = nfs_data_create(TEST_DATA_API_FILENAME);
+    assert(create_handle != nullptr);
+    std::vector<char> write_buf(DATA_API_BLOCK_SIZE, 'A');
+    assert(nfs_data_write(create_handle, 0, write_buf.data()) == 0); // Write to block 0
+    nfs_data_close(create_handle);
+
+    // 2. Open the file
+    int original_iomode = nfs_data_IOMODE;
+    nfs_data_IOMODE = 0; // Simulate read-only open
+    NfsDataHandle* open_handle = nfs_data_open(TEST_DATA_API_FILENAME); //
+    assert(open_handle != nullptr);
+    assert(open_handle->file_ptr != nullptr);
+    assert(open_handle->cache != nullptr);
+    assert(open_handle->cache->buffer_capacity == 0x10000);
+    assert(open_handle->cache->is_synced_flag == 1); // Should be clean after initial read
+    assert(open_handle->cache->cache_window_start_offset == 0);
+
+    // Verify initial cache content
+    char* cache_buf_ptr = static_cast<char*>(open_handle->cache->buffer);
+    assert(memcmp(cache_buf_ptr, write_buf.data(), DATA_API_BLOCK_SIZE) == 0);
+
+    nfs_data_close(open_handle);
+    std::filesystem::remove(TEST_DATA_API_FILENAME);
+    nfs_data_IOMODE = original_iomode;
+}
+
+void test_nfs_data_open_non_existent() {
+    std::filesystem::remove(TEST_DATA_API_FILENAME);
+    NfsDataHandle* handle = nfs_data_open(TEST_DATA_API_FILENAME); //
+    assert(handle == nullptr);
+}
+
+void test_nfs_data_open_null_filename() {
+    NfsDataHandle* handle = nfs_data_open(nullptr); //
+    assert(handle == nullptr);
+}
+
+void test_nfs_data_open_iomode_write() {
+    NfsDataHandle* create_handle = nfs_data_create(TEST_DATA_API_FILENAME);
+    assert(create_handle != nullptr);
+    nfs_data_close(create_handle);
+
+    int original_iomode = nfs_data_IOMODE;
+    nfs_data_IOMODE = 2; // Mode that implies write access ("r+b")
+    NfsDataHandle* open_handle = nfs_data_open(TEST_DATA_API_FILENAME);
+    assert(open_handle != nullptr);
+    // Further check: try writing to it
+    std::vector<char> write_buf(DATA_API_BLOCK_SIZE, 'W');
+    assert(nfs_data_write(open_handle, 0, write_buf.data()) == 0);
+
+    nfs_data_close(open_handle);
+    std::filesystem::remove(TEST_DATA_API_FILENAME);
+    nfs_data_IOMODE = original_iomode;
+}
+
+// --- nfs_data_flush_cache ---
+void test_nfs_data_flush_cache_dirty() {
+    NfsDataHandle* handle = nfs_data_create(TEST_DATA_API_FILENAME);
+    assert(handle != nullptr && handle->cache != nullptr);
+
+    char* cache_buffer = static_cast<char*>(handle->cache->buffer);
+    memset(cache_buffer, 'D', DATA_API_BLOCK_SIZE); // Modify cache
+    handle->cache->is_synced_flag = 0; // Mark dirty
+
+    assert(nfs_data_flush_cache(handle) == 0); //
+    assert(handle->cache->is_synced_flag == 1); // Should be clean after flush
+
+    // Verify file content
+    std::vector<char> file_content(DATA_API_BLOCK_SIZE);
+    assert(helper_read_raw_file_segment(TEST_DATA_API_FILENAME, 0, file_content.data(), DATA_API_BLOCK_SIZE));
+    for (int i = 0; i < DATA_API_BLOCK_SIZE; ++i) {
+        assert(file_content[i] == 'D');
+    }
+
+    nfs_data_close(handle);
+    std::filesystem::remove(TEST_DATA_API_FILENAME);
+}
+
+void test_nfs_data_flush_cache_clean() {
+    NfsDataHandle* handle = nfs_data_create(TEST_DATA_API_FILENAME);
+    assert(handle != nullptr && handle->cache != nullptr);
+    // Cache is initially clean after create
+
+    assert(helper_create_raw_file_with_content(TEST_DATA_API_FILENAME, DATA_API_BLOCK_SIZE, 'X')); // Set known file state
+    // Re-read into cache to ensure it's clean and has 'X'
+    assert(cache_slide(handle, 0) == 0); //
+    assert(handle->cache->is_synced_flag == 1);
+
+
+    assert(nfs_data_flush_cache(handle) == 0); //
+    assert(handle->cache->is_synced_flag == 1); // Should remain clean
+
+    // Verify file content has not changed from 'X'
+    std::vector<char> file_content(DATA_API_BLOCK_SIZE);
+    assert(helper_read_raw_file_segment(TEST_DATA_API_FILENAME, 0, file_content.data(), DATA_API_BLOCK_SIZE));
+    for (int i = 0; i < DATA_API_BLOCK_SIZE; ++i) {
+        assert(file_content[i] == 'X');
+    }
+
+    nfs_data_close(handle);
+    std::filesystem::remove(TEST_DATA_API_FILENAME);
+}
+
+void test_nfs_data_flush_cache_null_handle() {
+    assert(nfs_data_flush_cache(nullptr) == 0); // Original code returns 0 if handle is null
+}
+
+// --- nfs_data_set_cache_size ---
+void test_nfs_data_set_cache_size_larger() {
+    NfsDataHandle* handle = nfs_data_create(TEST_DATA_API_FILENAME);
+    assert(handle != nullptr && handle->cache != nullptr);
+    assert(helper_create_raw_file_with_content(TEST_DATA_API_FILENAME, 0x20000, 'L')); // 128KB file
+
+    // Ensure initial cache load
+    assert(cache_slide(handle, 0) == 0);
+
+    size_t initial_capacity = handle->cache->buffer_capacity;
+    size_t new_capacity = initial_capacity * 2;
+
+    assert(nfs_data_set_cache_size(handle, new_capacity) == 0); //
+    assert(handle->cache->buffer_capacity == new_capacity);
+    assert(handle->cache->is_synced_flag == 1); // Should be clean after resize and reload
+
+    // Verify reloaded content
+    char* cache_buf_ptr = static_cast<char*>(handle->cache->buffer);
+    for (size_t i = 0; i < new_capacity; ++i) {
+        assert(cache_buf_ptr[i] == 'L');
+    }
+
+    nfs_data_close(handle);
+    std::filesystem::remove(TEST_DATA_API_FILENAME);
+}
+
+void test_nfs_data_set_cache_size_smaller_dirty() {
+    NfsDataHandle* handle = nfs_data_create(TEST_DATA_API_FILENAME);
+    assert(handle != nullptr && handle->cache != nullptr);
+    assert(helper_create_raw_file_with_content(TEST_DATA_API_FILENAME, 0x10000, 'S')); // 64KB file
+
+    // Ensure initial cache load
+    assert(cache_slide(handle, 0) == 0);
+
+    // Make cache dirty
+    char* cache_buffer = static_cast<char*>(handle->cache->buffer);
+    memset(cache_buffer, 'M', DATA_API_BLOCK_SIZE); // Modify first block
+    handle->cache->is_synced_flag = 0;
+
+    size_t new_capacity = handle->cache->buffer_capacity / 2;
+    assert(nfs_data_set_cache_size(handle, new_capacity) == 0); //
+    assert(handle->cache->buffer_capacity == new_capacity);
+    assert(handle->cache->is_synced_flag == 1); // Should be clean
+
+    // Verify original dirty data was flushed
+    std::vector<char> file_block0(DATA_API_BLOCK_SIZE);
+    assert(helper_read_raw_file_segment(TEST_DATA_API_FILENAME, 0, file_block0.data(), DATA_API_BLOCK_SIZE));
+    for (int i = 0; i < DATA_API_BLOCK_SIZE; ++i) {
+        assert(file_block0[i] == 'M');
+    }
+
+    // Verify new cache content (reloaded from file, first part should be 'M', rest 'S')
+    char* new_cache_buf = static_cast<char*>(handle->cache->buffer);
+    for (size_t i = 0; i < new_capacity; ++i) {
+        if (i < DATA_API_BLOCK_SIZE) assert(new_cache_buf[i] == 'M');
+        else assert(new_cache_buf[i] == 'S');
+    }
+
+    nfs_data_close(handle);
+    std::filesystem::remove(TEST_DATA_API_FILENAME);
+}
+
+void test_nfs_data_set_cache_size_unaligned() {
+    NfsDataHandle* handle = nfs_data_create(TEST_DATA_API_FILENAME);
+    assert(handle != nullptr);
+    size_t unaligned_size = DATA_API_BLOCK_SIZE * 2 + 10; // e.g. 1034
+    size_t expected_aligned_size = DATA_API_BLOCK_SIZE * 3; // e.g. 1536
+
+    assert(nfs_data_set_cache_size(handle, unaligned_size) == 0); //
+    assert(handle->cache->buffer_capacity == expected_aligned_size); //
+
+    nfs_data_close(handle);
+    std::filesystem::remove(TEST_DATA_API_FILENAME);
+}
+
+void test_nfs_data_set_cache_size_null_handle() {
+    assert(nfs_data_set_cache_size(nullptr, 1024) == -1);
+}
+
+
+// --- nfs_data_read / nfs_data_write ---
+void test_nfs_data_rw_single_block() {
+    NfsDataHandle* handle = nfs_data_create(TEST_DATA_API_FILENAME);
+    assert(handle != nullptr);
+
+    std::vector<char> write_buf(DATA_API_BLOCK_SIZE);
+    helper_fill_buffer_pattern(write_buf.data(), DATA_API_BLOCK_SIZE, 1);
+    std::vector<char> read_buf(DATA_API_BLOCK_SIZE);
+
+    // Write block 5
+    assert(nfs_data_write(handle, 5, write_buf.data()) == 0); //
+    assert(handle->cache->is_synced_flag == 0); // Dirty after write
+
+    // Read block 5 (should come from cache)
+    assert(nfs_data_read(handle, 5, read_buf.data()) == 0); //
+    assert(memcmp(read_buf.data(), write_buf.data(), DATA_API_BLOCK_SIZE) == 0);
+
+    // Flush and verify file content
+    assert(nfs_data_flush_cache(handle) == 0);
+    std::vector<char> file_buf(DATA_API_BLOCK_SIZE);
+    assert(helper_read_raw_file_segment(TEST_DATA_API_FILENAME, 5 * DATA_API_BLOCK_SIZE, file_buf.data(), DATA_API_BLOCK_SIZE));
+    assert(memcmp(file_buf.data(), write_buf.data(), DATA_API_BLOCK_SIZE) == 0);
+
+    // Read a different block (causes slide and potentially reads from file if not cached)
+    assert(helper_create_raw_file_with_content(TEST_DATA_API_FILENAME, DATA_API_BLOCK_SIZE * 130, 'Z')); // Create a larger file
+    // The previous write to block 5 is now part of this larger file.
+    // Seek to block 128 (outside default 64KB cache if original window was at 0)
+    // Note: block_index 128 means offset 128*512 = 65536. Default cache capacity is 65536.
+    // So block 128 is just outside the first window [0, 65535]. Block 127 is the last in window.
+    std::vector<char> expected_read_remote(DATA_API_BLOCK_SIZE, 'Z');
+    assert(nfs_data_read(handle, 128, read_buf.data()) == 0); //
+    assert(memcmp(read_buf.data(), expected_read_remote.data(), DATA_API_BLOCK_SIZE) == 0);
+    assert(handle->cache->cache_window_start_offset == 128 * DATA_API_BLOCK_SIZE); // by internal cache_slide
+
+    nfs_data_close(handle);
+    std::filesystem::remove(TEST_DATA_API_FILENAME);
+}
+
+void test_nfs_data_rw_invalid_index() {
+    NfsDataHandle* handle = nfs_data_create(TEST_DATA_API_FILENAME);
+    assert(handle != nullptr);
+    std::vector<char> buffer(DATA_API_BLOCK_SIZE);
+
+    assert(nfs_data_read(handle, -1, buffer.data()) == -1); //
+    assert(nfs_data_write(handle, -2, buffer.data()) == -1); //
+
+    nfs_data_close(handle);
+    std::filesystem::remove(TEST_DATA_API_FILENAME);
+}
+
+// --- nfs_data_read_contiguous / nfs_data_write_contiguous ---
+void test_nfs_data_rw_contiguous_blocks() {
+    NfsDataHandle* handle = nfs_data_create(TEST_DATA_API_FILENAME);
+    assert(handle != nullptr);
+
+    int num_blocks = 3;
+    std::vector<char> write_contig_buf(DATA_API_BLOCK_SIZE * num_blocks);
+    helper_fill_buffer_pattern(write_contig_buf.data(), write_contig_buf.size(), 10);
+    std::vector<char> read_contig_buf(DATA_API_BLOCK_SIZE * num_blocks);
+
+    // Write 3 blocks starting at block 2
+    assert(nfs_data_write_contiguous(handle, 2, num_blocks, write_contig_buf.data()) == 0); //
+    assert(handle->cache->is_synced_flag == 0);
+
+    // Read them back
+    assert(nfs_data_read_contiguous(handle, 2, num_blocks, read_contig_buf.data()) == 0); //
+    assert(memcmp(read_contig_buf.data(), write_contig_buf.data(), write_contig_buf.size()) == 0);
+
+    // Flush and verify
+    assert(nfs_data_flush_cache(handle) == 0);
+    std::vector<char> file_contig_buf(DATA_API_BLOCK_SIZE * num_blocks);
+    assert(helper_read_raw_file_segment(TEST_DATA_API_FILENAME, 2 * DATA_API_BLOCK_SIZE, file_contig_buf.data(), file_contig_buf.size()));
+    assert(memcmp(file_contig_buf.data(), write_contig_buf.data(), write_contig_buf.size()) == 0);
+
+
+    nfs_data_close(handle);
+    std::filesystem::remove(TEST_DATA_API_FILENAME);
+}
+
+void test_nfs_data_rw_contiguous_zero_blocks() {
+    NfsDataHandle* handle = nfs_data_create(TEST_DATA_API_FILENAME);
+    assert(handle != nullptr);
+    std::vector<char> buffer(DATA_API_BLOCK_SIZE); // Dummy buffer
+
+    assert(nfs_data_read_contiguous(handle, 0, 0, buffer.data()) == 0); //
+    assert(nfs_data_write_contiguous(handle, 0, 0, buffer.data()) == 0); //
+
+    nfs_data_close(handle);
+    std::filesystem::remove(TEST_DATA_API_FILENAME);
+}
+
+void test_nfs_data_rw_contiguous_invalid_params() {
+    NfsDataHandle* handle = nfs_data_create(TEST_DATA_API_FILENAME);
+    assert(handle != nullptr);
+    std::vector<char> buffer(DATA_API_BLOCK_SIZE * 2);
+
+    assert(nfs_data_read_contiguous(handle, -1, 2, buffer.data()) == -1); //
+    assert(nfs_data_write_contiguous(handle, -1, 2, buffer.data()) == -1); //
+
+    assert(nfs_data_read_contiguous(handle, 0, -1, buffer.data()) == -1); //
+    assert(nfs_data_write_contiguous(handle, 0, -2, buffer.data()) == -1); //
+
+    nfs_data_close(handle);
+    std::filesystem::remove(TEST_DATA_API_FILENAME);
+}
+
+
+// --- nfs_data_close ---
+void test_nfs_data_close_flushes() {
+    NfsDataHandle* handle = nfs_data_create(TEST_DATA_API_FILENAME);
+    assert(handle != nullptr);
+
+    std::vector<char> write_buf(DATA_API_BLOCK_SIZE, 'C');
+    assert(nfs_data_write(handle, 0, write_buf.data()) == 0); // Makes cache dirty
+    assert(handle->cache->is_synced_flag == 0);
+
+    nfs_data_close(handle); // Should flush
+
+    // Verify file content
+    std::vector<char> file_buf(DATA_API_BLOCK_SIZE);
+    assert(helper_read_raw_file_segment(TEST_DATA_API_FILENAME, 0, file_buf.data(), DATA_API_BLOCK_SIZE));
+    assert(memcmp(file_buf.data(), write_buf.data(), DATA_API_BLOCK_SIZE) == 0);
+
+    std::filesystem::remove(TEST_DATA_API_FILENAME);
+}
+
+void test_nfs_data_close_null_handle() {
+    nfs_data_close(nullptr); // Should be safe
+    // No specific assert, just that it doesn't crash.
+}
+
+// --- nfs_data_destroy ---
+void test_nfs_data_destroy_removes_file_and_flushes() {
+    NfsDataHandle* handle = nfs_data_create(TEST_DATA_API_FILENAME);
+    assert(handle != nullptr);
+
+    std::vector<char> write_buf(DATA_API_BLOCK_SIZE, 'X');
+    assert(nfs_data_write(handle, 0, write_buf.data()) == 0); // Cache is dirty
+
+    // It's tricky to verify flush for a deleted file.
+    // The main check is that destroy calls close, which should flush.
+    // And the file is removed.
+    nfs_data_destroy(handle); //
+
+    assert(!std::filesystem::exists(TEST_DATA_API_FILENAME)); // File should be gone
+}
+
+void test_nfs_data_destroy_null_handle() {
+    nfs_data_destroy(nullptr); // Should be safe
+}
+
+void run_nfs_data_api_tests() {
+    std::cout << "--- Running NFS Data API (Layer 3) Tests ---" << std::endl;
+
+    RUN_TEST(test_nfs_data_create_new);
+    RUN_TEST(test_nfs_data_create_overwrite);
+    RUN_TEST(test_nfs_data_create_null_filename);
+
+    RUN_TEST(test_nfs_data_open_existing);
+    RUN_TEST(test_nfs_data_open_non_existent);
+    RUN_TEST(test_nfs_data_open_null_filename);
+    RUN_TEST(test_nfs_data_open_iomode_write);
+
+    RUN_TEST(test_nfs_data_flush_cache_dirty);
+    RUN_TEST(test_nfs_data_flush_cache_clean);
+    RUN_TEST(test_nfs_data_flush_cache_null_handle);
+
+    RUN_TEST(test_nfs_data_set_cache_size_larger);
+    RUN_TEST(test_nfs_data_set_cache_size_smaller_dirty);
+    RUN_TEST(test_nfs_data_set_cache_size_unaligned);
+    RUN_TEST(test_nfs_data_set_cache_size_null_handle);
+
+    RUN_TEST(test_nfs_data_rw_single_block);
+    RUN_TEST(test_nfs_data_rw_invalid_index);
+
+    RUN_TEST(test_nfs_data_rw_contiguous_blocks);
+    RUN_TEST(test_nfs_data_rw_contiguous_zero_blocks);
+    RUN_TEST(test_nfs_data_rw_contiguous_invalid_params);
+
+    RUN_TEST(test_nfs_data_close_flushes);
+    RUN_TEST(test_nfs_data_close_null_handle);
+
+    RUN_TEST(test_nfs_data_destroy_removes_file_and_flushes);
+    RUN_TEST(test_nfs_data_destroy_null_handle);
+
+    // Final cleanup for any test file that might have been missed if a test aborted.
+    std::filesystem::remove(TEST_DATA_API_FILENAME);
+    std::cout << "--- NFS Data API (Layer 3) Tests Finished ---" << std::endl;
+}
 
 void run_all_tests() {
 	// --- 單元測試 ---
@@ -3743,7 +4207,7 @@ void run_all_tests() {
     // Data Cache Resize (Layer 3)
     RUN_TEST(test_data_cache_resize_larger);
     RUN_TEST(test_data_cache_resize_smaller);
-    //RUN_TEST(test_data_cache_resize_unaligned_capacity);
+    RUN_TEST(test_data_cache_resize_unaligned_capacity);
     RUN_TEST(test_data_cache_resize_dirty_cache_needs_flush);
 
     // Data Cache Destroy (Layer 3)
@@ -3752,6 +4216,8 @@ void run_all_tests() {
 
     // Data Cache Get/Put (Layer 3)
     RUN_TEST(test_data_cache_put_then_get);
+    run_nfs_data_api_tests();
+
 
 	// cleanup temp files
     cleanup_test_files(TEST_VFS_BASENAME);

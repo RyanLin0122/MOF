@@ -2173,6 +2173,9 @@ int cache_put(NfsDataHandle* handle, int file_offset_to_write_to, int num_bytes_
  * @return 指向 NfsDataHandle 結構的指標，失敗時返回 nullptr。
  */
 NfsDataHandle* nfs_data_create(const char* fileName) {
+	if (fileName == nullptr) {
+		return nullptr;
+	}
 	NfsDataHandle* handle = static_cast<NfsDataHandle*>(malloc(sizeof(NfsDataHandle)));
 	if (!handle) {
 		return nullptr;
@@ -2212,6 +2215,9 @@ NfsDataHandle* nfs_data_create(const char* fileName) {
  * @return 指向 NfsDataHandle 結構的指標，失敗時返回 nullptr。
  */
 NfsDataHandle* nfs_data_open(const char* fileName) {
+	if (fileName == nullptr) {
+		return nullptr;
+	}
 	NfsDataHandle* handle = static_cast<NfsDataHandle*>(malloc(sizeof(NfsDataHandle)));
 	if (!handle) {
 		return nullptr;
