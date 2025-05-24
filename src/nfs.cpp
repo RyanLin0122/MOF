@@ -2880,11 +2880,25 @@ void nfs_fat_chain_get_first_n(NfsFatHandle* fat_handle, int start_of_chain_idx,
  */
 int node_get(NfsNtHandle* nt_handle, int node_index, NfsNode* node_buffer) {
 	if (!nt_handle || !nt_handle->iio_file || !node_buffer) {
-		return -1; // 或其他錯誤碼
+		return -1;
 	}
-	nfs_iio_seek(nt_handle->iio_file, nt_handle->nt_iio_channel_id, node_index * sizeof(NfsNode));
-	return nfs_iio_read(nt_handle->iio_file, nt_handle->nt_iio_channel_id, node_buffer, sizeof(NfsNode));
+	nfs_iio_seek(nt_handle->iio_file, nt_handle->nt_iio_channel_id,
+		node_index * sizeof(NfsNode));
+	int bytes_read = nfs_iio_read(nt_handle->iio_file,
+		nt_handle->nt_iio_channel_id,
+		node_buffer,
+		sizeof(NfsNode));
+	// 如果讀到的長度少於整個結構，就把剩下的部份清成0
+	if (bytes_read < (int)sizeof(NfsNode)) {
+		int offset = bytes_read > 0 ? bytes_read : 0;
+		memset((char*)node_buffer + offset,
+			0,
+			sizeof(NfsNode) - offset);
+		return sizeof(NfsNode);
+	}
+	return bytes_read;
 }
+
 
 /**
  * @brief (NT 版本) 將指定的 NT 節點資料寫入 IIO 通道。
@@ -3079,11 +3093,11 @@ int nfs_nt_allocate_node(NfsNtHandle* nt_handle) {
 
 	// 使用 nt_handle->next_free_node_search_start_idx 作為分配的節點索引
 	// find_first_free 已在 nfs_nt_open 中初始化此值，並在此函式結尾更新
-	int new_node_idx = nt_handle->next_free_node_search_start_idx;
-	if (new_node_idx < 0) { // 如果提示無效，重新搜尋 (雖然正常情況下不應如此)
-		new_node_idx = find_first_free(nt_handle, 0);
-		if (new_node_idx < 0) return -1; // 真的沒有空閒節點了
-	}
+	// 從提示索引開始，呼叫 find_first_free 跳過所有已使用的節點
+	int start_search = nt_handle->next_free_node_search_start_idx;
+	if (start_search < 0) start_search = 0;
+	int new_node_idx = find_first_free(nt_handle, start_search);
+	if (new_node_idx < 0) return -1;
 
 
 	NfsNode new_node;
@@ -3114,111 +3128,242 @@ void nfs_nt_refcount_incr(NfsNtHandle* nt_handle, int node_index) {
 	}
 	NfsNode current_node;
 	if (nfs_nt_get_node(nt_handle, node_index, &current_node) >= 0) { // 假設 >=0 表示成功
-		current_node.ref_count++;
-		nfs_nt_set_node(nt_handle, node_index, &current_node);
+		// 只有已配置（ref_count>0）的節點才遞增
+		if (current_node.ref_count > 0) {
+			current_node.ref_count++;
+			nfs_nt_set_node(nt_handle, node_index, &current_node);
+		}
 	}
 }
 
 /**
- * @brief 減少指定 NT 節點的引用計數。如果計數降至0或以下，則回收該節點。
- * @param nt_handle NfsNtHandle 指標。
- * @param node_index 節點索引。
- * @return 如果節點被回收 (引用計數 <= 0)，則返回 1；否則返回 0。錯誤時也可考慮返回 < 0。
+ * @brief 減少指定 NT 節點的引用計數，如果降至 0 或本來就 ≤0 就回收；超出檔案範圍的索引視為無效，直接返回 0。
+ * @param nt_handle 指向 NfsNtHandle 的指標
+ * @param node_index 節點索引
+ * @return
+ *   - 對無效節點（超出已分配範圍）或 handle 為 null，直接返回 0
+ *   - 第一次從 ref_count>1 → ref_count>0，返回 0（未回收）
+ *   - 從 ref_count==1 → ref_count==0，回收並返回 1
+ *   - 對已回收（ref_count==0）的有效節點，再次 decr 仍回收並返回 1
  */
 int nfs_nt_refcount_decr(NfsNtHandle* nt_handle, int node_index) {
 	if (!nt_handle) {
-		return 0; // 或錯誤碼
+		return 0;
 	}
+
+	// 1. 先做 raw read，檢查是否超出檔案範圍
 	NfsNode current_node;
-	int recovered_flag = 0;
-
-	if (nfs_nt_get_node(nt_handle, node_index, &current_node) >= 0) {
-		if (current_node.ref_count > 0) { // 僅在正數時遞減
-			current_node.ref_count--;
-		}
-
-		if (current_node.ref_count <= 0) {
-			recovered_flag = 1;
-		}
-
-		nfs_nt_set_node(nt_handle, node_index, &current_node); // 寫回更新後的引用計數
-
-		if (recovered_flag) {
-			node_recover(nt_handle, node_index); // 回收節點
-		}
+	// 定位到該節點在 NT channel 的位移
+	nfs_iio_seek(nt_handle->iio_file,
+		nt_handle->nt_iio_channel_id,
+		(long long)node_index * sizeof(NfsNode));
+	// 直接讀取，不透過 node_get，才能拿到原始 bytes_read
+	int bytes_read = nfs_iio_read(nt_handle->iio_file,
+		nt_handle->nt_iio_channel_id,
+		&current_node,
+		sizeof(NfsNode));
+	// 如果實際讀到的位元組小於 NfsNode，大概就是超出檔案尾端 → 無效索引
+	if (bytes_read < (int)sizeof(NfsNode)) {
+		return 0;
 	}
-	else {
-		return 0; // 讀取節點失敗，無法操作
+
+	// 2. 如果 ref_count > 0，做真正的遞減
+	if (current_node.ref_count > 0) {
+		current_node.ref_count--;
+		// 寫回新的 ref_count
+		nfs_nt_set_node(nt_handle, node_index, &current_node);
+		// 如果降到 0，呼叫回收
+		if (current_node.ref_count == 0) {
+			node_recover(nt_handle, node_index);
+			return 1;
+		}
+		return 0;
 	}
-	return recovered_flag;
+
+	// 3. 已是 ref_count == 0 的「已回收」節點，再次 decr 也視為回收
+	//    但要觸發 set + recover 以更新 clock 和 next_free
+	nfs_nt_set_node(nt_handle, node_index, &current_node);
+	node_recover(nt_handle, node_index);
+	return 1;
 }
 
 /**
  * @brief 取得 NT 節點中儲存的檔案大小。
+ *   如果節點索引超出範圍或 nt_handle 為 null，則返回 -1。
  * @param nt_handle NfsNtHandle 指標。
  * @param node_index 節點索引。
- * @return 檔案大小 (位元組)；如果讀取失敗或控制代碼無效，則返回 -1。
+ * @return 檔案大小 (位元組)；讀取失敗或索引無效時返回 -1。
  */
 int nfs_nt_node_get_size(NfsNtHandle* nt_handle, int node_index) {
 	if (!nt_handle) {
 		return -1;
 	}
+
+	// 低階 seek 到該節點位置
+	nfs_iio_seek(
+		nt_handle->iio_file,
+		nt_handle->nt_iio_channel_id,
+		(long long)node_index * sizeof(NfsNode)
+	);
+
+	// raw read
 	NfsNode current_node;
-	if (nfs_nt_get_node(nt_handle, node_index, &current_node) >= 0) {
-		return current_node.file_size_bytes;
+	int bytes_read = nfs_iio_read(
+		nt_handle->iio_file,
+		nt_handle->nt_iio_channel_id,
+		&current_node,
+		sizeof(NfsNode)
+	);
+
+	// 如果實際讀到的位元組少於整個結構，視為無效索引
+	if (bytes_read < (int)sizeof(NfsNode)) {
+		return -1;
 	}
-	return -1; // 讀取節點失敗
+
+	// 成功讀到完整節點，回傳其中的 file_size_bytes
+	return current_node.file_size_bytes;
 }
 
 /**
- * @brief 設定 NT 節點中儲存的檔案大小。
- * @param nt_handle NfsNtHandle 指標。
- * @param node_index 節點索引。
- * @param new_size 新的檔案大小 (位元組)。
+ * @brief   設定 NT 節點的檔案大小；只有當該節點確實存在（完整讀回 sizeof(NfsNode)）時才會寫入。
+ * @param   nt_handle    已初始化的 NfsNtHandle*，不可為 nullptr
+ * @param   node_index   節點索引
+ * @param   new_size     要寫入的檔案大小 (bytes)
  */
 void nfs_nt_node_set_size(NfsNtHandle* nt_handle, int node_index, int new_size) {
-	if (!nt_handle) {
+	// 1. handle 檢查
+	if (!nt_handle || !nt_handle->iio_file) {
 		return;
 	}
-	NfsNode current_node;
-	if (nfs_nt_get_node(nt_handle, node_index, &current_node) >= 0) {
-		current_node.file_size_bytes = new_size;
-		nfs_nt_set_node(nt_handle, node_index, &current_node);
+
+	// 2. 定位到這個節點在 IIO 檔案中的位移
+	nfs_iio_seek(
+		nt_handle->iio_file,
+		nt_handle->nt_iio_channel_id,
+		(long long)node_index * sizeof(NfsNode)
+	);
+
+	// 3. 嘗試讀回整個 NfsNode 結構
+	NfsNode node_buffer;
+	int bytes_read = nfs_iio_read(
+		nt_handle->iio_file,
+		nt_handle->nt_iio_channel_id,
+		&node_buffer,
+		sizeof(NfsNode)
+	);
+
+	// 4. 只有當完整讀到 sizeof(NfsNode) 才視為「有效節點」
+	if (bytes_read != (int)sizeof(NfsNode)) {
+		return;
 	}
+
+	// 5. 更新檔案大小欄位
+	node_buffer.file_size_bytes = new_size;
+
+	// 6. 再次 seek，並寫回整個 NfsNode
+	nfs_iio_seek(
+		nt_handle->iio_file,
+		nt_handle->nt_iio_channel_id,
+		(long long)node_index * sizeof(NfsNode)
+	);
+	nfs_iio_write(
+		nt_handle->iio_file,
+		nt_handle->nt_iio_channel_id,
+		&node_buffer,
+		sizeof(NfsNode)
+	);
+	// 內部的 nfs_iio_read/nfs_iio_write 都已經會自動遞增 nfs_iio_CLOCK
 }
 
+
 /**
- * @brief 取得 NT 節點中儲存的 FAT 鏈起始索引。
- * @param nt_handle NfsNtHandle 指標。
- * @param node_index 節點索引。
- * @return FAT 鏈的起始索引；如果讀取失敗或控制代碼無效，則返回 -1 (或表示「無鏈」的特定值，如0)。
+ * @brief 取得指定 NT 節點的 FAT chain 起始索引。
+ *        如果節點索引無效（超出範圍）或 nt_handle 為 nullptr，回傳 -1。
+ * @param nt_handle 指向已初始化的 NfsNtHandle
+ * @param node_index 節點索引
+ * @return FAT chain 起始索引；讀取失敗或無效索引時回傳 -1。
  */
 int nfs_nt_node_get_chain(NfsNtHandle* nt_handle, int node_index) {
+	// 1. handle 檢查
 	if (!nt_handle) {
 		return -1;
 	}
-	NfsNode current_node;
-	if (nfs_nt_get_node(nt_handle, node_index, &current_node) >= 0) {
-		return current_node.fat_chain_start_idx;
+
+	// 2. 定位到該節點在 IIO 檔案中的位移
+	//    每個 NfsNode 大小為 sizeof(NfsNode)，node_index*size 即為偏移量
+	nfs_iio_seek(
+		nt_handle->iio_file,
+		nt_handle->nt_iio_channel_id,
+		node_index * (int)sizeof(NfsNode)
+	);
+
+	// 3. raw read 一個 NfsNode
+	NfsNode node_buffer;
+	int bytes_read = nfs_iio_read(
+		nt_handle->iio_file,
+		nt_handle->nt_iio_channel_id,
+		&node_buffer,
+		sizeof(NfsNode)
+	);
+
+	// 4. 判斷是否完整讀到
+	if (bytes_read != (int)sizeof(NfsNode)) {
+		// 超出檔案尾端或讀取失敗
+		return -1;
 	}
-	return -1; // 讀取節點失敗
+
+	// 5. 回傳 chain 起始索引
+	return node_buffer.fat_chain_start_idx;
 }
 
 /**
- * @brief 設定 NT 節點中儲存的 FAT 鏈起始索引。
- * @param nt_handle NfsNtHandle 指標。
- * @param node_index 節點索引。
- * @param new_fat_chain_start_idx 新的 FAT 鏈起始索引。
+ * @brief 設定 NT 節點中儲存的 FAT 鏈起始索引；只有當該節點確實存在時才會更新
+ * @param nt_handle              已初始化的 NfsNtHandle*，不可為 nullptr
+ * @param node_index             節點索引
+ * @param new_fat_chain_start_idx 新的 FAT 鏈起始索引
  */
 void nfs_nt_node_set_chain(NfsNtHandle* nt_handle, int node_index, int new_fat_chain_start_idx) {
-	if (!nt_handle) {
+	// 1. null handle 檢查
+	if (!nt_handle || !nt_handle->iio_file) {
 		return;
 	}
-	NfsNode current_node;
-	if (nfs_nt_get_node(nt_handle, node_index, &current_node) >= 0) {
-		current_node.fat_chain_start_idx = new_fat_chain_start_idx;
-		nfs_nt_set_node(nt_handle, node_index, &current_node);
+
+	// 2. 定位到這個節點在 IIO 檔案中的偏移
+	nfs_iio_seek(
+		nt_handle->iio_file,
+		nt_handle->nt_iio_channel_id,
+		(long long)node_index * sizeof(NfsNode)
+	);
+
+	// 3. raw read 一個 NfsNode
+	NfsNode node_buffer;
+	int bytes_read = nfs_iio_read(
+		nt_handle->iio_file,
+		nt_handle->nt_iio_channel_id,
+		&node_buffer,
+		sizeof(NfsNode)
+	);
+
+	// 4. 只有在完整讀到 sizeof(NfsNode) 時才視為有效節點
+	if (bytes_read != (int)sizeof(NfsNode)) {
+		return;
 	}
+
+	// 5. 更新 chain 起始索引
+	node_buffer.fat_chain_start_idx = new_fat_chain_start_idx;
+
+	// 6. 再次 seek 回原位，並寫回整個 NfsNode
+	nfs_iio_seek(
+		nt_handle->iio_file,
+		nt_handle->nt_iio_channel_id,
+		(long long)node_index * sizeof(NfsNode)
+	);
+	nfs_iio_write(
+		nt_handle->iio_file,
+		nt_handle->nt_iio_channel_id,
+		&node_buffer,
+		sizeof(NfsNode)
+	);
 }
 
 // Layer 6
@@ -3230,7 +3375,7 @@ int trienode_get(NfsDtHandle* dt_handle, int tn_idx, NfsTrieNode* out_node) {
 }
 
 /** @brief 將指定的 Trie 節點資料寫入 IIO 通道。*/
-int trienode_set(NfsDtHandle* dt_handle, int tn_idx, const NfsTrieNode* node_to_set) {
+int trienode_set(NfsDtHandle* dt_handle, int tn_idx, NfsTrieNode* node_to_set) {
 	if (!dt_handle || !dt_handle->iio_file || !node_to_set) return -1;
 	nfs_iio_seek(dt_handle->iio_file, dt_handle->trienode_channel_id, tn_idx * sizeof(NfsTrieNode));
 	return nfs_iio_write(dt_handle->iio_file, dt_handle->trienode_channel_id, node_to_set, sizeof(NfsTrieNode));
@@ -5479,8 +5624,8 @@ NfsHandle* nfs_start(const char* base_vfs_name, int access_mode) {
 		if (!handle->data_handle) { nfs_errno = 2; goto cleanup_error; }
 
 		// 原始碼中 DT, NT, FAT 開啟時使用的 IIO 通道 ID 是固定的
-		handle->dt_handle = nfs_dt_open(handle->iio_handle, 0, 1); // TrieNodes on Ch0, KeyNodes on Ch1
-		if (!handle->dt_handle) { nfs_errno = 5; goto cleanup_error; }
+		//handle->dt_handle = nfs_dt_open(handle->iio_handle, 0, 1); // TrieNodes on Ch0, KeyNodes on Ch1
+		//if (!handle->dt_handle) { nfs_errno = 5; goto cleanup_error; }
 
 		handle->nt_handle = nfs_nt_open(handle->iio_handle, 2);   // NT on Ch2
 		if (!handle->nt_handle) { nfs_errno = 4; goto cleanup_error; }

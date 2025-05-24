@@ -294,6 +294,15 @@ void nfs_nt_node_set_chain(NfsNtHandle* nt_handle, int node_index, int new_fat_c
 
 
 // Layer 6 (DT - Directory Table with Patricia Trie)
+int trienode_get(NfsDtHandle* dt_handle, int tn_idx, NfsTrieNode* out_node);
+int trienode_set(NfsDtHandle* dt_handle, int tn_idx, NfsTrieNode* node_to_set);
+int keynode_get(NfsDtHandle* dt_handle, int kn_idx, NfsKeyNode* out_node);
+int keynode_set(NfsDtHandle* dt_handle, int kn_idx, const NfsKeyNode* node_to_set);
+int trienode_is_free(NfsDtHandle* dt_handle, int tn_idx);
+int trienode_find_first_free(NfsDtHandle* dt_handle, int start_idx);
+int trienode_clear(NfsDtHandle* dt_handle, int tn_idx);
+int trienode_recover(NfsDtHandle* dt_handle, int tn_idx);
+
 NfsDtHandle* nfs_dt_create(NfsIioFile* iio_file, int tn_chan_blocks, int kn_chan_blocks);
 NfsDtHandle* nfs_dt_open(NfsIioFile* iio_file, int trienode_channel_id, int keynode_channel_id);
 int nfs_dt_close(NfsDtHandle* dt_handle);
