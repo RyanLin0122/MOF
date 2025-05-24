@@ -105,7 +105,7 @@ void COgg::OpenStreem(const char* filePath) {
         // CMofPacking::ChangeString 將字串轉為小寫
         // 假設 g_clMofPacking 的 ChangeString 修改傳入的緩衝區
         char* processedPath = g_clMofPacking->ChangeString(tempPath);
-
+        g_clMofPacking->PackFileOpen(processedPath);
         g_clMofPacking->FileReadBackGroundLoading(processedPath);
 
         // cogg.c 中此處有 `if ( &dword_C24CF4 )` 檢查

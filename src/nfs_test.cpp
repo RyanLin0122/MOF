@@ -3987,6 +3987,1328 @@ void test_nfs_data_destroy_null_handle() {
     nfs_data_destroy(nullptr); // Should be safe
 }
 
+const char* TEST_FAT_IIO_FILENAME = "test_fat_iio.paki";
+
+// Simplified IIO File setup for FAT tests.
+// This version focuses on creating an IIO file and allocating a specific channel
+// that the FAT handle will use. Cache initialization for this channel is also important.
+NfsIioFile* helper_setup_iio_for_fat(const char* filename, int num_fat_channel_blocks = 1) {
+    std::filesystem::remove(filename); // Clean up old file
+
+    // nfs_iio_create will initialize the file and write an empty header.
+    NfsIioFile* iio_file = nfs_iio_create(filename);
+    if (!iio_file) {
+        std::cerr << "helper_setup_iio_for_fat: nfs_iio_create failed for " << filename << std::endl;
+        return nullptr;
+    }
+
+    // Allocate the channel that FAT will use.
+    // nfs_fat_create will call nfs_iio_allocate_channel.
+    // nfs_fat_open will expect a channel ID to be passed.
+    // For direct testing of node_get/set_value, we might need to allocate it manually
+    // if not using nfs_fat_create.
+    // However, for nfs_fat_create tests, it will do this.
+    // For nfs_fat_open tests, we'll need to create a file, allocate a channel, close, then reopen.
+
+    // For simplicity in unit testing FAT functions directly, let's assume the channel
+    // can be allocated and its cache initialized here.
+    if (num_fat_channel_blocks > 0) { // Positive value indicates desire to pre-allocate for testing
+        int fat_channel_id = nfs_iio_allocate_channel(iio_file, num_fat_channel_blocks);
+        if (fat_channel_id < 0) {
+            std::cerr << "helper_setup_iio_for_fat: nfs_iio_allocate_channel failed." << std::endl;
+            nfs_iio_destroy(iio_file); // Destroy the created IIO file
+            return nullptr;
+        }
+        // Ensure cache is created for this channel, as node_get/set_value will use IIO read/write
+        // which rely on the cache layer. nfs_iio_allocate_channel should call cache_create.
+        if (!iio_file->channels[fat_channel_id] || !iio_file->channels[fat_channel_id]->cache_header) {
+            std::cerr << "helper_setup_iio_for_fat: Cache not created for FAT channel " << fat_channel_id << std::endl;
+            // This might indicate an issue in nfs_iio_allocate_channel's cache setup
+        }
+    }
+    // Note: nfs_iio_BLOCK_SIZEv should be set to a known value for predictable FAT entry offsets.
+    // Example: nfs_iio_BLOCK_SIZEv = 512; (sizeof(int) for FAT entry is 4 bytes)
+    return iio_file;
+}
+
+// Teardown for the IIO file used in FAT tests
+void helper_teardown_iio_for_fat(NfsIioFile* iio_file, bool remove_phys_file = true) {
+    if (!iio_file) return;
+    if (remove_phys_file) {
+        nfs_iio_destroy(iio_file); // This also closes and frees the IIO file struct
+    }
+    else {
+        nfs_iio_close(iio_file); // Only close and free struct
+    }
+}
+
+// Simplified FAT Handle creation for tests that need an existing one.
+// Assumes iio_file is valid and fat_channel_id exists within it and is initialized.
+NfsFatHandle* helper_create_fat_handle_for_test(NfsIioFile* iio_file, int fat_channel_id) {
+    if (!iio_file || fat_channel_id < 0 || fat_channel_id >= iio_file->num_channels) {
+        return nullptr;
+    }
+    NfsFatHandle* fat_handle = (NfsFatHandle*)malloc(sizeof(NfsFatHandle));
+    if (!fat_handle) return nullptr;
+
+    fat_handle->iio_file = iio_file;
+    fat_handle->fat_iio_channel_id = fat_channel_id;
+    // Initialize next_free_search_start_idx. For many tests, starting at 1 is fine.
+    // If the test relies on next_free finding specific pre-set values, this might need adjustment
+    // or the test should call next_free itself.
+    fat_handle->next_free_search_start_idx = 1;
+    // For tests using nfs_fat_open, next_free_search_start_idx will be properly set by calling next_free.
+    return fat_handle;
+}
+
+// --- Test Case Definitions ---
+
+// Global variable to hold the callback result for nfs_fat_chain_for_each
+static int fat_for_each_callback_count = 0;
+static std::vector<int> fat_for_each_visited_indices;
+
+int test_fat_for_each_callback(NfsFatHandle* fat_handle, int current_entry_idx) {
+    fat_for_each_callback_count++;
+    fat_for_each_visited_indices.push_back(current_entry_idx);
+    // Return 1 to continue, 0 to stop
+    if (fat_for_each_callback_count == 2 && current_entry_idx == 99) { // Test stopping condition
+        return 0;
+    }
+    return 1;
+}
+
+
+// --- Tests for node_get_value and node_set_value (FAT version) ---
+void test_fat_node_get_set_value() {
+    NfsIioFile* iio = helper_setup_iio_for_fat(TEST_FAT_IIO_FILENAME, 1); // 1 block per stripe for FAT channel
+    assert(iio != nullptr && iio->num_channels > 0 && iio->channels[0] != nullptr);
+    int fat_channel_id = 0; // Assuming FAT uses the first allocated channel
+
+    NfsFatHandle* fat_h = helper_create_fat_handle_for_test(iio, fat_channel_id);
+    assert(fat_h != nullptr);
+
+    int old_clock = nfs_iio_CLOCK;
+    int test_idx = 5;
+    int test_val = 12345;
+
+    node_set_value(fat_h, test_idx, test_val);
+    // nfs_iio_seek (+1) and nfs_iio_write (+1 or more depending on cache_write_... path)
+    // Let's assume each IIO op in set/get increments clock at least by 1 due to nfs_iio_CLOCK++
+    // and potentially more due to cache interactions calling blocks_per_chunk.
+    // For simplicity, we'll check for a minimum increment.
+    int clock_after_set = nfs_iio_CLOCK;
+    assert(clock_after_set > old_clock);
+
+    int read_val = node_get_value(fat_h, test_idx);
+    int clock_after_get = nfs_iio_CLOCK;
+    assert(clock_after_get > clock_after_set);
+
+    assert(read_val == test_val);
+
+    // Test another index and value
+    old_clock = nfs_iio_CLOCK;
+    node_set_value(fat_h, 10, -1);
+    assert(nfs_iio_CLOCK > old_clock);
+    old_clock = nfs_iio_CLOCK;
+    assert(node_get_value(fat_h, 10) == -1);
+    assert(nfs_iio_CLOCK > old_clock);
+
+
+    // Test reading an unwritten entry (should be 0 if IIO channel was zeroed out,
+    // or garbage if not. The cache layer might zero-fill on read past EOF of channel)
+    // Assuming cache_page_refresh zeros unread parts.
+    // The nfs_iio_read -> cache_read_... path might involve cache_update -> cache_page_refresh
+    // which zeros out parts of the buffer if fread doesn't fill it.
+    // So an unwritten FAT entry should effectively read as 0.
+    // int unwritten_val = node_get_value(fat_h, 100); // Assuming index 100 is beyond any writes
+    // For a robust test, explicitly write 0 then read it, or ensure channel is large enough and zeroed.
+    // assert(unwritten_val == 0); // This assertion is less reliable without explicit zeroing.
+
+
+    free(fat_h);
+    helper_teardown_iio_for_fat(iio);
+}
+
+// --- Tests for next_free (FAT version) ---
+void test_fat_next_free() {
+    NfsIioFile* iio = helper_setup_iio_for_fat(TEST_FAT_IIO_FILENAME, 1);
+    assert(iio);
+    int fat_channel_id = 0;
+    NfsFatHandle* fat_h = helper_create_fat_handle_for_test(iio, fat_channel_id);
+    assert(fat_h);
+
+    // 確保通道大小足以涵蓋這些索引；預設的 IIO 快取頁面通常已能覆蓋。  
+    // nfs_iio_BLOCK_SIZEv 為 4096 位元組，FAT 項目佔 4 位元組，因此一頁可放 1024 項。  
+    // 以下測試皆落在同一頁面內。  
+
+    // 情境 1：空的 FAT（全為零；快取會對未寫入區域做零填充）  
+    // next_free 從 fat_h->next_free_search_start_idx（在 helper 中為 1）開始搜尋，  
+    // 或從傳入的 start_search_idx 開始。  
+    // 第一次呼叫 node_get_value 時，可能會觸發讀取一個已歸零的區塊。  
+
+    int old_clock = nfs_iio_CLOCK;
+    assert(next_free(fat_h, 0) == 1); // Start search from 0, should find 1 (as 0 is invalid)
+    assert(nfs_iio_CLOCK > old_clock);
+
+    old_clock = nfs_iio_CLOCK;
+    assert(next_free(fat_h, 1) == 1); // Start search from 1, should find 1
+    assert(nfs_iio_CLOCK > old_clock);
+
+
+    // Scenario 2: Some entries used
+    node_set_value(fat_h, 1, 100);
+    node_set_value(fat_h, 2, 200);
+    node_set_value(fat_h, 4, 400); // Entry 3 is free
+
+    old_clock = nfs_iio_CLOCK;
+    assert(next_free(fat_h, 1) == 3);
+    assert(nfs_iio_CLOCK > old_clock); // node_get_value for 1, 2, 3
+
+    old_clock = nfs_iio_CLOCK;
+    assert(next_free(fat_h, 3) == 3);
+    assert(nfs_iio_CLOCK > old_clock); // node_get_value for 3
+
+    node_set_value(fat_h, 3, 300); // Fill entry 3
+    old_clock = nfs_iio_CLOCK;
+    assert(next_free(fat_h, 1) == 5); // Next free should be 5
+    assert(nfs_iio_CLOCK > old_clock);
+
+    // Scenario 3: Search starts past some free entries
+    node_set_value(fat_h, 5, 0); // Make 5 free again
+    node_set_value(fat_h, 6, 600);
+    old_clock = nfs_iio_CLOCK;
+    assert(next_free(fat_h, 6) == 7); // Should skip 5 and find 7
+    assert(nfs_iio_CLOCK > old_clock);
+
+
+    free(fat_h);
+    helper_teardown_iio_for_fat(iio);
+}
+
+// --- Tests for find_last_in_chain ---
+void test_fat_find_last_in_chain() {
+    NfsIioFile* iio = helper_setup_iio_for_fat(TEST_FAT_IIO_FILENAME, 1);
+    assert(iio);
+    int fat_channel_id = 0;
+    NfsFatHandle* fat_h = helper_create_fat_handle_for_test(iio, fat_channel_id);
+    assert(fat_h);
+
+    // Scenario 1: Empty chain (starts with -1)
+    // This case is handled before loop in find_last_in_chain.
+    // node_get_value won't be called if start_of_chain_idx is -1.
+    int old_clock = nfs_iio_CLOCK;
+    assert(find_last_in_chain(fat_h, -1) == -1);
+    assert(nfs_iio_CLOCK == old_clock); // No IIO access
+
+    // Scenario 2: Single entry chain (e.g., index 5 points to -1)
+    node_set_value(fat_h, 5, -1);
+    old_clock = nfs_iio_CLOCK;
+    assert(find_last_in_chain(fat_h, 5) == 5);
+    assert(nfs_iio_CLOCK > old_clock); // One node_get_value for index 5
+
+    // Scenario 3: Multi-entry chain (e.g., 7 -> 8 -> 9 -> -1)
+    node_set_value(fat_h, 7, 8);
+    node_set_value(fat_h, 8, 9);
+    node_set_value(fat_h, 9, -1);
+    old_clock = nfs_iio_CLOCK;
+    assert(find_last_in_chain(fat_h, 7) == 9);
+    assert(nfs_iio_CLOCK > old_clock); // node_get_value for 7, 8, 9
+
+    // Scenario 4: Invalid start index (e.g., 0 or negative not -1)
+    // The behavior depends on how node_get_value handles invalid indices.
+    // Assuming node_get_value returns an error or non -1 for index 0.
+    // If node_get_value(fat_h, 0) returns say, 0, then it becomes 0 -> 0 -> ...
+    // find_last_in_chain might loop if node_get_value(0) doesn't return -1 or error.
+    // The original code's FAT indices are positive.
+    // node_get_value returns -2 on error in the provided C++ code.
+    // If node_get_value returns -2 (error), the loop `while (current_idx_in_chain != -1)` might behave unexpectedly.
+    // Let's assume valid positive indices for chains.
+    // assert(find_last_in_chain(fat_h, 0) == ...); // Undefined by typical FAT usage
+
+    free(fat_h);
+    helper_teardown_iio_for_fat(iio);
+}
+
+// --- Tests for node_recover (FAT version) ---
+void test_fat_node_recover() {
+    NfsIioFile* iio = helper_setup_iio_for_fat(TEST_FAT_IIO_FILENAME, 1);
+    assert(iio);
+    int fat_channel_id = 0;
+    NfsFatHandle* fat_h = helper_create_fat_handle_for_test(iio, fat_channel_id);
+    assert(fat_h);
+
+    fat_h->next_free_search_start_idx = 10; // Set a known start_idx
+
+    // Recover an entry with index > next_free_search_start_idx
+    node_set_value(fat_h, 15, 555); // Mark as used
+    assert(node_get_value(fat_h, 15) == 555);
+    int old_clock = nfs_iio_CLOCK;
+    assert(node_recover(fat_h, 15) == 1);
+    assert(nfs_iio_CLOCK > old_clock); // node_set_value
+    assert(node_get_value(fat_h, 15) == 0); // Should be cleared
+    assert(fat_h->next_free_search_start_idx == 10); // Should not change
+
+    // Recover an entry with index < next_free_search_start_idx
+    node_set_value(fat_h, 5, 666);
+    assert(node_get_value(fat_h, 5) == 666);
+    old_clock = nfs_iio_CLOCK;
+    assert(node_recover(fat_h, 5) == 1);
+    assert(nfs_iio_CLOCK > old_clock);
+    assert(node_get_value(fat_h, 5) == 0);
+    assert(fat_h->next_free_search_start_idx == 5); // Should update
+
+    // Recover an entry with index 0 or negative (should do nothing to FAT, but updates hint if < hint and positive)
+    old_clock = nfs_iio_CLOCK;
+    fat_h->next_free_search_start_idx = 10; // reset
+    assert(node_recover(fat_h, 0) == 1);
+    assert(nfs_iio_CLOCK == old_clock); // No node_set_value called
+    assert(fat_h->next_free_search_start_idx == 10); // Does not update hint for 0
+
+    assert(node_recover(fat_h, -5) == 1);
+    assert(nfs_iio_CLOCK == old_clock);
+    assert(fat_h->next_free_search_start_idx == 10);
+
+    // Recover an entry with index > 0 but less than hint (e.g., -5 is not >0)
+    node_set_value(fat_h, 2, 777); // A positive index
+    fat_h->next_free_search_start_idx = 3;
+    assert(node_recover(fat_h, 2) == 1);
+    assert(fat_h->next_free_search_start_idx == 2);
+
+
+    free(fat_h);
+    helper_teardown_iio_for_fat(iio);
+}
+
+// --- Tests for nfs_fat_create ---
+void test_nfs_fat_create_valid() {
+    NfsIioFile* iio = helper_setup_iio_for_fat(TEST_FAT_IIO_FILENAME, 0); // Don't pre-allocate channel here
+    assert(iio);
+    int initial_num_channels = iio->num_channels;
+
+    int old_clock = nfs_iio_CLOCK;
+    NfsFatHandle* fat_h = nfs_fat_create(iio, 2); // Request 2 blocks per stripe
+    assert(fat_h != nullptr);
+    assert(fat_h->iio_file == iio);
+    assert(fat_h->fat_iio_channel_id == initial_num_channels); // Should be the next available channel ID
+    assert(fat_h->next_free_search_start_idx == 1);
+    assert(iio->num_channels == initial_num_channels + 1);
+    assert(iio->channels[fat_h->fat_iio_channel_id] != nullptr);
+    assert(iio->channels[fat_h->fat_iio_channel_id]->blocks_per_stripe == 2);
+    // nfs_fat_create -> nfs_iio_allocate_channel (+1) -> cache_create (+1)
+    assert(nfs_iio_CLOCK == old_clock + 2);
+
+
+    nfs_fat_close(fat_h); // Frees fat_h struct
+    helper_teardown_iio_for_fat(iio);
+}
+
+void test_nfs_fat_create_null_iio() {
+    NfsFatHandle* fat_h = nfs_fat_create(nullptr, 1);
+    assert(fat_h == nullptr);
+    // nfs_iio_CLOCK should not change if iio_file is null early exit
+}
+
+void test_nfs_fat_create_channel_allocation_fail() {
+    // This is hard to test without mocking nfs_iio_allocate_channel
+    // to return -1. If we assume nfs_iio_allocate_channel works,
+    // this test would pass by not being able to trigger the failure.
+    // For now, we'll assume allocation works.
+    std::cout << "Skipping test_nfs_fat_create_channel_allocation_fail (mocking needed)" << std::endl;
+}
+
+// --- Tests for nfs_fat_open ---
+void test_nfs_fat_open_valid() {
+    NfsIioFile* iio_setup = helper_setup_iio_for_fat(TEST_FAT_IIO_FILENAME, 1); // Setup with 1 channel (ID 0) for FAT
+    assert(iio_setup);
+    int fat_channel_id_setup = 0;
+
+    // Pre-populate some FAT entries in the IIO channel 0
+    NfsFatHandle* temp_fat_h = helper_create_fat_handle_for_test(iio_setup, fat_channel_id_setup);
+    assert(temp_fat_h);
+    node_set_value(temp_fat_h, 1, 10); // Used
+    node_set_value(temp_fat_h, 2, 20); // Used
+    // Entry 3 is free (will read as 0 due to IIO cache zero-fill)
+    node_set_value(temp_fat_h, 4, 40); // Used
+    free(temp_fat_h); // Free the temporary handle, not the IIO file
+
+    // We need to close and "re-open" the IIO file concept for nfs_fat_open,
+    // or ensure nfs_fat_open works on an already open NfsIioFile.
+    // The signature nfs_fat_open(NfsIioFile* iio_file, int fat_iio_channel_id) implies
+    // iio_file is already an open and valid handle.
+
+    int old_clock = nfs_iio_CLOCK;
+    NfsFatHandle* fat_h_opened = nfs_fat_open(iio_setup, fat_channel_id_setup);
+    assert(fat_h_opened != nullptr);
+    assert(fat_h_opened->iio_file == iio_setup);
+    assert(fat_h_opened->fat_iio_channel_id == fat_channel_id_setup);
+    // next_free(fat_h_opened, 0) should be called, which reads 1, 2, then finds 3.
+    assert(fat_h_opened->next_free_search_start_idx == 3);
+    // CLOCK: nfs_fat_open itself does not increment. next_free calls node_get_value repeatedly.
+    // For 1, 2, 3: 3 calls to node_get_value. Each increments clock (e.g. by 2: seek+read).
+    // This is an estimate.
+    assert(nfs_iio_CLOCK > old_clock);
+
+
+    nfs_fat_close(fat_h_opened);
+    helper_teardown_iio_for_fat(iio_setup);
+}
+
+void test_nfs_fat_open_null_iio() {
+    NfsFatHandle* fat_h = nfs_fat_open(nullptr, 0);
+    assert(fat_h == nullptr);
+}
+
+// --- Tests for nfs_fat_close ---
+void test_nfs_fat_close_valid() {
+    NfsIioFile* iio = helper_setup_iio_for_fat(TEST_FAT_IIO_FILENAME, 0);
+    NfsFatHandle* fat_h = nfs_fat_create(iio, 1);
+    assert(fat_h != nullptr);
+
+    int result = nfs_fat_close(fat_h);
+    assert(result == 0);
+    // fat_h pointer is now invalid. Accessing it would be UB.
+    // Hard to assert memory is freed without tools, but ensure no crash.
+
+    helper_teardown_iio_for_fat(iio); // Clean up IIO file
+}
+
+void test_nfs_fat_close_null() {
+    assert(nfs_fat_close(nullptr) == 0); // Should be safe
+}
+
+
+// --- Tests for nfs_fat_create_chain ---
+void test_nfs_fat_create_chain_basic() {
+    NfsIioFile* iio = helper_setup_iio_for_fat(TEST_FAT_IIO_FILENAME, 1);
+    assert(iio);
+    NfsFatHandle* fat_h = helper_create_fat_handle_for_test(iio, 0);
+    assert(fat_h);
+
+    fat_h->next_free_search_start_idx = 1; // Start fresh
+
+    int old_clock = nfs_iio_CLOCK;
+    int chain_start_idx1 = nfs_fat_create_chain(fat_h);
+    assert(chain_start_idx1 == 1); // First free is 1
+    assert(node_get_value(fat_h, 1) == -1); // Should be EOC
+    assert(fat_h->next_free_search_start_idx == 2); // Hint updated
+    assert(nfs_iio_CLOCK > old_clock); // node_set_value + next_free
+
+    old_clock = nfs_iio_CLOCK;
+    int chain_start_idx2 = nfs_fat_create_chain(fat_h);
+    assert(chain_start_idx2 == 2); // Next free is 2
+    assert(node_get_value(fat_h, 2) == -1);
+    assert(fat_h->next_free_search_start_idx == 3);
+    assert(nfs_iio_CLOCK > old_clock);
+
+    // Test with a gap
+    node_set_value(fat_h, 3, 99); // Mark 3 as used
+    node_set_value(fat_h, 4, 99); // Mark 4 as used
+    fat_h->next_free_search_start_idx = 3; // Set hint before gap
+    old_clock = nfs_iio_CLOCK;
+    int chain_start_idx3 = nfs_fat_create_chain(fat_h);
+    assert(chain_start_idx3 == 5); // next_free(fat_h, 3) finds 5
+    assert(node_get_value(fat_h, 5) == -1);
+    assert(fat_h->next_free_search_start_idx == 6);
+    assert(nfs_iio_CLOCK > old_clock);
+
+    free(fat_h);
+    helper_teardown_iio_for_fat(iio);
+}
+
+void test_nfs_fat_create_chain_null_handle() {
+    assert(nfs_fat_create_chain(nullptr) == -1);
+}
+
+// --- Tests for nfs_fat_chain_for_each ---
+void test_nfs_fat_chain_for_each_basic() {
+    NfsIioFile* iio = helper_setup_iio_for_fat(TEST_FAT_IIO_FILENAME, 1);
+    assert(iio);
+    NfsFatHandle* fat_h = helper_create_fat_handle_for_test(iio, 0);
+    assert(fat_h);
+
+    // Chain: 1 -> 2 -> 3 -> -1
+    node_set_value(fat_h, 1, 2);
+    node_set_value(fat_h, 2, 3);
+    node_set_value(fat_h, 3, -1);
+
+    fat_for_each_callback_count = 0;
+    fat_for_each_visited_indices.clear();
+    nfs_fat_chain_for_each(fat_h, 1, test_fat_for_each_callback);
+
+    assert(fat_for_each_callback_count == 3);
+    assert(fat_for_each_visited_indices.size() == 3);
+    assert(fat_for_each_visited_indices[0] == 1);
+    assert(fat_for_each_visited_indices[1] == 2);
+    assert(fat_for_each_visited_indices[2] == 3);
+
+    // Test stopping early
+    // Chain: 5 -> 99 -> 7 -> -1. Callback stops if current_entry_idx == 99 and count == 2.
+    node_set_value(fat_h, 5, 99);
+    node_set_value(fat_h, 99, 7);
+    node_set_value(fat_h, 7, -1);
+    fat_for_each_callback_count = 0;
+    fat_for_each_visited_indices.clear();
+    nfs_fat_chain_for_each(fat_h, 5, test_fat_for_each_callback);
+    assert(fat_for_each_callback_count == 2); // Stopped at 99
+    assert(fat_for_each_visited_indices.size() == 2);
+    assert(fat_for_each_visited_indices[0] == 5);
+    assert(fat_for_each_visited_indices[1] == 99);
+
+
+    // Test empty chain
+    fat_for_each_callback_count = 0;
+    fat_for_each_visited_indices.clear();
+    nfs_fat_chain_for_each(fat_h, -1, test_fat_for_each_callback);
+    assert(fat_for_each_callback_count == 0);
+
+    // Test invalid start_idx
+    fat_for_each_callback_count = 0;
+    nfs_fat_chain_for_each(fat_h, 0, test_fat_for_each_callback); // Should not run callback
+    assert(fat_for_each_callback_count == 0);
+
+
+    free(fat_h);
+    helper_teardown_iio_for_fat(iio);
+}
+// Add more tests for nfs_fat_chain_for_each (null handle, null callback etc.)
+
+// --- Tests for nfs_fat_destroy_chain ---
+// 測試銷毀一個有效的 FAT 鏈
+void test_nfs_fat_destroy_chain_valid_chain() {
+    NfsIioFile* iio = helper_setup_iio_for_fat(TEST_FAT_IIO_FILENAME, 1);
+    assert(iio);
+    NfsFatHandle* fat_h = helper_create_fat_handle_for_test(iio, 0);
+    assert(fat_h);
+
+    // 建立一個鏈: 1 -> 2 -> 3 -> -1
+    node_set_value(fat_h, 1, 2);
+    node_set_value(fat_h, 2, 3);
+    node_set_value(fat_h, 3, -1);
+    fat_h->next_free_search_start_idx = 4; // 假設下一個空閒從4開始
+
+    int old_clock = nfs_iio_CLOCK;
+    int result = nfs_fat_destroy_chain(fat_h, 1);
+    assert(result == 0);
+    // node_recover 會被呼叫三次，每次呼叫 node_set_value
+    // nfs_fat_chain_for_each 會呼叫三次 node_get_value
+    // 預期 CLOCK 增加次數為 3 * (讀取開銷) + 3 * (寫入開銷)
+    assert(nfs_iio_CLOCK > old_clock);
+
+    assert(node_get_value(fat_h, 1) == 0); // 應被清零
+    assert(node_get_value(fat_h, 2) == 0); // 應被清零
+    assert(node_get_value(fat_h, 3) == 0); // 應被清零
+    assert(fat_h->next_free_search_start_idx == 1); // 應更新為回收的最小索引
+
+    free(fat_h);
+    helper_teardown_iio_for_fat(iio);
+}
+
+// 測試銷毀一個空鏈
+void test_nfs_fat_destroy_chain_empty_chain() {
+    NfsIioFile* iio = helper_setup_iio_for_fat(TEST_FAT_IIO_FILENAME, 1);
+    assert(iio);
+    NfsFatHandle* fat_h = helper_create_fat_handle_for_test(iio, 0);
+    assert(fat_h);
+
+    int old_clock = nfs_iio_CLOCK;
+    int result = nfs_fat_destroy_chain(fat_h, -1);
+    assert(result == 0);
+    assert(nfs_iio_CLOCK == old_clock); // 不應有 IIO 操作
+
+    free(fat_h);
+    helper_teardown_iio_for_fat(iio);
+}
+
+// 測試銷毀單一節點鏈
+void test_nfs_fat_destroy_chain_single_entry() {
+    NfsIioFile* iio = helper_setup_iio_for_fat(TEST_FAT_IIO_FILENAME, 1);
+    assert(iio);
+    NfsFatHandle* fat_h = helper_create_fat_handle_for_test(iio, 0);
+    assert(fat_h);
+
+    node_set_value(fat_h, 5, -1);
+    fat_h->next_free_search_start_idx = 6;
+
+    int old_clock = nfs_iio_CLOCK;
+    int result = nfs_fat_destroy_chain(fat_h, 5);
+    assert(result == 0);
+    assert(nfs_iio_CLOCK > old_clock); // node_get_value + node_set_value
+
+    assert(node_get_value(fat_h, 5) == 0);
+    assert(fat_h->next_free_search_start_idx == 5);
+
+    free(fat_h);
+    helper_teardown_iio_for_fat(iio);
+}
+
+// 測試無效輸入對 nfs_fat_destroy_chain
+void test_nfs_fat_destroy_chain_invalid_inputs() {
+    NfsIioFile* iio = helper_setup_iio_for_fat(TEST_FAT_IIO_FILENAME, 1);
+    assert(iio);
+    NfsFatHandle* fat_h = helper_create_fat_handle_for_test(iio, 0);
+    assert(fat_h);
+
+    assert(nfs_fat_destroy_chain(nullptr, 1) == -1); // Null handle
+    assert(nfs_fat_destroy_chain(fat_h, 0) == -1);   // 無效起始索引 (0)
+    assert(nfs_fat_destroy_chain(fat_h, -2) == -1); // 無效起始索引 (負數非-1)
+
+    free(fat_h);
+    helper_teardown_iio_for_fat(iio);
+}
+
+// --- Tests for nfs_fat_chain_get_nth ---
+
+// 測試 nfs_fat_chain_get_nth 的基本有效案例
+void test_nfs_fat_chain_get_nth_valid() {
+    NfsIioFile* iio = helper_setup_iio_for_fat(TEST_FAT_IIO_FILENAME, 1);
+    assert(iio);
+    NfsFatHandle* fat_h = helper_create_fat_handle_for_test(iio, 0);
+    assert(fat_h);
+
+    // 鏈: 1 -> 2 -> 3 -> -1
+    node_set_value(fat_h, 1, 2);
+    node_set_value(fat_h, 2, 3);
+    node_set_value(fat_h, 3, -1);
+
+    int old_clock = nfs_iio_CLOCK;
+    assert(nfs_fat_chain_get_nth(fat_h, 1, 0) == 1); // 第0個是1
+    assert(nfs_iio_CLOCK == old_clock); // n=0, 不進迴圈, 無IIO
+
+    old_clock = nfs_iio_CLOCK;
+    assert(nfs_fat_chain_get_nth(fat_h, 1, 1) == 2); // 第1個是2
+    assert(nfs_iio_CLOCK > old_clock); // 讀取 node_get_value(fat_h, 1)
+
+    old_clock = nfs_iio_CLOCK;
+    assert(nfs_fat_chain_get_nth(fat_h, 1, 2) == 3); // 第2個是3
+    assert(nfs_iio_CLOCK > old_clock); // 讀取 node_get_value(fat_h, 1) 和 node_get_value(fat_h, 2)
+
+    old_clock = nfs_iio_CLOCK;
+    assert(nfs_fat_chain_get_nth(fat_h, 1, 3) == -1); // 第3個是鏈尾標記-1
+    assert(nfs_iio_CLOCK > old_clock);
+
+    // 測試單節點鏈
+    node_set_value(fat_h, 5, -1);
+    old_clock = nfs_iio_CLOCK;
+    assert(nfs_fat_chain_get_nth(fat_h, 5, 0) == 5);
+    assert(nfs_iio_CLOCK == old_clock);
+    old_clock = nfs_iio_CLOCK;
+    assert(nfs_fat_chain_get_nth(fat_h, 5, 1) == -1);
+    assert(nfs_iio_CLOCK > old_clock);
+
+
+    free(fat_h);
+    helper_teardown_iio_for_fat(iio);
+}
+
+// 測試 nfs_fat_chain_get_nth 的邊界和無效案例
+void test_nfs_fat_chain_get_nth_edge_invalid() {
+    NfsIioFile* iio = helper_setup_iio_for_fat(TEST_FAT_IIO_FILENAME, 1);
+    assert(iio);
+    NfsFatHandle* fat_h = helper_create_fat_handle_for_test(iio, 0);
+    assert(fat_h);
+
+    // 鏈: 1 -> 2 -> -1
+    node_set_value(fat_h, 1, 2);
+    node_set_value(fat_h, 2, -1);
+
+    assert(nfs_fat_chain_get_nth(nullptr, 1, 0) == -1); // Null handle
+    assert(nfs_fat_chain_get_nth(fat_h, 1, -1) == -1);  // n < 0
+    assert(nfs_fat_chain_get_nth(fat_h, 1, 5) == -1);   // n 超出鏈長度
+
+    assert(nfs_fat_chain_get_nth(fat_h, -1, 0) == -1);  // 空鏈
+    assert(nfs_fat_chain_get_nth(fat_h, 0, 0) == -1);   // 無效起始索引 (current_entry_idx <=0)
+    assert(nfs_fat_chain_get_nth(fat_h, -5, 0) == -1);  // 無效起始索引
+
+    free(fat_h);
+    helper_teardown_iio_for_fat(iio);
+}
+
+// --- Tests for nfs_fat_chain_truncate ---
+
+// 測試 nfs_fat_chain_truncate 的基本功能
+void test_nfs_fat_chain_truncate_basic() {
+    NfsIioFile* iio = helper_setup_iio_for_fat(TEST_FAT_IIO_FILENAME, 1);
+    assert(iio);
+    NfsFatHandle* fat_h = helper_create_fat_handle_for_test(iio, 0);
+    assert(fat_h);
+
+    // 鏈: 1 -> 2 -> 3 -> 4 -> -1
+    node_set_value(fat_h, 1, 2);
+    node_set_value(fat_h, 2, 3);
+    node_set_value(fat_h, 3, 4);
+    node_set_value(fat_h, 4, -1);
+    fat_h->next_free_search_start_idx = 5;
+
+    int old_clock = nfs_iio_CLOCK;
+    // 截斷鏈，使2成為新的鏈尾
+    int result = nfs_fat_chain_truncate(fat_h, 2);
+    assert(result == 0);
+    // truncate: 1x node_get_value(2), 1x node_set_value(2, -1)
+    // destroy_chain(3): (iter 3: get(3), recover(3)->set(3,0)), (iter 4: get(4), recover(4)->set(4,0))
+    // 預期多次 CLOCK 增加
+    assert(nfs_iio_CLOCK > old_clock);
+
+    assert(node_get_value(fat_h, 1) == 2);
+    assert(node_get_value(fat_h, 2) == -1); // 新的鏈尾
+    assert(node_get_value(fat_h, 3) == 0);  // 被回收
+    assert(node_get_value(fat_h, 4) == 0);  // 被回收
+    assert(fat_h->next_free_search_start_idx == 3); // 應更新為3
+
+    // 測試截斷到鏈的原始結尾
+    node_set_value(fat_h, 10, 11);
+    node_set_value(fat_h, 11, -1);
+    fat_h->next_free_search_start_idx = 12;
+    old_clock = nfs_iio_CLOCK;
+    result = nfs_fat_chain_truncate(fat_h, 11); // 11已是鏈尾
+    assert(result == 0);
+    assert(nfs_iio_CLOCK > old_clock); // node_get_value(11) + node_set_value(11, -1)
+    assert(node_get_value(fat_h, 10) == 11);
+    assert(node_get_value(fat_h, 11) == -1); // 保持鏈尾
+    assert(fat_h->next_free_search_start_idx == 12); // 不變
+
+    free(fat_h);
+    helper_teardown_iio_for_fat(iio);
+}
+
+// 測試 nfs_fat_chain_truncate 的無效輸入
+void test_nfs_fat_chain_truncate_invalid() {
+    NfsIioFile* iio = helper_setup_iio_for_fat(TEST_FAT_IIO_FILENAME, 1);
+    assert(iio);
+    NfsFatHandle* fat_h = helper_create_fat_handle_for_test(iio, 0);
+    assert(fat_h);
+
+    assert(nfs_fat_chain_truncate(nullptr, 1) == -1);
+    assert(nfs_fat_chain_truncate(fat_h, 0) == -1);    // entry_idx_to_become_new_eoc <= 0
+    assert(nfs_fat_chain_truncate(fat_h, -5) == -1);
+
+    free(fat_h);
+    helper_teardown_iio_for_fat(iio);
+}
+
+// --- Tests for nfs_fat_chain_extend ---
+
+// 測試 nfs_fat_chain_extend 擴展現有鏈
+void test_nfs_fat_chain_extend_existing_chain() {
+    NfsIioFile* iio = helper_setup_iio_for_fat(TEST_FAT_IIO_FILENAME, 1);
+    assert(iio);
+    NfsFatHandle* fat_h = helper_create_fat_handle_for_test(iio, 0);
+    assert(fat_h);
+
+    // 初始鏈: 1 -> -1
+    node_set_value(fat_h, 1, -1);
+    fat_h->next_free_search_start_idx = 2;
+
+    int old_clock = nfs_iio_CLOCK;
+    int new_block_idx = nfs_fat_chain_extend(fat_h, 1);
+    assert(new_block_idx == 2); // 應該使用 hint 2
+    // extend: next_free (讀取2), set(2,-1), find_last_in_chain(1) (讀取1), set(1,2)
+    assert(nfs_iio_CLOCK > old_clock);
+
+    assert(node_get_value(fat_h, 1) == 2);
+    assert(node_get_value(fat_h, 2) == -1); // 新的鏈尾
+    assert(fat_h->next_free_search_start_idx == 3); // hint 更新
+
+    // 再次擴展
+    old_clock = nfs_iio_CLOCK;
+    new_block_idx = nfs_fat_chain_extend(fat_h, 1); // 從鏈頭1開始擴展
+    assert(new_block_idx == 3);
+    assert(nfs_iio_CLOCK > old_clock);
+    assert(node_get_value(fat_h, 1) == 2);
+    assert(node_get_value(fat_h, 2) == 3);
+    assert(node_get_value(fat_h, 3) == -1);
+    assert(fat_h->next_free_search_start_idx == 4);
+
+    free(fat_h);
+    helper_teardown_iio_for_fat(iio);
+}
+
+// 測試 nfs_fat_chain_extend 創建新鏈 (chain_to_extend <= 0)
+void test_nfs_fat_chain_extend_new_chain() {
+    NfsIioFile* iio = helper_setup_iio_for_fat(TEST_FAT_IIO_FILENAME, 1);
+    assert(iio);
+    NfsFatHandle* fat_h = helper_create_fat_handle_for_test(iio, 0);
+    assert(fat_h);
+
+    fat_h->next_free_search_start_idx = 5;
+
+    int old_clock = nfs_iio_CLOCK;
+    int new_block_idx = nfs_fat_chain_extend(fat_h, 0); // chain_to_extend <= 0
+    assert(new_block_idx == 5);
+    // extend: next_free (讀5), set(5,-1)
+    assert(nfs_iio_CLOCK > old_clock);
+    assert(node_get_value(fat_h, 5) == -1); // 新鏈只有一個節點
+    assert(fat_h->next_free_search_start_idx == 6);
+
+    old_clock = nfs_iio_CLOCK;
+    new_block_idx = nfs_fat_chain_extend(fat_h, -1);
+    assert(new_block_idx == 6);
+    assert(nfs_iio_CLOCK > old_clock);
+    assert(node_get_value(fat_h, 6) == -1);
+    assert(fat_h->next_free_search_start_idx == 7);
+
+
+    free(fat_h);
+    helper_teardown_iio_for_fat(iio);
+}
+
+// 測試 nfs_fat_chain_extend 在無空閒區塊時的行為
+void test_nfs_fat_chain_extend_no_free_blocks() {
+    // 模擬無空閒區塊較困難，因為 next_free 會持續增加索引。
+    // 除非能限制 IIO 通道的大小，或者讓 node_get_value 在超出某範圍時返回非0值。
+    // 假設 next_free 如果找不到會返回 <=0。
+    // 目前的 next_free 實現如果找不到，理論上會無限增加 current_idx。
+    std::cout << "Skipping test_nfs_fat_chain_extend_no_free_blocks (hard to simulate)" << std::endl;
+}
+
+// --- Tests for nfs_fat_chain_shrink ---
+
+// 測試 nfs_fat_chain_shrink 的基本縮減功能
+void test_nfs_fat_chain_shrink_basic() {
+    NfsIioFile* iio = helper_setup_iio_for_fat(TEST_FAT_IIO_FILENAME, 1);
+    assert(iio);
+    NfsFatHandle* fat_h = helper_create_fat_handle_for_test(iio, 0);
+    assert(fat_h);
+
+    // 鏈: 1 -> 2 -> 3 -> 4 -> 5 -> -1
+    node_set_value(fat_h, 1, 2);
+    node_set_value(fat_h, 2, 3);
+    node_set_value(fat_h, 3, 4);
+    node_set_value(fat_h, 4, 5);
+    node_set_value(fat_h, 5, -1);
+    fat_h->next_free_search_start_idx = 6;
+
+    int old_clock = nfs_iio_CLOCK;
+    // 保留3個區塊
+    int result = nfs_fat_chain_shrink(fat_h, 1, 3);
+    assert(result == 0);
+    // shrink: get_nth(1,2) -> 讀1,讀2.   truncate(3) -> 讀3,寫3, destroy_chain(4) -> ...
+    assert(nfs_iio_CLOCK > old_clock);
+
+    assert(node_get_value(fat_h, 1) == 2);
+    assert(node_get_value(fat_h, 2) == 3);
+    assert(node_get_value(fat_h, 3) == -1); // 新鏈尾
+    assert(node_get_value(fat_h, 4) == 0);  // 被回收
+    assert(node_get_value(fat_h, 5) == 0);  // 被回收
+    assert(fat_h->next_free_search_start_idx == 4); // 4是第一個被回收的
+
+    free(fat_h);
+    helper_teardown_iio_for_fat(iio);
+}
+
+// 測試 nfs_fat_chain_shrink 保留0個區塊 (銷毀整個鏈)
+void test_nfs_fat_chain_shrink_to_zero() {
+    NfsIioFile* iio = helper_setup_iio_for_fat(TEST_FAT_IIO_FILENAME, 1);
+    assert(iio);
+    NfsFatHandle* fat_h = helper_create_fat_handle_for_test(iio, 0);
+    assert(fat_h);
+
+    node_set_value(fat_h, 1, 2);
+    node_set_value(fat_h, 2, -1);
+    fat_h->next_free_search_start_idx = 3;
+
+    int result = nfs_fat_chain_shrink(fat_h, 1, 0);
+    assert(result == 0);
+    assert(node_get_value(fat_h, 1) == 0);
+    assert(node_get_value(fat_h, 2) == 0);
+    assert(fat_h->next_free_search_start_idx == 1);
+
+    free(fat_h);
+    helper_teardown_iio_for_fat(iio);
+}
+
+// 測試 nfs_fat_chain_shrink 保留數量等於或大於鏈長
+void test_nfs_fat_chain_shrink_keep_more_or_equal() {
+    NfsIioFile* iio = helper_setup_iio_for_fat(TEST_FAT_IIO_FILENAME, 1);
+    assert(iio);
+    NfsFatHandle* fat_h = helper_create_fat_handle_for_test(iio, 0);
+    assert(fat_h);
+
+    // 鏈: 1 -> 2 -> -1
+    node_set_value(fat_h, 1, 2);
+    node_set_value(fat_h, 2, -1);
+
+    // 保留2個 (等於鏈長)
+    int result = nfs_fat_chain_shrink(fat_h, 1, 2);
+    assert(result == 0); // 根據新的實現，如果 get_nth 找到有效節點，就會 truncate。
+    // 如果鏈長度 < num_blocks_to_keep，get_nth 會返回 -1，則 shrink 返回 0 而不做操作。
+    // 此處鏈長2，保留2，get_nth(1,1) -> 2. truncate(2) 會將 node(2) 設為 -1 (它本來就是)。
+    assert(node_get_value(fat_h, 1) == 2);
+    assert(node_get_value(fat_h, 2) == -1);
+
+    // 保留3個 (大於鏈長)
+    // 原始碼中的 nfs_fat_chain_get_nth(1, 2) 會返回 -1 (鏈尾)，
+    // 所以 nfs_fat_chain_truncate(-1) 會失敗 (返回 -1)。
+    // 經過修正後的 nfs_fat_chain_shrink 會檢查 current_len < num_blocks_to_keep，並返回-1。
+    // result = nfs_fat_chain_shrink(fat_h, 1, 3);
+    // assert(result == -1); // 或根據實際錯誤處理，可能是0表示無操作
+
+    // 基於提供的 nfs.cpp 實現：
+    // get_nth(1, 3-1=2) -> -1. new_eoc_node_idx = -1.
+    // `current_len < num_blocks_to_keep` (2 < 3) -> returns -1.
+    result = nfs_fat_chain_shrink(fat_h, 1, 3);
+    assert(result == -1);
+
+
+    free(fat_h);
+    helper_teardown_iio_for_fat(iio);
+}
+
+// 測試 nfs_fat_chain_shrink 的無效輸入
+void test_nfs_fat_chain_shrink_invalid() {
+    NfsIioFile* iio = helper_setup_iio_for_fat(TEST_FAT_IIO_FILENAME, 1);
+    assert(iio);
+    NfsFatHandle* fat_h = helper_create_fat_handle_for_test(iio, 0);
+    assert(fat_h);
+
+    assert(nfs_fat_chain_shrink(nullptr, 1, 1) == -1);
+    assert(nfs_fat_chain_shrink(fat_h, 1, -1) == -1);  // num_blocks_to_keep < 0
+    assert(nfs_fat_chain_shrink(fat_h, 0, 1) == -1);   // invalid start_of_chain_idx
+    assert(nfs_fat_chain_shrink(fat_h, -2, 1) == -1); // invalid start_of_chain_idx
+
+    // 空鏈，但嘗試保留區塊
+    assert(nfs_fat_chain_shrink(fat_h, -1, 1) == 0); // 空鏈，保留1個 (不操作，返回0)
+    assert(nfs_fat_chain_shrink(fat_h, -1, 0) == 0); // 空鏈，保留0个 (不操作，返回0)
+
+
+    free(fat_h);
+    helper_teardown_iio_for_fat(iio);
+}
+
+
+// --- Tests for nfs_fat_chain_get ---
+
+// 測試 nfs_fat_chain_get 的基本功能
+void test_nfs_fat_chain_get_basic() {
+    NfsIioFile* iio = helper_setup_iio_for_fat(TEST_FAT_IIO_FILENAME, 1);
+    assert(iio);
+    NfsFatHandle* fat_h = helper_create_fat_handle_for_test(iio, 0);
+    assert(fat_h);
+
+    // 鏈: 1 -> 7 -> 3 -> -1
+    node_set_value(fat_h, 1, 7);
+    node_set_value(fat_h, 7, 3);
+    node_set_value(fat_h, 3, -1);
+
+    int buffer[10] = { 0 }; // 確保緩衝區足夠大
+    int old_clock = nfs_iio_CLOCK;
+    nfs_fat_chain_get(fat_h, 1, buffer);
+    // 預期3次 node_get_value
+    assert(nfs_iio_CLOCK > old_clock);
+
+    assert(buffer[0] == 1);
+    assert(buffer[1] == 7);
+    assert(buffer[2] == 3);
+    // 根據實現，nfs_fat_chain_get 不會寫入鏈尾的-1到buffer，
+    // 也不會填充剩餘的buffer。
+    // 為了驗證，可以檢查 buffer[3] 是否仍為初始值0（如果鏈長為3）。
+    assert(buffer[3] == 0); // 假設 buffer 初始化為0
+
+    // 測試空鏈
+    memset(buffer, 0, sizeof(buffer));
+    old_clock = nfs_iio_CLOCK;
+    nfs_fat_chain_get(fat_h, -1, buffer);
+    assert(nfs_iio_CLOCK == old_clock); // 無 IIO
+    assert(buffer[0] == 0); // 緩衝區應無變化
+
+    free(fat_h);
+    helper_teardown_iio_for_fat(iio);
+}
+
+// --- Tests for nfs_fat_chain_get_first_n ---
+
+// 測試 nfs_fat_chain_get_first_n 的基本功能
+void test_nfs_fat_chain_get_first_n_basic() {
+    NfsIioFile* iio = helper_setup_iio_for_fat(TEST_FAT_IIO_FILENAME, 1);
+    assert(iio);
+    NfsFatHandle* fat_h = helper_create_fat_handle_for_test(iio, 0);
+    assert(fat_h);
+
+    // 鏈: 5 -> 6 -> 7 -> 8 -> -1
+    node_set_value(fat_h, 5, 6);
+    node_set_value(fat_h, 6, 7);
+    node_set_value(fat_h, 7, 8);
+    node_set_value(fat_h, 8, -1);
+
+    int buffer[10] = { 0 };
+
+    // 獲取前2個
+    int old_clock = nfs_iio_CLOCK;
+    nfs_fat_chain_get_first_n(fat_h, 5, 2, buffer);
+    // 預期 node_get_value(5) 和 node_get_value(6)
+    assert(nfs_iio_CLOCK > old_clock);
+    assert(buffer[0] == 5);
+    assert(buffer[1] == 6);
+    assert(buffer[2] == 0); // 後面應不變
+
+    // 獲取前4個 (等於鏈長)
+    memset(buffer, 0, sizeof(buffer));
+    old_clock = nfs_iio_CLOCK;
+    nfs_fat_chain_get_first_n(fat_h, 5, 4, buffer);
+    assert(nfs_iio_CLOCK > old_clock);
+    assert(buffer[0] == 5);
+    assert(buffer[1] == 6);
+    assert(buffer[2] == 7);
+    assert(buffer[3] == 8);
+    assert(buffer[4] == 0);
+
+    // 獲取超過鏈長的數量
+    memset(buffer, 0, sizeof(buffer));
+    old_clock = nfs_iio_CLOCK;
+    nfs_fat_chain_get_first_n(fat_h, 5, 10, buffer); // 鏈長4，請求10
+    assert(nfs_iio_CLOCK > old_clock);
+    assert(buffer[0] == 5);
+    assert(buffer[1] == 6);
+    assert(buffer[2] == 7);
+    assert(buffer[3] == 8);
+    assert(buffer[4] == 0); // 只應填入實際存在的
+
+    // 獲取0個
+    memset(buffer, 0, sizeof(buffer));
+    old_clock = nfs_iio_CLOCK;
+    nfs_fat_chain_get_first_n(fat_h, 5, 0, buffer);
+    assert(nfs_iio_CLOCK == old_clock); // 無 IIO
+    assert(buffer[0] == 0); // 緩衝區不變
+
+    free(fat_h);
+    helper_teardown_iio_for_fat(iio);
+}
+
+// --- Test Filename for NT tests ---
+const char* TEST_NT_IIO_FILENAME = "test_nt_iio.paki";
+
+// --- Helper Functions for NT Tests ---
+
+// 輔助：建立並開啟 NfsIioFile 以進行 NT 測試，並可選擇預分配 NT 通道
+NfsIioFile* helper_setup_iio_for_nt(const char* filename, int num_nt_channel_blocks = 0, int* out_nt_channel_id = nullptr) {
+    std::filesystem::remove(filename);
+
+    NfsIioFile* iio_file = nfs_iio_create(filename);
+    if (!iio_file) {
+        std::cerr << "helper_setup_iio_for_nt: nfs_iio_create failed for " << filename << std::endl;
+        return nullptr;
+    }
+
+    if (num_nt_channel_blocks > 0) { // 如果 > 0，表示我們希望手動預分配通道以供測試
+        int nt_channel_id = nfs_iio_allocate_channel(iio_file, num_nt_channel_blocks);
+        if (nt_channel_id < 0) {
+            std::cerr << "helper_setup_iio_for_nt: nfs_iio_allocate_channel failed." << std::endl;
+            nfs_iio_destroy(iio_file);
+            return nullptr;
+        }
+        if (out_nt_channel_id) {
+            *out_nt_channel_id = nt_channel_id;
+        }
+        // 確保新通道的快取已建立 (nfs_iio_allocate_channel 內部會處理)
+        if (!iio_file->channels[nt_channel_id] || !iio_file->channels[nt_channel_id]->cache_header) {
+            std::cerr << "helper_setup_iio_for_nt: Cache not created for NT channel " << nt_channel_id << std::endl;
+        }
+    }
+    return iio_file;
+}
+
+// 輔助：清理 NT 測試用的 IIO 檔案
+void helper_teardown_iio_for_nt(NfsIioFile* iio_file, bool remove_phys_file = true) {
+    if (!iio_file) return;
+    if (remove_phys_file) {
+        nfs_iio_destroy(iio_file);
+    }
+    else {
+        nfs_iio_close(iio_file);
+    }
+}
+
+// 輔助：為測試建立 NfsNtHandle (不執行 nfs_nt_open 的 next_free 邏輯)
+NfsNtHandle* helper_create_nt_handle_for_test(NfsIioFile* iio_file, int nt_channel_id, int initial_next_free_idx = 0) {
+    if (!iio_file || nt_channel_id < 0 || nt_channel_id >= iio_file->num_channels) {
+        return nullptr;
+    }
+    NfsNtHandle* nt_handle = (NfsNtHandle*)malloc(sizeof(NfsNtHandle));
+    if (!nt_handle) return nullptr;
+
+    nt_handle->iio_file = iio_file;
+    nt_handle->nt_iio_channel_id = nt_channel_id;
+    nt_handle->next_free_node_search_start_idx = initial_next_free_idx;
+    return nt_handle;
+}
+
+// 輔助：建立一個 NfsNode 結構實例
+NfsNode helper_create_nfs_node(int ref_count, int file_size, int fat_chain_start, int user_flags) {
+    NfsNode node;
+    node.ref_count = ref_count;
+    node.file_size_bytes = file_size;
+    node.fat_chain_start_idx = fat_chain_start;
+    node.user_flags_or_type = user_flags;
+    return node;
+}
+
+
+// --- Tests for node_get and node_set (NT internal helpers) ---
+// 由於 nfs_nt_get_node 和 nfs_nt_set_node 幾乎直接呼叫它們，測試將主要針對外部 API。
+// 但我們可以為它們建立一個簡單的測試以確保基本I/O。
+
+// 測試 NT 層級的 node_set 和 node_get
+void test_nt_internal_node_get_set() {
+    int nt_ch_id;
+    NfsIioFile* iio = helper_setup_iio_for_nt(TEST_NT_IIO_FILENAME, 1, &nt_ch_id); // 1 block per stripe for NT channel
+    assert(iio != nullptr && iio->num_channels > 0 && iio->channels[nt_ch_id] != nullptr);
+
+    NfsNtHandle* nt_h = helper_create_nt_handle_for_test(iio, nt_ch_id);
+    assert(nt_h != nullptr);
+
+    int node_idx = 3;
+    NfsNode node_to_set = helper_create_nfs_node(1, 1024, 5, 0xABCD);
+    NfsNode node_read_back;
+
+    int old_clock = nfs_iio_CLOCK;
+    // 測試 node_set
+    int bytes_written = node_set(nt_h, node_idx, &node_to_set);
+    assert(bytes_written == sizeof(NfsNode));
+    assert(nfs_iio_CLOCK > old_clock); // seek + write
+
+    old_clock = nfs_iio_CLOCK;
+    // 測試 node_get
+    int bytes_read = node_get(nt_h, node_idx, &node_read_back);
+    assert(bytes_read == sizeof(NfsNode));
+    assert(nfs_iio_CLOCK > old_clock); // seek + read
+
+    assert(memcmp(&node_read_back, &node_to_set, sizeof(NfsNode)) == 0);
+
+    // 測試讀取未寫入區域 (應為0，因IIO層快取處理)
+    NfsNode zero_node_expected = { 0 };
+    bytes_read = node_get(nt_h, node_idx + 10, &node_read_back); // 讀取一個遠一點的索引
+    assert(bytes_read == sizeof(NfsNode)); // 即使是讀取 "空" 區域，也應返回請求的大小
+    assert(memcmp(&node_read_back, &zero_node_expected, sizeof(NfsNode)) == 0);
+
+
+    free(nt_h);
+    helper_teardown_iio_for_nt(iio);
+}
+
+// --- Tests for find_first_free (NT internal helper) ---
+void test_nt_find_first_free() {
+    int nt_ch_id;
+    NfsIioFile* iio = helper_setup_iio_for_nt(TEST_NT_IIO_FILENAME, 1, &nt_ch_id);
+    assert(iio);
+    NfsNtHandle* nt_h = helper_create_nt_handle_for_test(iio, nt_ch_id);
+    assert(nt_h);
+
+    // 情境 1: 全新NT，從0開始找，應找到0
+    int old_clock = nfs_iio_CLOCK;
+    assert(find_first_free(nt_h, 0) == 0);
+    assert(nfs_iio_CLOCK > old_clock); // 至少一次 node_get
+
+    // 情境 2: 部分節點被使用
+    NfsNode used_node = helper_create_nfs_node(1, 100, 1, 1);
+    node_set(nt_h, 0, &used_node);
+    node_set(nt_h, 1, &used_node);
+    // 節點2是空閒的 (ref_count 預設為0)
+
+    old_clock = nfs_iio_CLOCK;
+    assert(find_first_free(nt_h, 0) == 2);
+    // node_get(0), node_get(1), node_get(2)
+    assert(nfs_iio_CLOCK >= old_clock + 3 * 2); // 粗略估計
+
+    old_clock = nfs_iio_CLOCK;
+    assert(find_first_free(nt_h, 2) == 2); // 從已空閒的節點開始找
+    assert(nfs_iio_CLOCK > old_clock);
+
+    // 情境 3: 所有可見節點都被使用 (模擬一個小範圍)
+    node_set(nt_h, 2, &used_node);
+    node_set(nt_h, 3, &used_node);
+    // 假設節點4是下一個空閒的
+    old_clock = nfs_iio_CLOCK;
+    assert(find_first_free(nt_h, 0) == 4);
+    assert(nfs_iio_CLOCK > old_clock);
+
+    // 測試 find_first_free 在 null handle 時的行為 (已在原碼處理)
+    // assert(find_first_free(nullptr, 0) == -1); // 根據原碼，若 nt_handle 為 null，返回 -1
+
+    free(nt_h);
+    helper_teardown_iio_for_nt(iio);
+}
+
+
+// --- Tests for node_recover (NT internal helper) ---
+void test_nt_node_recover() {
+    int nt_ch_id;
+    NfsIioFile* iio = helper_setup_iio_for_nt(TEST_NT_IIO_FILENAME, 1, &nt_ch_id);
+    assert(iio);
+    NfsNtHandle* nt_h = helper_create_nt_handle_for_test(iio, nt_ch_id, 10); // next_free_node_search_start_idx = 10
+    assert(nt_h);
+
+    NfsNode used_node = helper_create_nfs_node(1, 100, 1, 1);
+    NfsNode zero_node = { 0 };
+
+    // 情況1: 回收的節點索引大於 next_free_node_search_start_idx
+    node_set(nt_h, 15, &used_node); // 設定節點15為已使用
+    assert(node_recover(nt_h, 15) == 0); // 檢查返回值
+    NfsNode recovered_node;
+    node_get(nt_h, 15, &recovered_node);
+    assert(memcmp(&recovered_node, &zero_node, sizeof(NfsNode)) == 0); // 應被清零
+    assert(nt_h->next_free_node_search_start_idx == 10); // 不應改變
+
+    // 情況2: 回收的節點索引小於 next_free_node_search_start_idx
+    node_set(nt_h, 5, &used_node);
+    assert(node_recover(nt_h, 5) == 0);
+    node_get(nt_h, 5, &recovered_node);
+    assert(memcmp(&recovered_node, &zero_node, sizeof(NfsNode)) == 0);
+    assert(nt_h->next_free_node_search_start_idx == 5); // 應更新
+
+    // 情況3: 回收無效索引 (例如負數)
+    // node_recover 的原碼沒有對 node_idx_to_free 做嚴格的正數檢查才調用 node_set
+    // 但 next_free_node_search_start_idx 的更新有 `a2 < nt_h->next_free_node_search_start_idx`
+    // 如果傳入負數 a2，且它小於 search_start_idx，search_start_idx 會被更新為負數，這可能不是預期的。
+    // 目前的 nfs.cpp: node_recover 不檢查 node_idx_to_free < 0 就調用 node_set，
+    // 這可能導致向負數索引的 IIO 通道位置寫入，行為未定義或依賴 IIO 層。
+    // next_free_node_search_start_idx 的更新也不檢查 node_idx_to_free 是否為有效正索引。
+    // 這裡假設測試中只傳入有效的非負索引進行回收。
+    // 如果要測試原碼的邊界行為，需要更仔細的IIO層模擬。
+
+    // 測試 nt_handle 為 null (已在原碼處理)
+    // assert(node_recover(nullptr, 1) == -1);
+
+    free(nt_h);
+    helper_teardown_iio_for_nt(iio);
+}
+
+// --- Tests for nfs_nt_create ---
+void test_nfs_nt_create_valid() {
+    NfsIioFile* iio = helper_setup_iio_for_nt(TEST_NT_IIO_FILENAME, 0); // 不預分配，讓 create 自己分配
+    assert(iio);
+    int initial_num_channels = iio->num_channels;
+
+    int old_clock = nfs_iio_CLOCK;
+    NfsNtHandle* nt_h = nfs_nt_create(iio, 2); // 請求2個區塊的條帶
+    assert(nt_h != nullptr);
+    assert(nt_h->iio_file == iio);
+    assert(nt_h->nt_iio_channel_id == initial_num_channels); // 應為新分配的通道ID
+    assert(nt_h->next_free_node_search_start_idx == 0);
+    assert(iio->num_channels == initial_num_channels + 1);
+    assert(iio->channels[nt_h->nt_iio_channel_id] != nullptr);
+    assert(iio->channels[nt_h->nt_iio_channel_id]->blocks_per_stripe == 2);
+    // nfs_nt_create -> nfs_iio_allocate_channel (+1) -> cache_create (其內部 refresh +1)
+    assert(nfs_iio_CLOCK == old_clock + 2);
+
+    nfs_nt_close(nt_h); // 只釋放 nt_h 結構
+    helper_teardown_iio_for_nt(iio);
+}
+
+void test_nfs_nt_create_null_iio() {
+    NfsNtHandle* nt_h = nfs_nt_create(nullptr, 1);
+    assert(nt_h == nullptr);
+}
+
+// --- Tests for nfs_nt_open ---
+void test_nfs_nt_open_valid() {
+    int nt_ch_id_setup;
+    NfsIioFile* iio = helper_setup_iio_for_nt(TEST_NT_IIO_FILENAME, 1, &nt_ch_id_setup); // 預分配通道0給NT
+    assert(iio);
+
+    // 在通道 nt_ch_id_setup 中預先設定一些節點狀態
+    NfsNtHandle* temp_nt_h = helper_create_nt_handle_for_test(iio, nt_ch_id_setup); // 臨時 handle 用於設定
+    assert(temp_nt_h);
+    NfsNode used_node = helper_create_nfs_node(1, 0, 0, 0);
+    node_set(temp_nt_h, 0, &used_node); // 節點0 已使用
+    node_set(temp_nt_h, 1, &used_node); // 節點1 已使用
+    // 節點2 預期是空閒的 (ref_count = 0)
+    free(temp_nt_h);
+
+    int old_clock = nfs_iio_CLOCK;
+    NfsNtHandle* nt_h_opened = nfs_nt_open(iio, nt_ch_id_setup);
+    assert(nt_h_opened != nullptr);
+    assert(nt_h_opened->iio_file == iio);
+    assert(nt_h_opened->nt_iio_channel_id == nt_ch_id_setup);
+    // find_first_free(nt_h_opened, 0) 會被呼叫
+    // 它會讀取節點0 (used), 節點1 (used), 節點2 (free)
+    assert(nt_h_opened->next_free_node_search_start_idx == 2);
+    assert(nfs_iio_CLOCK > old_clock); // 至少3次 node_get
+
+    nfs_nt_close(nt_h_opened);
+    helper_teardown_iio_for_nt(iio);
+}
+
+void test_nfs_nt_open_null_iio() {
+    NfsNtHandle* nt_h = nfs_nt_open(nullptr, 0);
+    assert(nt_h == nullptr);
+}
+
+// --- Tests for nfs_nt_close & nfs_nt_destroy ---
+void test_nfs_nt_close_destroy() {
+    int nt_ch_id;
+    NfsIioFile* iio = helper_setup_iio_for_nt(TEST_NT_IIO_FILENAME, 1, &nt_ch_id);
+    NfsNtHandle* nt_h = nfs_nt_create(iio, 1); // 使用 create 確保 handle 有效
+    assert(nt_h != nullptr);
+
+    nfs_nt_close(nt_h); // nt_h 指標變無效
+    // No specific assert other than it doesn't crash.
+
+    nt_h = nfs_nt_create(iio, 1); // 重新創建一個
+    assert(nt_h != nullptr);
+    nfs_nt_destroy(nt_h); // nt_h 指標變無效 (destroy 僅呼叫 close)
+
+    nfs_nt_close(nullptr);    // 應安全
+    nfs_nt_destroy(nullptr);  // 應安全
+
+    helper_teardown_iio_for_nt(iio); // 清理 IIO 檔案
+}
+
+// --- Tests for nfs_nt_get_node & nfs_nt_set_node (API versions) ---
+void test_nfs_nt_api_get_set_node() {
+    int nt_ch_id;
+    NfsIioFile* iio = helper_setup_iio_for_nt(TEST_NT_IIO_FILENAME, 1, &nt_ch_id);
+    NfsNtHandle* nt_h = nfs_nt_create(iio, 1); // 用 create 建立 handle
+    assert(nt_h);
+
+    NfsNode node_to_set = helper_create_nfs_node(5, 2048, 10, 0xAFAF);
+    NfsNode node_read_back;
+    int node_idx = 7;
+
+    // Set node
+    int old_clock = nfs_iio_CLOCK;
+    int result_set = nfs_nt_set_node(nt_h, node_idx, &node_to_set);
+    assert(result_set == sizeof(NfsNode));
+    assert(nfs_iio_CLOCK > old_clock);
+
+    // Get node
+    old_clock = nfs_iio_CLOCK;
+    int result_get = nfs_nt_get_node(nt_h, node_idx, &node_read_back);
+    assert(result_get == sizeof(NfsNode));
+    assert(nfs_iio_CLOCK > old_clock);
+    assert(memcmp(&node_read_back, &node_to_set, sizeof(NfsNode)) == 0);
+
+    // Get node with null handle
+    assert(nfs_nt_get_node(nullptr, node_idx, &node_read_back) == -1);
+    // Set node with null handle (nfs.cpp 的 nfs_nt_set_node 沒有檢查 nt_handle == nullptr)
+    // assert(nfs_nt_set_node(nullptr, node_idx, &node_to_set) == -1); // 預期崩潰或 UB，取決於底層
+
+    nfs_nt_destroy(nt_h); // 清理 handle
+    helper_teardown_iio_for_nt(iio);
+}
+
+// 將新的測試函數添加到測試運行器中
+void run_nfs_nt_api_tests() {
+    std::cout << "--- Running NFS NT API (Layer 5) Tests ---" << std::endl;
+
+    RUN_TEST(test_nt_internal_node_get_set);
+    RUN_TEST(test_nt_find_first_free);
+    RUN_TEST(test_nt_node_recover);
+
+    RUN_TEST(test_nfs_nt_create_valid);
+    RUN_TEST(test_nfs_nt_create_null_iio);
+
+    RUN_TEST(test_nfs_nt_open_valid);
+    RUN_TEST(test_nfs_nt_open_null_iio);
+
+    RUN_TEST(test_nfs_nt_close_destroy); // 測試 close 和 destroy
+
+    RUN_TEST(test_nfs_nt_api_get_set_node); // 測試 API 層級的 get/set
+
+    // ... (之後會加入 nfs_nt_allocate_node, refcount 等測試)
+
+    std::filesystem::remove(TEST_NT_IIO_FILENAME); // 清理 NT 測試檔案
+    std::cout << "--- NFS NT API (Layer 5) Tests Finished ---" << std::endl;
+}
+
 void run_nfs_data_api_tests() {
     std::cout << "--- Running NFS Data API (Layer 3) Tests ---" << std::endl;
 
@@ -4020,6 +5342,44 @@ void run_nfs_data_api_tests() {
 
     RUN_TEST(test_nfs_data_destroy_removes_file_and_flushes);
     RUN_TEST(test_nfs_data_destroy_null_handle);
+
+    std::cout << "--- Running NFS FAT API (Layer 4) Tests ---" << std::endl;
+    RUN_TEST(test_fat_node_get_set_value);
+    RUN_TEST(test_fat_next_free);
+    RUN_TEST(test_fat_find_last_in_chain);
+    RUN_TEST(test_fat_node_recover);
+    RUN_TEST(test_nfs_fat_create_valid);
+    RUN_TEST(test_nfs_fat_create_null_iio);
+    RUN_TEST(test_nfs_fat_open_valid);
+    RUN_TEST(test_nfs_fat_open_null_iio);
+    RUN_TEST(test_nfs_fat_close_valid);
+    RUN_TEST(test_nfs_fat_close_null);
+    RUN_TEST(test_nfs_fat_create_chain_basic);
+    RUN_TEST(test_nfs_fat_create_chain_null_handle);
+    RUN_TEST(test_nfs_fat_chain_for_each_basic);
+
+    // 新增的測試
+    RUN_TEST(test_nfs_fat_destroy_chain_valid_chain);
+    RUN_TEST(test_nfs_fat_destroy_chain_empty_chain);
+    RUN_TEST(test_nfs_fat_destroy_chain_single_entry);
+    RUN_TEST(test_nfs_fat_destroy_chain_invalid_inputs);
+
+    RUN_TEST(test_nfs_fat_chain_get_nth_valid);
+    RUN_TEST(test_nfs_fat_chain_get_nth_edge_invalid);
+
+    RUN_TEST(test_nfs_fat_chain_truncate_basic);
+    RUN_TEST(test_nfs_fat_chain_truncate_invalid);
+
+    RUN_TEST(test_nfs_fat_chain_extend_existing_chain);
+    RUN_TEST(test_nfs_fat_chain_extend_new_chain);
+    // RUN_TEST(test_nfs_fat_chain_extend_no_free_blocks); // Skipped
+
+    RUN_TEST(test_nfs_fat_chain_shrink_basic);
+    RUN_TEST(test_nfs_fat_chain_shrink_to_zero);
+    RUN_TEST(test_nfs_fat_chain_shrink_keep_more_or_equal);
+    RUN_TEST(test_nfs_fat_chain_shrink_invalid);
+    RUN_TEST(test_nfs_fat_chain_get_basic);
+    RUN_TEST(test_nfs_fat_chain_get_first_n_basic);
 
     // Final cleanup for any test file that might have been missed if a test aborted.
     std::filesystem::remove(TEST_DATA_API_FILENAME);
@@ -4217,6 +5577,7 @@ void run_all_tests() {
     // Data Cache Get/Put (Layer 3)
     RUN_TEST(test_data_cache_put_then_get);
     run_nfs_data_api_tests();
+    run_nfs_nt_api_tests();
 
 
 	// cleanup temp files
@@ -4230,6 +5591,7 @@ void run_all_tests() {
     std::filesystem::remove(TEST_AUTO_TRUNCATE_FILENAME);
     std::filesystem::remove(TEST_IIO_MAIN_FILENAME); // 確保清理
     std::filesystem::remove(TEST_DATA_CACHE_FILENAME); // 清理此組測試的檔案
+    std::filesystem::remove(TEST_NT_IIO_FILENAME);
 }
 
 

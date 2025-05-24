@@ -2397,20 +2397,30 @@ void nfs_data_destroy(NfsDataHandle* handle) {
  * @param fat_entry_index 要讀取的 FAT 表項的索引。
  * @return FAT 表項的值 (int)。如果讀取失敗，行為未定義 (取決於 nfs_iio_read)。
  */
-int node_get_value(NfsFatHandle* fat_handle, int fat_entry_index) {
-	if (!fat_handle || !fat_handle->iio_file) {
-		// 應有錯誤處理，例如返回特定錯誤值
-		return -2; // 假設 -2 為錯誤代碼
-	}
-	int value_read = 0; // FAT 表項是 int (4位元組)
-	nfs_iio_seek(fat_handle->iio_file, fat_handle->fat_iio_channel_id, fat_entry_index * sizeof(int));
-	// 假設 nfs_iio_read 返回讀取的位元組數
-	if (nfs_iio_read(fat_handle->iio_file, fat_handle->fat_iio_channel_id, &value_read, sizeof(int)) != sizeof(int)) {
-		// 讀取錯誤
-		return -2; // 假設 -2 為錯誤代碼
+ // nfs.cpp
+int node_get_value(NfsFatHandle* fat_handle, int fat_entry_index)
+{
+	if (!fat_handle || !fat_handle->iio_file)
+		return -2;                    // handle 無效
+
+	int value_read = 0;
+	nfs_iio_seek(fat_handle->iio_file,
+		fat_handle->fat_iio_channel_id,
+		fat_entry_index * sizeof(int));
+
+	int bytes = nfs_iio_read(fat_handle->iio_file,
+		fat_handle->fat_iio_channel_id,
+		&value_read,
+		sizeof(int));
+
+	if (bytes != sizeof(int)) {
+		/* 讀到檔案尾端 → 視為尚未配置，值就是 0               *
+		 * 其他真正的 I/O 錯誤（fread 回傳 <0）才回傳 -2  */
+		return (bytes >= 0) ? 0 : -2;
 	}
 	return value_read;
 }
+
 
 /**
  * @brief (FAT 版本) 設定 IIO 通道中指定索引的 FAT 表項的值。
@@ -2674,19 +2684,24 @@ int nfs_fat_destroy_chain(NfsFatHandle* fat_handle, int start_of_chain_idx) {
  * @return 第 N 個表項的索引。如果鏈比 N 短或發生錯誤，則返回 -1。
  */
 int nfs_fat_chain_get_nth(NfsFatHandle* fat_handle, int start_of_chain_idx, int n) {
-	if (!fat_handle || !fat_handle->iio_file || n < 0) {
+	// 加入 start_of_chain_idx <= 0 的檢查
+	if (!fat_handle
+		|| !fat_handle->iio_file
+		|| n < 0
+		|| start_of_chain_idx <= 0) {
 		return -1;
 	}
 
 	int current_entry_idx = start_of_chain_idx;
 	for (int i = 0; i < n; ++i) {
-		if (current_entry_idx == -1 || current_entry_idx <= 0) { // 已達鏈尾或遇到無效索引
-			return -1; // 鏈不夠長
+		if (current_entry_idx == -1 || current_entry_idx <= 0) {
+			return -1;
 		}
 		current_entry_idx = node_get_value(fat_handle, current_entry_idx);
 	}
-	return current_entry_idx; // 這是在遍歷 n 次後的 current_entry_idx
+	return current_entry_idx;
 }
+
 
 /**
  * @brief 截斷 FAT 鏈，使指定的表項成為新的鏈尾。

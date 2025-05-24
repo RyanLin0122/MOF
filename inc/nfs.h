@@ -253,6 +253,11 @@ int nfs_data_set_cache_size(NfsDataHandle* handle, size_t new_size);
 
 
 // Layer 4 (FAT - File Allocation Table)
+int node_get_value(NfsFatHandle* fat_handle, int fat_entry_index);
+void node_set_value(NfsFatHandle* fat_handle, int fat_entry_index, int value_to_set);
+int next_free(NfsFatHandle* fat_handle, int start_search_idx);
+int find_last_in_chain(NfsFatHandle* fat_handle, int start_of_chain_idx);
+int node_recover(NfsFatHandle* fat_handle, int fat_entry_idx_to_free);
 NfsFatHandle* nfs_fat_create(NfsIioFile* iio_file, int num_iio_blocks_for_fat_channel);
 NfsFatHandle* nfs_fat_open(NfsIioFile* iio_file, int fat_iio_channel_id);
 int nfs_fat_close(NfsFatHandle* fat_handle);
@@ -269,6 +274,10 @@ void nfs_fat_chain_get_first_n(NfsFatHandle* fat_handle, int start_of_chain_idx,
 
 
 // Layer 5 (NT - Node Table)
+int node_get(NfsNtHandle* nt_handle, int node_index, NfsNode* node_buffer);
+int node_set(NfsNtHandle* nt_handle, int node_index, const NfsNode* node_data);
+int find_first_free(NfsNtHandle* nt_handle, int start_search_idx);
+int node_recover(NfsNtHandle* nt_handle, int node_idx_to_free);
 NfsNtHandle* nfs_nt_create(NfsIioFile* iio_file, int num_iio_blocks_for_nt_channel);
 NfsNtHandle* nfs_nt_open(NfsIioFile* iio_file, int nt_iio_channel_id);
 void nfs_nt_close(NfsNtHandle* nt_handle);
