@@ -4015,33 +4015,35 @@ int p_insert_key(NfsDtHandle* dt_handle, const char* key_to_insert, short nt_idx
 
 /** @brief 從 Trie 中移除指定的鍵。 */
 // 刪除指定 key（Patricia Trie）
+/** @brief 從 Trie 中移除指定的鍵。 */
+/** @brief 從 Trie 中移除指定的鍵。*/
 int p_remove_key(NfsDtHandle* dt_handle, const char* key_to_remove) {
 	if (!dt_handle || !key_to_remove) return -1;
 	printf("\n\n--- [DEBUG] p_remove_key: Removing '%s' ---\n", key_to_remove);
 
-	int grandparent = p_get_head();
-	int parent = p_get_head();
-	int current = trienode_get_right(dt_handle, parent);
+	int head = p_get_head();
+	int grandparent = head;
+	int parent = head;
+	int current = trienode_get_right(dt_handle, head);
 
-	// 1. 正確地遍歷以找到 current, parent, 和 grandparent
+	// 1. 找到 current (外部鍵節點)、parent 和 grandparent
 	while (trienode_get_bindex(dt_handle, parent) < trienode_get_bindex(dt_handle, current)) {
 		grandparent = parent;
 		parent = current;
-		// 【關鍵修正點】
 		current = bit_get(key_to_remove, trienode_get_bindex(dt_handle, parent))
 			? trienode_get_right(dt_handle, parent)
 			: trienode_get_left(dt_handle, parent);
 	}
-
-	// 2. 驗證找到的節點
+	// 2. 比對是否真的找到
 	if (p_compare_keys(dt_handle, key_to_remove, current) != 1) {
 		printf("[D] Remove - ERROR: Key '%s' not found.\n", key_to_remove);
 		return -1;
 	}
-	printf("[D] Remove: Found node to delete: current=%d. Its parent is %d, grandparent is %d.\n", current, parent, grandparent);
+	printf("[D] Remove: Found node to delete: current=%d. Its parent is %d, grandparent is %d.\n",
+		current, parent, grandparent);
 
-	// 3. 如果 parent 就是 head，是特殊情況
-	if (parent == p_get_head()) {
+	// 3. 如果 parent 是 head，重設整顆 Trie
+	if (parent == head) {
 		printf("[D] Remove: Parent is head. Deleting last element. Re-initializing head.\n");
 		unsigned int kidx = trienode_get_kindex(dt_handle, current);
 		if (kidx > 0) fnode_free(dt_handle, kidx);
@@ -4050,13 +4052,13 @@ int p_remove_key(NfsDtHandle* dt_handle, const char* key_to_remove) {
 		return 0;
 	}
 
-	// 4. 找到兄弟節點 sibling
+	// 4. 找 sibling
 	int sibling = (trienode_get_left(dt_handle, parent) == current)
 		? trienode_get_right(dt_handle, parent)
 		: trienode_get_left(dt_handle, parent);
 	printf("[D] Remove: Sibling of node %d is node %d.\n", current, sibling);
 
-	// 5. 將 grandparent 的指標直接指向 sibling，繞過 parent
+	// 5. 把 sibling 掛到 grandparent 上
 	printf("[D] Remove: Attaching sibling %d to grandparent %d.\n", sibling, grandparent);
 	if (trienode_get_left(dt_handle, grandparent) == parent) {
 		trienode_set_left(dt_handle, grandparent, sibling);
@@ -4065,20 +4067,41 @@ int p_remove_key(NfsDtHandle* dt_handle, const char* key_to_remove) {
 		trienode_set_right(dt_handle, grandparent, sibling);
 	}
 
-	// 6. 回收 parent 和 current 節點的資源
-	printf("[D] Remove: Freeing key for node %d, then recovering trienodes %d and %d.\n", current, current, parent);
-	fnode_free(dt_handle, trienode_get_kindex(dt_handle, current));
-	trienode_recover(dt_handle, current);
+	// 6. 釋放 current 的 key，但**不要** recover current 以免清掉內部節點結構
+	unsigned int ck = trienode_get_kindex(dt_handle, current);
+	if (ck > 0) fnode_free(dt_handle, ck);
+	// 只把 trienode 的 k_index 清掉，保留 b_index 和子節點指標
+	{
+		NfsTrieNode nodebuf;
+		trienode_get(dt_handle, current, &nodebuf);
+		nodebuf.k_index = 0;
+		trienode_set(dt_handle, current, &nodebuf);
+	}
 
-	// 修正：只有在 parent 是純內部節點時才回收
-	// 在此實作中，如果 sibling 不是 parent，代表 parent 是純內部節點
 	if (sibling != parent) {
+		// 7a. 一般情況：回收 parent trienode (它原本有兩條分支)
+		printf("[D] Remove: Recovering parent node %d.\n", parent);
+		// 先釋放 parent 的 key 再 recover
+		unsigned int pk = trienode_get_kindex(dt_handle, parent);
+		if (pk > 0) fnode_free(dt_handle, pk);
 		trienode_recover(dt_handle, parent);
+	}
+	else {
+		// 7b. 兄弟就是 parent：把 parent 轉成純 leaf
+		printf("[D] Remove: Collapsing parent node %d into leaf.\n", parent);
+		NfsTrieNode pbuf;
+		trienode_get(dt_handle, parent, &pbuf);
+		// children 指向自己
+		pbuf.left_child_idx = parent;
+		pbuf.right_child_idx = parent;
+		trienode_set(dt_handle, parent, &pbuf);
+		// (k_index 已經是我們要保留的那把 key)
 	}
 
 	printf("--- [DEBUG] p_remove_key: Finished removing '%s' ---\n", key_to_remove);
 	return 0;
 }
+
 
 // 查找指定 key，回傳 TrieNode index（外部節點 idx）或 -1
 int p_lookup_key(NfsDtHandle* dt_handle, const char* key_to_lookup) {
