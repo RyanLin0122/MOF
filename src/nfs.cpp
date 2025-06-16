@@ -3409,19 +3409,29 @@ int trienode_is_free(NfsDtHandle* dt_handle, int tn_idx) {
 
 /** @brief 從指定的起始索引開始，尋找第一個空閒的 Trie 節點 (索引 > 0)。*/
 int trienode_find_first_free(NfsDtHandle* dt_handle, int start_idx) {
-	int current_idx = start_idx - 1; // 確保從 start_idx 開始檢查
-	do {
-		current_idx++;
-		if (current_idx == 0 && start_idx <= 0) current_idx = 1; // 跳過索引0，除非明確從0開始且0是目標
+	if (!dt_handle || !dt_handle->iio_file) return -1;
+	// 取得通道資訊
+	NfsIioChannel* ch = nfs_iio_get_channel(dt_handle->iio_file, dt_handle->trienode_channel_id);
+	if (!ch) return -1;
+	int channel_bytes = nfs_iio_channel_size(ch);
+	int entry_size = sizeof(NfsTrieNode);
+	int num_entries = (channel_bytes > 0) ? (channel_bytes / entry_size) : 0;
 
-		// 防止無限迴圈的簡易安全檢查 (可依需求調整上限)
-		if (current_idx > start_idx + 1000000 && start_idx > 0) return -1; // 避免在大型空檔案中搜尋過久
-		if (current_idx > 1000000 && start_idx <= 0) return -1;
+	// 從合法起點開始
+	int idx = (start_idx > 0) ? start_idx : 1;
+	int max_idx = idx + 1000000; // 安全上限
 
-
-	} while (!trienode_is_free(dt_handle, current_idx) || current_idx <= 0); // 條件: 非空閒 或 索引無效(<=0) 則繼續
-	// 結束條件: 空閒 且 索引有效(>0)
-	return current_idx;
+	for (; idx > 0 && idx <= max_idx; ++idx) {
+		// 超出已初始化區段，直接當成空閒
+		if (idx >= num_entries) {
+			return idx;
+		}
+		// 否則檢查 k_index >= 0 即為空閒
+		if (trienode_is_free(dt_handle, idx)) {
+			return idx;
+		}
+	}
+	return -1;
 }
 
 /** @brief 清除指定的 Trie 節點，將其標記为空閒。k_index 設為 0，子節點指向自身。*/
@@ -3461,16 +3471,32 @@ int keynode_is_free(NfsDtHandle* dt_handle, int kn_idx) {
 
 /** @brief 從指定的起始索引開始，尋找第一個空閒的鍵節點 (索引 > 0)。*/
 int keynode_find_first_free(NfsDtHandle* dt_handle, int start_idx) {
-	int current_idx = start_idx - 1;
-	do {
-		current_idx++;
-		if (current_idx == 0 && start_idx <= 0) current_idx = 1;
+	if (!dt_handle || !dt_handle->iio_file) return -1;
+	// 起點：若 start_idx <= 0，就從 1 開始
+	int idx = (start_idx > 0) ? start_idx : 1;
 
-		if (current_idx > start_idx + 1000000 && start_idx > 0) return -1;
-		if (current_idx > 1000000 && start_idx <= 0) return -1;
+	// 取得 keynode channel 目前寫入的位元組長度
+	NfsIioChannel* ch = nfs_iio_get_channel(dt_handle->iio_file,
+		dt_handle->keynode_channel_id);
+	int channel_bytes = nfs_iio_channel_size(ch);
+	int entry_size = sizeof(NfsKeyNode);
+	// 已初始化（含零補齊及寫入）的節點數
+	int num_entries = (channel_bytes > 0) ? (channel_bytes / entry_size) : 0;
 
-	} while (!keynode_is_free(dt_handle, current_idx) || current_idx <= 0);
-	return current_idx;
+	// 為了安全，限制搜尋到 start_idx+1,000,000 或 1,000,000
+	int max_idx = (start_idx > 0) ? (start_idx + 1000000) : 1000000;
+
+	for (; idx > 0 && idx <= max_idx; ++idx) {
+		// 1) 若 idx 超過已初始化區段，直接當成空閒
+		if (idx >= num_entries) {
+			return idx;
+		}
+		// 2) 否則照原本方式檢查
+		if (keynode_is_free(dt_handle, idx)) {
+			return idx;
+		}
+	}
+	return -1;
 }
 
 /** @brief 清除指定的鍵節點，將其標記为空閒 (所有成員設為0)。*/
@@ -3531,64 +3557,97 @@ short trienode_get_nt(NfsDtHandle* dt_handle, int tn_idx) {
 }
 
 int trienode_set_left(NfsDtHandle* dt_handle, int tn_idx, int left_child_idx) {
-	if (!dt_handle || !dt_handle->iio_file) return -1;
-	nfs_iio_seek(dt_handle->iio_file, dt_handle->trienode_channel_id, tn_idx * sizeof(NfsTrieNode) + offsetof(NfsTrieNode, left_child_idx));
-	return nfs_iio_write(dt_handle->iio_file, dt_handle->trienode_channel_id, &left_child_idx, sizeof(int));
+	if (!dt_handle || !dt_handle->iio_file)
+		return -1;
+	NfsIioChannel* chan = nfs_iio_get_channel(dt_handle->iio_file, dt_handle->trienode_channel_id);
+	if (!chan)
+		return -1;
+	int max_nodes = chan->current_size_bytes / sizeof(NfsTrieNode);
+	if (tn_idx < 0 || tn_idx >= max_nodes)
+		return -1;
+	nfs_iio_seek(dt_handle->iio_file, dt_handle->trienode_channel_id,
+		tn_idx * sizeof(NfsTrieNode) + offsetof(NfsTrieNode, left_child_idx));
+	return nfs_iio_write(dt_handle->iio_file, dt_handle->trienode_channel_id,
+		&left_child_idx, sizeof(int));
 }
 
 int trienode_set_right(NfsDtHandle* dt_handle, int tn_idx, int right_child_idx) {
-	if (!dt_handle || !dt_handle->iio_file) return -1;
-	nfs_iio_seek(dt_handle->iio_file, dt_handle->trienode_channel_id, tn_idx * sizeof(NfsTrieNode) + offsetof(NfsTrieNode, right_child_idx));
-	return nfs_iio_write(dt_handle->iio_file, dt_handle->trienode_channel_id, &right_child_idx, sizeof(int));
+	if (!dt_handle || !dt_handle->iio_file)
+		return -1;
+	NfsIioChannel* chan = nfs_iio_get_channel(dt_handle->iio_file, dt_handle->trienode_channel_id);
+	if (!chan)
+		return -1;
+	int max_nodes = chan->current_size_bytes / sizeof(NfsTrieNode);
+	if (tn_idx < 0 || tn_idx >= max_nodes)
+		return -1;
+	nfs_iio_seek(dt_handle->iio_file, dt_handle->trienode_channel_id,
+		tn_idx * sizeof(NfsTrieNode) + offsetof(NfsTrieNode, right_child_idx));
+	return nfs_iio_write(dt_handle->iio_file, dt_handle->trienode_channel_id,
+		&right_child_idx, sizeof(int));
 }
 
 int trienode_set_nt(NfsDtHandle* dt_handle, int tn_idx, short nt_idx) {
-	if (!dt_handle || !dt_handle->iio_file) return -1;
-	nfs_iio_seek(dt_handle->iio_file, dt_handle->trienode_channel_id, tn_idx * sizeof(NfsTrieNode) + offsetof(NfsTrieNode, nt_idx));
-	return nfs_iio_write(dt_handle->iio_file, dt_handle->trienode_channel_id, &nt_idx, sizeof(short));
+	if (!dt_handle || !dt_handle->iio_file)
+		return -1;
+	NfsIioChannel* chan = nfs_iio_get_channel(dt_handle->iio_file, dt_handle->trienode_channel_id);
+	if (!chan)
+		return -1;
+	int max_nodes = chan->current_size_bytes / sizeof(NfsTrieNode);
+	if (tn_idx < 0 || tn_idx >= max_nodes)
+		return -1;
+	nfs_iio_seek(dt_handle->iio_file, dt_handle->trienode_channel_id,
+		tn_idx * sizeof(NfsTrieNode) + offsetof(NfsTrieNode, nt_idx));
+	return nfs_iio_write(dt_handle->iio_file, dt_handle->trienode_channel_id,
+		&nt_idx, sizeof(short));
 }
 
 // --- Fnode (KeyNode chain) 相關函式 ---
 
 /** @brief 從 KeyNode 鏈中提取完整的檔案名稱 (鍵)。*/
 int fnode_extract_key(NfsDtHandle* dt_handle, int start_keynode_idx, char* output_buffer) {
+	// 參數檢查
 	if (!dt_handle || !output_buffer) {
 		if (output_buffer) *output_buffer = '\0';
 		return -1;
 	}
-	if (start_keynode_idx <= 0) { // 無效的起始 KeyNode 索引
+	// 無效起始索引：直接回傳空字串
+	if (start_keynode_idx <= 0) {
 		*output_buffer = '\0';
-		return 0; // 原始碼返回 0
+		return 0;
 	}
 
-	NfsKeyNode current_keynode;
-	int current_kn_idx = start_keynode_idx;
-	int output_buffer_pos = 0;
-	const int max_key_len = 4095; // 假設輸出緩衝區夠大，但設定一個上限以防萬一
+	const int max_key_len = 4095;     // 保護性上限
+	int output_pos = 0;
+	int current_idx = start_keynode_idx;
 
 	do {
-		if (keynode_get(dt_handle, current_kn_idx, &current_keynode) != sizeof(NfsKeyNode)) {
-			// 讀取 KeyNode 失敗
-			output_buffer[output_buffer_pos] = '\0'; // 嘗試結束字串
-			return -1; // 表示錯誤
+		NfsKeyNode node;
+		// 讀取 KeyNode，不足大小視為錯誤
+		if (keynode_get(dt_handle, current_idx, &node) != sizeof(NfsKeyNode)) {
+			output_buffer[output_pos] = '\0';
+			return -1;
 		}
 
-		for (int i = 0; i < 60 && output_buffer_pos < max_key_len; ++i) {
-			if (current_keynode.key_fragment[i] == '\0') {
-				// 片段中的空字元表示鍵的結束 (如果不是最後一個片段，則後續片段不應存在)
-				// 或者，整個鍵到此結束
-				output_buffer[output_buffer_pos] = '\0';
-				// 根據原始碼，如果遇到 \0，則整個鍵結束
-				return 0;
+		// 取出下一個 fragment 的索引 (去掉 MSB 的 in-use 標誌)
+		unsigned int next_idx = node.next_fragment_idx_flags & 0x7FFFFFFF;
+
+		// 將本片段的內容複製到 output_buffer
+		for (int i = 0; i < 60 && output_pos < max_key_len; ++i) {
+			char c = node.key_fragment[i];
+			if (c == '\0') {
+				// 遇到 '\0' 表示本片段結束，但若 next_idx != 0
+				// 則仍需繼續讀取後面 fragment
+				break;
 			}
-			output_buffer[output_buffer_pos++] = current_keynode.key_fragment[i];
+			output_buffer[output_pos++] = c;
 		}
-		// 獲取下一個片段的索引 (清除 MSB 旗標)
-		current_kn_idx = current_keynode.next_fragment_idx_flags & 0x7FFFFFFF;
-	} while (current_kn_idx != 0 && output_buffer_pos < max_key_len); // 0 表示鏈的結束
-	// (0x80000000 & 0x7FFFFFFF = 0)
-	output_buffer[output_buffer_pos] = '\0';
-	return 0; // 原始碼成功時返回 0
+
+		current_idx = next_idx;
+	} while (current_idx != 0 && output_pos < max_key_len);
+
+	// 最後加上字串結尾
+	output_buffer[output_pos] = '\0';
+	return 0;
 }
 
 /** @brief 釋放 (回收) 一個 KeyNode 鏈。*/
@@ -3701,50 +3760,47 @@ int fnode_allocate(NfsDtHandle* dt_handle, const char* source_string) {
 
 
 /** @brief (DT 版本) 配置一個新的 TrieNode 並為其關聯一個儲存了鍵字串的 KeyNode 鏈。*/
-int node_allocate(NfsDtHandle* dt_handle, const char* key_string, short nt_idx_for_trienode, short b_index_for_trienode) {
+int node_allocate(NfsDtHandle* dt_handle,
+	const char* key_string,
+	short nt_idx_for_trienode,
+	short b_index_for_trienode) {
 	if (!dt_handle || !key_string) return -1;
 
+	// 1. 分配 KeyNode 鏈
 	int keynode_chain_start_idx = fnode_allocate(dt_handle, key_string);
-	if (keynode_chain_start_idx < 0) { // fnode_allocate 失敗
-		return -1;
-	}
-	// 如果鍵為空字串，fnode_allocate 可能返回0或一個包含空字串的單一節點索引。
-	// 原始碼中，若 source 為空，fnode_allocate 返回 v13[0]，其中 v13[0] 是一個新分配的 keynode。
-	// 此 keynode 的 fragment 將只包含 '\0'。k_index 仍需標記 MSB。
-	// 所以 (keynode_chain_start_idx == 0 && strlen(key_string) > 0) 是一個有效的錯誤檢查。
+	if (keynode_chain_start_idx < 0) return -1;
 	if (keynode_chain_start_idx == 0 && strlen(key_string) > 0) {
-		// 這表示為非空字串分配鍵節點時得到了一個無效的起始索引 (0 通常不用於有效鏈)
-		return -1;
+		return -1; // 空字串之外不應返回 0
 	}
 
-
+	// 2. 找第一個可用的 TrieNode
 	int new_trienode_idx = dt_handle->next_free_trienode_idx;
 	if (new_trienode_idx <= 0 || !trienode_is_free(dt_handle, new_trienode_idx)) {
-		new_trienode_idx = trienode_find_first_free(dt_handle, (new_trienode_idx > 0) ? new_trienode_idx : 1);
+		new_trienode_idx = trienode_find_first_free(dt_handle, new_trienode_idx);
 	}
-
-	if (new_trienode_idx <= 0) { // 沒有可用的空閒 TrieNode
-		if (keynode_chain_start_idx > 0) { // 如果先前成功分配了 fnode，則回滾
-			fnode_free(dt_handle, keynode_chain_start_idx);
-		}
+	if (new_trienode_idx <= 0) {
+		// 分配失敗，回滾 KeyNode
+		if (keynode_chain_start_idx > 0) fnode_free(dt_handle, keynode_chain_start_idx);
 		return -1;
 	}
 
+	// 3. 寫入新節點
 	NfsTrieNode new_trienode;
 	new_trienode.nt_idx = nt_idx_for_trienode;
 	new_trienode.b_index = b_index_for_trienode;
-	new_trienode.k_index = keynode_chain_start_idx | 0x80000000; // 關聯 KeyNode 鏈並設定使用中旗標
-	new_trienode.left_child_idx = 0;  // 子節點將由 Patricia Trie 插入演算法設定
+	new_trienode.k_index = keynode_chain_start_idx | 0x80000000;
+	new_trienode.left_child_idx = 0;
 	new_trienode.right_child_idx = 0;
 
 	if (trienode_set(dt_handle, new_trienode_idx, &new_trienode) < 0) {
-		// trienode_set 失敗，回滾 fnode
+		// 寫入失敗，回滾 KeyNode
 		if (keynode_chain_start_idx > 0) fnode_free(dt_handle, keynode_chain_start_idx);
-		// 此 trienode 槽位未被成功標記，下次 find_first_free 可能會重試它 (但 next_free_trienode_idx 未更新)
 		return -1;
 	}
 
-	dt_handle->next_free_trienode_idx = trienode_find_first_free(dt_handle, new_trienode_idx + 1);
+	// 4. 更新下一次搜尋提示
+	dt_handle->next_free_trienode_idx =
+		trienode_find_first_free(dt_handle, new_trienode_idx + 1);
 
 	return new_trienode_idx;
 }
@@ -3872,255 +3928,155 @@ int p_find_first_different_bit(NfsDtHandle* dt_handle, const char* key1, int tri
 int p_insert_key(NfsDtHandle* dt_handle, const char* key_to_insert, short nt_idx) {
 	if (!dt_handle || !key_to_insert) return -1;
 
-	int p = p_get_head(); // parent
-	int x = trienode_get_right(dt_handle, p); // current_node (starts from head's right child)
+	// 步驟 1: 沿著樹搜尋，找到與 key_to_insert 最匹配的外部節點 x
+	int p = p_get_head();
+	int x = trienode_get_right(dt_handle, p); // 始終從右子節點開始
 
-	// 1. 沿著 Trie 向下搜尋，直到找到 b_index不再嚴格遞增的點 (x->b_index <= p->b_index)
-	//    這表示我們找到了包含與 key_to_insert 最長共同前綴的外部節點 x，或者是指向上的回溯連結。
 	while (trienode_get_bindex(dt_handle, p) < trienode_get_bindex(dt_handle, x)) {
 		p = x;
-		x = bit_get(key_to_insert, trienode_get_bindex(dt_handle, x)) ?
-			trienode_get_right(dt_handle, x) :
-			trienode_get_left(dt_handle, x);
+		x = bit_get(key_to_insert, trienode_get_bindex(dt_handle, x))
+			? trienode_get_right(dt_handle, x)
+			: trienode_get_left(dt_handle, x);
 	}
 
-	// 2. 檢查找到的外部節點 x 是否與 key_to_insert 完全相同
+	// 步驟 2: 檢查鍵是否已經存在
 	if (p_compare_keys(dt_handle, key_to_insert, x) == 1) {
-		return -1; // 鍵已存在
+		return -1; // 鍵已存在，插入失敗
 	}
 
-	// 3. 找到 key_to_insert 與節點 x 中儲存的鍵之間第一個不同的位元
-	short first_diff_bit = static_cast<short>(p_find_first_different_bit(dt_handle, key_to_insert, x));
+	// 步驟 3: 找到新鍵與樹中現有鍵的第一個不同位元
+	int first_diff_bit = p_find_first_different_bit(dt_handle, key_to_insert, x);
 
-	// 4. 重新從頭搜尋，找到應該插入新內部節點的位置。
-	//    這個新內部節點的 b_index 將是 first_diff_bit。
-	//    我們需要找到一個節點 t，其子節點 s 滿足 t->b_index < first_diff_bit < s->b_index。
-	p = p_get_head();
-	int t = trienode_get_right(dt_handle, p); // t is current_search_node (parent of s)
-	int s = t; // s is child of t
+	// 步驟 4: 再次從頭遍歷，為新的分支節點找到正確的父節點(p_insert)和要被替換的子節點(x_insert)
+	int p_insert = p_get_head();
+	int x_insert = trienode_get_right(dt_handle, p_insert); // 始終從右子節點開始
 
-	while (trienode_get_bindex(dt_handle, p) < trienode_get_bindex(dt_handle, s) &&
-		trienode_get_bindex(dt_handle, s) < first_diff_bit) {
-		p = s; // s 成為新的 parent
-		s = bit_get(key_to_insert, trienode_get_bindex(dt_handle, s)) ?
-			trienode_get_right(dt_handle, s) :
-			trienode_get_left(dt_handle, s);
-	}
-	// 此時，p 是新內部節點的父節點，s 是 p 的子節點，新內部節點應插入在 p 和 s 之間。
-
-	// 5. 分配新的外部節點 (用於 key_to_insert) 和新的內部節點。
-	//    a. 建立新的外部節點 new_external_node，儲存 key_to_insert。
-	//       其 b_index 通常設為一個較大值或特殊值 (例如 first_diff_bit，如原始碼所示)。
-	int new_external_node_idx = node_allocate(dt_handle, key_to_insert, nt_idx, first_diff_bit);
-	if (new_external_node_idx < 0) return -1;
-
-	//    b. 建立新的內部節點 new_internal_node。
-	//       在原始碼的簡化模型中，`new_external_node_idx` 可能同時扮演這個角色，
-	//       或者一個獨立的內部節點被創建（但原始碼的 node_allocate 看起來是創建外部節點）。
-	//       根據 `p_insert_key` 的原始碼片段，`node_allocate` 返回的節點（我們稱為 `new_branch_node_idx`）
-	//       的 `b_index` 被設為 `first_diff_bit`。這個節點同時也儲存了 `key_to_insert` (透過其 `k_index`)。
-	//       然後這個 `new_branch_node_idx` 的子節點被設定：一個指向它自己（代表 `key_to_insert` 的路徑），
-	//       另一個指向 `s` (原路徑上的節點)。
-
-	// 實際上，原始碼的 node_allocate(dt_handle, key_to_insert, nt_idx, first_diff_bit)
-	// 已經創建了一個 TrieNode，它的 b_index 是 first_diff_bit，k_index 指向 key_to_insert。
-	// 我們將這個節點 (new_external_node_idx) 當作新的分支點。
-	int new_branch_node_idx = new_external_node_idx; // 為了清晰，改個名字
-
-	// 設定 new_branch_node_idx 的子節點
-	if (bit_get(key_to_insert, first_diff_bit)) { // 如果新鍵在 first_diff_bit 處為 1
-		trienode_set_left(dt_handle, new_branch_node_idx, s); // 左子節點是原路徑 (s)
-		trienode_set_right(dt_handle, new_branch_node_idx, new_branch_node_idx); // 右子節點指向自身 (表示新鍵的路徑)
-	}
-	else { // 如果新鍵在 first_diff_bit 處為 0
-		trienode_set_left(dt_handle, new_branch_node_idx, new_branch_node_idx); // 左子節點指向自身
-		trienode_set_right(dt_handle, new_branch_node_idx, s); // 右子節點是原路徑 (s)
+	while (trienode_get_bindex(dt_handle, p_insert) < trienode_get_bindex(dt_handle, x_insert) &&
+		trienode_get_bindex(dt_handle, x_insert) < first_diff_bit) {
+		p_insert = x_insert;
+		x_insert = bit_get(key_to_insert, trienode_get_bindex(dt_handle, x_insert))
+			? trienode_get_right(dt_handle, x_insert)
+			: trienode_get_left(dt_handle, x_insert);
 	}
 
-	// 6. 將 new_branch_node_idx 連接到父節點 p
-	//    p 是在步驟4中找到的，將成為 new_branch_node_idx 的父節點。
-	//    需要根據 key_to_insert 在 p->b_index 處的位元值來決定是左孩子還是右孩子。
-	//    注意：這裡的位元比較應該是針對父節點 p 的 b_index。
-	if (bit_get(key_to_insert, trienode_get_bindex(dt_handle, p))) {
-		trienode_set_right(dt_handle, p, new_branch_node_idx);
+	// 步驟 5: 分配一個新的 TrieNode
+	int new_node_idx = node_allocate(dt_handle, key_to_insert, nt_idx, (short)first_diff_bit);
+	if (new_node_idx < 0) {
+		return -1; // 節點分配失敗
+	}
+
+	// 步驟 6: 設定新節點的子節點
+	if (bit_get(key_to_insert, first_diff_bit)) {
+		trienode_set_left(dt_handle, new_node_idx, x_insert);
+		trienode_set_right(dt_handle, new_node_idx, new_node_idx);
 	}
 	else {
-		trienode_set_left(dt_handle, p, new_branch_node_idx);
+		trienode_set_left(dt_handle, new_node_idx, new_node_idx);
+		trienode_set_right(dt_handle, new_node_idx, x_insert);
 	}
 
-	return new_branch_node_idx; // 原始碼返回新分配節點的索引 (v14)
+	// 步驟 7: 將新節點正確地連接到其父節點 (p_insert) - [核心修正邏輯]
+	// 檢查 x_insert 是否為 p_insert 的右子節點，因為所有遍歷都從右邊開始。
+	// 如果是，則替換右子節點，否則替換左子節點。
+	if (trienode_get_right(dt_handle, p_insert) == x_insert) {
+		trienode_set_right(dt_handle, p_insert, new_node_idx);
+	}
+	else {
+		trienode_set_left(dt_handle, p_insert, new_node_idx);
+	}
+
+	return new_node_idx;
 }
 
 
 /** @brief 從 Trie 中移除指定的鍵。 */
+// 刪除指定 key（Patricia Trie）
 int p_remove_key(NfsDtHandle* dt_handle, const char* key_to_remove) {
 	if (!dt_handle || !key_to_remove) return -1;
 
-	int p_parent = p_get_head(); // parent of parent (grandparent of x)
-	int p = p_get_head();        // parent of x
-	int x = trienode_get_right(dt_handle, p); // current node
+	int grandparent = p_get_head();
+	int parent = p_get_head();
+	int current = trienode_get_right(dt_handle, parent);
 
-	// 1. 找到包含 key_to_remove 的外部節點 x 及其父節點 p
-	while (trienode_get_bindex(dt_handle, p) < trienode_get_bindex(dt_handle, x)) {
-		p_parent = p;
-		p = x;
-		x = bit_get(key_to_remove, trienode_get_bindex(dt_handle, x)) ?
-			trienode_get_right(dt_handle, x) :
-			trienode_get_left(dt_handle, x);
+	// 1. 正確地遍歷以找到 current, parent, 和 grandparent
+	while (trienode_get_bindex(dt_handle, parent) < trienode_get_bindex(dt_handle, current)) {
+		grandparent = parent;
+		parent = current;
+		current = bit_get(key_to_remove, trienode_get_bindex(dt_handle, parent))
+			? trienode_get_right(dt_handle, parent)
+			: trienode_get_left(dt_handle, parent);
 	}
 
-	// 2. 驗證是否找到了正確的鍵
-	if (p_compare_keys(dt_handle, key_to_remove, x) != 1) {
-		return -1; // 鍵未找到
+	// 2. 驗證找到的節點是否確實是我們要刪除的鍵
+	if (p_compare_keys(dt_handle, key_to_remove, current) != 1) {
+		return -1; // 鍵不存在
 	}
 
-	// 3. 移除節點 x
-	//    Case 1: x 不是 p (即 x 不是 Trie 的根節點的直接子節點，且 p 不是頭部)
-	//            且 p 自身也是一個外部節點 (p->k_index 的 MSB 被設定)
-	//            這意味著 p 儲存了一個鍵，並且 x 是 p 的一個「普通」子節點。
-	//            此時，我們需要將 p 的另一個子節點（不是 x 的那個）連接到 p_parent。
-	//            然後回收 p 和 x。
-	//
-	//    Case 2: p 是一個內部節點 (p->k_index 的 MSB 未設定，或 p 是頭部)
-	//            或者 x 就是 p (這種情況較為特殊，可能發生在只有一個元素或頭部直接指向 x)
-	//            此時，如果 x 是 p 的一個孩子，我們需要將 x 的一個孩子（如果 x 有孩子且該孩子不是 x 自己）
-	//            連接到 p 的相應子鏈接上。如果 x 沒有「真正」的孩子（即其孩子都指向 x 自身），
-	//            則 p 的相應子鏈接將指向 p 自己（表示該路徑消失）。
-	//            然後回收 x。
-
-	// 原始碼 (005C9310) 的刪除邏輯更為複雜，涉及尋找替代節點、複製鍵等，
-	// 以保持 Trie 的 Patricia 特性。
-	// 簡化的描述：
-	//   a. 如果 x 不是 p (即 x 不是 p 自己)，則將 p 的鍵複製到 x。
-	//      這意味著我們試圖用 p 的內容（如果 p 是外部節點）覆蓋 x，然後刪除 p。
-	//      但這通常是用於刪除有兩個子節點的內部節點，用其後繼來替換。
-	//      原始碼的 `if (v3 != v2)` (v3 is x, v2 is p) `node_copy_key(a1, v2, v3);`
-	//      `node_copy_key(dt, p, x)`: 將 p 的鍵資訊複製到 x，並釋放 x 原來的鍵。
-	//                                 x 的子節點保持不變。
-	//
-	//   b. 然後，需要調整指向被「邏輯上」移除的節點 (現在是 p) 的父節點的連結。
-	//      x 變成了實質上的 p。需要將 x (新的p) 的一個孩子連接到 p_parent。
-	//      或者，如果 x (新的p) 也是一個葉節點（其子節點都指向自身），則 p_parent 的相應子節點設為 p_parent 自身。
-	//
-	// Patricia Trie 的刪除相當複雜，難以僅憑片段完美還原。
-	// 以下是一個基於典型刪除和原始碼片段的嘗試性還原：
-
-	int node_to_physically_remove_idx = x;
-	int parent_of_node_to_remove_idx = p;
-	int grandparent_of_node_to_remove_idx = p_parent; // 在 x 的父節點 p 不是 head 時有用
-
-	NfsTrieNode x_node, p_node;
-	if (trienode_get(dt_handle, x, &x_node) < 0) return -1;
-	if (trienode_get(dt_handle, p, &p_node) < 0) return -1;
-
-	// 如果 x 有一個「真正的」子節點 (即其子節點不指向 x 自身)，
-	// 則 p (x的父節點) 的指向 x 的那個子鏈接，現在應該指向 x 的那個「真正的」子節點。
-	// 如果 x 的兩個子節點都指向 x 自身 (x 是葉節點)，
-	// 則 p 的指向 x 的那個子鏈接，現在應該指向 p 自身 (如果 p 是外部節點)
-	// 或者 p 的另一個孩子 (如果 p 是內部節點且變為只有一個孩子)。
-
-	// 情況 1: x 是葉節點 (其子節點都指向 x 自身，或者說其 k_index MSB set 且 b_index 很大)
-	//         且 p 不是頭部節點。
-	if ((x_node.left_child_idx == x && x_node.right_child_idx == x) ||
-		(x_node.k_index < 0 && (trienode_get_bindex(dt_handle, x_node.left_child_idx) <= x_node.b_index &&
-			trienode_get_bindex(dt_handle, x_node.right_child_idx) <= x_node.b_index))) {
-		// x 確實是一個外部/葉節點。
-		// 將 p 的指向 x 的子鏈接，指向 p 的另一個子節點 (如果 p 是內部節點且變成單一路徑)
-		// 或者指向 p 自身 (如果 p 也是外部節點，表示該分支結束)
-		// 或者如果 p 是頭部，則指向頭部。
-
-		int sibling_of_x_idx = (p_node.left_child_idx == x) ? p_node.right_child_idx : p_node.left_child_idx;
-
-		// 更新 grandparent_of_node_to_remove_idx 的子節點為 sibling_of_x_idx
-		// 這需要知道 p 是 grandparent 的左孩子還是右孩子。
-		// 原始碼中 v26 是 p_parent (grandparent)。v2 是 p (parent)。v3 是 x (node to remove)。
-		// `if (bit_get(key_to_remove, trienode_get_bindex(dt_handle, grandparent_of_node_to_remove_idx)))`
-		// `  trienode_set_right(dt_handle, grandparent_of_node_to_remove_idx, new_child_for_grandparent);`
-		// `else trienode_set_left(dt_handle, grandparent_of_node_to_remove_idx, new_child_for_grandparent);`
-		//
-		// new_child_for_grandparent 是什麼？
-		// 如果 p (parent of x) 也是一個外部節點（即其 k_index MSB set），那麼在移除了 x 之後，
-		// p 自身可能需要被移除，除非 sibling_of_x 能取代 p。
-		//
-		// 根據原始碼的 `node_copy_key(a1, v2, v3)` (v2=p, v3=x) if x!=p:
-		// 這表示 x 的 k_index, nt_idx, b_index 被 p 的覆蓋。x 原來的 key 被釋放。
-		// 然後，問題變成刪除 p。
-		// 這種情況通常是 p 是內部節點，x 是其子節點，且 p 被選為「犧牲者」。
-
-		if (x != p) { // 通常情況
-			node_copy_key(dt_handle, p, x); // x 現在擁有了 p 的鍵資訊，但保持 x 的子節點結構。
-			// x 原來的鍵已被 fnode_free。
-			// 現在我們要刪除邏輯上的 p。
-			node_to_physically_remove_idx = p;
-			parent_of_node_to_remove_idx = p_parent; // p 的父節點是 p_parent
-			// 需要重新獲取 p_node 因為 node_copy_key 不修改它，但我們關心的是原始 p
-		}
-		// 現在我們要從 parent_of_node_to_remove_idx 移除 node_to_physically_remove_idx。
-		// 找到 node_to_physically_remove_idx 的「替代者」。
-		// 替代者是 node_to_physically_remove_idx 的兩個孩子中，不等於它自身（如果它是葉節點）
-		// 或不等於被「提升」的那個孩子（如果它是內部節點）。
-		NfsTrieNode node_to_remove_data;
-		if (trienode_get(dt_handle, node_to_physically_remove_idx, &node_to_remove_data) < 0) return -1;
-
-		int replacement_idx;
-		// 判斷 node_to_remove_data 的哪個子節點應該被提升
-		// 原始碼 `if (bit_get(v30 /*key from p*/, v15 /*b_index of p*/)) v16=right else v16=left`
-		// v16 是 sibling。
-		// 這裡需要確定要提升哪個子節點
-		// 假設我們總是提升其中一個非自身的子節點（如果存在）。
-		// 如果 node_to_physically_remove_idx 的 b_index 用於區分其左右子樹
-		// 並且其中一個子樹現在是空的 (因為鍵被移除)，則另一個子樹被提升。
-		//
-		// 簡化：假設被移除節點的父節點 (parent_of_node_to_remove_idx)
-		// 現在將直接指向被移除節點的某個孩子。
-		// 原始碼 `v21 = (bit_get(a2,v20)) ? trienode_get_left(a1,v2) : trienode_get_right(a1,v2)`
-		// a2 is key_to_remove. v20 is b_index of p (parent_of_node_to_remove). v2 is p.
-		// 這是在決定 p 的哪個孩子應該被保留/提升。
-
-		// 這段邏輯非常依賴原始碼的確切流程，難以在沒有完整上下文時精確還原。
-		// 粗略的說，刪除後需要重新連接樹。
-		// 我們將只釋放 x (node_to_physically_remove_idx) 的資源，並假設其父節點 p 已被正確更新。
-		// 實際上，是父節點 p 的指向 x 的指標，需要被更新為 x 的某個子節點，或者如果 p 變為單一路徑則 p 也可能被移除。
-
-		// 假設 p 的子鏈接已被修改為跳過 x (或 x 的替代節點)
-		// 釋放 x 的 fnode 和 trienode
-		unsigned int kn_idx_to_free = trienode_get_kindex(dt_handle, node_to_physically_remove_idx);
-		if (kn_idx_to_free > 0 && (node_to_remove_data.k_index < 0)) { // 確保是有效的已用 k_index
-			fnode_free(dt_handle, kn_idx_to_free);
-		}
-		trienode_recover(dt_handle, node_to_physically_remove_idx);
-		return 0; // 成功 (簡化版)
+	// 3. 如果 parent 就是 head，表示樹中只有一個元素（或兩個），這是特殊情況
+	if (parent == p_get_head()) {
+		// 刪除後樹變空，只需重置 head
+		p_init_head(dt_handle);
 	}
 	else {
-		// 更複雜的刪除情況 (例如刪除內部節點，或 x == p)
-		// 這需要標準的 Patricia Trie 刪除演算法，涉及找到替代節點等。
-		// 由於缺乏完整的原始碼流程，此處返回錯誤。
-		return -2; // 未完全實現的刪除路徑
+		// 4. 找到 current 的兄弟節點 sibling
+		int sibling = (trienode_get_left(dt_handle, parent) == current)
+			? trienode_get_right(dt_handle, parent)
+			: trienode_get_left(dt_handle, parent);
+
+		// 5. 重新連接 grandparent -> sibling，繞過 parent
+		if (trienode_get_left(dt_handle, grandparent) == parent) {
+			trienode_set_left(dt_handle, grandparent, sibling);
+		}
+		else {
+			trienode_set_right(dt_handle, grandparent, sibling);
+		}
+
+		// 6. 檢查 parent 節點是否本身就是一個外部節點 (即 sibling 指向 parent)
+		// 在這個實作中，如果 sibling == parent，表示 parent 節點儲存著兄弟路徑的 key
+		if (sibling != parent) {
+			// 如果 sibling 不是 parent 本身，表示 parent 是一個純粹的內部節點
+			// 現在它變的冗餘了，可以被安全回收
+			trienode_recover(dt_handle, parent);
+		}
+		// else {
+		//   // 如果 sibling == parent，表示 parent 本身就是一個外部節點，
+		//   // 它不能被回收，因為它仍然代表一個有效的鍵。
+		//   // 由於 grandparent 已經繞過它指向了 sibling(parent)，
+		//   // parent 節點實際上已經被正確地保留在樹中。
+		// }
 	}
+
+	// 7. 最後，回收被刪除節點 (current) 的資源
+	unsigned int kidx = trienode_get_kindex(dt_handle, current);
+	if (kidx > 0) fnode_free(dt_handle, kidx);
+	trienode_recover(dt_handle, current);
+
+	return 0;
 }
 
-
-/** @brief 在 Trie 中查詢指定的鍵。 */
+// 查找指定 key，回傳 TrieNode index（外部節點 idx）或 -1
 int p_lookup_key(NfsDtHandle* dt_handle, const char* key_to_lookup) {
 	if (!dt_handle || !key_to_lookup) return -1;
 
+	// 1. 從 head 的右子節點開始遍歷
 	int p = p_get_head();
 	int x = trienode_get_right(dt_handle, p);
 
+	// 2. 只要還在 internal node（b_index 嚴格遞增），就依據該節點的 b_index 做分支
 	while (trienode_get_bindex(dt_handle, p) < trienode_get_bindex(dt_handle, x)) {
 		p = x;
-		x = bit_get(key_to_lookup, trienode_get_bindex(dt_handle, x)) ?
-			trienode_get_right(dt_handle, x) :
-			trienode_get_left(dt_handle, x);
+		x = bit_get(key_to_lookup, trienode_get_bindex(dt_handle, x))
+			? trienode_get_right(dt_handle, x)
+			: trienode_get_left(dt_handle, x);
 	}
 
+	// 3. 抵達外部節點後，比對完整字串，完全相同才回傳該節點索引
 	if (p_compare_keys(dt_handle, key_to_lookup, x) == 1) {
-		return x; // 找到，返回外部節點的索引
+		return x;  // 找到，返回外部節點索引
 	}
-	else {
-		return -1; // 未找到
-	}
+	return -1;     // 未找到
 }
+
 
 /** @brief 在 Trie 中查詢與給定鍵的前 N 個位元匹配的最深節點。*/
 int p_lookup_key_n(NfsDtHandle* dt_handle, const char* key_to_lookup, int num_bits_to_match) {

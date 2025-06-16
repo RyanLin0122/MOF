@@ -302,6 +302,35 @@ int trienode_is_free(NfsDtHandle* dt_handle, int tn_idx);
 int trienode_find_first_free(NfsDtHandle* dt_handle, int start_idx);
 int trienode_clear(NfsDtHandle* dt_handle, int tn_idx);
 int trienode_recover(NfsDtHandle* dt_handle, int tn_idx);
+int keynode_is_free(NfsDtHandle* dt_handle, int kn_idx);
+int keynode_find_first_free(NfsDtHandle* dt_handle, int start_idx);
+int keynode_clear(NfsDtHandle* dt_handle, int kn_idx);
+unsigned int trienode_get_left(NfsDtHandle* dt_handle, int tn_idx);
+unsigned int trienode_get_right(NfsDtHandle* dt_handle, int tn_idx);
+short trienode_get_bindex(NfsDtHandle* dt_handle, int tn_idx);
+unsigned int trienode_get_kindex(NfsDtHandle* dt_handle, int tn_idx);
+short trienode_get_nt(NfsDtHandle* dt_handle, int tn_idx);
+int trienode_set_left(NfsDtHandle* dt_handle, int tn_idx, int left_child_idx);
+int trienode_set_right(NfsDtHandle* dt_handle, int tn_idx, int right_child_idx);
+int trienode_set_nt(NfsDtHandle* dt_handle, int tn_idx, short nt_idx);
+int fnode_extract_key(NfsDtHandle* dt_handle, int start_keynode_idx, char* output_buffer);
+int fnode_free(NfsDtHandle* dt_handle, int start_keynode_idx_to_free);
+int fnode_allocate(NfsDtHandle* dt_handle, const char* source_string);
+int node_allocate(NfsDtHandle* dt_handle, const char* key_string, short nt_idx_for_trienode, short b_index_for_trienode);
+int node_copy_key(NfsDtHandle* dt_handle, int source_trienode_idx, int dest_trienode_idx);
+int p_get_head();
+int p_init_head(NfsDtHandle* dt_handle);
+int p_compare_keys(NfsDtHandle* dt_handle, const char* key_to_compare, int external_trienode_idx);
+int p_find_first_different_bit(NfsDtHandle* dt_handle, const char* key1, int trienode_idx_for_key2);
+int p_insert_key(NfsDtHandle* dt_handle, const char* key_to_insert, short nt_idx);
+int p_remove_key(NfsDtHandle* dt_handle, const char* key_to_remove);
+int p_lookup_key(NfsDtHandle* dt_handle, const char* key_to_lookup);
+int p_lookup_key_n(NfsDtHandle* dt_handle, const char* key_to_lookup, int num_bits_to_match);
+char* find_prefix(const char* pattern, char* output_buffer);
+int nfs_pmatch(const char* pattern, const char* string_to_test, int flags);
+int p_node_iterate(NfsDtHandle* dt_handle, int current_trienode_idx, int parent_b_index,
+	const char* glob_pattern, int pmatch_flags,
+	int (*callback)(NfsDtHandle*, char*, int, void*), void* callback_context);
 
 NfsDtHandle* nfs_dt_create(NfsIioFile* iio_file, int tn_chan_blocks, int kn_chan_blocks);
 NfsDtHandle* nfs_dt_open(NfsIioFile* iio_file, int trienode_channel_id, int keynode_channel_id);

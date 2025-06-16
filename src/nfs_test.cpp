@@ -5778,10 +5778,9 @@ NfsDtHandle* helper_create_dt_handle_for_test(NfsIioFile* iio_file, int tn_chann
     return dt_handle;
 }
 
-// 輔助：建立一個 NfsTrieNode 結構實例
-NfsTrieNode *helper_create_nfs_trienode(short nt_idx, short b_index, int k_index, int left_child, int right_child) {
-    NfsTrieNode node_object;
-    NfsTrieNode *node = &node_object;
+NfsTrieNode* helper_create_nfs_trienode(short nt_idx, short b_index,
+    int k_index, int left_child, int right_child) {
+    NfsTrieNode* node = (NfsTrieNode*)malloc(sizeof(NfsTrieNode));
     node->nt_idx = nt_idx;
     node->b_index = b_index;
     node->k_index = k_index;
@@ -5824,7 +5823,7 @@ void test_dt_trienode_get_set() {
     int bytes_read = trienode_get(dt_h, tn_idx, node_read_back);
     assert(bytes_read == sizeof(NfsTrieNode));
     assert(nfs_iio_CLOCK > old_clock); // seek + read
-    assert(memcmp(node_read_back, &node_to_set, sizeof(NfsTrieNode)) == 0);
+    assert(memcmp(node_read_back, node_to_set, sizeof(NfsTrieNode)) == 0);
 
     // 測試 null handle 和 null buffer
     assert(trienode_set(nullptr, tn_idx, node_to_set) == -1);
@@ -5834,6 +5833,7 @@ void test_dt_trienode_get_set() {
 
 
     free(dt_h);
+    free(node_to_set);
     helper_teardown_iio_for_dt(iio);
 }
 
@@ -6028,8 +6028,677 @@ void test_dt_trienode_recover() {
     helper_teardown_iio_for_dt(iio);
 }
 
+// --- Test Filename for more DT tests ---
+const char* TEST_DT_EXTRA_IIO_FILENAME = "test_dt_extra_iio.paki";
 
-// 將新的測試函數添加到測試運行器中
+// --- Tests for keynode_is_free ---
+void test_dt_keynode_is_free() {
+    int tn_ch_id, kn_ch_id;
+    // 建立測試用的 IIO 檔案和 DT 控制代碼
+    NfsIioFile* iio = helper_setup_iio_for_dt(TEST_DT_EXTRA_IIO_FILENAME, 1, 1, &tn_ch_id, &kn_ch_id);
+    assert(iio);
+    NfsDtHandle* dt_h = helper_create_dt_handle_for_test(iio, tn_ch_id, kn_ch_id);
+    assert(dt_h);
+
+    // 情況1：已使用的 KeyNode (next_fragment_idx_flags < 0)
+    NfsKeyNode used_node = helper_create_nfs_keynode(0x80000001, "used");
+    keynode_set(dt_h, 1, &used_node);
+    assert(keynode_is_free(dt_h, 1) == 0); // 應為非空閒
+
+    // 情況2：空閒的 KeyNode (next_fragment_idx_flags >= 0)
+    NfsKeyNode free_node = helper_create_nfs_keynode(0, ""); // flags = 0
+    keynode_set(dt_h, 2, &free_node);
+    assert(keynode_is_free(dt_h, 2) == 1); // 應為空閒
+
+    // 情況3：索引 0 是保留的，永遠不應為空閒
+    keynode_set(dt_h, 0, &free_node); // 即使將其內容設為空閒
+    assert(keynode_is_free(dt_h, 0) == 0); // 仍應為非空閒
+
+    // 情況4：讀取失敗的索引（例如，超出範圍），應視為非空閒
+    assert(keynode_is_free(dt_h, 999) == 0);
+
+    // 情況5：傳入 nullptr handle
+    assert(keynode_is_free(nullptr, 1) == 0);
+
+    // 清理
+    free(dt_h);
+    helper_teardown_iio_for_dt(iio);
+}
+
+// --- Tests for keynode_find_first_free ---
+void test_dt_keynode_find_first_free() {
+    int tn_ch_id, kn_ch_id;
+    NfsIioFile* iio = helper_setup_iio_for_dt(TEST_DT_EXTRA_IIO_FILENAME, 1, 1, &tn_ch_id, &kn_ch_id);
+    assert(iio);
+    NfsDtHandle* dt_h = helper_create_dt_handle_for_test(iio, tn_ch_id, kn_ch_id);
+    assert(dt_h);
+
+    NfsKeyNode keynode0 = helper_create_nfs_keynode(0x80000000, "head");
+    // 設定一些節點狀態
+    // 節點0: 頭部，非空閒
+    keynode_set(dt_h, 0, &keynode0);
+    // 節點1: 已使用
+    NfsKeyNode keynode1 = helper_create_nfs_keynode(0x80000001, "used1");
+    keynode_set(dt_h, 1, &keynode1);
+    // 節點2: 已使用
+    NfsKeyNode keynode2 = helper_create_nfs_keynode(0x80000002, "used2");
+    keynode_set(dt_h, 2, &keynode2);
+    // 節點3: 保持空閒
+    // 節點4: 已使用
+    NfsKeyNode keynode3 = helper_create_nfs_keynode(0x80000004, "used4");
+    keynode_set(dt_h, 4, &keynode3);
+    // 節點5: 保持空閒
+
+    // 測試從不同起點開始搜尋
+    assert(keynode_find_first_free(dt_h, 0) == 3); // 從0開始找，應跳過0,1,2，找到3
+    assert(keynode_find_first_free(dt_h, 1) == 3); // 從1開始找，應找到3
+    assert(keynode_find_first_free(dt_h, 3) == 3); // 從3開始找，應直接找到3
+    assert(keynode_find_first_free(dt_h, 4) == 5); // 從4開始找，應跳過4，找到5
+
+    // 清理
+    free(dt_h);
+    helper_teardown_iio_for_dt(iio);
+}
+
+// --- Tests for keynode_clear ---
+void test_dt_keynode_clear() {
+    int tn_ch_id, kn_ch_id;
+    NfsIioFile* iio = helper_setup_iio_for_dt(TEST_DT_EXTRA_IIO_FILENAME, 1, 1, &tn_ch_id, &kn_ch_id);
+    assert(iio);
+    NfsDtHandle* dt_h = helper_create_dt_handle_for_test(iio, tn_ch_id, kn_ch_id);
+    assert(dt_h);
+
+    int kn_idx_to_clear = 5;
+    // 先設定一個已使用的節點
+    NfsKeyNode used_node = helper_create_nfs_keynode(0x80000001, "some data");
+    keynode_set(dt_h, kn_idx_to_clear, &used_node);
+    assert(keynode_is_free(dt_h, kn_idx_to_clear) == 0); // 驗證初始為非空閒
+
+    // 執行清除
+    int result = keynode_clear(dt_h, kn_idx_to_clear);
+    assert(result == sizeof(NfsKeyNode)); // keynode_set 應返回寫入的位元組數
+
+    // 驗證節點是否已被清零並變為空閒
+    NfsKeyNode cleared_node_data;
+    NfsKeyNode zero_node = { 0 };
+    keynode_get(dt_h, kn_idx_to_clear, &cleared_node_data);
+    assert(memcmp(&cleared_node_data, &zero_node, sizeof(NfsKeyNode)) == 0);
+    assert(keynode_is_free(dt_h, kn_idx_to_clear) == 1);
+
+    // 清理
+    free(dt_h);
+    helper_teardown_iio_for_dt(iio);
+}
+
+
+// --- Tests for trienode field accessors ---
+void test_dt_trienode_field_accessors() {
+    int tn_ch_id, kn_ch_id;
+    NfsIioFile* iio = helper_setup_iio_for_dt(TEST_DT_EXTRA_IIO_FILENAME, 1, 1, &tn_ch_id, &kn_ch_id);
+    assert(iio);
+    NfsDtHandle* dt_h = helper_create_dt_handle_for_test(iio, tn_ch_id, kn_ch_id);
+    assert(dt_h);
+
+    int tn_idx = 4; // 選擇一個測試索引
+    // 準備一個包含已知值的節點並寫入
+    NfsTrieNode* node_to_set = helper_create_nfs_trienode(
+        123,                // nt_idx
+        45,                 // b_index
+        0x80000000 | 678,   // k_index (used, value 678)
+        80,                 // left_child_idx
+        90                  // right_child_idx
+    );
+    assert(trienode_set(dt_h, tn_idx, node_to_set) == sizeof(NfsTrieNode));
+
+    // 驗證各個 get 函式
+    assert(trienode_get_nt(dt_h, tn_idx) == 123);
+    assert(trienode_get_bindex(dt_h, tn_idx) == 45);
+    assert(trienode_get_kindex(dt_h, tn_idx) == 678); // 應返回清除 MSB 後的值
+    assert(trienode_get_left(dt_h, tn_idx) == 80);
+    assert(trienode_get_right(dt_h, tn_idx) == 90);
+
+    // 測試無效輸入
+    assert(trienode_get_nt(nullptr, tn_idx) == 0); // Null handle 應返回錯誤/預設值
+    assert(trienode_get_bindex(nullptr, tn_idx) == 0);
+    assert(trienode_get_kindex(nullptr, tn_idx) == 0);
+    assert(trienode_get_left(nullptr, tn_idx) == 0);
+    assert(trienode_get_right(nullptr, tn_idx) == 0);
+
+    // 測試無效索引
+    assert(trienode_get_nt(dt_h, 999) == 0); // 讀取失敗應返回預設值
+
+    // 清理
+    free(dt_h);
+    free(node_to_set);
+    helper_teardown_iio_for_dt(iio);
+}
+
+void test_dt_trienode_field_setters() {
+    int tn_ch_id, kn_ch_id;
+    NfsIioFile* iio = helper_setup_iio_for_dt(TEST_DT_EXTRA_IIO_FILENAME, 1, 1, &tn_ch_id, &kn_ch_id);
+    assert(iio);
+    NfsDtHandle* dt_h = helper_create_dt_handle_for_test(iio, tn_ch_id, kn_ch_id);
+    assert(dt_h);
+
+    int tn_idx = 5;
+    // 建立一個初始狀態的節點並寫入
+    NfsTrieNode* initial_node = helper_create_nfs_trienode(1, 1, 0x80000001, 1, 1);
+    assert(trienode_set(dt_h, tn_idx, initial_node) == sizeof(NfsTrieNode));
+
+    // 1. 測試 trienode_set_left
+    int old_clock = nfs_iio_CLOCK;
+    assert(trienode_set_left(dt_h, tn_idx, 123) > 0);
+    assert(nfs_iio_CLOCK > old_clock); // 驗證 seek + write
+    assert(trienode_get_left(dt_h, tn_idx) == 123);
+    // 驗證其他欄位未受影響
+    assert(trienode_get_right(dt_h, tn_idx) == 1);
+    assert(trienode_get_nt(dt_h, tn_idx) == 1);
+
+    // 2. 測試 trienode_set_right
+    old_clock = nfs_iio_CLOCK;
+    assert(trienode_set_right(dt_h, tn_idx, 456) > 0);
+    assert(nfs_iio_CLOCK > old_clock);
+    assert(trienode_get_right(dt_h, tn_idx) == 456);
+    // 驗證 left 未受影響
+    assert(trienode_get_left(dt_h, tn_idx) == 123);
+
+    // 3. 測試 trienode_set_nt
+    old_clock = nfs_iio_CLOCK;
+    short new_nt_val = 789;
+    assert(trienode_set_nt(dt_h, tn_idx, new_nt_val) > 0);
+    assert(nfs_iio_CLOCK > old_clock);
+    assert(trienode_get_nt(dt_h, tn_idx) == new_nt_val);
+    // 驗證其他欄位未受影響
+    assert(trienode_get_right(dt_h, tn_idx) == 456);
+
+    // 4. 測試無效輸入
+    assert(trienode_set_left(nullptr, tn_idx, 1) == -1);
+    assert(trienode_set_right(dt_h, -1, 1) < 0); // 無效索引
+    assert(trienode_set_nt(dt_h, 999, 1) < 0); // 寫入超出範圍的節點應失敗
+
+    // 清理
+    free(dt_h);
+    free(initial_node);
+    helper_teardown_iio_for_dt(iio);
+}
+
+// --- Tests for fnode_extract_key ---
+void test_dt_fnode_extract_key() {
+    int tn_ch_id, kn_ch_id;
+    NfsIioFile* iio = helper_setup_iio_for_dt(TEST_DT_EXTRA_IIO_FILENAME, 1, 2, &tn_ch_id, &kn_ch_id); // KeyNode 通道給大一點
+    assert(iio);
+    NfsDtHandle* dt_h = helper_create_dt_handle_for_test(iio, tn_ch_id, kn_ch_id);
+    assert(dt_h);
+
+    char output_buffer[1024];
+
+    // 情況1：單一 KeyNode，短字串
+    NfsKeyNode short_key = helper_create_nfs_keynode(0x80000000, "short_key");
+    keynode_set(dt_h, 1, &short_key);
+    assert(fnode_extract_key(dt_h, 1, output_buffer) == 0);
+    assert(strcmp(output_buffer, "short_key") == 0);
+
+    // 情況2：多個 KeyNode，長字串
+    char long_string[] = "this_is_a_very_long_string_that_will_definitely_span_across_multiple_keynode_fragments_for_testing_purposes";
+    NfsKeyNode long_key_part1 = helper_create_nfs_keynode(0x80000000 | 3, "this_is_a_very_long_string_that_will_definitely_span_across"); // 指向索引3
+    NfsKeyNode long_key_part2 = helper_create_nfs_keynode(0x80000000, "_multiple_keynode_fragments_for_testing_purposes"); // 鏈結尾
+    keynode_set(dt_h, 2, &long_key_part1);
+    keynode_set(dt_h, 3, &long_key_part2);
+    assert(fnode_extract_key(dt_h, 2, output_buffer) == 0);
+    assert(strcmp(output_buffer, long_string) == 0);
+
+    // 情況3：空字串
+    NfsKeyNode empty_key = helper_create_nfs_keynode(0x80000000, "");
+    keynode_set(dt_h, 4, &empty_key);
+    assert(fnode_extract_key(dt_h, 4, output_buffer) == 0);
+    assert(strcmp(output_buffer, "") == 0);
+
+    // 情況4：無效輸入
+    assert(fnode_extract_key(dt_h, 0, output_buffer) == 0); // 索引0是無效起始點
+    assert(strcmp(output_buffer, "") == 0);
+    assert(fnode_extract_key(dt_h, -1, output_buffer) == 0); // 索引-1是無效起始點
+    assert(strcmp(output_buffer, "") == 0);
+    assert(fnode_extract_key(nullptr, 1, output_buffer) == -1);
+    assert(fnode_extract_key(dt_h, 1, nullptr) == -1);
+
+
+    // 清理
+    free(dt_h);
+    helper_teardown_iio_for_dt(iio);
+}
+
+// --- Tests for fnode_free ---
+void test_dt_fnode_free() {
+    int tn_ch_id, kn_ch_id;
+    NfsIioFile* iio = helper_setup_iio_for_dt(TEST_DT_EXTRA_IIO_FILENAME, 1, 1, &tn_ch_id, &kn_ch_id);
+    assert(iio);
+    NfsDtHandle* dt_h = helper_create_dt_handle_for_test(iio, tn_ch_id, kn_ch_id);
+    assert(dt_h);
+
+    // 建立一個鏈: 5 -> 6 -> 7 -> -1
+    NfsKeyNode node0 = helper_create_nfs_keynode(0x80000000 | 6, "part1");
+    keynode_set(dt_h, 5, &node0);
+    NfsKeyNode node1 = helper_create_nfs_keynode(0x80000000 | 7, "part3");
+    keynode_set(dt_h, 6, &node1);
+    NfsKeyNode node2 = helper_create_nfs_keynode(0x80000000, "part3");
+    keynode_set(dt_h, 7, &node2);
+    assert(keynode_is_free(dt_h, 5) == 0); // 驗證初始為非空閒
+    assert(keynode_is_free(dt_h, 6) == 0);
+    assert(keynode_is_free(dt_h, 7) == 0);
+
+    dt_h->next_free_keynode_idx = 10; // 設定一個較大的提示值
+
+    // 執行釋放
+    assert(fnode_free(dt_h, 5) == 0);
+
+    // 驗證所有節點都已被釋放
+    assert(keynode_is_free(dt_h, 5) == 1);
+    assert(keynode_is_free(dt_h, 6) == 1);
+    assert(keynode_is_free(dt_h, 7) == 1);
+
+    // 驗證 next_free_keynode_idx 已被更新為釋放的最小索引
+    assert(dt_h->next_free_keynode_idx == 5);
+
+    // 測試釋放無效鏈
+    assert(fnode_free(dt_h, 0) == 0); // 不應出錯
+    assert(fnode_free(dt_h, -1) == 0);
+    assert(fnode_free(nullptr, 5) == 0); // 根據原碼，返回0
+
+    // 清理
+    free(dt_h);
+    helper_teardown_iio_for_dt(iio);
+}
+
+
+// --- Tests for fnode_allocate ---
+void test_dt_fnode_allocate() {
+    int tn_ch_id, kn_ch_id;
+    NfsIioFile* iio = helper_setup_iio_for_dt(TEST_DT_EXTRA_IIO_FILENAME, 1, 2, &tn_ch_id, &kn_ch_id);
+    assert(iio);
+    NfsDtHandle* dt_h = helper_create_dt_handle_for_test(iio, tn_ch_id, kn_ch_id);
+    assert(dt_h);
+    char buffer[256];
+
+    // 情況1：短字串 (< 60 bytes)
+    const char* short_str = "a_short_key";
+    int start_idx1 = fnode_allocate(dt_h, short_str);
+    assert(start_idx1 == 1); // 應從第一個空閒 KeyNode 開始
+    assert(dt_h->next_free_keynode_idx == 2); // 提示應更新
+    fnode_extract_key(dt_h, start_idx1, buffer);
+    assert(strcmp(buffer, short_str) == 0);
+    // 驗證它只有一個節點
+    NfsKeyNode temp_node;
+    keynode_get(dt_h, start_idx1, &temp_node);
+    assert(temp_node.next_fragment_idx_flags == (int)0x80000000);
+
+    // 情況2：長字串 (> 60 bytes)
+    const char* long_str = "this is a very long string that must span multiple keynode fragments to be stored correctly.";
+    int start_idx2 = fnode_allocate(dt_h, long_str);
+    assert(start_idx2 == 2); // 應從下一個空閒 KeyNode 開始
+    // 預期分配 2 個節點 (strlen is 98 -> 99 with null. 99/60 = 1.65 -> 2 fragments)
+    assert(dt_h->next_free_keynode_idx == 4);
+    fnode_extract_key(dt_h, start_idx2, buffer);
+    assert(strcmp(buffer, long_str) == 0);
+
+    // 情況3：空字串
+    const char* empty_str = "";
+    int start_idx3 = fnode_allocate(dt_h, empty_str);
+    assert(start_idx3 == 4);
+    assert(dt_h->next_free_keynode_idx == 5);
+    fnode_extract_key(dt_h, start_idx3, buffer);
+    assert(strcmp(buffer, empty_str) == 0);
+
+    // 清理
+    free(dt_h);
+    helper_teardown_iio_for_dt(iio);
+}
+
+
+// --- Tests for node_allocate (DT version) ---
+void test_dt_node_allocate() {
+    int tn_ch_id, kn_ch_id;
+    NfsIioFile* iio = helper_setup_iio_for_dt(TEST_DT_EXTRA_IIO_FILENAME, 1, 1, &tn_ch_id, &kn_ch_id);
+    assert(iio);
+    NfsDtHandle* dt_h = helper_create_dt_handle_for_test(iio, tn_ch_id, kn_ch_id);
+    assert(dt_h);
+    char key_buffer[256];
+
+    const char* key = "my_test_file";
+    short nt_idx = 123;
+    short b_index = 45;
+
+    // 執行分配
+    int new_tn_idx = node_allocate(dt_h, key, nt_idx, b_index);
+    assert(new_tn_idx > 0); // 應返回一個有效的 TrieNode 索引
+    assert(dt_h->next_free_trienode_idx > new_tn_idx); // 驗證提示已更新
+    assert(dt_h->next_free_keynode_idx > 0);
+
+    // 驗證新建立的 TrieNode
+    assert(trienode_get_nt(dt_h, new_tn_idx) == nt_idx);
+    assert(trienode_get_bindex(dt_h, new_tn_idx) == b_index);
+    int k_idx_val = trienode_get_kindex(dt_h, new_tn_idx);
+    assert(k_idx_val > 0); // 應指向一個有效的 KeyNode
+
+    // 驗證 KeyNode 鏈中儲存的鍵
+    fnode_extract_key(dt_h, k_idx_val, key_buffer);
+    assert(strcmp(key_buffer, key) == 0);
+
+    // TODO: 測試分配失敗並回滾的情況（需要 mock find_first_free）
+
+    // 清理
+    free(dt_h);
+    helper_teardown_iio_for_dt(iio);
+}
+
+
+// --- Tests for node_copy_key ---
+void test_dt_node_copy_key() {
+    int tn_ch_id, kn_ch_id;
+    NfsIioFile* iio = helper_setup_iio_for_dt(TEST_DT_EXTRA_IIO_FILENAME, 2, 2, &tn_ch_id, &kn_ch_id);
+    assert(iio);
+    NfsDtHandle* dt_h = helper_create_dt_handle_for_test(iio, tn_ch_id, kn_ch_id);
+    assert(dt_h);
+
+    // 1. 建立源節點
+    const char* src_key = "source_key";
+    int src_kn_idx = fnode_allocate(dt_h, src_key);
+    NfsTrieNode src_node_data;
+    src_node_data.nt_idx = 10;
+    src_node_data.b_index = 20;
+    src_node_data.k_index = src_kn_idx | 0x80000000;
+    src_node_data.left_child_idx = 99;  // 源節點的子節點不重要
+    src_node_data.right_child_idx = 98;
+    int src_tn_idx = 1;
+    trienode_set(dt_h, src_tn_idx, &src_node_data);
+
+    // 2. 建立目標節點
+    const char* dest_key = "destination_key_to_be_freed";
+    int dest_kn_idx = fnode_allocate(dt_h, dest_key);
+    NfsTrieNode dest_node_data;
+    dest_node_data.nt_idx = 11;
+    dest_node_data.b_index = 22;
+    dest_node_data.k_index = dest_kn_idx | 0x80000000;
+    dest_node_data.left_child_idx = 33;  // 目標節點的子節點很重要
+    dest_node_data.right_child_idx = 44;
+    int dest_tn_idx = 2;
+    trienode_set(dt_h, dest_tn_idx, &dest_node_data);
+
+    assert(keynode_is_free(dt_h, dest_kn_idx) == 0); // 驗證目標鍵初始為非空閒
+
+    // 3. 執行複製
+    assert(node_copy_key(dt_h, src_tn_idx, dest_tn_idx) == 0);
+
+    // 4. 驗證目標節點
+    NfsTrieNode final_dest_node;
+    trienode_get(dt_h, dest_tn_idx, &final_dest_node);
+    // 鍵相關資訊應來自源
+    assert(final_dest_node.nt_idx == src_node_data.nt_idx);
+    assert(final_dest_node.b_index == src_node_data.b_index);
+    assert(final_dest_node.k_index == src_node_data.k_index);
+    // 子節點應保持不變
+    assert(final_dest_node.left_child_idx == dest_node_data.left_child_idx);
+    assert(final_dest_node.right_child_idx == dest_node_data.right_child_idx);
+
+    // 5. 驗證目標節點的舊鍵已被釋放
+    assert(keynode_is_free(dt_h, dest_kn_idx) == 1);
+
+    // 清理
+    free(dt_h);
+    helper_teardown_iio_for_dt(iio);
+}
+
+const char* TEST_DT_PATRICIA_IIO_FILENAME = "test_dt_patricia.paki";
+
+// --- 新增一個輔助函式 ---
+// 輔助函式：遞迴印出 Trie 結構，用於除錯
+void helper_trie_dump_recursive(NfsDtHandle* dt_h, int tn_idx, int parent_b_idx, std::string prefix) {
+    if (!dt_h || tn_idx < 0) return;
+
+    NfsTrieNode node;
+    if (trienode_get(dt_h, tn_idx, &node) != sizeof(NfsTrieNode)) {
+        std::cout << prefix << "-> [Error reading node " << tn_idx << "]" << std::endl;
+        return;
+    }
+
+    // 檢查是否為外部節點（或回溯連結）
+    if (node.b_index <= parent_b_idx) {
+        char key_buf[256];
+        unsigned int k_idx = node.k_index & 0x7FFFFFFF;
+        fnode_extract_key(dt_h, k_idx, key_buf);
+        std::cout << prefix << "-> External Node " << tn_idx
+            << " (b: " << node.b_index << ", nt: " << node.nt_idx
+            << ", k_idx: " << k_idx << ", key: \"" << key_buf << "\")" << std::endl;
+        return;
+    }
+
+    // 內部節點
+    std::cout << prefix << "-> Internal Node " << tn_idx << " (b: " << node.b_index << ")" << std::endl;
+
+    // 遞迴處理子節點
+    helper_trie_dump_recursive(dt_h, node.left_child_idx, node.b_index, prefix + "  |--L: ");
+    helper_trie_dump_recursive(dt_h, node.right_child_idx, node.b_index, prefix + "  +--R: ");
+}
+
+void helper_trie_dump(NfsDtHandle* dt_h) {
+    if (!dt_h) {
+        std::cout << "Trie Dump: Invalid handle." << std::endl;
+        return;
+    }
+    std::cout << "--- Trie Dump Start ---" << std::endl;
+    // 從 head 的右子節點開始，因為 head 本身是虛擬的
+    NfsTrieNode head;
+    trienode_get(dt_h, 0, &head);
+    helper_trie_dump_recursive(dt_h, head.right_child_idx, -1, "");
+    std::cout << "--- Trie Dump End ---" << std::endl;
+}
+void test_p_get_head() {
+    // This function is trivial, it always returns 0.
+    assert(p_get_head() == 0);
+}
+
+// --- Tests for p_init_head ---
+void test_p_init_head() {
+    int tn_ch_id, kn_ch_id;
+    NfsIioFile* iio = helper_setup_iio_for_dt(TEST_DT_PATRICIA_IIO_FILENAME, 1, 1, &tn_ch_id, &kn_ch_id);
+    assert(iio);
+    NfsDtHandle* dt_h = helper_create_dt_handle_for_test(iio, tn_ch_id, kn_ch_id);
+    assert(dt_h);
+
+    assert(p_init_head(dt_h) == 0);
+
+    // Verify TrieNode at index 0
+    NfsTrieNode head_trienode;
+    assert(trienode_get(dt_h, 0, &head_trienode) == sizeof(NfsTrieNode));
+    assert(head_trienode.nt_idx == 0);
+    assert(head_trienode.b_index == -1);
+    assert(head_trienode.k_index == (int)0x80000000); // Points to KeyNode 0, in use
+    assert(head_trienode.left_child_idx == 0);
+    assert(head_trienode.right_child_idx == 0);
+
+    // Verify KeyNode at index 0
+    NfsKeyNode head_keynode;
+    assert(keynode_get(dt_h, 0, &head_keynode) == sizeof(NfsKeyNode));
+    assert(head_keynode.next_fragment_idx_flags == (int)0x80000000); // Last fragment
+    assert(head_keynode.key_fragment[0] == '\0'); // Empty string
+
+    free(dt_h);
+    helper_teardown_iio_for_dt(iio);
+}
+
+// --- Tests for p_compare_keys ---
+void test_p_compare_keys() {
+    int tn_ch_id, kn_ch_id;
+    NfsIioFile* iio = helper_setup_iio_for_dt(TEST_DT_PATRICIA_IIO_FILENAME, 1, 1, &tn_ch_id, &kn_ch_id);
+    assert(iio);
+    NfsDtHandle* dt_h = helper_create_dt_handle_for_test(iio, tn_ch_id, kn_ch_id);
+    assert(dt_h);
+
+    // Setup a node with key "apple"
+    int kn_idx = fnode_allocate(dt_h, "apple");
+    NfsTrieNode node_data;
+    node_data.k_index = kn_idx | 0x80000000;
+    int tn_idx = 1;
+    trienode_set(dt_h, tn_idx, &node_data);
+
+    // Test cases
+    assert(p_compare_keys(dt_h, "apple", tn_idx) == 1); // Exact match
+    assert(p_compare_keys(dt_h, "apply", tn_idx) == 0); // Different key
+    assert(p_compare_keys(dt_h, "apples", tn_idx) == 0); // Longer key
+    assert(p_compare_keys(dt_h, "appl", tn_idx) == 0); // Shorter key
+    assert(p_compare_keys(dt_h, "", tn_idx) == 0); // Empty key
+
+    // Test with a non-key node (k_index >= 0)
+    node_data.k_index = 0; // Mark as free/internal
+    trienode_set(dt_h, 2, &node_data);
+    assert(p_compare_keys(dt_h, "", 2) == 1); // Should match empty string
+    assert(p_compare_keys(dt_h, "a", 2) == 0); // Should not match non-empty string
+
+    free(dt_h);
+    helper_teardown_iio_for_dt(iio);
+}
+
+
+// --- Tests for p_find_first_different_bit ---
+void test_p_find_first_different_bit() {
+    int tn_ch_id, kn_ch_id;
+    NfsIioFile* iio = helper_setup_iio_for_dt(TEST_DT_PATRICIA_IIO_FILENAME, 1, 1, &tn_ch_id, &kn_ch_id);
+    assert(iio);
+    NfsDtHandle* dt_h = helper_create_dt_handle_for_test(iio, tn_ch_id, kn_ch_id);
+    assert(dt_h);
+
+    // Setup a node with key "apple"
+    int kn_idx = fnode_allocate(dt_h, "apple");
+    NfsTrieNode node_data;
+    node_data.k_index = kn_idx | 0x80000000;
+    int tn_idx = 1;
+    trienode_set(dt_h, tn_idx, &node_data);
+
+    // 'e' (01100101) vs 'y' (01111001) at index 4
+    // Different at the 3rd bit from left (bit index 2 in the byte)
+    // Global bit index = 4 * 8 + 2 = 34
+    assert(p_find_first_different_bit(dt_h, "apply", tn_idx) == 34);
+
+
+    assert(p_find_first_different_bit(dt_h, "bpple", tn_idx) == 0);
+
+    // Identical keys. bitfirst_different returns strlen * 8 of the shorter string.
+    // 'apple' length is 5. 5 * 8 = 40. The difference is in the null terminator.
+    assert(p_find_first_different_bit(dt_h, "apple", tn_idx) > 39); // Should be at null terminator
+
+    free(dt_h);
+    helper_teardown_iio_for_dt(iio);
+}
+
+// --- Tests for p_insert_key, p_lookup_key, p_remove_key ---
+void test_p_trie_insert_lookup_remove() {
+    int tn_ch_id, kn_ch_id;
+    NfsIioFile* iio = helper_setup_iio_for_dt(TEST_DT_PATRICIA_IIO_FILENAME, 1, 2, &tn_ch_id, &kn_ch_id);
+    assert(iio);
+    NfsDtHandle* dt_h = helper_create_dt_handle_for_test(iio, tn_ch_id, kn_ch_id);
+    assert(dt_h);
+    assert(p_init_head(dt_h) == 0);
+
+    // 1. Insert first key
+    int idx1 = p_insert_key(dt_h, "apple", 10);
+    assert(idx1 > 0);
+    assert(p_lookup_key(dt_h, "apple") == idx1);
+    assert(trienode_get_nt(dt_h, idx1) == 10);
+    std::cout << "After inserting 'apple':" << std::endl;
+    helper_trie_dump(dt_h);
+
+    // 2. Insert key with shared prefix
+    int idx2 = p_insert_key(dt_h, "apply", 20);
+    assert(idx2 > 0 && idx2 != idx1);
+    assert(p_lookup_key(dt_h, "apple") == idx1);
+    assert(p_lookup_key(dt_h, "apply") == idx2);
+    assert(trienode_get_nt(dt_h, idx2) == 20);
+    std::cout << "After inserting 'apply':" << std::endl;
+    helper_trie_dump(dt_h);
+
+    // 3. Insert another key causing a different split
+    int idx3 = p_insert_key(dt_h, "ape", 30);
+    assert(idx3 > 0);
+    assert(p_lookup_key(dt_h, "apple") == idx1);
+    assert(p_lookup_key(dt_h, "apply") == idx2);
+    assert(p_lookup_key(dt_h, "ape") == idx3);
+    assert(trienode_get_nt(dt_h, idx3) == 30);
+    std::cout << "After inserting 'ape':" << std::endl;
+    helper_trie_dump(dt_h);
+
+
+    // 4. Test inserting a duplicate key
+    assert(p_insert_key(dt_h, "apple", 99) == -1);
+
+    // 5. Remove a key ("apple")
+    assert(p_remove_key(dt_h, "apple") == 0); // Simplified check, expects success
+    assert(p_lookup_key(dt_h, "apple") == -1); // Should not be found
+    assert(p_lookup_key(dt_h, "apply") == idx2); // Others should remain
+    assert(p_lookup_key(dt_h, "ape") == idx3);
+    std::cout << "After removing 'apple':" << std::endl;
+    helper_trie_dump(dt_h);
+
+    // 6. Remove non-existent key
+    assert(p_remove_key(dt_h, "banana") == -1);
+
+    // 7. Remove remaining keys
+    assert(p_remove_key(dt_h, "ape") == 0);
+    assert(p_lookup_key(dt_h, "ape") == -1);
+    assert(p_lookup_key(dt_h, "apply") == idx2);
+    std::cout << "After removing 'ape':" << std::endl;
+    helper_trie_dump(dt_h);
+
+    assert(p_remove_key(dt_h, "apply") == 0);
+    assert(p_lookup_key(dt_h, "apply") == -1);
+    std::cout << "After removing 'apply':" << std::endl;
+    helper_trie_dump(dt_h); // Trie should be empty (only head node)
+
+    free(dt_h);
+    helper_teardown_iio_for_dt(iio);
+}
+
+// --- Tests for p_lookup_key_n ---
+void test_p_lookup_key_n() {
+    int tn_ch_id, kn_ch_id;
+    NfsIioFile* iio = helper_setup_iio_for_dt(TEST_DT_PATRICIA_IIO_FILENAME, 1, 2, &tn_ch_id, &kn_ch_id);
+    assert(iio);
+    NfsDtHandle* dt_h = helper_create_dt_handle_for_test(iio, tn_ch_id, kn_ch_id);
+    assert(dt_h);
+    assert(p_init_head(dt_h) == 0);
+
+    // Insert keys: "romane", "romulus", "rubens", "rubicon"
+    // from Sedgewick's example
+    int idx_romane = p_insert_key(dt_h, "romane", 1);
+    int idx_romulus = p_insert_key(dt_h, "romulus", 2);
+    int idx_rubens = p_insert_key(dt_h, "rubens", 3);
+    int idx_rubicon = p_insert_key(dt_h, "rubicon", 4);
+
+    helper_trie_dump(dt_h);
+
+    // Lookup "rom" (24 bits)
+    // "romane" vs "romulus" -> diff at 'a' vs 'u', index 3
+    // 'a' = 0110 0001, 'u' = 0111 0101. Diff at bit 1 of byte 3. Global index = 3*8+1=25
+    // The branching node for "rom" will have b_index=25.
+    // The search for prefix "rom" (24 bits) should stop at the parent of this branching node.
+    int lookup_node_idx = p_lookup_key_n(dt_h, "rom", 24);
+    assert(lookup_node_idx > 0); // Should find some node
+    // To be precise, we need to know the structure. The node found should be a parent
+    // of the node that branches on bit 25.
+    short b_idx = trienode_get_bindex(dt_h, lookup_node_idx);
+    assert(b_idx < 24);
+
+    // Lookup "r" (8 bits) should return the root's child.
+    lookup_node_idx = p_lookup_key_n(dt_h, "r", 8);
+    // The first split is 'o' vs 'u' -> index 1.
+    // 'o' = 0110 1111, 'u' = 0111 0101. Diff at bit 3 of byte 1. Global index = 1*8+3=11.
+    // lookup for 8 bits should stop at parent of node with b_index 11.
+    // That would be the head's right child (the root of the actual trie).
+    NfsTrieNode head; trienode_get(dt_h, 0, &head);
+    assert(lookup_node_idx == head.right_child_idx);
+
+
+    free(dt_h);
+    helper_teardown_iio_for_dt(iio);
+}
 void run_nfs_dt_low_level_tests() {
     std::cout << "--- Running NFS DT Low-Level (TrieNode/KeyNode) Tests ---" << std::endl;
 
@@ -6039,11 +6708,44 @@ void run_nfs_dt_low_level_tests() {
     RUN_TEST(test_dt_trienode_find_first_free);
     RUN_TEST(test_dt_trienode_clear);
     RUN_TEST(test_dt_trienode_recover);
+    RUN_TEST(test_dt_trienode_field_setters);
+    RUN_TEST(test_dt_fnode_extract_key);
+    RUN_TEST(test_dt_fnode_free);
+    RUN_TEST(test_dt_fnode_allocate);
+    RUN_TEST(test_dt_node_allocate);
+    RUN_TEST(test_dt_node_copy_key);
 
     // ... (之後會加入 KeyNode 相關的 is_free, find_first_free, clear, recover 測試)
 
     std::filesystem::remove(TEST_DT_IIO_FILENAME); // 清理 DT 測試檔案
     std::cout << "--- NFS DT Low-Level Tests Finished ---" << std::endl;
+}
+
+void run_nfs_dt_extra_low_level_tests() {
+    std::cout << "--- Running NFS DT Extra Low-Level Tests ---" << std::endl;
+
+    RUN_TEST(test_dt_keynode_is_free);
+    RUN_TEST(test_dt_keynode_find_first_free);
+    RUN_TEST(test_dt_keynode_clear);
+    RUN_TEST(test_dt_trienode_field_accessors);
+
+    std::filesystem::remove(TEST_DT_EXTRA_IIO_FILENAME); // 測試後清理
+    std::cout << "--- NFS DT Extra Low-Level Tests Finished ---" << std::endl;
+}
+
+void run_nfs_dt_patricia_trie_tests() {
+    std::cout << "--- Running NFS DT Patricia Trie (p_*) Tests ---" << std::endl;
+
+    RUN_TEST(test_p_get_head);
+    RUN_TEST(test_p_init_head);
+    RUN_TEST(test_p_compare_keys);
+    RUN_TEST(test_p_find_first_different_bit);
+    RUN_TEST(test_p_trie_insert_lookup_remove);
+    RUN_TEST(test_p_lookup_key_n);
+
+    // 測試後清理
+    std::filesystem::remove(TEST_DT_PATRICIA_IIO_FILENAME);
+    std::cout << "--- NFS DT Patricia Trie (p_*) Tests Finished ---" << std::endl;
 }
 
 void run_all_tests() {
@@ -6238,7 +6940,10 @@ void run_all_tests() {
     RUN_TEST(test_data_cache_put_then_get);
     run_nfs_data_api_tests();
     run_nfs_nt_api_tests();
+
     run_nfs_dt_low_level_tests();
+    run_nfs_dt_extra_low_level_tests();
+    run_nfs_dt_patricia_trie_tests();
 
 	// cleanup temp files
     cleanup_test_files(TEST_VFS_BASENAME);
@@ -6253,6 +6958,7 @@ void run_all_tests() {
     std::filesystem::remove(TEST_DATA_CACHE_FILENAME); // 清理此組測試的檔案
     std::filesystem::remove(TEST_NT_IIO_FILENAME);
     std::filesystem::remove(TEST_DT_IIO_FILENAME);
+    std::filesystem::remove(TEST_DT_PATRICIA_IIO_FILENAME);
 }
 
 
