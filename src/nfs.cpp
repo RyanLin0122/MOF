@@ -10,7 +10,7 @@
 #include <algorithm>
 #include <vector>
 #include <cctype>  // For tolower (雖然原始碼可能手動轉換)
-
+#include <intrin.h>
 
 
 /* global variables */
@@ -60,10 +60,30 @@ int bit_get(const char* byteValue, int bitIndex)
 	return 2; // 依照原始碼，負數位元索引返回 2
 }
 
+static inline int find_first_set_bit(unsigned char n) {
+	if (n == 0) return 0; // Or some error indicator
+#if defined(_MSC_VER)
+	unsigned long index;
+	_BitScanForward(&index, n);
+	return index;
+#elif defined(__GNUC__) || defined(__clang__)
+	return __builtin_ffs(n) - 1; // ffs is 1-based, we want 0-based
+#else
+	// Fallback for other compilers
+	int count = 0;
+	while ((n & 1) == 0) {
+		n >>= 1;
+		count++;
+	}
+	return count;
+#endif
+}
+
 // 找出兩個字串（視為位元組陣列）第一個不同的位元之全域位元索引
 // 假設傳入的字串在被呼叫的上下文中保證是不同的
 int bitfirst_different(const char* str1, const char* str2)
 {
+	printf("  [D] bitfirst_different: Comparing ('%s', '%s')\n", str1, str2);
 	int byteIndex = 0;
 	// 1. 找出第一個內容不同的位元組，或其中一個字串結束的位置
 	while (str1[byteIndex] == str2[byteIndex])
@@ -76,23 +96,20 @@ int bitfirst_different(const char* str1, const char* str2)
 	}
 
 	// 2. 從 byteIndex 開始，逐位元比較，找出第一個不同的位元
-	// local_bit_offset 是相對於 str1[byteIndex] 和 str2[byteIndex] 的位元偏移量
 	int local_bit_offset = 0;
 
-	// 檢查第 0 個位元 (相對於 byteIndex)
-	// bit_get 的第二個參數是相對於其第一個參數 (char*) 的位元偏移
 	if (bit_get(&str1[byteIndex], local_bit_offset) != bit_get(&str2[byteIndex], local_bit_offset))
 	{
+		printf("  [D] bitfirst_different: Found diff at byte %d, local_bit %d. Result: %d\n", byteIndex, local_bit_offset, byteIndex * 8 + local_bit_offset);
 		return byteIndex * 8 + local_bit_offset;
 	}
 
-	// 檢查後續位元 (相對於 byteIndex)
-	// 由於已保證字串不同，此迴圈必會找到差異點並返回
 	do
 	{
 		local_bit_offset++;
 	} while (bit_get(&str1[byteIndex], local_bit_offset) == bit_get(&str2[byteIndex], local_bit_offset));
 
+	printf("  [D] bitfirst_different: Found diff at byte %d, local_bit %d. Result: %d\n", byteIndex, local_bit_offset, byteIndex * 8 + local_bit_offset);
 	return byteIndex * 8 + local_bit_offset;
 }
 
@@ -3927,46 +3944,53 @@ int p_find_first_different_bit(NfsDtHandle* dt_handle, const char* key1, int tri
 /** @brief 將指定的鍵字串插入到 Patricia Trie 中。*/
 int p_insert_key(NfsDtHandle* dt_handle, const char* key_to_insert, short nt_idx) {
 	if (!dt_handle || !key_to_insert) return -1;
+	printf("\n\n--- [DEBUG] p_insert_key: Inserting '%s' ---\n", key_to_insert);
 
-	// 步驟 1: 沿著樹搜尋，找到與 key_to_insert 最匹配的外部節點 x
+	// 步驟 1: 查找與新鍵最匹配的現有節點 x
 	int p = p_get_head();
-	int x = trienode_get_right(dt_handle, p); // 始終從右子節點開始
-
+	int x = trienode_get_right(dt_handle, p);
+	printf("[D] Insert - Step 1 (Initial Search)\n");
 	while (trienode_get_bindex(dt_handle, p) < trienode_get_bindex(dt_handle, x)) {
 		p = x;
-		x = bit_get(key_to_insert, trienode_get_bindex(dt_handle, x))
-			? trienode_get_right(dt_handle, x)
-			: trienode_get_left(dt_handle, x);
+		// 【關鍵修正點】
+		x = bit_get(key_to_insert, trienode_get_bindex(dt_handle, p))
+			? trienode_get_right(dt_handle, p)
+			: trienode_get_left(dt_handle, p);
 	}
+	printf("[D] Insert - Step 1 Result: Found closest node x=%d (parent p=%d)\n", x, p);
 
-	// 步驟 2: 檢查鍵是否已經存在
 	if (p_compare_keys(dt_handle, key_to_insert, x) == 1) {
-		return -1; // 鍵已存在，插入失敗
+		printf("[D] Insert - ERROR: Key '%s' already exists.\n", key_to_insert);
+		return -1;
 	}
 
-	// 步驟 3: 找到新鍵與樹中現有鍵的第一個不同位元
 	int first_diff_bit = p_find_first_different_bit(dt_handle, key_to_insert, x);
+	printf("[D] Insert - Step 2 (DiffBit): First different bit is %d\n", first_diff_bit);
 
-	// 步驟 4: 再次從頭遍歷，為新的分支節點找到正確的父節點(p_insert)和要被替換的子節點(x_insert)
+	// 步驟 4: 再次從頭遍歷，為新分支節點找到正確的父節點(p_insert)和要被替換的子節點(x_insert)
 	int p_insert = p_get_head();
-	int x_insert = trienode_get_right(dt_handle, p_insert); // 始終從右子節點開始
-
+	int x_insert = trienode_get_right(dt_handle, p_insert);
+	printf("[D] Insert - Step 3 (Find Insertion Point)\n");
 	while (trienode_get_bindex(dt_handle, p_insert) < trienode_get_bindex(dt_handle, x_insert) &&
 		trienode_get_bindex(dt_handle, x_insert) < first_diff_bit) {
 		p_insert = x_insert;
-		x_insert = bit_get(key_to_insert, trienode_get_bindex(dt_handle, x_insert))
-			? trienode_get_right(dt_handle, x_insert)
-			: trienode_get_left(dt_handle, x_insert);
+		// 【關鍵修正點】
+		x_insert = bit_get(key_to_insert, trienode_get_bindex(dt_handle, p_insert))
+			? trienode_get_right(dt_handle, p_insert)
+			: trienode_get_left(dt_handle, p_insert);
 	}
+	printf("[D] Insert - Step 3 Result: Found insertion point between p_insert=%d and x_insert=%d\n", p_insert, x_insert);
 
-	// 步驟 5: 分配一個新的 TrieNode
 	int new_node_idx = node_allocate(dt_handle, key_to_insert, nt_idx, (short)first_diff_bit);
 	if (new_node_idx < 0) {
-		return -1; // 節點分配失敗
+		printf("[D] Insert - ERROR: node_allocate failed.\n");
+		return -1;
 	}
+	printf("[D] Insert - Step 4 (Allocate): Allocated new_node_idx=%d for key '%s' with b_index=%d\n", new_node_idx, key_to_insert, first_diff_bit);
 
-	// 步驟 6: 設定新節點的子節點
-	if (bit_get(key_to_insert, first_diff_bit)) {
+	int new_node_bit = bit_get(key_to_insert, first_diff_bit);
+	printf("[D] Insert - Step 5 (Set Children): bit_get('%s', %d) is %d.\n", key_to_insert, first_diff_bit, new_node_bit);
+	if (new_node_bit) {
 		trienode_set_left(dt_handle, new_node_idx, x_insert);
 		trienode_set_right(dt_handle, new_node_idx, new_node_idx);
 	}
@@ -3975,24 +3999,25 @@ int p_insert_key(NfsDtHandle* dt_handle, const char* key_to_insert, short nt_idx
 		trienode_set_right(dt_handle, new_node_idx, x_insert);
 	}
 
-	// 步驟 7: 將新節點正確地連接到其父節點 (p_insert) - [核心修正邏輯]
-	// 檢查 x_insert 是否為 p_insert 的右子節點，因為所有遍歷都從右邊開始。
-	// 如果是，則替換右子節點，否則替換左子節點。
+	printf("[D] Insert - Step 6 (Attach): Attaching new_node %d to parent %d. Original child was %d.\n", new_node_idx, p_insert, x_insert);
 	if (trienode_get_right(dt_handle, p_insert) == x_insert) {
+		printf("  [D] Attaching to RIGHT child of parent %d.\n", p_insert);
 		trienode_set_right(dt_handle, p_insert, new_node_idx);
 	}
 	else {
+		printf("  [D] Attaching to LEFT child of parent %d.\n", p_insert);
 		trienode_set_left(dt_handle, p_insert, new_node_idx);
 	}
+	printf("--- [DEBUG] p_insert_key: Finished inserting '%s' ---\n", key_to_insert);
 
 	return new_node_idx;
 }
-
 
 /** @brief 從 Trie 中移除指定的鍵。 */
 // 刪除指定 key（Patricia Trie）
 int p_remove_key(NfsDtHandle* dt_handle, const char* key_to_remove) {
 	if (!dt_handle || !key_to_remove) return -1;
+	printf("\n\n--- [DEBUG] p_remove_key: Removing '%s' ---\n", key_to_remove);
 
 	int grandparent = p_get_head();
 	int parent = p_get_head();
@@ -4002,55 +4027,56 @@ int p_remove_key(NfsDtHandle* dt_handle, const char* key_to_remove) {
 	while (trienode_get_bindex(dt_handle, parent) < trienode_get_bindex(dt_handle, current)) {
 		grandparent = parent;
 		parent = current;
+		// 【關鍵修正點】
 		current = bit_get(key_to_remove, trienode_get_bindex(dt_handle, parent))
 			? trienode_get_right(dt_handle, parent)
 			: trienode_get_left(dt_handle, parent);
 	}
 
-	// 2. 驗證找到的節點是否確實是我們要刪除的鍵
+	// 2. 驗證找到的節點
 	if (p_compare_keys(dt_handle, key_to_remove, current) != 1) {
-		return -1; // 鍵不存在
+		printf("[D] Remove - ERROR: Key '%s' not found.\n", key_to_remove);
+		return -1;
+	}
+	printf("[D] Remove: Found node to delete: current=%d. Its parent is %d, grandparent is %d.\n", current, parent, grandparent);
+
+	// 3. 如果 parent 就是 head，是特殊情況
+	if (parent == p_get_head()) {
+		printf("[D] Remove: Parent is head. Deleting last element. Re-initializing head.\n");
+		unsigned int kidx = trienode_get_kindex(dt_handle, current);
+		if (kidx > 0) fnode_free(dt_handle, kidx);
+		trienode_recover(dt_handle, current);
+		p_init_head(dt_handle);
+		return 0;
 	}
 
-	// 3. 如果 parent 就是 head，表示樹中只有一個元素（或兩個），這是特殊情況
-	if (parent == p_get_head()) {
-		// 刪除後樹變空，只需重置 head
-		p_init_head(dt_handle);
+	// 4. 找到兄弟節點 sibling
+	int sibling = (trienode_get_left(dt_handle, parent) == current)
+		? trienode_get_right(dt_handle, parent)
+		: trienode_get_left(dt_handle, parent);
+	printf("[D] Remove: Sibling of node %d is node %d.\n", current, sibling);
+
+	// 5. 將 grandparent 的指標直接指向 sibling，繞過 parent
+	printf("[D] Remove: Attaching sibling %d to grandparent %d.\n", sibling, grandparent);
+	if (trienode_get_left(dt_handle, grandparent) == parent) {
+		trienode_set_left(dt_handle, grandparent, sibling);
 	}
 	else {
-		// 4. 找到 current 的兄弟節點 sibling
-		int sibling = (trienode_get_left(dt_handle, parent) == current)
-			? trienode_get_right(dt_handle, parent)
-			: trienode_get_left(dt_handle, parent);
-
-		// 5. 重新連接 grandparent -> sibling，繞過 parent
-		if (trienode_get_left(dt_handle, grandparent) == parent) {
-			trienode_set_left(dt_handle, grandparent, sibling);
-		}
-		else {
-			trienode_set_right(dt_handle, grandparent, sibling);
-		}
-
-		// 6. 檢查 parent 節點是否本身就是一個外部節點 (即 sibling 指向 parent)
-		// 在這個實作中，如果 sibling == parent，表示 parent 節點儲存著兄弟路徑的 key
-		if (sibling != parent) {
-			// 如果 sibling 不是 parent 本身，表示 parent 是一個純粹的內部節點
-			// 現在它變的冗餘了，可以被安全回收
-			trienode_recover(dt_handle, parent);
-		}
-		// else {
-		//   // 如果 sibling == parent，表示 parent 本身就是一個外部節點，
-		//   // 它不能被回收，因為它仍然代表一個有效的鍵。
-		//   // 由於 grandparent 已經繞過它指向了 sibling(parent)，
-		//   // parent 節點實際上已經被正確地保留在樹中。
-		// }
+		trienode_set_right(dt_handle, grandparent, sibling);
 	}
 
-	// 7. 最後，回收被刪除節點 (current) 的資源
-	unsigned int kidx = trienode_get_kindex(dt_handle, current);
-	if (kidx > 0) fnode_free(dt_handle, kidx);
+	// 6. 回收 parent 和 current 節點的資源
+	printf("[D] Remove: Freeing key for node %d, then recovering trienodes %d and %d.\n", current, current, parent);
+	fnode_free(dt_handle, trienode_get_kindex(dt_handle, current));
 	trienode_recover(dt_handle, current);
 
+	// 修正：只有在 parent 是純內部節點時才回收
+	// 在此實作中，如果 sibling 不是 parent，代表 parent 是純內部節點
+	if (sibling != parent) {
+		trienode_recover(dt_handle, parent);
+	}
+
+	printf("--- [DEBUG] p_remove_key: Finished removing '%s' ---\n", key_to_remove);
 	return 0;
 }
 
@@ -4058,23 +4084,38 @@ int p_remove_key(NfsDtHandle* dt_handle, const char* key_to_remove) {
 int p_lookup_key(NfsDtHandle* dt_handle, const char* key_to_lookup) {
 	if (!dt_handle || !key_to_lookup) return -1;
 
-	// 1. 從 head 的右子節點開始遍歷
+	printf("\n[DEBUG] p_lookup_key: Searching for '%s'\n", key_to_lookup);
+
 	int p = p_get_head();
 	int x = trienode_get_right(dt_handle, p);
+	printf("  [L] Start: p=%d(b=%d), x=%d(b=%d)\n", p, trienode_get_bindex(dt_handle, p), x, trienode_get_bindex(dt_handle, x));
 
-	// 2. 只要還在 internal node（b_index 嚴格遞增），就依據該節點的 b_index 做分支
 	while (trienode_get_bindex(dt_handle, p) < trienode_get_bindex(dt_handle, x)) {
-		p = x;
-		x = bit_get(key_to_lookup, trienode_get_bindex(dt_handle, x))
-			? trienode_get_right(dt_handle, x)
-			: trienode_get_left(dt_handle, x);
+		int old_p_idx = p;
+		p = x; // p 更新為當前節點
+		int bit_to_test = trienode_get_bindex(dt_handle, p);
+		int bit_value = bit_get(key_to_lookup, bit_to_test);
+
+		// 【關鍵修正點】: 根據新的父節點 p 來獲取子節點，而不是用舊的 x
+		x = bit_value ? trienode_get_right(dt_handle, p) : trienode_get_left(dt_handle, p);
+
+		printf("  [L] Traverse: From p=%d(b=%d), testing bit %d -> %d. New x is %d.\n",
+			p, bit_to_test, bit_to_test, bit_value, x);
 	}
 
-	// 3. 抵達外部節點後，比對完整字串，完全相同才回傳該節點索引
+	printf("[DEBUG] p_lookup_key: Loop terminated. Final p=%d(b=%d), x=%d(b=%d).\n", p, trienode_get_bindex(dt_handle, p), x, trienode_get_bindex(dt_handle, x));
+
+	char stored_key_buffer[4096];
+	fnode_extract_key(dt_handle, trienode_get_kindex(dt_handle, x), stored_key_buffer);
+	printf("[DEBUG] p_lookup_key: Comparing search key '%s' with key from node %d ('%s').\n", key_to_lookup, x, stored_key_buffer);
+
 	if (p_compare_keys(dt_handle, key_to_lookup, x) == 1) {
-		return x;  // 找到，返回外部節點索引
+		printf("[DEBUG] p_lookup_key: Match SUCCEEDED. Returning node index %d.\n", x);
+		return x;
 	}
-	return -1;     // 未找到
+
+	printf("[DEBUG] p_lookup_key: Match FAILED. Returning -1.\n");
+	return -1;
 }
 
 
