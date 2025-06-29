@@ -4248,51 +4248,49 @@ int nfs_pmatch(const char* pattern, const char* string_to_test, int flags) {
 			return (*s == '\0') ? 0 : 1; // 如果字串也結束則匹配，否則不匹配
 		}
 		case '*': { // 星號萬用字元
+			const char* p_after_wildcards = p;
+			const char* s_after_qmarks = s;
+
 			// 處理 FNM_PERIOD for '*'
-			if ((flags & NFS_FNM_PERIOD) && *s == '.' && s == string_to_test) {
-				return 1; // '*' 在模式開頭且 FNM_PERIOD 時，不匹配字串開頭的 '.'
+			if ((flags & NFS_FNM_PERIOD) && *s_after_qmarks == '.' && s_after_qmarks == string_to_test) {
+				return 1;
 			}
 
-			// 跳過連續的 '*' 和 '?' (但 '?' 需要消耗字串中的字元)
-			while (*p == '*' || *p == '?') {
-				if (*p == '?') {
-					if (*s == '\0') return 1; // 字串已結束，無法匹配 '?'
-					if ((flags & NFS_FNM_PATHNAME) && *s == '/') return 1;
-					if ((flags & NFS_FNM_PERIOD) && *s == '.' && s == string_to_test) return 1;
-					s++; // '?' 消耗一個字元
+			// 跳過連續的 '*' 和 '?'，但操作發生在副本上
+			while (*p_after_wildcards == '*' || *p_after_wildcards == '?') {
+				if (*p_after_wildcards == '?') {
+					if (*s_after_qmarks == '\0') return 1;
+					if ((flags & NFS_FNM_PATHNAME) && *s_after_qmarks == '/') return 1;
+					if ((flags & NFS_FNM_PERIOD) && *s_after_qmarks == '.' && s_after_qmarks == string_to_test) return 1;
+					s_after_qmarks++;
 				}
-				p++; // 跳過 '*' 或已處理的 '?'
+				p_after_wildcards++;
 			}
 
-			if (*p == '\0') { // 如果 '*' 是模式的最後一個字元
+			if (*p_after_wildcards == '\0') {
 				if (flags & NFS_FNM_PATHNAME) {
-					// 如果設定了 FNM_PATHNAME，'*' 不能匹配路徑分隔符 '/'
-					// 因此，如果字串中還有 '/'，則不匹配
-					return (strchr(s, '/') == nullptr) ? 0 : 1;
+					return (strchr(s_after_qmarks, '/') == nullptr) ? 0 : 1;
 				}
-				return 0; // '*' 匹配剩餘所有字串
+				return 0;
 			}
 
-			// '*' 的核心邏輯：嘗試用模式的剩餘部分 (p) 匹配字串 (s) 的所有可能後綴
-			// 這是一個簡化的遞迴實現，原始碼中的迭代實現更複雜。
-			// 為了避免無限遞迴（例如 "a*b*c" vs "abc"），需要小心處理。
-			// 此處的簡化版本可能無法處理所有邊界情況。
-			const char* s_scan = s;
-			while (*s_scan != '\0') {
-				// FNM_PATHNAME 下 '*' 不能跨過 '/'
-				if ((flags & NFS_FNM_PATHNAME) && *s_scan == '/')
-					break;
-
-				// 嘗試從當前 s_scan 位置開始匹配模式的剩餘部分
-				if (nfs_pmatch(p, s_scan, flags & ~NFS_FNM_PERIOD) == 0) {
-					// FNM_PERIOD 旗標在 '*' 之後的遞迴調用中通常被移除，
-					// 因為 '*' 已經處理了可能的開頭 '.'。
-					return 0; // 找到匹配
+			// --- 核心邏輯修正 ---
+			// 使用 for 迴圈來清晰地表達「嘗試所有後綴」的意圖
+			for (const char* s_scan = s_after_qmarks; *s_scan != '\0'; ++s_scan) {
+				// 如果是 FNM_PATHNAME 模式，'*' 不能匹配 '/'，所以在此處的任何後續嘗試都將失敗。
+				if ((flags & NFS_FNM_PATHNAME) && *s_scan == '/') {
+					return 1;
 				}
-				s_scan++;
+
+				// 遞迴地檢查 * 後面的模式是否能從當前 s_scan 位置開始匹配
+				if (nfs_pmatch(p_after_wildcards, s_scan, flags & ~NFS_FNM_PERIOD) == 0) {
+					return 0; // 匹配成功
+				}
 			}
-			// 字串已耗盡，嘗試用模式的剩餘部分匹配空字串
-			return nfs_pmatch(p, s_scan, flags & ~NFS_FNM_PERIOD);
+
+			// 如果字串的所有後綴都無法匹配，最後嘗試用模式的剩餘部分匹配空字串
+			// (這處理了 "a*b" 匹配 "ab" 的情況)
+			return nfs_pmatch(p_after_wildcards, s_after_qmarks, flags & ~NFS_FNM_PERIOD);
 		}
 		case '?': { // 問號萬用字元
 			if (*s == '\0') return 1; // 字串結束，'?' 無法匹配
@@ -4442,6 +4440,9 @@ int p_node_iterate(NfsDtHandle* dt_handle, int current_trienode_idx, int parent_
 		return 1; // 左右子樹都處理完畢，繼續
 	}
 	else { // 外部節點 (或已達 b_index 限制)
+		if (current_trienode_idx == 0) {
+			return 1; // 忽略 head 節點，繼續遍歷其他分支
+		}
 		NfsTrieNode current_node_data;
 		if (trienode_get(dt_handle, current_trienode_idx, &current_node_data) < 0) return 1; //讀取失敗，繼續其他
 

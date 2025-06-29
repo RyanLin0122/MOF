@@ -6869,7 +6869,8 @@ void test_p_node_iterate_globbing() {
     // 測試 1: 匹配所有 ("*")
     g_iterate_matches.clear();
     g_iterate_stop_count = -1;
-    p_node_iterate(dt_h, p_get_head(), -1, "*", 0, test_iterate_callback, nullptr);
+    p_node_iterate(dt_h, p_get_head(), -2, "*", 0, test_iterate_callback, nullptr);
+    auto a = g_iterate_matches.size();
     assert(g_iterate_matches.size() == 4);
     std::sort(g_iterate_matches.begin(), g_iterate_matches.end());
     assert(g_iterate_matches[0] == "apple.txt");
@@ -6877,7 +6878,8 @@ void test_p_node_iterate_globbing() {
 
     // 測試 2: 匹配後綴 ("*.txt")
     g_iterate_matches.clear();
-    p_node_iterate(dt_h, p_get_head(), -1, "*.txt", 0, test_iterate_callback, nullptr);
+    p_node_iterate(dt_h, p_get_head(), -2, "*.txt", 0, test_iterate_callback, nullptr);
+    //auto b = g_iterate_matches.size();
     assert(g_iterate_matches.size() == 2);
     std::sort(g_iterate_matches.begin(), g_iterate_matches.end());
     assert(g_iterate_matches[0] == "apple.txt");
@@ -6885,14 +6887,14 @@ void test_p_node_iterate_globbing() {
 
     // 測試 3: 匹配問號 ("appl?.log")
     g_iterate_matches.clear();
-    p_node_iterate(dt_h, p_get_head(), -1, "appl?.log", 0, test_iterate_callback, nullptr);
+    p_node_iterate(dt_h, p_get_head(), -2, "appl?.log", 0, test_iterate_callback, nullptr);
     assert(g_iterate_matches.size() == 1);
     assert(g_iterate_matches[0] == "apply.log");
 
     // 測試 4: 回呼函式中斷遍歷
     g_iterate_matches.clear();
     g_iterate_stop_count = 2; // 設定在找到2個匹配項後中斷
-    p_node_iterate(dt_h, p_get_head(), -1, "ap*", 0, test_iterate_callback, nullptr);
+    p_node_iterate(dt_h, p_get_head(), -2, "ap*", 0, test_iterate_callback, nullptr);
     assert(g_iterate_matches.size() == 2);
 
     // 清理
