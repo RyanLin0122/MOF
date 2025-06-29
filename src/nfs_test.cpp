@@ -6748,6 +6748,291 @@ void run_nfs_dt_patricia_trie_tests() {
     std::cout << "--- NFS DT Patricia Trie (p_*) Tests Finished ---" << std::endl;
 }
 
+// --- 測試檔案名稱 ---
+const char* TEST_DT_API_IIO_FILENAME = "test_dt_api.paki";
+
+// --- find_prefix 函式測試 ---
+
+void test_find_prefix() {
+    char buffer[256];
+
+    // 測試：有普通前綴的模式
+    find_prefix("prefix*wildcard", buffer);
+    assert(strcmp(buffer, "prefix") == 0);
+
+    // 測試：以 '?' 萬用字元開始的模式
+    find_prefix("?rest", buffer);
+    assert(strcmp(buffer, "") == 0);
+
+    // 測試：以 '*' 萬用字元開始的模式
+    find_prefix("*rest", buffer);
+    assert(strcmp(buffer, "") == 0);
+
+    // 測試：以 '[' 萬用字元開始的模式
+    find_prefix("[set]rest", buffer);
+    assert(strcmp(buffer, "") == 0);
+
+    // 測試：完全沒有萬用字元的模式
+    find_prefix("just_a_string", buffer);
+    assert(strcmp(buffer, "just_a_string") == 0);
+
+    // 測試：空字串模式
+    find_prefix("", buffer);
+    assert(strcmp(buffer, "") == 0);
+
+    // 測試：傳入 nullptr
+    find_prefix(nullptr, buffer);
+    assert(strcmp(buffer, "") == 0);
+}
+
+// --- nfs_pmatch 函式測試 ---
+
+void test_nfs_pmatch_literals_and_wildcards() {
+    // nfs_pmatch 返回 0 表示匹配，1 表示不匹配
+    // 精確匹配 (含大小寫不敏感)
+    assert(nfs_pmatch("abc", "abc", 0) == 0);
+    assert(nfs_pmatch("abc", "ABC", 0) == 0);
+    assert(nfs_pmatch("abc", "abd", 0) == 1);
+
+    // '?' 萬用字元
+    assert(nfs_pmatch("a?c", "abc", 0) == 0);
+    assert(nfs_pmatch("a?c", "aBc", 0) == 0);
+    assert(nfs_pmatch("a?c", "ac", 0) == 1);
+    assert(nfs_pmatch("a?c", "abbc", 0) == 1);
+
+    // '*' 萬用字元
+    assert(nfs_pmatch("a*c", "abbbc", 0) == 0);
+    assert(nfs_pmatch("a*c", "ac", 0) == 0); // * 匹配空字串
+    assert(nfs_pmatch("*", "anything_and_everything", 0) == 0);
+    assert(nfs_pmatch("a*b*c", "axbyc", 0) == 0);
+}
+
+void test_nfs_pmatch_character_class() {
+    // 正向字元類
+    assert(nfs_pmatch("a[xyz]c", "ayc", 0) == 0);
+    assert(nfs_pmatch("a[xyz]c", "adc", 0) == 1);
+    assert(nfs_pmatch("a[a-d]c", "abc", 0) == 0);
+    assert(nfs_pmatch("a[A-D]c", "aBc", 0) == 0); // 大小寫不敏感範圍
+
+    // 反向字元類
+    assert(nfs_pmatch("a[!xyz]c", "adc", 0) == 0);
+    assert(nfs_pmatch("a[^xyz]c", "ayc", 0) == 1);
+
+    // 邊界情況
+    assert(nfs_pmatch("a[]]c", "a]c", 0) == 0); // ']' 作為類中的第一個字元
+    assert(nfs_pmatch("a[!]c", "a!c", 0) == 0); // '!' 作為類中的普通字元
+}
+
+void test_nfs_pmatch_flags() {
+    const int FNM_PERIOD = 0x04;
+    const int FNM_PATHNAME = 0x01;
+
+    // 測試 NFS_FNM_PERIOD
+    assert(nfs_pmatch("*rc", ".bashrc", FNM_PERIOD) == 1); // '*' 不應匹配開頭的 '.'
+    assert(nfs_pmatch("?rc", ".rc", FNM_PERIOD) == 1);   // '?' 不應匹配開頭的 '.'
+    assert(nfs_pmatch(".*", ".bashrc", FNM_PERIOD) == 0); // 明確用 '.' 匹配
+
+    // 測試 NFS_FNM_PATHNAME
+    assert(nfs_pmatch("a*c", "a/c", FNM_PATHNAME) == 1); // '*' 不應匹配 '/'
+    assert(nfs_pmatch("a?c", "a/c", FNM_PATHNAME) == 1); // '?' 不應匹配 '/'
+    assert(nfs_pmatch("a/*", "a/b", FNM_PATHNAME) == 0); // 明確用 '/' 匹配
+}
+
+// --- p_node_iterate 函式測試 ---
+
+// 用於 p_node_iterate 測試的回呼函式與全域變數
+static std::vector<std::string> g_iterate_matches;
+static int g_iterate_stop_count = -1; // -1 表示不中斷
+
+int test_iterate_callback(NfsDtHandle* dt_h, char* matched_filename, int trienode_idx, void* context) {
+    (void)dt_h; (void)trienode_idx; (void)context; // 標記為未使用
+    g_iterate_matches.push_back(matched_filename);
+    if (g_iterate_stop_count > 0 && (int)g_iterate_matches.size() >= g_iterate_stop_count) {
+        return 0; // 返回 0 表示停止遍歷
+    }
+    return 1; // 返回 1 表示繼續
+}
+
+void test_p_node_iterate_globbing() {
+    // 建立一個包含 DT 的 IIO 檔案
+    NfsIioFile* iio = nfs_iio_create(TEST_DT_API_IIO_FILENAME);
+    assert(iio);
+    NfsDtHandle* dt_h = nfs_dt_create(iio, 1, 2); // 使用 API 建立以確保 head 初始化
+    assert(dt_h);
+
+    // 插入測試鍵
+    p_insert_key(dt_h, "apple.txt", 1);
+    p_insert_key(dt_h, "apply.log", 2);
+    p_insert_key(dt_h, "apricot.dat", 3);
+    p_insert_key(dt_h, "banana.txt", 4);
+
+    // 測試 1: 匹配所有 ("*")
+    g_iterate_matches.clear();
+    g_iterate_stop_count = -1;
+    p_node_iterate(dt_h, p_get_head(), -1, "*", 0, test_iterate_callback, nullptr);
+    assert(g_iterate_matches.size() == 4);
+    std::sort(g_iterate_matches.begin(), g_iterate_matches.end());
+    assert(g_iterate_matches[0] == "apple.txt");
+    assert(g_iterate_matches[3] == "banana.txt");
+
+    // 測試 2: 匹配後綴 ("*.txt")
+    g_iterate_matches.clear();
+    p_node_iterate(dt_h, p_get_head(), -1, "*.txt", 0, test_iterate_callback, nullptr);
+    assert(g_iterate_matches.size() == 2);
+    std::sort(g_iterate_matches.begin(), g_iterate_matches.end());
+    assert(g_iterate_matches[0] == "apple.txt");
+    assert(g_iterate_matches[1] == "banana.txt");
+
+    // 測試 3: 匹配問號 ("appl?.log")
+    g_iterate_matches.clear();
+    p_node_iterate(dt_h, p_get_head(), -1, "appl?.log", 0, test_iterate_callback, nullptr);
+    assert(g_iterate_matches.size() == 1);
+    assert(g_iterate_matches[0] == "apply.log");
+
+    // 測試 4: 回呼函式中斷遍歷
+    g_iterate_matches.clear();
+    g_iterate_stop_count = 2; // 設定在找到2個匹配項後中斷
+    p_node_iterate(dt_h, p_get_head(), -1, "ap*", 0, test_iterate_callback, nullptr);
+    assert(g_iterate_matches.size() == 2);
+
+    // 清理
+    nfs_dt_close(dt_h);
+    nfs_iio_destroy(iio);
+}
+
+
+// --- nfs_dt_create 函式測試 ---
+
+void test_nfs_dt_create_valid() {
+    NfsIioFile* iio = nfs_iio_create(TEST_DT_API_IIO_FILENAME);
+    assert(iio);
+    int initial_channels = iio->num_channels;
+
+    NfsDtHandle* dt_h = nfs_dt_create(iio, 1, 2); // 請求 trienode:1, keynode:2 個區塊
+    assert(dt_h != nullptr);
+    assert(dt_h->iio_file == iio);
+    assert(iio->num_channels == initial_channels + 2);
+    assert(dt_h->trienode_channel_id == initial_channels);
+    assert(dt_h->keynode_channel_id == initial_channels + 1);
+    assert(dt_h->next_free_trienode_idx == 1); // 索引 0 為 head
+    assert(dt_h->next_free_keynode_idx == 1);  // 索引 0 為 head
+
+    // 驗證 head 是否被初始化
+    NfsTrieNode head_node;
+    assert(trienode_get(dt_h, 0, &head_node) == sizeof(NfsTrieNode));
+    assert(head_node.b_index == -1);
+
+    nfs_dt_close(dt_h);
+    nfs_iio_destroy(iio);
+}
+
+// --- nfs_dt_open 函式測試 ---
+
+void test_nfs_dt_open_valid() {
+    int tn_ch_id_created, kn_ch_id_created;
+    // 1. 先建立一個包含 DT 的 IIO 檔案
+    {
+        NfsIioFile* iio_setup = nfs_iio_create(TEST_DT_API_IIO_FILENAME);
+        NfsDtHandle* dt_setup = nfs_dt_create(iio_setup, 1, 1);
+        assert(dt_setup);
+        nfs_dt_filename_add(dt_setup, "file1");
+        nfs_dt_filename_add(dt_setup, "file2");
+        tn_ch_id_created = dt_setup->trienode_channel_id;
+        kn_ch_id_created = dt_setup->keynode_channel_id;
+        nfs_dt_close(dt_setup);
+        nfs_iio_close(iio_setup); // 關閉 IIO 檔案以寫入 header
+    }
+
+    // 2. 重新開啟 IIO 和 DT
+    NfsIioFile* iio_reopen = nfs_iio_open(TEST_DT_API_IIO_FILENAME);
+    assert(iio_reopen);
+    NfsDtHandle* dt_opened = nfs_dt_open(iio_reopen, tn_ch_id_created, kn_ch_id_created);
+    assert(dt_opened != nullptr);
+    assert(dt_opened->iio_file == iio_reopen);
+    // 驗證 next_free_* 是否被正確計算
+    assert(dt_opened->next_free_trienode_idx > 1);
+    assert(dt_opened->next_free_keynode_idx > 1);
+
+    nfs_dt_close(dt_opened);
+    nfs_iio_destroy(iio_reopen);
+}
+
+// --- nfs_dt_close / nfs_dt_destroy 函式測試 ---
+
+void test_nfs_dt_close_and_destroy() {
+    NfsIioFile* iio = nfs_iio_create(TEST_DT_API_IIO_FILENAME);
+    assert(iio);
+    NfsDtHandle* dt_h = nfs_dt_create(iio, 1, 1);
+    assert(dt_h != nullptr);
+
+    // 測試 nfs_dt_close
+    nfs_dt_close(dt_h); // 應安全釋放 handle，不崩潰
+
+    // 測試 nfs_dt_destroy (功能同 close)
+    dt_h = nfs_dt_create(iio, 1, 1);
+    assert(dt_h != nullptr);
+    nfs_dt_destroy(dt_h);
+
+    // 測試傳入 nullptr
+    nfs_dt_close(nullptr);
+    nfs_dt_destroy(nullptr);
+
+    nfs_iio_destroy(iio);
+}
+
+// --- nfs_dt_filename_add 函式測試 ---
+
+void test_nfs_dt_filename_add_and_lookup() {
+    NfsIioFile* iio = nfs_iio_create(TEST_DT_API_IIO_FILENAME);
+    NfsDtHandle* dt_h = nfs_dt_create(iio, 1, 1);
+    assert(dt_h);
+
+    // 新增一個新檔名
+    int result1 = nfs_dt_filename_add(dt_h, "new_file.txt");
+    assert(result1 >= 0); // 應返回有效的 trie node index
+
+    // 驗證它是否存在
+    assert(nfs_dt_filename_lookup(dt_h, "new_file.txt") == result1);
+
+    // 新增一個重複的檔名
+    assert(nfs_dt_filename_add(dt_h, "new_file.txt") < 0); // 應失敗
+
+    // 新增另一個檔名
+    int result2 = nfs_dt_filename_add(dt_h, "another_file.log");
+    assert(result2 >= 0);
+    assert(result2 != result1);
+
+    // 驗證兩個檔案都存在
+    assert(nfs_dt_filename_lookup(dt_h, "new_file.txt") == result1);
+    assert(nfs_dt_filename_lookup(dt_h, "another_file.log") == result2);
+
+    // 驗證不存在的檔案
+    assert(nfs_dt_filename_lookup(dt_h, "ghost_file.dat") < 0);
+
+    nfs_dt_close(dt_h);
+    nfs_iio_destroy(iio);
+}
+
+// --- 主測試執行函式 ---
+// 您可以將此函式加入 nfs_test.cpp 的 run_all_tests() 中
+void run_nfs_dt_api_tests() {
+    std::cout << "--- Running NFS DT API (Layer 6) Tests ---" << std::endl;
+
+    RUN_TEST(test_find_prefix);
+    RUN_TEST(test_nfs_pmatch_literals_and_wildcards);
+    RUN_TEST(test_nfs_pmatch_character_class);
+    RUN_TEST(test_nfs_pmatch_flags);
+    RUN_TEST(test_p_node_iterate_globbing);
+    RUN_TEST(test_nfs_dt_create_valid);
+    RUN_TEST(test_nfs_dt_open_valid);
+    RUN_TEST(test_nfs_dt_close_and_destroy);
+    RUN_TEST(test_nfs_dt_filename_add_and_lookup);
+
+    // 測試後清理
+    std::filesystem::remove(TEST_DT_API_IIO_FILENAME);
+    std::cout << "--- NFS DT API (Layer 6) Tests Finished ---" << std::endl;
+}
+
 void run_all_tests() {
 	// --- 單元測試 ---
 	RUN_TEST(test_bit_operations);
@@ -6944,6 +7229,7 @@ void run_all_tests() {
     run_nfs_dt_low_level_tests();
     run_nfs_dt_extra_low_level_tests();
     run_nfs_dt_patricia_trie_tests();
+    run_nfs_dt_api_tests();
 
 	// cleanup temp files
     cleanup_test_files(TEST_VFS_BASENAME);

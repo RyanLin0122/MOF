@@ -4279,20 +4279,15 @@ int nfs_pmatch(const char* pattern, const char* string_to_test, int flags) {
 			// 此處的簡化版本可能無法處理所有邊界情況。
 			const char* s_scan = s;
 			while (*s_scan != '\0') {
+				// FNM_PATHNAME 下 '*' 不能跨過 '/'
+				if ((flags & NFS_FNM_PATHNAME) && *s_scan == '/')
+					break;
+
 				// 嘗試從當前 s_scan 位置開始匹配模式的剩餘部分
 				if (nfs_pmatch(p, s_scan, flags & ~NFS_FNM_PERIOD) == 0) {
 					// FNM_PERIOD 旗標在 '*' 之後的遞迴調用中通常被移除，
 					// 因為 '*' 已經處理了可能的開頭 '.'。
 					return 0; // 找到匹配
-				}
-				if ((flags & NFS_FNM_PATHNAME) && *s_scan == '/') {
-					// 如果是 FNM_PATHNAME，'*' 不能跨越 '/'
-					// 但如果 p 本身以 '/' 開頭，則遞迴調用會處理它。
-					// 原始碼的處理更細緻。
-					// 此處如果遇到 '/' 且 FNM_PATHNAME，表明 '*' 不能匹配它，
-					// 但模式 p 仍可能以 '/' 開頭，所以遞迴仍然是必要的。
-					// 不過，如果 p 不是以 '/' 開頭，那麼 *s_scan == '/' 就意味著這裡無法匹配。
-					// 為了簡化，我們讓遞迴的 nfs_pmatch 去處理。
 				}
 				s_scan++;
 			}
@@ -4306,101 +4301,83 @@ int nfs_pmatch(const char* pattern, const char* string_to_test, int flags) {
 			s++; // 消耗字串中的一個字元
 			break;
 		}
-		case '[': { // 字元類 [...]
-			if (*s == '\0') return 1; // 字串結束
-			// FNM_PERIOD 和 FNM_PATHNAME 檢查
+		case '[': {
+			if (*s == '\0') return 1;
 			if ((flags & NFS_FNM_PATHNAME) && *s == '/') return 1;
 			if ((flags & NFS_FNM_PERIOD) && *s == '.' && s == string_to_test) return 1;
 
 			bool matched_in_class = false;
 			bool negated_class = false;
-			const char* p_class_start = p; // 記錄 '[' 後第一個字元的位置
+			const char* p_class_start = p;
 
-			if (*p == '!' || *p == '^') {
+			// 僅當 '!' 或 '^' 之後還有不是 ']' 的字元時，才視為「反向」字元類
+			if ((*p == '!' || *p == '^') && p[1] != ']') {
 				negated_class = true;
 				p++;
 				p_class_start++;
 			}
 
-			// 獲取並轉換當前字串字元（用於大小寫不敏感比較）
 			char char_s_current = *s;
-			char char_s_lower = (char_s_current >= 'A' && char_s_current <= 'Z') ? (char_s_current + 32) : char_s_current;
+			char char_s_lower = (char_s_current >= 'A' && char_s_current <= 'Z')
+				? (char_s_current + 32) : char_s_current;
+			char prev_class_char = '\0';
 
-			char prev_class_char = '\0'; // 用於處理範圍
-
+			// 逐一掃描字元類內的字元或範圍
 			while (true) {
 				char char_p_class = *p++;
-				if (char_p_class == '\0') return 1; // 模式在 '[' 內部意外結束
+				if (char_p_class == '\0') return 1;  // 格式錯誤
 
-				// 處理 ']' 字元
-				// 如果 ']' 是類定義中的第一個有效字元 (緊跟在 '[' 或 '[^'/'[!'] 之後)，則它被視為普通字元。
-				// 否則，']' 標記字元類的結束。
-				if (char_p_class == ']' && p > p_class_start + 1) { // p 已前進，所以 > p_class_start + 1 表示 ']' 不是第一個
-					break; // 字元類定義結束
+				// 如果遇到結尾 ']'（且不是第一個有效字元），結束字元類掃描
+				if (char_p_class == ']' && p > p_class_start + 1) {
+					break;
 				}
 
-				// 處理轉義 (如果未設定 FNM_NOESCAPE)
-				if (!(flags & NFS_FNM_NOESCAPE) && char_p_class == '\\') {
-					char_p_class = *p++;
-					if (char_p_class == '\0') return 1; // 模式以 '\' 結尾
-				}
-
-				char char_p_class_lower = (char_p_class >= 'A' && char_p_class <= 'Z') ? (char_p_class + 32) : char_p_class;
-
-				// 檢查範圍，例如 [a-z]
+				// 處理範圍語法 [a-z]
 				if (prev_class_char != '\0' && char_p_class == '-' && *p != ']' && *p != '\0') {
-					char range_end_char = *p++; // 獲取範圍結束字元
-					if (!(flags & NFS_FNM_NOESCAPE) && range_end_char == '\\') {
-						range_end_char = *p++;
-						if (range_end_char == '\0') return 1;
+					char range_end = *p++;
+					if (!(flags & NFS_FNM_NOESCAPE) && range_end == '\\') {
+						range_end = *p++;
+						if (range_end == '\0') return 1;
 					}
-					if (range_end_char == '\0') return 1; // 模式在範圍定義中結束
+					if (range_end == '\0') return 1;
 
-					char range_end_lower = (range_end_char >= 'A' && range_end_char <= 'Z') ? (range_end_char + 32) : range_end_char;
-					char range_start_lower = (prev_class_char >= 'A' && prev_class_char <= 'Z') ? (prev_class_char + 32) : prev_class_char; // prev_class_char 已是小寫
-
-					if (range_start_lower <= range_end_lower) {
-						if (char_s_lower >= range_start_lower && char_s_lower <= range_end_lower) {
-							matched_in_class = true;
-						}
-					}
-					else { // 反向範圍，例如 [z-a]
-						if (char_s_lower >= range_end_lower && char_s_lower <= range_start_lower) {
-							matched_in_class = true;
-						}
-					}
-					prev_class_char = '\0'; // 範圍已處理
-				}
-				else { // 單個字元比較
-					if (char_s_lower == char_p_class_lower) {
+					char low = (prev_class_char >= 'A' && prev_class_char <= 'Z')
+						? prev_class_char + 32 : prev_class_char;
+					char high = (range_end >= 'A' && range_end <= 'Z')
+						? range_end + 32 : range_end;
+					if (low > high) std::swap(low, high);
+					if (char_s_lower >= low && char_s_lower <= high) {
 						matched_in_class = true;
 					}
-					prev_class_char = char_p_class_lower; // 儲存以備可能的範圍檢查
+					prev_class_char = '\0';
 				}
-				if (matched_in_class && !negated_class) break; // 如果是正向類且已匹配，則無需再檢查
-			} // end while for parsing class items
-
-			// 快速跳過字元類剩餘部分，直到找到 ']'
-			if (matched_in_class || negated_class) { // 只有在需要判斷最終匹配結果時才跳
-				bool found_closing_bracket = false;
-				while (*(p - 1) != '\0') { // p-1 是因為 p 在迴圈中總是先 ++
-					if (*(p - 1) == ']' && p > p_class_start + 1) { // 確保不是開頭的 ']'
-						found_closing_bracket = true;
-						break;
+				else {
+					// 單一字元比較
+					char pcl = (char_p_class >= 'A' && char_p_class <= 'Z')
+						? char_p_class + 32 : char_p_class;
+					if (pcl == char_s_lower) {
+						matched_in_class = true;
 					}
-					// 如果沒有找到 ']' 就結束了，表示模式格式錯誤
-					if (*p == '\0') break;
-					if (!(flags & NFS_FNM_NOESCAPE) && *p == '\\') p++; // 跳過轉義字元後的那個
+					prev_class_char = pcl;
+				}
+
+				if (matched_in_class && !negated_class) break;
+			}
+
+			// 跳過字元類中剩下的內容，找到真正的 ']'
+			if (matched_in_class || negated_class) {
+				while (*(p - 1) != '\0') {
+					if (*(p - 1) == ']' && p > p_class_start + 1) break;
+					if (!(flags & NFS_FNM_NOESCAPE) && *p == '\\') p++;
 					p++;
 				}
-				if (!found_closing_bracket) return 1; // 格式錯誤
+				if (*(p - 1) != ']') return 1;
 			}
 
+			// 如果正向且沒匹配，或反向且有匹配，都算不合
+			if (negated_class == matched_in_class) return 1;
 
-			if (negated_class == matched_in_class) { // (反向且匹配到) 或 (正向且未匹配到) -> 最終不匹配
-				return 1;
-			}
-			s++; // 字元與類匹配，消耗字串字元
+			s++;  // 成功匹配一個字元
 			break;
 		}
 		case '\\': { // 反斜線轉義
@@ -4452,7 +4429,6 @@ int p_node_iterate(NfsDtHandle* dt_handle, int current_trienode_idx, int parent_
 	if (!dt_handle || current_trienode_idx < 0) return 1; // 無效節點，但允許繼續遍歷其他分支
 
 	short current_node_b_idx = trienode_get_bindex(dt_handle, current_trienode_idx);
-
 	if (current_node_b_idx > parent_b_index) { // 內部節點，繼續向下
 		int left_child = trienode_get_left(dt_handle, current_trienode_idx);
 		int right_child = trienode_get_right(dt_handle, current_trienode_idx);
@@ -4482,9 +4458,9 @@ int p_node_iterate(NfsDtHandle* dt_handle, int current_trienode_idx, int parent_
 			return 1; // 提取鍵失敗，繼續
 		}
 
-		// 假設 nfs_pmatch 返回 1 表示匹配，0 表示不匹配 (基於原始碼 nfs_glob 用法)
-		if (nfs_pmatch(glob_pattern, nfs_glob_key_buffer, pmatch_flags) == 1) {
+		if (nfs_pmatch(glob_pattern, nfs_glob_key_buffer, pmatch_flags) == 0) {
 			if (callback) {
+				// callback 回傳 0 就停止遍歷，非0 就繼續
 				return callback(dt_handle, nfs_glob_key_buffer, current_trienode_idx, callback_context);
 			}
 		}
@@ -4748,13 +4724,13 @@ int nfs_dt_filename_glob(NfsDtHandle* dt_handle, const char* pattern, int flags,
 	// p_node_iterate(dt_handle, v6 /*起始節點*/, v9-1 /*父b_index或上限*/, pattern, flags, cbk, ctx);
 	// 此處 v9-1 的處理可能需要更細緻的理解，它可能是為了限制迭代深度或處理邊界。
 	// 簡單起見，我們傳遞一個相對較小的 b_index 作為起始父 b_index。
-	int initial_parent_b_index = -1; // 頭節點的 b_index
-	if (start_node_for_iteration != p_get_head()) {
+	int initial_parent_b_index;
+	if (start_node_for_iteration == p_get_head()) {
+		// head.b_index == -1，減1後變成 -2，讓 head (b_index=-1) 仍 satisfy b_index > parent
+		initial_parent_b_index = trienode_get_bindex(dt_handle, start_node_for_iteration) - 1;
+	}
+	else {
 		initial_parent_b_index = trienode_get_bindex(dt_handle, start_node_for_iteration);
-		// 原始碼的 p_node_iterate 邏輯是 if (current_b > parent_b), 所以 parent_b 應該是上一層的
-		// 如果 start_node_for_iteration 是 p_lookup_key_n 返回的，它可能是內部節點。
-		// 此處簡化：如果從 prefix 找到的節點開始，其自身的 b_index 可作為一個上限參考。
-		// 實際上，p_node_iterate 的 parent_b_index 用於決定何時從遞迴下降轉為檢查外部節點。
 	}
 
 
@@ -5644,8 +5620,8 @@ NfsHandle* nfs_start(const char* base_vfs_name, int access_mode) {
 		if (!handle->data_handle) { nfs_errno = 2; goto cleanup_error; }
 
 		// 原始碼中 DT, NT, FAT 開啟時使用的 IIO 通道 ID 是固定的
-		//handle->dt_handle = nfs_dt_open(handle->iio_handle, 0, 1); // TrieNodes on Ch0, KeyNodes on Ch1
-		//if (!handle->dt_handle) { nfs_errno = 5; goto cleanup_error; }
+		handle->dt_handle = nfs_dt_open(handle->iio_handle, 0, 1); // TrieNodes on Ch0, KeyNodes on Ch1
+		if (!handle->dt_handle) { nfs_errno = 5; goto cleanup_error; }
 
 		handle->nt_handle = nfs_nt_open(handle->iio_handle, 2);   // NT on Ch2
 		if (!handle->nt_handle) { nfs_errno = 4; goto cleanup_error; }
