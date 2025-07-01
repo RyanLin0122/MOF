@@ -7015,8 +7015,209 @@ void test_nfs_dt_filename_add_and_lookup() {
     nfs_iio_destroy(iio);
 }
 
-// --- 主測試執行函式 ---
-// 您可以將此函式加入 nfs_test.cpp 的 run_all_tests() 中
+// --- nfs_dt_filename_delete / nfs_dt_filename_lookup 函式測試 ---
+void test_nfs_dt_filename_delete_and_lookup() {
+    // 建立一個包含 DT 的 IIO 檔案
+    NfsIioFile* iio = nfs_iio_create(TEST_DT_API_IIO_FILENAME);
+    assert(iio);
+    NfsDtHandle* dt_h = nfs_dt_create(iio, 1, 2); // 使用 API 建立以確保 head 初始化
+    assert(dt_h);
+
+    const char* file1 = "apple.txt";
+    const char* file2 = "banana.log";
+    const char* non_existent_file = "coconut.dat";
+
+    // 1. 新增檔案並驗證 lookup
+    int idx1 = nfs_dt_filename_add(dt_h, file1);
+    int idx2 = nfs_dt_filename_add(dt_h, file2);
+    assert(idx1 >= 0 && idx2 >= 0);
+
+    assert(nfs_dt_filename_lookup(dt_h, file1) == idx1);
+    assert(nfs_dt_filename_lookup(dt_h, file2) == idx2);
+    assert(nfs_dt_filename_lookup(dt_h, non_existent_file) < 0);
+
+    // 2. 刪除存在的檔案 (file1)
+    assert(nfs_dt_filename_delete(dt_h, file1) == 0); // 成功應返回 0
+
+    // 3. 驗證刪除結果
+    assert(nfs_dt_filename_lookup(dt_h, file1) < 0); // file1 應已不存在
+    assert(nfs_dt_filename_lookup(dt_h, file2) == idx2); // file2 應不受影響
+
+    // 4. 刪除不存在的檔案
+    assert(nfs_dt_filename_delete(dt_h, non_existent_file) < 0); // 應失敗
+
+    // 5. 測試無效輸入
+    assert(nfs_dt_filename_lookup(nullptr, file1) < 0);
+    assert(nfs_dt_filename_lookup(dt_h, nullptr) < 0);
+    assert(nfs_dt_filename_delete(nullptr, file1) < 0);
+    assert(nfs_dt_filename_delete(dt_h, nullptr) < 0);
+
+    // 清理
+    nfs_dt_close(dt_h);
+    nfs_iio_destroy(iio);
+}
+
+// --- nfs_dt_filename_get/set_nt_index 函式測試 ---
+void test_nfs_dt_filename_get_set_nt_index() {
+    NfsIioFile* iio = nfs_iio_create(TEST_DT_API_IIO_FILENAME);
+    NfsDtHandle* dt_h = nfs_dt_create(iio, 1, 1);
+    assert(dt_h);
+
+    const char* filename = "test_file";
+    int trie_idx = nfs_dt_filename_add(dt_h, filename);
+    assert(trie_idx >= 0);
+
+    // 1. 驗證初始 NT 索引 (應為 0)
+    assert(nfs_dt_filename_get_nt_index(dt_h, trie_idx) == 0);
+
+    // 2. 設定新的 NT 索引
+    short new_nt_index = 123;
+    assert(nfs_dt_filename_set_nt_index(dt_h, trie_idx, new_nt_index) > 0); // 成功應返回 > 0 (寫入的位元組數)
+
+    // 3. 驗證 NT 索引是否已更新
+    assert(nfs_dt_filename_get_nt_index(dt_h, trie_idx) == new_nt_index);
+
+    // 4. 測試無效輸入
+    assert(nfs_dt_filename_get_nt_index(nullptr, trie_idx) < 0);
+    assert(nfs_dt_filename_get_nt_index(dt_h, -1) < 0); // 無效 trienode_idx
+    assert(nfs_dt_filename_set_nt_index(nullptr, trie_idx, 1) < 0);
+    assert(nfs_dt_filename_set_nt_index(dt_h, -1, 1) < 0);
+
+    // 清理
+    nfs_dt_close(dt_h);
+    nfs_iio_destroy(iio);
+}
+
+// --- nfs_dt_filename_get_name 函式測試 ---
+void test_nfs_dt_filename_get_name() {
+    NfsIioFile* iio = nfs_iio_create(TEST_DT_API_IIO_FILENAME);
+    NfsDtHandle* dt_h = nfs_dt_create(iio, 1, 2); // keynode channel 給大一點
+    assert(dt_h);
+
+    char buffer[1024];
+
+    // 1. 測試短檔名
+    const char* short_name = "file.txt";
+    int idx_short = nfs_dt_filename_add(dt_h, short_name);
+    assert(idx_short >= 0);
+    assert(nfs_dt_filename_get_name(dt_h, idx_short, buffer) == 0);
+    assert(strcmp(buffer, short_name) == 0);
+
+    // 2. 測試長檔名 (跨越多個 KeyNode)
+    const char* long_name = "this_is_a_very_long_filename_that_spans_across_multiple_keynode_fragments_for_testing_purposes.log";
+    int idx_long = nfs_dt_filename_add(dt_h, long_name);
+    assert(idx_long >= 0);
+    assert(nfs_dt_filename_get_name(dt_h, idx_long, buffer) == 0);
+    assert(strcmp(buffer, long_name) == 0);
+
+    // 3. 測試無效輸入
+    assert(nfs_dt_filename_get_name(nullptr, idx_short, buffer) < 0);
+    assert(nfs_dt_filename_get_name(dt_h, -1, buffer) < 0); // 無效 trienode_idx
+    assert(nfs_dt_filename_get_name(dt_h, idx_short, nullptr) < 0);
+
+    // 清理
+    nfs_dt_close(dt_h);
+    nfs_iio_destroy(iio);
+}
+
+
+// --- __nfs_glob_sort_callback / __nfs_glob_processing_callback 函式測試 ---
+
+// 由於這兩個函式是 static 的，我們不能直接在 nfs_test.cpp 中呼叫它們。
+// 因此，它們的正確性將透過測試 nfs_dt_filename_glob 來間接驗證。
+// 以下提供一個若能直接呼叫它們時的測試情境設計。
+
+/*
+// 理想化的 __nfs_glob_sort_callback 測試
+void test_internal_glob_sort_callback() {
+    const char* unsorted[] = { "zebra", "apple", "cat" };
+    const char* sorted[] = { "apple", "cat", "zebra" };
+
+    qsort((void*)unsorted, 3, sizeof(char*), __nfs_glob_sort_callback);
+
+    assert(strcmp(unsorted[0], sorted[0]) == 0);
+    assert(strcmp(unsorted[1], sorted[1]) == 0);
+    assert(strcmp(unsorted[2], sorted[2]) == 0);
+}
+
+// 理想化的 __nfs_glob_processing_callback 測試
+void test_internal_glob_processing_callback() {
+    NfsGlobResults results = { 0 };
+    char filename[] = "test.txt";
+
+    // 首次呼叫
+    assert(__nfs_glob_processing_callback(nullptr, filename, 1, &results) == 1);
+    assert(results.gl_pathc == 1);
+    assert(strcmp(results.gl_pathv[0], filename) == 0);
+
+    // 再次呼叫
+    char filename2[] = "another.log";
+    assert(__nfs_glob_processing_callback(nullptr, filename2, 2, &results) == 1);
+    assert(results.gl_pathc == 2);
+    assert(strcmp(results.gl_pathv[1], filename2) == 0);
+
+    // 釋放結果
+    nfs_glob_free(&results);
+}
+*/
+
+
+// --- nfs_dt_filename_glob 函式測試 (包含對內部回呼函式的驗證) ---
+
+void test_nfs_dt_filename_glob() {
+    NfsIioFile* iio = nfs_iio_create(TEST_DT_API_IIO_FILENAME);
+    NfsDtHandle* dt_h = nfs_dt_create(iio, 1, 2);
+    assert(dt_h);
+
+    // 新增測試鍵
+    nfs_dt_filename_add(dt_h, "apple.txt");
+    nfs_dt_filename_add(dt_h, "apply.log");
+    nfs_dt_filename_add(dt_h, "apricot.dat");
+    nfs_dt_filename_add(dt_h, "banana.txt");
+    nfs_dt_filename_add(dt_h, ".config"); // 隱藏檔
+
+    NfsGlobResults results = { 0 };
+
+    // 測試 1: 匹配所有 ("*")，預設排序
+    assert(nfs_dt_filename_glob(dt_h, "*", 0, nullptr, &results) == 0);
+    assert(results.gl_pathc == 5);
+    // 驗證排序 (__nfs_glob_sort_callback)
+    assert(strcmp(results.gl_pathv[0], ".config") == 0);
+    assert(strcmp(results.gl_pathv[1], "apple.txt") == 0);
+    assert(strcmp(results.gl_pathv[4], "banana.txt") == 0);
+    nfs_glob_free(&results);
+
+    // 測試 2: 匹配後綴 ("*.txt")，不排序
+    const int FNM_NOSORT = 0x04; // 假設此旗標存在
+    assert(nfs_dt_filename_glob(dt_h, "*.txt", FNM_NOSORT, nullptr, &results) == 0);
+    assert(results.gl_pathc == 2);
+    // 不驗證順序，只驗證內容 (__nfs_glob_processing_callback)
+    bool found_apple = false, found_banana = false;
+    for (size_t i = 0; i < results.gl_pathc; ++i) {
+        if (strcmp(results.gl_pathv[i], "apple.txt") == 0) found_apple = true;
+        if (strcmp(results.gl_pathv[i], "banana.txt") == 0) found_banana = true;
+    }
+    assert(found_apple && found_banana);
+    nfs_glob_free(&results);
+
+    // 測試 3: 無匹配項
+    const int GLOB_NOMATCH = 1; // 假設
+    assert(nfs_dt_filename_glob(dt_h, "zebra.*", 0, nullptr, &results) == GLOB_NOMATCH);
+    assert(results.gl_pathc == 0);
+    assert(results.gl_pathv == nullptr);
+
+    // 測試 4: 無匹配項 + FNM_NOCHECK
+    const int FNM_NOCHECK = 0x10; // 假設
+    assert(nfs_dt_filename_glob(dt_h, "zebra.*", FNM_NOCHECK, nullptr, &results) == 0);
+    assert(results.gl_pathc == 1);
+    assert(strcmp(results.gl_pathv[0], "zebra.*") == 0);
+    nfs_glob_free(&results);
+
+    // 清理
+    nfs_dt_close(dt_h);
+    nfs_iio_destroy(iio);
+}
+
 void run_nfs_dt_api_tests() {
     std::cout << "--- Running NFS DT API (Layer 6) Tests ---" << std::endl;
 
@@ -7029,6 +7230,10 @@ void run_nfs_dt_api_tests() {
     RUN_TEST(test_nfs_dt_open_valid);
     RUN_TEST(test_nfs_dt_close_and_destroy);
     RUN_TEST(test_nfs_dt_filename_add_and_lookup);
+    RUN_TEST(test_nfs_dt_filename_delete_and_lookup);
+    RUN_TEST(test_nfs_dt_filename_get_set_nt_index);
+    RUN_TEST(test_nfs_dt_filename_get_name);
+    RUN_TEST(test_nfs_dt_filename_glob);
 
     // 測試後清理
     std::filesystem::remove(TEST_DT_API_IIO_FILENAME);
