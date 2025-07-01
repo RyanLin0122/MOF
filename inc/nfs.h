@@ -351,6 +351,10 @@ int nfs_pmatch(const char* pattern, const char* string_to_test, int flags);
 
 
 // Layer 7 (NFS API - File System Level)
+int allocate_file_descriptor(NfsHandle* handle);
+int deallocate_file_descriptor(NfsHandle* handle, int fd);
+void file_truncate(NfsHandle* handle, NfsOpenFileHandle* fh, int new_size);
+
 NfsHandle* nfs_start(const char* base_vfs_name, int access_mode);
 void nfs_end(NfsHandle* handle, int destroy_files_flag);
 int nfs_exists(const char* base_vfs_name); // Returns bool (int)

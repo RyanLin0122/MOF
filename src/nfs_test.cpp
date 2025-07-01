@@ -7240,6 +7240,239 @@ void run_nfs_dt_api_tests() {
     std::cout << "--- NFS DT API (Layer 6) Tests Finished ---" << std::endl;
 }
 
+const char* TEST_VFS_L7_BASENAME = "test_vfs_layer7"; // Layer 7 測試專用的 VFS 基礎名稱
+
+// --- 輔助函式 ---
+
+// 輔助：建立一個用於 Layer 7 測試的完整 NFS 環境
+NfsHandle* helper_setup_l7_handle() {
+    // 模式 2 通常表示讀寫模式
+    NfsHandle* handle = nfs_start(TEST_VFS_L7_BASENAME, 2);
+    assert(handle != nullptr);
+    return handle;
+}
+
+// 輔助：關閉並銷毀 Layer 7 測試環境
+void helper_teardown_l7_handle(NfsHandle* handle) {
+    if (handle) {
+        // destroy_files_flag 設為 true 以刪除 .paki 和 .pak 檔案
+        nfs_end(handle, 1);
+    }
+    // 額外清理，以防萬一
+    cleanup_test_files(TEST_VFS_L7_BASENAME);
+}
+
+
+// --- 測試案例 ---
+
+// --- 測試 allocate_file_descriptor / deallocate_file_descriptor ---
+void test_internal_fd_allocation() {
+    NfsHandle* handle = helper_setup_l7_handle();
+
+    // 1. 首次分配
+    int fd0 = allocate_file_descriptor(handle);
+    assert(fd0 == 0);
+    assert(handle->open_files_array[0] != nullptr);
+    assert(handle->open_files_array_capacity == 32); // 驗證初始容量
+
+    // 2. 再次分配
+    int fd1 = allocate_file_descriptor(handle);
+    assert(fd1 == 1);
+    assert(handle->open_files_array[1] != nullptr);
+
+    // 3. 釋放 fd0
+    assert(deallocate_file_descriptor(handle, fd0) == 0);
+    assert(handle->open_files_array[0] == nullptr);
+
+    // 4. 重新分配，應使用剛被釋放的 fd0
+    int fd_reused = allocate_file_descriptor(handle);
+    assert(fd_reused == 0);
+    assert(handle->open_files_array[0] != nullptr);
+
+    // 5. 測試陣列擴展 (初始32，填滿後應擴展到64)
+    for (int i = 2; i < 32; ++i) { // 填滿剩餘的初始槽位
+        assert(allocate_file_descriptor(handle) == i);
+    }
+    assert(handle->open_files_array_capacity == 32);
+    int fd32 = allocate_file_descriptor(handle); // 觸發擴展
+    assert(fd32 == 32);
+    assert(handle->open_files_array_capacity == 64);
+    assert(handle->open_files_array[32] != nullptr);
+
+    // 6. 測試無效釋放
+    assert(deallocate_file_descriptor(handle, 99) != 0); // 索引越界
+    assert(deallocate_file_descriptor(handle, 1) != 0); // 該槽位未被釋放
+    deallocate_file_descriptor(handle, 1); // 先釋放
+    assert(deallocate_file_descriptor(handle, 1) != 0); // 再次釋放應失敗
+
+    helper_teardown_l7_handle(handle);
+}
+
+// --- 測試 file_truncate ---
+void test_internal_file_truncate() {
+    NfsHandle* handle = helper_setup_l7_handle();
+    const char* filename = "trunc_me.txt";
+
+    // 1. 建立一個包含數個區塊的檔案
+    int fd = nfs_file_create(handle, filename);
+    assert(fd >= 0);
+    std::vector<char> data(2000, 'A'); // 約4個 512B 區塊
+    assert(nfs_file_write(handle, fd, data.data(), data.size()) == (int)data.size());
+    assert(nfs_nt_node_get_size(handle->nt_handle, handle->open_files_array[fd]->nt_node_idx) == 2000);
+
+    NfsOpenFileHandle* fh = handle->open_files_array[fd];
+
+    // 2. 縮減檔案
+    file_truncate(handle, fh, 800);
+    assert(nfs_nt_node_get_size(handle->nt_handle, fh->nt_node_idx) == 800);
+    // 驗證 FAT 鏈是否縮短 (間接驗證：讀取時應只能讀到800位元組)
+    nfs_file_lseek(handle, fd, 0, 0); // SEEK_SET
+    std::vector<char> read_buf(1000);
+    assert(nfs_file_read(handle, fd, read_buf.data(), read_buf.size()) == 800);
+
+    // 3. 截斷至 0
+    file_truncate(handle, fh, 0);
+    assert(nfs_nt_node_get_size(handle->nt_handle, fh->nt_node_idx) == 0);
+    nfs_file_lseek(handle, fd, 0, 0);
+    assert(nfs_file_read(handle, fd, read_buf.data(), read_buf.size()) == 0);
+
+
+    // 4. 測試無效輸入
+    // file_truncate(nullptr, fh, 100); // 應安全處理
+    // file_truncate(handle, nullptr, 100); // 應安全處理
+
+    helper_teardown_l7_handle(handle);
+}
+
+
+// --- 測試 nfs_file_exists ---
+void test_nfs_file_exists() {
+    NfsHandle* handle = helper_setup_l7_handle();
+    const char* file_a = "file_a.txt";
+    const char* file_b = "file_b.txt";
+
+    // 1. 初始狀態，檔案應不存在
+    assert(nfs_file_exists(handle, file_a) == 0);
+
+    // 2. 建立檔案後，應存在
+    assert(nfs_file_create(handle, file_a) >= 0);
+    assert(nfs_file_exists(handle, file_a) == 1);
+    assert(nfs_file_exists(handle, file_b) == 0); // 其他檔案不應存在
+
+    // 3. 刪除檔案後，應不存在
+    assert(nfs_file_unlink(handle, file_a) == 0);
+    assert(nfs_file_exists(handle, file_a) == 0);
+
+    // 4. 測試無效輸入
+    assert(nfs_file_exists(nullptr, file_a) == 0);
+    assert(nfs_file_exists(handle, nullptr) == 0);
+
+    helper_teardown_l7_handle(handle);
+}
+
+// --- 測試 nfs_file_open / nfs_file_create / nfs_file_close ---
+void test_nfs_file_open_create_close() {
+    NfsHandle* handle = helper_setup_l7_handle();
+    const char* filename = "test_occ.dat";
+    std::vector<char> data(100, 'B');
+
+    // 1. 建立新檔案
+    int fd1 = nfs_file_create(handle, filename);
+    assert(fd1 >= 0);
+    assert(handle->num_currently_open_files == 1);
+    assert(nfs_nt_node_get_size(handle->nt_handle, handle->open_files_array[fd1]->nt_node_idx) == 0);
+
+    // 2. 寫入並關閉
+    assert(nfs_file_write(handle, fd1, data.data(), data.size()) == (int)data.size());
+    assert(nfs_file_close(handle, fd1) == 0);
+    assert(handle->num_currently_open_files == 0);
+    assert(handle->open_files_array[fd1] == nullptr); // 驗證 FD 已被釋放
+
+    // 3. 重新開啟 (唯讀)
+    int fd2 = nfs_file_open(handle, filename, 0); // 假設旗標 0 為唯讀
+    assert(fd2 >= 0);
+    assert(handle->num_currently_open_files == 1);
+    // 檔案大小應為之前寫入的大小
+    assert(nfs_nt_node_get_size(handle->nt_handle, handle->open_files_array[fd2]->nt_node_idx) == (int)data.size());
+    assert(nfs_file_close(handle, fd2) == 0);
+
+    // 4. 以截斷模式建立已存在的檔案
+    int fd3 = nfs_file_create(handle, filename);
+    assert(fd3 >= 0);
+    // 檔案大小應被截斷為 0
+    assert(nfs_nt_node_get_size(handle->nt_handle, handle->open_files_array[fd3]->nt_node_idx) == 0);
+    assert(nfs_file_close(handle, fd3) == 0);
+
+    // 5. 測試錯誤處理
+    assert(nfs_file_open(handle, "no_such_file.tmp", 0) < 0);
+    assert(nfs_errno == 11); // File not found
+    assert(nfs_file_close(handle, 99) < 0); // 無效 fd
+    assert(nfs_errno == 13 || nfs_errno == 10); // Invalid fd or already closed
+
+    helper_teardown_l7_handle(handle);
+}
+
+// --- 測試 nfs_file_lseek ---
+void test_nfs_file_lseek() {
+    NfsHandle* handle = helper_setup_l7_handle();
+    const char* filename = "seek_me.txt";
+    int fd = nfs_file_create(handle, filename);
+    assert(fd >= 0);
+
+    // 寫入 1000 位元組的初始資料
+    std::vector<char> initial_data(1000, 'S');
+    assert(nfs_file_write(handle, fd, initial_data.data(), initial_data.size()) == 1000);
+
+    NfsOpenFileHandle* fh = handle->open_files_array[fd];
+
+    // 1. SEEK_SET
+    nfs_file_lseek(handle, fd, 100, 0);
+    assert(fh->current_byte_offset == 100);
+
+    // 2. SEEK_CUR
+    nfs_file_lseek(handle, fd, 50, 1);
+    assert(fh->current_byte_offset == 150);
+
+    // 3. SEEK_END
+    nfs_file_lseek(handle, fd, -200, 2);
+    assert(fh->current_byte_offset == 800); // 1000 - 200
+
+    // 4. 擴展檔案
+    nfs_file_lseek(handle, fd, 1500, 0);
+    assert(fh->current_byte_offset == 1500);
+    // lseek 應已擴展檔案，驗證 NT 中的大小
+    assert(nfs_nt_node_get_size(handle->nt_handle, fh->nt_node_idx) == 1500);
+    // 寫入一個位元組以確認擴展有效
+    char test_char = 'X';
+    assert(nfs_file_write(handle, fd, &test_char, 1) == 1);
+    assert(nfs_nt_node_get_size(handle->nt_handle, fh->nt_node_idx) == 1501);
+
+    // 5. 測試邊界情況
+    nfs_file_lseek(handle, fd, -500, 0);
+    assert(fh->current_byte_offset == 0); // 應被限制在 0
+
+    // 6. 測試無效 FD
+    assert(nfs_file_lseek(handle, 99, 0, 0) < 0);
+    assert(nfs_errno == 13);
+
+    helper_teardown_l7_handle(handle);
+}
+
+// --- 主測試執行函式 ---
+void run_nfs_layer7_api_tests() {
+    std::cout << "--- Running NFS Layer 7 API Tests ---" << std::endl;
+
+    RUN_TEST(test_internal_fd_allocation);
+    RUN_TEST(test_internal_file_truncate);
+    RUN_TEST(test_nfs_file_exists);
+    RUN_TEST(test_nfs_file_open_create_close);
+    RUN_TEST(test_nfs_file_lseek);
+
+    // 測試後清理
+    cleanup_test_files(TEST_VFS_L7_BASENAME);
+    std::cout << "--- NFS Layer 7 API Tests Finished ---" << std::endl;
+}
+
 void run_all_tests() {
 	// --- 單元測試 ---
 	RUN_TEST(test_bit_operations);
@@ -7438,9 +7671,12 @@ void run_all_tests() {
     run_nfs_dt_patricia_trie_tests();
     run_nfs_dt_api_tests();
 
+    RUN_TEST(run_nfs_layer7_api_tests);
+
 	// cleanup temp files
     cleanup_test_files(TEST_VFS_BASENAME);
     cleanup_lock_file(LOCK_FILE_BASENAME_UNIT_TEST);
+    cleanup_test_files(TEST_VFS_L7_BASENAME);
     std::filesystem::remove(TEST_ABS_IO_FILENAME);
     std::filesystem::remove(TEST_WRITE_HEADER_FILENAME);
     std::filesystem::remove(TEST_ABS_IO_FILENAME); // Cleanup for these tests
