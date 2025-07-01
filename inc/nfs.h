@@ -146,6 +146,7 @@ struct NfsOpenFileHandle {
 	int fat_chain_start_idx;		// 檔案資料鏈在FAT中的起始區塊索引
 	int current_byte_offset;
 	int open_mode_flags;
+	bool in_use;
 };
 
 struct NfsHandle {

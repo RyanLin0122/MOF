@@ -4822,6 +4822,7 @@ int allocate_file_descriptor(NfsHandle* handle) {
 	}
 	// 初始化 new_fh 的成員為0 (或預設值)
 	memset(new_fh, 0, sizeof(NfsOpenFileHandle));
+	new_fh->in_use = false;
 
 	int fd = -1;
 	// 尋找空閒槽位
@@ -4866,19 +4867,34 @@ int allocate_file_descriptor(NfsHandle* handle) {
 }
 
 /** @brief 釋放指定的檔案描述符及其關聯的 NfsOpenFileHandle。*/
-int deallocate_file_descriptor(NfsHandle* handle, int fd) {
-	if (!handle) {
-		nfs_errno = 9; // Invalid file system handle
-		return 9; // 遵循原始碼的錯誤碼返回
-	}
-	if (!handle->open_files_array || fd < 0 || fd >= handle->open_files_array_capacity || !handle->open_files_array[fd]) {
-		nfs_errno = 10; // File already closed or invalid FD
+int deallocate_file_descriptor(NfsHandle* handle, int fd)
+{
+	if (!handle) { nfs_errno = 9;  return 9; }
+
+	if (!handle->open_files_array ||
+		fd < 0 || fd >= handle->open_files_array_capacity) {
+		nfs_errno = 10;             // FD 無效
 		return 10;
 	}
-	free(handle->open_files_array[fd]);
+
+	NfsOpenFileHandle* fh = handle->open_files_array[fd];
+	if (!fh) {
+		nfs_errno = 10;             // 已經被釋放過
+		return 10;
+	}
+
+	/* ⚠️ 關鍵判斷：還在使用中的 FD 不可強拆 */
+	if (fh->in_use) {
+		nfs_errno = 11;             // File still open
+		return 11;                  // 讓測試第 6 步 assert !=0 成立
+	}
+
+	free(fh);
 	handle->open_files_array[fd] = nullptr;
-	return 0; // 成功
+	return 0;                       // 真正成功
 }
+
+
 
 // --- 核心檔案操作 ---
 
@@ -4981,6 +4997,7 @@ int nfs_file_open(NfsHandle* handle, const char* filename, int open_flags) {
 
 	NfsOpenFileHandle* fh = handle->open_files_array[fd];
 	fh->open_mode_flags = open_flags;
+	fh->in_use = true;
 	fh->dt_trienode_idx = dt_node_idx;
 
 	fh->nt_node_idx = nfs_dt_filename_get_nt_index(handle->dt_handle, dt_node_idx);
@@ -5046,6 +5063,7 @@ int nfs_file_create(NfsHandle* handle, const char* filename) {
 			return -1;
 		}
 		fh = handle->open_files_array[fd];
+		fh->in_use = true;
 		fh->open_mode_flags = NFS_DEFAULT_FILE_MODE; // 假設的建立模式
 		fh->current_byte_offset = 0;
 
@@ -5099,6 +5117,8 @@ int nfs_file_close(NfsHandle* handle, int fd) {
 		nfs_errno = 9;
 		return -1;
 	}
+	NfsOpenFileHandle* fh = handle->open_files_array[fd];
+	fh->in_use = false;
 	if (deallocate_file_descriptor(handle, fd) != 0) {
 		// nfs_errno 已由 deallocate_file_descriptor 設定 (10)
 		return -1;

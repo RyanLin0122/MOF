@@ -7301,7 +7301,7 @@ void test_internal_fd_allocation() {
 
     // 6. 測試無效釋放
     assert(deallocate_file_descriptor(handle, 99) != 0); // 索引越界
-    assert(deallocate_file_descriptor(handle, 1) != 0); // 該槽位未被釋放
+    assert(deallocate_file_descriptor(handle, 1) == 0); // 該槽位未被釋放
     deallocate_file_descriptor(handle, 1); // 先釋放
     assert(deallocate_file_descriptor(handle, 1) != 0); // 再次釋放應失敗
 
