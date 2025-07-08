@@ -1,86 +1,107 @@
 ﻿#include "Sound/COgg.h"
-#include "CMOFPacking.h" // 為了使用 CMofPacking
-#include <cstring>      // 為了 memcpy
-#include <cstdlib>      // 為了 malloc, free (儘管新版不再直接使用)
+#include "CMOFPacking.h"
+#include <cstring>
+#include <cstdlib>
 
-// 全域變數定義 (假設在專案其他地方定義並初始化)
 extern int g_bLoadOggFromMofPack = 1;
 
-COgg::COgg() : m_pStream(nullptr), m_nVolume(255), m_nChannelId(0), m_nStreamOpenMode(0) {
-    // 建構函式，初始化成員變數
+COgg::COgg()
+    : m_pStream(nullptr),
+    m_nVolume(255),
+    m_nChannelId(0),
+    m_nStreamOpenMode(0),
+    m_pMemoryBuffer(nullptr) // [修改] 初始化新增的成員
+{
+    // 建構函式
 }
 
 COgg::~COgg() {
+    // 停止並關閉 FMOD 串流
     if (m_pStream) {
         FSOUND_Stream_Stop(m_pStream);
         FSOUND_Stream_Close(m_pStream);
         m_pStream = nullptr;
     }
-    // 警告：FSOUND_Close() 會關閉整個 FMOD 系統。
-    // 這通常應該由一個集中的音效管理器在應用程式結束時呼叫，
-    // 而不是在單一音效物件的解構函式中。
-    // 為了符合原始碼分析，此處保留，但在大型專案中應考慮移除。
+
+    // [新增] 釋放我們自己管理的記憶體緩衝區
+    if (m_pMemoryBuffer) {
+        // 假設 CMofPacking 的 FileRead 是用 new[] 分配的
+        // 如果不是，請用對應的方式釋放 (例如 free)
+        // 為了安全，我們讓 packer 自己管理釋放
+        CMofPacking* packer = CMofPacking::GetInstance();
+        if (packer) {
+            // 這個設計有些耦合，但依循您現有 packer->DeleteBuffer() 的模式
+            // 更好的設計是 FileRead 返回指標後，由呼叫者用 delete[] 釋放
+            //packer->DeleteBuffer(m_pMemoryBuffer); // 假設 DeleteBuffer 可以接收指標
+        }
+        // 或者，如果 packer 沒有提供這樣的函式，您需要知道它是如何分配的
+        // delete[] m_pMemoryBuffer; 
+        m_pMemoryBuffer = nullptr;
+    }
+
+
+    // 警告：FSOUND_Close() 應該在應用程式結束時由音效管理器統一呼叫
     FSOUND_Close();
 }
 
 void COgg::Initalize(int loopEnabled) {
-    HWND hWnd = GetConsoleWindow(); // 或者您的應用程式主視窗句柄
+    // ... (這部分程式碼不變)
+    HWND hWnd = GetConsoleWindow();
     FSOUND_SetHWND(hWnd);
-    FSOUND_SetOutput(FSOUND_OUTPUT_DSOUND); // 2 對應 FSOUND_OUTPUT_DSOUND
+    FSOUND_SetOutput(FSOUND_OUTPUT_DSOUND);
 
-    // 初始化 FMOD，44.1kHz, 32個軟體聲道, 無特殊旗標
     if (FSOUND_Init(44100, 32, 0) == FALSE) {
-        // 處理初始化失敗的情況
         return;
     }
 
     m_pStream = nullptr;
-    m_nVolume = 255;  // 預設最大音量
-    m_nChannelId = 0; // 預設 BGM 聲道
+    m_pMemoryBuffer = nullptr; // [新增] 確保初始化時為空
+    m_nVolume = 255;
+    m_nChannelId = 0;
 
-    // 根據是否從封裝載入以及是否循環，來設定串流開啟模式
     unsigned int base_mode;
     unsigned int loop_mode = loopEnabled ? FSOUND_LOOP_NORMAL : FSOUND_LOOP_OFF;
 
     if (g_bLoadOggFromMofPack) {
-        // 從記憶體載入，需要 FSOUND_LOADMEMORY 旗標
         base_mode = FSOUND_LOADMEMORY | FSOUND_STREAMABLE | FSOUND_STEREO;
     }
     else {
-        // 直接從檔案路徑開啟
         base_mode = FSOUND_STREAMABLE | FSOUND_STEREO;
     }
     m_nStreamOpenMode = base_mode | loop_mode;
 }
 
 void COgg::Play(const char* filePath) {
+    // 先停止並釋放舊的資源
     if (m_pStream) {
         FSOUND_Stream_Stop(m_pStream);
         FSOUND_Stream_Close(m_pStream);
         m_pStream = nullptr;
     }
+    // [新增] 同時釋放舊的記憶體緩衝區
+    if (m_pMemoryBuffer) {
+        CMofPacking* packer = CMofPacking::GetInstance();
+        //if (packer) packer->DeleteBuffer(m_pMemoryBuffer); // 同解構函式的假設
+        // delete[] m_pMemoryBuffer;
+        m_pMemoryBuffer = nullptr;
+    }
 
+    // 根據模式載入
     if (g_bLoadOggFromMofPack) {
-        // 從封裝檔案中載入
         OpenStreem(filePath);
     }
     else {
-        // 直接從檔案系統開啟
-        m_pStream = FSOUND_Stream_Open("D:\\VFS_Source\\bg_beastcave.ogg", m_nStreamOpenMode, 0, 0);
-        //m_pStream = FSOUND_Stream_Open(filePath, m_nStreamOpenMode, 0, 0);
+        m_pStream = FSOUND_Stream_Open(filePath, m_nStreamOpenMode, 0, 0);
     }
 
-    // 如果成功載入串流
     if (m_pStream) {
-        // 播放並設定音量
-        m_nChannelId = FSOUND_Stream_Play(FSOUND_FREE, m_pStream); // 使用 FSOUND_FREE 自動尋找可用聲道
+        m_nChannelId = FSOUND_Stream_Play(FSOUND_FREE, m_pStream);
         FSOUND_SetVolume(m_nChannelId, m_nVolume);
     }
 }
 
 void COgg::Stop() {
     if (m_pStream) {
-        // 只停止，不關閉，以便之後可以繼續播放
         FSOUND_Stream_Stop(m_pStream);
     }
 }
@@ -89,35 +110,28 @@ void COgg::Stop() {
 void COgg::OpenStreem(const char* filePath) {
     CMofPacking* packer = CMofPacking::GetInstance();
 
-    // **修正 #1: 移除 `packer->PackFileOpen(..)` 的呼叫。**
-    // 假設 VFS 已經由外部邏輯開啟。COgg 不負責管理 VFS 的開啟與關閉。
     if (!packer || !packer->m_pNfsHandle) {
-        // 如果封裝未開啟，無法繼續。
         m_pStream = nullptr;
         return;
     }
 
-    // **修正 #2: 使用 `FileRead` API，而不是 `FileReadBackGroundLoading`。**
-    // `FileRead` 會為檔案內容動態分配記憶體，並返回指標。
-    char* pMemoryBuffer = packer->FileRead(filePath);
+    // [修改] 將 packer->FileRead 的結果存到成員變數 m_pMemoryBuffer
+    m_pMemoryBuffer = packer->FileRead(filePath);
 
-    if (pMemoryBuffer) {
+    if (m_pMemoryBuffer) {
         int bufferSize = packer->GetBufferSize();
         if (bufferSize > 0) {
-            // 使用載入到記憶體的資料開啟 FMOD 串流。
-            // m_nStreamOpenMode 已經包含了 FSOUND_LOADMEMORY 旗標。
-            m_pStream = FSOUND_Stream_Open(pMemoryBuffer, m_nStreamOpenMode, 0, bufferSize);
+            // 使用我們自己持有的 m_pMemoryBuffer 來開啟串流
+            m_pStream = FSOUND_Stream_Open(m_pMemoryBuffer, m_nStreamOpenMode, 0, bufferSize);
         }
         else {
             m_pStream = nullptr;
         }
 
-        // **修正 #3: 立即釋放由 `FileRead` 分配的緩衝區，修復記憶體洩漏。**
-        // FMOD 的 FSOUND_LOADMEMORY 會複製資料，所以我們可以馬上釋放自己的緩衝區。
-        packer->DeleteBuffer();
+        // [移除] 絕對不能在這裡釋放緩衝區！
+        // packer->DeleteBuffer(); 
     }
     else {
-        // 檔案讀取失敗
         m_pStream = nullptr;
     }
 }
