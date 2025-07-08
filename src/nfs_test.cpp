@@ -2606,10 +2606,12 @@ void test_read_header_invalid_magic_number() {
     fclose(fp);
 
     NfsIioFile* file = (NfsIioFile*)malloc(sizeof(NfsIioFile));
-    memset(file, 0, sizeof(NfsIioFile));
-    file->file_handle = fopen(TEST_READ_HEADER_FILENAME, "rb");
+    if (file != nullptr)
+    {
+        memset(file, 0, sizeof(NfsIioFile));
+        file->file_handle = fopen(TEST_READ_HEADER_FILENAME, "rb");
+    }
     assert(file->file_handle);
-
     assert(read_header(file) == -1); // 應因 magic number 錯誤而失敗
 
     helper_teardown_iio_file(file, true);
@@ -2623,10 +2625,11 @@ void test_read_header_short_file() {
     fclose(fp);
 
     NfsIioFile* file = (NfsIioFile*)malloc(sizeof(NfsIioFile));
-    memset(file, 0, sizeof(NfsIioFile));
-    file->file_handle = fopen(TEST_READ_HEADER_FILENAME, "rb");
+    if (file != nullptr) {
+        memset(file, 0, sizeof(NfsIioFile));
+        file->file_handle = fopen(TEST_READ_HEADER_FILENAME, "rb");
+    }
     assert(file->file_handle);
-
     assert(read_header(file) == -1); // 檔案過短，讀取失敗
 
     helper_teardown_iio_file(file, true);
@@ -2924,7 +2927,7 @@ void test_nfs_iio_rw_full_and_partial_blocks() {
     helper_fill_buffer_pattern(data_to_write.data(), data_to_write.size(), 50);
 
     int old_clock = nfs_iio_CLOCK;
-    int bytes_written = nfs_iio_write(file, ch_idx, data_to_write.data(), data_to_write.size());
+    int bytes_written = nfs_iio_write(file, ch_idx, data_to_write.data(), (int)data_to_write.size());
     assert(bytes_written == (int)data_to_write.size());
     assert(channel->current_seek_position == (int)data_to_write.size());
     assert(channel->current_size_bytes == (int)data_to_write.size()); // Size 應擴展
@@ -2935,7 +2938,7 @@ void test_nfs_iio_rw_full_and_partial_blocks() {
     std::vector<char> read_buffer(data_to_write.size());
 
     old_clock = nfs_iio_CLOCK;
-    int bytes_read = nfs_iio_read(file, ch_idx, read_buffer.data(), read_buffer.size());
+    int bytes_read = nfs_iio_read(file, ch_idx, read_buffer.data(), (int)read_buffer.size());
     assert(bytes_read == (int)read_buffer.size());
     assert(memcmp(read_buffer.data(), data_to_write.data(), read_buffer.size()) == 0);
     assert(channel->current_seek_position == (int)read_buffer.size());
@@ -2962,8 +2965,8 @@ void test_nfs_iio_close_valid_file() {
     assert(nfs_iio_allocate_channel(file, 1) == 1); // ch1, bps=1
 
     std::vector<char> data(100, 'A');
-    assert(nfs_iio_write(file, 0, data.data(), data.size()) > 0); //寫一些數據到 ch0
-    file->channels[0]->current_size_bytes = data.size(); // 手動更新（或依賴 nfs_iio_write 更新）
+    assert(nfs_iio_write(file, 0, data.data(), (int)data.size()) > 0); //寫一些數據到 ch0
+    file->channels[0]->current_size_bytes = (int)data.size(); // 手動更新（或依賴 nfs_iio_write 更新）
     file->channels[1]->current_size_bytes = 50;          // 假設 ch1 也有一些大小
 
     // 模擬 IOMODE 表示允許寫入，以便 auto_truncate 被調用
@@ -3501,7 +3504,7 @@ void test_data_cache_put_then_get() {
     helper_fill_buffer_pattern(put_data.data(), put_data.size(), 40);
     int file_offset_to_write = DATA_CACHE_BLOCK_SIZE * 2; // 寫入到檔案的第2個區塊位置 (1024)
 
-    int result_put = cache_put(handle, file_offset_to_write, put_data.size(), put_data.data());
+    int result_put = cache_put(handle, file_offset_to_write, (int)put_data.size(), put_data.data());
     assert(result_put == 0);
     assert(handle->cache->is_synced_flag == 0); // 快取應變 dirty
     // 驗證快取內部緩衝區是否已更新 (在相對於 cache_window_start_offset 的位置)
@@ -3513,7 +3516,7 @@ void test_data_cache_put_then_get() {
 
     // 2. cache_get: 從快取讀回剛才 put 的數據
     std::vector<char> get_data(put_data.size());
-    int result_get = cache_get(handle, file_offset_to_write, get_data.size(), get_data.data());
+    int result_get = cache_get(handle, file_offset_to_write, (int)get_data.size(), get_data.data());
     assert(result_get == 0);
     assert(memcmp(get_data.data(), put_data.data(), get_data.size()) == 0);
 
@@ -7458,6 +7461,257 @@ void test_nfs_file_lseek() {
     helper_teardown_l7_handle(handle);
 }
 
+// 輔助函式：從 NT 層直接讀取節點的引用計數
+int helper_get_ref_count(NfsHandle* handle, const char* filename) {
+    if (!handle || !filename) return -1;
+    int dt_idx = nfs_dt_filename_lookup(handle->dt_handle, filename);
+    if (dt_idx < 0) return -2; // 檔案不存在
+    short nt_idx = nfs_dt_filename_get_nt_index(handle->dt_handle, dt_idx);
+    if (nt_idx < 0) return -3; // 無效的 NT 索引
+    NfsNode node;
+    if (nfs_nt_get_node(handle->nt_handle, nt_idx, &node) < 0) return -4; // 讀取 NT 節點失敗
+    return node.ref_count;
+}
+
+// --- nfs_file_write / nfs_file_read 測試 ---
+
+void test_nfs_rw_basic_io() {
+    NfsHandle* handle = helper_setup_l7_handle();
+    const char* filename = "rw_basic.txt";
+    int fd = nfs_file_create(handle, filename);
+    assert(fd >= 0);
+
+    // 1. 寫入資料
+    std::vector<char> write_buf(1200, 'X'); // 跨越多個 512B 區塊
+    int bytes_written = nfs_file_write(handle, fd, write_buf.data(), write_buf.size());
+    assert(bytes_written == (int)write_buf.size());
+
+    // 2. 驗證檔案大小
+    NfsOpenFileHandle* fh = handle->open_files_array[fd];
+    assert(fh->current_byte_offset == 1200);
+    assert(nfs_nt_node_get_size(handle->nt_handle, fh->nt_node_idx) == 1200);
+
+    // 3. lseek 回檔案開頭並讀取
+    nfs_file_lseek(handle, fd, 0, 0); // SEEK_SET
+    std::vector<char> read_buf(write_buf.size());
+    int bytes_read = nfs_file_read(handle, fd, read_buf.data(), read_buf.size());
+    assert(bytes_read == (int)write_buf.size());
+
+    // 4. 驗證讀回的資料
+    assert(memcmp(write_buf.data(), read_buf.data(), write_buf.size()) == 0);
+
+    // 5. 關閉檔案
+    assert(nfs_file_close(handle, fd) == 0);
+    helper_teardown_l7_handle(handle);
+}
+
+void test_nfs_rw_overwrite_and_eof() {
+    NfsHandle* handle = helper_setup_l7_handle();
+    const char* filename = "rw_overwrite.txt";
+    int fd = nfs_file_create(handle, filename);
+    assert(fd >= 0);
+
+    // 1. 寫入初始資料 "AAAAAAAAAA"
+    std::vector<char> initial_data(10, 'A');
+    assert(nfs_file_write(handle, fd, initial_data.data(), initial_data.size()) == 10);
+
+    // 2. seek 到偏移 3 的位置，覆寫 "BBB"
+    nfs_file_lseek(handle, fd, 3, 0);
+    const char* overwrite_data = "BBB";
+    assert(nfs_file_write(handle, fd, overwrite_data, 3) == 3); // fh->offset is now 6
+
+    // 3. 讀取整個檔案，預期內容為 "AAABBBAAAA"
+    nfs_file_lseek(handle, fd, 0, 0);
+    std::vector<char> final_data(10);
+    assert(nfs_file_read(handle, fd, final_data.data(), final_data.size()) == 10);
+    assert(memcmp(final_data.data(), "AAABBBAAAA", 10) == 0);
+
+    // 4. 測試讀取超過 EOF (檔案結尾)
+    // 目前 seek 在 10，檔案大小也是 10
+    assert(nfs_file_read(handle, fd, final_data.data(), 5) == 0); // 應讀到 0 bytes
+
+    helper_teardown_l7_handle(handle);
+}
+
+void test_nfs_rw_invalid_inputs() {
+    NfsHandle* handle = helper_setup_l7_handle();
+    char buffer[10];
+
+    // 測試無效檔案描述符
+    assert(nfs_file_write(handle, 99, buffer, 10) < 0);
+    assert(nfs_errno == 13); // Invalid file descriptor
+    assert(nfs_file_read(handle, 99, buffer, 10) < 0);
+    assert(nfs_errno == 13);
+
+    // 測試 nullptr handle
+    assert(nfs_file_write(nullptr, 0, buffer, 10) < 0);
+    assert(nfs_errno == 9); // Invalid file system handle
+    assert(nfs_file_read(nullptr, 0, buffer, 10) < 0);
+    assert(nfs_errno == 9);
+
+    // 測試 nullptr buffer
+    int fd = nfs_file_create(handle, "dummy.txt");
+    assert(fd >= 0);
+    assert(nfs_file_write(handle, fd, nullptr, 10) < 0);
+    assert(nfs_errno == 19); // Invalid parameters
+    assert(nfs_file_read(handle, fd, nullptr, 10) < 0);
+    assert(nfs_errno == 19);
+
+    helper_teardown_l7_handle(handle);
+}
+
+// --- nfs_file_inc/dec_refcount 測試 ---
+void test_nfs_refcount_management() {
+    NfsHandle* handle = helper_setup_l7_handle();
+    const char* filename = "ref_test.txt";
+
+    // 1. 建立檔案，refcount 應為 1
+    assert(nfs_file_create(handle, filename) >= 0);
+    assert(helper_get_ref_count(handle, filename) == 1);
+
+    // 2. 增加引用計數
+    assert(nfs_file_inc_refcount(handle, filename) == 0);
+    assert(helper_get_ref_count(handle, filename) == 2);
+
+    // 3. 減少引用計數 (從 2 到 1)
+    assert(nfs_file_dec_refcount(handle, filename) == 0);
+    assert(helper_get_ref_count(handle, filename) == 1);
+    assert(nfs_file_exists(handle, filename) == 1); // 檔案應仍然存在
+
+    // 4. 再次減少引用計數 (從 1 到 0)，觸發刪除
+    assert(nfs_file_dec_refcount(handle, filename) == 0);
+    assert(nfs_file_exists(handle, filename) == 0); // 檔案應已被刪除
+
+    // 5. 對不存在的檔案操作
+    assert(nfs_file_inc_refcount(handle, "no_such_file") < 0);
+    assert(nfs_errno == 11); // File not found
+    assert(nfs_file_dec_refcount(handle, "no_such_file") < 0);
+    assert(nfs_errno == 11);
+
+    helper_teardown_l7_handle(handle);
+}
+
+// --- nfs_file_link / nfs_file_unlink 測試 ---
+void test_nfs_link_and_unlink() {
+    NfsHandle* handle = helper_setup_l7_handle();
+    const char* original_name = "original.txt";
+    const char* link_name = "link.txt";
+
+    // 1. 建立原始檔案
+    int fd = nfs_file_create(handle, original_name);
+    assert(fd >= 0);
+    const char* content = "shared content";
+    assert(nfs_file_write(handle, fd, content, strlen(content)) == (int)strlen(content));
+    assert(nfs_file_close(handle, fd) == 0);
+    assert(helper_get_ref_count(handle, original_name) == 1);
+
+    // 2. 建立連結
+    assert(nfs_file_link(handle, original_name, link_name) == 0);
+    assert(nfs_file_exists(handle, link_name) == 1);
+    assert(helper_get_ref_count(handle, original_name) == 2); // refcount 增加
+    assert(helper_get_ref_count(handle, link_name) == 2);    // 兩者指向同個節點
+
+    // 3. 驗證連結內容
+    int fd_link = nfs_file_open(handle, link_name, 0);
+    char buffer[32];
+    assert(nfs_file_read(handle, fd_link, buffer, sizeof(buffer)) == (int)strlen(content));
+    assert(memcmp(buffer, content, strlen(content)) == 0);
+    assert(nfs_file_close(handle, fd_link) == 0);
+
+    // 4. 取消原始連結 (unlink)
+    assert(nfs_file_unlink(handle, original_name) == 0);
+    assert(nfs_file_exists(handle, original_name) == 0); // 原始名稱已不存在
+    assert(nfs_file_exists(handle, link_name) == 1);   // 連結應仍然存在
+    assert(helper_get_ref_count(handle, link_name) == 1);   // refcount 減少
+
+    // 5. 取消最後的連結
+    assert(nfs_file_unlink(handle, link_name) == 0);
+    assert(nfs_file_exists(handle, link_name) == 0); // 檔案應被徹底刪除
+
+    helper_teardown_l7_handle(handle);
+}
+
+void test_nfs_link_unlink_errors() {
+    NfsHandle* handle = helper_setup_l7_handle();
+    const char* file1 = "file1.txt";
+    const char* file2 = "file2.txt";
+
+    // 1. 連結到不存在的來源
+    assert(nfs_file_link(handle, "no_such_source", "new_link") < 0);
+    assert(nfs_errno == 11); // File not found
+
+    // 2. 建立一個已存在的連結目標
+    assert(nfs_file_create(handle, file1) >= 0);
+    assert(nfs_file_create(handle, file2) >= 0);
+    assert(nfs_file_link(handle, file1, file2) < 0);
+    assert(nfs_errno == 17); // File already exists
+
+    // 3. 取消不存在的檔案連結
+    assert(nfs_file_unlink(handle, "no_such_file") < 0);
+    assert(nfs_errno == 11); // File not found
+
+    helper_teardown_l7_handle(handle);
+}
+
+// --- nfs_glob / nfs_glob_free 測試 ---
+void test_nfs_glob_and_free() {
+    NfsHandle* handle = helper_setup_l7_handle();
+    NfsGlobResults results = { 0 };
+
+    // 1. 建立測試檔案
+    nfs_file_create(handle, "apple.txt");
+    nfs_file_create(handle, "apply.log");
+    nfs_file_create(handle, "apricot.dat");
+    nfs_file_create(handle, "banana.txt");
+    nfs_file_create(handle, ".config");
+
+    // 2. 測試模式 "*"
+    assert(nfs_glob(handle, "*", 0, nullptr, &results) == 0);
+    assert(results.gl_pathc == 5);
+    // 驗證排序
+    assert(strcmp(results.gl_pathv[0], ".config") == 0);
+    assert(strcmp(results.gl_pathv[1], "apple.txt") == 0);
+    assert(strcmp(results.gl_pathv[2], "apply.log") == 0);
+    assert(strcmp(results.gl_pathv[3], "apricot.dat") == 0);
+    assert(strcmp(results.gl_pathv[4], "banana.txt") == 0);
+    nfs_glob_free(&results); // 釋放結果
+    assert(results.gl_pathc == 0 && results.gl_pathv == nullptr); // 驗證 free 的效果
+
+    // 3. 測試模式 "*.txt"
+    assert(nfs_glob(handle, "*.txt", 0, nullptr, &results) == 0);
+    assert(results.gl_pathc == 2);
+    assert(strcmp(results.gl_pathv[0], "apple.txt") == 0);
+    assert(strcmp(results.gl_pathv[1], "banana.txt") == 0);
+    nfs_glob_free(&results);
+
+    // 4. 測試無匹配項
+    const int GLOB_NOMATCH = 1; // 假設的無匹配返回碼
+    assert(nfs_glob(handle, "zebra.*", 0, nullptr, &results) == GLOB_NOMATCH);
+    assert(results.gl_pathc == 0);
+
+    // 5. 測試 NFS_FNM_NOCHECK 旗標
+    const int FNM_NOCHECK = 0x10;
+    assert(nfs_glob(handle, "zebra.*", FNM_NOCHECK, nullptr, &results) == 0);
+    assert(results.gl_pathc == 1);
+    assert(strcmp(results.gl_pathv[0], "zebra.*") == 0);
+    nfs_glob_free(&results);
+
+    helper_teardown_l7_handle(handle);
+}
+
+// 註冊新的 Layer 7 測試到一個執行器函式中
+void run_nfs_layer7_api_extra_tests() {
+    std::cout << "\n--- Running Additional NFS Layer 7 API Tests ---" << std::endl;
+    RUN_TEST(test_nfs_rw_basic_io);
+    RUN_TEST(test_nfs_rw_overwrite_and_eof);
+    RUN_TEST(test_nfs_rw_invalid_inputs);
+    RUN_TEST(test_nfs_refcount_management);
+    RUN_TEST(test_nfs_link_and_unlink);
+    RUN_TEST(test_nfs_link_unlink_errors);
+    RUN_TEST(test_nfs_glob_and_free);
+    std::cout << "--- Additional NFS Layer 7 API Tests Finished ---\n" << std::endl;
+}
+
 // --- 主測試執行函式 ---
 void run_nfs_layer7_api_tests() {
     std::cout << "--- Running NFS Layer 7 API Tests ---" << std::endl;
@@ -7672,6 +7926,7 @@ void run_all_tests() {
     run_nfs_dt_api_tests();
 
     RUN_TEST(run_nfs_layer7_api_tests);
+    run_nfs_layer7_api_extra_tests();
 
 	// cleanup temp files
     cleanup_test_files(TEST_VFS_BASENAME);
