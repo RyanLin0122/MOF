@@ -7727,6 +7727,193 @@ void run_nfs_layer7_api_tests() {
     std::cout << "--- NFS Layer 7 API Tests Finished ---" << std::endl;
 }
 
+// 輔助函式：手動建立一個空檔案或帶有內容的檔案
+void helper_create_dummy_file(const char* filename, const char* content = nullptr) {
+    FILE* f = fopen(filename, "wb");
+    if (f) {
+        if (content) {
+            fwrite(content, 1, strlen(content), f);
+        }
+        fclose(f);
+    }
+}
+
+// --- nfs_exists 測試 ---
+
+void test_nfs_exists_scenarios() {
+    const char* base = "exist_test";
+    const std::string paki = std::string(base) + ".paki";
+    const std::string pak = std::string(base) + ".pak";
+
+    // 1. 初始狀態，兩個檔案都不存在
+    cleanup_test_files(base);
+    assert(nfs_exists(base) == 0);
+
+    // 2. 只有 .paki 存在
+    helper_create_dummy_file(paki.c_str());
+    assert(nfs_exists(base) == 0);
+    cleanup_test_files(base);
+
+    // 3. 只有 .pak 存在
+    helper_create_dummy_file(pak.c_str());
+    assert(nfs_exists(base) == 0);
+    cleanup_test_files(base);
+
+    // 4. 兩個檔案都存在
+    helper_create_dummy_file(paki.c_str());
+    helper_create_dummy_file(pak.c_str());
+    assert(nfs_exists(base) == 1);
+    cleanup_test_files(base);
+
+    // 5. 測試傳入 nullptr
+    assert(nfs_exists(nullptr) == 0);
+}
+
+
+// --- nfs_start 測試 ---
+
+void test_nfs_start_create_and_open() {
+    const char* base = "start_test";
+
+    // 1. 建立一個新的 VFS
+    // 模式 2 代表讀寫，應允許建立
+    NfsHandle* handle_create = nfs_start(base, 2);
+    assert(handle_create != nullptr);
+    assert(handle_create->iio_handle != nullptr);
+    assert(handle_create->data_handle != nullptr);
+    assert(handle_create->dt_handle != nullptr);
+    assert(handle_create->nt_handle != nullptr);
+    assert(handle_create->fat_handle != nullptr);
+
+    // 2. 寫入一個檔案以確保 VFS 內容被修改
+    int fd = nfs_file_create(handle_create, "test.txt");
+    assert(fd >= 0);
+    assert(nfs_file_write(handle_create, fd, "hello", 5) == 5);
+    // 正常關閉 VFS (destroy_files_flag = 0)
+    nfs_end(handle_create, 0);
+
+    // 3. 驗證實體檔案存在
+    assert(std::filesystem::exists(std::string(base) + ".paki"));
+    assert(std::filesystem::exists(std::string(base) + ".pak"));
+
+    // 4. 重新開啟已存在的 VFS
+    NfsHandle* handle_open = nfs_start(base, 2);
+    assert(handle_open != nullptr);
+
+    // 5. 驗證先前寫入的檔案仍然存在且可讀
+    assert(nfs_file_exists(handle_open, "test.txt") == 1);
+    fd = nfs_file_open(handle_open, "test.txt", 0); // 唯讀模式
+    assert(fd >= 0);
+    char buffer[10] = { 0 };
+    assert(nfs_file_read(handle_open, fd, buffer, sizeof(buffer)) == 5);
+    assert(memcmp(buffer, "hello", 5) == 0);
+
+    // 6. 徹底銷毀 VFS
+    nfs_end(handle_open, 1);
+    assert(!std::filesystem::exists(std::string(base) + ".paki"));
+    assert(!std::filesystem::exists(std::string(base) + ".pak"));
+}
+
+void test_nfs_start_error_conditions() {
+    const char* base = "start_error_test";
+
+    // 1. 測試檔案狀態不一致 (.paki 存在, .pak 不存在)
+    cleanup_test_files(base);
+    helper_create_dummy_file((std::string(base) + ".paki").c_str());
+    assert(nfs_start(base, 2) == nullptr);
+    assert(nfs_errno == 1); // 根據原始碼邏輯，可能是 "Could not open/create..."
+    cleanup_test_files(base);
+
+    // 2. 測試在唯讀模式下試圖建立 VFS
+    cleanup_test_files(base);
+    assert(nfs_start(base, 1) == nullptr); // 模式 1 假設為唯讀
+    assert(nfs_errno == 1);
+    assert(!std::filesystem::exists(std::string(base) + ".paki")); // 確認未建立檔案
+
+    // 3. 測試 VFS 被鎖定
+    cleanup_test_files(base);
+    // 建立一個獨佔鎖檔案 (flags[0] bit 1 set)
+    char exclusive_lock_flags[] = { 0x02, 0x00, 0x00, 0x00 };
+    assert(create_test_lock_file(base, exclusive_lock_flags, 1));
+    assert(nfs_start(base, 2) == nullptr);
+    assert(nfs_errno == 16); // File system is locked
+    cleanup_test_files(base);
+
+    // 4. 測試傳入 nullptr
+    assert(nfs_start(nullptr, 2) == nullptr);
+    assert(nfs_errno == 19); // Invalid parameters
+}
+
+// --- nfs_end 測試 ---
+void test_nfs_end_close_vs_destroy() {
+    const char* base_close = "end_close_test";
+    const char* base_destroy = "end_destroy_test";
+
+    // --- 測試 close (destroy_files_flag = 0) ---
+    // 1. 建立 VFS
+    NfsHandle* handle_close = nfs_start(base_close, 2);
+    assert(handle_close != nullptr);
+    assert(nfs_file_create(handle_close, "a.txt") >= 0);
+
+    // 2. 正常關閉
+    nfs_end(handle_close, 0);
+
+    // 3. 驗證實體檔案仍然存在
+    assert(std::filesystem::exists(std::string(base_close) + ".paki"));
+    assert(std::filesystem::exists(std::string(base_close) + ".pak"));
+    cleanup_test_files(base_close);
+
+
+    // --- 測試 destroy (destroy_files_flag = 1) ---
+    // 1. 建立 VFS
+    NfsHandle* handle_destroy = nfs_start(base_destroy, 2);
+    assert(handle_destroy != nullptr);
+    assert(nfs_file_create(handle_destroy, "b.txt") >= 0);
+
+    // 2. 銷毀 VFS
+    nfs_end(handle_destroy, 1);
+
+    // 3. 驗證實體檔案已被刪除
+    assert(!std::filesystem::exists(std::string(base_destroy) + ".paki"));
+    assert(!std::filesystem::exists(std::string(base_destroy) + ".pak"));
+}
+
+void test_nfs_end_with_open_files() {
+    NfsHandle* handle = helper_setup_l7_handle();
+    const char* file1 = "open1.txt";
+    const char* file2 = "open2.txt";
+
+    // 1. 開啟數個檔案但不關閉
+    int fd1 = nfs_file_create(handle, file1);
+    int fd2 = nfs_file_create(handle, file2);
+    assert(fd1 >= 0 && fd2 >= 0);
+    assert(handle->num_currently_open_files == 2);
+    assert(handle->open_files_array[fd1] != nullptr);
+    assert(handle->open_files_array[fd2] != nullptr);
+
+    // 2. 直接呼叫 nfs_end
+    // nfs_end 內部應能處理並釋放所有已開啟的檔案控制代碼
+    nfs_end(handle, 0); // handle 指標在此之後無效
+
+    // 3. 這個測試的主要目的是驗證 nfs_end 不會因為有未關閉的檔案而崩潰或洩漏記憶體。
+    // 在沒有 valgrind 或類似工具的情況下，我們只能相信函式能正確執行。
+    // 測試通過即表示函式未崩潰。
+    assert(true); // 表示測試執行完畢
+
+    cleanup_test_files(TEST_VFS_L7_BASENAME);
+}
+
+// --- 測試執行器 ---
+void run_nfs_system_level_tests() {
+    std::cout << "\n--- Running NFS System-Level API Tests ---" << std::endl;
+    RUN_TEST(test_nfs_exists_scenarios);
+    RUN_TEST(test_nfs_start_create_and_open);
+    RUN_TEST(test_nfs_start_error_conditions);
+    RUN_TEST(test_nfs_end_close_vs_destroy);
+    RUN_TEST(test_nfs_end_with_open_files);
+    std::cout << "--- NFS System-Level API Tests Finished ---\n" << std::endl;
+}
+
 void run_all_tests() {
 	// --- 單元測試 ---
 	RUN_TEST(test_bit_operations);
@@ -7927,6 +8114,7 @@ void run_all_tests() {
 
     RUN_TEST(run_nfs_layer7_api_tests);
     run_nfs_layer7_api_extra_tests();
+    run_nfs_system_level_tests();
 
 	// cleanup temp files
     cleanup_test_files(TEST_VFS_BASENAME);
@@ -7943,6 +8131,7 @@ void run_all_tests() {
     std::filesystem::remove(TEST_NT_IIO_FILENAME);
     std::filesystem::remove(TEST_DT_IIO_FILENAME);
     std::filesystem::remove(TEST_DT_PATRICIA_IIO_FILENAME);
+    std::filesystem::remove(TEST_READ_HEADER_FILENAME);
 }
 
 
