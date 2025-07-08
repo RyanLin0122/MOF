@@ -1,11 +1,10 @@
 ﻿#include <iostream>
-#include "nfs_test.h"
-#include "nfs_integration_test.h"
-#include "cm_packing_integration_test.h"
 #include <stdio.h>     // 用於 printf
 #include <windows.h>   // 用於 HWND, GetConsoleWindow, Sleep
 #include <conio.h>     // 用於 _kbhit, _getch (檢查鍵盤輸入)
 
+#include "nfs_test.h"
+#include "cm_packing_integration_test.h"
 #include "Sound/COgg.h"  // 您的 COgg 類別標頭檔
 #include "CMOFPacking.h" // 您的 CMofPacking 類別標頭檔 (單例版本)
 
@@ -59,15 +58,8 @@ int main() {
 	std::cout << "========================================" << std::endl;
 
 	// 執行所有測試
-	run_all_tests();
+	run_all_tests(); //nfs unit test
 	print_test_result();
-	/*
-	test_create_write_read_small();
-	test_cross_block_write_read();
-	test_multi_channel_isolation();
-	test_channel_truncate();
-	printf("ALL INTEGRATION TESTS PASSED\n");
-	*/
     run_cmofpacking_tests();
     ogg_play_test();
 	return 0;

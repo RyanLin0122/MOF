@@ -141,19 +141,19 @@
   <ItemGroup>
     <ClCompile Include="main.cpp" />
     <ClCompile Include="src\CMOFPacking.cpp" />
+    <ClCompile Include="src\cm_packing_integration_test.cpp" />
     <ClCompile Include="src\nfs.cpp" />
-    <ClCompile Include="src\nfs_integration_test.cpp" />
     <ClCompile Include="src\nfs_test.cpp" />
     <ClCompile Include="src\Sound\COgg.cpp" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="inc\CMOFPacking.h" />
+    <ClInclude Include="inc\cm_packing_integration_test.h" />
     <ClInclude Include="inc\fmod\fmod.h" />
     <ClInclude Include="inc\fmod\fmoddyn.h" />
     <ClInclude Include="inc\fmod\fmod_errors.h" />
     <ClInclude Include="inc\fmod\wincompat.h" />
     <ClInclude Include="inc\nfs.h" />
-    <ClInclude Include="inc\nfs_integration_test.h" />
     <ClInclude Include="inc\nfs_test.h" />
     <ClInclude Include="inc\Sound\COgg.h" />
   </ItemGroup>
