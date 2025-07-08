@@ -9,7 +9,7 @@
 #include <cstdio>
 #include <algorithm>
 #include <string>
-#include <new> // 為了 std::nothrow
+#include <new>
 
 class CMofPacking {
 public:
@@ -46,15 +46,7 @@ public:
 
     // 考慮將此成員封裝起來，提供 getter/setter 方法
     char m_backgroundLoadBufferField[0x7A1200];
-
-private:
-    // 私有建構函式
-    CMofPacking();
-
-    // 指向唯一實例的靜態指標
-    static CMofPacking* s_pInstance;
-
-    // --- 原有的私有成員變數 ---
+    
     NfsHandle* m_pNfsHandle;
     void* m_pReadBuffer;
     void* m_pBuffer1;
@@ -62,6 +54,12 @@ private:
     int m_nReadBytes;
     NfsGlobResults m_globResults;
     bool m_isLoadingFlag;
+private:
+    // 私有建構函式
+    CMofPacking();
+
+    // 指向唯一實例的靜態指標
+    static CMofPacking* s_pInstance;
 };
 
 #endif // CMOFPACKING_H

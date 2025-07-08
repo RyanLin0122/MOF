@@ -42,6 +42,9 @@
     <ClCompile Include="src\Sound\COgg.cpp">
       <Filter>來源檔案\Sound</Filter>
     </ClCompile>
+    <ClCompile Include="src\cm_packing_integration_test.cpp">
+      <Filter>來源檔案</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="inc\nfs.h">
@@ -70,6 +73,9 @@
     </ClInclude>
     <ClInclude Include="inc\fmod\wincompat.h">
       <Filter>標頭檔\fmod</Filter>
+    </ClInclude>
+    <ClInclude Include="inc\cm_packing_integration_test.h">
+      <Filter>標頭檔</Filter>
     </ClInclude>
   </ItemGroup>
 </Project>

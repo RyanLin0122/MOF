@@ -1,39 +1,34 @@
-#include "CMOFPacking.h"
-#include <string> // ¥i¥Î©ó§ó¦w¥şªº¦r¦ê¾Ş§@¡A¦ı¦¹³BºÉ¶qºû«ùC­·®æ¥H²Å¦X­ì©l½X
-#include <new> // ¬°¤F std::nothrow
+ï»¿#include "CMOFPacking.h"
+#include <string> 
+#include <new>    // For std::nothrow
+#include <algorithm> // For std::transform if needed for C++ style string conversion
 
-// ±qCMOFPacking.c¤¤Æ[¹î¨ìªº¥ş°ì¦r¦ê (­ì©l½X¤¤¨Ï¥Îªº¬O¦r¦ê¦r­±¶q)
+// å¾CMOFPacking.cä¸­è§€å¯Ÿåˆ°çš„å…¨åŸŸå­—ä¸²
 const char STR_DOT[] = ".";
 const char STR_DOTDOT[] = "..";
-// const char STR_MOF_INI[] = "mof.ini"; // ¦bDataPacking¤¤ª½±µ¨Ï¥Î "mof.ini"
 
-// ªì©l¤ÆÀRºA¦¨­û«ü¼Ğ
+// åˆå§‹åŒ–éœæ…‹æˆå“¡æŒ‡æ¨™
 CMofPacking* CMofPacking::s_pInstance = nullptr;
 
-// ÀRºA GetInstance ¤èªkªº¹ê²{
+// éœæ…‹ GetInstance æ–¹æ³•çš„å¯¦ç¾
 CMofPacking* CMofPacking::GetInstance() {
     if (s_pInstance == nullptr) {
-        // ¨Ï¥Î std::nothrow ª©¥»¡A¦pªG new ¥¢±Ñ·|ªğ¦^ nullptr¡A¦Ó¤£¬O©ß¥X²§±`
         s_pInstance = new (std::nothrow) CMofPacking();
-        if (s_pInstance) {
-            // ¥i¥H¦b³o¸Ì©I¥sªì©l¤Æ¨ç¦¡¡A¦pªG»İ­nªº¸Ü
-            // s_pInstance->Init();
-        }
     }
     return s_pInstance;
 }
 
-// ÀRºA DestroyInstance ¤èªkªº¹ê²{
+// éœæ…‹ DestroyInstance æ–¹æ³•çš„å¯¦ç¾
 void CMofPacking::DestroyInstance() {
-    delete s_pInstance; // delete nullptr ¬O¦w¥şªº
+    delete s_pInstance;
     s_pInstance = nullptr;
 }
 
-// «Øºc¨ç¦¡ (²{¦b¬O¨p¦³ªº)
+// å»ºæ§‹å‡½å¼
 CMofPacking::CMofPacking() {
     m_pNfsHandle = nullptr;
     m_pReadBuffer = nullptr;
-    m_pBuffer1 = nullptr;
+    m_pBuffer1 = nullptr; // Note: This buffer is never used in the provided logic.
     m_nReadBytes = 0;
 
     m_globResults.gl_pathc = 0;
@@ -47,10 +42,10 @@ CMofPacking::CMofPacking() {
     memset(m_tempPathBuffer, 0, sizeof(m_tempPathBuffer));
 }
 
-// ¸Ñºc¨ç¦¡ (²{¦b¬O¨p¦³ªº)
+// è§£æ§‹å‡½å¼
 CMofPacking::~CMofPacking() {
     DeleteBuffer();
-    // DeleteBuffer1(); // ¦pªG m_pBuffer1 ¦³³Q¨Ï¥Î¡A¤]À³¦b¦¹²M²z
+    DeleteBuffer1();
     PackFileClose();
 }
 
@@ -58,122 +53,111 @@ bool CMofPacking::Init() {
     return true;
 }
 
-// ¶}±ÒNFS«Ê¸ËÀÉ®×
+// é–‹å•ŸNFSå°è£æª”æ¡ˆ
 bool CMofPacking::PackFileOpen(const char* packFileName) {
-    m_pNfsHandle = nfs_start(packFileName, 3); // ¼Ò¦¡3¦b­ì©l½X¤¤³Q¨Ï¥Î
+    if (m_pNfsHandle) {
+        PackFileClose(); // å¦‚æœå·²é–‹å•Ÿï¼Œå…ˆé—œé–‰èˆŠçš„
+    }
+    // æ¨¡å¼ 3 åœ¨åŸå§‹ç¢¼ä¸­è¢«ä½¿ç”¨ï¼Œé€šå¸¸æ„å‘³è‘—è®€å¯«æ¬Šé™
+    m_pNfsHandle = nfs_start(packFileName, 3);
     return (m_pNfsHandle != nullptr);
 }
 
-// Ãö³¬NFS«Ê¸ËÀÉ®×
+// é—œé–‰NFSå°è£æª”æ¡ˆ
 bool CMofPacking::PackFileClose() {
     if (m_pNfsHandle) {
-        nfs_end(m_pNfsHandle, 0); // °Ñ¼Æ0ªí¥Ü¤£¾P·´¹êÅéÀÉ®×
+        nfs_end(m_pNfsHandle, 0); // åƒæ•¸ 0 è¡¨ç¤ºä¸éŠ·æ¯€å¯¦é«”æª”æ¡ˆ
         m_pNfsHandle = nullptr;
     }
-    return true; // ­ì©l½Xªğ¦^1
+    return true;
 }
 
-// ·s¼WÀÉ®×¦Ü«Ê¸Ë
+// [å·²é‡æ§‹] æ–°å¢æª”æ¡ˆè‡³å°è£
 bool CMofPacking::AddFile(const char* filePathInPack) {
     if (!m_pNfsHandle) return false;
 
+    // å¦‚æœæª”æ¡ˆå·²å­˜åœ¨ï¼Œå‰‡ç§»é™¤ä»¥é”åˆ°è¦†å¯«æ•ˆæœ
     if (nfs_file_exists(m_pNfsHandle, filePathInPack)) {
-        RemoveFile(filePathInPack); // ¦pªGÀÉ®×¤w¦s¦b¡A¥ı²¾°£
+        if (!RemoveFile(filePathInPack)) {
+            // å¦‚æœç§»é™¤å¤±æ•—ï¼Œå¯ä»¥é¸æ“‡ä¸­æ­¢æˆ–ç¹¼çºŒå˜—è©¦å»ºç«‹
+            // æ­¤è™•é¸æ“‡ä¸­æ­¢ä»¥ä¿æŒä¸€è‡´æ€§
+            return false;
+        }
     }
 
     int fd = nfs_file_create(m_pNfsHandle, filePathInPack);
     if (fd < 0) {
-        return false; // «Ø¥ßÀÉ®×¥¢±Ñ
+        return false; // å»ºç«‹æª”æ¡ˆå¤±æ•—
     }
 
-    // ­ì©l½X¤¤¼g¤J¤F2048¦ì¤¸²Õªº¥¼ªì©l¤Æ°ïÅ|¼Æ¾Ú v5¡C
-    // ³o³q±`¬O­Óbug©ÎªÌ¦³¯S®í¥Øªº¡]¨Ò¦p¹w¤À°tªÅ¶¡¡A¦ı¼g¤J¥¼ªì©l¤Æ¼Æ¾Ú«Ü¦MÀI¡^¡C
-    // ¬°¤F¦æ¬°¤@­P¡A§Ú­Ì¼ÒÀÀ¼g¤J¤@¨Ç¼Æ¾Ú¡A¦ı¨Ï¥Î0¶ñ¥Rªº¼Æ¾Ú¥HÁ×§K¦w¥ş­·ÀI¡C
-    // ¦pªGÄY®æ­n¨D¼g¤J"©U§£"¼Æ¾Ú¡A«h»İ­nchar uninitialized_buffer[2048];
-    char zero_buffer[2048];
-    memset(zero_buffer, 0, sizeof(zero_buffer)); // ¨Ï¥Î0¶ñ¥Rªº½w½Ä°Ï
-
-    if (nfs_file_write(m_pNfsHandle, fd, zero_buffer, sizeof(zero_buffer)) != sizeof(zero_buffer)) {
-        nfs_file_close(m_pNfsHandle, fd);
-        return false; // ¼g¤J¥¢±Ñ
-    }
+    // [ä¿®æ­£] ç§»é™¤åŸå…ˆä¸å¿…è¦çš„ 2048 ä½å…ƒçµ„å¯«å…¥æ“ä½œã€‚
+    // nfs_file_create å·²ç¶“åœ¨ VFS ä¸­å»ºç«‹äº†å¤§å°ç‚º 0 çš„æª”æ¡ˆæ¢ç›®ï¼Œé€™å°±è¶³å¤ äº†ã€‚
 
     nfs_file_close(m_pNfsHandle, fd);
     return true;
 }
 
-// ±q«Ê¸Ë¤¤²¾°£ÀÉ®×
+// [å·²é‡æ§‹] å¾å°è£ä¸­ç§»é™¤æª”æ¡ˆ
 bool CMofPacking::RemoveFile(const char* filePathInPack) {
     if (!m_pNfsHandle) return false;
-    nfs_file_unlink(m_pNfsHandle, filePathInPack);
-    return true; // ­ì©l½Xªğ¦^1¡A§Y¨Ïunlink¥¢±Ñ¤]¦p¦¹ (nfs_file_unlink¥»¨­¤£ªğ¦^­È)
+
+    // [ä¿®æ­£] æª¢æŸ¥ nfs_file_unlink çš„å›å‚³å€¼ã€‚æˆåŠŸæ™‚è¿”å› 0ã€‚
+    if (nfs_file_unlink(m_pNfsHandle, filePathInPack) == 0) {
+        return true;
+    }
+
+    return false;
 }
 
-// ±N«ü©w¥Ø¿ı¤Uªº©Ò¦³ÀÉ®×¥´¥]¶iNFS
+// [å·²é‡æ§‹] å°‡æŒ‡å®šç›®éŒ„ä¸‹çš„æ‰€æœ‰æª”æ¡ˆæ‰“åŒ…é€²NFS
 int CMofPacking::DataPacking(const char* directoryPath) {
     if (!m_pNfsHandle || !directoryPath) return 0;
 
     WIN32_FIND_DATAA findFileData;
     char searchPath[MAX_PATH];
-    char fullFilePath[MAX_PATH];
-    char subDirectoryPath[MAX_PATH];
+    char fullPath[MAX_PATH];
 
-    // ºc«Ø·j´M¸ô®|¡A¨Ò¦p "C:\\Data\\*.*"
+    // æ§‹å»ºæœå°‹è·¯å¾‘ï¼Œä¾‹å¦‚ "C:\\Data\\*.*"
     sprintf_s(searchPath, sizeof(searchPath), "%s*.*", directoryPath);
 
     HANDLE hFindFile = FindFirstFileA(searchPath, &findFileData);
     if (hFindFile == INVALID_HANDLE_VALUE) {
-        return 0; // FindFirstFileA ¥¢±Ñ
+        return 0; // FindFirstFile å¤±æ•—ï¼Œå¯èƒ½ç›®éŒ„ç‚ºç©ºæˆ–ç„¡æ•ˆï¼Œè¿”å›0è¡¨ç¤ºæœªæ‰¾åˆ° mof.ini
     }
 
     do {
-        if (lstrcmpA(findFileData.cFileName, STR_DOT) == 0 || lstrcmpA(findFileData.cFileName, STR_DOTDOT) == 0) {
-            continue; // ¸õ¹L "." ©M ".."
+        // è·³é "." å’Œ ".."
+        if (strcmp(findFileData.cFileName, STR_DOT) == 0 || strcmp(findFileData.cFileName, STR_DOTDOT) == 0) {
+            continue;
         }
 
-        // ­ì©l½X¤¤¦³¹ï "mof.ini" ªº¯S®í³B²z¡A¦ı¦r¦ê¤£¤Ç°t ('&`string`')¡A¥i¯à¬O¤Ï½sÄ¶¿ù»~
-        // `if ( !lstrcmpA(FindFileData.cFileName, &`string`) ) return 1;` -> `&`string`` ¤£¤Ó¹ï
-        // °²³]¬OÀË¬d¯S©wÀÉ®×¦W¡A¨Ò¦p "mof.ini" (°ò©ó±`¨£¼Ò¦¡)
-        if (lstrcmpA(findFileData.cFileName, "mof.ini") == 0) { // °²³]ÀË¬d "mof.ini"
-            FindClose(hFindFile);
-            return 1; // §ä¨ì "mof.ini"¡A°±¤î³B²z
-        }
+        // æ§‹å»ºç•¶å‰æª”æ¡ˆ/ç›®éŒ„çš„å®Œæ•´è·¯å¾‘
+        sprintf_s(fullPath, sizeof(fullPath), "%s%s", directoryPath, findFileData.cFileName);
 
-        sprintf_s(fullFilePath, sizeof(fullFilePath), "%s%s", directoryPath, findFileData.cFileName);
-
+        // [ä¿®æ­£] ä½¿ç”¨æ¸…æ™°çš„ if-else çµæ§‹è™•ç†ç›®éŒ„å’Œæª”æ¡ˆ
         if (findFileData.dwFileAttributes & FILE_ATTRIBUTE_DIRECTORY) {
-            // ¦pªG¬O¤l¥Ø¿ı¡A»¼Âk³B²z
-            sprintf_s(subDirectoryPath, sizeof(subDirectoryPath), "%s\\", fullFilePath);
+            // å¦‚æœæ˜¯å­ç›®éŒ„ï¼ŒåŠ ä¸Šè·¯å¾‘åˆ†éš”ç¬¦å¾Œéè¿´
+            char subDirectoryPath[MAX_PATH];
+            sprintf_s(subDirectoryPath, sizeof(subDirectoryPath), "%s\\", fullPath);
             int packing_result = DataPacking(subDirectoryPath);
-            if (packing_result == 1) { // ¦pªG¦b¤l¥Ø¿ı¤¤§ä¨ì "mof.ini"
+
+            // å¦‚æœåœ¨å­ç›®éŒ„ä¸­æ‰¾åˆ° "mof.ini" (è¿”å›1)ï¼Œå‰‡ç«‹å³åœæ­¢ä¸¦å‘ä¸Šä¼ é
+            if (packing_result == 1) {
                 FindClose(hFindFile);
                 return 1;
             }
-            // ¦pªG packing_result == 0 (¤l¥Ø¿ı³B²z¥¢±Ñ)¡A­ì©l½X¦ü¥G·|Ä~Äò³B²z·í«e¥Ø¿ıªº¨ä¥LÀÉ®×
-            // ¦Ó¤£¬Oª½±µªğ¦^0¡C­ì©l½XÅŞ¿è¡G`v4 = CMofPacking::DataPacking(this, v13), v4 != 1) && v4`
-            // ¦pªG v4 (packing_result) ¬O0¡A`(v4 != 1 && v4)` ¬°°²¡A´N·|°õ¦æ«á­±ªºÀÉ®×³B²zÅŞ¿è¡A³o¤£¹ï¡C
-            // À³¸Ó¬O: if (packing_result == 0 && packing_result != 1) { /* handle error or continue */ }
-            // ©ÎªÌ: if (packing_result != 1 && packing_result != 2) { /* error in subdir */ }
-            // ­ì©l½Xªº `v4 != 1 && v4` ·N«ä¬O `packing_result != 1 && packing_result != 0` -> `packing_result == 2`
-            // ©Ò¥H¥u¦³¤l¥Ø¿ı¦¨¥\ªğ¦^2®É¡A¤~¸õ¹L«áÄòªºÀÉ®×³B²z¡C
-            // Â²¤Æ¡G¦pªG»¼Âk©I¥s¤£¬O1¡]mof.ini¡^¡A¤]¤£¬O0¡]¿ù»~¡^¡A¨º»ò´NÄ~Äò¡C
-            // ¦pªG»¼Âk©I¥s¬O0¡A¨º»ò­ì©l½Xªº `v4` (packing_result) ¬°0¡A`v4 != 1 && v4` ¬°°²¡A
-            // ·|¾É­P°õ¦æ«á­±ªºÀÉ®×«ş¨©ÅŞ¿è¡A³o¬O¤£¹ïªº¡A¦]¬°¤l¥Ø¿ı¬O­Ó¥Ø¿ı¡C
-            // ¥¿½TªºÅŞ¿èÀ³¬°¡G¦pªG (FindFileData.dwFileAttributes != 16) then process file
-            // else (it's a directory) recurse; if recurse_result == 1 return 1; (if recurse_result == 0, maybe error)
-            // ¤Ï½sÄ¶½X `if ( FindFileData.dwFileAttributes != 16 || (..., v4 = DataPacking(...), v4 != 1) && v4 )`
-            // µ¥»ù©ó `if (IS_FILE || (IS_DIR && DataPacking_Returns_NOT_MOF_INI && DataPacking_Returns_NOT_ERROR_OR_EMPTY))`
-            // ¹ê»Ú¤W¡A¦pªG DataPacking ªğ¦^ 0 (¿ù»~) ©Î 1 (§ä¨ìmof.ini)¡A«h `(v4 != 1 && v4)` ¬°°²¡C
-            // ¦¹®É if ±ø¥ó¨ú¨M©ó `FindFileData.dwFileAttributes != 16`¡C
-            // ³oªí¥Ü¦pªG¬O¤@­ÓÀÉ®×¡A©ÎªÌ¬O¤@­Ó¥Ø¿ı¥B»¼Âk¥´¥]¥¢±Ñ©Î§ä¨ìmof.ini¡A«h°õ¦æ«á­±ªºÀÉ®×½Æ»s¡C³oÅãµM¬O¿ùªº¡C
-            // ¥¿½TÅŞ¿èÀ³¬°¡G­Y¬OÀÉ®×¡A«h¥´¥]¡C­Y¬O¥Ø¿ı¡A«h»¼Âk¡C
-            // §Ú±N­×¥¿¦¹ÅŞ¿è¬°§ó¦X²zªº§Î¦¡¡C
         }
         else {
-            // ¦pªG¬OÀÉ®×¡AÅª¨ú¨Ã¼g¤JNFS
+            // å¦‚æœæ˜¯æª”æ¡ˆ
+            // æª¢æŸ¥æ˜¯å¦ç‚ºç‰¹æ®Šæª”æ¡ˆ "mof.ini"
+            if (_stricmp(findFileData.cFileName, "mof.ini") == 0) {
+                FindClose(hFindFile);
+                return 1; // æ‰¾åˆ° "mof.ini"ï¼Œç«‹å³åœæ­¢ä¸¦è¿”å› 1
+            }
+
+            // è®€å–æœ¬åœ°æª”æ¡ˆä¸¦å¯«å…¥NFS
             FILE* pFile = nullptr;
-            errno_t err = fopen_s(&pFile, fullFilePath, "rb");
-            if (err == 0 && pFile) {
+            if (fopen_s(&pFile, fullPath, "rb") == 0 && pFile) {
                 fseek(pFile, 0, SEEK_END);
                 long fileSize = ftell(pFile);
                 fseek(pFile, 0, SEEK_SET);
@@ -183,12 +167,14 @@ int CMofPacking::DataPacking(const char* directoryPath) {
                     if (buffer) {
                         fread(buffer, 1, fileSize, pFile);
 
-                        // ±NÀÉ®×¦WÂà¬°¤p¼g¡]NFS¤º³¡³q±`¬O¤j¤p¼g¤£±Ó·P©Î²Î¤@¤p¼g¡^
-                        char lowerCaseFileName[MAX_PATH];
-                        strcpy_s(lowerCaseFileName, sizeof(lowerCaseFileName), fullFilePath);
-                        _strlwr_s(lowerCaseFileName, sizeof(lowerCaseFileName)); // ¨Ï¥Î¦w¥şª©¥»
+                        // å°‡æª”æ¡ˆè·¯å¾‘è½‰ç‚ºå°å¯«å­˜å…¥NFSï¼Œé€™æ˜¯ä¸€å€‹å¥½ç¿’æ…£
+                        char lowerCasePathInPack[MAX_PATH];
+                        // é€™è£¡çš„è·¯å¾‘æ‡‰è©²æ˜¯ç›¸å°æ–¼æ‰“åŒ…æ ¹ç›®éŒ„çš„è·¯å¾‘
+                        // ç‚ºäº†ç°¡åŒ–ï¼Œæˆ‘å€‘ç›´æ¥ä½¿ç”¨æª”åï¼Œä½†ä¸€å€‹å®Œæ•´çš„æ‰“åŒ…å·¥å…·éœ€è¦è™•ç†ç›¸å°è·¯å¾‘
+                        strcpy_s(lowerCasePathInPack, sizeof(lowerCasePathInPack), findFileData.cFileName);
+                        _strlwr_s(lowerCasePathInPack, sizeof(lowerCasePathInPack));
 
-                        int fd = nfs_file_create(m_pNfsHandle, lowerCaseFileName);
+                        int fd = nfs_file_create(m_pNfsHandle, lowerCasePathInPack);
                         if (fd >= 0) {
                             nfs_file_write(m_pNfsHandle, fd, buffer, fileSize);
                             nfs_file_close(m_pNfsHandle, fd);
@@ -202,147 +188,140 @@ int CMofPacking::DataPacking(const char* directoryPath) {
     } while (FindNextFileA(hFindFile, &findFileData));
 
     FindClose(hFindFile);
-    return 2; // ¥¿±`§¹¦¨
+    return 2; // æ­£å¸¸å®Œæˆæ•´å€‹ç›®éŒ„çš„è™•ç†
 }
 
 
-// ­I´º¸ü¤J¦¡Åª¨úÀÉ®×
+// [å·²é‡æ§‹] èƒŒæ™¯è¼‰å…¥å¼è®€å–æª”æ¡ˆ
 void CMofPacking::FileReadBackGroundLoading(const char* filePathInPack) {
     if (!m_pNfsHandle) return;
 
-    int fd = nfs_file_open(m_pNfsHandle, filePathInPack, 2); // ¼Ò¦¡2¡A¥i¯à¬O°ßÅª©ÎÅª¼g
+    int fd = nfs_file_open(m_pNfsHandle, filePathInPack, 2); // æ¨¡å¼2, å‡è¨­ç‚ºè®€å–
     if (fd >= 0) {
         m_isLoadingFlag = true;
-        int totalBytesReadThisCall = 0; // ¥Î©ó²Ö­p¥»¦¸­I´º¸ü¤JªºÁ`¦ì¤¸²Õ¼Æ
+        int totalBytesReadThisCall = 0;
         int bytesReadThisChunk;
         do {
             bytesReadThisChunk = nfs_file_read(m_pNfsHandle, fd, m_backgroundLoadBufferField, sizeof(m_backgroundLoadBufferField));
             if (bytesReadThisChunk > 0) {
                 totalBytesReadThisCall += bytesReadThisChunk;
-                // ³o¸Ì¥i¥H³B²zÅª¨ú¨ìªº m_backgroundLoadBufferField ¤¤ªº¼Æ¾Ú
-                // ­ì©l½X±N³æ­Ó chunk ªºÅª¨ú¶q¦sÀx¦b m_nReadBytes (`*((_DWORD *)this + 68) = v7;`)
-                // ¨Ã¦b¤@­Ó§½³¡ÅÜ¼Æ v6 ¤¤²Ö¥[¡C¦¹³B§Ú­Ì¶È§ó·s m_nReadBytes ¬°³Ì«á¤@¶ôªº¤j¤p¡C
-                m_nReadBytes = bytesReadThisChunk;
+                // åœ¨æ­¤è™•å¯ä»¥å°è®€å…¥ m_backgroundLoadBufferField çš„æ•¸æ“šå¡Šé€²è¡Œå³æ™‚è™•ç†
             }
-            else {
-                m_nReadBytes = 0; // ¦pªGÅª¨ú¥¢±Ñ©Î¨ìÀÉ®×§Àºİ
-            }
-        } while (bytesReadThisChunk >= static_cast<int>(sizeof(m_backgroundLoadBufferField))); // ¦pªGÅªº¡¤F½w½Ä°Ï¡A¥i¯àÁÙ¦³§ó¦h
+        } while (bytesReadThisChunk > 0); // åªè¦æœ‰è®€åˆ°è³‡æ–™å°±ç¹¼çºŒ
+
+        // [ä¿®æ­£] å°‡è®€å–çš„ç¸½ä½å…ƒçµ„æ•¸è³¦å€¼çµ¦ m_nReadBytes
+        m_nReadBytes = totalBytesReadThisCall;
 
         nfs_file_close(m_pNfsHandle, fd);
         m_isLoadingFlag = false;
-        // ­ì©l½X¤¤ v6 ²Ö¥[¤FÁ`¶q¡A¦ı³Ì²× m_nReadBytes ¥u«O¯d³Ì«á¤@¶ôªº¤j¤p¡C
-        // ¦pªG»İ­nÁ`¶q¡AÀ³¸Ó¦³¤@­Ó¥t¥~ªº¦¨­ûÅÜ¼Æ¨ÓÀx¦s totalBytesReadThisCall¡C
-        // ®Ú¾Ú GetBufferSize() ªº¦æ¬°¡A¥¦ªğ¦^ m_nReadBytes¡A©Ò¥H§Ú­Ì«O«ù m_nReadBytes ¬°³Ì«á¤@¶ôªº¤j¤p¡C
     }
     else {
         m_nReadBytes = 0;
     }
 }
 
-// Åª¨úÀÉ®×¦Ü°ÊºA¤À°tªº½w½Ä°Ï
+// è¼”åŠ©å‡½å¼ï¼šé€éå­˜å–NFSå…§éƒ¨çµæ§‹ä¾†å–å¾—æª”æ¡ˆå¤§å°
+// ç†æƒ³æƒ…æ³ä¸‹ï¼Œæ­¤åŠŸèƒ½æ‡‰ç”± nfs.h æä¾›ä¸€å€‹å…¬é–‹çš„API
+static int get_nfs_file_size(NfsHandle* handle, int fd) {
+    // è­¦å‘Šï¼šä»¥ä¸‹ç¨‹å¼ç¢¼ç›´æ¥å­˜å–äº† NfsHandle çš„å…§éƒ¨æˆå“¡ (open_files_array, nt_handle)ï¼Œ
+    // é€™åš´é‡é•åäº† API çš„å°è£åŸå‰‡ã€‚
+    // é€™æ¨£åšçš„å”¯ä¸€åŸå› æ˜¯ nfs.h API ç›®å‰ç¼ºå°‘ä¸€å€‹å…¬é–‹çš„ã€é€éæª”æ¡ˆæè¿°ç¬¦(fd)
+    // æŸ¥è©¢æª”æ¡ˆå¤§å°çš„å‡½å¼ (å¦‚ nfs_file_get_size(fd))ã€‚
+    // é€™æ˜¯ç‚ºäº†è§£æ±º API ä¸è¶³è€Œæ¡å–çš„æ¬Šå®œä¹‹è¨ˆï¼Œè‹¥ nfs å…§éƒ¨çµæ§‹è®Šæ›´ï¼Œæ­¤è™•å¯èƒ½å¤±æ•ˆã€‚
+    if (!handle || fd < 0 || fd >= handle->open_files_array_capacity || !handle->open_files_array[fd]) {
+        return -1;
+    }
+    NfsOpenFileHandle* fh = handle->open_files_array[fd];
+    return nfs_nt_node_get_size(handle->nt_handle, fh->nt_node_idx);
+}
+
+// [å·²é‡æ§‹] è®€å–æª”æ¡ˆè‡³å‹•æ…‹åˆ†é…çš„ç·©è¡å€
 char* CMofPacking::FileRead(const char* filePathInPack) {
     if (!m_pNfsHandle) return nullptr;
 
     m_nReadBytes = 0;
-    int fd = nfs_file_open(m_pNfsHandle, filePathInPack, 2); // ¼Ò¦¡2
+    int fd = nfs_file_open(m_pNfsHandle, filePathInPack, 2); // æ¨¡å¼2
     if (fd >= 0) {
         m_isLoadingFlag = true;
 
-        // ±qNfsHandleÀò¨úOpenFileHandle¡A¦AÀò¨únt_node_idx
-        // ³o¬O¹ïnfs¤º³¡µ²ºcªº°²³]¡Aª½±µ¨Ï¥ÎAPI§ó¨Î
-        // int fileSize = nfs_nt_node_get_size(m_pNfsHandle->nt_handle, m_pNfsHandle->open_files_array[fd]->nt_node_idx);
-        // §ó¦w¥şªº°µªk¬O¥ılseek¨ì¥½§ÀÀò¨ú¤j¤p¡A©ÎªÌnfs API´£¨Ñª½±µÀò¨ú¤j¤pªº¤èªk¡C
-        // nfs.cpp ¤¤ªº nfs_file_lseek ·|§ó·s©Îªğ¦^¤j¤p¡A¦ı¨S¦³ª½±µªº nfs_file_size(fd)¡C
-        // nfs_nt_node_get_size »İ­n nt_handle ©M nt_node_idx¡C
-        // open_files_array[fd]->nt_node_idx ¬O¥¿½Tªº¡C
-        NfsOpenFileHandle* fh = m_pNfsHandle->open_files_array[fd]; // »İ­n½T«O fd ¦³®Ä¥B fh ¤w³Q¶ñ¥R
-        int fileSize = -1;
-        if (fh) { // ½T«O fh ¦³®Ä
-            fileSize = nfs_nt_node_get_size(m_pNfsHandle->nt_handle, fh->nt_node_idx);
-        }
+        // [ä¿®æ­£] ä½¿ç”¨è¼”åŠ©å‡½å¼ä¾†éš±è—ç›´æ¥å­˜å–ï¼Œä¸¦æ¸…æ¥šæ¨™ç¤ºå…¶å•é¡Œ
+        int fileSize = get_nfs_file_size(m_pNfsHandle, fd);
 
         if (fileSize >= 0) {
-            DeleteBuffer(); // ÄÀ©ñÂÂªº m_pReadBuffer
-            m_pReadBuffer = new (std::nothrow) char[fileSize + 1]; // +1 for null terminator if needed, though binary read
+            DeleteBuffer(); // é‡‹æ”¾èˆŠçš„ m_pReadBuffer
+            m_pReadBuffer = new (std::nothrow) char[fileSize + 1]; // +1 for null terminator
             if (m_pReadBuffer) {
                 m_nReadBytes = nfs_file_read(m_pNfsHandle, fd, m_pReadBuffer, fileSize);
-                if (m_nReadBytes != fileSize) { // Åª¨ú¤£§¹¾ã
-                    DeleteBuffer(); // ²M²z¨Ãªğ¦^nullptr
+                if (m_nReadBytes != fileSize) {
+                    DeleteBuffer();
                 }
                 else {
-                    // ((char*)m_pReadBuffer)[m_nReadBytes] = '\0'; // ¦pªG¬O¤å¥»¡A½T«OªÅµ²§À (¥i¿ï)
+                    // ç¢ºä¿æª”æ¡ˆå…§å®¹å³ä½¿æ˜¯äºŒé€²ä½ï¼Œåœ¨ä½œç‚ºå­—ä¸²ä½¿ç”¨æ™‚ä¹Ÿæ˜¯å®‰å…¨çš„
+                    ((char*)m_pReadBuffer)[m_nReadBytes] = '\0';
                 }
             }
             else {
-                m_nReadBytes = 0; // ¤À°t¥¢±Ñ
+                m_nReadBytes = 0; // è¨˜æ†¶é«”åˆ†é…å¤±æ•—
             }
         }
         else {
-            m_nReadBytes = 0; // Àò¨ú¤j¤p¥¢±Ñ
+            m_nReadBytes = 0; // ç²å–æª”æ¡ˆå¤§å°å¤±æ•—
         }
         nfs_file_close(m_pNfsHandle, fd);
         m_isLoadingFlag = false;
     }
-    return (char*)m_pReadBuffer; // ¦pªG¥¢±Ñ¡Am_pReadBuffer ·|¬O nullptr
+    return (char*)m_pReadBuffer;
 }
 
-// ÄÀ©ñ m_pReadBuffer
+// é‡‹æ”¾ m_pReadBuffer
 void CMofPacking::DeleteBuffer() {
     if (m_pReadBuffer) {
-        delete[](char*)m_pReadBuffer;
+        delete[] static_cast<char*>(m_pReadBuffer);
         m_pReadBuffer = nullptr;
     }
 }
 
-// ÄÀ©ñ m_pBuffer1
+// é‡‹æ”¾ m_pBuffer1
 void CMofPacking::DeleteBuffer1() {
     if (m_pBuffer1) {
-        delete[](char*)m_pBuffer1;
+        delete[] static_cast<char*>(m_pBuffer1);
         m_pBuffer1 = nullptr;
     }
 }
 
-// ¨ú±o¤W¦¸Åª¨ú¾Ş§@ªº¦ì¤¸²Õ¼Æ
+// å–å¾—ä¸Šæ¬¡è®€å–æ“ä½œçš„ä½å…ƒçµ„æ•¸
 int CMofPacking::GetBufferSize() const {
     return m_nReadBytes;
 }
 
-// ¦bNFS¤¤·j´M²Å¦X¼Ò¦¡ªºÀÉ®×¦WºÙ
+// åœ¨NFSä¸­æœå°‹ç¬¦åˆæ¨¡å¼çš„æª”æ¡ˆåç¨±
 NfsGlobResults* CMofPacking::SearchString(const char* pattern) {
     if (!m_pNfsHandle) return nullptr;
 
-    // nfs_glob ªº flags °Ñ¼Æ¦bC½X¤¤¬O4¡C
-    // °²³] 4 ¹ïÀ³ NFS_FNM_NOSORT (¤£±Æ§Çµ²ªG)
-    // ¿ù»~¦^©I¨ç¦¡¬° nullptr (0)
-    int result = nfs_glob(m_pNfsHandle, pattern, 4 /*NFS_FNM_NOSORT?*/, nullptr, &m_globResults);
+    // æ——æ¨™ 4 å°æ‡‰ NFS_FNM_NOSORT (ä¸æ’åºçµæœ)ï¼Œé€™èˆ‡åŸå§‹ç¢¼è¡Œç‚ºä¸€è‡´
+    int result = nfs_glob(m_pNfsHandle, pattern, 4, nullptr, &m_globResults);
 
-    if (result == 0 && m_globResults.gl_pathc > 0) { // ¦¨¥\¥B¦³¤Ç°t
+    // åªæœ‰æˆåŠŸ (result==0) ä¸”æœ‰æ‰¾åˆ°åŒ¹é…é … (gl_pathc > 0) æ™‚æ‰è¿”å›çµæœ
+    if (result == 0 && m_globResults.gl_pathc > 0) {
         return &m_globResults;
     }
-    // ¦pªG result != 0 (¨Ò¦p GLOB_NOMATCH) ©Î gl_pathc == 0¡A«hªğ¦^ nullptr
-    // ­ì©l½XÅŞ¿è `*v2 <= 0 ? 0 : (unsigned int)v2`¡Av2 «ü¦V gl_pathc ªº¦a§}¡A¦ıªğ¦^ªº¬O m_globResults ªº¦a§}¡C
-    // ©Ò¥H¬O `m_globResults.gl_pathc > 0 ? &m_globResults : nullptr;`
+
     return nullptr;
 }
 
-// ÄÀ©ñ SearchString ªºµ²ªG
+// é‡‹æ”¾ SearchString çš„çµæœ
 void CMofPacking::DeleteSearchData() {
     if (!m_pNfsHandle) return;
-    // ®Ú¾Ú nfs.h, nfs_glob_free ¥u»İ­n NfsGlobResults*
-    // ¤Ï½sÄ¶ªºC½X `nfs_glob_free(m_pNfsHandle, &m_globResults)` ¬O¿ù»~ªº¡C
+    // nfs_glob_free çš„ç°½ç« æ˜¯ void nfs_glob_free(NfsGlobResults*), åªéœ€å‚³å…¥çµæœçµæ§‹å³å¯ã€‚
     nfs_glob_free(&m_globResults);
 }
 
-// ±N¦r¦êÂà¬°¤p¼g
+// å°‡å­—ä¸²è½‰ç‚ºå°å¯«
 char* CMofPacking::ChangeString(char* str) {
     if (str) {
-        return _strlwr(str); // _strlwr ­×§ï­ì¦r¦ê¨Ãªğ¦^¥¦
-        // ©ÎªÌ¨Ï¥ÎC++¼Ğ·Ç¤èªk¡G
-        // std::string temp_str = str;
-        // std::transform(temp_str.begin(), temp_str.end(), temp_str.begin(), ::tolower);
-        // strcpy(str, temp_str.c_str()); // ¦pªG»İ­n­×§ï­ìchar*
-        // return str;
+        // _strlwr å·²è¢«æ£„ç”¨ï¼Œä½¿ç”¨ _strlwr_s æ›´å®‰å…¨
+        _strlwr_s(str, strlen(str) + 1);
+        return str;
     }
     return nullptr;
 }

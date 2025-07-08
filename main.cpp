@@ -1,6 +1,7 @@
 ﻿#include <iostream>
 #include "nfs_test.h"
 #include "nfs_integration_test.h"
+#include "cm_packing_integration_test.h"
 #include <stdio.h>     // 用於 printf
 #include <windows.h>   // 用於 HWND, GetConsoleWindow, Sleep
 #include <conio.h>     // 用於 _kbhit, _getch (檢查鍵盤輸入)
@@ -67,6 +68,7 @@ int main() {
 	test_channel_truncate();
 	printf("ALL INTEGRATION TESTS PASSED\n");
 	*/
+    run_cmofpacking_tests();
     ogg_play_test();
 	return 0;
 }
