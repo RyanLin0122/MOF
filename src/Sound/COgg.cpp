@@ -66,7 +66,8 @@ void COgg::Play(const char* filePath) {
     }
     else {
         // 直接從檔案系統開啟
-        m_pStream = FSOUND_Stream_Open(filePath, m_nStreamOpenMode, 0, 0);
+        m_pStream = FSOUND_Stream_Open("D:\\VFS_Source\\bg_beastcave.ogg", m_nStreamOpenMode, 0, 0);
+        //m_pStream = FSOUND_Stream_Open(filePath, m_nStreamOpenMode, 0, 0);
     }
 
     // 如果成功載入串流

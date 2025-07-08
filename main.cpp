@@ -8,16 +8,56 @@
 #include "Sound/COgg.h"  // 您的 COgg 類別標頭檔
 #include "CMOFPacking.h" // 您的 CMofPacking 類別標頭檔 (單例版本)
 
+void create_vfs_archive() {
+    const char* vfs_base_name = "mof"; // 最終會產生 mof.pak 和 mof.paki
+    const char* source_directory = "D:\\VFS_Source\\"; // 您在步驟1中建立的來源目錄 (注意路徑結尾的斜線)
+
+    std::cout << "正在建立 VFS 封裝檔: " << vfs_base_name << std::endl;
+    std::cout << "來源目錄: " << source_directory << std::endl;
+
+    // 取得 CMofPacking 單例
+    CMofPacking* packer = CMofPacking::GetInstance();
+    if (!packer) {
+        std::cerr << "錯誤：無法取得 CMofPacking 實例。" << std::endl;
+        return;
+    }
+
+    // 開啟 (建立) 一個新的 VFS 檔案
+    // PackFileOpen 在檔案不存在時會建立新檔
+    if (!packer->PackFileOpen(vfs_base_name)) {
+        std::cerr << "錯誤：無法開啟/建立 VFS 檔案 " << vfs_base_name << std::endl;
+        CMofPacking::DestroyInstance();
+        return;
+    }
+
+    // 執行打包
+    std::cout << "正在打包目錄內容..." << std::endl;
+    int result = packer->DataPacking(source_directory);
+    if (result == 0) {
+        std::cerr << "警告：DataPacking 未找到任何檔案或目錄無效。" << std::endl;
+    }
+    else {
+        std::cout << "打包完成。" << std::endl;
+    }
+
+    // 關閉 VFS 檔案並銷毀單例
+    packer->PackFileClose();
+    CMofPacking::DestroyInstance();
+
+    std::cout << vfs_base_name << ".pak 和 " << vfs_base_name << ".paki 已成功建立。" << std::endl;
+}
+
 void ogg_play_test() {
     // --- 測試參數設定 ---
     // 請將此處的 VFS 名稱換成您實際的封裝檔基礎名稱 (不含 .pak/.paki)
     const char* VFS_ARCHIVE_NAME = "mof"; // 例如 "mof", "data" 等
     // 請將此處的路徑換成您封裝檔中實際的 OGG 檔案路徑
-    const char* OGG_PATH_IN_VFS = "D:\\MOF\\mofdata\\music\\bg_beavers.ogg";
+    const char* OGG_PATH_IN_VFS = "bg_beavers.ogg";
 
     printf("FMOD OGG 播放整合測試\n");
     printf("------------------------\n");
 
+    create_vfs_archive();
     // --- 1. 初始化並開啟 VFS ---
     // 這是應用程式層級的責任，必須在任何讀取操作之前完成。
     printf("正在初始化並開啟 VFS: %s.pak/.paki\n", VFS_ARCHIVE_NAME);
