@@ -5211,11 +5211,28 @@ int nfs_file_lseek(NfsHandle* handle, int fd, int offset, int whence) {
 
 /** @brief 從檔案讀取資料。*/
 int nfs_file_read(NfsHandle* handle, int fd, void* buffer, int bytes_to_read) {
-	if (!handle || !handle->open_files_array || fd < 0 || fd >= handle->open_files_array_capacity || !handle->open_files_array[fd] || !buffer || bytes_to_read < 0) {
-		nfs_errno = (handle && handle->open_files_array && (fd < 0 || fd >= handle->open_files_array_capacity || !handle->open_files_array[fd])) ? 13 : 19;
+	// 1. 檢查 handle
+	if (!handle) {
+		nfs_errno = 9;  // Invalid file system handle
 		return -1;
 	}
-	if (bytes_to_read == 0) return 0;
+	// 2. 檢查檔案描述符是否合法
+	if (fd < 0
+		|| fd >= handle->open_files_array_capacity
+		|| !handle->open_files_array
+		|| !handle->open_files_array[fd]) {
+		nfs_errno = 13; // Invalid file descriptor
+		return -1;
+	}
+	// 3. 檢查 buffer 指標與讀取長度
+	if (!buffer || bytes_to_read < 0) {
+		nfs_errno = 19; // Invalid parameters
+		return -1;
+	}
+	// 0 bytes shortcut
+	if (bytes_to_read == 0) {
+		return 0;
+	}
 
 	NfsOpenFileHandle* fh = handle->open_files_array[fd];
 
@@ -5265,101 +5282,101 @@ int nfs_file_read(NfsHandle* handle, int fd, void* buffer, int bytes_to_read) {
 }
 
 /** @brief 向檔案寫入資料。*/
+/** @brief 向檔案寫入資料。*/
 int nfs_file_write(NfsHandle* handle, int fd, const void* buffer, int bytes_to_write) {
-	if (!handle || !handle->open_files_array || fd < 0 || fd >= handle->open_files_array_capacity || !handle->open_files_array[fd] || !buffer || bytes_to_write < 0) {
-		nfs_errno = (handle && handle->open_files_array && (fd < 0 || fd >= handle->open_files_array_capacity || !handle->open_files_array[fd])) ? 13 : 19;
+	// 1. 檢查 handle
+	if (!handle) {
+		nfs_errno = 9;    // Invalid file system handle
 		return -1;
 	}
-	if (bytes_to_write == 0) return 0;
+	// 2. 檢查 fd
+	if (fd < 0
+		|| fd >= handle->open_files_array_capacity
+		|| !handle->open_files_array
+		|| !handle->open_files_array[fd]) {
+		nfs_errno = 13;   // Invalid file descriptor
+		return -1;
+	}
+	// 3. 檢查 buffer 與長度
+	if (!buffer || bytes_to_write < 0) {
+		nfs_errno = 19;   // Invalid parameters
+		return -1;
+	}
+	if (bytes_to_write == 0) {
+		return 0;
+	}
 
 	NfsOpenFileHandle* fh = handle->open_files_array[fd];
 
-	// 檢查是否有寫入權限 (這應在 nfs_file_open/create 時檢查，此處假設已有)
-	// if (!((fh->open_mode_flags & NFS_OPEN_ACCESS_MODE_MASK) & (NFS_OPEN_WRITE_ONLY | NFS_OPEN_READ_WRITE))) {
-	//     nfs_errno = EACCES or EBADF; return -1;
-	// }
-
-
-	// 如果是附加模式 (O_APPEND)
+	// 2. 處理 O_APPEND：將 offset 移至檔案尾端
 	if (fh->open_mode_flags & NFS_OPEN_APPEND) {
 		int current_size = nfs_nt_node_get_size(handle->nt_handle, fh->nt_node_idx);
 		if (current_size < 0) { nfs_errno = 14; return -1; }
-		if (nfs_file_lseek(handle, fd, current_size, 0 /*SEEK_SET*/) != 0) { // lseek 會處理擴展
+		if (nfs_file_lseek(handle, fd, current_size, 0 /*SEEK_SET*/) != 0) {
 			// nfs_errno 已由 lseek 設定
 			return -1;
 		}
 	}
 
-	// 確保檔案大小和 FAT 鏈足以容納寫入
-	// fh->current_byte_offset 是目前的寫入起始點
-	// 需要寫入到 fh->current_byte_offset + bytes_to_write -1
+	// 3. 如果寫入會超出目前檔案大小，先用 lseek 觸發擴展，再把位置移回
 	int target_end_offset = fh->current_byte_offset + bytes_to_write - 1;
 	int current_file_size = nfs_nt_node_get_size(handle->nt_handle, fh->nt_node_idx);
-	if (target_end_offset >= current_file_size) { // 如果寫入會超出目前檔案大小
-		// lseek 到目標結束位置的前一個位元組，以觸發擴展
-		// 然後再 lseek 回目前的寫入位置
+	if (target_end_offset >= current_file_size) {
 		int original_seek_pos = fh->current_byte_offset;
-		if (nfs_file_lseek(handle, fd, target_end_offset, 0 /*SEEK_SET*/) != 0) {
-			return -1;
-		}
-		if (nfs_file_lseek(handle, fd, original_seek_pos, 0 /*SEEK_SET*/) != 0) { // 恢復 seek 位置
-			return -1;
-		}
-		// lseek 內部已更新 NT size
+		if (nfs_file_lseek(handle, fd, target_end_offset, 0 /*SEEK_SET*/) != 0) return -1;
+		if (nfs_file_lseek(handle, fd, original_seek_pos, 0 /*SEEK_SET*/) != 0) return -1;
+		// lseek 已更新 NT 的檔案大小
 	}
 
-
-	char temp_block_buffer[512]; // 用於處理部分區塊寫入
-	int total_bytes_written = 0;
+	// 4. 逐區塊寫入
+	char        temp_block_buffer[512];
+	int         total_bytes_written = 0;
 	const char* current_user_buffer_ptr = static_cast<const char*>(buffer);
-	int remaining_bytes = bytes_to_write;
+	int         remaining_bytes = bytes_to_write;
 
 	while (remaining_bytes > 0) {
-		int current_block_seq_in_file = blockno(fh->current_byte_offset);
-		int offset_in_physical_block = fh->current_byte_offset % 512;
-
-		int actual_fat_block_idx = nfs_fat_chain_get_nth(handle->fat_handle, fh->fat_chain_start_idx, current_block_seq_in_file);
-		if (actual_fat_block_idx <= 0) { // 鏈結束或錯誤 (lseek 應該已擴展好)
+		int block_seq = blockno(fh->current_byte_offset);
+		int offset_in_block = fh->current_byte_offset % 512;
+		int fat_block_idx = nfs_fat_chain_get_nth(handle->fat_handle, fh->fat_chain_start_idx, block_seq);
+		if (fat_block_idx <= 0) {
 			nfs_errno = 6; // Bad FAT chain or disk full
 			break;
 		}
 
-		int bytes_to_write_to_this_vfs_block = min(remaining_bytes, 512 - offset_in_physical_block);
+		int bytes_this_block = min(remaining_bytes, 512 - offset_in_block);
+		bool full_overwrite = (offset_in_block == 0 && bytes_this_block == 512);
 
-		bool full_block_overwrite = (offset_in_physical_block == 0 && bytes_to_write_to_this_vfs_block == 512);
-
-		if (!full_block_overwrite) { // 如果是部分寫入，需要先讀取該區塊的現有內容
-			if (nfs_data_read(handle->data_handle, actual_fat_block_idx, temp_block_buffer) != 0) {
-				nfs_errno = 2;
+		// 如果不是整塊覆蓋，先讀出舊資料
+		if (!full_overwrite) {
+			if (nfs_data_read(handle->data_handle, fat_block_idx, temp_block_buffer) != 0) {
+				nfs_errno = 2; // Data read error
 				break;
 			}
 		}
 
-		memcpy(temp_block_buffer + offset_in_physical_block, current_user_buffer_ptr, bytes_to_write_to_this_vfs_block);
+		// 複製新資料到快取緩衝
+		memcpy(temp_block_buffer + offset_in_block, current_user_buffer_ptr, bytes_this_block);
 
-		if (nfs_data_write(handle->data_handle, actual_fat_block_idx, temp_block_buffer) != 0) {
+		// 寫回實體區塊
+		if (nfs_data_write(handle->data_handle, fat_block_idx, temp_block_buffer) != 0) {
 			nfs_errno = 2; // Data write error
 			break;
 		}
 
-		fh->current_byte_offset += bytes_to_write_to_this_vfs_block;
-		current_user_buffer_ptr += bytes_to_write_to_this_vfs_block;
-		total_bytes_written += bytes_to_write_to_this_vfs_block;
-		remaining_bytes -= bytes_to_write_to_this_vfs_block;
+		// 更新 offset 與計數
+		fh->current_byte_offset += bytes_this_block;
+		current_user_buffer_ptr += bytes_this_block;
+		total_bytes_written += bytes_this_block;
+		remaining_bytes -= bytes_this_block;
 	}
 
-	// 更新 NT 中的檔案大小 (如果 lseek 未完全處理，或者寫入未超出原始大小但仍需確認)
-	// 實際上，lseek 在擴展時已設定了 new_pos。如果寫入沒有超出 new_pos，則大小不變。
-	// 如果寫入超出了 lseek 設定的 new_pos (例如 lseek 僅擴展到 current_offset + write_len -1)，
-	// 則 fh->current_byte_offset 現在是新的檔案末尾 +1。
-	// 應以 fh->current_byte_offset 作為新的檔案大小。
+	// 5. 最後再次確認並更新 NT 中的檔案大小
 	if (fh->current_byte_offset > nfs_nt_node_get_size(handle->nt_handle, fh->nt_node_idx)) {
 		nfs_nt_node_set_size(handle->nt_handle, fh->nt_node_idx, fh->current_byte_offset);
 	}
 
 	return total_bytes_written;
 }
-
 
 /** @brief 增加檔案的引用計數。*/
 int nfs_file_inc_refcount(NfsHandle* handle, const char* filename) {
