@@ -33,9 +33,6 @@
     <ClCompile Include="src\nfs_test.cpp">
       <Filter>來源檔案</Filter>
     </ClCompile>
-    <ClCompile Include="src\nfs_integration_test.cpp">
-      <Filter>來源檔案</Filter>
-    </ClCompile>
     <ClCompile Include="src\CMOFPacking.cpp">
       <Filter>來源檔案</Filter>
     </ClCompile>
@@ -45,15 +42,21 @@
     <ClCompile Include="src\cm_packing_integration_test.cpp">
       <Filter>來源檔案</Filter>
     </ClCompile>
+    <ClCompile Include="src\Image\Comp.cpp">
+      <Filter>來源檔案</Filter>
+    </ClCompile>
+    <ClCompile Include="src\Image\GIVertex.cpp">
+      <Filter>來源檔案</Filter>
+    </ClCompile>
+    <ClCompile Include="src\Image\CDeviceManager.cpp">
+      <Filter>來源檔案</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="inc\nfs.h">
       <Filter>標頭檔</Filter>
     </ClInclude>
     <ClInclude Include="inc\nfs_test.h">
-      <Filter>標頭檔</Filter>
-    </ClInclude>
-    <ClInclude Include="inc\nfs_integration_test.h">
       <Filter>標頭檔</Filter>
     </ClInclude>
     <ClInclude Include="inc\CMOFPacking.h">
@@ -75,6 +78,15 @@
       <Filter>標頭檔\fmod</Filter>
     </ClInclude>
     <ClInclude Include="inc\cm_packing_integration_test.h">
+      <Filter>標頭檔</Filter>
+    </ClInclude>
+    <ClInclude Include="inc\Image\comp.h">
+      <Filter>標頭檔</Filter>
+    </ClInclude>
+    <ClInclude Include="inc\Image\GIVertex.h">
+      <Filter>標頭檔</Filter>
+    </ClInclude>
+    <ClInclude Include="inc\Image\CDeviceManager.h">
       <Filter>標頭檔</Filter>
     </ClInclude>
   </ItemGroup>

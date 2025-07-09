@@ -142,6 +142,9 @@
     <ClCompile Include="main.cpp" />
     <ClCompile Include="src\CMOFPacking.cpp" />
     <ClCompile Include="src\cm_packing_integration_test.cpp" />
+    <ClCompile Include="src\Image\CDeviceManager.cpp" />
+    <ClCompile Include="src\Image\Comp.cpp" />
+    <ClCompile Include="src\Image\GIVertex.cpp" />
     <ClCompile Include="src\nfs.cpp" />
     <ClCompile Include="src\nfs_test.cpp" />
     <ClCompile Include="src\Sound\COgg.cpp" />
@@ -153,6 +156,9 @@
     <ClInclude Include="inc\fmod\fmoddyn.h" />
     <ClInclude Include="inc\fmod\fmod_errors.h" />
     <ClInclude Include="inc\fmod\wincompat.h" />
+    <ClInclude Include="inc\Image\CDeviceManager.h" />
+    <ClInclude Include="inc\Image\comp.h" />
+    <ClInclude Include="inc\Image\GIVertex.h" />
     <ClInclude Include="inc\nfs.h" />
     <ClInclude Include="inc\nfs_test.h" />
     <ClInclude Include="inc\Sound\COgg.h" />
