@@ -7,6 +7,9 @@
 #include "cm_packing_integration_test.h"
 #include "Sound/COgg.h"  // 您的 COgg 類別標頭檔
 #include "CMOFPacking.h" // 您的 CMofPacking 類別標頭檔 (單例版本)
+#include "Image/CDeviceResetManager.h"
+
+#include <d3d9.h>
 
 void create_vfs_archive() {
     const char* vfs_base_name = "mof"; // 最終會產生 mof.pak 和 mof.paki
@@ -118,14 +121,205 @@ void ogg_play_test() {
     printf("測試程式結束。\n");
 }
 
-int main() {
-	std::cout << "Starting Virtual File System Tests..." << std::endl;
-	std::cout << "========================================" << std::endl;
+//-----------------------------------------------------------------------------
+// 全域變數
+//-----------------------------------------------------------------------------
+LPDIRECT3D9             g_pD3D = NULL;               // 用於建立 D3D 裝置的 D3D 物件
+LPDIRECT3DDEVICE9       g_pd3dDevice = NULL;         // 我們的渲染裝置
+D3DPRESENT_PARAMETERS   g_d3dpp;                     // D3D 呈現參數
+HWND                    g_hWnd = NULL;               // 我們的主視窗控制代碼
+Device_Reset_Manager* g_pDeviceResetManager = NULL;  // 裝置重設管理器
 
-	// 執行所有測試
-	//run_all_tests(); //nfs unit test
-	//print_test_result();
+// 為了讓還原的類別可以找到裝置指標，我們定義這個全域變數
+// 在 InitD3D 中會將它指向 g_pd3dDevice
+LPDIRECT3DDEVICE9 Device = NULL;
+
+//-----------------------------------------------------------------------------
+// 函式原型 (Forward Declarations)
+//-----------------------------------------------------------------------------
+LRESULT CALLBACK WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam);
+HRESULT InitD3D(HWND hWnd);
+VOID Render();
+VOID Cleanup();
+
+int main_func() {
+    std::cout << "Starting Virtual File System Tests..." << std::endl;
+    std::cout << "========================================" << std::endl;
+
+    // 執行所有測試
+    //run_all_tests(); //nfs unit test
+    //print_test_result();
     //run_cmofpacking_tests();
     ogg_play_test();
-	return 0;
+    return 0;
+}
+
+//-----------------------------------------------------------------------------
+// Windows 應用程式主進入點
+//-----------------------------------------------------------------------------
+int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine, int nCmdShow)
+{
+    // 註冊視窗類別 (使用 ANSI 版本)
+    WNDCLASSEXA wc = { sizeof(WNDCLASSEX), CS_CLASSDC, WndProc, 0L, 0L,
+                      GetModuleHandle(NULL), NULL, NULL, NULL, NULL,
+                      "D3D Tutorial", NULL };
+    RegisterClassExA(&wc);
+
+    // 建立應用程式視窗 (使用 ANSI 版本)
+    g_hWnd = CreateWindowExA(0, "D3D Tutorial", "Direct3D 視窗程式",
+        WS_OVERLAPPEDWINDOW, 100, 100, 1280, 720,
+        NULL, NULL, wc.hInstance, NULL);
+
+    // 初始化 Direct3D
+    if (SUCCEEDED(InitD3D(g_hWnd)))
+    {
+        // 建立我們的裝置管理器
+        g_pDeviceResetManager = new Device_Reset_Manager();
+
+        // 顯示視窗
+        ShowWindow(g_hWnd, nCmdShow);
+        UpdateWindow(g_hWnd);
+
+        // 進入訊息迴圈
+        MSG msg;
+        ZeroMemory(&msg, sizeof(msg));
+        while (msg.message != WM_QUIT)
+        {
+            main_func();
+            // 使用 PeekMessage 來處理訊息，不會阻塞渲染迴圈
+            if (PeekMessage(&msg, NULL, 0U, 0U, PM_REMOVE))
+            {
+                TranslateMessage(&msg);
+                DispatchMessage(&msg);
+            }
+            else
+            {
+                // 如果沒有訊息，就進行渲染
+                Render();
+            }
+        }
+    }
+
+    // 清理資源
+    Cleanup();
+    UnregisterClassA("D3D Tutorial", wc.hInstance);
+    return 0;
+}
+
+
+//-----------------------------------------------------------------------------
+// 視窗訊息處理函式 (Window Procedure)
+//-----------------------------------------------------------------------------
+LRESULT CALLBACK WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
+{
+    switch (message)
+    {
+    case WM_CLOSE:
+        DestroyWindow(hWnd);
+        return 0;
+
+    case WM_DESTROY:
+        PostQuitMessage(0);
+        return 0;
+    }
+    // 其他訊息交給預設的處理函式 (使用 ANSI 版本)
+    return DefWindowProcA(hWnd, message, wParam, lParam);
+}
+
+
+//-----------------------------------------------------------------------------
+// 初始化 Direct3D
+//-----------------------------------------------------------------------------
+HRESULT InitD3D(HWND hWnd)
+{
+    // 建立 D3D 物件
+    if (NULL == (g_pD3D = Direct3DCreate9(D3D_SDK_VERSION)))
+        return E_FAIL;
+
+    // 設定 D3D 呈現參數
+    ZeroMemory(&g_d3dpp, sizeof(g_d3dpp));
+    g_d3dpp.Windowed = TRUE;
+    g_d3dpp.SwapEffect = D3DSWAPEFFECT_DISCARD;
+    g_d3dpp.BackBufferFormat = D3DFMT_UNKNOWN; // 自動偵測格式
+    g_d3dpp.EnableAutoDepthStencil = TRUE;
+    g_d3dpp.AutoDepthStencilFormat = D3DFMT_D16;
+    g_d3dpp.hDeviceWindow = hWnd;
+
+    // 建立 D3D 裝置
+    if (FAILED(g_pD3D->CreateDevice(D3DADAPTER_DEFAULT, D3DDEVTYPE_HAL, hWnd,
+        D3DCREATE_HARDWARE_VERTEXPROCESSING,
+        &g_d3dpp, &g_pd3dDevice)))
+    {
+        return E_FAIL;
+    }
+
+    // *** 關鍵步驟 ***
+    // 將我們建立的裝置指標，賦值給我們還原的類別所依賴的全域 Device 指標
+    Device = g_pd3dDevice;
+
+    return S_OK;
+}
+
+
+//-----------------------------------------------------------------------------
+// 每一幀的渲染函式
+//-----------------------------------------------------------------------------
+VOID Render()
+{
+    if (NULL == g_pd3dDevice)
+        return;
+
+    // 檢查裝置狀態，看是否遺失
+    HRESULT hr = g_pd3dDevice->TestCooperativeLevel();
+    if (hr == D3DERR_DEVICENOTRESET)
+    {
+        // 如果裝置可以被重設，就呼叫我們的管理器來處理
+        if (g_pDeviceResetManager)
+        {
+            g_pDeviceResetManager->ResetToDevice(hr);
+        }
+    }
+    else if (hr == S_OK)
+    {
+        // 清除後台緩衝區和深度緩衝區
+        g_pd3dDevice->Clear(0, NULL, D3DCLEAR_TARGET | D3DCLEAR_ZBUFFER, D3DCOLOR_XRGB(0, 40, 100), 1.0f, 0);
+
+        // 開始繪製場景
+        if (SUCCEEDED(g_pd3dDevice->BeginScene()))
+        {
+            //
+            // --- 在這裡進行所有的繪圖操作 ---
+            // 例如：g_pDeviceResetManager->GetSpriteObject()->Begin(...)
+            //
+
+            // 結束繪製場景
+            g_pd3dDevice->EndScene();
+        }
+
+        // 將後台緩衝區的內容顯示到螢幕上
+        g_pd3dDevice->Present(NULL, NULL, NULL, NULL);
+    }
+}
+
+
+//-----------------------------------------------------------------------------
+// 程式結束時釋放資源
+//-----------------------------------------------------------------------------
+VOID Cleanup()
+{
+    if (g_pDeviceResetManager != NULL)
+    {
+        delete g_pDeviceResetManager;
+        g_pDeviceResetManager = NULL;
+    }
+    if (g_pd3dDevice != NULL)
+    {
+        g_pd3dDevice->Release();
+        g_pd3dDevice = NULL;
+    }
+    if (g_pD3D != NULL)
+    {
+        g_pD3D->Release();
+        g_pD3D = NULL;
+    }
 }
