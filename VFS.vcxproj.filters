@@ -51,6 +51,9 @@
     <ClCompile Include="src\Image\CDeviceManager.cpp">
       <Filter>來源檔案</Filter>
     </ClCompile>
+    <ClCompile Include="src\Image\ImageResource.cpp">
+      <Filter>來源檔案</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="inc\nfs.h">
@@ -87,6 +90,9 @@
       <Filter>標頭檔</Filter>
     </ClInclude>
     <ClInclude Include="inc\Image\CDeviceManager.h">
+      <Filter>標頭檔</Filter>
+    </ClInclude>
+    <ClInclude Include="inc\Image\ImageResource.h">
       <Filter>標頭檔</Filter>
     </ClInclude>
   </ItemGroup>
