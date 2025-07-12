@@ -155,11 +155,15 @@
     <ClCompile Include="src\Image\CDeviceResetManager.cpp" />
     <ClCompile Include="src\Image\cltBaseResource.cpp" />
     <ClCompile Include="src\Image\cltGIResource.cpp" />
+    <ClCompile Include="src\Image\cltImageManager.cpp" />
     <ClCompile Include="src\Image\Comp.cpp" />
+    <ClCompile Include="src\Image\GameImage.cpp" />
     <ClCompile Include="src\Image\GIVertex.cpp" />
     <ClCompile Include="src\Image\Image.cpp" />
     <ClCompile Include="src\Image\ImageResource.cpp" />
     <ClCompile Include="src\Image\ImageResourceListDataMgr.cpp" />
+    <ClCompile Include="src\Image\LoadingThread.cpp" />
+    <ClCompile Include="src\Image\ResourceMgr.cpp" />
     <ClCompile Include="src\nfs.cpp" />
     <ClCompile Include="src\nfs_test.cpp" />
     <ClCompile Include="src\Sound\COgg.cpp" />
@@ -176,15 +180,21 @@
     <ClInclude Include="inc\Image\CDeviceResetManager.h" />
     <ClInclude Include="inc\Image\cltBaseResource.h" />
     <ClInclude Include="inc\Image\cltGIResource.h" />
+    <ClInclude Include="inc\Image\cltImageManager.h" />
     <ClInclude Include="inc\Image\comp.h" />
     <ClInclude Include="inc\Image\GameImage.h" />
     <ClInclude Include="inc\Image\GIVertex.h" />
     <ClInclude Include="inc\Image\Image.h" />
     <ClInclude Include="inc\Image\ImageResource.h" />
     <ClInclude Include="inc\Image\ImageResourceListDataMgr.h" />
+    <ClInclude Include="inc\Image\LoadingThread.h" />
+    <ClInclude Include="inc\Image\ResourceMgr.h" />
     <ClInclude Include="inc\nfs.h" />
     <ClInclude Include="inc\nfs_test.h" />
     <ClInclude Include="inc\Sound\COgg.h" />
+  </ItemGroup>
+  <ItemGroup>
+    <Library Include="lib\fmod64vc.lib" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">

@@ -10,9 +10,41 @@
 /// @brief 儲存 GI 檔案中每個動畫影格的資訊。
 /// 這個結構的大小 (52 bytes) 是根據 LoadGI/LoadGIInPack 中
 /// 的記憶體分配和複製模式反向工程得出的。
+/// @struct AnimationFrameData
+/// @brief 儲存 GI 檔案中每個動畫影格的詳細資訊。
+///
+/// 這個結構的大小 (52 bytes) 和成員是根據 ImageResource.h 的定義，
+/// 以及 GameImage.c 中 Process 和 GetBlockRect 函式的記憶體存取模式反向工程得出的。
 struct AnimationFrameData {
-    // 實際的成員未知，但總大小為 52 bytes
-    DWORD unknown_data[13]; 
+    // --------------------------------------------------------------------
+    // 位移 0-11: 未知資料 (12 bytes)
+    // 這部分資料在 GameImage.c 中未被使用，其具體用途不明。
+    // 可能是用於其他類型的特效、碰撞資料或保留欄位。
+    DWORD unknown_data[3];
+
+    // --------------------------------------------------------------------
+    // 位移 12-19: 另一組座標 (8 bytes)
+    // GameImage::GetBlockRect 函式似乎將這兩個成員作為 left 和 top 來使用，
+    // 但核心的 Process 函式未使用它們。可能是舊版或用於特定功能的座標。
+    int   legacy_offsetX; // 位移 +12
+    int   legacy_offsetY; // 位移 +16
+
+    // --------------------------------------------------------------------
+    // 位移 20-35: 影格尺寸與繪製偏移 (16 bytes)
+    // 這些成員在 GameImage::Process 中被用來確定圖像的尺寸和繪製位置。
+    int   width;          // 位移 +20: 此影格的寬度（像素）
+    int   height;         // 位移 +24: 此影格的高度（像素）
+    int   offsetX;        // 位移 +28: 繪製時的 X 軸偏移量
+    int   offsetY;        // 位移 +32: 繪製時的 Y 軸偏移量
+
+    // --------------------------------------------------------------------
+    // 位移 36-51: 紋理 UV 座標 (16 bytes)
+    // 定義了此影格在紋理圖集(Texture Atlas)上的具體位置。
+    // Process 函式使用它們來設定頂點的 UV。
+    float u1;             // 位移 +36: 左側 U 座標
+    float v1;             // 位移 +40: 頂部 V 座標
+    float u2;             // 位移 +44: 右側 U 座標
+    float v2;             // 位移 +48: 底部 V 座標
 };
 
 
@@ -54,7 +86,7 @@ private:
     /// @return 每個像素的字節數。
     unsigned char GetPixelDepth(D3DFORMAT format);
 
-private:
+public:
     // 以下成員變數是根據反編譯程式碼中的記憶體位移 (offset) 還原的。
 
     int             m_version;              // 位移 +4:  檔案版本，20 代表 RLE 壓縮。
@@ -63,7 +95,7 @@ private:
     unsigned int    m_imageDataSize;        // 位移 +12: 圖片資料的總大小 (壓縮後或原始大小)。
     unsigned int    m_decompressedSize;     // 位移 +16: 壓縮前的原始圖片大小 (僅當版本為 20 時使用)。
     
-    unsigned short  m_animationFrameCount;  // 位移 +20: 動畫影格的數量。
+    unsigned short  m_animationFrameCount;  // 位移 +20: 動畫影格的數量。   
     AnimationFrameData* m_pAnimationFrames; // 位移 +24: 指向動畫影格資料陣列的指標。
     D3DFORMAT       m_d3dFormat;            // 位移 +28: 紋理的 D3D 格式。
     
