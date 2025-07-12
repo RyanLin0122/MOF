@@ -1,7 +1,15 @@
 #include "Image/CDeviceManager.h" // 包含我們定義的標頭檔
 
-// 假設 Direct3D 裝置的全局變量 `Device` 已在某處定義
-// 例如：LPDIRECT3DDEVICE9 Device = nullptr;
+// 初始化靜態成員指標
+CDeviceManager* CDeviceManager::s_pInstance = nullptr;
+
+// 靜態 GetInstance 方法的實現
+CDeviceManager* CDeviceManager::GetInstance() {
+    if (s_pInstance == nullptr) {
+        s_pInstance = new (std::nothrow) CDeviceManager();
+    }
+    return s_pInstance;
+}
 
 // CDeviceManager 的建構函式
 CDeviceManager::CDeviceManager() {

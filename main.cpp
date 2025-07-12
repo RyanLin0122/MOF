@@ -128,7 +128,7 @@ LPDIRECT3D9             g_pD3D = NULL;               // 用於建立 D3D 裝置�
 LPDIRECT3DDEVICE9       g_pd3dDevice = NULL;         // 我們的渲染裝置
 D3DPRESENT_PARAMETERS   g_d3dpp;                     // D3D 呈現參數
 HWND                    g_hWnd = NULL;               // 我們的主視窗控制代碼
-Device_Reset_Manager* g_pDeviceResetManager = NULL;  // 裝置重設管理器
+CDeviceResetManager* g_pDeviceResetManager = NULL;  // 裝置重設管理器
 
 // 為了讓還原的類別可以找到裝置指標，我們定義這個全域變數
 // 在 InitD3D 中會將它指向 g_pd3dDevice
@@ -174,7 +174,7 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine
     if (SUCCEEDED(InitD3D(g_hWnd)))
     {
         // 建立我們的裝置管理器
-        g_pDeviceResetManager = new Device_Reset_Manager();
+        g_pDeviceResetManager = CDeviceResetManager::GetInstance();
 
         // 顯示視窗
         ShowWindow(g_hWnd, nCmdShow);

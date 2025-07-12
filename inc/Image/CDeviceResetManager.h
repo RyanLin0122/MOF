@@ -6,7 +6,7 @@
 #include <d3dx9tex.h>
 
 //-- 輔助類別和結構的簡化定義 (Stub) -------------------------------------------
-// 這些是根據 Device_Reset_Manager.cpp 的用法推斷出的簡化版定義
+// 這些是根據 CDeviceResetManager.cpp 的用法推斷出的簡化版定義
 
 // 假設的 VertexBufferData 結構
 struct VertexBufferData {
@@ -42,17 +42,16 @@ public:
 
 //--------------------------------------------------------------------------------
 
-/// @class Device_Reset_Manager
+/// @class CDeviceResetManager
 /// @brief 集中管理因 Direct3D 裝置重設 (Device Reset) 而需要重新建立的資源。
 ///
 /// 這個類別封裝了對 Vertex Buffers、圖片資源 (ImageResource) 和紋理 (Texture) 的管理，
 /// 並處理裝置遺失 (Device Lost) 和重設時的相關邏輯。
-class Device_Reset_Manager {
+class CDeviceResetManager {
 public:
-    /// @brief 建構函式
-    Device_Reset_Manager();
+    static CDeviceResetManager* GetInstance();
     /// @brief 解構函式
-    ~Device_Reset_Manager();
+    ~CDeviceResetManager();
 
     /// @brief 建立一個指定類型的頂點緩衝區。
     /// @param capacity 頂點緩衝區能容納的頂點數量。
@@ -97,6 +96,11 @@ public:
     bool ResetToDevice(long hresult);
 
 private:
+    // 私有建構函式
+    CDeviceResetManager();
+
+    // 指向唯一實例的靜態指標
+    static CDeviceResetManager* s_pInstance;
     // 根據反編譯程式碼的建構函式和成員位移，還原出以下成員
     VertexBufferDataMgr      m_vertexBufferMgr;      // 偏移量: 0
     ImageResourceListDataMgr m_imageResourceMgr;     // 偏移量: 12

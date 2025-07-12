@@ -16,19 +16,30 @@ void SafeRelease(T*& p) {
     }
 }
 
-Device_Reset_Manager::Device_Reset_Manager() {
+// 初始化靜態成員指標
+CDeviceResetManager* CDeviceResetManager::s_pInstance = nullptr;
+
+// 靜態 GetInstance 方法的實現
+CDeviceResetManager* CDeviceResetManager::GetInstance() {
+    if (s_pInstance == nullptr) {
+        s_pInstance = new (std::nothrow) CDeviceResetManager();
+    }
+    return s_pInstance;
+}
+
+CDeviceResetManager::CDeviceResetManager() {
     // 建構函式會自動呼叫成員變數的建構函式
     // 將 Sprite 指標初始化為空
     m_pSprite = nullptr;
 }
 
-Device_Reset_Manager::~Device_Reset_Manager() {
+CDeviceResetManager::~CDeviceResetManager() {
     // 釋放 Sprite 物件
     SafeRelease(m_pSprite);
     // 成員管理器的解構函式會被自動呼叫
 }
 
-VertexBufferData* Device_Reset_Manager::CreateVertexBuffer(unsigned short capacity, unsigned char type) {
+VertexBufferData* CDeviceResetManager::CreateVertexBuffer(unsigned short capacity, unsigned char type) {
     // 根據反編譯程式碼，這裡省略了對 m_vertexBufferMgr.Add() 的呼叫，
     // 因為我們沒有其完整實現。以下程式碼旨在展示其核心邏輯。
     VertexBufferData* pNewNode = m_vertexBufferMgr.Add();
@@ -39,14 +50,14 @@ VertexBufferData* Device_Reset_Manager::CreateVertexBuffer(unsigned short capaci
     // 根據類型選擇不同的頂點大小和FVF來建立VertexBuffer
     switch (type) {
     case 1: // AlphaBoxVertex
-        // hr = Device->CreateVertexBuffer(20 * capacity, 8, AlphaBoxVertex::FVF, D3DPOOL_MANAGED, &pNewNode->pVertexBuffer, nullptr);
+        //hr = Device->CreateVertexBuffer(20 * capacity, 8, AlphaBoxVertex::FVF, D3DPOOL_MANAGED, &pNewNode->pVertexBuffer, nullptr);
         break;
     case 2: // ImageVertex
-        // hr = Device->CreateVertexBuffer(24 * capacity, 8, ImageVertex::FVF, D3DPOOL_MANAGED, &pNewNode->pVertexBuffer, nullptr);
+        //hr = Device->CreateVertexBuffer(24 * capacity, 8, ImageVertex::FVF, D3DPOOL_MANAGED, &pNewNode->pVertexBuffer, nullptr);
         break;
     case 0:
     case 3: // GIVertex
-        // hr = Device->CreateVertexBuffer(28 * capacity, 8, GIVertex::FVF, D3DPOOL_MANAGED, &pNewNode->pVertexBuffer, nullptr);
+        //hr = Device->CreateVertexBuffer(28 * capacity, 8, GIVertex::FVF, D3DPOOL_MANAGED, &pNewNode->pVertexBuffer, nullptr);
         break;
     default:
         // 不支援的類型
@@ -64,11 +75,11 @@ VertexBufferData* Device_Reset_Manager::CreateVertexBuffer(unsigned short capaci
     return nullptr;
 }
 
-void Device_Reset_Manager::DeleteVertexBuffer(VertexBufferData* pBufferData) {
+void CDeviceResetManager::DeleteVertexBuffer(VertexBufferData* pBufferData) {
     m_vertexBufferMgr.Delete(pBufferData); //
 }
 
-ImageResourceListData* Device_Reset_Manager::CreateImageResource(const char* pFileName, char flag, unsigned char packerType, int a5) {
+ImageResourceListData* CDeviceResetManager::CreateImageResource(const char* pFileName, char flag, unsigned char packerType, int a5) {
     ImageResourceListData* pNewNode = m_imageResourceMgr.Add(); //
     if (!pNewNode) return nullptr;
 
@@ -94,11 +105,11 @@ ImageResourceListData* Device_Reset_Manager::CreateImageResource(const char* pFi
     return pNewNode;
 }
 
-void Device_Reset_Manager::DeleteImageResource(ImageResourceListData* pImageNode) {
+void CDeviceResetManager::DeleteImageResource(ImageResourceListData* pImageNode) {
     m_imageResourceMgr.Delete(pImageNode); //
 }
 
-TextureListData* Device_Reset_Manager::CreateTexture(const char* pFileName, unsigned char flag) {
+TextureListData* CDeviceResetManager::CreateTexture(const char* pFileName, unsigned char flag) {
     TextureListData* pNewNode = m_textureMgr.Add(); //
     if (!pNewNode) return nullptr;
 
@@ -119,11 +130,11 @@ TextureListData* Device_Reset_Manager::CreateTexture(const char* pFileName, unsi
     return pNewNode;
 }
 
-void Device_Reset_Manager::DeleteTexture(TextureListData* pTextureNode) {
+void CDeviceResetManager::DeleteTexture(TextureListData* pTextureNode) {
     m_textureMgr.Delete(pTextureNode); //
 }
 
-ID3DXSprite* Device_Reset_Manager::GetSpriteObject() {
+ID3DXSprite* CDeviceResetManager::GetSpriteObject() {
     // 如果 Sprite 物件尚未建立，則建立它
     if (!m_pSprite) {
         D3DXCreateSprite(Device, &m_pSprite); //
@@ -131,7 +142,7 @@ ID3DXSprite* Device_Reset_Manager::GetSpriteObject() {
     return m_pSprite;
 }
 
-bool Device_Reset_Manager::ResetToDevice(long hresult) {
+bool CDeviceResetManager::ResetToDevice(long hresult) {
     // 檢查是否需要重設裝置。D3DERR_DEVICENOTRESET 的值為 -2005530519。
     if (hresult >= 0 || Device->TestCooperativeLevel() != D3DERR_DEVICENOTRESET) {
         return true;

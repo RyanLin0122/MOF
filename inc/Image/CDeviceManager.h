@@ -37,9 +37,7 @@ public:
     unsigned int render_state_cache[210]; // D3DRENDERSTATETYPE 的最大值 D3DRS_BLENDOPALPHA 是 209 (截至 DX9)
 
 public:
-    // 建構函式
-    CDeviceManager();
-
+    static CDeviceManager* GetInstance();
     // 設定 Flexible Vertex Format (FVF)
     // 如果 FVF 與當前設定的相同，則不執行任何操作以優化性能。
     // fvf_value: 要設定的 FVF 值
@@ -74,4 +72,8 @@ public:
     // type: 要設定的紋理 Stage 狀態類型 (D3DTEXTURESTAGESTATETYPE)
     // value: 要設定的紋理 Stage 狀態值
     HRESULT SetTextureStageState(unsigned int stage, D3DTEXTURESTAGESTATETYPE type, unsigned int value);
+
+private:
+    CDeviceManager();
+    static CDeviceManager* s_pInstance;
 };

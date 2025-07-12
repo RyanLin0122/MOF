@@ -52,7 +52,7 @@ struct ImageResourceListData {
     ImageResourceListData* pNext;       // 指向後一個節點
     ImageResource m_Resource;           // 嵌入的圖片資源物件
 
-    // 從 Device_Reset_Manager::CreateImageResource 推斷出的成員
+    // 從 CDeviceResetManager::CreateImageResource 推斷出的成員
     char m_szFileName[255];             // 資源的檔案名稱
     char m_cFlag;                       // 未使用的旗標 (對應 a3)
     unsigned char m_ucPackerType;       // 封裝檔類型 (對應 a4)
