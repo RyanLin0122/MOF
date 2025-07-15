@@ -5,7 +5,7 @@
 #include <stdlib.h>  // For size_t
 #include <stdint.h>  // For uintptr_t
 #include <new>
-#include "Image/comp.h"
+#include "Image/Comp.h"
 
 /// @brief 儲存 GI 檔案中每個動畫影格的資訊。
 /// 這個結構的大小 (52 bytes) 是根據 LoadGI/LoadGIInPack 中

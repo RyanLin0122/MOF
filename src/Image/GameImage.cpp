@@ -1,7 +1,7 @@
 ﻿#include "Image/GameImage.h"
 #include "Image/CDeviceResetManager.h" // 假設全域 g_Device_Reset_Manager 在此
 #include "Image/CDeviceManager.h"      // 假設全域 g_clDeviceManager 在此
-#include "Image/ResourceMgr.h"\
+#include "Image/ResourceMgr.h"
 #include "Image/ImageResourceListDataMgr.h" // 需要 ImageResourceListData 的完整定義
 #include <cstring>               // 為了 memset
 #include <algorithm>             // 為了 std::swap

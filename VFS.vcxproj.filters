@@ -84,6 +84,9 @@
     <ClCompile Include="src\Image\ResourceMgr.cpp">
       <Filter>來源檔案</Filter>
     </ClCompile>
+    <ClCompile Include="src\Test\CompTest.cpp">
+      <Filter>來源檔案</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="inc\nfs.h">
@@ -113,7 +116,7 @@
     <ClInclude Include="inc\cm_packing_integration_test.h">
       <Filter>標頭檔</Filter>
     </ClInclude>
-    <ClInclude Include="inc\Image\comp.h">
+    <ClInclude Include="inc\Image\Comp.h">
       <Filter>標頭檔</Filter>
     </ClInclude>
     <ClInclude Include="inc\Image\GIVertex.h">
@@ -153,6 +156,9 @@
       <Filter>標頭檔</Filter>
     </ClInclude>
     <ClInclude Include="inc\Image\ResourceMgr.h">
+      <Filter>標頭檔</Filter>
+    </ClInclude>
+    <ClInclude Include="inc\Test\CompTest.h">
       <Filter>標頭檔</Filter>
     </ClInclude>
   </ItemGroup>

@@ -167,6 +167,7 @@
     <ClCompile Include="src\nfs.cpp" />
     <ClCompile Include="src\nfs_test.cpp" />
     <ClCompile Include="src\Sound\COgg.cpp" />
+    <ClCompile Include="src\Test\CompTest.cpp" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="inc\CMOFPacking.h" />
@@ -181,7 +182,7 @@
     <ClInclude Include="inc\Image\cltBaseResource.h" />
     <ClInclude Include="inc\Image\cltGIResource.h" />
     <ClInclude Include="inc\Image\cltImageManager.h" />
-    <ClInclude Include="inc\Image\comp.h" />
+    <ClInclude Include="inc\Image\Comp.h" />
     <ClInclude Include="inc\Image\GameImage.h" />
     <ClInclude Include="inc\Image\GIVertex.h" />
     <ClInclude Include="inc\Image\Image.h" />
@@ -192,6 +193,7 @@
     <ClInclude Include="inc\nfs.h" />
     <ClInclude Include="inc\nfs_test.h" />
     <ClInclude Include="inc\Sound\COgg.h" />
+    <ClInclude Include="inc\Test\CompTest.h" />
   </ItemGroup>
   <ItemGroup>
     <Library Include="lib\fmod64vc.lib" />

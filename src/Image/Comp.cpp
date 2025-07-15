@@ -1,4 +1,4 @@
-#include "Image/comp.h"
+#include "Image/Comp.h"
 
 // 模擬 IDA Pro 反編譯中使用的 memset32 函式
 extern "C" void memset32(void* dest, int val, size_t count) {

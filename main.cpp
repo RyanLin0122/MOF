@@ -5,6 +5,7 @@
 
 #include "nfs_test.h"
 #include "cm_packing_integration_test.h"
+#include "Test/CompTest.h"
 #include "Sound/COgg.h"  // 您的 COgg 類別標頭檔
 #include "CMOFPacking.h" // 您的 CMofPacking 類別標頭檔 (單例版本)
 #include "Image/CDeviceResetManager.h"
@@ -142,16 +143,44 @@ HRESULT InitD3D(HWND hWnd);
 VOID Render();
 VOID Cleanup();
 
-int main_func() {
+int test_func() {
     std::cout << "Starting Virtual File System Tests..." << std::endl;
     std::cout << "========================================" << std::endl;
 
     // 執行所有測試
-    //run_all_tests(); //nfs unit test
-    //print_test_result();
-    //run_cmofpacking_tests();
-    ogg_play_test();
+    run_all_tests(); //nfs unit test
+    print_test_result();
+    run_cmofpacking_tests();
+    run_comp_test();
+    //ogg_play_test();
     return 0;
+}
+
+void CreateDebugConsole()
+{
+    // 使用 _DEBUG 預處理器，確保這段程式碼只在「偵錯」模式下編譯
+#ifdef _DEBUG
+    if (AllocConsole())
+    {
+        FILE* pFile;
+        // 重新導向標準輸出到新的主控台
+        freopen_s(&pFile, "CONOUT$", "w", stdout);
+
+        // 重新導向標準錯誤到新的主控台
+        freopen_s(&pFile, "CONOUT$", "w", stderr);
+
+        // 重新導向標準輸入到新的主控台
+        freopen_s(&pFile, "CONIN$", "r", stdin);
+
+        // 也讓 C++ 的 iostream 可以正常運作
+        std::cout.clear();
+        std::wcout.clear();
+        std::cerr.clear();
+        std::wcerr.clear();
+        std::cin.clear();
+        std::wcin.clear();
+    }
+#endif
 }
 
 //-----------------------------------------------------------------------------
@@ -159,6 +188,9 @@ int main_func() {
 //-----------------------------------------------------------------------------
 int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine, int nCmdShow)
 {
+    //Debug Console
+    CreateDebugConsole();
+    test_func();
     // 註冊視窗類別 (使用 ANSI 版本)
     WNDCLASSEXA wc = { sizeof(WNDCLASSEX), CS_CLASSDC, WndProc, 0L, 0L,
                       GetModuleHandle(NULL), NULL, NULL, NULL, NULL,
@@ -185,7 +217,6 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine
         ZeroMemory(&msg, sizeof(msg));
         while (msg.message != WM_QUIT)
         {
-            main_func();
             // 使用 PeekMessage 來處理訊息，不會阻塞渲染迴圈
             if (PeekMessage(&msg, NULL, 0U, 0U, PM_REMOVE))
             {

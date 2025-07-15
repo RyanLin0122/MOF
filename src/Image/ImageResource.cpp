@@ -81,7 +81,7 @@ bool ImageResource::LoadGIInPack(char* fileData, int packerType, unsigned char a
         if (!m_pImageData) return false;
 
         unsigned char pixelDepth = GetPixelDepth(m_d3dFormat);
-        run_length_decomp(0, 0, compressedBuffer, m_imageDataSize, m_pImageData, m_decompressedSize, pixelDepth);
+        run_length_decomp(compressedBuffer, m_imageDataSize, m_pImageData, m_decompressedSize, pixelDepth);
         
         m_imageDataSize = m_decompressedSize; // 更新大小為解壓後的大小
 
@@ -156,7 +156,7 @@ bool ImageResource::LoadGI(const char* fileName, unsigned char a3) {
         
         // 執行解壓縮
         unsigned char pixelDepth = GetPixelDepth(m_d3dFormat);
-        run_length_decomp(0, 0, compressedBuffer, m_imageDataSize, m_pImageData, m_decompressedSize, pixelDepth);
+        run_length_decomp(compressedBuffer, m_imageDataSize, m_pImageData, m_decompressedSize, pixelDepth);
         
         // 更新資料大小為解壓縮後的大小，並釋放臨時緩衝區
         m_imageDataSize = m_decompressedSize;
