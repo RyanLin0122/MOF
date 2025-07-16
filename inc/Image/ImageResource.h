@@ -6,6 +6,7 @@
 #include <stdint.h>  // For uintptr_t
 #include <new>
 #include "Image/Comp.h"
+#include "CMOFPacking.h"
 
 /// @brief 儲存 GI 檔案中每個動畫影格的資訊。
 /// 這個結構的大小 (52 bytes) 是根據 LoadGI/LoadGIInPack 中
@@ -70,7 +71,7 @@ public:
     /// @param packerType 標示使用哪種封裝檔系統 (0: g_clMofPacking, 1: g_clCharPacking)。
     /// @param a4 一個在原始碼中存在但未被使用的參數。
     /// @return 如果載入成功返回 true，否則返回 false。
-    bool LoadGIInPack(char* fileNameInPack, int packerType, unsigned char a4);
+    bool LoadGIInPack(const char* filePathInPack, int packerType, unsigned char a4);
 
     /// @brief 將載入到記憶體中的圖片資料轉換成 Direct3D 紋理。
     /// @return 如果紋理建立成功返回 true，否則返回 false。

@@ -47,7 +47,7 @@ private:
     /// @brief 讓背景執行緒安全地退出。
     void ExitThread();
 
-private:
+public:
     HANDLE m_hThread;                // 位移+0: 背景執行緒的控制代碼
     bool m_bIsRunning;               // 位移+4: 標記背景執行緒是否正在執行
     CRITICAL_SECTION m_cs;           // 位移+8: 用於保護佇列的臨界區

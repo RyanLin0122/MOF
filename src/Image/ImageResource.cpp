@@ -27,14 +27,26 @@ ImageResource::~ImageResource() {
     // m_pTexture 是在 ResetGIData 中釋放的
 }
 
-bool ImageResource::LoadGIInPack(char* fileData, int packerType, unsigned char a4) {
+bool ImageResource::LoadGIInPack(const char* filePathInPack, int packerType, unsigned char a4) {
+    CMofPacking* pPacker = CMofPacking::GetInstance();
+    if (!pPacker) {
+        // 如果連封裝管理器都沒有，直接失敗
+        return false;
+    }
+
+    // 使用 CMofPacking::FileRead 讀取檔案內容到其內部緩衝區
+    // fileData 指向由 pPacker 管理的記憶體，此處不應釋放它
+    char* fileData = pPacker->FileRead(filePathInPack);
+
     if (!fileData) {
         char buffer[128];
-        sprintf_s(buffer, sizeof(buffer), "Image file is not found in pack");
+        sprintf_s(buffer, sizeof(buffer), "Image file '%s' is not found in pack", filePathInPack);
         //CMessageBoxManager::AddOK(g_pMsgBoxMgr, buffer, 0, 0, 0, -1);
         return false;
     }
-    
+
+    // ----- 從此處開始，後續的解析邏輯與原始函式完全相同 -----
+
     // 使用一個指標來遍歷記憶體中的檔案資料
     char* current_ptr = fileData;
     bool isCompressed = false;
@@ -61,7 +73,7 @@ bool ImageResource::LoadGIInPack(char* fileData, int packerType, unsigned char a
     if (m_animationFrameCount > 0) {
         m_pAnimationFrames = new (std::nothrow) AnimationFrameData[m_animationFrameCount];
         if (!m_pAnimationFrames) return false;
-        
+
         size_t animDataSize = sizeof(AnimationFrameData) * m_animationFrameCount;
         memcpy(m_pAnimationFrames, current_ptr, animDataSize);
         current_ptr += animDataSize;
@@ -74,22 +86,23 @@ bool ImageResource::LoadGIInPack(char* fileData, int packerType, unsigned char a
     if (isCompressed) {
         m_decompressedSize = *reinterpret_cast<unsigned int*>(current_ptr);
         current_ptr += sizeof(unsigned int);
-        
+
         unsigned char* compressedBuffer = reinterpret_cast<unsigned char*>(current_ptr);
-        
+
         m_pImageData = new (std::nothrow) unsigned char[m_decompressedSize];
         if (!m_pImageData) return false;
 
         unsigned char pixelDepth = GetPixelDepth(m_d3dFormat);
         run_length_decomp(compressedBuffer, m_imageDataSize, m_pImageData, m_decompressedSize, pixelDepth);
-        
+
         m_imageDataSize = m_decompressedSize; // 更新大小為解壓後的大小
 
-    } else { // 未壓縮
+    }
+    else { // 未壓縮
         if (m_imageDataSize > 0 && m_imageDataSize < 0x20000000) {
             m_pImageData = new (std::nothrow) unsigned char[m_imageDataSize];
             if (!m_pImageData) return false;
-            
+
             memcpy(m_pImageData, current_ptr, m_imageDataSize);
         }
     }
@@ -131,7 +144,7 @@ bool ImageResource::LoadGI(const char* fileName, unsigned char a3) {
         fread(m_pAnimationFrames, sizeof(AnimationFrameData) * m_animationFrameCount, 1, pFile);
     }
     
-    fread(&m_unknownFlag, 1, 1, pFile);
+    fread(&m_unknownFlag, 1, 1, pFile); //有可能要多讀32Bytes
 
     // 根據是否壓縮來處理像素資料
     if (isCompressed) {

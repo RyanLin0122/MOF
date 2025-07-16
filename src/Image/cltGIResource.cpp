@@ -1,16 +1,12 @@
 #include "Image/cltGIResource.h"
 #include "Image/CDeviceResetManager.h" // 假設全域的 g_Device_Reset_Manager 在此
+#include "CMOFPacking.h"
 #include <cstdio>  // for sprintf, wsprintfA
 #include <string.h> // for strcpy, memset
 
 
 // 控制是從獨立檔案(0)還是封裝檔(1)載入
 extern int IsInMemory;
-
-// 假設的封裝檔處理類別和物件
-class CMofPacking { /* ... */ };
-extern CMofPacking g_clMofPacking;
-extern CMofPacking g_clCharPacking;
 
 // 假設的字型和區域處理類別
 class MoFFont { /* ... */ };

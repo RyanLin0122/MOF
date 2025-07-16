@@ -6,6 +6,7 @@
 #include "nfs_test.h"
 #include "cm_packing_integration_test.h"
 #include "Test/CompTest.h"
+#include "Test/ImageTest.h"
 #include "Sound/COgg.h"  // 您的 COgg 類別標頭檔
 #include "CMOFPacking.h" // 您的 CMofPacking 類別標頭檔 (單例版本)
 #include "Image/CDeviceResetManager.h"
@@ -61,7 +62,6 @@ void ogg_play_test() {
     printf("FMOD OGG 播放整合測試\n");
     printf("------------------------\n");
 
-    create_vfs_archive();
     // --- 1. 初始化並開啟 VFS ---
     // 這是應用程式層級的責任，必須在任何讀取操作之前完成。
     printf("正在初始化並開啟 VFS: %s.pak/.paki\n", VFS_ARCHIVE_NAME);
@@ -152,7 +152,10 @@ int test_func() {
     print_test_result();
     run_cmofpacking_tests();
     run_comp_test();
-    //ogg_play_test();
+    create_vfs_archive();
+    ImageSystemTester tester;
+    tester.RunImageTests();
+    ogg_play_test();
     return 0;
 }
 
