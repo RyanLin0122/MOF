@@ -275,7 +275,8 @@ private:
     void Test_ImageResource_LoadTexture_Failure();
     void Test_LoadingThread_QueueOperations();
     void Test_LoadingThread_ThreadProcessing();
-
+    void Test_ImageResource_LoadGI_RealFileAbsolutePath();
+    void Test_ImageResource_LoadGI_RealFileRelativePath();
     // --- ¾ã¦X´ú¸Õ ---
     void Test_Integration_AsyncLoadAndVerify();
 

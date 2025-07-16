@@ -257,10 +257,19 @@ void ImageSystemTester::Test_LoadingThread_ThreadProcessing() {
 
     lt.Poll(); // 啟動執行緒
 
-    // 等待執行緒完成 (在測試中，短暫 sleep 是個簡單但不完美的作法)
-    Sleep(100); // 等待執行緒處理完畢
+    // --- 可靠的等待 ---
+    // 檢查執行緒控制代碼是否有效
+    if (lt.m_hThread) {
+        // 等待，直到由 m_hThread 所代表的執行緒結束。
+        // INFINITE 表示無限期等待，直到它完成為止。
+        WaitForSingleObject(lt.m_hThread, INFINITE);
 
-    // 檢查執行緒是否已結束
+        // 既然執行緒結束了，最好將其控制代碼關閉
+        CloseHandle(lt.m_hThread);
+        lt.m_hThread = NULL; // 避免重複關閉
+    }
+
+    // 現在我們可以 100% 確定執行緒已經執行完畢
     assert(lt.m_bIsRunning == false);
 
     // 檢查 MockResourceMgr 是否被正確呼叫
@@ -298,6 +307,43 @@ void ImageSystemTester::Test_ImageResource_LoadGIInPack_Success() {
     assert(res.m_pImageData != nullptr);
 }
 
+void ImageSystemTester::Test_ImageResource_LoadGI_RealFileRelativePath() {
+    std::cout << "\n  [PRE-REQUISITE] This test requires the file '1f000386_sky-middle-01.gi' to exist in the execution directory." << std::endl;
+
+    // Arrange
+    const char* filename = "1f000386_sky-middle-01.gi";
+    ImageResource res;
+
+    // Act
+    bool success = res.LoadGI(filename, 0);
+
+    // Assert
+    // 如果檔案不存在，測試會失敗，這是預期行為。
+    assert(success == true && "Failed to load '1f000386_sky-middle-01.gi'. Make sure it exists in the execution path.");
+    assert(res.m_width > 0);
+    assert(res.m_height > 0);
+    assert(res.m_imageDataSize > 0);
+    assert(res.m_pImageData != nullptr || res.m_pTexture != nullptr); // 載入後至少要有像素資料或紋理
+}
+
+/// @brief 測試使用絕對路徑讀取一個真實存在的 GI 檔案
+void ImageSystemTester::Test_ImageResource_LoadGI_RealFileAbsolutePath() {
+    std::cout << "\n  [PRE-REQUISITE] This test requires the file '200000a1_static_m0002_1.gi' to exist at 'D:\\VFS_Source\\'." << std::endl;
+
+    // Arrange
+    const char* filename = "D:\\VFS_Source\\200000a1_static_m0002_1.gi";
+    ImageResource res;
+
+    // Act
+    bool success = res.LoadGI(filename, 0);
+
+    // Assert
+    assert(success == true && "Failed to load 'D:\\VFS_Source\\200000a1_static_m0002_1.gi'. Make sure the file exists at this absolute path.");
+    assert(res.m_width > 0);
+    assert(res.m_height > 0);
+    assert(res.m_imageDataSize > 0);
+    assert(res.m_pImageData != nullptr || res.m_pTexture != nullptr); // 載入後至少要有像素資料或紋理
+}
 
 // --- 整合測試用的特殊 ResourceMgr ---
 // 這個版本會真的去載入 ImageResource
