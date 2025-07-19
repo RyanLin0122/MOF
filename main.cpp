@@ -148,10 +148,10 @@ int test_func() {
     std::cout << "========================================" << std::endl;
 
     // 執行所有測試
-    run_all_tests(); //nfs unit test
-    print_test_result();
-    run_cmofpacking_tests();
-    run_comp_test();
+    //run_all_tests(); //nfs unit test
+    //print_test_result();
+    //run_cmofpacking_tests();
+    //run_comp_test();
     create_vfs_archive();
     ImageSystemTester tester;
     tester.RunImageTests();

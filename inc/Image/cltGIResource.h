@@ -1,6 +1,6 @@
 #pragma once
 
-#include "cltBaseResource.h" // 包含基底類別的定義
+#include "Image/cltBaseResource.h" // 包含基底類別的定義
 
 // 前向宣告，避免不必要的 include
 struct ImageResourceListData;

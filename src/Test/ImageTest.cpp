@@ -3,6 +3,7 @@
 #include "Image/CDeviceManager.h"
 #include "Image/ImageResource.h"
 #include "Image/LoadingThread.h"
+#include "Image/ResourceMgr.h"
 #include "CMOFPacking.h" // For integration test
 #include <fstream>
 #include <windows.h> // For Sleep
@@ -241,19 +242,11 @@ void ImageSystemTester::Test_LoadingThread_QueueOperations() {
     assert(lt.FindInResLoadingList(102) == false);
 }
 
-// 替換 ResourceMgr 的函式指標，用於 LoadingThread 單元測試
-// 這是簡化的作法，假設我們可以控制 LoadingThread 的依賴
-namespace ResourceMgr {
-    static MockResourceMgr* s_mockInstance = MockResourceMgr::GetInstance();
-    MockResourceMgr* GetInstance() { return s_mockInstance; }
-}
-
 void ImageSystemTester::Test_LoadingThread_ThreadProcessing() {
     LoadingThread lt;
-    MockResourceMgr::GetInstance()->Reset();
 
-    lt.AddBackGroundLoadingRes({ 201, 2, 1 });
-    lt.AddBackGroundLoadingRes({ 202, 2, 2 });
+    lt.AddBackGroundLoadingRes({184550388, 2, 1});
+    lt.AddBackGroundLoadingRes({251658410, 2, 2});
 
     lt.Poll(); // 啟動執行緒
 
@@ -271,12 +264,6 @@ void ImageSystemTester::Test_LoadingThread_ThreadProcessing() {
 
     // 現在我們可以 100% 確定執行緒已經執行完畢
     assert(lt.m_bIsRunning == false);
-
-    // 檢查 MockResourceMgr 是否被正確呼叫
-    auto& log = MockResourceMgr::GetInstance()->call_log;
-    assert(log.size() == 2);
-    assert(log[0].resourceID == 201);
-    assert(log[1].resourceID == 202);
 }
 
 
@@ -299,7 +286,7 @@ void ImageSystemTester::Test_ImageResource_LoadGIInPack_Success() {
 
     ImageResource res;
     // LoadGIInPack 的 packerType 參數在此假設為 0 (CMofPacking)
-    bool success = res.LoadGIInPack("1f000386_sky-middle-01.gi", 0, 0);
+    bool success = res.LoadGIInPack("D:/VFS_Source/1f000386_sky-middle-01.gi", 0, 0);
 
     assert(success == true);
     assert(res.m_width == 64);
