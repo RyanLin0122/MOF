@@ -83,7 +83,7 @@ static inline int find_first_set_bit(unsigned char n) {
 // 假設傳入的字串在被呼叫的上下文中保證是不同的
 int bitfirst_different(const char* str1, const char* str2)
 {
-	printf("  [D] bitfirst_different: Comparing ('%s', '%s')\n", str1, str2);
+	//printf("  [D] bitfirst_different: Comparing ('%s', '%s')\n", str1, str2);
 	int byteIndex = 0;
 	// 1. 找出第一個內容不同的位元組，或其中一個字串結束的位置
 	while (str1[byteIndex] == str2[byteIndex])
@@ -100,7 +100,7 @@ int bitfirst_different(const char* str1, const char* str2)
 
 	if (bit_get(&str1[byteIndex], local_bit_offset) != bit_get(&str2[byteIndex], local_bit_offset))
 	{
-		printf("  [D] bitfirst_different: Found diff at byte %d, local_bit %d. Result: %d\n", byteIndex, local_bit_offset, byteIndex * 8 + local_bit_offset);
+		//printf("  [D] bitfirst_different: Found diff at byte %d, local_bit %d. Result: %d\n", byteIndex, local_bit_offset, byteIndex * 8 + local_bit_offset);
 		return byteIndex * 8 + local_bit_offset;
 	}
 
@@ -109,7 +109,7 @@ int bitfirst_different(const char* str1, const char* str2)
 		local_bit_offset++;
 	} while (bit_get(&str1[byteIndex], local_bit_offset) == bit_get(&str2[byteIndex], local_bit_offset));
 
-	printf("  [D] bitfirst_different: Found diff at byte %d, local_bit %d. Result: %d\n", byteIndex, local_bit_offset, byteIndex * 8 + local_bit_offset);
+	//printf("  [D] bitfirst_different: Found diff at byte %d, local_bit %d. Result: %d\n", byteIndex, local_bit_offset, byteIndex * 8 + local_bit_offset);
 	return byteIndex * 8 + local_bit_offset;
 }
 
@@ -835,7 +835,7 @@ void cache_page_create(NfsIioFile* file, int channel_idx, int page_array_idx_to_
 			cache->num_pages_active++;
 			NfsIioCachePage* new_page = static_cast<NfsIioCachePage*>(malloc(sizeof(NfsIioCachePage)));
 			if (!new_page) {
-				fprintf(stderr, "Error: Could not allocate memory for NfsIioCachePage metadata.\n");
+				//fprintf(stderr, "Error: Could not allocate memory for NfsIioCachePage metadata.\n");
 				// 應有更完善的錯誤處理
 				cache->num_pages_active--; // 回復計數
 				return;
@@ -843,7 +843,7 @@ void cache_page_create(NfsIioFile* file, int channel_idx, int page_array_idx_to_
 
 			size_t buffer_size = static_cast<size_t>(nfs_iio_BLOCK_SIZEv) * channel->blocks_per_stripe;
 			if (buffer_size == 0 && channel->blocks_per_stripe > 0) { // 防止blocks_per_stripe很大導致溢位
-				fprintf(stderr, "Error: Buffer size calculation resulted in zero or overflow.\n");
+				//fprintf(stderr, "Error: Buffer size calculation resulted in zero or overflow.\n");
 				free(new_page);
 				cache->num_pages_active--;
 				return;
@@ -857,7 +857,7 @@ void cache_page_create(NfsIioFile* file, int channel_idx, int page_array_idx_to_
 			if (buffer_size > 0) {
 				buffer = malloc(buffer_size);
 				if (!buffer) {
-					fprintf(stderr, "Internal error: not enough memory for cache page buffer. Aborting...\n");
+					//fprintf(stderr, "Internal error: not enough memory for cache page buffer. Aborting...\n");
 					free(new_page); // 釋放已分配的元數據
 					cache->num_pages_active--; // 回復計數
 					// _exit(-1); // 原始碼中此處會退出
@@ -1416,7 +1416,7 @@ void auto_truncate(NfsIioFile* file) {
 
 	long current_header_size = header_size(file);
 	if (current_header_size < 0) { // header_size 可能返回錯誤
-		fprintf(stderr, "auto_truncate: Invalid header size.\n");
+		//fprintf(stderr, "auto_truncate: Invalid header size.\n");
 		return;
 	}
 
@@ -1474,23 +1474,23 @@ void auto_truncate(NfsIioFile* file) {
 				if (!SetEndOfFile(win_handle)) {
 					// SetEndOfFile 失敗
 					DWORD error = GetLastError();
-					fprintf(stderr, "auto_truncate: SetEndOfFile failed with error %lu\n", error);
+					//fprintf(stderr, "auto_truncate: SetEndOfFile failed with error %lu\n", error);
 				}
 			}
 			else {
 				// SetFilePointerEx 失敗
 				DWORD error = GetLastError();
-				fprintf(stderr, "auto_truncate: SetFilePointerEx failed with error %lu\n", error);
+				//fprintf(stderr, "auto_truncate: SetFilePointerEx failed with error %lu\n", error);
 			}
 		}
 		else {
 			// _get_osfhandle 失敗
-			fprintf(stderr, "auto_truncate: _get_osfhandle failed.\n");
+			//fprintf(stderr, "auto_truncate: _get_osfhandle failed.\n");
 		}
 	}
 	else {
 		// _fileno 失敗
-		fprintf(stderr, "auto_truncate: _fileno failed.\n");
+		//fprintf(stderr, "auto_truncate: _fileno failed.\n");
 	}
 }
 
@@ -3944,12 +3944,12 @@ int p_find_first_different_bit(NfsDtHandle* dt_handle, const char* key1, int tri
 /** @brief 將指定的鍵字串插入到 Patricia Trie 中。*/
 int p_insert_key(NfsDtHandle* dt_handle, const char* key_to_insert, short nt_idx) {
 	if (!dt_handle || !key_to_insert) return -1;
-	printf("\n\n--- [DEBUG] p_insert_key: Inserting '%s' ---\n", key_to_insert);
+	//printf("\n\n--- [DEBUG] p_insert_key: Inserting '%s' ---\n", key_to_insert);
 
 	// 步驟 1: 查找與新鍵最匹配的現有節點 x
 	int p = p_get_head();
 	int x = trienode_get_right(dt_handle, p);
-	printf("[D] Insert - Step 1 (Initial Search)\n");
+	//printf("[D] Insert - Step 1 (Initial Search)\n");
 	while (trienode_get_bindex(dt_handle, p) < trienode_get_bindex(dt_handle, x)) {
 		p = x;
 		// 【關鍵修正點】
@@ -3957,20 +3957,20 @@ int p_insert_key(NfsDtHandle* dt_handle, const char* key_to_insert, short nt_idx
 			? trienode_get_right(dt_handle, p)
 			: trienode_get_left(dt_handle, p);
 	}
-	printf("[D] Insert - Step 1 Result: Found closest node x=%d (parent p=%d)\n", x, p);
+	//printf("[D] Insert - Step 1 Result: Found closest node x=%d (parent p=%d)\n", x, p);
 
 	if (p_compare_keys(dt_handle, key_to_insert, x) == 1) {
-		printf("[D] Insert - ERROR: Key '%s' already exists.\n", key_to_insert);
+		//printf("[D] Insert - ERROR: Key '%s' already exists.\n", key_to_insert);
 		return -1;
 	}
 
 	int first_diff_bit = p_find_first_different_bit(dt_handle, key_to_insert, x);
-	printf("[D] Insert - Step 2 (DiffBit): First different bit is %d\n", first_diff_bit);
+	//printf("[D] Insert - Step 2 (DiffBit): First different bit is %d\n", first_diff_bit);
 
 	// 步驟 4: 再次從頭遍歷，為新分支節點找到正確的父節點(p_insert)和要被替換的子節點(x_insert)
 	int p_insert = p_get_head();
 	int x_insert = trienode_get_right(dt_handle, p_insert);
-	printf("[D] Insert - Step 3 (Find Insertion Point)\n");
+	//printf("[D] Insert - Step 3 (Find Insertion Point)\n");
 	while (trienode_get_bindex(dt_handle, p_insert) < trienode_get_bindex(dt_handle, x_insert) &&
 		trienode_get_bindex(dt_handle, x_insert) < first_diff_bit) {
 		p_insert = x_insert;
@@ -3979,17 +3979,17 @@ int p_insert_key(NfsDtHandle* dt_handle, const char* key_to_insert, short nt_idx
 			? trienode_get_right(dt_handle, p_insert)
 			: trienode_get_left(dt_handle, p_insert);
 	}
-	printf("[D] Insert - Step 3 Result: Found insertion point between p_insert=%d and x_insert=%d\n", p_insert, x_insert);
+	//printf("[D] Insert - Step 3 Result: Found insertion point between p_insert=%d and x_insert=%d\n", p_insert, x_insert);
 
 	int new_node_idx = node_allocate(dt_handle, key_to_insert, nt_idx, (short)first_diff_bit);
 	if (new_node_idx < 0) {
-		printf("[D] Insert - ERROR: node_allocate failed.\n");
+		//printf("[D] Insert - ERROR: node_allocate failed.\n");
 		return -1;
 	}
-	printf("[D] Insert - Step 4 (Allocate): Allocated new_node_idx=%d for key '%s' with b_index=%d\n", new_node_idx, key_to_insert, first_diff_bit);
+	//printf("[D] Insert - Step 4 (Allocate): Allocated new_node_idx=%d for key '%s' with b_index=%d\n", new_node_idx, key_to_insert, first_diff_bit);
 
 	int new_node_bit = bit_get(key_to_insert, first_diff_bit);
-	printf("[D] Insert - Step 5 (Set Children): bit_get('%s', %d) is %d.\n", key_to_insert, first_diff_bit, new_node_bit);
+	//printf("[D] Insert - Step 5 (Set Children): bit_get('%s', %d) is %d.\n", key_to_insert, first_diff_bit, new_node_bit);
 	if (new_node_bit) {
 		trienode_set_left(dt_handle, new_node_idx, x_insert);
 		trienode_set_right(dt_handle, new_node_idx, new_node_idx);
@@ -3999,16 +3999,16 @@ int p_insert_key(NfsDtHandle* dt_handle, const char* key_to_insert, short nt_idx
 		trienode_set_right(dt_handle, new_node_idx, x_insert);
 	}
 
-	printf("[D] Insert - Step 6 (Attach): Attaching new_node %d to parent %d. Original child was %d.\n", new_node_idx, p_insert, x_insert);
+	//printf("[D] Insert - Step 6 (Attach): Attaching new_node %d to parent %d. Original child was %d.\n", new_node_idx, p_insert, x_insert);
 	if (trienode_get_right(dt_handle, p_insert) == x_insert) {
-		printf("  [D] Attaching to RIGHT child of parent %d.\n", p_insert);
+		//printf("  [D] Attaching to RIGHT child of parent %d.\n", p_insert);
 		trienode_set_right(dt_handle, p_insert, new_node_idx);
 	}
 	else {
-		printf("  [D] Attaching to LEFT child of parent %d.\n", p_insert);
+		//printf("  [D] Attaching to LEFT child of parent %d.\n", p_insert);
 		trienode_set_left(dt_handle, p_insert, new_node_idx);
 	}
-	printf("--- [DEBUG] p_insert_key: Finished inserting '%s' ---\n", key_to_insert);
+	//printf("--- [DEBUG] p_insert_key: Finished inserting '%s' ---\n", key_to_insert);
 
 	return new_node_idx;
 }
@@ -4019,7 +4019,7 @@ int p_insert_key(NfsDtHandle* dt_handle, const char* key_to_insert, short nt_idx
 /** @brief 從 Trie 中移除指定的鍵。*/
 int p_remove_key(NfsDtHandle* dt_handle, const char* key_to_remove) {
 	if (!dt_handle || !key_to_remove) return -1;
-	printf("\n\n--- [DEBUG] p_remove_key: Removing '%s' ---\n", key_to_remove);
+	//printf("\n\n--- [DEBUG] p_remove_key: Removing '%s' ---\n", key_to_remove);
 
 	int head = p_get_head();
 	int grandparent = head;
@@ -4036,15 +4036,14 @@ int p_remove_key(NfsDtHandle* dt_handle, const char* key_to_remove) {
 	}
 	// 2. 比對是否真的找到
 	if (p_compare_keys(dt_handle, key_to_remove, current) != 1) {
-		printf("[D] Remove - ERROR: Key '%s' not found.\n", key_to_remove);
+		//printf("[D] Remove - ERROR: Key '%s' not found.\n", key_to_remove);
 		return -1;
 	}
-	printf("[D] Remove: Found node to delete: current=%d. Its parent is %d, grandparent is %d.\n",
-		current, parent, grandparent);
+	//printf("[D] Remove: Found node to delete: current=%d. Its parent is %d, grandparent is %d.\n", current, parent, grandparent);
 
 	// 3. 如果 parent 是 head，重設整顆 Trie
 	if (parent == head) {
-		printf("[D] Remove: Parent is head. Deleting last element. Re-initializing head.\n");
+		//printf("[D] Remove: Parent is head. Deleting last element. Re-initializing head.\n");
 		unsigned int kidx = trienode_get_kindex(dt_handle, current);
 		if (kidx > 0) fnode_free(dt_handle, kidx);
 		trienode_recover(dt_handle, current);
@@ -4056,10 +4055,10 @@ int p_remove_key(NfsDtHandle* dt_handle, const char* key_to_remove) {
 	int sibling = (trienode_get_left(dt_handle, parent) == current)
 		? trienode_get_right(dt_handle, parent)
 		: trienode_get_left(dt_handle, parent);
-	printf("[D] Remove: Sibling of node %d is node %d.\n", current, sibling);
+	//printf("[D] Remove: Sibling of node %d is node %d.\n", current, sibling);
 
 	// 5. 把 sibling 掛到 grandparent 上
-	printf("[D] Remove: Attaching sibling %d to grandparent %d.\n", sibling, grandparent);
+	//printf("[D] Remove: Attaching sibling %d to grandparent %d.\n", sibling, grandparent);
 	if (trienode_get_left(dt_handle, grandparent) == parent) {
 		trienode_set_left(dt_handle, grandparent, sibling);
 	}
@@ -4080,7 +4079,7 @@ int p_remove_key(NfsDtHandle* dt_handle, const char* key_to_remove) {
 
 	if (sibling != parent) {
 		// 7a. 一般情況：回收 parent trienode (它原本有兩條分支)
-		printf("[D] Remove: Recovering parent node %d.\n", parent);
+		//printf("[D] Remove: Recovering parent node %d.\n", parent);
 		// 先釋放 parent 的 key 再 recover
 		unsigned int pk = trienode_get_kindex(dt_handle, parent);
 		if (pk > 0) fnode_free(dt_handle, pk);
@@ -4088,7 +4087,7 @@ int p_remove_key(NfsDtHandle* dt_handle, const char* key_to_remove) {
 	}
 	else {
 		// 7b. 兄弟就是 parent：把 parent 轉成純 leaf
-		printf("[D] Remove: Collapsing parent node %d into leaf.\n", parent);
+		//printf("[D] Remove: Collapsing parent node %d into leaf.\n", parent);
 		NfsTrieNode pbuf;
 		trienode_get(dt_handle, parent, &pbuf);
 		// children 指向自己
@@ -4098,7 +4097,7 @@ int p_remove_key(NfsDtHandle* dt_handle, const char* key_to_remove) {
 		// (k_index 已經是我們要保留的那把 key)
 	}
 
-	printf("--- [DEBUG] p_remove_key: Finished removing '%s' ---\n", key_to_remove);
+	//printf("--- [DEBUG] p_remove_key: Finished removing '%s' ---\n", key_to_remove);
 	return 0;
 }
 
@@ -4107,11 +4106,11 @@ int p_remove_key(NfsDtHandle* dt_handle, const char* key_to_remove) {
 int p_lookup_key(NfsDtHandle* dt_handle, const char* key_to_lookup) {
 	if (!dt_handle || !key_to_lookup) return -1;
 
-	printf("\n[DEBUG] p_lookup_key: Searching for '%s'\n", key_to_lookup);
+	//printf("\n[DEBUG] p_lookup_key: Searching for '%s'\n", key_to_lookup);
 
 	int p = p_get_head();
 	int x = trienode_get_right(dt_handle, p);
-	printf("  [L] Start: p=%d(b=%d), x=%d(b=%d)\n", p, trienode_get_bindex(dt_handle, p), x, trienode_get_bindex(dt_handle, x));
+	//printf("  [L] Start: p=%d(b=%d), x=%d(b=%d)\n", p, trienode_get_bindex(dt_handle, p), x, trienode_get_bindex(dt_handle, x));
 
 	while (trienode_get_bindex(dt_handle, p) < trienode_get_bindex(dt_handle, x)) {
 		int old_p_idx = p;
@@ -4122,22 +4121,21 @@ int p_lookup_key(NfsDtHandle* dt_handle, const char* key_to_lookup) {
 		// 【關鍵修正點】: 根據新的父節點 p 來獲取子節點，而不是用舊的 x
 		x = bit_value ? trienode_get_right(dt_handle, p) : trienode_get_left(dt_handle, p);
 
-		printf("  [L] Traverse: From p=%d(b=%d), testing bit %d -> %d. New x is %d.\n",
-			p, bit_to_test, bit_to_test, bit_value, x);
+		//printf("  [L] Traverse: From p=%d(b=%d), testing bit %d -> %d. New x is %d.\n", p, bit_to_test, bit_to_test, bit_value, x);
 	}
 
-	printf("[DEBUG] p_lookup_key: Loop terminated. Final p=%d(b=%d), x=%d(b=%d).\n", p, trienode_get_bindex(dt_handle, p), x, trienode_get_bindex(dt_handle, x));
+	//printf("[DEBUG] p_lookup_key: Loop terminated. Final p=%d(b=%d), x=%d(b=%d).\n", p, trienode_get_bindex(dt_handle, p), x, trienode_get_bindex(dt_handle, x));
 
 	char stored_key_buffer[4096];
 	fnode_extract_key(dt_handle, trienode_get_kindex(dt_handle, x), stored_key_buffer);
-	printf("[DEBUG] p_lookup_key: Comparing search key '%s' with key from node %d ('%s').\n", key_to_lookup, x, stored_key_buffer);
+	//printf("[DEBUG] p_lookup_key: Comparing search key '%s' with key from node %d ('%s').\n", key_to_lookup, x, stored_key_buffer);
 
 	if (p_compare_keys(dt_handle, key_to_lookup, x) == 1) {
-		printf("[DEBUG] p_lookup_key: Match SUCCEEDED. Returning node index %d.\n", x);
+		//printf("[DEBUG] p_lookup_key: Match SUCCEEDED. Returning node index %d.\n", x);
 		return x;
 	}
 
-	printf("[DEBUG] p_lookup_key: Match FAILED. Returning -1.\n");
+	//printf("[DEBUG] p_lookup_key: Match FAILED. Returning -1.\n");
 	return -1;
 }
 

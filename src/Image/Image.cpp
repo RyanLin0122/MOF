@@ -3,7 +3,7 @@
 
 // --- 外部依賴的全域變數 ---
 extern LPDIRECT3DDEVICE9    Device;
-extern bool                 DontDraw = 0; // 全域的 "不要繪製" 旗標
+extern bool                 DontDraw; // 全域的 "不要繪製" 旗標
 
 Image::Image()
 {

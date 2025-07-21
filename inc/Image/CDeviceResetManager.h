@@ -2,55 +2,23 @@
 
 #include <d3d9.h>
 #include <d3dx9.h>
-#include "Image/ImageResourceListDataMgr.h" // 包含我們之前還原的 ImageResource 管理器
-#include <d3dx9tex.h>
+#include "Image/VertexBufferDataMgr.h"     // 包含之前還原的 VertexBuffer 管理器
+#include "Image/ImageResourceListDataMgr.h"// 包含 ImageResource 管理器
+#include "Image/TextureListDataMgr.h"      // 包含之前還原的 Texture 管理器
 
-//-- 輔助類別和結構的簡化定義 (Stub) -------------------------------------------
-// 這些是根據 CDeviceResetManager.cpp 的用法推斷出的簡化版定義
-
-// 假設的 VertexBufferData 結構
-struct VertexBufferData {
-    VertexBufferData* pPrev;
-    VertexBufferData* pNext;
-    IDirect3DVertexBuffer9* pVertexBuffer; // 從CreateVertexBuffer推斷，偏移量為+8
-    unsigned short capacity;               // 偏移量為+12
-    unsigned char type;                    // 偏移量為+14
-};
-
-// 假設的 VertexBufferDataMgr 類別
-class VertexBufferDataMgr {
-public:
-    VertexBufferData* Add() { /* 實作細節省略 */ return nullptr; }
-    void Delete(VertexBufferData* pNode) { /* 實作細節省略 */ }
-};
-
-// 假設的 TextureListData 結構
-struct TextureListData {
-    TextureListData* pPrev;
-    TextureListData* pNext;
-    IDirect3DTexture9* pTexture;           // 從CreateTexture推斷，偏移量為+8
-    char szFileName[256];                  // 儲存檔案路徑
-    unsigned char flag;                    // 儲存旗標
-};
-
-// 假設的 TextureListDataMgr 類別
-class TextureListDataMgr {
-public:
-    TextureListData* Add() { /* 實作細節省略 */ return nullptr; }
-    void Delete(TextureListData* pNode) { /* 實作細節省略 */ }
-};
-
-//--------------------------------------------------------------------------------
-
-/// @class CDeviceResetManager
-/// @brief 集中管理因 Direct3D 裝置重設 (Device Reset) 而需要重新建立的資源。
-///
-/// 這個類別封裝了對 Vertex Buffers、圖片資源 (ImageResource) 和紋理 (Texture) 的管理，
-/// 並處理裝置遺失 (Device Lost) 和重設時的相關邏輯。
+/**
+ * @class CDeviceResetManager
+ * @brief 集中管理D3D資源，並處理裝置遺失(Lost)與重設(Reset)的核心邏輯。
+ *
+ * 這個類別使用單例模式(Singleton)，確保程式中只有一個實例。
+ * 它封裝了對 Vertex Buffers、Image Resources 和 Textures 的生命週期管理。
+ */
 class CDeviceResetManager {
 public:
+    /// @brief 取得唯一的類別實例。
     static CDeviceResetManager* GetInstance();
-    /// @brief 解構函式
+
+    /// @brief 解構函式。
     ~CDeviceResetManager();
 
     /// @brief 建立一個指定類型的頂點緩衝區。
@@ -65,9 +33,9 @@ public:
 
     /// @brief 建立一個圖片資源。
     /// @param pFileName 圖片檔案的路徑或在封裝檔中的名稱。
-    /// @param flag 傳遞給 LoadGI/LoadGIInPack 的旗標 (原始碼中的 a3)。
-    /// @param packerType 傳遞給 LoadGI/LoadGIInPack 的旗標 (原始碼中的 a4)。
-    /// @param a5 傳遞給 LoadGIInPack 的參數 (原始碼中的 a5)，通常是封裝檔類型。
+    /// @param flag 傳遞給 LoadGI/LoadGIInPack 的旗標。
+    /// @param packerType 傳遞給 LoadGI/LoadGIInPack 的打包器類型。
+    /// @param a5 傳遞給 LoadGIInPack 的參數(通常是封裝檔類型)。
     /// @return 指向新建立的 ImageResourceListData 節點的指標。
     ImageResourceListData* CreateImageResource(const char* pFileName, char flag, unsigned char packerType, int a5);
 
@@ -77,7 +45,7 @@ public:
 
     /// @brief 從檔案建立一個紋理。
     /// @param pFileName 紋理檔案的路徑。
-    /// @param flag 原始碼中的旗標 (a3)。
+    /// @param flag 原始碼中的旗標。
     /// @return 指向新建立的 TextureListData 節點的指標。
     TextureListData* CreateTexture(const char* pFileName, unsigned char flag);
 
@@ -90,20 +58,25 @@ public:
     ID3DXSprite* GetSpriteObject();
 
     /// @brief 處理裝置重設。
-    /// 當主迴圈偵測到裝置需要重設時呼叫此函式。
     /// @param hresult 來自 Present() 或其他 D3D 呼叫的返回碼。
-    /// @return 如果裝置狀態正常或已成功重設，返回 true。如果重設失敗，返回 false。
+    /// @return 如果裝置狀態正常或已成功重設，返回 true。
     bool ResetToDevice(long hresult);
 
 private:
-    // 私有建構函式
+    /// @brief 私有建構函式，防止外部直接建立。
     CDeviceResetManager();
 
+    // 刪除拷貝建構函式和賦值運算子，確保單例的唯一性
+    CDeviceResetManager(const CDeviceResetManager&) = delete;
+    CDeviceResetManager& operator=(const CDeviceResetManager&) = delete;
+
+private:
     // 指向唯一實例的靜態指標
     static CDeviceResetManager* s_pInstance;
-    // 根據反編譯程式碼的建構函式和成員位移，還原出以下成員
-    VertexBufferDataMgr      m_vertexBufferMgr;      // 偏移量: 0
-    ImageResourceListDataMgr m_imageResourceMgr;     // 偏移量: 12
-    TextureListDataMgr       m_textureMgr;           // 偏移量: 24
-    ID3DXSprite* m_pSprite;              // 偏移量: 36
+
+    // 成員變數 (順序和大小與反編譯碼一致)
+    VertexBufferDataMgr      m_vertexBufferMgr;      // 位移: +0
+    ImageResourceListDataMgr m_imageResourceMgr;     // 位移: +12
+    TextureListDataMgr       m_textureMgr;           // 位移: +24
+    ID3DXSprite* m_pSprite;              // 位移: +36
 };

@@ -13,9 +13,15 @@
 
 #include <d3d9.h>
 
+extern int IsInMemory = 1;      // 控制是從獨立檔案還是封裝檔載入 (IsInMemory)
+extern bool IsDialogBoxMode = 0;     // 控制是否設定 DialogBoxMode (IsDialogBoxMode)
+extern int g_Game_System_Info = 0;
+extern int nHeight = 0;
+extern bool DontDraw = false;
+
 void create_vfs_archive() {
     const char* vfs_base_name = "mof"; // 最終會產生 mof.pak 和 mof.paki
-    const char* source_directory = "D:\\VFS_Source\\"; // 您在步驟1中建立的來源目錄 (注意路徑結尾的斜線)
+    const char* source_directory = "D:\\mof_module\\VFS\\mofdata\\"; // 您在步驟1中建立的來源目錄 (注意路徑結尾的斜線)
 
     std::cout << "正在建立 VFS 封裝檔: " << vfs_base_name << std::endl;
     std::cout << "來源目錄: " << source_directory << std::endl;
@@ -152,9 +158,9 @@ int test_func() {
     //print_test_result();
     //run_cmofpacking_tests();
     //run_comp_test();
-    create_vfs_archive();
+    //create_vfs_archive();
     ImageSystemTester tester;
-    tester.RunImageTests();
+    //tester.RunImageTests();
     ogg_play_test();
     return 0;
 }

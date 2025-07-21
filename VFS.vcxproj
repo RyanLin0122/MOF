@@ -164,6 +164,8 @@
     <ClCompile Include="src\Image\ImageResourceListDataMgr.cpp" />
     <ClCompile Include="src\Image\LoadingThread.cpp" />
     <ClCompile Include="src\Image\ResourceMgr.cpp" />
+    <ClCompile Include="src\Image\TextureListDataMgr.cpp" />
+    <ClCompile Include="src\Image\VertexBufferDataMgr.cpp" />
     <ClCompile Include="src\nfs.cpp" />
     <ClCompile Include="src\nfs_test.cpp" />
     <ClCompile Include="src\Sound\COgg.cpp" />
@@ -191,6 +193,8 @@
     <ClInclude Include="inc\Image\ImageResourceListDataMgr.h" />
     <ClInclude Include="inc\Image\LoadingThread.h" />
     <ClInclude Include="inc\Image\ResourceMgr.h" />
+    <ClInclude Include="inc\Image\TextureListDataMgr.h" />
+    <ClInclude Include="inc\Image\VertexBufferDataMgr.h" />
     <ClInclude Include="inc\nfs.h" />
     <ClInclude Include="inc\nfs_test.h" />
     <ClInclude Include="inc\Sound\COgg.h" />

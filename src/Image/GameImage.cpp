@@ -10,8 +10,8 @@
 extern LPDIRECT3DDEVICE9 Device;
 
 // GameImage.c::Process 中引用的全域變數
-extern int g_Game_System_Info = 0;
-extern int nHeight = 0;
+extern int g_Game_System_Info;
+extern int nHeight;
 extern bool DontDraw;
 
 GameImage::GameImage() {

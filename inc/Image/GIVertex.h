@@ -1,4 +1,6 @@
 #pragma once
+#include <d3d9.h>
+#include <d3dx9.h>
 
 // 定義 GIVertex 類別
 // 該類別用於表示圖形渲染中的一個頂點，包含位置、顏色和紋理座標等資訊。
@@ -31,4 +33,5 @@ public:
     // 建構函式
     // 初始化頂點的各個屬性
     GIVertex();
+    static const unsigned int FVF = D3DFVF_TEX1 | D3DFVF_DIFFUSE | D3DFVF_XYZRHW;
 };

@@ -33,7 +33,6 @@ bool ImageResource::LoadGIInPack(const char* filePathInPack, int packerType, uns
         // 如果連封裝管理器都沒有，直接失敗
         return false;
     }
-
     // 使用 CMofPacking::FileRead 讀取檔案內容到其內部緩衝區
     // fileData 指向由 pPacker 管理的記憶體，此處不應釋放它
     char* fileData = pPacker->FileRead(filePathInPack);

@@ -3,7 +3,7 @@
 
 // 安砞硂琌办跑计ノ∕﹚戈方更よΑは絪亩祘Α絏い┮ǎ
 // 0: 眖縒ミ郎更, 獶0: 眖杆郎更
-extern int IsInMemory = 0;
+extern int IsInMemory;
 
 //--------------------------------------------------------------------------------
 // ImageResourceListData (竊翴) 龟瞷
