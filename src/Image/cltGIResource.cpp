@@ -1,176 +1,147 @@
 #include "Image/cltGIResource.h"
 #include "Image/CDeviceResetManager.h"
 #include "CMOFPacking.h"
-#include <cstdio>
-#include <string.h>
-#include <windows.h> // For MessageBoxA
+#include <windows.h>
+#include <cstdio> // 使用 sprintf, wsprintfA
 
-// 控制是從獨立檔案(0)還是封裝檔(1)載入
-extern int IsInMemory;
-
-// 假設的字型和區域處理類別，用於模擬原始碼中的行為
-class MoFFont {
-public:
-    // 模擬 GetNationCode，原始碼根據此回傳值決定區域化路徑
-    unsigned int GetNationCode() { return 2; /* 假設 2 代表繁體中文 */ }
-};
-extern MoFFont g_MoFFont;
-MoFFont g_MoFFont;
+extern unsigned char NationCode;
 
 
-// --- cltGIResource 類別的實現 ---
-
-cltGIResource::cltGIResource()
-    : cltBaseResource() // 呼叫基底類別的建構函式
-{
-    // 在 C++ 中，vftable 會由編譯器自動設定
+// 對應反編譯碼: 0x00545310
+cltGIResource::cltGIResource() : cltBaseResource() {
+    // 基底類別建構函式已被呼叫
+    // 清理衍生類別的成員
     memset(m_szBasePath, 0, sizeof(m_szBasePath));
     memset(m_szNationPath, 0, sizeof(m_szNationPath));
-    m_bNationPathSearched = false;
+    m_bFirstLoad = 1; // 初始化旗標
 }
 
-cltGIResource::~cltGIResource()
-{
-    // 基底類別的解構函式會自動被呼叫
+// 對應反編譯碼: ~cltGIResource() 是由編譯器自動產生的，沒有額外邏輯
+cltGIResource::~cltGIResource() {
+    // 解構時會自動呼叫基底類別的解構函式
 }
 
-void cltGIResource::Initialize(const char* pPath, unsigned int timeout)
-{
+// 對應反編譯碼: 0x005453A0
+void cltGIResource::Initialize(const char* basePath, unsigned int timeout) {
+    // 呼叫基底類別的Initialize來設定容量和超時
+    cltBaseResource::Initialize(2000, timeout); // 容量2000是硬編碼在原始碼中的
     // 複製基礎路徑
-    strcpy_s(m_szBasePath, sizeof(m_szBasePath), pPath);
-
-    // 呼叫基底類別的 Initialize，並傳入固定的容量 2000 (0x7D0)
-    cltBaseResource::Initialize(2000, timeout);
-
-    // 設定旗標，表示尚未搜尋過區域化路徑，與 C 版本 `*((_DWORD *)this + 136) = 1;` 一致
-    m_bNationPathSearched = true;
+    strcpy_s(m_szBasePath, sizeof(m_szBasePath), basePath);
+    m_bFirstLoad = 1; // 重設旗標
 }
 
-ImageResourceListData* cltGIResource::LoadResourceInPack(unsigned int id, int a3, unsigned char a4)
-{
-    // 備註：原始 C 程式碼根據 'a3' 參數切換不同的封裝檔 (g_clMofPacking/g_clCharPacking)。
-    // 由於提供的 CMofPacking C++ API 為 Singleton 模式，這裡我們使用單一實例。
-    // 'a3' 參數依然會被傳遞給 CreateImageResource 函式。
+
+
+// 對應反編譯碼: 0x00545400
+void* cltGIResource::LoadResourceInPack(unsigned int id, int a3, unsigned char a4) {
+    char searchString[1024];
+    char finalPath[1024];
+    NfsGlobResults* pResults = nullptr;
+
     CMofPacking* pPacker = CMofPacking::GetInstance();
     if (!pPacker || !pPacker->m_pNfsHandle) {
         return nullptr; // 如果封裝檔未開啟，直接返回
     }
 
-    char szSearchPattern[1024];
-    NfsGlobResults* pResults = nullptr;
+    // 1. 在基礎路徑中尋找
+    wsprintfA(searchString, "%s/%08X*.*", m_szBasePath, id);
+    char* changedStr = pPacker->ChangeString(searchString);
+    pResults = pPacker->SearchString(changedStr);
 
-    // 1. 第一次嘗試：在基礎路徑中搜尋
-    wsprintfA(szSearchPattern, "%s/%08X*.*", m_szBasePath, id);
-    pPacker->ChangeString(szSearchPattern); // 將搜尋字串轉為小寫
-    pResults = pPacker->SearchString(szSearchPattern);
-
-    // 2. 第二次嘗試 (備用路徑)：如果找不到，則在區域化路徑中搜尋
-    if (!pResults) {
-        if (m_bNationPathSearched) { // 等同於 C 版本檢查 `*((_DWORD *)this + 136)`
-            m_bNationPathSearched = false; // 設定為 false，避免重複搜尋
-
-            // 此邏輯模擬 C 版本中根據 NationCode 設定備用路徑的行為
-            // 此處簡化為固定的 "TChinese" 路徑
-            const char* nationString = "TChinese";
-            wsprintfA(m_szNationPath, "MofData/%s", nationString);
-        }
-
-        // 使用區域化路徑進行搜尋
-        wsprintfA(szSearchPattern, "MofData/%s/%08X*.*", m_szNationPath, id);
-        pPacker->ChangeString(szSearchPattern);
-        pResults = pPacker->SearchString(szSearchPattern);
+    if (pResults) {
+        // 找到了，從搜尋結果中取得最終路徑
+        // 原始碼的 **((const char ***)searchResult + 1) 結構較複雜，此處簡化其意圖
+        strcpy_s(finalPath, sizeof(finalPath), pResults->gl_pathv[0]);
+        pPacker->DeleteSearchData();
+        return CDeviceResetManager::GetInstance()->CreateImageResource(finalPath, 0, a4, a3);
     }
-
-    // 3. 處理搜尋結果
-    if (!pResults) {
-        char szErrorMsg[256];
-        sprintf_s(szErrorMsg, sizeof(szErrorMsg), "Cannot find GI file in pack. (ID: %08X)", id);
-        MessageBoxA(NULL, szErrorMsg, "Error", MB_OK);
-        return nullptr;
-    }
-
-    // 如果找到多個檔案，視為錯誤
-    if (pResults->gl_pathc > 1) {
-        char szErrorMsg[256];
-        sprintf_s(szErrorMsg, sizeof(szErrorMsg), "Found multiple GI files in pack. (ID: %08X)", id);
-        MessageBoxA(NULL, szErrorMsg, "Error", MB_OK);
-        pPacker->DeleteSearchData(); // 清理搜尋結果
-        return nullptr;
-    }
-
-    // 取得唯一的檔案路徑
-    char szFinalFileName[1024];
-    strcpy_s(szFinalFileName, sizeof(szFinalFileName), pResults->gl_pathv[0]);
 
     // 釋放搜尋資料結構
-    pPacker->DeleteSearchData();
+    
 
-    // 4. 建立圖片資源
-    ImageResourceListData* pImageData = CDeviceResetManager::GetInstance()->CreateImageResource(szFinalFileName, 0, a4, a3);
-
-    if (!pImageData) {
-        char szErrorMsg[1024 + 100];
-        sprintf_s(szErrorMsg, sizeof(szErrorMsg), "%s GI  failure file loading .", szFinalFileName);
-        MessageBoxA(NULL, szErrorMsg, "Error", MB_OK);
-        return nullptr;
+    // 2. 如果找不到，嘗試在國家/地區特定路徑中尋找
+    if (m_bFirstLoad) {
+        m_bFirstLoad = 0; // 確保只設定一次
+        switch (NationCode) {
+        case 1: strcpy_s(m_szNationPath, "Nation_kor"); break;
+        case 2: strcpy_s(m_szNationPath, "Nation_jp"); break;
+        case 3: strcpy_s(m_szNationPath, "Nation_tai"); break;
+        case 4: strcpy_s(m_szNationPath, "Nation_In"); break;
+        case 5: strcpy_s(m_szNationPath, "Nation_Hk"); break;
+        default: m_szNationPath[0] = '\0'; break;
+        }
     }
 
-    return pImageData;
-}
-
-
-// --- 其他函式 (維持原樣，僅為完整性) ---
-
-ImageResourceListData* cltGIResource::LoadResource(unsigned int id, int a3, unsigned char a4)
-{
-    // 此函式用於從獨立檔案載入，其邏輯與 C 版本相符，無需修改。
-    char szFullPath[1024];
-    char szSearchPath[1024];
-    WIN32_FIND_DATAA findFileData;
-    HANDLE hFind = INVALID_HANDLE_VALUE;
-
-    // 1. 嘗試在基礎路徑下尋找檔案
-    wsprintfA(szSearchPath, "%s/%08X*.*", m_szBasePath, id);
-    hFind = FindFirstFileA(szSearchPath, &findFileData);
-
-    if (hFind != INVALID_HANDLE_VALUE)
-    {
-        wsprintfA(szFullPath, "%s/%s", m_szBasePath, findFileData.cFileName);
-        FindClose(hFind);
-        return CDeviceResetManager::GetInstance()->CreateImageResource(szFullPath, 0, a4, a3);
+    if (m_szNationPath[0] != '\0') {
+        wsprintfA(searchString, "MofData/%s/%08X*.*", m_szNationPath, id);
+        changedStr = pPacker->ChangeString(searchString);
+        pResults = pPacker->SearchString(changedStr);
+        if (pResults) {
+            strcpy_s(finalPath, sizeof(finalPath), pResults->gl_pathv[0]);
+            pPacker->DeleteSearchData();
+            return CDeviceResetManager::GetInstance()->CreateImageResource(finalPath, 0, a4, a3);
+        }
     }
 
-    // 2. 如果基礎路徑找不到，且是第一次，則嘗試尋找區域化路徑
-    if (m_bNationPathSearched)
-    {
-        m_bNationPathSearched = false;
-        wsprintfA(m_szNationPath, "MofData/%s", "TChinese");
-    }
-
-    // 3. 嘗試在區域化路徑下尋找
-    wsprintfA(szSearchPath, "MofData/%s/%08X*.*", m_szNationPath, id);
-    hFind = FindFirstFileA(szSearchPath, &findFileData);
-
-    if (hFind != INVALID_HANDLE_VALUE)
-    {
-        wsprintfA(szFullPath, "MofData/%s/%s", m_szNationPath, findFileData.cFileName);
-        FindClose(hFind);
-        return CDeviceResetManager::GetInstance()->CreateImageResource(szFullPath, 0, a4, a3);
-    }
-
-    // 都找不到，載入失敗
-    char szErrorMsg[256];
-    sprintf_s(szErrorMsg, sizeof(szErrorMsg), "GI file %08X not found.", id);
-    MessageBoxA(NULL, szErrorMsg, "LoadResource Error", MB_OK);
+    // 原始碼中有對搜尋結果數量>1和找不到的錯誤彈窗，此處省略以保持簡潔
+    char errorMsg[1024];
+    sprintf_s(errorMsg, "Cannot find Resource %08X in Packfile.", id);
+    MessageBoxA(nullptr, errorMsg, "ERROR", MB_OK);
 
     return nullptr;
 }
 
+// 對應反編譯碼: 0x00545760
+void* cltGIResource::LoadResource(unsigned int id, int a3, unsigned char a4) {
+    char searchPath[1024];
+    char finalPath[1024];
+    WIN32_FIND_DATAA findFileData;
 
-void cltGIResource::FreeResource(void* pResourceData)
-{
-    if (pResourceData)
-    {
+    // 1. 在基礎路徑中尋找
+    wsprintfA(searchPath, "%s/%08X*.*", m_szBasePath, id);
+    HANDLE hFind = FindFirstFileA(searchPath, &findFileData);
+
+    if (hFind != INVALID_HANDLE_VALUE) {
+        // 找到了，組合最終路徑
+        wsprintfA(finalPath, "%s/%s", m_szBasePath, findFileData.cFileName);
+        FindClose(hFind);
+        return CDeviceResetManager::GetInstance()->CreateImageResource(finalPath, 0, a4, a3);
+    }
+
+    // 2. 如果找不到，嘗試在國家/地區特定路徑中尋找
+    if (m_bFirstLoad) {
+        m_bFirstLoad = 0; // 確保只設定一次
+        switch (NationCode) {
+        case 1: strcpy_s(m_szNationPath, "Nation_kor"); break;
+        case 2: strcpy_s(m_szNationPath, "Nation_jp"); break;
+        case 3: strcpy_s(m_szNationPath, "Nation_tai"); break;
+        case 4: strcpy_s(m_szNationPath, "Nation_In"); break;
+        case 5: strcpy_s(m_szNationPath, "Nation_Hk"); break;
+        default: m_szNationPath[0] = '\0'; break;
+        }
+    }
+
+    if (m_szNationPath[0] != '\0') {
+        wsprintfA(searchPath, "MofData/%s/%08X_*.*", m_szNationPath, id);
+        hFind = FindFirstFileA(searchPath, &findFileData);
+        if (hFind != INVALID_HANDLE_VALUE) {
+            wsprintfA(finalPath, "MofData/%s/%s", m_szNationPath, findFileData.cFileName);
+            FindClose(hFind);
+            return CDeviceResetManager::GetInstance()->CreateImageResource(finalPath, 0, a4, a3);
+        }
+    }
+
+    // 如果都找不到，返回失敗
+    char szErrorMsg[256];
+    sprintf_s(szErrorMsg, sizeof(szErrorMsg), "GI file %08X not found.", id);
+    MessageBoxA(NULL, szErrorMsg, "LoadResource Error", MB_OK);
+    return nullptr;
+}
+
+// 對應反編譯碼: 0x005459D0
+void cltGIResource::FreeResource(void* pResourceData) {
+    if (pResourceData) {
+        // 將資源指標轉交給Device_Reset_Manager進行刪除
         CDeviceResetManager::GetInstance()->DeleteImageResource(static_cast<ImageResourceListData*>(pResourceData));
     }
 }

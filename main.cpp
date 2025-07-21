@@ -13,11 +13,12 @@
 
 #include <d3d9.h>
 
-extern int IsInMemory = 1;      // 控制是從獨立檔案還是封裝檔載入 (IsInMemory)
+extern int IsInMemory = 0;      // 控制是從獨立檔案還是封裝檔載入 (IsInMemory)
 extern bool IsDialogBoxMode = 0;     // 控制是否設定 DialogBoxMode (IsDialogBoxMode)
 extern int g_Game_System_Info = 0;
 extern int nHeight = 0;
 extern bool DontDraw = false;
+extern unsigned char NationCode = 0;
 
 void create_vfs_archive() {
     const char* vfs_base_name = "mof"; // 最終會產生 mof.pak 和 mof.paki
@@ -154,13 +155,13 @@ int test_func() {
     std::cout << "========================================" << std::endl;
 
     // 執行所有測試
-    //run_all_tests(); //nfs unit test
-    //print_test_result();
-    //run_cmofpacking_tests();
-    //run_comp_test();
+    run_all_tests(); //nfs unit test
+    print_test_result();
+    run_cmofpacking_tests();
+    run_comp_test();
     //create_vfs_archive();
     ImageSystemTester tester;
-    //tester.RunImageTests();
+    tester.RunImageTests();
     ogg_play_test();
     return 0;
 }

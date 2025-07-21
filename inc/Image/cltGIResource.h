@@ -23,11 +23,11 @@ public:
 protected:
     /// @brief 從獨立檔案載入 GI 資源。
     /// @override
-    virtual ImageResourceListData* LoadResource(unsigned int id, int a3, unsigned char a4) override;
+    virtual void* LoadResource(unsigned int id, int a3, unsigned char a4) override;
 
     /// @brief 從封裝檔 (pack file) 載入 GI 資源。
     /// @override
-    virtual ImageResourceListData* LoadResourceInPack(unsigned int id, int a3, unsigned char a4) override;
+    virtual void* LoadResourceInPack(unsigned int id, int a3, unsigned char a4) override;
 
     /// @brief 釋放一個已載入的 GI 資源。
     /// @override
@@ -37,4 +37,5 @@ private:
     char m_szBasePath[260];          // 資源的基礎搜尋路徑 (位移 +24)
     char m_szNationPath[260];        // 區域化資源的後備路徑 (位移 +284)
     bool m_bNationPathSearched;      // 是否已經搜尋過區域化路徑的旗標 (位移 +544, dword at +136)
+    int  m_bFirstLoad;
 };

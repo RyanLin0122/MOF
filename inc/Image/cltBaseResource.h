@@ -1,95 +1,88 @@
 #pragma once
 
-#include <windows.h> // for DWORD
+#include <windows.h> // 使用 timeGetTime, MessageBoxA 等
+#include <cstdio>    // 使用 NULL
 
-// 前向宣告，讓此頭檔案可以獨立被引用，而不需要知道 ImageResourceListData 的完整定義
-struct ImageResourceListData;
+/**
+ * @struct ResourceInfo
+ * @brief 儲存單一資源的中繼資料。
+ */
+struct ResourceInfo {
+    unsigned int id;         // 資源的唯一ID
+    void* pData;      // 指向實際資源資料的指標
+    int          refCount;   // 引用計數
+    DWORD        timestamp;  // 最後一次被釋放的時間戳
+};
 
-/// @class cltBaseResource
-/// @brief 泛用的資源管理器基底類別。
-///
-/// 這個類別管理一個資源快取池，包含參考計數和基於時間的自動釋放機制。
-/// 它定義了一個框架，而實際的資源載入與釋放由衍生類別 (如 cltGIResource)
-/// 透過實現純虛擬函式來完成。
+/**
+ * @class cltBaseResource
+ * @brief 資源管理的抽象基底類別。
+ *
+ * 定義了一套通用的資源管理框架，包括載入、釋放、引用計數和自動回收。
+ * 具體的資源載入與釋放邏輯由衍生類別透過實作純虛擬函式來完成。
+ */
 class cltBaseResource {
 public:
-    /// @brief 建構函式：初始化所有成員為預設值。
+    /// @brief 建構函式
     cltBaseResource();
 
-    /// @brief 虛擬解構函式：確保在刪除基底類別指標時，衍生類別的解構函式能被正確呼叫。
+    /// @brief 虛擬解構函式
     virtual ~cltBaseResource();
 
     /// @brief 初始化資源管理器。
-    /// @param capacity 快取池的最大容量。
-    /// @param timeout 資源在無人引用後，自動被回收的逾時時間 (毫秒)。0 表示不回收。
+    /// @param capacity 資源陣列的最大容量。
+    /// @param timeout 閒置資源被自動回收的超時時間(毫秒)。0表示不回收。
     void Initialize(unsigned int capacity, unsigned int timeout);
 
-    /// @brief 釋放所有資源並清理快取池。
+    /// @brief 釋放所有已分配的內部記憶體。
     void Free();
 
-    /// @brief 取得一個資源。如果資源不在快取中，會觸發載入流程。
-    /// @param id 資源的唯一ID。
-    /// @param a3 傳遞給載入函式的參數。
-    /// @param a4 傳遞給載入函式的參數。
-    /// @return 指向資源資料的指標 (void*)，失敗則返回 nullptr。
-    void* Get(unsigned int id, int a3 = 0, int a4 = 0);
+    /// @brief 取得資源。如果資源不存在，會嘗試載入。
+    /// @return 成功則返回指向資源資料的指標，否則返回 nullptr。
+    void* Get(unsigned int id, int a3, int a4);
 
-    /// @brief 僅取得已存在於快取中的資源，如果不存在則不會觸發載入。
-    /// @param id 資源的唯一ID。
-    /// @return 指向資源資料的指標 (void*)，若不存在則返回 nullptr。
-    void* Get1(unsigned int id, int a3 = 0, unsigned char a4 = 0);
+    /// @brief 取得資源，但如果不存在則不載入。
+    /// @return 成功則返回指向資源資料的指標，否則返回 nullptr。
+    void* Get1(unsigned int id, int a3, unsigned char a4);
 
-    /// @brief 釋放對一個資源的引用 (將參考計數減 1)。
-    /// @param id 資源的ID。
-    /// @return 成功返回 1，失敗返回 0。
+    /// @brief 釋放對一個資源的引用。
+    /// @return 成功返回1，資源不存在返回0。
     int Release(unsigned int id);
 
-    /// @brief 強制從快取池中刪除一個資源，無論其參考計數為何。
-    /// @param id 資源的ID。
-    /// @return 成功返回 1，失敗返回 0。
-    int Delete(unsigned int id);
-
-    /// @brief 輪詢函式，用於檢查並回收超時且無人引用的資源。
-    void Poll();
-
-    /// @brief 強制刪除所有已載入的資源。
-    void DeleteAllResource();
-
-    /// @brief 取得指定資源目前的參考計數。
-    /// @param id 資源的ID。
-    /// @return 資源的參考計數，若資源不存在則返回 0。
+    /// @brief 取得指定資源的引用計數。
+    /// @return 返回引用計數值，若資源不存在則返回0。
     int GetRefCount(unsigned int id);
 
+    /// @brief 輪詢並清理閒置的資源。
+    virtual void Poll();
+
+    /// @brief 刪除所有已載入的資源。
+    void DeleteAllResource();
+
 protected:
-    /// @struct ResourceEntry
-    /// @brief 在資源快取池中，用於描述單一資源狀態的結構。
-    struct ResourceEntry {
-        unsigned int id;        // 資源的唯一ID
-        void* pData;     // 指向實際資源資料的指標 (例如 ImageResourceListData*)
-        int          refCount;  // 參考計數
-        DWORD        lastAccess;// 最後存取時間戳 (timeGetTime() 的結果)，用於自動回收
-    };
+    /// @brief 嘗試新增一個資源到管理器中（通常由Get內部呼叫）。
+    /// @return 1:錯誤(Buffer滿), 2:已存在, 3:新增成功
+    virtual int Add(unsigned int id, int a3, int a4);
 
-    // --- 成員變數 ---
-    ResourceEntry* m_pResourcePool;   // 指向資源快取池陣列的指標
-    unsigned int   m_nCapacity;       // 快取池的最大容量
-    unsigned int   m_nItemCount;      // 目前快取池中的項目數量
-    unsigned int   m_nTimeout;        // 資源自動回收的逾時時間 (毫秒)
-    bool           m_bUnkFlag;        // 未知的旗標 (在位移+20)
+    /// @brief 從管理器中刪除一個資源。
+    /// @return 成功返回1，失敗返回0。
+    virtual int Delete(unsigned int id);
 
-    /// @brief 內部函式，用於處理資源的新增邏輯，會呼叫虛擬載入函式。
-    /// @return 狀態碼 (0:失敗, 1:已滿, 2:已存在, 3:成功加入)。
-    int Add(unsigned int id, int a3, int a4);
+    // --- 純虛擬函式 (由衍生類別實作) ---
 
-    // --- 純虛擬函式 (Pure Virtual Functions) ---
-    // 以下函式定義了衍生類別必須實現的介面。
+    /// @brief 從檔案載入資源。
+    virtual void* LoadResource(unsigned int id, int a3, unsigned char a4) = 0;
 
-    /// @brief 從獨立檔案載入資源的實作。
-    virtual ImageResourceListData* LoadResource(unsigned int id, int a3, unsigned char a4) = 0;
+    /// @brief 從封裝檔載入資源。
+    virtual void* LoadResourceInPack(unsigned int id, int a3, unsigned char a4) = 0;
 
-    /// @brief 從封裝檔載入資源的實作。
-    virtual ImageResourceListData* LoadResourceInPack(unsigned int id, int a3, unsigned char a4) = 0;
-
-    /// @brief 釋放單一資源所佔用的記憶體和資源。
+    /// @brief 釋放資源資料。
     virtual void FreeResource(void* pResourceData) = 0;
+
+protected:
+    ResourceInfo* m_pResourceArray;           // 資源資訊陣列
+    unsigned int  m_uResourceArrayCapacity;   // 陣列容量
+    unsigned int  m_uResourceCount;           // 目前資源數量
+    DWORD         m_dwTimeout;                // 閒置超時時間(ms)
+    bool          m_bInitialized;             // 是否已初始化
 };
