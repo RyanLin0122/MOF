@@ -170,6 +170,7 @@
     <ClCompile Include="src\nfs_test.cpp" />
     <ClCompile Include="src\Sound\COgg.cpp" />
     <ClCompile Include="src\Test\CompTest.cpp" />
+    <ClCompile Include="src\Test\ImageDrawTest.cpp" />
     <ClCompile Include="src\Test\ImageTest.cpp" />
   </ItemGroup>
   <ItemGroup>
@@ -199,6 +200,7 @@
     <ClInclude Include="inc\nfs_test.h" />
     <ClInclude Include="inc\Sound\COgg.h" />
     <ClInclude Include="inc\Test\CompTest.h" />
+    <ClInclude Include="inc\Test\ImageDrawTest.h" />
     <ClInclude Include="inc\Test\ImageTest.h" />
   </ItemGroup>
   <ItemGroup>

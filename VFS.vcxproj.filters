@@ -96,6 +96,9 @@
     <ClCompile Include="src\Image\TextureListDataMgr.cpp">
       <Filter>來源檔案</Filter>
     </ClCompile>
+    <ClCompile Include="src\Test\ImageDrawTest.cpp">
+      <Filter>來源檔案</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="inc\nfs.h">
@@ -177,6 +180,9 @@
       <Filter>標頭檔</Filter>
     </ClInclude>
     <ClInclude Include="inc\Image\TextureListDataMgr.h">
+      <Filter>標頭檔</Filter>
+    </ClInclude>
+    <ClInclude Include="inc\Test\ImageDrawTest.h">
       <Filter>標頭檔</Filter>
     </ClInclude>
   </ItemGroup>

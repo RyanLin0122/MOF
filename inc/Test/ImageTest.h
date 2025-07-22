@@ -13,12 +13,16 @@
 // --- 前向宣告 ---
 class ImageResource;
 
-// --- 測試輔助宏 ---
-#define RUN_TEST(test_func) \
-    std::cout << "  [RUNNING] " << #test_func << "..." << std::endl; \
-    test_func(); \
-    std::cout << "  [PASSED]  " << #test_func << std::endl;
-
+#define RUN_TEST(test_name) \
+    do { \
+        std::cout << "  Running test: " << #test_name << "..." << std::endl; \
+        try { \
+            test_name(); \
+            std::cout << "  [PASS] " << #test_name << std::endl; \
+        } catch (const std::exception& e) { \
+            std::cout << "  [FAIL] " << #test_name << " with exception: " << e.what() << std::endl; \
+        } \
+    } while(0)
 // --- Mock 物件 ---
 
 /// @class MockD3DDevice
@@ -279,7 +283,18 @@ private:
     void Test_ImageResource_LoadGI_RealFileRelativePath();
     // --- 整合測試 ---
     void Test_Integration_AsyncLoadAndVerify();
+    // GameImage Tests
+    void Test_GameImage_Transformation(); // 將縮放、旋轉、翻轉合併測試
+    void Test_GameImage_ColorAndAlpha();
 
+    // BackgroundImage Tests
+    void Test_BackgroundImage_Scrolling();
+
+    // cltImageManager Tests
+    void Test_cltImageManager_PoolExhaustionAndReuse();
+
+    // ResourceMgr Tests
+    void Test_ResourceMgr_ReferenceCounting();
     // --- 測試輔助函式 ---
     void CreateDummyGIFile(const std::string& filename, bool compressed, bool with_anim);
 

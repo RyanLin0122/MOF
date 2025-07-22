@@ -2,12 +2,11 @@
 
 #include <d3d9.h>
 #include <d3dx9.h>
-#include "GIVertex.h" // GameImage 使用 GIVertex 格式
+#include "Image/GIVertex.h" // GameImage 使用 GIVertex 格式
+#include "Image/ImageResource.h"
+#include "Image/VertexBufferDataMgr.h"
+#include "Image/ImageResourceListDataMgr.h"
 
-// 前向宣告，避免不必要的標頭檔相依
-struct VertexBufferData;
-struct ImageResourceListData;
-struct AnimationFrameData;
 
 /// @class GameImage
 /// @brief 一個複雜的遊戲圖像物件，支持縮放、旋轉、顏色混合等多種特效。
@@ -78,9 +77,6 @@ public:
 
     /// @brief 檢查此 GameImage 物件是否正在被使用。
     bool IsInUse() const { return m_pGIData != nullptr; }
-
-private:
-    // --- 成員變數 (根據 GameImage.c 中的記憶體位移還原) ---
 
     VertexBufferData* m_pVBData;       // 位移+4: 頂點緩衝區的管理節點
     ImageResourceListData* m_pGIData;    // 位移+8: 圖片資源的管理節點

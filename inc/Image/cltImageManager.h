@@ -46,7 +46,6 @@ public:
     /// @brief 更新所有正在使用的 GameImage 物件的頂點資料。
     void ProcessAllGameImage();
 
-private:
     // 物件池的大小
     static const int MAX_IMAGES = 5000;
 

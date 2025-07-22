@@ -7,18 +7,12 @@
 #include "cm_packing_integration_test.h"
 #include "Test/CompTest.h"
 #include "Test/ImageTest.h"
+#include "Test/ImageDrawTest.h"
 #include "Sound/COgg.h"  // 您的 COgg 類別標頭檔
 #include "CMOFPacking.h" // 您的 CMofPacking 類別標頭檔 (單例版本)
 #include "Image/CDeviceResetManager.h"
 
 #include <d3d9.h>
-
-extern int IsInMemory = 1;      // 控制是從獨立檔案還是封裝檔載入 (IsInMemory)
-extern bool IsDialogBoxMode = 0;     // 控制是否設定 DialogBoxMode (IsDialogBoxMode)
-extern int g_Game_System_Info = 0;
-extern int nHeight = 0;
-extern bool DontDraw = false;
-extern unsigned char NationCode = 0;
 
 void create_vfs_archive() {
     const char* vfs_base_name = "mof"; // 最終會產生 mof.pak 和 mof.paki
@@ -132,15 +126,23 @@ void ogg_play_test() {
 //-----------------------------------------------------------------------------
 // 全域變數
 //-----------------------------------------------------------------------------
-LPDIRECT3D9             g_pD3D = NULL;               // 用於建立 D3D 裝置的 D3D 物件
-LPDIRECT3DDEVICE9       g_pd3dDevice = NULL;         // 我們的渲染裝置
-D3DPRESENT_PARAMETERS   g_d3dpp;                     // D3D 呈現參數
-HWND                    g_hWnd = NULL;               // 我們的主視窗控制代碼
-CDeviceResetManager* g_pDeviceResetManager = NULL;  // 裝置重設管理器
+// --- 全域變數定義 ---
+extern int IsInMemory = 1;
+extern bool IsDialogBoxMode = false;
+extern int g_Game_System_Info = 1280;
+extern int nHeight = 720;
+extern bool DontDraw = false;
+extern unsigned char NationCode = 0;
 
-// 為了讓還原的類別可以找到裝置指標，我們定義這個全域變數
-// 在 InitD3D 中會將它指向 g_pd3dDevice
-LPDIRECT3DDEVICE9 Device = NULL;
+// --- D3D 和測試模式所需的全域變數 ---
+LPDIRECT3D9             g_pD3D = NULL;
+LPDIRECT3DDEVICE9       g_pd3dDevice = NULL;
+D3DPRESENT_PARAMETERS   g_d3dpp;
+HWND                    g_hWnd = NULL;
+LPDIRECT3DDEVICE9       Device = NULL;
+
+// <<< NEW CODE: 建立一個指向我們測試類別實體的指標 >>>
+ImageDrawTest* g_pDrawTest = nullptr;
 
 //-----------------------------------------------------------------------------
 // 函式原型 (Forward Declarations)
@@ -198,36 +200,37 @@ void CreateDebugConsole()
 //-----------------------------------------------------------------------------
 int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine, int nCmdShow)
 {
-    //Debug Console
     CreateDebugConsole();
     test_func();
-    // 註冊視窗類別 (使用 ANSI 版本)
+
     WNDCLASSEXA wc = { sizeof(WNDCLASSEX), CS_CLASSDC, WndProc, 0L, 0L,
                       GetModuleHandle(NULL), NULL, NULL, NULL, NULL,
-                      "D3D Tutorial", NULL };
+                      "D3D GameImage Test", NULL };
     RegisterClassExA(&wc);
 
-    // 建立應用程式視窗 (使用 ANSI 版本)
-    g_hWnd = CreateWindowExA(0, "D3D Tutorial", "Direct3D 視窗程式",
+    g_hWnd = CreateWindowExA(0, "D3D GameImage Test", "GameImage 渲染測試模式 (模組化版本)",
         WS_OVERLAPPEDWINDOW, 100, 100, 1280, 720,
         NULL, NULL, wc.hInstance, NULL);
 
-    // 初始化 Direct3D
     if (SUCCEEDED(InitD3D(g_hWnd)))
     {
-        // 建立我們的裝置管理器
-        g_pDeviceResetManager = CDeviceResetManager::GetInstance();
+        // <<< NEW CODE START: 初始化我們的測試類別 >>>
+        g_pDrawTest = new ImageDrawTest();
+        if (FAILED(g_pDrawTest->Initialize()))
+        {
+            MessageBoxA(g_hWnd, "無法初始化或載入測試圖片，請檢查 .pak 檔案和資源 ID 是否正確。", "測試初始化失敗", MB_OK | MB_ICONERROR);
+            Cleanup();
+            return -1;
+        }
+        // <<< NEW CODE END >>>
 
-        // 顯示視窗
         ShowWindow(g_hWnd, nCmdShow);
         UpdateWindow(g_hWnd);
 
-        // 進入訊息迴圈
         MSG msg;
         ZeroMemory(&msg, sizeof(msg));
         while (msg.message != WM_QUIT)
         {
-            // 使用 PeekMessage 來處理訊息，不會阻塞渲染迴圈
             if (PeekMessage(&msg, NULL, 0U, 0U, PM_REMOVE))
             {
                 TranslateMessage(&msg);
@@ -235,15 +238,13 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine
             }
             else
             {
-                // 如果沒有訊息，就進行渲染
                 Render();
             }
         }
     }
 
-    // 清理資源
     Cleanup();
-    UnregisterClassA("D3D Tutorial", wc.hInstance);
+    UnregisterClassA("D3D GameImage Test", wc.hInstance);
     return 0;
 }
 
@@ -307,39 +308,32 @@ HRESULT InitD3D(HWND hWnd)
 //-----------------------------------------------------------------------------
 VOID Render()
 {
-    if (NULL == g_pd3dDevice)
+    if (NULL == Device) return;
+
+    HRESULT hr = Device->TestCooperativeLevel();
+    if (hr != S_OK)
+    {
+        if (hr == D3DERR_DEVICENOTRESET)
+        {
+            CDeviceResetManager::GetInstance()->ResetToDevice(hr);
+        }
         return;
-
-    // 檢查裝置狀態，看是否遺失
-    HRESULT hr = g_pd3dDevice->TestCooperativeLevel();
-    if (hr == D3DERR_DEVICENOTRESET)
-    {
-        // 如果裝置可以被重設，就呼叫我們的管理器來處理
-        if (g_pDeviceResetManager)
-        {
-            g_pDeviceResetManager->ResetToDevice(hr);
-        }
     }
-    else if (hr == S_OK)
+
+    Device->Clear(0, NULL, D3DCLEAR_TARGET | D3DCLEAR_ZBUFFER, D3DCOLOR_XRGB(20, 20, 60), 1.0f, 0);
+
+    if (SUCCEEDED(Device->BeginScene()))
     {
-        // 清除後台緩衝區和深度緩衝區
-        g_pd3dDevice->Clear(0, NULL, D3DCLEAR_TARGET | D3DCLEAR_ZBUFFER, D3DCOLOR_XRGB(0, 40, 100), 1.0f, 0);
-
-        // 開始繪製場景
-        if (SUCCEEDED(g_pd3dDevice->BeginScene()))
+        // <<< NEW CODE: 將渲染呼叫委派給我們的測試類別 >>>
+        if (g_pDrawTest)
         {
-            //
-            // --- 在這裡進行所有的繪圖操作 ---
-            // 例如：g_pDeviceResetManager->GetSpriteObject()->Begin(...)
-            //
-
-            // 結束繪製場景
-            g_pd3dDevice->EndScene();
+            g_pDrawTest->Render();
         }
 
-        // 將後台緩衝區的內容顯示到螢幕上
-        g_pd3dDevice->Present(NULL, NULL, NULL, NULL);
+        Device->EndScene();
     }
+
+    Device->Present(NULL, NULL, NULL, NULL);
 }
 
 
@@ -348,19 +342,23 @@ VOID Render()
 //-----------------------------------------------------------------------------
 VOID Cleanup()
 {
-    if (g_pDeviceResetManager != NULL)
+    printf("--- [main] 清理資源 ---\n");
+
+    // <<< NEW CODE: 刪除測試類別的實體 >>>
+    // 這將觸發 ImageDrawTest 的解構函式，進而呼叫其內部的 Cleanup 函式
+    if (g_pDrawTest)
     {
-        delete g_pDeviceResetManager;
-        g_pDeviceResetManager = NULL;
+        delete g_pDrawTest;
+        g_pDrawTest = nullptr;
     }
-    if (g_pd3dDevice != NULL)
-    {
-        g_pd3dDevice->Release();
-        g_pd3dDevice = NULL;
-    }
-    if (g_pD3D != NULL)
-    {
-        g_pD3D->Release();
-        g_pD3D = NULL;
-    }
+
+    // 釋放 D3D 物件
+    if (g_pd3dDevice != NULL) g_pd3dDevice->Release();
+    if (g_pD3D != NULL) g_pD3D->Release();
+
+    // 關閉 VFS 單例
+    printf("  [main] 正在關閉 VFS...\n");
+    CMofPacking::GetInstance()->PackFileClose();
+    CMofPacking::DestroyInstance();
+    printf("--- [main] 清理完畢 ---\n");
 }

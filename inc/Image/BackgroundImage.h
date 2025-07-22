@@ -2,10 +2,9 @@
 
 #include "Image.h"      // 為了 ImageVertex 結構
 #include "GIVertex.h"   // 為了 GIVertex 結構
-
-// 前向宣告
-struct VertexBufferData;
-struct TextureListData;
+#include "Image/ImageResource.h"
+#include "Image/VertexBufferDataMgr.h"
+#include "Image/ImageResourceListDataMgr.h"
 
 /// @class BackgroundImage
 /// @brief 負責管理和繪製背景，可以是滾動的圖片，也可以是純黑色的矩形。
@@ -54,9 +53,7 @@ public:
     /// @brief 繪製純黑色背景。
     void RenderBlackBG();
 
-private:
-    // --- 成員變數 (根據反編譯程式碼的記憶體位移推斷) ---
-
+//private:
     // 這兩個指標被 CreateImage 和 CreateBlackBG 共用
     VertexBufferData* m_pVBData;      // 位移 0:   頂點緩衝區
     TextureListData* m_pTexData;     // 位移 4:   紋理

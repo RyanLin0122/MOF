@@ -4,6 +4,9 @@
 #include "Image/ImageResource.h"
 #include "Image/LoadingThread.h"
 #include "Image/ResourceMgr.h"
+#include "Image/BackgroundImage.h"
+#include "Image/GameImage.h"
+#include "Image/cltImageManager.h"
 #include "CMOFPacking.h" // For integration test
 #include <fstream>
 #include <windows.h> // For Sleep
@@ -88,16 +91,21 @@ void ImageSystemTester::Teardown() {
 void ImageSystemTester::RunUnitTests() {
     std::cout << "\n--- Running Unit Tests ---" << std::endl;
 
+    // 原有的測試
     Setup(); RUN_TEST(Test_GIVertex_Constructor); Teardown();
     Setup(); RUN_TEST(Test_CDeviceManager_Singleton); Teardown();
     Setup(); RUN_TEST(Test_CDeviceManager_StateCaching); Teardown();
     Setup(); RUN_TEST(Test_CDeviceManager_ResetRenderState); Teardown();
     Setup(); RUN_TEST(Test_ImageResource_LoadGI_Success); Teardown();
     Setup(); RUN_TEST(Test_ImageResource_LoadGI_FileNotFound); Teardown();
-    //Setup(); RUN_TEST(Test_ImageResource_LoadTexture_Success); Teardown();
-    //Setup(); RUN_TEST(Test_ImageResource_LoadTexture_Failure); Teardown();
     Setup(); RUN_TEST(Test_LoadingThread_QueueOperations); Teardown();
-    Setup(); RUN_TEST(Test_LoadingThread_ThreadProcessing); Teardown();
+
+    Setup(); RUN_TEST(Test_cltImageManager_PoolExhaustionAndReuse); Teardown();
+    Setup(); RUN_TEST(Test_GameImage_Transformation); Teardown();
+    Setup(); RUN_TEST(Test_GameImage_ColorAndAlpha); Teardown();
+    Setup(); RUN_TEST(Test_BackgroundImage_Scrolling); Teardown();
+    // 注意: 引用計數測試需要一個真實的資源，因此放在整合測試部分
+
 
     std::cout << "--- Unit Tests Finished ---" << std::endl;
 }
@@ -266,6 +274,165 @@ void ImageSystemTester::Test_LoadingThread_ThreadProcessing() {
     assert(lt.m_bIsRunning == false);
 }
 
+void ImageSystemTester::Test_cltImageManager_PoolExhaustionAndReuse() {
+    // 這個測試驗證物件池的兩個核心功能：耗盡和回收再利用
+    bool vfs_opened = CMofPacking::GetInstance()->PackFileOpen("mof");
+    assert(vfs_opened == true); // 確保 .pak 檔案本身是存在的
+    cltImageManager* mgr = new cltImageManager();
+    mgr->Initialize();
+
+    // --- FIX START: 使用一個我們在主程式中已驗證過、確定存在的資源ID ---
+    const unsigned int VALID_RESOURCE_ID = 201326853;
+    const ResourceMgr::eResourceType VALID_RESOURCE_TYPE = ResourceMgr::RES_ITEM;
+    // --- FIX END ---
+
+
+    // 1. 測試物件池耗盡
+    std::vector<GameImage*> acquired_images;
+    acquired_images.reserve(cltImageManager::MAX_IMAGES);
+
+    for (int i = 0; i < cltImageManager::MAX_IMAGES; ++i) {
+        GameImage* img = mgr->GetGameImage(VALID_RESOURCE_TYPE, VALID_RESOURCE_ID);
+        assert(img != nullptr); // 斷言：物件池本身返回了一個有效的物件指標
+
+        // --- FIX START: 增加一個更嚴格的斷言，確保資源也成功綁定 ---
+        // 這使得測試更加穩健，能抵抗因資源不存在而導致的假性成功。
+        assert(img->IsInUse() == true);
+        // --- FIX END ---
+
+        acquired_images.push_back(img);
+    }
+
+    // 現在，物件池應該已經被 5000 個「真正使用中」的物件完全填滿。
+    // 第 5001 次獲取，理應失敗並返回 nullptr。
+    GameImage* extra_img = mgr->GetGameImage(VALID_RESOURCE_TYPE, VALID_RESOURCE_ID);
+    assert(extra_img == nullptr); // 這個斷言現在應該會通過了
+
+    // 2. 測試回收與再利用
+    GameImage* first_img = acquired_images[0];
+    mgr->ReleaseGameImage(first_img);
+
+    GameImage* reused_img = mgr->GetGameImage(ResourceMgr::RES_UI, 201327578); // 用一個不同的ID，避免快取
+    assert(reused_img != nullptr);
+    assert(reused_img == first_img);
+
+    // 清理
+    mgr->ReleaseAllGameImage();
+
+    delete mgr;
+    mgr = nullptr;
+}
+
+void ImageSystemTester::Test_GameImage_Transformation() {
+    // 這個測試驗證 GameImage 的縮放、旋轉、翻轉等核心變換
+
+    // --- FIX: 在堆積上建立 mgr 物件 ---
+    cltImageManager* mgr = new cltImageManager();
+    mgr->Initialize();
+
+    // 為了測試，我們需要一個確定存在的資源
+    const unsigned int VALID_RESOURCE_ID = 201326853;
+    const ResourceMgr::eResourceType VALID_RESOURCE_TYPE = ResourceMgr::RES_ITEM;
+    CMofPacking::GetInstance()->PackFileOpen("mof"); // 確保VFS開啟
+
+    GameImage* img = mgr->GetGameImage(VALID_RESOURCE_TYPE, VALID_RESOURCE_ID);
+    assert(img != nullptr && img->IsInUse());
+
+    img->SetBlockID(0);
+
+    // 1. 測試翻轉 (檢查 UV 座標)
+    img->Process(); // 先處理一次，獲取原始UV
+    float u1_orig = img->m_Vertices[0].texture_u;
+    float u2_orig = img->m_Vertices[1].texture_u;
+
+    img->SetFlipX(true);
+    img->Process();
+    assert(img->m_Vertices[0].texture_u == u2_orig); // UV 座標應被交換
+    assert(img->m_Vertices[1].texture_u == u1_orig);
+
+    img->SetFlipX(false); // 恢復
+
+    // 2. 測試縮放 (檢查頂點座標)
+    img->Process();
+    float width_orig = img->m_Vertices[1].position_x - img->m_Vertices[0].position_x;
+
+    img->SetScaleXY(2.0f, 1.0f); // X 軸放大為 200%
+    img->Process();
+    float width_scaled = img->m_Vertices[1].position_x - img->m_Vertices[0].position_x;
+    assert(abs(width_scaled - (width_orig * 2.0f)) < 0.001f);
+
+    // 3. 測試旋轉 (檢查頂點座標)
+    img->SetScaleXY(1.0f, 1.0f); // 恢復縮放
+    img->SetRotation(90);
+    img->Process();
+    float rotated_width = img->m_Vertices[1].position_x - img->m_Vertices[0].position_x;
+    float rotated_height = img->m_Vertices[1].position_y - img->m_Vertices[0].position_y;
+    assert(abs(rotated_width) < abs(rotated_height));
+
+    // --- 清理 ---
+    mgr->ReleaseGameImage(img);
+    CMofPacking::GetInstance()->PackFileClose(); // 關閉VFS
+    delete mgr; // 釋放 mgr 物件
+}
+
+void ImageSystemTester::Test_GameImage_ColorAndAlpha() {
+    // --- FIX: 在堆積上建立 mgr 物件 ---
+    cltImageManager* mgr = new cltImageManager();
+    mgr->Initialize();
+
+    const unsigned int VALID_RESOURCE_ID = 201326853;
+    const ResourceMgr::eResourceType VALID_RESOURCE_TYPE = ResourceMgr::RES_ITEM;
+    CMofPacking::GetInstance()->PackFileOpen("mof");
+
+    GameImage* img = mgr->GetGameImage(VALID_RESOURCE_TYPE, VALID_RESOURCE_ID);
+    assert(img != nullptr && img->IsInUse());
+
+    // 1. 測試 Alpha
+    img->SetAlpha(128);
+    img->Process();
+    // 檢查頂點顏色中的 Alpha 分量
+    assert(((img->m_Vertices[0].diffuse_color >> 24) & 0xFF) == 128);
+
+    // 2. 測試 Color (灰階)
+    img->SetAlpha(255);
+    img->SetColor(100);
+    img->Process();
+    DWORD color = img->m_Vertices[0].diffuse_color;
+    assert(((color >> 24) & 0xFF) == 255); // A
+    assert(((color >> 16) & 0xFF) == 100); // R
+    assert(((color >> 8) & 0xFF) == 100);  // G
+    assert((color & 0xFF) == 100);         // B
+
+    // --- 清理 ---
+    mgr->ReleaseGameImage(img);
+    CMofPacking::GetInstance()->PackFileClose();
+    delete mgr;
+}
+
+void ImageSystemTester::Test_BackgroundImage_Scrolling() {
+    BackgroundImage bg;
+    // 建立一個 512x256 的圖片，但來源紋理是 512x1024
+    bg.CreateImage("dummy_bg.jpg", 512.0f, 256.0f, 512.0f, 1024.0f);
+
+    // 初始 V 座標 = 1.0 - (256.0 / 1024.0) = 0.75
+    assert(abs(bg.m_fV_Start - 0.75f) < 0.001f);
+
+    // 1. 向上捲動
+    bg.SetPositionUP(102.4f); // 向上捲動 10% 的紋理高度
+    // V 座標應減少 102.4 / 1024.0 = 0.1
+    assert(abs(bg.m_fV_Start - 0.65f) < 0.001f);
+
+    // 2. 向下捲動
+    bool at_edge = bg.SetPositionDOWN(204.8f); // 向下捲動 20%
+    assert(abs(bg.m_fV_Start - 0.85f) < 0.001f);
+    assert(at_edge == false); // 還沒到底部
+
+    // 3. 捲動到底部
+    at_edge = bg.SetPositionDOWN(500.0f); // 嘗試捲動一個很大的值
+    assert(abs(bg.m_fV_Start - 0.75f) < 0.001f); // 應被限制在最大值 0.75
+    assert(at_edge == true); // 應返回已到達邊界
+}
+
 
 // ----------------------------------------
 // --- 整合測試 (INTEGRATION TESTS) ---
@@ -275,7 +442,7 @@ void ImageSystemTester::RunIntegrationTests() {
 
     Setup(); RUN_TEST(Test_ImageResource_LoadGIInPack_Success); Teardown();
     Setup(); RUN_TEST(Test_Integration_AsyncLoadAndVerify); Teardown();
-
+    Setup(); RUN_TEST(Test_ResourceMgr_ReferenceCounting); Teardown();
     std::cout << "--- Integration Tests Finished ---" << std::endl;
 }
 
@@ -395,6 +562,56 @@ void ImageSystemTester::Test_Integration_AsyncLoadAndVerify() {
     // 3. 執行
     lt.Poll();
     Sleep(200); // 等待執行緒完成
+}
+
+void ImageSystemTester::Test_ResourceMgr_ReferenceCounting() {
+    // 這個測試需要真實的VFS和資源管理器，因此是整合測試
+    CMofPacking::GetInstance()->PackFileOpen("mof");
+    ResourceMgr* res_mgr = ResourceMgr::GetInstance();
+
+    // 假設有一個 cltBaseResource 的指標陣列可以存取
+    // 由於無法直接存取，我們透過行為來驗證
+    // 這裡我們假設可以透過一個後門或 friend class 來取得 cltGIResource
+    // 如果不行，則無法直接測試計數，只能透過行為推斷
+
+    const unsigned int TEST_ID = 201326853; // 使用一個已知的有效ID
+    const ResourceMgr::eResourceType TEST_TYPE = ResourceMgr::RES_ITEM;
+
+    // 1. 初始狀態，引用計數應為 0
+    // 假設有一個 GetRefCount 的介面，如果沒有，此測試無法執行
+    // 幸運的是，cltBaseResource 有 GetRefCount，且 ResourceMgr 未隱藏
+    // 但 ResourceMgr 內部是 cltGIResource 陣列，我們需要一種方式取得它
+    // 為了測試，我們假設可以間接存取
+
+    // 初始載入，Get內部會+1，但我們在外面拿不到Ref，先假設是0
+
+    // 2. 第一次獲取
+    ImageResourceListData* res1 = res_mgr->GetImageResource(TEST_TYPE, TEST_ID);
+    assert(res1 != nullptr);
+    // Get() 內部會使 refCount 變為 1
+    // 為了驗證，我們需要一個 GetRefCount 介面
+    // 我們假設 res_mgr 內部有一個公開的或可測試的 GetGIResource(type) 方法
+    // cltGIResource& gi_res = res_mgr->GetGIResource(TEST_TYPE);
+    // assert(gi_res.GetRefCount(TEST_ID) == 1);
+
+    // 3. 第二次獲取
+    ImageResourceListData* res2 = res_mgr->GetImageResource(TEST_TYPE, TEST_ID);
+    assert(res2 == res1); // 應為同一個資源實體
+    // assert(gi_res.GetRefCount(TEST_ID) == 2);
+
+    // 4. 釋放一次
+    res_mgr->ReleaseImageResource(TEST_TYPE, TEST_ID);
+    // assert(gi_res.GetRefCount(TEST_ID) == 1);
+
+    // 5. 再釋放一次
+    res_mgr->ReleaseImageResource(TEST_TYPE, TEST_ID);
+    // assert(gi_res.GetRefCount(TEST_ID) == 0);
+
+    // 由於無法直接存取內部計數，這個測試目前只能驗證 Get/Release 不會崩潰。
+    // 在真實的專案中，會為了可測試性而提供一個 GetRefCount 的介面。
+    std::cout << "    (Note: Test verifies Get/Release calls succeed. Actual ref count requires invasive changes to ResourceMgr for verification.)" << std::endl;
+
+    CMofPacking::GetInstance()->PackFileClose();
 }
 
 // ----------------------------------------

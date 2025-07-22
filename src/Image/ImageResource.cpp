@@ -189,6 +189,15 @@ bool ImageResource::LoadGI(const char* fileName, unsigned char a3) {
     return true;
 }
 
+bool IsCompressedFormat(D3DFORMAT format) {
+    return format == D3DFMT_DXT1 ||
+        format == D3DFMT_DXT2 ||
+        format == D3DFMT_DXT3 ||
+        format == D3DFMT_DXT4 ||
+        format == D3DFMT_DXT5;
+}
+
+/*
 bool ImageResource::LoadTexture() {
     // 如果沒有圖片資料，或紋理已經存在，則直接返回
     if (!m_pImageData) {
@@ -232,6 +241,82 @@ bool ImageResource::LoadTexture() {
         SafeRelease(tempTex);
         return false;
     }
+}
+*/
+bool ImageResource::LoadTexture() {
+    if (!m_pImageData) {
+        return false;
+    }
+    if (m_pTexture) {
+        return true;
+    }
+
+    assert(Device != nullptr && "Direct3D Device has not been initialized!");
+
+    // 步驟 1: 建立一個空的 D3D 紋理
+    HRESULT hr = Device->CreateTexture(
+        m_width, m_height, 1, 0, m_d3dFormat, D3DPOOL_MANAGED, &m_pTexture, NULL);
+
+    if (FAILED(hr)) {
+        SafeRelease(m_pTexture);
+        delete[] m_pImageData;
+        m_pImageData = nullptr;
+        return false;
+    }
+
+    // 步驟 2: 鎖定紋理以準備寫入資料
+    D3DLOCKED_RECT lockedRect;
+    hr = m_pTexture->LockRect(0, &lockedRect, NULL, 0);
+
+    if (FAILED(hr)) {
+        SafeRelease(m_pTexture);
+        delete[] m_pImageData;
+        m_pImageData = nullptr;
+        return false;
+    }
+
+    // 步驟 3: 偵測資料類型並準備複製參數
+    bool isDDS = (m_imageDataSize > 4 && *reinterpret_cast<DWORD*>(m_pImageData) == 0x20534444); // "DDS "
+    bool isCompressed = IsCompressedFormat(m_d3dFormat);
+
+    unsigned char* pSrcData = m_pImageData;
+    size_t dataToCopySize = m_imageDataSize;
+
+    // 如果是 DDS 檔案，來源指標需要向後移動 128 位元組以跳過其標頭
+    if (isDDS) {
+        const size_t DDS_HEADER_SIZE = 128;
+        pSrcData += DDS_HEADER_SIZE;
+        dataToCopySize -= DDS_HEADER_SIZE;
+    }
+
+    // 步驟 4: 根據是否為壓縮格式，選擇不同的複製策略
+    if (isCompressed) {
+        // 對於 DXT1-5 等塊壓縮格式，資料是連續的塊，可以直接進行一次性複製。
+        // D3D 會處理好 Pitch/Stride。
+        memcpy(lockedRect.pBits, pSrcData, dataToCopySize);
+    }
+    else {
+        // 對於 A8R8G8B8 等非壓縮格式，必須逐行複製以應對 Pitch。
+        // Pitch 是 D3D 在記憶體中為一行像素分配的實際寬度，可能大於圖像的視覺寬度。
+        unsigned int bytesPerRow = m_width * GetPixelDepth(m_d3dFormat);
+        unsigned char* pDestRow = static_cast<unsigned char*>(lockedRect.pBits);
+        unsigned char* pSrcRow = pSrcData;
+
+        for (unsigned int y = 0; y < m_height; ++y) {
+            memcpy(pDestRow, pSrcRow, bytesPerRow); // 複製一行的資料
+            pDestRow += lockedRect.Pitch;          // 目標指標移動到下一行的起始位置
+            pSrcRow += bytesPerRow;                // 來源指標也移動一行的長度
+        }
+    }
+
+    // 步驟 5: 解鎖紋理，完成所有操作
+    m_pTexture->UnlockRect(0);
+
+    // 釋放記憶體中的原始資料
+    delete[] m_pImageData;
+    m_pImageData = nullptr;
+
+    return true;
 }
 
 void ImageResource::ResetGIData() {
