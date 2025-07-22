@@ -16,33 +16,33 @@ ResourceMgr* ResourceMgr::GetInstance() {
 ResourceMgr::ResourceMgr() {
     // 檢查封裝檔是否存在，並設定旗標
     WIN32_FIND_DATAA findFileData;
-    if (FindFirstFileA("MoFData/mofdata.pak", &findFileData) == INVALID_HANDLE_VALUE) {
+    if (FindFirstFileA("mof.pak", &findFileData) == INVALID_HANDLE_VALUE) {
         m_bUsePackFile = false;
     } else {
         m_bUsePackFile = true;
     }
 
     // 初始化各個 cltGIResource 子管理器
-    m_GIResources[RES_CHARACTER].Initialize("MoFData/Character", 10000);
-    m_GIResources[RES_MONSTER].Initialize("MoFData/Monster", 10000);
-    m_GIResources[RES_MAPTILE].Initialize("MoFData/MapTile", 0);
-    m_GIResources[RES_ITEM].Initialize("MoFData/Item", 10000);
-    m_GIResources[RES_NPC].Initialize("MoFData/NPC", 10000);
-    m_GIResources[RES_UI].Initialize("MoFData/UI", 10000);
-    m_GIResources[RES_IMAGE].Initialize("MoFData/Image", 10000);
-    m_GIResources[RES_EFFECT].Initialize("MoFData/Effect", 60000);
-    m_GIResources[RES_OBJECT].Initialize("MoFData/Object", 10000);
-    m_GIResources[RES_MINIGAME].Initialize("MoFData/MiniGame", 10000);
-    m_GIResources[RES_MOVEMAPBG].Initialize("MoFData/MoveMapBg", 10000);
-    m_GIResources[RES_LOBBY].Initialize("MoFData/Lobby", 10000);
-    m_GIResources[RES_SPIRIT].Initialize("MoFData/Spirit", 10000);
-    m_GIResources[RES_MAPBG].Initialize("MoFData/MapBG", 10000);
+    m_GIResources[RES_CHARACTER].Initialize("Character", 10000);
+    m_GIResources[RES_MONSTER].Initialize("Monster", 10000);
+    m_GIResources[RES_MAPTILE].Initialize("MapTile", 0);
+    m_GIResources[RES_ITEM].Initialize("Item", 10000);
+    m_GIResources[RES_NPC].Initialize("NPC", 10000);
+    m_GIResources[RES_UI].Initialize("UI", 10000);
+    m_GIResources[RES_IMAGE].Initialize("Image", 10000);
+    m_GIResources[RES_EFFECT].Initialize("Effect", 60000);
+    m_GIResources[RES_OBJECT].Initialize("Object", 10000);
+    m_GIResources[RES_MINIGAME].Initialize("MiniGame", 10000);
+    m_GIResources[RES_MOVEMAPBG].Initialize("MoveMapBg", 10000);
+    m_GIResources[RES_LOBBY].Initialize("Lobby", 10000);
+    m_GIResources[RES_SPIRIT].Initialize("Spirit", 10000);
+    m_GIResources[RES_MAPBG].Initialize("MapBG", 10000);
     
     // 如果使用封裝檔，則開啟它們
-    if (m_bUsePackFile) {
-        if (!CMofPacking::GetInstance()->PackFileOpen("./mofdata/mofdata"))
+    if (!m_bUsePackFile) {
+        if (!CMofPacking::GetInstance()->PackFileOpen("./mofdata"))
             MessageBoxA(NULL, "PackFileOpenError: mofdata", "Error", 0);
-        if (!CMofPacking::GetInstance()->PackFileOpen("./mofdata/character"))
+        if (!CMofPacking::GetInstance()->PackFileOpen("./character"))
             MessageBoxA(NULL, "PackFileOpenError: character", "Error", 0);
     }
 }

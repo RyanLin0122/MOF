@@ -170,8 +170,8 @@ void test_glob_search() {
     packer->AddFile("archive.zip");
 
     // 搜尋所有 .jpg 檔案
-    //NfsGlobResults* results = packer->SearchString("*.jpg");
-    NfsGlobResults* results = packer->SearchString("image.jpg");
+    NfsGlobResults* results = packer->SearchString("*.jpg");
+    //NfsGlobResults* results = packer->SearchString("image.jpg");
     assert(results != nullptr);
     assert(results->gl_pathc == 2);
 

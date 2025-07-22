@@ -7,7 +7,6 @@
 extern unsigned char NationCode;
 
 
-// 對應反編譯碼: 0x00545310
 cltGIResource::cltGIResource() : cltBaseResource() {
     // 基底類別建構函式已被呼叫
     // 清理衍生類別的成員
@@ -16,12 +15,9 @@ cltGIResource::cltGIResource() : cltBaseResource() {
     m_bFirstLoad = 1; // 初始化旗標
 }
 
-// 對應反編譯碼: ~cltGIResource() 是由編譯器自動產生的，沒有額外邏輯
 cltGIResource::~cltGIResource() {
-    // 解構時會自動呼叫基底類別的解構函式
 }
 
-// 對應反編譯碼: 0x005453A0
 void cltGIResource::Initialize(const char* basePath, unsigned int timeout) {
     // 呼叫基底類別的Initialize來設定容量和超時
     cltBaseResource::Initialize(2000, timeout); // 容量2000是硬編碼在原始碼中的
@@ -30,9 +26,6 @@ void cltGIResource::Initialize(const char* basePath, unsigned int timeout) {
     m_bFirstLoad = 1; // 重設旗標
 }
 
-
-
-// 對應反編譯碼: 0x00545400
 void* cltGIResource::LoadResourceInPack(unsigned int id, int a3, unsigned char a4) {
     char searchString[1024];
     char finalPath[1024];
@@ -45,6 +38,7 @@ void* cltGIResource::LoadResourceInPack(unsigned int id, int a3, unsigned char a
 
     // 1. 在基礎路徑中尋找
     wsprintfA(searchString, "%s/%08X*.*", m_szBasePath, id);
+    
     char* changedStr = pPacker->ChangeString(searchString);
     pResults = pPacker->SearchString(changedStr);
 
@@ -55,9 +49,6 @@ void* cltGIResource::LoadResourceInPack(unsigned int id, int a3, unsigned char a
         pPacker->DeleteSearchData();
         return CDeviceResetManager::GetInstance()->CreateImageResource(finalPath, 0, a4, a3);
     }
-
-    // 釋放搜尋資料結構
-    
 
     // 2. 如果找不到，嘗試在國家/地區特定路徑中尋找
     if (m_bFirstLoad) {
@@ -73,7 +64,7 @@ void* cltGIResource::LoadResourceInPack(unsigned int id, int a3, unsigned char a
     }
 
     if (m_szNationPath[0] != '\0') {
-        wsprintfA(searchString, "MofData/%s/%08X*.*", m_szNationPath, id);
+        wsprintfA(searchString, "%s/%08X*.*", m_szNationPath, id);
         changedStr = pPacker->ChangeString(searchString);
         pResults = pPacker->SearchString(changedStr);
         if (pResults) {
@@ -91,7 +82,6 @@ void* cltGIResource::LoadResourceInPack(unsigned int id, int a3, unsigned char a
     return nullptr;
 }
 
-// 對應反編譯碼: 0x00545760
 void* cltGIResource::LoadResource(unsigned int id, int a3, unsigned char a4) {
     char searchPath[1024];
     char finalPath[1024];
@@ -122,10 +112,10 @@ void* cltGIResource::LoadResource(unsigned int id, int a3, unsigned char a4) {
     }
 
     if (m_szNationPath[0] != '\0') {
-        wsprintfA(searchPath, "MofData/%s/%08X_*.*", m_szNationPath, id);
+        wsprintfA(searchPath, "%s/%08X_*.*", m_szNationPath, id);
         hFind = FindFirstFileA(searchPath, &findFileData);
         if (hFind != INVALID_HANDLE_VALUE) {
-            wsprintfA(finalPath, "MofData/%s/%s", m_szNationPath, findFileData.cFileName);
+            wsprintfA(finalPath, "%s/%s", m_szNationPath, findFileData.cFileName);
             FindClose(hFind);
             return CDeviceResetManager::GetInstance()->CreateImageResource(finalPath, 0, a4, a3);
         }
@@ -138,7 +128,6 @@ void* cltGIResource::LoadResource(unsigned int id, int a3, unsigned char a4) {
     return nullptr;
 }
 
-// 對應反編譯碼: 0x005459D0
 void cltGIResource::FreeResource(void* pResourceData) {
     if (pResourceData) {
         // 將資源指標轉交給Device_Reset_Manager進行刪除

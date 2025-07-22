@@ -234,53 +234,16 @@ int CMofPacking::GetBufferSize() const {
 NfsGlobResults* CMofPacking::SearchString(const char* pattern) {
     if (!m_pNfsHandle) return nullptr;
 
+    // 保留大小寫轉換，確保 API 一致性
     char lowerCasePattern[MAX_PATH];
     strcpy_s(lowerCasePattern, sizeof(lowerCasePattern), pattern);
     _strlwr_s(lowerCasePattern, sizeof(lowerCasePattern));
 
-    // [新增的修正]
-    // 檢查 pattern 是否包含任何萬用字元 ('*', '?', '[')
-    if (strpbrk(lowerCasePattern, "*?[") == nullptr) {
-        // --- 如果沒有萬用字元，執行精確查找 ---
+    // 直接呼叫已修復的 nfs_glob 即可，不再需要 if/else 判斷
+    int result = nfs_glob(m_pNfsHandle, lowerCasePattern, 4, nullptr, &m_globResults);
 
-        // 1. 使用 lookup 函式直接查找
-        int trie_idx = nfs_dt_filename_lookup(m_pNfsHandle->dt_handle, lowerCasePattern);
-
-        // 2. 清理舊的 glob 結果
-        nfs_glob_free(&m_globResults);
-
-        if (trie_idx >= 0) {
-            // 3. 如果找到了，手動建構一個 NfsGlobResults 結果
-            m_globResults.gl_pathc = 1;
-            m_globResults.gl_pathv = (char**)malloc(sizeof(char*));
-            if (!m_globResults.gl_pathv) {
-                m_globResults.gl_pathc = 0;
-                return nullptr; // 記憶體分配失敗
-            }
-            size_t len = strlen(lowerCasePattern) + 1;
-            m_globResults.gl_pathv[0] = (char*)malloc(len);
-            if (!m_globResults.gl_pathv[0]) {
-                free(m_globResults.gl_pathv);
-                m_globResults.gl_pathv = nullptr;
-                m_globResults.gl_pathc = 0;
-                return nullptr;
-            }
-            strcpy_s(m_globResults.gl_pathv[0], len, lowerCasePattern);
-
-            return &m_globResults;
-        }
-        else {
-            // 沒找到，回傳 nullptr
-            return nullptr;
-        }
-    }
-    else {
-        // --- 如果有萬用字元，才執行原本的 glob 流程 ---
-        int result = nfs_glob(m_pNfsHandle, lowerCasePattern, 4, nullptr, &m_globResults);
-
-        if (result == 0 && m_globResults.gl_pathc > 0) {
-            return &m_globResults;
-        }
+    if (result == 0 && m_globResults.gl_pathc > 0) {
+        return &m_globResults;
     }
 
     return nullptr;

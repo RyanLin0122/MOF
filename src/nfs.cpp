@@ -4705,18 +4705,7 @@ int nfs_dt_filename_glob(NfsDtHandle* dt_handle, const char* pattern, int flags,
 	}
 	glob_results_output->internal_callback_error_flag = 0;
 
-
-	char prefix[256]; // 儲存模式的前綴
-	find_prefix(pattern, prefix);
-
 	int start_node_for_iteration = p_get_head(); // 預設從頭開始
-	if (prefix[0] != '\0') {
-		// 如果有前綴，嘗試使用 p_lookup_key_n 縮小搜尋範圍
-		// p_lookup_key_n 需要位元長度
-		int prefix_bit_len = static_cast<int>(strlen(prefix)) * 8;
-		start_node_for_iteration = p_lookup_key_n(dt_handle, prefix, prefix_bit_len);
-		if (start_node_for_iteration < 0) start_node_for_iteration = p_get_head(); // 若查找失敗，仍從頭開始
-	}
 
 	// 原始碼 nfs_dt_filename_glob 傳遞給 p_node_iterate 的 parent_b_index (a3) 是：
 	// v6 = p_lookup_key_n(...); v9 = trienode_get_bindex(dt_handle, v6);
