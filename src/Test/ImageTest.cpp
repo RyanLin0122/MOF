@@ -288,7 +288,7 @@ void ImageSystemTester::Test_ImageResource_LoadGIInPack_Success() {
     // LoadGIInPack 的 packerType 參數在此假設為 0 (CMofPacking)
 	CMofPacking* packer = CMofPacking::GetInstance();
 	packer->PackFileOpen("mof"); // 確保 VFS 已開啟
-    bool success = res.LoadGIInPack("1f000386_sky-middle-01.gi", 0, 0);
+    bool success = res.LoadGIInPack("mapbg/1f000386_sky-middle-01.gi", 0, 0);
 
     assert(success == true);
     assert(res.m_pImageData != nullptr);

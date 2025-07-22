@@ -58,6 +58,8 @@ private:
     // 私有建構函式
     CMofPacking();
 
+    // 私有的遞迴工作函式
+    int DataPacking_Recursive(const char* currentDirectory, const char* rootPath);
     // 指向唯一實例的靜態指標
     static CMofPacking* s_pInstance;
 };

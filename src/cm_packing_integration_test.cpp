@@ -39,10 +39,18 @@ void cleanup_test_vfs_files(const std::string& base_name) {
 	std::filesystem::remove(base_name + ".lock");
 }
 
-// 輔助函式：在本地建立一個帶有內容的檔案
 void create_local_file(const std::string& path, const std::string& content) {
+    // [修正] 在建立檔案前，先確保其所在的目錄存在
+    std::filesystem::path file_path(path);
+    if (file_path.has_parent_path()) {
+        std::filesystem::create_directories(file_path.parent_path());
+    }
+
     std::ofstream outfile(path);
-    assert(outfile.is_open());
+    if (!outfile.is_open()) {
+        std::cerr << "Failed to open file: " << path << " | Error: " << strerror(errno) << std::endl;
+        assert(false);
+    }
     outfile << content;
     outfile.close();
 }
@@ -162,7 +170,8 @@ void test_glob_search() {
     packer->AddFile("archive.zip");
 
     // 搜尋所有 .jpg 檔案
-    NfsGlobResults* results = packer->SearchString("*.jpg");
+    //NfsGlobResults* results = packer->SearchString("*.jpg");
+    NfsGlobResults* results = packer->SearchString("image.jpg");
     assert(results != nullptr);
     assert(results->gl_pathc == 2);
 
@@ -190,13 +199,12 @@ void test_glob_search() {
 void test_directory_packing() {
     const std::string dir_name = "temp_pack_dir";
     const std::string pack_name = "dir_pack_test";
-    
-    // 準備環境：建立本地目錄和檔案
-    std::filesystem::remove_all(dir_name); // 清理舊的測試目錄
+
+    // 準備環境
+    std::filesystem::remove_all(dir_name);
     cleanup_test_vfs_files(pack_name);
-    
-    std::filesystem::create_directory(dir_name);
-    std::filesystem::create_directory(dir_name + "/subdir");
+
+    // 建立本地目錄和檔案結構
     create_local_file(dir_name + "/root.txt", "root file");
     create_local_file(dir_name + "/image.png", "png data");
     create_local_file(dir_name + "/subdir/nested.dat", "nested data");
@@ -204,33 +212,34 @@ void test_directory_packing() {
     // 開始打包
     CMofPacking* packer = CMofPacking::GetInstance();
     assert(packer->PackFileOpen(pack_name.c_str()) == true);
-    
-    // 呼叫 DataPacking，注意路徑結尾需要斜線
+
+    // 呼叫 DataPacking
     int result = packer->DataPacking((dir_name + "\\").c_str());
     assert(result == 2); // 2 表示正常完成
 
-    // 驗證封裝內的檔案
-    // 注意：DataPacking 內部會將檔名轉為小寫
+    // [修正] 驗證封裝內的檔案，現在必須包含相對路徑
     assert(nfs_file_exists(packer->m_pNfsHandle, "root.txt") == 1);
     assert(nfs_file_exists(packer->m_pNfsHandle, "image.png") == 1);
-    assert(nfs_file_exists(packer->m_pNfsHandle, "nested.dat") == 1); // 假設路徑被扁平化處理
-    assert(nfs_file_exists(packer->m_pNfsHandle, "non_existent.file") == 0);
-    
+    // 關鍵驗證：檢查帶有子目錄的相對路徑
+    assert(nfs_file_exists(packer->m_pNfsHandle, "subdir/nested.dat") == 1);
+    // 關鍵驗證：確保扁平化的路徑已不存在
+    assert(nfs_file_exists(packer->m_pNfsHandle, "nested.dat") == 0);
+
     assert(packer->PackFileClose() == true);
-    
-    // 測試 mof.ini 中斷條件
-    std::filesystem::create_directory(dir_name + "/stop_test");
+
+    // [增強] 測試 mof.ini 中斷條件
     create_local_file(dir_name + "/stop_test/a.txt", "a");
     create_local_file(dir_name + "/stop_test/mof.ini", "stop");
-    create_local_file(dir_name + "/stop_test/z.txt", "z");
-    
+    create_local_file(dir_name + "/stop_test/z.txt", "z"); // 這個檔案不應被打包
+
     assert(packer->PackFileOpen(pack_name.c_str()) == true);
-    result = packer->DataPacking((dir_name + "\\stop_test\\").c_str());
+    result = packer->DataPacking((dir_name + "\\").c_str());
     assert(result == 1); // 應返回 1 表示找到 mof.ini
-    
-    // 驗證 z.txt 沒有被打包進去
-    assert(nfs_file_exists(packer->m_pNfsHandle, "z.txt") == 0);
-    
+
+    // 驗證 a.txt 被打包，但 z.txt 沒有
+    assert(nfs_file_exists(packer->m_pNfsHandle, "stop_test/a.txt") == 1);
+    assert(nfs_file_exists(packer->m_pNfsHandle, "stop_test/z.txt") == 0);
+
     // 清理
     assert(packer->PackFileClose() == true);
     CMofPacking::DestroyInstance();

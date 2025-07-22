@@ -2,6 +2,8 @@
 #include <string> 
 #include <new>    // For std::nothrow
 #include <algorithm> // For std::transform if needed for C++ style string conversion
+#include <shlwapi.h> // 引入 Shlwapi.h 以使用路徑處理函式
+#pragma comment(lib, "shlwapi.lib")
 
 // 從CMOFPacking.c中觀察到的全域字串
 const char STR_DOT[] = ".";
@@ -113,82 +115,14 @@ bool CMofPacking::RemoveFile(const char* filePathInPack) {
 int CMofPacking::DataPacking(const char* directoryPath) {
     if (!m_pNfsHandle || !directoryPath) return 0;
 
-    WIN32_FIND_DATAA findFileData;
-    char searchPath[MAX_PATH];
-    char fullPath[MAX_PATH];
+    char rootPath[MAX_PATH];
+    strcpy_s(rootPath, sizeof(rootPath), directoryPath);
 
-    // 構建搜尋路徑，例如 "C:\\Data\\*.*"
-    sprintf_s(searchPath, sizeof(searchPath), "%s*.*", directoryPath);
+    // [新增] 使用 PathAddBackslashA 確保路徑以 '\' 結尾，這對後續計算相對路徑很重要
+    PathAddBackslashA(rootPath);
 
-    HANDLE hFindFile = FindFirstFileA(searchPath, &findFileData);
-    if (hFindFile == INVALID_HANDLE_VALUE) {
-        return 0; // FindFirstFile 失敗，可能目錄為空或無效，返回0表示未找到 mof.ini
-    }
-
-    do {
-        // 跳過 "." 和 ".."
-        if (strcmp(findFileData.cFileName, STR_DOT) == 0 || strcmp(findFileData.cFileName, STR_DOTDOT) == 0) {
-            continue;
-        }
-
-        // 構建當前檔案/目錄的完整路徑
-        sprintf_s(fullPath, sizeof(fullPath), "%s%s", directoryPath, findFileData.cFileName);
-
-        // [修正] 使用清晰的 if-else 結構處理目錄和檔案
-        if (findFileData.dwFileAttributes & FILE_ATTRIBUTE_DIRECTORY) {
-            // 如果是子目錄，加上路徑分隔符後遞迴
-            char subDirectoryPath[MAX_PATH];
-            sprintf_s(subDirectoryPath, sizeof(subDirectoryPath), "%s\\", fullPath);
-            int packing_result = DataPacking(subDirectoryPath);
-
-            // 如果在子目錄中找到 "mof.ini" (返回1)，則立即停止並向上传遞
-            if (packing_result == 1) {
-                FindClose(hFindFile);
-                return 1;
-            }
-        }
-        else {
-            // 如果是檔案
-            // 檢查是否為特殊檔案 "mof.ini"
-            if (_stricmp(findFileData.cFileName, "mof.ini") == 0) {
-                FindClose(hFindFile);
-                return 1; // 找到 "mof.ini"，立即停止並返回 1
-            }
-
-            // 讀取本地檔案並寫入NFS
-            FILE* pFile = nullptr;
-            if (fopen_s(&pFile, fullPath, "rb") == 0 && pFile) {
-                fseek(pFile, 0, SEEK_END);
-                long fileSize = ftell(pFile);
-                fseek(pFile, 0, SEEK_SET);
-
-                if (fileSize > 0) {
-                    char* buffer = new (std::nothrow) char[fileSize];
-                    if (buffer) {
-                        fread(buffer, 1, fileSize, pFile);
-
-                        // 將檔案路徑轉為小寫存入NFS，這是一個好習慣
-                        char lowerCasePathInPack[MAX_PATH];
-                        // 這裡的路徑應該是相對於打包根目錄的路徑
-                        // 為了簡化，我們直接使用檔名，但一個完整的打包工具需要處理相對路徑
-                        strcpy_s(lowerCasePathInPack, sizeof(lowerCasePathInPack), findFileData.cFileName);
-                        _strlwr_s(lowerCasePathInPack, sizeof(lowerCasePathInPack));
-
-                        int fd = nfs_file_create(m_pNfsHandle, lowerCasePathInPack);
-                        if (fd >= 0) {
-                            nfs_file_write(m_pNfsHandle, fd, buffer, fileSize);
-                            nfs_file_close(m_pNfsHandle, fd);
-                        }
-                        delete[] buffer;
-                    }
-                }
-                fclose(pFile);
-            }
-        }
-    } while (FindNextFileA(hFindFile, &findFileData));
-
-    FindClose(hFindFile);
-    return 2; // 正常完成整個目錄的處理
+    // 呼叫私有的遞迴函式開始打包
+    return DataPacking_Recursive(rootPath, rootPath);
 }
 
 
@@ -295,15 +229,58 @@ int CMofPacking::GetBufferSize() const {
 }
 
 // 在NFS中搜尋符合模式的檔案名稱
+// 在 CMOFPacking.cpp 中
+
 NfsGlobResults* CMofPacking::SearchString(const char* pattern) {
     if (!m_pNfsHandle) return nullptr;
 
-    // 旗標 4 對應 NFS_FNM_NOSORT (不排序結果)，這與原始碼行為一致
-    int result = nfs_glob(m_pNfsHandle, pattern, 4, nullptr, &m_globResults);
+    char lowerCasePattern[MAX_PATH];
+    strcpy_s(lowerCasePattern, sizeof(lowerCasePattern), pattern);
+    _strlwr_s(lowerCasePattern, sizeof(lowerCasePattern));
 
-    // 只有成功 (result==0) 且有找到匹配項 (gl_pathc > 0) 時才返回結果
-    if (result == 0 && m_globResults.gl_pathc > 0) {
-        return &m_globResults;
+    // [新增的修正]
+    // 檢查 pattern 是否包含任何萬用字元 ('*', '?', '[')
+    if (strpbrk(lowerCasePattern, "*?[") == nullptr) {
+        // --- 如果沒有萬用字元，執行精確查找 ---
+
+        // 1. 使用 lookup 函式直接查找
+        int trie_idx = nfs_dt_filename_lookup(m_pNfsHandle->dt_handle, lowerCasePattern);
+
+        // 2. 清理舊的 glob 結果
+        nfs_glob_free(&m_globResults);
+
+        if (trie_idx >= 0) {
+            // 3. 如果找到了，手動建構一個 NfsGlobResults 結果
+            m_globResults.gl_pathc = 1;
+            m_globResults.gl_pathv = (char**)malloc(sizeof(char*));
+            if (!m_globResults.gl_pathv) {
+                m_globResults.gl_pathc = 0;
+                return nullptr; // 記憶體分配失敗
+            }
+            size_t len = strlen(lowerCasePattern) + 1;
+            m_globResults.gl_pathv[0] = (char*)malloc(len);
+            if (!m_globResults.gl_pathv[0]) {
+                free(m_globResults.gl_pathv);
+                m_globResults.gl_pathv = nullptr;
+                m_globResults.gl_pathc = 0;
+                return nullptr;
+            }
+            strcpy_s(m_globResults.gl_pathv[0], len, lowerCasePattern);
+
+            return &m_globResults;
+        }
+        else {
+            // 沒找到，回傳 nullptr
+            return nullptr;
+        }
+    }
+    else {
+        // --- 如果有萬用字元，才執行原本的 glob 流程 ---
+        int result = nfs_glob(m_pNfsHandle, lowerCasePattern, 4, nullptr, &m_globResults);
+
+        if (result == 0 && m_globResults.gl_pathc > 0) {
+            return &m_globResults;
+        }
     }
 
     return nullptr;
@@ -324,4 +301,93 @@ char* CMofPacking::ChangeString(char* str) {
         return str;
     }
     return nullptr;
+}
+
+int CMofPacking::DataPacking_Recursive(const char* currentDirectory, const char* rootPath) {
+    // 這裡的邏輯基本上就是舊的 DataPacking 函式，但有關鍵修改
+    if (!m_pNfsHandle || !currentDirectory || !rootPath) return 0;
+
+    WIN32_FIND_DATAA findFileData;
+    char searchPath[MAX_PATH];
+    char fullLocalPath[MAX_PATH]; // [修改] 變數名稱更清晰
+
+    // 構建搜尋路徑
+    sprintf_s(searchPath, sizeof(searchPath), "%s*.*", currentDirectory);
+
+    HANDLE hFindFile = FindFirstFileA(searchPath, &findFileData);
+    if (hFindFile == INVALID_HANDLE_VALUE) {
+        return 2; // 目錄為空或無效，正常結束
+    }
+
+    size_t rootPathLen = strlen(rootPath);
+
+    do {
+        if (strcmp(findFileData.cFileName, STR_DOT) == 0 || strcmp(findFileData.cFileName, STR_DOTDOT) == 0) {
+            continue;
+        }
+
+        // 構建當前檔案/目錄的完整本地路徑
+        sprintf_s(fullLocalPath, sizeof(fullLocalPath), "%s%s", currentDirectory, findFileData.cFileName);
+
+        if (findFileData.dwFileAttributes & FILE_ATTRIBUTE_DIRECTORY) {
+            char subDirectoryPath[MAX_PATH];
+            sprintf_s(subDirectoryPath, sizeof(subDirectoryPath), "%s\\", fullLocalPath);
+            // [修改] 遞迴呼叫新的工作函式
+            int packing_result = DataPacking_Recursive(subDirectoryPath, rootPath);
+            if (packing_result == 1) {
+                FindClose(hFindFile);
+                return 1;
+            }
+        }
+        else {
+            if (_stricmp(findFileData.cFileName, "mof.ini") == 0) {
+                FindClose(hFindFile);
+                return 1;
+            }
+
+            FILE* pFile = nullptr;
+            if (fopen_s(&pFile, fullLocalPath, "rb") == 0 && pFile) {
+                fseek(pFile, 0, SEEK_END);
+                long fileSize = ftell(pFile);
+                fseek(pFile, 0, SEEK_SET);
+
+                if (fileSize > 0) {
+                    char* buffer = new (std::nothrow) char[fileSize];
+                    if (buffer) {
+                        fread(buffer, 1, fileSize, pFile);
+
+                        // --- [核心修改] ---
+                        // 計算相對於 rootPath 的路徑作為 VFS 中的鍵
+                        char relativePathForVFS[MAX_PATH];
+                        // fullLocalPath 的開頭就是 rootPath，我們取 rootPath 之後的部分
+                        strcpy_s(relativePathForVFS, sizeof(relativePathForVFS), fullLocalPath + rootPathLen);
+
+                        // [建議] 將路徑分隔符 '\' 轉換為 '/'，這在 VFS 中是更好的習慣
+                        for (char* p = relativePathForVFS; *p; ++p) {
+                            if (*p == '\\') *p = '/';
+                        }
+
+                        // 轉換為小寫
+                        _strlwr_s(relativePathForVFS, sizeof(relativePathForVFS));
+
+                        // 使用計算出的相對路徑來建立檔案
+                        int fd = nfs_file_create(m_pNfsHandle, relativePathForVFS);
+                        if (fd >= 0) {
+                            printf("Packing: %s\n", relativePathForVFS); // [可選] 輸出打包的檔案路徑
+                            nfs_file_write(m_pNfsHandle, fd, buffer, fileSize);
+                            nfs_file_close(m_pNfsHandle, fd);
+                        }
+                        else {
+                            printf("Failed to create file in VFS: %s\n", relativePathForVFS);
+                        }
+                        delete[] buffer;
+                    }
+                }
+                fclose(pFile);
+            }
+        }
+    } while (FindNextFileA(hFindFile, &findFileData));
+
+    FindClose(hFindFile);
+    return 2; // 正常完成
 }

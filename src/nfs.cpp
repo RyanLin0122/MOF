@@ -5115,6 +5115,11 @@ int nfs_file_close(NfsHandle* handle, int fd) {
 		nfs_errno = 9;
 		return -1;
 	}
+	if (!handle->open_files_array || fd < 0 || fd >= handle->open_files_array_capacity || handle->open_files_array[fd] == nullptr) {
+		nfs_errno = 13; // Invalid file descriptor
+		return -1;
+	}
+
 	NfsOpenFileHandle* fh = handle->open_files_array[fd];
 	fh->in_use = false;
 	if (deallocate_file_descriptor(handle, fd) != 0) {

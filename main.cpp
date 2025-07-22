@@ -13,7 +13,7 @@
 
 #include <d3d9.h>
 
-extern int IsInMemory = 0;      // 控制是從獨立檔案還是封裝檔載入 (IsInMemory)
+extern int IsInMemory = 1;      // 控制是從獨立檔案還是封裝檔載入 (IsInMemory)
 extern bool IsDialogBoxMode = 0;     // 控制是否設定 DialogBoxMode (IsDialogBoxMode)
 extern int g_Game_System_Info = 0;
 extern int nHeight = 0;
