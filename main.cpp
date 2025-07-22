@@ -64,7 +64,7 @@ void ogg_play_test() {
     // 請將此處的 VFS 名稱換成您實際的封裝檔基礎名稱 (不含 .pak/.paki)
     const char* VFS_ARCHIVE_NAME = "mof"; // 例如 "mof", "data" 等
     // 請將此處的路徑換成您封裝檔中實際的 OGG 檔案路徑
-    const char* OGG_PATH_IN_VFS = "bg_beavers.ogg";
+    const char* OGG_PATH_IN_VFS = "music/bg_beavers.ogg";
 
     printf("FMOD OGG 播放整合測試\n");
     printf("------------------------\n");
