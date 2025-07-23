@@ -2,6 +2,17 @@
 #include <windows.h> // 為了 MessageBoxA
 #include <cstdio>    // 為了 wsprintfA
 
+// 初始化靜態成員指標
+cltImageManager* cltImageManager::s_pInstance = nullptr;
+
+// 靜態 GetInstance 方法的實現
+cltImageManager* cltImageManager::GetInstance() {
+    if (s_pInstance == nullptr) {
+        s_pInstance = new (std::nothrow) cltImageManager();
+    }
+    return s_pInstance;
+}
+
 cltImageManager::cltImageManager() {
     // C++ 的陣列成員 m_Images 會在此處自動呼叫 5000 次 GameImage 的預設建構函式。
     // 這對應了 `eh vector constructor iterator` 的行為。

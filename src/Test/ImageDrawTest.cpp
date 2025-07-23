@@ -36,7 +36,7 @@ HRESULT ImageDrawTest::Initialize()
 
     // 2. 初始化圖片物件池管理器
     printf("  [ImageDrawTest] 正在初始化 cltImageManager...\n");
-    m_pImageManager = new cltImageManager();
+    m_pImageManager = cltImageManager::GetInstance();
     m_pImageManager->Initialize(); // 為物件池中的所有圖片預先建立頂點緩衝區
     printf("  [ImageDrawTest] cltImageManager 初始化完畢。\n");
 

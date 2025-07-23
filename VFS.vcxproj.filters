@@ -99,6 +99,15 @@
     <ClCompile Include="src\Test\ImageDrawTest.cpp">
       <Filter>來源檔案</Filter>
     </ClCompile>
+    <ClCompile Include="src\Effect\CEffectBase.cpp">
+      <Filter>來源檔案</Filter>
+    </ClCompile>
+    <ClCompile Include="src\Effect\CCAEffect.cpp">
+      <Filter>來源檔案</Filter>
+    </ClCompile>
+    <ClCompile Include="src\global.cpp">
+      <Filter>來源檔案</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="inc\nfs.h">
@@ -183,6 +192,15 @@
       <Filter>標頭檔</Filter>
     </ClInclude>
     <ClInclude Include="inc\Test\ImageDrawTest.h">
+      <Filter>標頭檔</Filter>
+    </ClInclude>
+    <ClInclude Include="inc\Effect\CEffectBase.h">
+      <Filter>標頭檔</Filter>
+    </ClInclude>
+    <ClInclude Include="inc\Effect\CCAEffect.h">
+      <Filter>標頭檔</Filter>
+    </ClInclude>
+    <ClInclude Include="inc\global.h">
       <Filter>標頭檔</Filter>
     </ClInclude>
   </ItemGroup>

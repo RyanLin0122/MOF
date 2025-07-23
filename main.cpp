@@ -3,6 +3,7 @@
 #include <windows.h>   // 用於 HWND, GetConsoleWindow, Sleep
 #include <conio.h>     // 用於 _kbhit, _getch (檢查鍵盤輸入)
 
+#include "global.h"  // 包含全域變數定義
 #include "nfs_test.h"
 #include "cm_packing_integration_test.h"
 #include "Test/CompTest.h"
@@ -13,6 +14,25 @@
 #include "Image/CDeviceResetManager.h"
 
 #include <d3d9.h>
+
+HWND                    g_hWnd = NULL;
+LPDIRECT3D9             g_pD3D = NULL;
+LPDIRECT3DDEVICE9       g_pd3dDevice = NULL;
+D3DPRESENT_PARAMETERS   g_d3dpp;
+LPDIRECT3DDEVICE9       Device = NULL;
+ImageDrawTest* g_pDrawTest = nullptr;
+
+//-----------------------------------------------------------------------------
+// 函式原型 (Forward Declarations)
+//-----------------------------------------------------------------------------
+LRESULT CALLBACK WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam);
+HRESULT InitD3D(HWND hWnd);
+VOID Render();
+VOID Cleanup();
+
+//-----------------------------------------------------------------------------
+// 函式實作 (Function Implementation)
+//-----------------------------------------------------------------------------
 
 void create_vfs_archive() {
     const char* vfs_base_name = "mof"; // 最終會產生 mof.pak 和 mof.paki
@@ -122,35 +142,6 @@ void ogg_play_test() {
 
     printf("測試程式結束。\n");
 }
-
-//-----------------------------------------------------------------------------
-// 全域變數
-//-----------------------------------------------------------------------------
-// --- 全域變數定義 ---
-extern int IsInMemory = 1;
-extern bool IsDialogBoxMode = false;
-extern int g_Game_System_Info = 1280;
-extern int nHeight = 720;
-extern bool DontDraw = false;
-extern unsigned char NationCode = 0;
-
-// --- D3D 和測試模式所需的全域變數 ---
-LPDIRECT3D9             g_pD3D = NULL;
-LPDIRECT3DDEVICE9       g_pd3dDevice = NULL;
-D3DPRESENT_PARAMETERS   g_d3dpp;
-HWND                    g_hWnd = NULL;
-LPDIRECT3DDEVICE9       Device = NULL;
-
-// <<< NEW CODE: 建立一個指向我們測試類別實體的指標 >>>
-ImageDrawTest* g_pDrawTest = nullptr;
-
-//-----------------------------------------------------------------------------
-// 函式原型 (Forward Declarations)
-//-----------------------------------------------------------------------------
-LRESULT CALLBACK WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam);
-HRESULT InitD3D(HWND hWnd);
-VOID Render();
-VOID Cleanup();
 
 int test_func() {
     std::cout << "Starting Virtual File System Tests..." << std::endl;

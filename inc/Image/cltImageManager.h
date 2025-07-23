@@ -12,9 +12,7 @@
 /// 提供獲取和釋放 GameImage 物件的介面，以達到重複利用、提升效能的目的。
 class cltImageManager {
 public:
-    /// @brief 建構函式。
-    /// 會自動呼叫陣列中所有 GameImage 物件的建構函式。
-    cltImageManager();
+    static cltImageManager* GetInstance();
 
     /// @brief 解構函式。
     /// 會自動呼叫陣列中所有 GameImage 物件的解構函式。
@@ -51,4 +49,7 @@ public:
 
     // GameImage 物件池陣列
     GameImage m_Images[MAX_IMAGES];
+private:
+    cltImageManager();
+    static cltImageManager* s_pInstance;
 };

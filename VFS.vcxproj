@@ -150,6 +150,9 @@
     <ClCompile Include="main.cpp" />
     <ClCompile Include="src\CMOFPacking.cpp" />
     <ClCompile Include="src\cm_packing_integration_test.cpp" />
+    <ClCompile Include="src\Effect\CCAEffect.cpp" />
+    <ClCompile Include="src\Effect\CEffectBase.cpp" />
+    <ClCompile Include="src\global.cpp" />
     <ClCompile Include="src\Image\BackgroundImage.cpp" />
     <ClCompile Include="src\Image\CDeviceManager.cpp" />
     <ClCompile Include="src\Image\CDeviceResetManager.cpp" />
@@ -176,10 +179,13 @@
   <ItemGroup>
     <ClInclude Include="inc\CMOFPacking.h" />
     <ClInclude Include="inc\cm_packing_integration_test.h" />
+    <ClInclude Include="inc\Effect\CCAEffect.h" />
+    <ClInclude Include="inc\Effect\CEffectBase.h" />
     <ClInclude Include="inc\fmod\fmod.h" />
     <ClInclude Include="inc\fmod\fmoddyn.h" />
     <ClInclude Include="inc\fmod\fmod_errors.h" />
     <ClInclude Include="inc\fmod\wincompat.h" />
+    <ClInclude Include="inc\global.h" />
     <ClInclude Include="inc\Image\BackgroundImage.h" />
     <ClInclude Include="inc\Image\CDeviceManager.h" />
     <ClInclude Include="inc\Image\CDeviceResetManager.h" />

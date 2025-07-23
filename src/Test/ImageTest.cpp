@@ -278,7 +278,7 @@ void ImageSystemTester::Test_cltImageManager_PoolExhaustionAndReuse() {
     // 這個測試驗證物件池的兩個核心功能：耗盡和回收再利用
     bool vfs_opened = CMofPacking::GetInstance()->PackFileOpen("mof");
     assert(vfs_opened == true); // 確保 .pak 檔案本身是存在的
-    cltImageManager* mgr = new cltImageManager();
+    cltImageManager* mgr = cltImageManager::GetInstance();
     mgr->Initialize();
 
     // --- FIX START: 使用一個我們在主程式中已驗證過、確定存在的資源ID ---
@@ -327,7 +327,7 @@ void ImageSystemTester::Test_GameImage_Transformation() {
     // 這個測試驗證 GameImage 的縮放、旋轉、翻轉等核心變換
 
     // --- FIX: 在堆積上建立 mgr 物件 ---
-    cltImageManager* mgr = new cltImageManager();
+    cltImageManager* mgr = cltImageManager::GetInstance();
     mgr->Initialize();
 
     // 為了測試，我們需要一個確定存在的資源
@@ -377,7 +377,7 @@ void ImageSystemTester::Test_GameImage_Transformation() {
 
 void ImageSystemTester::Test_GameImage_ColorAndAlpha() {
     // --- FIX: 在堆積上建立 mgr 物件 ---
-    cltImageManager* mgr = new cltImageManager();
+    cltImageManager* mgr = cltImageManager::GetInstance();
     mgr->Initialize();
 
     const unsigned int VALID_RESOURCE_ID = 201326853;

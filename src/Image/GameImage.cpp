@@ -5,13 +5,13 @@
 #include "Image/ImageResourceListDataMgr.h" // 需要 ImageResourceListData 的完整定義
 #include <cstring>               // 為了 memset
 #include <algorithm>             // 為了 std::swap
+#include "global.h"
 
 // --- 外部依賴的全域變數 ---
 extern LPDIRECT3DDEVICE9 Device;
 
 // GameImage.c::Process 中引用的全域變數
-extern int g_Game_System_Info;
-extern int nHeight;
+extern GameSystemInfo g_Game_System_Info;
 extern bool DontDraw;
 
 GameImage::GameImage() {
@@ -153,11 +153,11 @@ bool GameImage::Process() {
     // ----- 根據 GameImage.c::Process 的邏輯進行完整的頂點計算 -----
 
     // 可見性初步判斷 (這部分邏輯與螢幕邊界有關，直接還原)
-    if (!((float)pFrame->width * m_fScaleX + m_fPosX >= 0.0f && (float)(g_Game_System_Info + pFrame->width) >= m_fPosX)) {
+    if (!((float)pFrame->width * m_fScaleX + m_fPosX >= 0.0f && (float)(g_Game_System_Info.ScreenWidth + pFrame->width) >= m_fPosX)) {
         m_bIsProcessed = false;
         return false;
     }
-    if (!((float)pFrame->height * m_fScaleY + m_fPosY >= 0.0f && m_fPosY <= (float)(nHeight + pFrame->height) + m_fPosY)) {
+    if (!((float)pFrame->height * m_fScaleY + m_fPosY >= 0.0f && m_fPosY <= (float)(g_Game_System_Info.ScreenHeight + pFrame->height) + m_fPosY)) {
         m_bIsProcessed = false;
         return false;
     }
