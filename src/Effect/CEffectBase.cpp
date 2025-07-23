@@ -1,12 +1,9 @@
 #include "Effect/CEffectBase.h"
+#include "global.h"
 
 // 假設的全域變數，用於 IsCliping 函式
 // 這些變數應在遊戲主系統中定義和更新
-extern struct GameSystemInfo {
-    int ScreenWidth;
-    int ScreenHeight;
-} g_Game_System_Info;
-
+extern GameSystemInfo g_Game_System_Info;
 
 // 對應反組譯碼: 0x0053A2C0
 CEffectBase::CEffectBase()

@@ -134,6 +134,7 @@ public:
     void SetRotation(float radians) { m_fRotation = radians; }
     void SetFlipX(bool flip) { m_bFlipX = flip; }
     void SetData(EADATALISTINFO* pData) { m_pEffectData = pData; }
+    friend class CEAManager;
 
 private:
     void DrawRenderState();
@@ -163,6 +164,10 @@ protected:
 
     FrameSkip       m_FrameSkip;
 
-    // 函數指標，用於切換繪製狀態
-    void (CCAEffect::* m_pfnDrawRenderState)();
+    // 渲染狀態選擇旗標 (由 CEAManager 設定)
+    unsigned char   m_ucRenderStateSelector; // 位移 +85: 0 使用 DrawRenderState, 1 使用 DrawEtcRenderState
+
+    // 兩個預先儲存的成員函式指標
+    void (CCAEffect::* m_pfnDrawRenderState)();    // 位移 +88 (原始碼中為 +22 * 4)
+    void (CCAEffect::* m_pfnDrawEtcRenderState)(); // 位移 +92 (原始碼中為 +23 * 4)
 };

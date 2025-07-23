@@ -108,6 +108,39 @@
     <ClCompile Include="src\global.cpp">
       <Filter>來源檔案</Filter>
     </ClCompile>
+    <ClCompile Include="src\Effect\CEffectManager.cpp">
+      <Filter>來源檔案</Filter>
+    </ClCompile>
+    <ClCompile Include="src\Effect\cltMoFC_EffectKindInfo.cpp">
+      <Filter>來源檔案</Filter>
+    </ClCompile>
+    <ClCompile Include="src\Effect\CEAManager.cpp">
+      <Filter>來源檔案</Filter>
+    </ClCompile>
+    <ClCompile Include="src\Effect\CEffect_Skill_Type_Once.cpp">
+      <Filter>來源檔案</Filter>
+    </ClCompile>
+    <ClCompile Include="src\Effect\CEffect_Skill_Type_Directed.cpp">
+      <Filter>來源檔案</Filter>
+    </ClCompile>
+    <ClCompile Include="src\Effect\CEffect_Skill_Type_Sustain.cpp">
+      <Filter>來源檔案</Filter>
+    </ClCompile>
+    <ClCompile Include="src\Effect\CEffect_Skill_Type_ShootUnit.cpp">
+      <Filter>來源檔案</Filter>
+    </ClCompile>
+    <ClCompile Include="src\Effect\CEffect_Battle_GunShoot.cpp">
+      <Filter>來源檔案</Filter>
+    </ClCompile>
+    <ClCompile Include="src\Effect\CEffect_Battle_GunSpark.cpp">
+      <Filter>來源檔案</Filter>
+    </ClCompile>
+    <ClCompile Include="src\Effect\CEffect_Field_Walkdust.cpp">
+      <Filter>來源檔案</Filter>
+    </ClCompile>
+    <ClCompile Include="src\Effect\CEffect_Item_Type_Once.cpp">
+      <Filter>來源檔案</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="inc\nfs.h">
@@ -201,6 +234,39 @@
       <Filter>標頭檔</Filter>
     </ClInclude>
     <ClInclude Include="inc\global.h">
+      <Filter>標頭檔</Filter>
+    </ClInclude>
+    <ClInclude Include="inc\Effect\CEffectManager.h">
+      <Filter>標頭檔</Filter>
+    </ClInclude>
+    <ClInclude Include="inc\Effect\cltMoFC_EffectKindInfo.h">
+      <Filter>標頭檔</Filter>
+    </ClInclude>
+    <ClInclude Include="inc\Effect\CEAManager.h">
+      <Filter>標頭檔</Filter>
+    </ClInclude>
+    <ClInclude Include="inc\Effect\CEffect_Skill_Type_Once.h">
+      <Filter>標頭檔</Filter>
+    </ClInclude>
+    <ClInclude Include="inc\Effect\CEffect_Skill_Type_Directed.h">
+      <Filter>標頭檔</Filter>
+    </ClInclude>
+    <ClInclude Include="inc\Effect\CEffect_Skill_Type_Sustain.h">
+      <Filter>標頭檔</Filter>
+    </ClInclude>
+    <ClInclude Include="inc\Effect\CEffect_Skill_Type_ShootUnit.h">
+      <Filter>標頭檔</Filter>
+    </ClInclude>
+    <ClInclude Include="inc\Effect\CEffect_Battle_GunShoot.h">
+      <Filter>標頭檔</Filter>
+    </ClInclude>
+    <ClInclude Include="inc\Effect\CEffect_Battle_GunSpark.h">
+      <Filter>標頭檔</Filter>
+    </ClInclude>
+    <ClInclude Include="inc\Effect\CEffect_Field_Walkdust.h">
+      <Filter>標頭檔</Filter>
+    </ClInclude>
+    <ClInclude Include="inc\Effect\CEffect_Item_Type_Once.h">
       <Filter>標頭檔</Filter>
     </ClInclude>
   </ItemGroup>

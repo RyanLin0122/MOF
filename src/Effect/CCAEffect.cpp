@@ -134,34 +134,55 @@ bool CCAEffect::FrameProcess(float fElapsedTime)
     return false;
 }
 
-// 對應反組譯碼: 0x00528740
+/**
+ * @brief 處理特效當前影格的邏輯，準備所有需要繪製的 GameImage 物件。
+ * * 這是 CCAEffect 的核心函式之一。它根據 m_nCurrentFrame 的值，
+ * 從 .ea 特效數據中讀取對應的圖層和影格資訊，然後：
+ * 1. 從物件池中獲取 GameImage 實例。
+ * 2. 讀取影格定義的頂點數據。
+ * 3. 依次應用旋轉、平移和翻轉等矩陣變換。
+ * 4. 將最終計算好的頂點數據傳遞給 GameImage 物件。
+ * 5. 將準備好的 GameImage 物件加入到當前影格的繪製列表中。
+ * * 此函式的行為精確模擬了 Effectall.c 中 0x00528740 處的原始邏輯。
+ */
 void CCAEffect::Process()
 {
+    // 檢查基本播放狀態，如果未播放、不顯示、沒有數據或影格為負，則直接返回。
     if (!m_bShow || !m_bIsPlaying || !m_pEffectData || m_nCurrentFrame < 0) {
         m_nImageCountInFrame = 0;
         return;
     }
 
+    // 重設當前影格要繪製的圖片數量
     m_nImageCountInFrame = 0;
 
-    // 遍歷所有圖層
+    // 遍歷此特效的所有圖層
     for (int i = 0; i < m_pEffectData->m_nLayerCount; ++i) {
         VERTEXANIMATIONLAYERINFO* pLayer = &m_pEffectData->m_pLayers[i];
 
+        // 確保當前影格在此圖層的時間軸範圍內
         if (m_nCurrentFrame < pLayer->m_nFrameCount) {
             VERTEXANIMATIONFRAMEINFO* pFrame = &pLayer->m_pFrames[m_nCurrentFrame];
 
+            // 如果該影格定義了一個有效的圖片資源 ID
             if (pFrame->m_dwImageID != 0) {
-                // 從物件池獲取 GameImage
+
+                // 從物件池獲取一個 GameImage 實例
+                // 資源群組 7 通常對應 Effect
                 GameImage* pImage = cltImageManager::GetInstance()->GetGameImage(7, pFrame->m_dwImageID, 0, 1);
 
+                // 確保成功獲取且未超過最大圖片數量限制
                 if (pImage && m_nImageCountInFrame < m_nMaxImagesInAnimation) {
+                    // 將此 GameImage 加入到本幀的繪製列表中
                     m_pGameImages[m_nImageCountInFrame++] = pImage;
 
+                    // 創建一個臨時頂點陣列，用於進行變換計算
                     GIVertex transformedVertices[4];
                     memcpy(transformedVertices, pFrame->m_Vertices, sizeof(transformedVertices));
 
-                    // 1. 處理旋轉
+                    // --- 開始頂點變換 ---
+
+                    // 1. 旋轉 (Rotation)
                     if (m_fRotation != 0.0f) {
                         D3DXMATRIX matRotation;
                         D3DXMatrixRotationZ(&matRotation, m_fRotation);
@@ -173,19 +194,30 @@ void CCAEffect::Process()
                         }
                     }
 
-                    // 2. 處理位置和翻轉
+                    // 2. 平移 (Translation) 與 翻轉 (Flip)
+                    // 原始碼中將平移和翻轉合併處理，此處為忠實還原其邏輯
                     for (int v = 0; v < 4; ++v) {
+                        // 首先加上特效自身的座標
                         transformedVertices[v].position_x += m_fPosX;
                         transformedVertices[v].position_y += m_fPosY;
+
+                        // 如果設定了水平翻轉
                         if (m_bFlipX) {
-                            // 原始碼的翻轉邏輯較複雜，此處為簡化示意
-                            // float tempX = transformedVertices[v].position_x;
-                            // transformedVertices[v].position_x = (m_fPosX * 2.0f) - tempX;
+                            // 原始碼邏輯: v16 = m_fPosX + m_fPosX; v18[0] = v16 - v18[0];
+                            // 這等同於以 m_fPosX 所在的垂直線為對稱軸進行鏡像反射
+                            transformedVertices[v].position_x = (2.0f * m_fPosX) - transformedVertices[v].position_x;
                         }
                     }
 
-                    // 3. 傳遞頂點數據
+                    // --- 頂點變換結束 ---
+
+                    // 將計算完成的頂點數據傳遞給 GameImage
                     pImage->VertexAnimationCalculator(transformedVertices);
+
+                    // 設定其他渲染屬性
+                    if (m_dwAlpha != 100) { // 原始碼中有此判斷
+                        pImage->SetAlpha(m_dwAlpha);
+                    }
                 }
             }
         }
@@ -198,10 +230,20 @@ void CCAEffect::Draw()
 {
     if (!m_bShow || !m_bIsPlaying || m_nImageCountInFrame == 0) return;
 
-    if (m_pfnDrawRenderState) {
-        (this->*m_pfnDrawRenderState)();
+    // --- 關鍵變更 ---
+    // 根據 m_ucRenderStateSelector 旗標來決定呼叫哪個函式指標
+    if (m_ucRenderStateSelector == 0) {
+        if (m_pfnDrawRenderState) {
+            (this->*m_pfnDrawRenderState)();
+        }
+    }
+    else {
+        if (m_pfnDrawEtcRenderState) {
+            (this->*m_pfnDrawEtcRenderState)();
+        }
     }
 
+    // 後續繪製 GameImage 的邏輯不變
     for (int i = 0; i < m_nImageCountInFrame; ++i) {
         GameImage* pImage = m_pGameImages[i];
         if (pImage && pImage->IsInUse()) {
