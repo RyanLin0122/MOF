@@ -3,9 +3,6 @@
 #include "Effect/CEffect_OverMind_Screen.h"
 #include "Effect/CEffect_Skill_Type_Once.h" // 雖然在提供的程式碼中未見其用途，但依據建構函式還原
 
-// 前向宣告
-class ClientCharacter;
-
 /**
  * @struct EffectInfo
  * @brief 用於串接 CEffectBase 物件的雙向鏈結串列節點。

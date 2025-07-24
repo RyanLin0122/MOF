@@ -1,10 +1,8 @@
 #pragma once
 #include "Effect/CEffectBase.h"
 #include "Effect/CCAEffect.h" // 為了 FrameSkip
+#include "Character/ClientCharacter.h"
 #include <d3dx9math.h>
-
-// 前向宣告
-class ClientCharacter;
 
 class CEffect_Skill_Type_ShootUnit : public CEffectBase {
 public:

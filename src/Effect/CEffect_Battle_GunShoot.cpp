@@ -9,7 +9,6 @@
 
 // 假設的全域變數
 extern GameSystemInfo g_Game_System_Info;
-extern CEffectManager g_EffectManager;
 
 // 對應反組譯碼: 0x0052E090
 CEffect_Battle_GunShoot::CEffect_Battle_GunShoot()
@@ -49,12 +48,12 @@ void CEffect_Battle_GunShoot::SetEffect(ClientCharacter* pCaster, ClientCharacte
         // 建立煙塵效果
         CEffect_Field_Walkdust* pDust = new CEffect_Field_Walkdust();
         pDust->SetEffect(startPos.x + 55.0f, startPos.y - 45.0f, false, 0, 0, 0, 0);
-        g_EffectManager.BulletAdd(pDust);
+        CEffectManager::GetInstance()->BulletAdd(pDust);
 
         // 建立槍口火花
         CEffect_Battle_GunSpark* pSpark = new CEffect_Battle_GunSpark();
         pSpark->SetEffect(startPos.x, startPos.y, true);
-        g_EffectManager.BulletAdd(pSpark);
+        CEffectManager::GetInstance()->BulletAdd(pSpark);
 
     }
     else { // 朝左
@@ -62,11 +61,11 @@ void CEffect_Battle_GunShoot::SetEffect(ClientCharacter* pCaster, ClientCharacte
 
         CEffect_Field_Walkdust* pDust = new CEffect_Field_Walkdust();
         pDust->SetEffect(startPos.x + 50.0f, startPos.y - 45.0f, false, 0, 0, 0, 0);
-        g_EffectManager.BulletAdd(pDust);
+        CEffectManager::GetInstance()->BulletAdd(pDust);
 
         CEffect_Battle_GunSpark* pSpark = new CEffect_Battle_GunSpark();
         pSpark->SetEffect(startPos.x, startPos.y, false);
-        g_EffectManager.BulletAdd(pSpark);
+        CEffectManager::GetInstance()->BulletAdd(pSpark);
     }
 
     // --- 計算飛行路徑 ---

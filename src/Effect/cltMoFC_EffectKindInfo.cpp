@@ -1,5 +1,5 @@
 #include "Effect/cltMoFC_EffectKindInfo.h"
-#include "cltTextFileManager.h" // 假設的檔案管理器
+//#include "cltTextFileManager.h" // 假設的檔案管理器
 #include <new>
 
 // 假設的全域檔案管理器實例
@@ -10,6 +10,7 @@ cltMoFC_EffectKindInfo::cltMoFC_EffectKindInfo()
 {
     // 將指標陣列的所有成員初始化為空指標
     memset(m_pEffectInfo, 0, sizeof(m_pEffectInfo));
+
 }
 
 // 對應反組譯碼: 0x0053BC70 (隱含了對成員的清理)
@@ -27,7 +28,8 @@ cltMoFC_EffectKindInfo::~cltMoFC_EffectKindInfo()
 // 對應反組譯碼: 0x0053BC80
 int cltMoFC_EffectKindInfo::Initialize(char* szFileName)
 {
-    FILE* pFile = g_clTextFileManager.fopen(szFileName);
+    //FILE* pFile = g_clTextFileManager.fopen(szFileName);
+    FILE* pFile = NULL;
     if (!pFile) {
         return 0; // 檔案開啟失敗
     }
@@ -38,7 +40,7 @@ int cltMoFC_EffectKindInfo::Initialize(char* szFileName)
     // 跳過檔案標頭 (原始碼讀取了4次，前3次可能是註解或標題行)
     for (int i = 0; i < 4; ++i) {
         if (!fgets(buffer, sizeof(buffer), pFile)) {
-            g_clTextFileManager.fclose(pFile);
+            //g_clTextFileManager.fclose(pFile);
             return 1; // 檔案內容不完整，但視為正常結束
         }
     }
@@ -80,7 +82,7 @@ int cltMoFC_EffectKindInfo::Initialize(char* szFileName)
         }
     } while (fgets(buffer, sizeof(buffer), pFile));
 
-    g_clTextFileManager.fclose(pFile);
+    //g_clTextFileManager.fclose(pFile);
     return 1; // 初始化成功
 }
 

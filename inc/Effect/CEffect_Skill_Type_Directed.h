@@ -1,9 +1,7 @@
 #pragma once
 
 #include "Effect/CEffectBase.h"
-
-// «e¦V«Å§i
-class ClientCharacter;
+#include "Character/ClientCharacter.h"
 
 /**
  * @class CEffect_Skill_Type_Directed

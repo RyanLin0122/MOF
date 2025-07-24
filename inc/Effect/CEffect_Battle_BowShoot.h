@@ -2,10 +2,8 @@
 
 #include "Effect/CEffectBase.h"
 #include "Effect/CCAEffect.h" // 為了 FrameSkip 的使用
+#include "Character/ClientCharacter.h"
 #include <d3dx9math.h>
-
-// 前向宣告
-class ClientCharacter;
 
 /**
  * @class CEffect_Battle_BowShoot

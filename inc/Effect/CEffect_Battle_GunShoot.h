@@ -2,10 +2,9 @@
 
 #include "Effect/CEffectBase.h"
 #include "Effect/CCAEffect.h" // 包含 FrameSkip 的定義
+#include "Character/ClientCharacter.h"
 #include <d3dx9math.h>
 
-// 前向宣告
-class ClientCharacter;
 class CEffect_Field_Walkdust;
 class CEffect_Battle_GunSpark;
 

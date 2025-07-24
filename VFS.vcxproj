@@ -148,6 +148,8 @@
   </ItemDefinitionGroup>
   <ItemGroup>
     <ClCompile Include="main.cpp" />
+    <ClCompile Include="src\Character\ClientCharacter.cpp" />
+    <ClCompile Include="src\Character\ClientCharacterManager.cpp" />
     <ClCompile Include="src\CMOFPacking.cpp" />
     <ClCompile Include="src\cm_packing_integration_test.cpp" />
     <ClCompile Include="src\Effect\CCAEffect.cpp" />
@@ -171,11 +173,14 @@
     <ClCompile Include="src\Effect\CEffect_Field_DamageNumber.cpp" />
     <ClCompile Include="src\Effect\CEffect_Field_ExpNumber.cpp" />
     <ClCompile Include="src\Effect\CEffect_Field_HealNumber.cpp" />
+    <ClCompile Include="src\Effect\CEffect_Field_ItemPick.cpp" />
+    <ClCompile Include="src\Effect\CEffect_Field_ItemPick_Sub.cpp" />
     <ClCompile Include="src\Effect\CEffect_Field_Miss.cpp" />
     <ClCompile Include="src\Effect\CEffect_Field_Pet_ItemPick.cpp" />
     <ClCompile Include="src\Effect\CEffect_Field_Pet_ItemPick_Sub.cpp" />
     <ClCompile Include="src\Effect\CEffect_Field_Walkdust.cpp" />
     <ClCompile Include="src\Effect\CEffect_Item_Type_Once.cpp" />
+    <ClCompile Include="src\Effect\CEffect_OverMind_Screen.cpp" />
     <ClCompile Include="src\Effect\CEffect_Skill_Type_Directed.cpp" />
     <ClCompile Include="src\Effect\CEffect_Skill_Type_Once.cpp" />
     <ClCompile Include="src\Effect\CEffect_Skill_Type_ShootUnit.cpp" />
@@ -206,6 +211,8 @@
     <ClCompile Include="src\Test\ImageTest.cpp" />
   </ItemGroup>
   <ItemGroup>
+    <ClInclude Include="inc\Character\ClientCharacter.h" />
+    <ClInclude Include="inc\Character\ClientCharacterManager.h" />
     <ClInclude Include="inc\CMOFPacking.h" />
     <ClInclude Include="inc\cm_packing_integration_test.h" />
     <ClInclude Include="inc\Effect\CCAEffect.h" />
@@ -229,11 +236,14 @@
     <ClInclude Include="inc\Effect\CEffect_Field_DamageNumber.h" />
     <ClInclude Include="inc\Effect\CEffect_Field_ExpNumber.h" />
     <ClInclude Include="inc\Effect\CEffect_Field_HealNumber.h" />
+    <ClInclude Include="inc\Effect\CEffect_Field_ItemPick.h" />
+    <ClInclude Include="inc\Effect\CEffect_Field_ItemPick_Sub.h" />
     <ClInclude Include="inc\Effect\CEffect_Field_Miss.h" />
     <ClInclude Include="inc\Effect\CEffect_Field_Pet_ItemPick.h" />
     <ClInclude Include="inc\Effect\CEffect_Field_Pet_ItemPick_Sub.h" />
     <ClInclude Include="inc\Effect\CEffect_Field_Walkdust.h" />
     <ClInclude Include="inc\Effect\CEffect_Item_Type_Once.h" />
+    <ClInclude Include="inc\Effect\CEffect_OverMind_Screen.h" />
     <ClInclude Include="inc\Effect\CEffect_Skill_Type_Directed.h" />
     <ClInclude Include="inc\Effect\CEffect_Skill_Type_Once.h" />
     <ClInclude Include="inc\Effect\CEffect_Skill_Type_ShootUnit.h" />

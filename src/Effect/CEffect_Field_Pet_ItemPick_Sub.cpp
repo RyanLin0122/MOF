@@ -11,20 +11,51 @@
 // CEffect_Field_Pet_ItemPick_Sub_Complete
 // =======================================================================
 
+// 對應反組譯碼: 0x00536D60
 CEffect_Field_Pet_ItemPick_Sub_Complete::CEffect_Field_Pet_ItemPick_Sub_Complete()
 {
     CEAManager::GetInstance()->GetEAData(106, "MoFData/Effect/Pet-ItemPick.ea", &m_ccaEffect);
     m_ccaEffect.SetFrameTime();
     m_ccaEffect.Play(0, false);
 }
+CEffect_Field_Pet_ItemPick_Sub_Complete::~CEffect_Field_Pet_ItemPick_Sub_Complete() {}
 
-// ... (解構, Process, Draw 函式與其他 "Once" 類型特效類似) ...
+void CEffect_Field_Pet_ItemPick_Sub_Complete::SetEffect(float x, float y, bool bFlip)
+{
+    m_fCurrentPosX = x;
+    m_fCurrentPosY = y;
+    m_bIsFlip = bFlip;
+}
+
+bool CEffect_Field_Pet_ItemPick_Sub_Complete::FrameProcess(float fElapsedTime)
+{
+    return m_ccaEffect.FrameProcess(fElapsedTime);
+}
+
+void CEffect_Field_Pet_ItemPick_Sub_Complete::Process()
+{
+    float screenX = m_fCurrentPosX - static_cast<float>(g_Game_System_Info.ScreenWidth);
+    float screenY = m_fCurrentPosY - static_cast<float>(g_Game_System_Info.ScreenHeight);
+    m_bIsVisible = IsCliping(screenX, 0.0f);
+
+    if (m_bIsVisible) {
+        m_ccaEffect.SetPosition(screenX, screenY);
+        m_ccaEffect.Process();
+    }
+}
+
+void CEffect_Field_Pet_ItemPick_Sub_Complete::Draw()
+{
+    if (m_bIsVisible) {
+        m_ccaEffect.Draw();
+    }
+}
 
 // =======================================================================
 // CEffect_Field_Pet_ItemPick_Sub_Light
 // =======================================================================
 
-// 對應反組譯碼: 0x00536EE0
+// 對應反組譯碼: 0x00536E80
 CEffect_Field_Pet_ItemPick_Sub_Light::CEffect_Field_Pet_ItemPick_Sub_Light()
 {
     m_pLightImage = nullptr;
@@ -32,13 +63,14 @@ CEffect_Field_Pet_ItemPick_Sub_Light::CEffect_Field_Pet_ItemPick_Sub_Light()
     m_FrameSkip.m_fTimePerFrame = 1.0f / 30.0f; // 995783694
 }
 
-// ... (解構函式) ...
+CEffect_Field_Pet_ItemPick_Sub_Light::~CEffect_Field_Pet_ItemPick_Sub_Light() {}
 
 // 對應反組譯碼: 0x00536F20
 void CEffect_Field_Pet_ItemPick_Sub_Light::SetEffect(float x, float y, bool bFlip)
 {
     m_fCurrentPosX = x;
     m_fCurrentPosY = y;
+    m_bIsFlip = bFlip;
 }
 
 // 對應反組譯碼: 0x00536F40
@@ -61,7 +93,7 @@ void CEffect_Field_Pet_ItemPick_Sub_Light::Process()
         float screenY = m_fCurrentPosY - static_cast<float>(g_Game_System_Info.ScreenHeight);
 
         m_pLightImage->SetPosition(screenX, screenY);
-        m_pLightImage->SetColor(static_cast<unsigned int>(m_fAlpha)); // 原始碼將 Alpha 設給 Color
+        m_pLightImage->SetColor(static_cast<unsigned int>(m_fAlpha));
         m_pLightImage->Process();
     }
 }
@@ -70,8 +102,9 @@ void CEffect_Field_Pet_ItemPick_Sub_Light::Process()
 void CEffect_Field_Pet_ItemPick_Sub_Light::Draw()
 {
     if (m_pLightImage && m_pLightImage->IsInUse()) {
-        CDeviceManager::GetInstance()->SetRenderState(D3DRS_SRCBLEND, D3DBLEND_SRCALPHA); // 0xA -> 5
-        CDeviceManager::GetInstance()->SetRenderState(D3DRS_DESTBLEND, D3DBLEND_ONE);     // 2
+        CDeviceManager::GetInstance()->SetRenderState(D3DRS_BLENDOP, D3DBLEND_ZERO);
+        CDeviceManager::GetInstance()->SetRenderState(D3DRS_SRCBLEND, D3DBLEND_INVDESTCOLOR);
+        CDeviceManager::GetInstance()->SetRenderState(D3DRS_DESTBLEND, D3DBLEND_ONE);
         m_pLightImage->Draw();
     }
 }

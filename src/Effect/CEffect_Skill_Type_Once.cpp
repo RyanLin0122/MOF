@@ -67,7 +67,7 @@ void CEffect_Skill_Type_Once::Process()
     // 如果可見，則更新內部 CCAEffect 的狀態並處理其動畫
     if (m_bIsVisible) {
         // 將世界座標轉換為螢幕座標後傳遞給 CCAEffect
-        m_ccaEffect.SetPosition(screenX, m_fCurrentPosY - static_cast<float>(g_Game_System_Info.ScreenY));
+        m_ccaEffect.SetPosition(screenX, m_fCurrentPosY - static_cast<float>(g_Game_System_Info.ScreenHeight));
         m_ccaEffect.Process();
     }
 }
