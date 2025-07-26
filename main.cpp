@@ -2,18 +2,21 @@
 #include <stdio.h>     // 用於 printf
 #include <windows.h>   // 用於 HWND, GetConsoleWindow, Sleep
 #include <conio.h>     // 用於 _kbhit, _getch (檢查鍵盤輸入)
+#include <d3d9.h>
 
 #include "global.h"  // 包含全域變數定義
+#include "Sound/COgg.h"  // 您的 COgg 類別標頭檔
+#include "CMOFPacking.h" // 您的 CMofPacking 類別標頭檔 (單例版本)
+#include "Image/CDeviceResetManager.h"
+
 #include "nfs_test.h"
 #include "cm_packing_integration_test.h"
 #include "Test/CompTest.h"
 #include "Test/ImageTest.h"
 #include "Test/ImageDrawTest.h"
-#include "Sound/COgg.h"  // 您的 COgg 類別標頭檔
-#include "CMOFPacking.h" // 您的 CMofPacking 類別標頭檔 (單例版本)
-#include "Image/CDeviceResetManager.h"
+#include "Test/EffectSystemTest.h"
 
-#include <d3d9.h>
+
 
 HWND                    g_hWnd = NULL;
 LPDIRECT3D9             g_pD3D = NULL;
@@ -21,6 +24,9 @@ LPDIRECT3DDEVICE9       g_pd3dDevice = NULL;
 D3DPRESENT_PARAMETERS   g_d3dpp;
 LPDIRECT3DDEVICE9       Device = NULL;
 ImageDrawTest* g_pDrawTest = nullptr;
+EffectSystemTest* g_pEffectTest = nullptr;
+
+bool IsTestImage = false;
 
 //-----------------------------------------------------------------------------
 // 函式原型 (Forward Declarations)
@@ -148,14 +154,14 @@ int test_func() {
     std::cout << "========================================" << std::endl;
 
     // 執行所有測試
-    run_all_tests(); //nfs unit test
-    print_test_result();
-    run_cmofpacking_tests();
-    run_comp_test();
+    //run_all_tests(); //nfs unit test
+    //print_test_result();
+    //run_cmofpacking_tests();
+    //run_comp_test();
     //create_vfs_archive();
-    ImageSystemTester tester;
-    tester.RunImageTests();
-    ogg_play_test();
+    //ImageSystemTester tester;
+    //tester.RunImageTests();
+    //ogg_play_test();
     return 0;
 }
 
@@ -191,7 +197,9 @@ void CreateDebugConsole()
 //-----------------------------------------------------------------------------
 int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine, int nCmdShow)
 {
+    DWORD lastTime = 0;
     CreateDebugConsole();
+    CMofPacking::GetInstance()->PackFileOpen("mof");
     test_func();
 
     WNDCLASSEXA wc = { sizeof(WNDCLASSEX), CS_CLASSDC, WndProc, 0L, 0L,
@@ -205,15 +213,25 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine
 
     if (SUCCEEDED(InitD3D(g_hWnd)))
     {
-        // <<< NEW CODE START: 初始化我們的測試類別 >>>
-        g_pDrawTest = new ImageDrawTest();
-        if (FAILED(g_pDrawTest->Initialize()))
-        {
-            MessageBoxA(g_hWnd, "無法初始化或載入測試圖片，請檢查 .pak 檔案和資源 ID 是否正確。", "測試初始化失敗", MB_OK | MB_ICONERROR);
-            Cleanup();
-            return -1;
+        if (IsTestImage) {
+            g_pDrawTest = new ImageDrawTest();
+            if (FAILED(g_pDrawTest->Initialize()))
+            {
+                MessageBoxA(g_hWnd, "無法初始化或載入測試圖片，請檢查 .pak 檔案和資源 ID 是否正確。", "測試初始化失敗", MB_OK | MB_ICONERROR);
+                Cleanup();
+                return -1;
+            }
         }
-        // <<< NEW CODE END >>>
+        else {
+            g_pEffectTest = new EffectSystemTest();
+            if (FAILED(g_pEffectTest->Initialize()))
+            {
+                // 2. 修改錯誤訊息
+                MessageBoxA(g_hWnd, "無法初始化特效系統測試，請檢查 .pak 檔案和資源是否存在。", "測試初始化失敗", MB_OK | MB_ICONERROR);
+                Cleanup();
+                return -1;
+            }
+        }
 
         ShowWindow(g_hWnd, nCmdShow);
         UpdateWindow(g_hWnd);
@@ -229,6 +247,18 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine
             }
             else
             {
+                if (!IsTestImage)
+                {
+                    DWORD currentTime = timeGetTime();
+                    float fElapsedTime = (currentTime - lastTime) / 1000.0f;
+                    lastTime = currentTime;
+
+                    // <<< 新增程式碼：呼叫 Update >>>
+                    if (g_pEffectTest)
+                    {
+                        g_pEffectTest->Update(fElapsedTime);
+                    }
+                }
                 Render();
             }
         }
@@ -316,9 +346,17 @@ VOID Render()
     if (SUCCEEDED(Device->BeginScene()))
     {
         // <<< NEW CODE: 將渲染呼叫委派給我們的測試類別 >>>
-        if (g_pDrawTest)
-        {
-            g_pDrawTest->Render();
+        if (IsTestImage) {
+            if (g_pDrawTest)
+            {
+                g_pDrawTest->Render();
+            }
+        }
+        else {
+            if (g_pEffectTest)
+            {
+                g_pEffectTest->Render(); // 呼叫新類別的 Render
+            }
         }
 
         Device->EndScene();
@@ -342,7 +380,11 @@ VOID Cleanup()
         delete g_pDrawTest;
         g_pDrawTest = nullptr;
     }
-
+    if (g_pEffectTest)
+    {
+        delete g_pEffectTest;
+        g_pEffectTest = nullptr;
+    }
     // 釋放 D3D 物件
     if (g_pd3dDevice != NULL) g_pd3dDevice->Release();
     if (g_pD3D != NULL) g_pD3D->Release();

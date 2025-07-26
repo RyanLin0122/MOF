@@ -12,7 +12,7 @@ CEffect_Battle_DownCut::CEffect_Battle_DownCut()
 
     // 向 CEAManager 請求特效數據
     // 特效 ID: 0, 檔案名稱: "MoFData/Effect/efn_downcut.ea"
-    CEAManager::GetInstance()->GetEAData(0, "MoFData/Effect/efn_downcut.ea", &m_ccaEffect);
+    CEAManager::GetInstance()->GetEAData(0, "Effect/efn_downcut.ea", &m_ccaEffect);
 
     // 設定影格時間並播放動畫
     m_ccaEffect.SetFrameTime();
@@ -56,7 +56,9 @@ void CEffect_Battle_DownCut::Process()
     // 進行裁剪判斷
     // 原始碼: v2 = CEffectBase::IsCliping(this, v3, 0.0); *((_DWORD *)this + 8) = v2;
     m_bIsVisible = IsCliping(screenX, 0.0f);
-
+    //float screenX = m_fCurrentPosX;
+    //float screenY = m_fCurrentPosY;
+    m_bIsVisible = IsCliping(screenX, screenY);
     if (m_bIsVisible) {
         // 更新內部 CCAEffect 的狀態
         // 原始碼: *((float *)this + 12) = ...; *((float *)this + 13) = ...;
