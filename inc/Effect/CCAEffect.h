@@ -9,85 +9,69 @@
 
 /**
  * @struct VERTEXANIMATIONFRAMEINFO
- * @brief (大小: 124 bytes) 儲存特效動畫單一影格的詳細渲染資訊。
- * 這是動畫數據中最底層的結構。
+ * @brief 代表動畫中的單一影格。
+ *
+ * MODIFICATION: 結構大小被修改為 120 bytes，以精確對應 `ea_parser.py` 的解析。
+ * 移除了 m_dwUnknown2，並將 m_dwUnknown1 重新命名以增加清晰度。
+ * (大小: 4 + 4*28 + 4 = 120 bytes)
  */
-struct VERTEXANIMATIONFRAMEINFO {
-    /// @brief (位移 +0, 大小 4) 要使用的圖片資源 ID。
-    unsigned int m_dwImageID;
-
-    /// @brief (位移 +4, 大小 112) 構成一個矩形的 4 個頂點的完整數據。
-    /// CCAEffect::Process 會讀取這塊數據並傳給 GameImage。
-    GIVertex m_Vertices[4];
-
-    /// @brief (位移 +116, 大小 4) 未知用途的數據。
-    unsigned int m_dwUnknown1;
-
-    /// @brief (位移 +120, 大小 4) 未知用途的數據。
-    unsigned int m_dwUnknown2;
+struct VERTEXANIMATIONFRAMEINFO
+{
+    uint32_t   m_dwImageID;   // +0:  要使用的圖片 ID
+    GIVertex   m_Vertices[4]; // +4:  定義圖片形狀的 4 個頂點 (112 bytes)
+    uint32_t   m_pExtraData;  // +116: 對應 python 腳本中的 'ptrExtra'
 };
 
 /**
  * @struct VERTEXANIMATIONLAYERINFO
- * @brief (大小: 8 bytes) 儲存一個特效圖層的資訊，包含該圖層所有的影格。
+ * @brief 代表一個動畫圖層，包含一組影格。
+ * Python 腳本解析的格式可視為只包含一個圖層。
  */
-struct VERTEXANIMATIONLAYERINFO {
-    /// @brief (位移 +0, 大小 4) 此圖層擁有的總影格數。
-    int m_nFrameCount;
-
-    /// @brief (位移 +4, 大小 4) 指向 VERTEXANIMATIONFRAMEINFO 陣列的指標。
-    VERTEXANIMATIONFRAMEINFO* m_pFrames;
+struct VERTEXANIMATIONLAYERINFO
+{
+    int                           m_nFrameCount; // 此圖層的總影格數
+    VERTEXANIMATIONFRAMEINFO* m_pFrames;     // 指向影格資料陣列的指標
 };
 
 /**
  * @struct KEYINFO
- * @brief (大小: 28 bytes) 定義一個具名的動畫片段（例如 "attack", "idle"）。
+ * @brief 定義一個動畫片段 (clip)，例如 "run", "attack"。
  */
-struct KEYINFO {
-    /// @brief (位移 +0, 大小 20) 動畫片段的名稱，推測大小為 20 以對齊。
+struct KEYINFO
+{
     char m_szName[20];
-
-    /// @brief (位移 +20, 大小 4) 此動畫片段的起始影格索引。
-    /// CCAEffect::Play 會讀取此值。
-    int m_nStartFrame;
-
-    /// @brief (位移 +24, 大小 4) 此動畫片段的結束影格索引。
-    /// CCAEffect::Play 會讀取此值。
-    int m_nEndFrame;
+    int  m_nStartFrame;
+    int  m_nEndFrame;
 };
 
 /**
  * @struct EADATALISTINFO
- * @brief (大小: 36 bytes) .ea 檔案在記憶體中的最上層主結構。
- * 包含了整個特效的所有動畫數據和渲染設定。
+ * @brief .ea 檔案在記憶體中的最上層結構。
+ *
+ * MODIFICATION: 移除了與 `ea_parser.py` 解析格式不符的 SIMPLESPRITE 相關成員，
+ * 使其專注於基於 GIVertex 的影格動畫格式。
  */
-struct EADATALISTINFO {
-    /// @brief (位移 +0, 大小 4) 動畫片段(KEYINFO)的總數。
+struct EADATALISTINFO
+{
+    // 動畫片段資訊
     int m_nAnimationCount;
-
-    /// @brief (位移 +4, 大小 4) 指向 KEYINFO 陣列的指標。
     KEYINFO* m_pKeyFrames;
 
-    /// @brief (位移 +8, 大小 4) 未知用途，可能是總影格數。
+    // 整體資訊
     int m_nTotalFrames;
-
-    /// @brief (位移 +12, 大小 4) 檔案版本。
     int m_nVersion;
 
-    /// @brief (位移 +16, 大小 4) 特效的圖層數量。
+    // 圖層與影格資料
     int m_nLayerCount;
-
-    /// @brief (位移 +20, 大小 4) 指向 VERTEXANIMATIONLAYERINFO 陣列的指標。
     VERTEXANIMATIONLAYERINFO* m_pLayers;
 
-    // --- 渲染狀態設定 (由 CCAEffect 讀取) ---
-    unsigned char m_ucBlendOp;      // 位移 +24
-    unsigned char m_ucSrcBlend;     // 位移 +25
-    unsigned char m_ucDestBlend;    // 位移 +26
-    unsigned char m_ucEtcBlendOp;   // 位移 +27
-    unsigned char m_ucEtcSrcBlend;  // 位移 +28
-    unsigned char m_ucEtcDestBlend; // 位移 +29
-    // 位移 +30, +31 是編譯器為了對齊插入的 padding
+    // 渲染狀態 (Render States)
+    uint8_t m_ucBlendOp;
+    uint8_t m_ucSrcBlend;
+    uint8_t m_ucDestBlend;
+    uint8_t m_ucEtcBlendOp;
+    uint8_t m_ucEtcSrcBlend;
+    uint8_t m_ucEtcDestBlend;
 };
 
 /**

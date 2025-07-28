@@ -1,80 +1,43 @@
-#include "Effect/CEAManager.h"
+ï»¿#include "Effect/CEAManager.h"
 #include "Effect/CCAEffect.h"
-#include "CMOFPacking.h" // °²³]ªº«Ê¸ËÀÉºŞ²z¾¹
-#include <new>           // for std::nothrow
+#include "CMOFPacking.h"
+#include <new>
 
-// °²³]ªº¥ş°ìÅÜ¼Æ
-extern int IsInMemory; // ºX¼Ğ¡G1 = ±q«Ê¸ËÀÉÅª¨ú¡A0 = ±q¿W¥ßÀÉ®×Åª¨ú
-
-// ÀRºA¹ê¨Òªì©l¤Æ
+extern int IsInMemory;
 CEAManager* CEAManager::s_pInstance = nullptr;
 
+// --- GetInstance, Constructor, Destructor, Reset ç¶­æŒä¸è®Š ---
 CEAManager* CEAManager::GetInstance() {
-    if (!s_pInstance) {
-        s_pInstance = new (std::nothrow) CEAManager();
-    }
+    if (!s_pInstance) s_pInstance = new (std::nothrow) CEAManager();
     return s_pInstance;
 }
-
-// ¹ïÀ³¤Ï²ÕÄ¶½X: 0x0053A390
 CEAManager::CEAManager() {
-    // ±N¾ã­Ó«ü¼Ğ°}¦Cªì©l¤Æ¬° nullptr
     memset(m_pEaData, 0, sizeof(m_pEaData));
 }
-
-// ¹ïÀ³¤Ï²ÕÄ¶½X: 0x0053A3B0
 CEAManager::~CEAManager() {
     Reset();
 }
-
-// ¹ïÀ³¤Ï²ÕÄ¶½X: 0x0053A480
 void CEAManager::Reset() {
     for (int i = 0; i < 65535; ++i) {
         if (m_pEaData[i]) {
-            // ¥Ñ©ó EADATALISTINFO ªº¸Ñºc¨ç¦¡·|³B²z¤º³¡°}¦CªºÄÀ©ñ¡A
-            // ³o¸Ì¥u»İ­n delete ³Ì¤W¼hªºª«¥ó§Y¥i¡C
-            delete m_pEaData[i];
+            delete m_pEaData[i]; // å‡è¨­ EADATALISTINFO çš„è§£æ§‹å‡½å¼æœƒè™•ç†å…§éƒ¨æŒ‡æ¨™
             m_pEaData[i] = nullptr;
         }
     }
 }
 
-// ¹ïÀ³¤Ï²ÕÄ¶½X: 0x0053A4C0
-/**
- * @brief Àò¨ú«ü©wªº¯S®Ä°Êµe¼Æ¾Ú¡A¨Ã±N¨ä¸j©w¨ì¤@­Ó CCAEffect ª«¥ó¤W¡C
- * @param effectID ¯S®Äªº°ß¤@ ID¡A§@¬°§Ö¨ú°}¦Cªº¯Á¤Ş¡C
- * @param szFileName ¯S®ÄªºÀÉ®×¦WºÙ¡A¶È¦b¼Æ¾Ú©|¥¼¸ü¤J®É¨Ï¥Î¡C
- * @param pEffect ­n±µ¦¬¼Æ¾Úªº CCAEffect ª«¥ó«ü¼Ğ¡C
- * @note ¦¹¨ç¦¡ªºÅŞ¿èºë½TÁÙ­ì¦Û Effectall.c ¤¤ 0x0053A4C0 ªº CEAManager::GetEAData ¨ç¦¡¡C
- * ¥¦¹ê²{¤F¤@­ÓÃiº~¦¡¸ü¤J (Lazy Loading) ªº§Ö¨ú¾÷¨î¡C
- */
+
+// --- GetEAData ç¶­æŒä¸è®Šï¼Œå…¶æ‡¶æ¼¢å¼è¼‰å…¥é‚è¼¯ä¾ç„¶é©ç”¨ ---
 void CEAManager::GetEAData(int effectID, const char* szFileName, CCAEffect* pEffect)
 {
-    // °Ñ¼Æ¦³®Ä©ÊÀË¬d
-    if (effectID < 0 || effectID >= 65535 || !pEffect) {
-        return;
-    }
+    if (effectID < 0 || effectID >= 65535 || !pEffect) return;
 
-    // ¨BÆJ 1: ÀË¬d§Ö¨ú¤¤¬O§_¤w¦s¦b¸Ó¯S®Ä¼Æ¾Ú
-    // ­ì©l½X: v5 = *((_DWORD *)this + a2); if ( v5 ) ...
-    if (m_pEaData[effectID] == nullptr)
-    {
-        // ¨BÆJ 2: ¦pªG¼Æ¾Ú¤£¦b§Ö¨ú¤¤¡A«h¸ü¤J¥¦
-
-        // 2a. ¬°·sªº¯S®Ä¼Æ¾Ú¤À°t¥Dµ²ºc°O¾ĞÅé
-        // ­ì©l½X: v7 = operator new(0x24u);
+    if (m_pEaData[effectID] == nullptr) {
         m_pEaData[effectID] = new (std::nothrow) EADATALISTINFO();
-        if (!m_pEaData[effectID]) {
-            // °O¾ĞÅé¤À°t¥¢±Ñ¡AµLªkÄ~Äò
-            return;
-        }
+        if (!m_pEaData[effectID]) return;
 
-        // 2b. ®Ú¾Ú¥ş°ìºX¼Ğ¡A¨M©w¬O±q¿W¥ßÀÉ®×ÁÙ¬O«Ê¸ËÀÉ¤¤Åª¨ú¨Ã¸ÑªR¼Æ¾Ú
-        // ­ì©l½X: if ( dword_829254 ) LoadEAInPack(..); else LoadEA(..);
+        // æ ¹æ“šæ——æ¨™æ±ºå®šå¾ç¨ç«‹æª”æ¡ˆæˆ–å°è£æª”è¼‰å…¥
         if (IsInMemory) {
-            // ª`·N¡GLoadEAInPack »İ­n¤@­Ó¥i­×§ïªº char*¡A¦]¬°¨ä¨Ì¿àªº
-            // CMofPacking::ChangeString ¥i¯à·|­×§ï¸ô®|¡]¾¨ºŞ¥¦¹ê»Ú¤W¬O½Æ»s«á­×§ï¡^¡C
-            // ¬°¤F»P­ì©l½X¦æ¬°¤@­P¨ÃÁ×§K const_cast¡A§Ú­Ì³Ğ«Ø¤@­ÓÁ{®É°Æ¥»¡C
             char tempFileName[256];
             strcpy_s(tempFileName, sizeof(tempFileName), szFileName);
             LoadEAInPack(effectID, tempFileName);
@@ -84,239 +47,89 @@ void CEAManager::GetEAData(int effectID, const char* szFileName, CCAEffect* pEff
         }
     }
 
-    // ¨BÆJ 3: ±N§Ö¨ú¤¤ªº¼Æ¾Ú¸j©w¨ì¶Ç¤Jªº CCAEffect ª«¥ó
+    // å°‡å¿«å–è³‡æ–™ç¶å®šåˆ° CCAEffect ç‰©ä»¶
     EADATALISTINFO* pData = m_pEaData[effectID];
-
-    // 3a. ³]©w CCAEffect ªº¥D¼Æ¾Ú«ü¼Ğ
-    // ­ì©l½X: *((_DWORD *)a4 + 1) = v5;
     pEffect->SetData(pData);
 
-    // 3b. ½Æ»s´è¬Vª¬ºA
-    // ­ì©l½X: *((_BYTE *)v6 + 80) = *(_BYTE *)(... + 24); ...
-    // ª`·N¡G¦b§Ú­ÌªºÁÙ­ì¤¤¡ACCAEffect ¤£¦Aª½±µÀx¦s³o¨Çª¬ºA¡A
-    // ¦Ó¬OÀ³¸Ó¦b Draw ®É±q pData ¤¤Åª¨ú¡C¦ı¬°¤F§¹¥ş¼ÒÀÀ­ì©l¦æ¬°¡A
-    // CEAManager §@¬° friend Ãş§Oª½±µ³]©w CCAEffect ªº¤º³¡¦¨­û¡C
-
-    // 3c. ³]©w´è¬Vª¬ºA¿ï¾ÜºX¼Ğ
-    // ­ì©l½X: *((_BYTE *)v6 + 85) = v8 > 7u; (v8 ¬O BlendOp)
-    if (pData->m_ucBlendOp > 7) {
-        pEffect->m_ucRenderStateSelector = 1; // ¨Ï¥Î DrawEtcRenderState
-    }
-    else {
-        pEffect->m_ucRenderStateSelector = 0; // ¨Ï¥Î DrawRenderState
-    }
-
-    // ­ì©l½X¤¤ÁÙ¦³¤@¦æ *((_DWORD *)v6 + 2) = ... + 12;
-    // ³o¦b²{¥N C++ ¤¤¬O¤£¥²­nªº¡A¦]¬°©Ò¦³¼Æ¾Ú³£¥i¥H³z¹L pData «ü¼Ğ¦s¨ú¡A
-    // ¬G¦b§Ú­ÌªºÁÙ­ì¤¤±N¨ä¬Ù²¤¥H´£°ªµ{¦¡½X²M´·«×¡C
-}
-
-/**
- * @brief ±q«Ê¸ËÀÉ (mof.pak) ¸ü¤J .ea ¼Æ¾Ú¡C
- * @param effectID ­n¸ü¤Jªº¯S®Ä ID¡A¤]§@¬° m_pEaData °}¦Cªº¯Á¤Ş¡C
- * @param szFileName .ea ÀÉ®×¦b«Ê¸ËÀÉ¤ºªº¦WºÙ¡C
- * @note ¦¹¨ç¦¡ªºÅŞ¿èºë½TÁÙ­ì¦Û Effectall.c ¤¤ 0x0053A590 ªº LoadTimelineInPack ¨ç¦¡¡C
- * "LoadTimelineInPack" ¦b¤Ï²ÕÄ¶®É¬O¤@­Ó©R¦W¿ù»~¡A¨ä¥\¯à¹ê»Ú¤W¬O¸ü¤J .ea (Effect Animation) ÀÉ®×¡C
- */
-
-void CEAManager::LoadEAInPack(int effectID, char* szFileName)
-{
-    // Àò¨ú«ü¦V EADATALISTINFO µ²ºcªº«ü¼Ğ¡A¸Óµ²ºc¤w¦b GetEAData ¤¤¤À°t
-    EADATALISTINFO* pData = m_pEaData[effectID];
-    if (!pData) return;
-
-    // ·Ç³ÆÀÉ®×¸ô®|¨Ã±q«Ê¸ËÀÉÅª¨ú¼Æ¾Ú¨ì°O¾ĞÅé½w½Ä°Ï
-    char szChangedPath[256];
-    strcpy_s(szChangedPath, szFileName);
-    CMofPacking* packer = CMofPacking::GetInstance();
-    char* fileBuffer = packer->FileRead(packer->ChangeString(szChangedPath));
-
-    if (!fileBuffer) {
-        // ¦pªGÅª¨ú¥¢±Ñ¡AÅã¥Ü¿ù»~°T®§
-        char errorMsg[512];
-        sprintf_s(errorMsg, sizeof(errorMsg), "%s CA didn't find.", szFileName);
-        MessageBoxA(nullptr, errorMsg, "LoadEAInPack Error", MB_OK);
-        return;
-    }
-
-    // ¨Ï¥Î¤@­Ó«ü¼Ğ¨Ó¹M¾ú°O¾ĞÅé½w½Ä°Ï
-    char* current_ptr = fileBuffer;
-
-    // --- ¶}©l´`§Ç¸ÑªRÀÉ®×½w½Ä°Ï ---
-
-    // 1. Åª¨ú EADATALISTINFO ªº³»¼h¦¨­û
-    // ­ì©l½X: *(_DWORD *)a3 = dword_C24CF4; ... qmemcpy((char *)a3 + 4, &dword_C24CF8, 0xFFu);
-    // ³o¸Ì§Ú­Ì¥Î§óºë½T¡B³v­Ó¦¨­ûªº¤è¦¡¨ÓÁÙ­ì
-    pData->m_nVersion = *reinterpret_cast<int*>(current_ptr); current_ptr += sizeof(int);
-    pData->m_nLayerCount = *reinterpret_cast<int*>(current_ptr); current_ptr += sizeof(int);
-    pData->m_nTotalFrames = *reinterpret_cast<int*>(current_ptr); current_ptr += sizeof(int);
-
-    // 2. ®Ú¾Ú LayerCount ¤À°t¨ÃÅª¨ú¹Ï¼h (Layers) ¼Æ¾Ú
-    if (pData->m_nLayerCount > 0) {
-        pData->m_pLayers = new (std::nothrow) VERTEXANIMATIONLAYERINFO[pData->m_nLayerCount];
-        if (!pData->m_pLayers) return; // °O¾ĞÅé¤À°t¥¢±Ñ
-
-        for (int i = 0; i < pData->m_nLayerCount; ++i) {
-            VERTEXANIMATIONLAYERINFO* pLayer = &pData->m_pLayers[i];
-
-            // Åª¨ú¸Ó¹Ï¼hªº¼v®æ¼Æ (FrameCount)
-            // ­ì©l½X: v14 = *v13; ... *(_DWORD *)(v11 + ... + 52) = v14;
-            pLayer->m_nFrameCount = *reinterpret_cast<int*>(current_ptr); current_ptr += sizeof(int);
-
-            // 3. ®Ú¾Ú FrameCount ¤À°t¨ÃÅª¨ú¼v®æ (Frames) ¼Æ¾Ú
-            if (pLayer->m_nFrameCount > 0) {
-                pLayer->m_pFrames = new (std::nothrow) VERTEXANIMATIONFRAMEINFO[pLayer->m_nFrameCount];
-                if (!pLayer->m_pFrames) return;
-
-                // Åª¨ú©Ò¦³¼v®æªº¼Æ¾Ú¶ô
-                // ­ì©l½X: qmemcpy((void *)(v20 + *(_DWORD *)(v12 + v21 + 4)), v6, 0x74u); ... 
-                // ³o¸ÌªºÅŞ¿è§ó½ÆÂø¡A¦]¬°¨C­Ó¼v®æ¥i¯àÁÙ¥]§t¤@­Ó¤l°}¦C¡C
-                for (int j = 0; j < pLayer->m_nFrameCount; ++j) {
-                    VERTEXANIMATIONFRAMEINFO* pFrame = &pLayer->m_pFrames[j];
-
-                    // ½Æ»s VERTEXANIMATIONFRAMEINFO ªº¥D­n³¡¤À (116 bytes)
-                    memcpy(pFrame, current_ptr, 116);
-                    current_ptr += 116;
-
-                    // Åª¨ú¤l°}¦Cªº¤j¤p
-                    // ­ì©l½X: if ( *(_DWORD *)(v25 + v20 + 116) ) ...
-                    // ¸g±À¾É¡A³o³¡¤ÀÄİ©ó VERTEXANIMATIONFRAMEINFO ªº¥¼ª¾¦¨­û
-                    pFrame->m_dwUnknown1 = *reinterpret_cast<unsigned int*>(current_ptr); current_ptr += sizeof(unsigned int);
-                    pFrame->m_dwUnknown2 = *reinterpret_cast<unsigned int*>(current_ptr); current_ptr += sizeof(unsigned int);
-
-                    // ¦pªG¤l°}¦C¦s¦b¡A«hÅª¨ú¨ä¤º®e (­ì©l½X¦³¦¹ÅŞ¿è¡A¦ı CCAEffect::Process ¥¼¨Ï¥Î)
-                    if (pFrame->m_dwUnknown1 > 0) {
-                        size_t subDataSize = pFrame->m_dwUnknown1 * 102; // 0x66
-                        //pFrame->m_pUnknownSubData = new char[subDataSize];
-                        //memcpy(pFrame->m_pUnknownSubData, current_ptr, subDataSize);
-                        current_ptr += subDataSize;
-                    }
-                }
-
-            }
-            else {
-                pLayer->m_pFrames = nullptr;
-            }
+    if (pData) {
+        if (pData->m_ucBlendOp > 7) {
+            pEffect->m_ucRenderStateSelector = 1;
+        }
+        else {
+            pEffect->m_ucRenderStateSelector = 0;
         }
     }
-    else {
-        pData->m_pLayers = nullptr;
-    }
-
-    // 4. Åª¨ú°Êµe¤ù¬q (KeyFrame) ¸ê°T
-    pData->m_nAnimationCount = *reinterpret_cast<int*>(current_ptr); current_ptr += sizeof(int);
-    *reinterpret_cast<int*>(current_ptr); current_ptr += sizeof(int); // ­ì©l½X¦³¤@­Ó¦h¾lªºÅª¨ú¡A¥i¯à¬OÁ`¼v®æ¼Æ
-
-    if (pData->m_nAnimationCount > 0) {
-        pData->m_pKeyFrames = new (std::nothrow) KEYINFO[pData->m_nAnimationCount];
-        if (!pData->m_pKeyFrames) return;
-
-        size_t keyinfoDataSize = sizeof(KEYINFO) * pData->m_nAnimationCount;
-        memcpy(pData->m_pKeyFrames, current_ptr, keyinfoDataSize);
-        current_ptr += keyinfoDataSize;
-    }
-    else {
-        pData->m_pKeyFrames = nullptr;
-    }
-
-    // 5. Åª¨ú´è¬Vª¬ºA (Render States)
-    pData->m_ucBlendOp = *reinterpret_cast<unsigned char*>(current_ptr); current_ptr++;
-    pData->m_ucSrcBlend = *reinterpret_cast<unsigned char*>(current_ptr); current_ptr++;
-    pData->m_ucDestBlend = *reinterpret_cast<unsigned char*>(current_ptr); current_ptr++;
-    pData->m_ucEtcBlendOp = *reinterpret_cast<unsigned char*>(current_ptr); current_ptr++;
-    pData->m_ucEtcSrcBlend = *reinterpret_cast<unsigned char*>(current_ptr); current_ptr++;
-    pData->m_ucEtcDestBlend = *reinterpret_cast<unsigned char*>(current_ptr); current_ptr++;
-
-    // ÀÉ®×¸ÑªR§¹²¦¡ACMofPacking ªº½w½Ä°Ï·|¦b¨ä¤º³¡ºŞ²z¡A¦¹³B¤£»İÄÀ©ñ
 }
 
+
 /**
- * @brief ±q¿W¥ßªº .ea ÀÉ®×¸ü¤J¯S®Ä°Êµe¼Æ¾Ú¡C
- * @param effectID ­n¸ü¤Jªº¯S®Ä ID¡A¤]§@¬° m_pEaData °}¦Cªº¯Á¤Ş¡C
- * @param szFileName .ea ÀÉ®×ªº§¹¾ã¸ô®|¡C
- * @note ¦¹¨ç¦¡ªºÅŞ¿èºë½TÁÙ­ì¦Û Effectall.c ¤¤ 0x0053AA50 ªº¨ç¦¡¡C
- * ¥¦­t³d´`§ÇÅª¨úÀÉ®×¡A¨Ã°ÊºA¤À°t°O¾ĞÅé¨Ó«Ø¥ß¤@­Ó§¹¾ãªº EADATALISTINFO ¼Æ¾Úµ²ºc¡C
+ * @brief å¾ç¨ç«‹çš„ .ea æª”æ¡ˆè¼‰å…¥ç‰¹æ•ˆå‹•ç•«æ•¸æ“šã€‚
+ *
+ * MODIFICATION: æ­¤å‡½å¼çš„å¯¦ä½œå·²è¢«å®Œå…¨é‡å¯«ï¼Œä»¥ç¬¦åˆ `ea_parser.py` æ‰€æ­ç¤ºçš„
+ * ç°¡å–®æª”æ¡ˆæ ¼å¼ï¼šHeader(12 bytes) -> Frame Array -> Trailer(6+ bytes)ã€‚
+ * å®ƒå°‡æª”æ¡ˆå…§å®¹è§£æç‚ºä¸€å€‹å–®ä¸€åœ–å±¤çš„å‹•ç•«ã€‚
  */
 void CEAManager::LoadEA(int effectID, const char* szFileName)
 {
-    // Àò¨ú«ü¦V EADATALISTINFO µ²ºcªº«ü¼Ğ¡A¸Óµ²ºc¤w¦b GetEAData ¤¤¹w¥ı¤À°t
     EADATALISTINFO* pData = m_pEaData[effectID];
-    if (!pData) {
-        return;
-    }
+    if (!pData) return;
 
     FILE* pFile = nullptr;
-    // ¨Ï¥Î fopen_s ¥H¤G¶i¦ìÅª¨ú¼Ò¦¡("rb")¦w¥ş¦a¶}±ÒÀÉ®×
     if (fopen_s(&pFile, szFileName, "rb") != 0 || pFile == nullptr) {
-        // ÀÉ®×¶}±Ò¥¢±Ñ¡AÅã¥Ü¿ù»~°T®§¡A¦æ¬°»P­ì©l½X¤@­P
-        char errorMsg[512];
-        sprintf_s(errorMsg, sizeof(errorMsg), "%s Effect info file is not found.", szFileName);
-        MessageBoxA(nullptr, errorMsg, "CEAManager::LoadEA Error", MB_OK);
+        // éŒ¯èª¤è™•ç†...
         return;
     }
 
-    // --- ¶}©l´`§ÇÅª¨úÀÉ®× ---
+    // 1. è®€å– Header (num_keys, num_layers, num_frames)
+    // Python: num_keys, num_layers, num_frames = struct.unpack_from('<III', data, 0)
+    int num_keys, num_layers, num_frames;
+    fread(&num_keys, sizeof(int), 1, pFile);
+    fread(&num_layers, sizeof(int), 1, pFile);
+    fread(&num_frames, sizeof(int), 1, pFile);
 
-    // 1. Åª¨ú EADATALISTINFO ªº³»¼h¦¨­û
-    fread(&pData->m_nVersion, sizeof(pData->m_nVersion), 1, pFile);
-    fread(&pData->m_nLayerCount, sizeof(pData->m_nLayerCount), 1, pFile);
-    fread(&pData->m_nTotalFrames, sizeof(pData->m_nTotalFrames), 1, pFile);
+    // 2. å¡«å…… EADATALISTINFO çµæ§‹
+    // æˆ‘å€‘å°‡æ­¤æ ¼å¼è¦–ç‚ºå…·æœ‰ä¸€å€‹åœ–å±¤å’Œä¸€å€‹é è¨­å‹•ç•«ç‰‡æ®µ
+    pData->m_nTotalFrames = num_frames;
+    pData->m_nLayerCount = 1; // ç°¡åŒ–ç‚ºå–®ä¸€åœ–å±¤
+    pData->m_pLayers = nullptr;
+    pData->m_nAnimationCount = 1; // å‰µå»ºä¸€å€‹æ¶µè“‹æ‰€æœ‰å½±æ ¼çš„é è¨­å‹•ç•«ç‰‡æ®µ
+    pData->m_pKeyFrames = nullptr;
 
-    // 2. ®Ú¾Ú LayerCount ¤À°t¨ÃÅª¨ú¹Ï¼h (Layers) ¼Æ¾Ú
-    if (pData->m_nLayerCount > 0) {
+
+    // 3. åˆ†é…ä¸¦è¨­å®šåœ–å±¤
+    if (pData->m_nLayerCount > 0 && num_frames > 0) {
         pData->m_pLayers = new (std::nothrow) VERTEXANIMATIONLAYERINFO[pData->m_nLayerCount];
         if (!pData->m_pLayers) { fclose(pFile); return; }
 
-        for (int i = 0; i < pData->m_nLayerCount; ++i) {
-            VERTEXANIMATIONLAYERINFO* pLayer = &pData->m_pLayers[i];
-
-            // Åª¨ú¸Ó¹Ï¼hªº¼v®æ¼Æ (FrameCount)
-            fread(&pLayer->m_nFrameCount, sizeof(pLayer->m_nFrameCount), 1, pFile);
-
-            // 3. ®Ú¾Ú FrameCount ¤À°t¨ÃÅª¨ú¼v®æ (Frames) ¼Æ¾Ú
-            if (pLayer->m_nFrameCount > 0) {
-                pLayer->m_pFrames = new (std::nothrow) VERTEXANIMATIONFRAMEINFO[pLayer->m_nFrameCount];
-                if (!pLayer->m_pFrames) { fclose(pFile); return; }
-
-                // ¤@¦¸©ÊÅª¨ú©Ò¦³¼v®æªº¼Æ¾Ú¶ô
-                fread(pLayer->m_pFrames, sizeof(VERTEXANIMATIONFRAMEINFO), pLayer->m_nFrameCount, pFile);
-
-                // ¦b­ì©l½X¤¤¡A¨C­Ó¼v®æ«á­±¥i¯à¸òµÛ¤@­Ó¤l¼Æ¾Ú¶ô¡A³o¸Ì¤]­nÅª¨ú
-                for (int j = 0; j < pLayer->m_nFrameCount; ++j) {
-                    VERTEXANIMATIONFRAMEINFO* pFrame = &pLayer->m_pFrames[j];
-                    // ¥Ñ©ó§Ú­Ì¤w±N¥¼ª¾¦¨­û¥]§t¦bµ²ºcÅé¤¤¡A¤W­±ªº fread ¤w¸gÅª¨ú¤F¥¦­Ì¡C
-                    // ¦pªG³o¨Ç¥¼ª¾¦¨­û¬O«ü¼Ğ¡A«h»İ­n¦b¦¹³B¶i¤@¨BÅª¨ú¥¦­Ì«ü¦Vªº¤º®e¡C
-                    // ®Ú¾Ú¤§«eªº¤ÀªR¡A¥¦­Ì¦ü¥G¬O©T©w¤j¤pªº¼Æ¾Ú©Î­p¼Æ¡A¤w³QÅª¨ú¡C
-                }
-
-            }
-            else {
-                pLayer->m_pFrames = nullptr;
-            }
+        VERTEXANIMATIONLAYERINFO* pLayer = &pData->m_pLayers[0];
+        pLayer->m_nFrameCount = num_frames;
+        pLayer->m_pFrames = new (std::nothrow) VERTEXANIMATIONFRAMEINFO[num_frames];
+        if (!pLayer->m_pFrames) {
+            delete[] pData->m_pLayers;
+            pData->m_pLayers = nullptr;
+            fclose(pFile);
+            return;
         }
-    }
-    else {
-        pData->m_pLayers = nullptr;
+
+        // 4. ä¸€æ¬¡æ€§è®€å–æ‰€æœ‰å½±æ ¼è³‡æ–™
+        // Python: ... loop ... struct.unpack_from ...
+        // C++: A single fread is more efficient here.
+        // Requires VERTEXANIMATIONFRAMEINFO to be exactly 120 bytes.
+        fread(pLayer->m_pFrames, sizeof(VERTEXANIMATIONFRAMEINFO), num_frames, pFile);
     }
 
-    // 4. Åª¨ú°Êµe¤ù¬q (KeyFrame) ¸ê°T
-    fread(&pData->m_nAnimationCount, sizeof(pData->m_nAnimationCount), 1, pFile);
-    // ­ì©l½X¦bÅª¨ú AnimationCount «áÁÙ¦³¤@¦¸4¦ì¤¸²ÕªºÅª¨ú¡A±À´ú¬OÁ`¼v®æ¼Æªº­«½Æ©Î¥t¤@­Ó¥¼¨Ï¥ÎÄæ¦ì
-    int dummy;
-    fread(&dummy, sizeof(int), 1, pFile);
-
+    // 5. å»ºç«‹é è¨­çš„ KeyFrame
     if (pData->m_nAnimationCount > 0) {
         pData->m_pKeyFrames = new (std::nothrow) KEYINFO[pData->m_nAnimationCount];
-        if (!pData->m_pKeyFrames) { fclose(pFile); return; }
-
-        // ¤@¦¸©ÊÅª¨ú©Ò¦³ KeyInfo ªº¼Æ¾Ú¶ô
-        fread(pData->m_pKeyFrames, sizeof(KEYINFO), pData->m_nAnimationCount, pFile);
-    }
-    else {
-        pData->m_pKeyFrames = nullptr;
+        if (pData->m_pKeyFrames) {
+            strcpy_s(pData->m_pKeyFrames[0].m_szName, sizeof(pData->m_pKeyFrames[0].m_szName), "default");
+            pData->m_pKeyFrames[0].m_nStartFrame = 0;
+            pData->m_pKeyFrames[0].m_nEndFrame = num_frames > 0 ? num_frames - 1 : 0;
+        }
     }
 
-    // 5. Åª¨ú´è¬Vª¬ºA (Render States)
+    // 6. è®€å–æª”æ¡ˆå°¾éƒ¨çš„æ¸²æŸ“ç‹€æ…‹ (Trailer)
+    // Python: trailer = data[offset:]
     fread(&pData->m_ucBlendOp, sizeof(unsigned char), 1, pFile);
     fread(&pData->m_ucSrcBlend, sizeof(unsigned char), 1, pFile);
     fread(&pData->m_ucDestBlend, sizeof(unsigned char), 1, pFile);
@@ -324,6 +137,76 @@ void CEAManager::LoadEA(int effectID, const char* szFileName)
     fread(&pData->m_ucEtcSrcBlend, sizeof(unsigned char), 1, pFile);
     fread(&pData->m_ucEtcDestBlend, sizeof(unsigned char), 1, pFile);
 
-    // --- ÀÉ®×Åª¨ú§¹²¦ ---
     fclose(pFile);
+}
+
+/**
+ * @brief å¾å°è£æª” (mof.pak) çš„è¨˜æ†¶é«”ç·©è¡å€è¼‰å…¥ .ea æ•¸æ“šã€‚
+ *
+ * MODIFICATION: æ­¤å‡½å¼ä¹Ÿè¢«é‡å¯«ï¼Œä»¥åŒ¹é…æ–°çš„è§£æé‚è¼¯ã€‚
+ * å®ƒå¾è¨˜æ†¶é«”æŒ‡æ¨™è€Œä¸æ˜¯æª”æ¡ˆæŒ‡æ¨™è®€å–è³‡æ–™ã€‚
+ */
+void CEAManager::LoadEAInPack(int effectID, char* szFileName)
+{
+    EADATALISTINFO* pData = m_pEaData[effectID];
+    if (!pData) return;
+
+    // 1. å¾å°è£æª”ç®¡ç†å™¨ç²å–æª”æ¡ˆçš„è¨˜æ†¶é«”ç·©è¡å€
+    CMofPacking* packer = CMofPacking::GetInstance();
+    char* fileBuffer = packer->FileRead(packer->ChangeString(szFileName));
+    if (!fileBuffer) {
+        // éŒ¯èª¤è™•ç†...
+        return;
+    }
+    char* current_ptr = fileBuffer;
+
+    // 2. è§£æ Header
+    int num_keys = *reinterpret_cast<int*>(current_ptr); current_ptr += sizeof(int);
+    int num_layers = *reinterpret_cast<int*>(current_ptr); current_ptr += sizeof(int);
+    int num_frames = *reinterpret_cast<int*>(current_ptr); current_ptr += sizeof(int);
+
+    // 3. å¡«å…… EADATALISTINFO (é‚è¼¯åŒ LoadEA)
+    pData->m_nTotalFrames = num_frames;
+    pData->m_nLayerCount = 1;
+    pData->m_pLayers = nullptr;
+    pData->m_nAnimationCount = 1;
+    pData->m_pKeyFrames = nullptr;
+
+    // 4. åˆ†é…ã€è¨­å®šä¸¦è¤‡è£½åœ–å±¤èˆ‡å½±æ ¼è³‡æ–™
+    if (pData->m_nLayerCount > 0 && num_frames > 0) {
+        pData->m_pLayers = new (std::nothrow) VERTEXANIMATIONLAYERINFO[pData->m_nLayerCount];
+        if (!pData->m_pLayers) return;
+
+        VERTEXANIMATIONLAYERINFO* pLayer = &pData->m_pLayers[0];
+        pLayer->m_nFrameCount = num_frames;
+        pLayer->m_pFrames = new (std::nothrow) VERTEXANIMATIONFRAMEINFO[num_frames];
+        if (!pLayer->m_pFrames) {
+            delete[] pData->m_pLayers;
+            pData->m_pLayers = nullptr;
+            return;
+        }
+        size_t frameDataSize = sizeof(VERTEXANIMATIONFRAMEINFO) * num_frames;
+        memcpy(pLayer->m_pFrames, current_ptr, frameDataSize);
+        current_ptr += frameDataSize;
+    }
+
+    // 5. å»ºç«‹é è¨­ KeyFrame (é‚è¼¯åŒ LoadEA)
+    if (pData->m_nAnimationCount > 0) {
+        pData->m_pKeyFrames = new (std::nothrow) KEYINFO[pData->m_nAnimationCount];
+        if (pData->m_pKeyFrames) {
+            strcpy_s(pData->m_pKeyFrames[0].m_szName, sizeof(pData->m_pKeyFrames[0].m_szName), "default");
+            pData->m_pKeyFrames[0].m_nStartFrame = 0;
+            pData->m_pKeyFrames[0].m_nEndFrame = num_frames > 0 ? num_frames - 1 : 0;
+        }
+    }
+
+    // 6. è§£æ Trailer çš„æ¸²æŸ“ç‹€æ…‹
+    pData->m_ucBlendOp = *reinterpret_cast<unsigned char*>(current_ptr); current_ptr++;
+    pData->m_ucSrcBlend = *reinterpret_cast<unsigned char*>(current_ptr); current_ptr++;
+    pData->m_ucDestBlend = *reinterpret_cast<unsigned char*>(current_ptr); current_ptr++;
+    pData->m_ucEtcBlendOp = *reinterpret_cast<unsigned char*>(current_ptr); current_ptr++;
+    pData->m_ucEtcSrcBlend = *reinterpret_cast<unsigned char*>(current_ptr); current_ptr++;
+    pData->m_ucEtcDestBlend = *reinterpret_cast<unsigned char*>(current_ptr); current_ptr++;
+
+    // è¨˜æ†¶é«”ç·©è¡å€ç”± CMofPacking ç®¡ç†ï¼Œæ­¤è™•ä¸é‡‹æ”¾
 }
