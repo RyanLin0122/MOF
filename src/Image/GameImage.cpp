@@ -268,9 +268,39 @@ bool GameImage::Process() {
 }
 
 bool GameImage::Draw() {
-    if (!m_bIsProcessed || !m_pGIData || !m_pGIData->m_Resource.m_pTexture) { // 如果頂點尚未處理，或資源無效，則不繪製
+    // 如果 (不是標準流程處理的 且 也不是頂點動畫模式) 或者 缺少必要資源，則返回
+    if ((!m_bIsProcessed && !m_bVertexAnimation) || !m_pGIData || !m_pGIData->m_Resource.m_pTexture) {
         return false;
     }
+        // ==================== 黑盒子日誌記錄器 START ====================
+    //
+    // 目標：捕捉每一次 Draw 呼叫前的所有關鍵狀態，以便比較成功與失敗時的差異。
+    //
+    printf("\n--- GameImage::Draw() Snapshot ---\n");
+    printf("  GameImage Addr:  0x%p\n", this);
+
+    if (m_pGIData && m_pGIData->m_Resource.m_pTexture) {
+        printf("  Texture Addr:    0x%p\n", m_pGIData->m_Resource.m_pTexture);
+    }
+    else {
+        printf("  Texture Addr:    [NULL]\n");
+    }
+
+    // 記錄四個頂點的關鍵資訊 (我們只看左上角和右下角，足以判斷問題)
+    printf("  Vertex[0] Pos:   (%.1f, %.1f)\n", m_Vertices[0].position_x, m_Vertices[0].position_y);
+    printf("  Vertex[0] Color: 0x%08X\n", m_Vertices[0].diffuse_color);
+    printf("  Vertex[2] Pos:   (%.1f, %.1f)\n", m_Vertices[2].position_x, m_Vertices[2].position_y);
+    printf("  Vertex[2] Color: 0x%08X\n", m_Vertices[2].diffuse_color);
+
+    // 記錄 DrawPrimitive 即將使用的參數
+    if (m_pVBData && m_pVBData->pVertexBuffer) {
+        printf("  VertexBuffer:    VALID (0x%p)\n", m_pVBData->pVertexBuffer);
+    }
+    else {
+        printf("  VertexBuffer:    [NULL]\n");
+    }
+    printf("  Draw Flags:      m_bIsProcessed=%d, m_bVertexAnimation=%d\n", m_bIsProcessed, m_bVertexAnimation);
+    // ===================== 黑盒子日誌記錄器 END ======================
 
     // 設定渲染狀態
     CDeviceManager::GetInstance()->SetTexture(0, m_pGIData->m_Resource.m_pTexture);
@@ -336,6 +366,25 @@ void GameImage::VertexAnimationCalculator(const GIVertex* pSourceVertices)
 
     // 將外部傳入的8個頂點資料 (224 bytes) 複製到內部的頂點陣列中
     memcpy(m_Vertices, pSourceVertices, sizeof(m_Vertices));
+}
+
+void GameImage::UpdateVertexBuffer()
+{
+    // 如果頂點緩衝區不存在，或來源頂點資料為空，則不執行
+    if (!m_pVBData || !m_pVBData->pVertexBuffer) return;
+
+    // 鎖定頂點緩衝區，準備寫入
+    void* pV = nullptr;
+    // 注意：這裡我們假設頂點動畫最多使用8個頂點，與CreateVertexBuffer時一致
+    HRESULT hr = m_pVBData->pVertexBuffer->Lock(0, sizeof(GIVertex) * 8, &pV, D3DLOCK_DISCARD);
+
+    if (SUCCEEDED(hr) && pV != nullptr)
+    {
+        // 將 CPU 端的 m_Vertices 陣列內容，複製到 GPU 端的緩衝區
+        memcpy(pV, m_Vertices, sizeof(m_Vertices));
+        // 解鎖緩衝區，完成上傳
+        m_pVBData->pVertexBuffer->Unlock();
+    }
 }
 
 void GameImage::SetDefaultTextureColor()

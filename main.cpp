@@ -8,6 +8,7 @@
 #include "Sound/COgg.h"  // 您的 COgg 類別標頭檔
 #include "CMOFPacking.h" // 您的 CMofPacking 類別標頭檔 (單例版本)
 #include "Image/CDeviceResetManager.h"
+#include "Image/cltImageManager.h"
 
 #include "nfs_test.h"
 #include "cm_packing_integration_test.h"
@@ -213,6 +214,7 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine
 
     if (SUCCEEDED(InitD3D(g_hWnd)))
     {
+        cltImageManager::GetInstance()->Initialize();
         if (IsTestImage) {
             g_pDrawTest = new ImageDrawTest();
             if (FAILED(g_pDrawTest->Initialize()))
@@ -238,6 +240,9 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine
 
         MSG msg;
         ZeroMemory(&msg, sizeof(msg));
+
+		// 初始化時間
+		lastTime = timeGetTime(); // 使用 timeGetTime() 取得當前時間
         while (msg.message != WM_QUIT)
         {
             if (PeekMessage(&msg, NULL, 0U, 0U, PM_REMOVE))
@@ -253,7 +258,6 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine
                     float fElapsedTime = (currentTime - lastTime) / 1000.0f;
                     lastTime = currentTime;
 
-                    // <<< 新增程式碼：呼叫 Update >>>
                     if (g_pEffectTest)
                     {
                         g_pEffectTest->Update(fElapsedTime);

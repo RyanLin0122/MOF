@@ -64,6 +64,17 @@ CCAEffect::CCAEffect()
 // 對應反組譯碼: 0x00528600
 CCAEffect::~CCAEffect()
 {
+    if (m_pGameImages) {
+        // 迴圈遍歷此特效在最後一幀中使用的所有 GameImage
+        for (int i = 0; i < m_nImageCountInFrame; ++i) {
+            if (m_pGameImages[i]) {
+                // 呼叫管理器的 Release 函式，將物件歸還到池中
+                cltImageManager::GetInstance()->ReleaseGameImage(m_pGameImages[i]);
+            }
+        }
+    }
+    // ==================== 新增的修正程式碼 END ======================
+
     delete[] m_pGameImages;
 }
 
@@ -98,9 +109,9 @@ void CCAEffect::SetFrameTime()
 
     // 原始碼: *((float *)this + 19) = 1.0 / (double)*(int *)(*((_DWORD *)this + 1) + 8);
     // 其中 this+1 是 m_pAnimationInfo，+8 是 m_nTotalFrames。此處假設它代表幀率。
-    if (m_pEffectData->m_nTotalFrames > 0) {
-        m_FrameSkip.m_fTimePerFrame = 1.0f / static_cast<float>(m_pEffectData->m_nTotalFrames);
-    }
+    //if (m_pEffectData->m_nTotalFrames > 0) {
+    //    m_FrameSkip.m_fTimePerFrame = 1.0f / static_cast<float>(m_pEffectData->m_nTotalFrames);
+    //}
 
     // 原始碼: v1 = *(_DWORD *)(*((_DWORD *)this + 2) + 4);
     // 其中 this+2 是 m_pTimelineInfo，+4 是 m_nLayerCount
@@ -114,6 +125,9 @@ void CCAEffect::SetFrameTime()
 // 對應反組譯碼: 0x005286C0
 bool CCAEffect::FrameProcess(float fElapsedTime)
 {
+    if (m_bIsPlaying) {
+        printf("CCAEffect[0x%p] Tick: CurrentFrame=%d, EndFrame=%d\n", this, m_nCurrentFrame, m_nEndFrame);
+    }
     if (!m_bIsPlaying) {
         return false;
     }
@@ -147,14 +161,13 @@ bool CCAEffect::FrameProcess(float fElapsedTime)
  */
 void CCAEffect::Process()
 {
+    // 重設當前影格要繪製的圖片數量
+    m_nImageCountInFrame = 0;
     // 檢查基本播放狀態，如果未播放、不顯示、沒有數據或影格為負，則直接返回。
     if (!m_bShow || !m_bIsPlaying || !m_pEffectData || m_nCurrentFrame < 0) {
         m_nImageCountInFrame = 0;
         return;
     }
-
-    // 重設當前影格要繪製的圖片數量
-    m_nImageCountInFrame = 0;
 
     // 遍歷此特效的所有圖層
     for (int i = 0; i < m_pEffectData->m_nLayerCount; ++i) {
@@ -213,7 +226,7 @@ void CCAEffect::Process()
 
                     // 將計算完成的頂點數據傳遞給 GameImage
                     pImage->VertexAnimationCalculator(transformedVertices);
-
+                    pImage->UpdateVertexBuffer();
                     // 設定其他渲染屬性
                     if (m_dwAlpha != 100) { // 原始碼中有此判斷
                         pImage->SetAlpha(m_dwAlpha);
@@ -247,6 +260,7 @@ void CCAEffect::Draw()
     for (int i = 0; i < m_nImageCountInFrame; ++i) {
         GameImage* pImage = m_pGameImages[i];
         if (pImage && pImage->IsInUse()) {
+            printf("Frame number: %d \n", m_nCurrentFrame);
             pImage->Draw();
         }
     }
@@ -263,7 +277,7 @@ void CCAEffect::Play(int nAnimationID, bool bLoop)
     KEYINFO* pKey = &m_pEffectData->m_pKeyFrames[nAnimationID];
     m_nStartFrame = pKey->m_nStartFrame;
     m_nEndFrame = pKey->m_nEndFrame;
-
+    printf("CCAEffect[0x%p] PLAYING: StartFrame=%d, EndFrame=%d\n", this, m_nStartFrame, m_nEndFrame);
     m_nCurrentFrame = m_nStartFrame;
     m_bIsPlaying = true;
 }

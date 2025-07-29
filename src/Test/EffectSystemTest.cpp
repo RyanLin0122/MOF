@@ -39,9 +39,7 @@ HRESULT EffectSystemTest::Initialize()
         return E_FAIL;
     }
 
-    // 步驟 3: 在初始化時立即產生第一個特效。
     SpawnDownCutEffect();
-
     printf("--- [EffectSystemTest] 初始化成功 ---\n");
     return S_OK;
 }
@@ -67,7 +65,7 @@ void EffectSystemTest::Update(float fElapsedTime)
     m_fTimeSinceLastEffect += fElapsedTime;
 
     // 每隔 0.5 秒產生一個新的下劈斬特效
-    if (m_fTimeSinceLastEffect > 0.5f) {
+    if (m_fTimeSinceLastEffect > 3.0f) {
         SpawnDownCutEffect();
         m_fTimeSinceLastEffect = 0.0f; // 重置計時器
     }

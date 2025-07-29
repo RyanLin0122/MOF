@@ -48,6 +48,8 @@ public:
     /// @brief 使用外部提供的頂點資料覆蓋內部頂點，用於頂點動畫。
     void VertexAnimationCalculator(const GIVertex* pSourceVertices);
 
+    void UpdateVertexBuffer();
+
     /// @brief 將顏色覆蓋值重設為預設(白色)。
     void SetDefaultTextureColor();
 
@@ -74,6 +76,7 @@ public:
     void SetFlipY(bool bFlip) { m_bFlipY = bFlip; }
     void SetAlpha(unsigned int dwAlpha) { m_dwAlpha = dwAlpha; }
     void SetColor(unsigned int dwColor) { m_dwColor = dwColor; }
+    ImageResourceListData* GetGIDataPtr() const { return m_pGIData; }
 
     /// @brief 檢查此 GameImage 物件是否正在被使用。
     bool IsInUse() const { return m_pGIData != nullptr; }

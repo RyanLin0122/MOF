@@ -50,14 +50,20 @@ GameImage* cltImageManager::GetGameImage(unsigned int dwGroupID, unsigned int dw
     }
 
     // 遍歷物件池，尋找第一個未被使用的 GameImage。
-    // 判斷依據是其資源指標 m_GIData 是否為空。
-    // 在 GameImage.c 中，m_GIData 位於偏移量+8的位置 (*((_DWORD *)this + 2))。
     for (int i = 0; i < MAX_IMAGES; ++i) {
-        // 我們假設 GameImage 有一個 IsInUse() 方法來檢查其資源指標是否為空。
         if (!m_Images[i].IsInUse()) {
             // 找到了閒置物件，讓它去獲取圖片資源。
             GameImage* pImage = &m_Images[i];
             pImage->GetGIData(dwGroupID, dwResourceID, a4, a5);
+            // 在將 GameImage 物件交出去之前，確保其 D3D 紋理已經被建立。
+            if (pImage->IsInUse()) {
+                // 使用我們剛剛新增的 getter 取得資源資料指標
+                ImageResourceListData* pGIData = pImage->GetGIDataPtr();
+                if (pGIData) {
+                    // 觸發從記憶體到 VRAM 的紋理載入
+                    pGIData->m_Resource.LoadTexture();
+                }
+            }
             return pImage;
         }
     }

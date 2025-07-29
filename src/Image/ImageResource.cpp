@@ -197,58 +197,13 @@ bool IsCompressedFormat(D3DFORMAT format) {
         format == D3DFMT_DXT5;
 }
 
-/*
 bool ImageResource::LoadTexture() {
-    // 如果沒有圖片資料，或紋理已經存在，則直接返回
-    if (!m_pImageData) {
-        return false;
-    }
     if (m_pTexture) {
         return true;
     }
 
-    assert(Device != nullptr && "Direct3D Device has not been initialized!");
-    IDirect3DTexture9* tempTex = nullptr;
-    // D3DXCreateTextureFromFileInMemoryEx 是一個強大的函式，可以從記憶體直接建立紋理
-    HRESULT hr = D3DXCreateTextureFromFileInMemoryEx(
-        Device,                 // D3D 裝置
-        m_pImageData,           // 包含圖片資料的記憶體指標
-        m_imageDataSize,        // 資料大小
-        m_width,                // 寬度
-        m_height,               // 高度
-        1,                      // MipLevels (1 表示不生成 mipmap)
-        0,                      // Usage
-        m_d3dFormat,            // 像素格式
-        D3DPOOL_MANAGED,        // 記憶體池 (MANAGED 表示由 D3D 自動管理)
-        D3DX_FILTER_POINT,      // Filter (1u 對應點採樣)
-        D3DX_FILTER_POINT,      // MipFilter (1u 對應點採樣)
-        0,                      // ColorKey (0 表示禁用)
-        nullptr,                // pSrcInfo
-        nullptr,                // pPalette
-        &tempTex);           // 接收紋理指標的位址
-
-    if (SUCCEEDED(hr)) {
-        // 紋理建立成功後，可以釋放記憶體中的像素資料以節省記憶體
-        delete[] m_pImageData;
-        m_pImageData = nullptr;
-        m_pTexture = tempTex;
-        return true;
-    } else {
-        // PrintDXError(hr, "Failed to create texture", 0);
-        // 建立失敗，同樣釋放記憶體
-        delete[] m_pImageData;
-        m_pImageData = nullptr;
-        SafeRelease(tempTex);
-        return false;
-    }
-}
-*/
-bool ImageResource::LoadTexture() {
     if (!m_pImageData) {
         return false;
-    }
-    if (m_pTexture) {
-        return true;
     }
 
     assert(Device != nullptr && "Direct3D Device has not been initialized!");
