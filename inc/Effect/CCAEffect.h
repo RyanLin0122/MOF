@@ -142,9 +142,9 @@ protected:
     int             m_nStartFrame;
     int             m_nEndFrame;
 
-    GameImage** m_pGameImages;
-    int             m_nMaxImagesInAnimation;
-    int             m_nImageCountInFrame;
+    //GameImage** m_pGameImages;
+    //int             m_nMaxImagesInAnimation;
+    //int             m_nImageCountInFrame;
 
     FrameSkip       m_FrameSkip;
 

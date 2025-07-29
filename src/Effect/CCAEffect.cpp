@@ -5,15 +5,13 @@
 #include <new> // for std::nothrow
 
 //=============================================================================
-// FrameSkip 類別實作
+// FrameSkip 類別實作 (維持不變)
 //=============================================================================
-
 FrameSkip::FrameSkip() : m_fAccumulatedTime(0.0f), m_fTimePerFrame(1.0f / 60.0f) {}
 FrameSkip::~FrameSkip() {}
 
-// 邏輯對應 Effectall.c @ 005286C0 (CCAEffect::FrameProcess)
 bool FrameSkip::Update(float fElapsedTime, int& outFrameCount) {
-    if (m_fTimePerFrame <= 0.0001f) { // 避免除以零
+    if (m_fTimePerFrame <= 0.0001f) {
         outFrameCount = 0;
         return false;
     }
@@ -31,18 +29,18 @@ bool FrameSkip::Update(float fElapsedTime, int& outFrameCount) {
 }
 
 //=============================================================================
-// CCAEffect 類別實作
+// CCAEffect 類別實作 (重寫版本)
 //=============================================================================
 
-// 對應反組譯碼: 0x00528560
 CCAEffect::CCAEffect()
 {
+    // 初始化所有成員變數為乾淨的初始狀態
     m_pEffectData = nullptr;
     m_fPosX = 0.0f;
     m_fPosY = 0.0f;
     m_bFlipX = false;
     m_fRotation = 0.0f;
-    m_dwAlpha = 100;
+    m_dwAlpha = 255; // 使用 0-255 範圍
     m_bIsPlaying = false;
     m_bShow = true;
     m_bIsLooping = false;
@@ -50,43 +48,32 @@ CCAEffect::CCAEffect()
     m_nCurrentFrame = 0;
     m_nStartFrame = 0;
     m_nEndFrame = 0;
-    m_pGameImages = nullptr;
-    m_nMaxImagesInAnimation = 0;
-    m_nImageCountInFrame = 0;
-    m_pfnDrawRenderState = &CCAEffect::DrawRenderState;
 
-    // 初始化 FrameSkip 成員
-    // 原始碼: *((_DWORD *)this + 19) = 1015580809; (0x3C888889 -> 0.016666667f ~ 1/60)
-    m_FrameSkip.m_fTimePerFrame = 1.0f / 60.0f;
+    // 設定預設播放速度為 60 FPS
+    m_FrameSkip.m_fTimePerFrame = 1.0f / 30.0f;
     m_FrameSkip.m_fAccumulatedTime = 0.0f;
+
+    // 初始化渲染狀態的函式指標
+    m_pfnDrawRenderState = &CCAEffect::DrawRenderState;
+    m_pfnDrawEtcRenderState = &CCAEffect::DrawEtcRenderState;
 }
 
-// 對應反組譯碼: 0x00528600
 CCAEffect::~CCAEffect()
 {
-    if (m_pGameImages) {
-        // 迴圈遍歷此特效在最後一幀中使用的所有 GameImage
-        for (int i = 0; i < m_nImageCountInFrame; ++i) {
-            if (m_pGameImages[i]) {
-                // 呼叫管理器的 Release 函式，將物件歸還到池中
-                cltImageManager::GetInstance()->ReleaseGameImage(m_pGameImages[i]);
-            }
-        }
-    }
-    // ==================== 新增的修正程式碼 END ======================
-
-    delete[] m_pGameImages;
+    // 在這個新的設計中，CCAEffect 不再持有 GameImage 的長期指標，
+    // 因此解構函式中不再需要釋放 GameImage 的邏輯。
+    // GameImage 的釋放完全由 CEffect_Battle_DownCut 等特效物件的解構函式觸發。
 }
 
-// 對應反組譯碼: 0x00528630
 void CCAEffect::Reset()
 {
+    // 重設所有狀態，與建構函式邏輯一致
     m_pEffectData = nullptr;
     m_fPosX = 0.0f;
     m_fPosY = 0.0f;
     m_bFlipX = false;
     m_fRotation = 0.0f;
-    m_dwAlpha = 100;
+    m_dwAlpha = 255;
     m_bIsPlaying = false;
     m_bShow = true;
     m_bIsLooping = false;
@@ -94,40 +81,22 @@ void CCAEffect::Reset()
     m_nCurrentFrame = 0;
     m_nStartFrame = 0;
     m_nEndFrame = 0;
-
-    delete[] m_pGameImages;
-    m_pGameImages = nullptr;
-
-    m_nMaxImagesInAnimation = 0;
-    m_nImageCountInFrame = 0;
 }
 
-// 對應反組譯碼: 0x00528690
 void CCAEffect::SetFrameTime()
 {
+    // 警告：這個函式的原始邏輯 (1.0f / 總影格數) 是有問題的，
+    // 它會導致動畫播放速度不穩定。
+    // 建議不要呼叫此函式，而是讓系統使用預設的 60 FPS 播放速率。
     if (!m_pEffectData) return;
 
-    // 原始碼: *((float *)this + 19) = 1.0 / (double)*(int *)(*((_DWORD *)this + 1) + 8);
-    // 其中 this+1 是 m_pAnimationInfo，+8 是 m_nTotalFrames。此處假設它代表幀率。
     //if (m_pEffectData->m_nTotalFrames > 0) {
     //    m_FrameSkip.m_fTimePerFrame = 1.0f / static_cast<float>(m_pEffectData->m_nTotalFrames);
     //}
-
-    // 原始碼: v1 = *(_DWORD *)(*((_DWORD *)this + 2) + 4);
-    // 其中 this+2 是 m_pTimelineInfo，+4 是 m_nLayerCount
-    m_nMaxImagesInAnimation = m_pEffectData->m_nLayerCount;
-    if (m_nMaxImagesInAnimation > 0) {
-        // 分配足夠的 GameImage 指標空間
-        m_pGameImages = new (std::nothrow) GameImage * [m_nMaxImagesInAnimation];
-    }
 }
 
-// 對應反組譯碼: 0x005286C0
 bool CCAEffect::FrameProcess(float fElapsedTime)
 {
-    if (m_bIsPlaying) {
-        printf("CCAEffect[0x%p] Tick: CurrentFrame=%d, EndFrame=%d\n", this, m_nCurrentFrame, m_nEndFrame);
-    }
     if (!m_bIsPlaying) {
         return false;
     }
@@ -135,138 +104,129 @@ bool CCAEffect::FrameProcess(float fElapsedTime)
     int frameCount = 0;
     if (m_FrameSkip.Update(fElapsedTime, frameCount)) {
         m_nCurrentFrame += frameCount;
+
+        // 正確的銷毀條件：
+        // 動畫影格索引為 0 到 (N-1)。當 m_nCurrentFrame 增加到 N 時，
+        // 代表 0 到 (N-1) 的所有影格都已播放完畢。
+        // 因此，`>` 是正確的判斷子。
         if (m_nCurrentFrame > m_nEndFrame) {
             if (m_bIsLooping) {
-                m_nCurrentFrame = m_nStartFrame;
+                m_nCurrentFrame = m_nStartFrame; // 循環播放
             }
             else {
                 m_bIsPlaying = false;
-                return true; // 動畫結束
+                return true; // 動畫結束，回傳 true 以觸發銷毀
             }
         }
     }
-    return false;
+    return false; // 動畫仍在播放，回傳 false
 }
 
-/**
- * @brief 處理特效當前影格的邏輯，準備所有需要繪製的 GameImage 物件。
- * * 這是 CCAEffect 的核心函式之一。它根據 m_nCurrentFrame 的值，
- * 從 .ea 特效數據中讀取對應的圖層和影格資訊，然後：
- * 1. 從物件池中獲取 GameImage 實例。
- * 2. 讀取影格定義的頂點數據。
- * 3. 依次應用旋轉、平移和翻轉等矩陣變換。
- * 4. 將最終計算好的頂點數據傳遞給 GameImage 物件。
- * 5. 將準備好的 GameImage 物件加入到當前影格的繪製列表中。
- * * 此函式的行為精確模擬了 Effectall.c 中 0x00528740 處的原始邏輯。
- */
 void CCAEffect::Process()
 {
-    // 重設當前影格要繪製的圖片數量
-    m_nImageCountInFrame = 0;
-    // 檢查基本播放狀態，如果未播放、不顯示、沒有數據或影格為負，則直接返回。
+    // 在新的設計中，Process 函式只負責更新非繪圖相關的邏輯。
+    // 所有與 GameImage 相關的計算都移至 Draw 函式中，以避免狀態污染。
+    // 目前此函式可以為空，或只做最基本的狀態檢查。
     if (!m_bShow || !m_bIsPlaying || !m_pEffectData || m_nCurrentFrame < 0) {
-        m_nImageCountInFrame = 0;
+        m_bShow = false; // 設定一個旗標，讓 Draw 函式知道本幀不需繪製
+    }
+    else {
+        m_bShow = true;
+    }
+}
+
+void CCAEffect::Draw()
+{
+    // 1. 進行繪製前的最終檢查
+    if (!m_bShow || !m_bIsPlaying || !m_pEffectData || m_nCurrentFrame < 0 || m_nCurrentFrame > m_nEndFrame) {
         return;
     }
 
-    // 遍歷此特效的所有圖層
+    // 2. 遍歷圖層，準備繪製
+    // (對於 .ea 格式，通常只有一個圖層)
     for (int i = 0; i < m_pEffectData->m_nLayerCount; ++i) {
         VERTEXANIMATIONLAYERINFO* pLayer = &m_pEffectData->m_pLayers[i];
+        if (m_nCurrentFrame >= pLayer->m_nFrameCount) continue;
 
-        // 確保當前影格在此圖層的時間軸範圍內
-        if (m_nCurrentFrame < pLayer->m_nFrameCount) {
-            VERTEXANIMATIONFRAMEINFO* pFrame = &pLayer->m_pFrames[m_nCurrentFrame];
+        VERTEXANIMATIONFRAMEINFO* pFrame = &pLayer->m_pFrames[m_nCurrentFrame];
+        if (pFrame->m_dwImageID == 0) continue;
 
-            // 如果該影格定義了一個有效的圖片資源 ID
-            if (pFrame->m_dwImageID != 0) {
+        // 3. 在繪製的這一刻，才向管理器「借用」一個 GameImage 物件
+        GameImage* pImage = cltImageManager::GetInstance()->GetGameImage(7, pFrame->m_dwImageID, 0, 1);
 
-                // 從物件池獲取一個 GameImage 實例
-                // 資源群組 7 通常對應 Effect
-                GameImage* pImage = cltImageManager::GetInstance()->GetGameImage(7, pFrame->m_dwImageID, 0, 1);
+        if (pImage) {
+            // 4. 計算頂點
+            GIVertex transformedVertices[4];
+            memcpy(transformedVertices, pFrame->m_Vertices, sizeof(transformedVertices));
 
-                // 確保成功獲取且未超過最大圖片數量限制
-                if (pImage && m_nImageCountInFrame < m_nMaxImagesInAnimation) {
-                    // 將此 GameImage 加入到本幀的繪製列表中
-                    m_pGameImages[m_nImageCountInFrame++] = pImage;
-
-                    // 創建一個臨時頂點陣列，用於進行變換計算
-                    GIVertex transformedVertices[4];
-                    memcpy(transformedVertices, pFrame->m_Vertices, sizeof(transformedVertices));
-
-                    // --- 開始頂點變換 ---
-
-                    // 1. 旋轉 (Rotation)
-                    if (m_fRotation != 0.0f) {
-                        D3DXMATRIX matRotation;
-                        D3DXMatrixRotationZ(&matRotation, m_fRotation);
-                        for (int v = 0; v < 4; ++v) {
-                            D3DXVECTOR3 pos = { transformedVertices[v].position_x, transformedVertices[v].position_y, 0.0f };
-                            D3DXVec3TransformCoord(&pos, &pos, &matRotation);
-                            transformedVertices[v].position_x = pos.x;
-                            transformedVertices[v].position_y = pos.y;
-                        }
-                    }
-
-                    // 2. 平移 (Translation) 與 翻轉 (Flip)
-                    // 原始碼中將平移和翻轉合併處理，此處為忠實還原其邏輯
-                    for (int v = 0; v < 4; ++v) {
-                        // 首先加上特效自身的座標
-                        transformedVertices[v].position_x += m_fPosX;
-                        transformedVertices[v].position_y += m_fPosY;
-
-                        // 如果設定了水平翻轉
-                        if (m_bFlipX) {
-                            // 原始碼邏輯: v16 = m_fPosX + m_fPosX; v18[0] = v16 - v18[0];
-                            // 這等同於以 m_fPosX 所在的垂直線為對稱軸進行鏡像反射
-                            transformedVertices[v].position_x = (2.0f * m_fPosX) - transformedVertices[v].position_x;
-                        }
-                    }
-
-                    // --- 頂點變換結束 ---
-
-                    // 將計算完成的頂點數據傳遞給 GameImage
-                    pImage->VertexAnimationCalculator(transformedVertices);
-                    pImage->UpdateVertexBuffer();
-                    // 設定其他渲染屬性
-                    if (m_dwAlpha != 100) { // 原始碼中有此判斷
-                        pImage->SetAlpha(m_dwAlpha);
-                    }
+            // 可選：覆寫 Alpha 值，避免特效因檔案設計而提前淡出
+            for (int v = 0; v < 4; ++v) {
+                if (((transformedVertices[v].diffuse_color >> 24) & 0xFF) > 0) {
+                    transformedVertices[v].diffuse_color = (transformedVertices[v].diffuse_color & 0x00FFFFFF) | (m_dwAlpha << 24);
                 }
             }
-        }
-    }
-}
 
+            // 5. 應用旋轉、翻轉、平移等變換
+            if (m_fRotation != 0.0f) {
+                D3DXMATRIX matRotation;
+                D3DXMatrixRotationZ(&matRotation, m_fRotation);
+                for (int v = 0; v < 4; ++v) {
+                    D3DXVECTOR3 pos = { transformedVertices[v].position_x, transformedVertices[v].position_y, 0.0f };
+                    D3DXVec3TransformCoord(&pos, &pos, &matRotation);
+                    transformedVertices[v].position_x = pos.x;
+                    transformedVertices[v].position_y = pos.y;
+                }
+            }
+            for (int v = 0; v < 4; ++v) {
+                transformedVertices[v].position_x += m_fPosX;
+                transformedVertices[v].position_y += m_fPosY;
+                if (m_bFlipX) {
+                    transformedVertices[v].position_x = (2.0f * m_fPosX) - transformedVertices[v].position_x;
+                }
+            }
 
-// 對應反組譯碼: 0x005289A0
-void CCAEffect::Draw()
-{
-    if (!m_bShow || !m_bIsPlaying || m_nImageCountInFrame == 0) return;
+            // 6. 將計算好的頂點注入 GameImage 並上傳到 GPU
+            pImage->VertexAnimationCalculator(transformedVertices);
+            pImage->UpdateVertexBuffer();
 
-    // --- 關鍵變更 ---
-    // 根據 m_ucRenderStateSelector 旗標來決定呼叫哪個函式指標
-    if (m_ucRenderStateSelector == 0) {
-        if (m_pfnDrawRenderState) {
-            (this->*m_pfnDrawRenderState)();
-        }
-    }
-    else {
-        if (m_pfnDrawEtcRenderState) {
-            (this->*m_pfnDrawEtcRenderState)();
-        }
-    }
+            Device->SetRenderState(D3DRS_CULLMODE, D3DCULL_NONE);
 
-    // 後續繪製 GameImage 的邏輯不變
-    for (int i = 0; i < m_nImageCountInFrame; ++i) {
-        GameImage* pImage = m_pGameImages[i];
-        if (pImage && pImage->IsInUse()) {
-            printf("Frame number: %d \n", m_nCurrentFrame);
+            // 7. 設定渲染狀態並呼叫繪製
+            if (m_ucRenderStateSelector == 0) {
+                (this->*m_pfnDrawRenderState)();
+            }
+            else {
+                (this->*m_pfnDrawEtcRenderState)();
+            }
+			printf("CCAEffect::Draw: AnimationID=%d, Frame=%d, Layer=%d\n", m_nAnimationID, m_nCurrentFrame, i);
+            // --- 階段 2: Alpha 混合狀態 ---
+            Device->SetRenderState(D3DRS_ALPHABLENDENABLE, TRUE);
+            Device->SetRenderState(D3DRS_SRCBLEND, D3DBLEND_SRCALPHA);
+            Device->SetRenderState(D3DRS_DESTBLEND, D3DBLEND_INVSRCALPHA);
+
+            // --- 關鍵修正：階段 1: 紋理混合狀態 ---
+            // 強制使用標準的“乘法”模式，而不是會導致發光的“加法”模式
+            Device->SetTextureStageState(0, D3DTSS_COLOROP, D3DTOP_MODULATE);
+            Device->SetTextureStageState(0, D3DTSS_COLORARG1, D3DTA_TEXTURE);
+            Device->SetTextureStageState(0, D3DTSS_COLORARG2, D3DTA_DIFFUSE);
+
+            // 同時也明確設定 Alpha 的混合方式
+            Device->SetTextureStageState(0, D3DTSS_ALPHAOP, D3DTOP_MODULATE);
+            Device->SetTextureStageState(0, D3DTSS_ALPHAARG1, D3DTA_TEXTURE);
+            Device->SetTextureStageState(0, D3DTSS_ALPHAARG2, D3DTA_DIFFUSE);
+
+            // --- 其他確保性設定 ---
+            Device->SetRenderState(D3DRS_ALPHATESTENABLE, FALSE);
+            Device->SetRenderState(D3DRS_CULLMODE, D3DCULL_NONE);
+            Device->SetFVF(GIVertex::FVF);
             pImage->Draw();
+
+            // 注意：GameImage 的歸還，由持有 CCAEffect 的外部特效類別
+            // (如 CEffect_Battle_DownCut) 在其解構時觸發，這是目前架構的設計。
         }
     }
 }
 
-// 對應反組譯碼: 0x00528A80
 void CCAEffect::Play(int nAnimationID, bool bLoop)
 {
     if (!m_pEffectData || nAnimationID >= m_pEffectData->m_nAnimationCount) return;
@@ -277,18 +237,17 @@ void CCAEffect::Play(int nAnimationID, bool bLoop)
     KEYINFO* pKey = &m_pEffectData->m_pKeyFrames[nAnimationID];
     m_nStartFrame = pKey->m_nStartFrame;
     m_nEndFrame = pKey->m_nEndFrame;
-    printf("CCAEffect[0x%p] PLAYING: StartFrame=%d, EndFrame=%d\n", this, m_nStartFrame, m_nEndFrame);
+
     m_nCurrentFrame = m_nStartFrame;
     m_bIsPlaying = true;
+    m_bShow = true;
 }
 
-// 對應反組譯碼: 0x00528AD0
 void CCAEffect::Pause()
 {
     m_bIsPlaying = !m_bIsPlaying;
 }
 
-// 對應反組譯碼: 0x00528AE0
 void CCAEffect::LoadImageA()
 {
     if (!m_pEffectData || m_nCurrentFrame < 0) return;
@@ -304,7 +263,6 @@ void CCAEffect::LoadImageA()
     }
 }
 
-// 對應反組譯碼: 0x005289E0
 void CCAEffect::DrawRenderState()
 {
     if (!m_pEffectData) return;
@@ -313,7 +271,6 @@ void CCAEffect::DrawRenderState()
     CDeviceManager::GetInstance()->SetRenderState(D3DRS_DESTBLEND, m_pEffectData->m_ucDestBlend);
 }
 
-// 對應反組譯碼: 0x00528A40
 void CCAEffect::DrawEtcRenderState()
 {
     if (!m_pEffectData) return;
