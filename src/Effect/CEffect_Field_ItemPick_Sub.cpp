@@ -14,7 +14,7 @@
 // 對應反組譯碼: 0x005362F0
 CEffect_Field_ItemPick_Sub_Complete::CEffect_Field_ItemPick_Sub_Complete()
 {
-    CEAManager::GetInstance()->GetEAData(105, "MoFData/Effect/efn_ItemPick_01.ea", &m_ccaEffect);
+    CEAManager::GetInstance()->GetEAData(105, "Effect/efn_ItemPick_01.ea", &m_ccaEffect);
     m_ccaEffect.SetFrameTime();
     m_ccaEffect.Play(0, false);
 }

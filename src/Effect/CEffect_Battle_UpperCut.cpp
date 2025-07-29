@@ -11,8 +11,8 @@ CEffect_Battle_UpperCut::CEffect_Battle_UpperCut()
     // CEffectBase 的建構函式會被自動呼叫
 
     // 向 CEAManager 請求特效數據
-    // 特效 ID: 8, 檔案名稱: "MoFData/Effect/efn_uppercut.ea"
-    CEAManager::GetInstance()->GetEAData(8, "MoFData/Effect/efn_uppercut.ea", &m_ccaEffect);
+    // 特效 ID: 8, 檔案名稱: "Effect/efn_uppercut.ea"
+    CEAManager::GetInstance()->GetEAData(8, "Effect/efn_uppercut.ea", &m_ccaEffect);
 
     // 設定影格時間並播放動畫
     m_ccaEffect.SetFrameTime();
@@ -50,8 +50,8 @@ void CEffect_Battle_UpperCut::Process()
 {
     // 將世界座標轉換為螢幕座標
     // 原始碼: v3 = *((float *)this + 2) - (double)dword_A73088;
-    float screenX = m_fCurrentPosX - static_cast<float>(g_Game_System_Info.ScreenWidth);
-    float screenY = m_fCurrentPosY - static_cast<float>(g_Game_System_Info.ScreenHeight);
+    float screenX = m_fCurrentPosX;// -static_cast<float>(g_Game_System_Info.ScreenWidth);
+    float screenY = m_fCurrentPosY;// -static_cast<float>(g_Game_System_Info.ScreenHeight);
 
     // 進行裁剪判斷
     // 原始碼: v2 = CEffectBase::IsCliping(this, v3, 0.0); *((_DWORD *)this + 8) = v2;

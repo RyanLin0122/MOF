@@ -11,8 +11,8 @@ CEffect_Battle_HorizonCut::CEffect_Battle_HorizonCut()
     // CEffectBase 的建構函式會被自動呼叫
 
     // 向 CEAManager 請求特效數據
-    // 特效 ID: 1, 檔案名稱: "MoFData/Effect/efn_horizoncut.ea"
-    CEAManager::GetInstance()->GetEAData(1, "MoFData/Effect/efn_horizoncut.ea", &m_ccaEffect);
+    // 特效 ID: 1, 檔案名稱: "Effect/efn_horizoncut.ea"
+    CEAManager::GetInstance()->GetEAData(1, "Effect/efn_horizoncut.ea", &m_ccaEffect);
 
     // 設定影格時間並播放動畫
     m_ccaEffect.SetFrameTime();

@@ -11,8 +11,8 @@ CEffect_Battle_TwoHandCut::CEffect_Battle_TwoHandCut()
     // CEffectBase 的建構函式會被自動呼叫
 
     // 向 CEAManager 請求特效數據
-    // 特效 ID: 7, 檔案名稱: "MoFData/Effect/efn_twohandcut.ea"
-    CEAManager::GetInstance()->GetEAData(7, "MoFData/Effect/efn_twohandcut.ea", &m_ccaEffect);
+    // 特效 ID: 7, 檔案名稱: "Effect/efn_twohandcut.ea"
+    CEAManager::GetInstance()->GetEAData(7, "Effect/efn_twohandcut.ea", &m_ccaEffect);
 
     // 設定影格時間並播放動畫
     m_ccaEffect.SetFrameTime();

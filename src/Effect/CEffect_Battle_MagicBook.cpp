@@ -18,7 +18,7 @@ CEffect_Battle_MagicBook::CEffect_Battle_MagicBook()
     // CEffectBase 建構函式已自動呼叫
 
     // 載入特效的視覺動畫
-    CEAManager::GetInstance()->GetEAData(6, "MoFData/Effect/efn-firebids01.ea", &m_ccaEffect);
+    CEAManager::GetInstance()->GetEAData(6, "Effect/efn-firebids01.ea", &m_ccaEffect);
     m_ccaEffect.SetFrameTime();
     m_ccaEffect.Play(0, true); // 投射物動畫應循環播放
 

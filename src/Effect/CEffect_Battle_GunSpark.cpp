@@ -11,8 +11,8 @@ CEffect_Battle_GunSpark::CEffect_Battle_GunSpark()
     // CEffectBase 的建構函式會被自動呼叫
 
     // 向 CEAManager 請求特效數據
-    // 特效 ID: 5, 檔案名稱: "MoFData/Effect/efn_GunSpark.ea"
-    CEAManager::GetInstance()->GetEAData(5, "MoFData/Effect/efn_GunSpark.ea", &m_ccaEffect);
+    // 特效 ID: 5, 檔案名稱: "Effect/efn_GunSpark.ea"
+    CEAManager::GetInstance()->GetEAData(5, "Effect/efn_GunSpark.ea", &m_ccaEffect);
 
     // 設定影格時間並播放動畫
     m_ccaEffect.SetFrameTime();

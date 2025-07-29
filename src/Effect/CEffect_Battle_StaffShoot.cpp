@@ -13,8 +13,8 @@ CEffect_Battle_StaffShoot::CEffect_Battle_StaffShoot()
     // CEffectBase 的建構函式會被自動呼叫
 
     // 向 CEAManager 請求特效數據
-    // 特效 ID: 11, 檔案名稱: "MoFData/Effect/efn_staffshoot.ea"
-    CEAManager::GetInstance()->GetEAData(11, "MoFData/Effect/efn_staffshoot.ea", &m_ccaEffect);
+    // 特效 ID: 11, 檔案名稱: "Effect/efn_staffshoot.ea"
+    CEAManager::GetInstance()->GetEAData(11, "Effect/efn_staffshoot.ea", &m_ccaEffect);
 
     // 設定影格時間並播放動畫
     m_ccaEffect.SetFrameTime();

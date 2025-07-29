@@ -33,6 +33,10 @@ private:
     /// @brief 一個輔助函式，用於在角色位置產生新的下劈斬特效。
     void SpawnDownCutEffect();
 
+    void SpawnHitNormalEffect();
+
+    void SpawnUpperCutEffect();
+
     // --- 私有成員 ---
 
     /// @brief 模擬的施法者角色。

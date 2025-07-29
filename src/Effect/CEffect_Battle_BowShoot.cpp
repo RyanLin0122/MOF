@@ -17,7 +17,7 @@ CEffect_Battle_BowShoot::CEffect_Battle_BowShoot()
     // CEffectBase 建構函式已自動呼叫
 
     // 載入箭矢的視覺動畫
-    CEAManager::GetInstance()->GetEAData(3, "MoFData/Effect/efn_bowshoot.ea", &m_ccaEffect);
+    CEAManager::GetInstance()->GetEAData(3, "Effect/efn_bowshoot.ea", &m_ccaEffect);
     m_ccaEffect.SetFrameTime();
     m_ccaEffect.Play(0, true); // 箭矢飛行動畫應循環播放
 

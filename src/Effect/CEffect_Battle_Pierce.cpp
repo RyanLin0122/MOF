@@ -11,8 +11,8 @@ CEffect_Battle_Pierce::CEffect_Battle_Pierce()
     // CEffectBase 的建構函式會被自動呼叫
 
     // 向 CEAManager 請求特效數據
-    // 特效 ID: 2, 檔案名稱: "MoFData/Effect/efn_pierce.ea"
-    CEAManager::GetInstance()->GetEAData(2, "MoFData/Effect/efn_pierce.ea", &m_ccaEffect);
+    // 特效 ID: 2, 檔案名稱: "Effect/efn_pierce.ea"
+    CEAManager::GetInstance()->GetEAData(2, "Effect/efn_pierce.ea", &m_ccaEffect);
 
     // 設定影格時間並播放動畫
     m_ccaEffect.SetFrameTime();

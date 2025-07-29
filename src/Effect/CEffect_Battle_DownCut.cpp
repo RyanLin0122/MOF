@@ -11,7 +11,7 @@ CEffect_Battle_DownCut::CEffect_Battle_DownCut()
     // CEffectBase 的建構函式會被自動呼叫
 
     // 向 CEAManager 請求特效數據
-    // 特效 ID: 0, 檔案名稱: "MoFData/Effect/efn_downcut.ea"
+    // 特效 ID: 0, 檔案名稱: "Effect/efn_downcut.ea"
     CEAManager::GetInstance()->GetEAData(0, "Effect/efn_downcut.ea", &m_ccaEffect);
 
     // 設定影格時間並播放動畫
