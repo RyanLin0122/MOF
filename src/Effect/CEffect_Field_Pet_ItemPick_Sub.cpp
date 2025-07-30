@@ -14,7 +14,7 @@
 // 對應反組譯碼: 0x00536D60
 CEffect_Field_Pet_ItemPick_Sub_Complete::CEffect_Field_Pet_ItemPick_Sub_Complete()
 {
-    CEAManager::GetInstance()->GetEAData(106, "MoFData/Effect/Pet-ItemPick.ea", &m_ccaEffect);
+    CEAManager::GetInstance()->GetEAData(106, "Effect/Pet-ItemPick.ea", &m_ccaEffect);
     m_ccaEffect.SetFrameTime();
     m_ccaEffect.Play(0, false);
 }

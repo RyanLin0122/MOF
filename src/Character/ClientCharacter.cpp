@@ -2,7 +2,7 @@
 
 /// @brief 建構函式
 ClientCharacter::ClientCharacter() {
-
+	m_wMapID = 0; // 假設初始地圖 ID 為 0
 }
 
 /// @brief 虛擬解構函式

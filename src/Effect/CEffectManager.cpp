@@ -13,8 +13,6 @@
 #include "Effect/CEffect_Item_Type_Once.h"
 #include "Character/ClientCharacterManager.h"
 
-// 假設的全域單例
-extern cltMoFC_EffectKindInfo* g_clEffectKindInfo = new cltMoFC_EffectKindInfo();
 
 // 靜態實例初始化
 CEffectManager* CEffectManager::s_pInstance = nullptr;
@@ -29,7 +27,8 @@ CEffectManager* CEffectManager::GetInstance() {
 // 對應反組譯碼: 0x0053AEE0
 CEffectManager::CEffectManager() : m_pHead(nullptr), m_pTail(nullptr), m_uEffectCount(0)
 {
-    // m_OverMindScreenEffect 和 m_SkillTypeOnceEffect 的建構函式會在此處自動呼叫
+    // m_OverMindScreenEffect & cltMoFC_EffectKindInfo 和 m_SkillTypeOnceEffect 的建構函式會在此處自動呼叫
+	//g_clEffectKindInfo->Initialize("Effect/EffectKindInfo.txt");
 }
 
 // 對應反組譯碼: 0x0053AEE0
@@ -66,7 +65,7 @@ void CEffectManager::BulletAdd(CEffectBase* pEffect)
 // 對應反組譯碼: 0x0053AFA0
 CEffectBase* CEffectManager::AddEffect(unsigned short effectKindID, ClientCharacter* pCaster, ClientCharacter* pTarget, int a5, unsigned short a6, unsigned short a7, unsigned char a8)
 {
-    stEffectKindInfo* pKindInfo = g_clEffectKindInfo->GetEffectKindInfo(effectKindID);
+    stEffectKindInfo* pKindInfo = this->g_clEffectKindInfo.GetEffectKindInfo(effectKindID);
     if (!pKindInfo) return nullptr;
 
     // 如果特效檔案名是 "0"，且不是特殊類型5，則不創建
@@ -121,7 +120,7 @@ CEffectBase* CEffectManager::AddEffect(unsigned short effectKindID, ClientCharac
 // 對應反組譯碼: 0x0053B280
 CEffectBase* CEffectManager::AddEffect(char* szEffectName, ClientCharacter* pCaster)
 {
-    unsigned short kindID = g_clEffectKindInfo->TranslateKindCode(szEffectName);
+    unsigned short kindID = this->g_clEffectKindInfo.TranslateKindCode(szEffectName);
     return AddEffect(kindID, pCaster, nullptr, 0, 0, 0, 2);
 }
 

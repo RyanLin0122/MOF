@@ -2,6 +2,7 @@
 #include "Effect/CEffectBase.h"
 #include "Effect/CEffect_OverMind_Screen.h"
 #include "Effect/CEffect_Skill_Type_Once.h" // 雖然在提供的程式碼中未見其用途，但依據建構函式還原
+#include "Effect/cltMoFC_EffectKindInfo.h"
 
 /**
  * @struct EffectInfo
@@ -67,8 +68,9 @@ public:
 
     /// @brief 清空所有特效鏈結串列。
     void BulletListAllDel();
-
-
+	
+    cltMoFC_EffectKindInfo g_clEffectKindInfo;
+    
 private:
     // --- 私有成員 ---
 
