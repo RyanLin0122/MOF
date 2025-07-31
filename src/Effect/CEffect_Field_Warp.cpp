@@ -71,8 +71,8 @@ void CEffect_Field_Warp::Process()
     }
 
     // 將世界座標轉換為螢幕座標
-    float screenX = m_fCurrentPosX - static_cast<float>(g_Game_System_Info.ScreenWidth);
-    float screenY = m_fCurrentPosY - static_cast<float>(g_Game_System_Info.ScreenHeight);
+    float screenX = m_fCurrentPosX - static_cast<float>(g_Game_System_Info.ScreenX);
+    float screenY = m_fCurrentPosY - static_cast<float>(g_Game_System_Info.ScreenY);
 
     // 進行裁剪判斷
     m_bIsVisible = IsCliping(screenX, 0.0f);

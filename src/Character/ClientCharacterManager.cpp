@@ -22,3 +22,7 @@ ClientCharacterManager::~ClientCharacterManager() {
 ClientCharacter* ClientCharacterManager::GetCharByAccount(unsigned int) {
 	return new ClientCharacter(); // 假設這裡返回一個新的 ClientCharacter 實例
 }
+
+bool ClientCharacterManager::IsMapConqueror(char* Name) {
+    return true;
+}

@@ -61,13 +61,13 @@ void CEffect_Skill_Type_Once::Process()
 
     // 進行裁剪判斷
     // 減去攝影機座標，轉換為螢幕座標
-    float screenX = m_fCurrentPosX - static_cast<float>(g_Game_System_Info.ScreenWidth);
+    float screenX = m_fCurrentPosX - static_cast<float>(g_Game_System_Info.ScreenX);
     m_bIsVisible = IsCliping(screenX, 0.0f); // 原始碼只檢查 X 軸
 
     // 如果可見，則更新內部 CCAEffect 的狀態並處理其動畫
     if (m_bIsVisible) {
         // 將世界座標轉換為螢幕座標後傳遞給 CCAEffect
-        m_ccaEffect.SetPosition(screenX, m_fCurrentPosY - static_cast<float>(g_Game_System_Info.ScreenHeight));
+        m_ccaEffect.SetPosition(screenX, m_fCurrentPosY - static_cast<float>(g_Game_System_Info.ScreenY));
         m_ccaEffect.Process();
     }
 }

@@ -219,13 +219,13 @@ void CEffectUseHitMulti::Process()
     for (unsigned int i = 0; i < m_uParticleCount; ++i) {
         Particle& p = m_Particles[i];
         if (p.bIsActive) {
-            float screenX = p.fPosX - static_cast<float>(g_Game_System_Info.ScreenWidth);
+            float screenX = p.fPosX - static_cast<float>(g_Game_System_Info.ScreenX);
             p.bIsVisible = IsCliping(screenX, 0.0f);
 
             if (p.bIsVisible) {
                 p.pImage = cltImageManager::GetInstance()->GetGameImage(7, m_dwResourceID, 0, 1);
                 if (p.pImage) {
-                    float screenY = p.fPosY - static_cast<float>(g_Game_System_Info.ScreenHeight);
+                    float screenY = p.fPosY - static_cast<float>(g_Game_System_Info.ScreenY);
                     p.pImage->SetPosition(screenX, screenY);
                     p.pImage->SetBlockID(p.cFrameIndex);
 

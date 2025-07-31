@@ -132,8 +132,8 @@ bool CEffect_Mon_DarkBall::FrameProcess(float fElapsedTime)
 void CEffect_Mon_DarkBall::Process()
 {
     // 與 BowShoot 不同，此函式沒有裁剪判斷，而是直接計算
-    float screenX = m_fCurrentPosX - static_cast<float>(g_Game_System_Info.ScreenWidth);
-    float screenY = m_fCurrentPosY - static_cast<float>(g_Game_System_Info.ScreenHeight);
+    float screenX = m_fCurrentPosX - static_cast<float>(g_Game_System_Info.ScreenX);
+    float screenY = m_fCurrentPosY - static_cast<float>(g_Game_System_Info.ScreenY);
 
     m_ccaEffect.SetPosition(screenX, screenY);
     m_ccaEffect.SetRotation(m_fAngle);

@@ -276,6 +276,39 @@
     <ClCompile Include="src\Pet\cltPetObject.cpp">
       <Filter>來源檔案</Filter>
     </ClCompile>
+    <ClCompile Include="src\Effect\CEffect_Player_Dead.cpp">
+      <Filter>來源檔案</Filter>
+    </ClCompile>
+    <ClCompile Include="src\Effect\CEffect_Player_EnchantLevel.cpp">
+      <Filter>來源檔案</Filter>
+    </ClCompile>
+    <ClCompile Include="src\Effect\CEffect_Player_FItem_Effect.cpp">
+      <Filter>來源檔案</Filter>
+    </ClCompile>
+    <ClCompile Include="src\Effect\CEffect_Player_Goggles.cpp">
+      <Filter>來源檔案</Filter>
+    </ClCompile>
+    <ClCompile Include="src\Effect\CEffect_Player_MapConqueror.cpp">
+      <Filter>來源檔案</Filter>
+    </ClCompile>
+    <ClCompile Include="src\Effect\CEffect_Player_PCRoom_Effect.cpp">
+      <Filter>來源檔案</Filter>
+    </ClCompile>
+    <ClCompile Include="src\Effect\CEffect_Player_Special_Top_Effect.cpp">
+      <Filter>來源檔案</Filter>
+    </ClCompile>
+    <ClCompile Include="src\Effect\CEffect_Player_Special_Bottom_Effect.cpp">
+      <Filter>來源檔案</Filter>
+    </ClCompile>
+    <ClCompile Include="src\Effect\CEffect_Player_Tolerance.cpp">
+      <Filter>來源檔案</Filter>
+    </ClCompile>
+    <ClCompile Include="src\Effect\CEffect_Player_WeatherPreView.cpp">
+      <Filter>來源檔案</Filter>
+    </ClCompile>
+    <ClCompile Include="src\Effect\CEffect_Portal.cpp">
+      <Filter>來源檔案</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="inc\nfs.h">
@@ -537,6 +570,39 @@
       <Filter>標頭檔</Filter>
     </ClInclude>
     <ClInclude Include="inc\Pet\cltPetObject.h">
+      <Filter>標頭檔</Filter>
+    </ClInclude>
+    <ClInclude Include="inc\Effect\CEffect_Player_Dead.h">
+      <Filter>標頭檔</Filter>
+    </ClInclude>
+    <ClInclude Include="inc\Effect\CEffect_Player_EnchantLevel.h">
+      <Filter>標頭檔</Filter>
+    </ClInclude>
+    <ClInclude Include="inc\Effect\CEffect_Player_FItem_Effect.h">
+      <Filter>標頭檔</Filter>
+    </ClInclude>
+    <ClInclude Include="inc\Effect\CEffect_Player_Goggles.h">
+      <Filter>標頭檔</Filter>
+    </ClInclude>
+    <ClInclude Include="inc\Effect\CEffect_Player_MapConqueror.h">
+      <Filter>標頭檔</Filter>
+    </ClInclude>
+    <ClInclude Include="inc\Effect\CEffect_Player_PCRoom_Effect.h">
+      <Filter>標頭檔</Filter>
+    </ClInclude>
+    <ClInclude Include="inc\Effect\CEffect_Player_Special_Top_Effect.h">
+      <Filter>標頭檔</Filter>
+    </ClInclude>
+    <ClInclude Include="inc\Effect\CEffect_Player_Special_Bottom_Effect.h">
+      <Filter>標頭檔</Filter>
+    </ClInclude>
+    <ClInclude Include="inc\Effect\CEffect_Player_Tolerance.h">
+      <Filter>標頭檔</Filter>
+    </ClInclude>
+    <ClInclude Include="inc\Effect\CEffect_Player_WeatherPreView.h">
+      <Filter>標頭檔</Filter>
+    </ClInclude>
+    <ClInclude Include="inc\Effect\CEffect_Portal.h">
       <Filter>標頭檔</Filter>
     </ClInclude>
   </ItemGroup>

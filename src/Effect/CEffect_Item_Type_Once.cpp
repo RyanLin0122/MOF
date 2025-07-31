@@ -64,14 +64,14 @@ void CEffect_Item_Type_Once::Process()
     // --- 核心邏輯：使用儲存的初始位置 ---
     // 原始碼: v3 = (float)(*((_DWORD *)this + 34) - dword_A73088);
     //         v2 = CEffectBase::IsCliping(this, v3, 0.0);
-    float screenX = m_fInitialPosX - static_cast<float>(g_Game_System_Info.ScreenWidth);
+    float screenX = m_fInitialPosX - static_cast<float>(g_Game_System_Info.ScreenX);
     m_bIsVisible = IsCliping(screenX, 0.0f);
 
     if (m_bIsVisible) {
         // 將世界座標轉換為螢幕座標後傳遞給 CCAEffect
         // 原始碼: *((float *)this + 12) = (float)(*((_DWORD *)this + 34) - dword_A73088);
         //         *((float *)this + 13) = (float)(*((_DWORD *)this + 35) - dword_A7308C);
-        m_ccaEffect.SetPosition(screenX, m_fInitialPosY - static_cast<float>(g_Game_System_Info.ScreenHeight));
+        m_ccaEffect.SetPosition(screenX, m_fInitialPosY - static_cast<float>(g_Game_System_Info.ScreenY));
         m_ccaEffect.SetFlipX(m_bIsFlip);
         m_ccaEffect.Process();
     }

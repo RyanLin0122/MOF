@@ -128,11 +128,11 @@ bool CEffect_Field_CriticalNumber::FrameProcess(float fElapsedTime)
 // 對應反組譯碼: 0x00534940
 void CEffect_Field_CriticalNumber::Process()
 {
-    float screenX = m_fInitialPosX - static_cast<float>(g_Game_System_Info.ScreenWidth);
+    float screenX = m_fInitialPosX - static_cast<float>(g_Game_System_Info.ScreenX);
     m_bIsVisible = IsCliping(screenX, 0.0f);
 
     if (m_bIsVisible) {
-        float screenY = m_fCurrentPosY - static_cast<float>(g_Game_System_Info.ScreenHeight);
+        float screenY = m_fCurrentPosY - static_cast<float>(g_Game_System_Info.ScreenY);
         float currentX = screenX - m_fTotalWidth;
 
         // 處理數字

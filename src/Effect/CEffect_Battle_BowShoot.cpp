@@ -158,11 +158,11 @@ bool CEffect_Battle_BowShoot::FrameProcess(float fElapsedTime)
 // 對應反組譯碼: 0x0052DF10
 void CEffect_Battle_BowShoot::Process()
 {
-    float screenX = m_fCurrentPosX - static_cast<float>(g_Game_System_Info.ScreenWidth);
+    float screenX = m_fCurrentPosX - static_cast<float>(g_Game_System_Info.ScreenX);
     m_bIsVisible = IsCliping(screenX, 0.0f);
 
     if (m_bIsVisible) {
-        float screenY = m_fCurrentPosY - static_cast<float>(g_Game_System_Info.ScreenHeight);
+        float screenY = m_fCurrentPosY - static_cast<float>(g_Game_System_Info.ScreenY);
 
         m_ccaEffect.SetPosition(screenX, screenY);
         m_ccaEffect.SetRotation(m_fAngle);

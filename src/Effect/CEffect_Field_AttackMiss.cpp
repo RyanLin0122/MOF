@@ -64,7 +64,7 @@ bool CEffect_Field_AttackMiss::FrameProcess(float fElapsedTime)
 // 對應反組譯碼: 0x00534380
 void CEffect_Field_AttackMiss::Process()
 {
-    float screenX = m_fInitialPosX - static_cast<float>(g_Game_System_Info.ScreenWidth);
+    float screenX = m_fInitialPosX - static_cast<float>(g_Game_System_Info.ScreenX);
     m_bIsVisible = IsCliping(screenX, 0.0f);
 
     if (m_bIsVisible) {
@@ -73,7 +73,7 @@ void CEffect_Field_AttackMiss::Process()
         m_pMissImage = cltImageManager::GetInstance()->GetGameImage(7, 0xB0005A4u, 0, 1);
 
         if (m_pMissImage) {
-            float screenY = m_fCurrentPosY - static_cast<float>(g_Game_System_Info.ScreenHeight);
+            float screenY = m_fCurrentPosY - static_cast<float>(g_Game_System_Info.ScreenY);
 
             m_pMissImage->SetPosition(screenX, screenY);
             m_pMissImage->SetBlockID(62); // "MISS" 字樣在圖檔中的索引

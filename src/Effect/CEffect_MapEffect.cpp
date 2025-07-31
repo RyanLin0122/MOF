@@ -75,8 +75,8 @@ bool CEffect_MapEffect::FrameProcess(float fElapsedTime)
 // 對應反組譯碼: 0x005378E0
 void CEffect_MapEffect::Process()
 {
-    float screenX = m_fCurrentPosX - static_cast<float>(g_Game_System_Info.ScreenWidth);
-    float screenY = m_fCurrentPosY - static_cast<float>(g_Game_System_Info.ScreenHeight);
+    float screenX = m_fCurrentPosX - static_cast<float>(g_Game_System_Info.ScreenX);
+    float screenY = m_fCurrentPosY - static_cast<float>(g_Game_System_Info.ScreenY);
 
     m_bIsVisible = IsCliping(screenX, 0.0f);
 

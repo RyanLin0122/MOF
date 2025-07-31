@@ -106,7 +106,7 @@ void CEffect_Field_ItemPick::Process()
     m_nSubEffectTimer++;
     if (m_nSubEffectTimer >= SETTING_FRAME) {
         m_nSubEffectTimer = 0;
-        float screenX = m_fCurrentPosX - static_cast<float>(g_Game_System_Info.ScreenWidth);
+        float screenX = m_fCurrentPosX - static_cast<float>(g_Game_System_Info.ScreenX);
         m_bIsVisible = IsCliping(screenX, 0.0f);
 
         if (m_bIsVisible) {

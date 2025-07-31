@@ -46,7 +46,7 @@ void CEffect_Battle_Hit_Normal::Process()
 {
     // 將世界座標轉換為螢幕座標
     // 原始碼: v3 = *((float *)this + 2) - (double)dword_A73088;
-    float screenX = m_fCurrentPosX;// - static_cast<float>(g_Game_System_Info.ScreenWidth);
+    float screenX = m_fCurrentPosX;// - static_cast<float>(g_Game_System_Info.ScreenX);
     float screenY = m_fCurrentPosY;// -static_cast<float>(g_Game_System_Info.ScreenHeight);
 
     // 進行裁剪判斷

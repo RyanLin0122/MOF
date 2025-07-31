@@ -71,12 +71,12 @@ void CEffect_Skill_Type_Directed::Process()
     m_fCurrentPosY = targetY;
 
     // 進行裁剪判斷
-    float screenX = m_fCurrentPosX - static_cast<float>(g_Game_System_Info.ScreenWidth);
+    float screenX = m_fCurrentPosX - static_cast<float>(g_Game_System_Info.ScreenX);
     m_bIsVisible = IsCliping(screenX, 0.0f);
 
     if (m_bIsVisible) {
         // 將世界座標轉換為螢幕座標後傳遞給 CCAEffect
-        m_ccaEffect.SetPosition(screenX, m_fCurrentPosY - static_cast<float>(g_Game_System_Info.ScreenHeight));
+        m_ccaEffect.SetPosition(screenX, m_fCurrentPosY - static_cast<float>(g_Game_System_Info.ScreenY));
         m_ccaEffect.SetFlipX(m_bIsFlip); // 將翻轉狀態傳遞給 CCAEffect
         m_ccaEffect.Process();
     }

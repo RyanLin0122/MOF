@@ -5,6 +5,7 @@ class ClientCharacterManager {
 public:
 	static ClientCharacterManager* GetInstance();
 	ClientCharacter* GetCharByAccount(unsigned int);
+	bool IsMapConqueror(char* Name);
 private:
 	ClientCharacterManager();
 	~ClientCharacterManager();

@@ -34,8 +34,8 @@ bool CEffect_Field_Pet_ItemPick_Sub_Complete::FrameProcess(float fElapsedTime)
 
 void CEffect_Field_Pet_ItemPick_Sub_Complete::Process()
 {
-    float screenX = m_fCurrentPosX - static_cast<float>(g_Game_System_Info.ScreenWidth);
-    float screenY = m_fCurrentPosY - static_cast<float>(g_Game_System_Info.ScreenHeight);
+    float screenX = m_fCurrentPosX - static_cast<float>(g_Game_System_Info.ScreenX);
+    float screenY = m_fCurrentPosY - static_cast<float>(g_Game_System_Info.ScreenY);
     m_bIsVisible = IsCliping(screenX, 0.0f);
 
     if (m_bIsVisible) {
@@ -89,8 +89,8 @@ void CEffect_Field_Pet_ItemPick_Sub_Light::Process()
     m_pLightImage = cltImageManager::GetInstance()->GetGameImage(7, 0x1D00011A, 0, 1);
     if (m_pLightImage)
     {
-        float screenX = m_fCurrentPosX - static_cast<float>(g_Game_System_Info.ScreenWidth);
-        float screenY = m_fCurrentPosY - static_cast<float>(g_Game_System_Info.ScreenHeight);
+        float screenX = m_fCurrentPosX - static_cast<float>(g_Game_System_Info.ScreenX);
+        float screenY = m_fCurrentPosY - static_cast<float>(g_Game_System_Info.ScreenY);
 
         m_pLightImage->SetPosition(screenX, screenY);
         m_pLightImage->SetColor(static_cast<unsigned int>(m_fAlpha));

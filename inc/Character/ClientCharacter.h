@@ -80,6 +80,13 @@ public:
 
     int GetPetPosY();
 	unsigned short GetMapID() const { return m_wMapID; }
+	unsigned int GetActionState() const { return m_dwActionState; }
+    int IsTransformed() const { return m_dwTransformation != 0; }
+	int GetSomeOtherState() const { return m_someOtherState; }
+	bool IsFashionItemActive() const { return m_fashionItemActive; }
+	char* GetName() { return m_szName; }
+	bool IsPCRoomUser() const { return m_isPCRoomUser; }
+    bool IsPCRoomPremium() const { return m_isPCRoomPremium; }
 
 private:
     // 內部輔助函式
@@ -121,6 +128,7 @@ private:
     unsigned char m_ucHair;                           // 位移 +595
     unsigned char m_ucFace;                           // 位移 +596
     char m_cCharState;                                // 位移 +604 (Stun, etc.)
+    int m_dwTransformation;                           // 位移 +676
     stCharOrder* m_pCurrentOrder;                     // 位移 +708
     unsigned char m_ucHittedSkillMotion;              // 位移 +732 (*((_BYTE *)this + 732))
     unsigned char m_ucAttackType;                     // 位移 +738 (*((_BYTE *)this + 738))
@@ -156,6 +164,10 @@ private:
     float m_fMoveSpeed;                               // 位移 +564 (*((float *)this + 141))
 
     unsigned int m_dwActionState;                     // 位移 +9684 (*((_DWORD *)this + 2421))
+	bool m_fashionItemActive;                         // 位移 +9688 (*((_BYTE *)this + 4376))
     unsigned short m_wCurrentFrame;                   // 位移 +9694 (*((_WORD *)this + 4847))
     unsigned short m_wTotalFrame;                     // 位移 +9688 (*((_WORD *)this + 4844))
+	int m_someOtherState;                             // 位移 +11528
+    bool m_isPCRoomUser;                                // 位移 +11556
+    bool m_isPCRoomPremium;                             // 位移 +11560
 };

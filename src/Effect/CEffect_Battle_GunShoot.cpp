@@ -125,8 +125,8 @@ void CEffect_Battle_GunShoot::Process()
         // 將世界座標轉換為螢幕座標
         // 原始碼: v4 = *((float *)this + 2) - (double)dword_A73088;
         //         v3 = *((float *)this + 3) - (double)dword_A7308C - 60.0;
-        float screenX = m_fCurrentPosX - static_cast<float>(g_Game_System_Info.ScreenWidth);
-        float screenY = m_fCurrentPosY - static_cast<float>(g_Game_System_Info.ScreenHeight) - 60.0f; // Y軸有60像素的額外偏移
+        float screenX = m_fCurrentPosX - static_cast<float>(g_Game_System_Info.ScreenX);
+        float screenY = m_fCurrentPosY - static_cast<float>(g_Game_System_Info.ScreenY) - 60.0f; // Y軸有60像素的額外偏移
 
         // --- 開始設定 GameImage 的所有屬性 ---
 

@@ -115,7 +115,7 @@ void CEffect_Field_Walkdust::Process()
     m_pEffectImage = cltImageManager::GetInstance()->GetGameImage(7, m_dwResourceID, 0, 1);
 
     if (m_pEffectImage) {
-        float screenY = m_bMoveRight ? m_fCurrentPosY : m_fCurrentPosY - static_cast<float>(g_Game_System_Info.ScreenHeight);
+        float screenY = m_bMoveRight ? m_fCurrentPosY : m_fCurrentPosY - static_cast<float>(g_Game_System_Info.ScreenY);
 
         m_pEffectImage->SetPosition(screenX, screenY);
         m_pEffectImage->SetBlockID(m_cInitialFrame);

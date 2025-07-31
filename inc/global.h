@@ -14,6 +14,8 @@ extern bool IsDialogBoxMode;
 struct GameSystemInfo {
     int ScreenWidth;
     int ScreenHeight;
+    float ScreenX;
+	float ScreenY;
 };
 
 extern GameSystemInfo g_Game_System_Info;
