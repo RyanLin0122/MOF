@@ -309,6 +309,42 @@
     <ClCompile Include="src\Effect\CEffect_Portal.cpp">
       <Filter>來源檔案</Filter>
     </ClCompile>
+    <ClCompile Include="src\Effect\CEffect_Skill_Blocking.cpp">
+      <Filter>來源檔案</Filter>
+    </ClCompile>
+    <ClCompile Include="src\Effect\CEffect_Skill_Freezing.cpp">
+      <Filter>來源檔案</Filter>
+    </ClCompile>
+    <ClCompile Include="src\Effect\CEffect_Skill_Heal.cpp">
+      <Filter>來源檔案</Filter>
+    </ClCompile>
+    <ClCompile Include="src\Effect\CEffect_Skill_HealPray.cpp">
+      <Filter>來源檔案</Filter>
+    </ClCompile>
+    <ClCompile Include="src\Effect\CEffect_Skill_Hit.cpp">
+      <Filter>來源檔案</Filter>
+    </ClCompile>
+    <ClCompile Include="src\Effect\CEffect_Skill_Integrity.cpp">
+      <Filter>來源檔案</Filter>
+    </ClCompile>
+    <ClCompile Include="src\Effect\CEffect_Skill_OtherHeal.cpp">
+      <Filter>來源檔案</Filter>
+    </ClCompile>
+    <ClCompile Include="src\Effect\CEffect_Skill_Resurrection.cpp">
+      <Filter>來源檔案</Filter>
+    </ClCompile>
+    <ClCompile Include="src\Effect\CEffect_Skill_SpeedUP.cpp">
+      <Filter>來源檔案</Filter>
+    </ClCompile>
+    <ClCompile Include="src\Effect\CEffect_Skill_Take.cpp">
+      <Filter>來源檔案</Filter>
+    </ClCompile>
+    <ClCompile Include="src\Effect\CEffect_Skill_Trap_Explosion.cpp">
+      <Filter>來源檔案</Filter>
+    </ClCompile>
+    <ClCompile Include="src\Effect\CEffect_Skill_Type_Directed_Target.cpp">
+      <Filter>來源檔案</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="inc\nfs.h">
@@ -603,6 +639,42 @@
       <Filter>標頭檔</Filter>
     </ClInclude>
     <ClInclude Include="inc\Effect\CEffect_Portal.h">
+      <Filter>標頭檔</Filter>
+    </ClInclude>
+    <ClInclude Include="inc\Effect\CEffect_Skill_Blocking.h">
+      <Filter>標頭檔</Filter>
+    </ClInclude>
+    <ClInclude Include="inc\Effect\CEffect_Skill_Freezing.h">
+      <Filter>標頭檔</Filter>
+    </ClInclude>
+    <ClInclude Include="inc\Effect\CEffect_Skill_Heal.h">
+      <Filter>標頭檔</Filter>
+    </ClInclude>
+    <ClInclude Include="inc\Effect\CEffect_Skill_HealPray.h">
+      <Filter>標頭檔</Filter>
+    </ClInclude>
+    <ClInclude Include="inc\Effect\CEffect_Skill_Hit.h">
+      <Filter>標頭檔</Filter>
+    </ClInclude>
+    <ClInclude Include="inc\Effect\CEffect_Skill_Integrity.h">
+      <Filter>標頭檔</Filter>
+    </ClInclude>
+    <ClInclude Include="inc\Effect\CEffect_Skill_OtherHeal.h">
+      <Filter>標頭檔</Filter>
+    </ClInclude>
+    <ClInclude Include="inc\Effect\CEffect_Skill_Resurrection.h">
+      <Filter>標頭檔</Filter>
+    </ClInclude>
+    <ClInclude Include="inc\Effect\CEffect_Skill_SpeedUP.h">
+      <Filter>標頭檔</Filter>
+    </ClInclude>
+    <ClInclude Include="inc\Effect\CEffect_Skill_Take.h">
+      <Filter>標頭檔</Filter>
+    </ClInclude>
+    <ClInclude Include="inc\Effect\CEffect_Skill_Trap_Explosion.h">
+      <Filter>標頭檔</Filter>
+    </ClInclude>
+    <ClInclude Include="inc\Effect\CEffect_Skill_Type_Directed_Target.h">
       <Filter>標頭檔</Filter>
     </ClInclude>
   </ItemGroup>

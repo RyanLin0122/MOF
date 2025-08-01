@@ -87,6 +87,11 @@ public:
 	char* GetName() { return m_szName; }
 	bool IsPCRoomUser() const { return m_isPCRoomUser; }
     bool IsPCRoomPremium() const { return m_isPCRoomPremium; }
+	bool CanMove() const { return m_canMove; }
+	bool IsFreezing() const { return m_isFreezing; }
+	bool IsIntegrityActive() const { return m_isIntegrityActive; }
+	void SetCanSpeedUp(bool value) { m_canSpeedUp = value; }
+	void SetPreparingSpeedUp(bool value) { m_preparingSpeedUp = value; }
 
 private:
     // 內部輔助函式
@@ -167,7 +172,12 @@ private:
 	bool m_fashionItemActive;                         // 位移 +9688 (*((_BYTE *)this + 4376))
     unsigned short m_wCurrentFrame;                   // 位移 +9694 (*((_WORD *)this + 4847))
     unsigned short m_wTotalFrame;                     // 位移 +9688 (*((_WORD *)this + 4844))
-	int m_someOtherState;                             // 位移 +11528
-    bool m_isPCRoomUser;                                // 位移 +11556
-    bool m_isPCRoomPremium;                             // 位移 +11560
+	bool m_isFreezing;                                // 位移 +9700 bit4
+    bool m_canMove;                                   // 位移 +9700 bit1
+    bool m_isIntegrityActive;                         // 位移 +9700 bit0
+    int m_someOtherState;                             // 位移 +11528
+    bool m_isPCRoomUser;                              // 位移 +11556
+    bool m_isPCRoomPremium;                           // 位移 +11560
+	bool m_preparingSpeedUp;                          // 位移 *((_DWORD *)a2 + 174)
+	bool m_canSpeedUp;                                // 位移 *(_DWORD *)(v3 + 696)
 };
