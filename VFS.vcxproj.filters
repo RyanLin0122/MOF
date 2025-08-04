@@ -363,6 +363,12 @@
     <ClCompile Include="src\Effect\CEffect_UI_WorldMap_Light.cpp">
       <Filter>來源檔案</Filter>
     </ClCompile>
+    <ClCompile Include="src\Effect\CBulletBase.cpp">
+      <Filter>來源檔案</Filter>
+    </ClCompile>
+    <ClCompile Include="src\Effect\CBulletArrow.cpp">
+      <Filter>來源檔案</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="inc\nfs.h">
@@ -711,6 +717,12 @@
       <Filter>標頭檔</Filter>
     </ClInclude>
     <ClInclude Include="inc\Effect\CEffect_UI_WorldMap_Light.h">
+      <Filter>標頭檔</Filter>
+    </ClInclude>
+    <ClInclude Include="inc\Effect\CBulletBase.h">
+      <Filter>標頭檔</Filter>
+    </ClInclude>
+    <ClInclude Include="inc\Effect\CBulletArrow.h">
       <Filter>標頭檔</Filter>
     </ClInclude>
   </ItemGroup>

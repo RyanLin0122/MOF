@@ -152,6 +152,8 @@
     <ClCompile Include="src\Character\ClientCharacterManager.cpp" />
     <ClCompile Include="src\CMOFPacking.cpp" />
     <ClCompile Include="src\cm_packing_integration_test.cpp" />
+    <ClCompile Include="src\Effect\CBulletArrow.cpp" />
+    <ClCompile Include="src\Effect\CBulletBase.cpp" />
     <ClCompile Include="src\Effect\CCAEffect.cpp" />
     <ClCompile Include="src\Effect\CEAManager.cpp" />
     <ClCompile Include="src\Effect\CEffectBase.cpp" />
@@ -266,6 +268,8 @@
     <ClInclude Include="inc\Character\ClientCharacterManager.h" />
     <ClInclude Include="inc\CMOFPacking.h" />
     <ClInclude Include="inc\cm_packing_integration_test.h" />
+    <ClInclude Include="inc\Effect\CBulletArrow.h" />
+    <ClInclude Include="inc\Effect\CBulletBase.h" />
     <ClInclude Include="inc\Effect\CCAEffect.h" />
     <ClInclude Include="inc\Effect\CEAManager.h" />
     <ClInclude Include="inc\Effect\CEffectBase.h" />
