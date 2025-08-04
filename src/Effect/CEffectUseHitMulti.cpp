@@ -7,9 +7,6 @@
 #include <cstdlib> // for rand()
 #include <cmath>   // for sin(), cos()
 
-// 假設的全域變數
-extern GameSystemInfo g_Game_System_Info;
-
 // 對應反組譯碼: 0x0052FCD0
 CEffectUseHitMulti::CEffectUseHitMulti()
 {

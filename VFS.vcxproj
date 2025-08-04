@@ -228,6 +228,12 @@
     <ClCompile Include="src\Effect\CEffect_Skill_Type_Once.cpp" />
     <ClCompile Include="src\Effect\CEffect_Skill_Type_ShootUnit.cpp" />
     <ClCompile Include="src\Effect\CEffect_Skill_Type_Sustain.cpp" />
+    <ClCompile Include="src\Effect\CEffect_UI_ButtonSide.cpp" />
+    <ClCompile Include="src\Effect\CEffect_UI_HP_MP_Number.cpp" />
+    <ClCompile Include="src\Effect\CEffect_UI_SkillSet.cpp" />
+    <ClCompile Include="src\Effect\CEffect_UI_WorldMap_Light.cpp" />
+    <ClCompile Include="src\Effect\CEffect_Use_Hit.cpp" />
+    <ClCompile Include="src\Effect\CEffect_WeddingHall.cpp" />
     <ClCompile Include="src\Effect\cltMoFC_EffectKindInfo.cpp" />
     <ClCompile Include="src\global.cpp" />
     <ClCompile Include="src\Image\BackgroundImage.cpp" />
@@ -336,6 +342,12 @@
     <ClInclude Include="inc\Effect\CEffect_Skill_Type_Once.h" />
     <ClInclude Include="inc\Effect\CEffect_Skill_Type_ShootUnit.h" />
     <ClInclude Include="inc\Effect\CEffect_Skill_Type_Sustain.h" />
+    <ClInclude Include="inc\Effect\CEffect_UI_ButtonSide.h" />
+    <ClInclude Include="inc\Effect\CEffect_UI_HP_MP_Number.h" />
+    <ClInclude Include="inc\Effect\CEffect_UI_SkillSet.h" />
+    <ClInclude Include="inc\Effect\CEffect_UI_WorldMap_Light.h" />
+    <ClInclude Include="inc\Effect\CEffect_Use_Hit.h" />
+    <ClInclude Include="inc\Effect\CEffect_WeddingHall.h" />
     <ClInclude Include="inc\Effect\cltMoFC_EffectKindInfo.h" />
     <ClInclude Include="inc\fmod\fmod.h" />
     <ClInclude Include="inc\fmod\fmoddyn.h" />
