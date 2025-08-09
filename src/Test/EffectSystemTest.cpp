@@ -118,8 +118,6 @@ void EffectSystemTest::SpawnDownCutEffect()
     bool bFlip = (rand() % 2 == 0);
     pEffect->SetEffect(x, y, bFlip, 0);
 
-    // 步驟 4: 將建立好的特效實例加入到 CEffectManager 的管理鏈結串列中。
-    // 這是關鍵步驟，只有被加入的特效才會被更新和繪製。
     CEffectManager::GetInstance()->BulletAdd(pEffect);
 }
 
@@ -129,20 +127,15 @@ void EffectSystemTest::SpawnHitNormalEffect()
 
     printf("  正在產生 CEffect_Battle_Hit_Normal 特效...\n");
 
-    // 步驟 1: 直接 new 一個 CEffect_Battle_DownCut 物件。
-    // 其建構函式會自動向 CEAManager 請求 "efn_downcut.ea" 特效數據。
     CEffect_Battle_Hit_Normal* pEffect = new CEffect_Battle_Hit_Normal();
 
     // 步驟 2: 從模擬角色獲取位置。
     float x = static_cast<float>(m_pCaster->GetPosX());
     float y = static_cast<float>(m_pCaster->GetPosY());
 
-    // 步驟 3: 設定特效的位置與方向 (隨機翻轉以測試兩種情況)。
     bool bFlip = (rand() % 2 == 0);
     pEffect->SetEffect(x, y);
 
-    // 步驟 4: 將建立好的特效實例加入到 CEffectManager 的管理鏈結串列中。
-    // 這是關鍵步驟，只有被加入的特效才會被更新和繪製。
     CEffectManager::GetInstance()->BulletAdd(pEffect);
 }
 
@@ -152,20 +145,14 @@ void EffectSystemTest::SpawnUpperCutEffect()
 
     printf("  正在產生 CEffect_Battle_UpperCut 特效...\n");
 
-    // 步驟 1: 直接 new 一個 CEffect_Battle_DownCut 物件。
-    // 其建構函式會自動向 CEAManager 請求 "efn_downcut.ea" 特效數據。
     CEffect_Battle_UpperCut* pEffect = new CEffect_Battle_UpperCut();
 
-    // 步驟 2: 從模擬角色獲取位置。
     float x = static_cast<float>(m_pCaster->GetPosX());
     float y = static_cast<float>(m_pCaster->GetPosY());
 
-    // 步驟 3: 設定特效的位置與方向 (隨機翻轉以測試兩種情況)。
     bool bFlip = (rand() % 2 == 0);
     pEffect->SetEffect(x, y, bFlip, 0);
 
-    // 步驟 4: 將建立好的特效實例加入到 CEffectManager 的管理鏈結串列中。
-    // 這是關鍵步驟，只有被加入的特效才會被更新和繪製。
     CEffectManager::GetInstance()->BulletAdd(pEffect);
 }
 
@@ -173,22 +160,16 @@ void EffectSystemTest::SpawnHorizenCutEffect()
 {
     if (!m_pCaster) return;
 
-    printf("  正在產生 CEffect_Battle_UpperCut 特效...\n");
+    printf("  正在產生 CEffect_Battle_HorizenCut 特效...\n");
 
-    // 步驟 1: 直接 new 一個 CEffect_Battle_DownCut 物件。
-    // 其建構函式會自動向 CEAManager 請求 "efn_downcut.ea" 特效數據。
     CEffect_Battle_HorizonCut* pEffect = new CEffect_Battle_HorizonCut();
 
-    // 步驟 2: 從模擬角色獲取位置。
     float x = static_cast<float>(m_pCaster->GetPosX());
     float y = static_cast<float>(m_pCaster->GetPosY());
 
-    // 步驟 3: 設定特效的位置與方向 (隨機翻轉以測試兩種情況)。
     bool bFlip = (rand() % 2 == 0);
     pEffect->SetEffect(x, y, bFlip, 0);
 
-    // 步驟 4: 將建立好的特效實例加入到 CEffectManager 的管理鏈結串列中。
-    // 這是關鍵步驟，只有被加入的特效才會被更新和繪製。
     CEffectManager::GetInstance()->BulletAdd(pEffect);
 }
 
@@ -196,21 +177,15 @@ void EffectSystemTest::SpawnMagicBookEffect()
 {
     if (!m_pCaster) return;
     if (!m_pTarget) return;
-    printf("  正在產生 CEffect_Battle_UpperCut 特效...\n");
+    printf("  正在產生 CEffect_Battle_MagicBook 特效...\n");
 
-    // 步驟 1: 直接 new 一個 CEffect_Battle_DownCut 物件。
-    // 其建構函式會自動向 CEAManager 請求 "efn_downcut.ea" 特效數據。
     CEffect_Battle_MagicBook* pEffect = new CEffect_Battle_MagicBook();
 
-    // 步驟 2: 從模擬角色獲取位置。
     float x = static_cast<float>(m_pCaster->GetPosX());
     float y = static_cast<float>(m_pCaster->GetPosY());
 
-    // 步驟 3: 設定特效的位置與方向 (隨機翻轉以測試兩種情況)。
     bool bFlip = (rand() % 2 == 0);
     pEffect->SetEffect(m_pCaster, m_pTarget, bFlip, 0);
 
-    // 步驟 4: 將建立好的特效實例加入到 CEffectManager 的管理鏈結串列中。
-    // 這是關鍵步驟，只有被加入的特效才會被更新和繪製。
     CEffectManager::GetInstance()->BulletAdd(pEffect);
 }
