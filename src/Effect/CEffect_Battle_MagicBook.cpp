@@ -46,8 +46,8 @@ void CEffect_Battle_MagicBook::SetEffect(ClientCharacter* pCaster, ClientCharact
 
     // --- 步驟 2: 手動覆寫混合模式 (關鍵修正) ---
     // 無論檔案中定義的是什麼，我們都強制其使用加法混合
-    m_ccaEffect.m_ucSrcBlend = D3DBLEND_SRCALPHA; // 值為 5
-    m_ccaEffect.m_ucDestBlend = D3DBLEND_ONE;      // 值為 2
+    //m_ccaEffect.m_ucSrcBlend = D3DBLEND_SRCALPHA; // 值為 5
+    //m_ccaEffect.m_ucDestBlend = D3DBLEND_ONE;      // 值為 2
 
     // --- 後續的物理計算不變 ---
     D3DXVECTOR2 startPos(static_cast<float>(pCaster->GetPosX()), static_cast<float>(pCaster->GetPosY() - 15));

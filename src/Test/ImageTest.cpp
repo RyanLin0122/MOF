@@ -449,7 +449,6 @@ void ImageSystemTester::RunIntegrationTests() {
 
 void ImageSystemTester::Test_ImageResource_LoadGIInPack_Success() {
     // 這個測試依賴於 main.cpp 中的 create_vfs_archive() 已經被呼叫
-    // 且 "D:\\VFS_Source\\" 目錄下有一個名為 "test_pack.gi" 的檔案
 
     ImageResource res;
     // LoadGIInPack 的 packerType 參數在此假設為 0 (CMofPacking)
@@ -482,17 +481,17 @@ void ImageSystemTester::Test_ImageResource_LoadGI_RealFileRelativePath() {
 
 /// @brief 測試使用絕對路徑讀取一個真實存在的 GI 檔案
 void ImageSystemTester::Test_ImageResource_LoadGI_RealFileAbsolutePath() {
-    std::cout << "\n  [PRE-REQUISITE] This test requires the file '200000a1_static_m0002_1.gi' to exist at 'D:\\VFS_Source\\'." << std::endl;
+    std::cout << "\n  [PRE-REQUISITE] This test requires the file '200000a1_static_m0002_1.gi' to exist at 'mofdata\\'." << std::endl;
 
     // Arrange
-    const char* filename = "D:\\VFS_Source\\200000a1_static_m0002_1.gi";
+    const char* filename = "mofdata\\mapbg\\200000a1_static_m0002_1.gi";
     ImageResource res;
 
     // Act
     bool success = res.LoadGI(filename, 0);
 
     // Assert
-    assert(success == true && "Failed to load 'D:\\VFS_Source\\200000a1_static_m0002_1.gi'. Make sure the file exists at this absolute path.");
+    assert(success == true && "Failed to load 'mofdata\\mapbg\\200000a1_static_m0002_1.gi'. Make sure the file exists at this absolute path.");
     assert(res.m_width > 0);
     assert(res.m_height > 0);
     assert(res.m_imageDataSize > 0);

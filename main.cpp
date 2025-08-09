@@ -43,7 +43,7 @@ VOID Cleanup();
 
 void create_vfs_archive() {
     const char* vfs_base_name = "mof"; // 最終會產生 mof.pak 和 mof.paki
-    const char* source_directory = "D:\\mof_module\\VFS\\mofdata\\"; // 您在步驟1中建立的來源目錄 (注意路徑結尾的斜線)
+    const char* source_directory = "mofdata\\"; // 您在步驟1中建立的來源目錄 (注意路徑結尾的斜線)
 
     std::cout << "正在建立 VFS 封裝檔: " << vfs_base_name << std::endl;
     std::cout << "來源目錄: " << source_directory << std::endl;
