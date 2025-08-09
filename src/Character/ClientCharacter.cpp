@@ -3,6 +3,8 @@
 /// @brief 建構函式
 ClientCharacter::ClientCharacter() {
 	m_wMapID = 0; // 假設初始地圖 ID 為 0
+	m_iPosX = 600;
+	m_iPosY = 300;
 }
 
 /// @brief 虛擬解構函式
@@ -12,11 +14,18 @@ ClientCharacter::~ClientCharacter() {
 
 /// @brief 取得角色的 X 座標
 int ClientCharacter::GetPosX() {
-	return 600;
+	return m_iPosX;
 }
 /// @brief 取得角色的 Y 座標
 int ClientCharacter::GetPosY() {
-	return 300;
+	return m_iPosY;
+}
+void ClientCharacter::SetPosX(float x) {
+	m_iPosX = x;
+}
+/// @brief 取得角色的 Y 座標
+void ClientCharacter::SetPosY(float y) {
+	m_iPosY = y;
 }
 /// @brief 取得角色的高度
 int ClientCharacter::GetCharHeight() {

@@ -49,6 +49,8 @@ public:
     // Getters & Setters
     int GetPosX() const;
     int GetPosY() const;
+    void SetPosX(float x);
+    void SetPosY(float y);
     int GetHP() const;
     void SetHP();
     unsigned short GetCharHeight() const;

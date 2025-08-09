@@ -37,11 +37,15 @@ private:
 
     void SpawnUpperCutEffect();
 
+	void SpawnHorizenCutEffect();
+
+    void SpawnMagicBookEffect();
+
     // --- 私有成員 ---
 
     /// @brief 模擬的施法者角色。
     ClientCharacter* m_pCaster;
-
+    ClientCharacter* m_pTarget;
     /// @brief 用於計時，以固定間隔產生新特效。
     float m_fTimeSinceLastEffect;
 };

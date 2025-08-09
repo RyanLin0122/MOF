@@ -50,14 +50,13 @@ void CEffect_Battle_DownCut::Process()
 {
     // 將世界座標轉換為螢幕座標
     // 原始碼: v3 = *((float *)this + 2) - (double)dword_A73088;
-    //float screenX = m_fCurrentPosX - static_cast<float>(g_Game_System_Info.ScreenX);
-    //float screenY = m_fCurrentPosY - static_cast<float>(g_Game_System_Info.ScreenY);
+    float screenX = m_fCurrentPosX - static_cast<float>(g_Game_System_Info.ScreenX);
+    float screenY = m_fCurrentPosY - static_cast<float>(g_Game_System_Info.ScreenY);
 
     // 進行裁剪判斷
     // 原始碼: v2 = CEffectBase::IsCliping(this, v3, 0.0); *((_DWORD *)this + 8) = v2;
     //m_bIsVisible = IsCliping(screenX, 0.0f);
-    float screenX = m_fCurrentPosX;
-    float screenY = m_fCurrentPosY;
+
     m_bIsVisible = IsCliping(screenX, screenY);
     if (m_bIsVisible) {
         // 更新內部 CCAEffect 的狀態
