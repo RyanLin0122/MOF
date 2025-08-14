@@ -119,11 +119,11 @@ public:
     void SetFlipX(bool flip) { m_bFlipX = flip; }
     void SetData(EADATALISTINFO* pData) { m_pEffectData = pData; }
     friend class CEAManager;
-
+    int             colorNum = 1;
 private:
     void DrawRenderState();
     void DrawEtcRenderState();
-
+    void Setup2DState(IDirect3DDevice9* Device);
 protected:
     EADATALISTINFO* m_pEffectData;
 

@@ -8,6 +8,17 @@
 #include "Effect/CEffect_Battle_HorizonCut.h"
 #include "Effect/CEffect_Battle_MagicBook.h"
 
+// --- 新增的小遊戲特效標頭檔 ---
+#include "Effect/CEffect_MiniGame_Archer_String.h"
+#include "Effect/CEffect_MiniGame_Fighter_Break.h"
+#include "Effect/CEffect_MiniGame_Fighter_String.h"
+#include "Effect/CEffect_MiniGame_MagicStick_Left.h"
+#include "Effect/CEffect_MiniGame_MagicStick_Right.h"
+#include "Effect/CEffect_MiniGame_Priest_Heal.h"
+#include "Effect/CEffect_MiniGame_Priest_Light.h"
+#include "Effect/CEffect_MiniGame_Class_Sword.h"
+#include "Effect/CEffect_MiniGame_Wizard_String.h"
+
 #include "Character/ClientCharacter.h"
 #include "global.h"
 #include <stdio.h>
@@ -43,13 +54,13 @@ HRESULT EffectSystemTest::Initialize()
         printf("錯誤：建立 ClientCharacter 失敗。\n");
         return E_FAIL;
     }
-	m_pTarget = new ClientCharacter();
+    m_pTarget = new ClientCharacter();
     m_pTarget->SetPosX(900);
-	m_pTarget->SetPosY(200);
+    m_pTarget->SetPosY(200);
     if (!m_pTarget) {
         printf("錯誤：建立 ClientCharacter 失敗。\n");
         return E_FAIL;
-	}
+    }
     printf("--- [EffectSystemTest] 初始化成功 ---\n");
     return S_OK;
 }
@@ -74,13 +85,26 @@ void EffectSystemTest::Update(float fElapsedTime)
     // 累加時間
     m_fTimeSinceLastEffect += fElapsedTime;
 
-    // 每隔 0.5 秒產生一個新的下劈斬特效
+    // 每隔 3.0 秒產生一個新的特效
     if (m_fTimeSinceLastEffect > 3.0f) {
+        // --- 原有的戰鬥特效 ---
         //SpawnDownCutEffect();
         //SpawnUpperCutEffect();
-		//SpawnHitNormalEffect();
+        //SpawnHitNormalEffect();
         //SpawnHorizenCutEffect();
-        SpawnMagicBookEffect();
+        //SpawnMagicBookEffect();
+
+        // --- 新增的小遊戲特效 (請一次取消註解一個來測試) ---
+        //SpawnMiniGameArcherStringEffect();
+        //SpawnMiniGameFighterBreakEffect();
+        //SpawnMiniGameFighterStringEffect();
+        SpawnMiniGameMagicStickLeftEffect();
+        //SpawnMiniGameMagicStickRightEffect();
+        //SpawnMiniGamePriestHealEffect();
+        //SpawnMiniGamePriestLightEffect();
+        //SpawnMiniGameClassSwordEffect();
+        //SpawnMiniGameWizardStringEffect(); // 例如：測試法師文字特效
+
         m_fTimeSinceLastEffect = 0.0f; // 重置計時器
     }
 
@@ -187,5 +211,109 @@ void EffectSystemTest::SpawnMagicBookEffect()
     bool bFlip = (rand() % 2 == 0);
     pEffect->SetEffect(m_pCaster, m_pTarget, bFlip, 0);
 
+    CEffectManager::GetInstance()->BulletAdd(pEffect);
+}
+
+// --- 以下為新增的小遊戲特效生成函式 ---
+
+void EffectSystemTest::SpawnMiniGameArcherStringEffect()
+{
+    if (!m_pCaster) return;
+    printf("  正在產生 CEffect_MiniGame_Archer_String 特效...\n");
+    CEffect_MiniGame_Archer_String* pEffect = new CEffect_MiniGame_Archer_String();
+    float x = static_cast<float>(m_pCaster->GetPosX());
+    float y = static_cast<float>(m_pCaster->GetPosY());
+    // 設定要顯示的文字影格索引 (例如 0)，以及位置
+    pEffect->SetEffect(0, x, y);
+    CEffectManager::GetInstance()->BulletAdd(pEffect);
+}
+
+void EffectSystemTest::SpawnMiniGameFighterBreakEffect()
+{
+    if (!m_pCaster) return;
+    printf("  正在產生 CEffect_MiniGame_Fighter_Break 特效...\n");
+    CEffect_MiniGame_Fighter_Break* pEffect = new CEffect_MiniGame_Fighter_Break();
+    float x = static_cast<float>(m_pCaster->GetPosX());
+    float y = static_cast<float>(m_pCaster->GetPosY());
+    pEffect->SetEffect(x, y);
+    CEffectManager::GetInstance()->BulletAdd(pEffect);
+}
+
+void EffectSystemTest::SpawnMiniGameFighterStringEffect()
+{
+    if (!m_pCaster) return;
+    printf("  正在產生 CEffect_MiniGame_Fighter_String 特效...\n");
+    CEffect_MiniGame_Fighter_String* pEffect = new CEffect_MiniGame_Fighter_String();
+    float x = static_cast<float>(m_pCaster->GetPosX());
+    float y = static_cast<float>(m_pCaster->GetPosY());
+    // 設定要顯示的文字影格索引 (例如 0)，以及位置
+    pEffect->SetEffect(0, x, y);
+    CEffectManager::GetInstance()->BulletAdd(pEffect);
+}
+
+void EffectSystemTest::SpawnMiniGameMagicStickLeftEffect()
+{
+    if (!m_pCaster) return;
+    printf("  正在產生 CEffect_MiniGame_MagicStick_Left 特效...\n");
+    CEffect_MiniGame_MagicStick_Left* pEffect = new CEffect_MiniGame_MagicStick_Left();
+    float x = static_cast<float>(m_pCaster->GetPosX());
+    float y = static_cast<float>(m_pCaster->GetPosY());
+    pEffect->SetEffect(x, y);
+    CEffectManager::GetInstance()->BulletAdd(pEffect);
+}
+
+void EffectSystemTest::SpawnMiniGameMagicStickRightEffect()
+{
+    if (!m_pCaster) return;
+    printf("  正在產生 CEffect_MiniGame_MagicStick_Right 特效...\n");
+    CEffect_MiniGame_MagicStick_Right* pEffect = new CEffect_MiniGame_MagicStick_Right();
+    float x = static_cast<float>(m_pCaster->GetPosX());
+    float y = static_cast<float>(m_pCaster->GetPosY());
+    pEffect->SetEffect(x, y);
+    CEffectManager::GetInstance()->BulletAdd(pEffect);
+}
+
+void EffectSystemTest::SpawnMiniGamePriestHealEffect()
+{
+    if (!m_pCaster) return;
+    printf("  正在產生 CEffect_MiniGame_Priest_Heal 特效...\n");
+    CEffect_MiniGame_Priest_Heal* pEffect = new CEffect_MiniGame_Priest_Heal();
+    float x = static_cast<float>(m_pCaster->GetPosX());
+    float y = static_cast<float>(m_pCaster->GetPosY());
+    pEffect->SetEffect(x, y);
+    CEffectManager::GetInstance()->BulletAdd(pEffect);
+}
+
+void EffectSystemTest::SpawnMiniGamePriestLightEffect()
+{
+    if (!m_pCaster) return;
+    printf("  正在產生 CEffect_MiniGame_Priest_Light 特效...\n");
+    CEffect_MiniGame_Priest_Light* pEffect = new CEffect_MiniGame_Priest_Light();
+    float x = static_cast<float>(m_pCaster->GetPosX());
+    float y = static_cast<float>(m_pCaster->GetPosY());
+    pEffect->SetEffect(x, y);
+    CEffectManager::GetInstance()->BulletAdd(pEffect);
+}
+
+void EffectSystemTest::SpawnMiniGameClassSwordEffect()
+{
+    if (!m_pCaster) return;
+    printf("  正在產生 CEffect_MiniGame_Class_Sword 特效...\n");
+    CEffect_MiniGame_Class_Sword* pEffect = new CEffect_MiniGame_Class_Sword();
+    float x = static_cast<float>(m_pCaster->GetPosX());
+    float y = static_cast<float>(m_pCaster->GetPosY());
+    pEffect->SetEffect(x, y);
+    CEffectManager::GetInstance()->BulletAdd(pEffect);
+}
+
+void EffectSystemTest::SpawnMiniGameWizardStringEffect()
+{
+    if (!m_pCaster) return;
+    printf("  正在產生 CEffect_MiniGame_Wizard_String 特效...\n");
+    CEffect_MiniGame_Wizard_String* pEffect = new CEffect_MiniGame_Wizard_String();
+    float x = static_cast<float>(m_pCaster->GetPosX());
+    float y = static_cast<float>(m_pCaster->GetPosY());
+    // 設定要顯示的文字影格索引 (例如 0)，以及位置
+    pEffect->SetEffect(0, x, y);
     CEffectManager::GetInstance()->BulletAdd(pEffect);
 }

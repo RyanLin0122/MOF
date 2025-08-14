@@ -27,86 +27,78 @@ ImageResource::~ImageResource() {
     // m_pTexture 是在 ResetGIData 中釋放的
 }
 
-bool ImageResource::LoadGIInPack(const char* filePathInPack, int packerType, unsigned char a4) {
+bool ImageResource::LoadGIInPack(const char* filePathInPack, int /*packerType*/, unsigned char /*a4*/)
+{
     CMofPacking* pPacker = CMofPacking::GetInstance();
-    if (!pPacker) {
-        // 如果連封裝管理器都沒有，直接失敗
-        return false;
-    }
-    // 使用 CMofPacking::FileRead 讀取檔案內容到其內部緩衝區
-    // fileData 指向由 pPacker 管理的記憶體，此處不應釋放它
+    if (!pPacker) return false;
+
     char* fileData = pPacker->FileRead(filePathInPack);
+    if (!fileData) return false;
 
-    if (!fileData) {
-        char buffer[128];
-        sprintf_s(buffer, sizeof(buffer), "Image file '%s' is not found in pack", filePathInPack);
-        //CMessageBoxManager::AddOK(g_pMsgBoxMgr, buffer, 0, 0, 0, -1);
-        return false;
-    }
+    unsigned char* cur = reinterpret_cast<unsigned char*>(fileData);
 
-    // ----- 從此處開始，後續的解析邏輯與原始函式完全相同 -----
+    // 讀 Header
+    m_version = *reinterpret_cast<int*>(cur);               cur += 4;
+    const bool isV20 = (m_version == 20);
+    const bool isCompressed = isV20; // 目前資源：v20 皆為壓縮
 
-    // 使用一個指標來遍歷記憶體中的檔案資料
-    char* current_ptr = fileData;
-    bool isCompressed = false;
+    m_width = *reinterpret_cast<unsigned short*>(cur);    cur += 2;
+    m_height = *reinterpret_cast<unsigned short*>(cur);    cur += 2;
+    m_imageDataSize = *reinterpret_cast<unsigned int*>(cur);      cur += 4; // v20: 解壓後大小
+    m_d3dFormat = *reinterpret_cast<D3DFORMAT*>(cur);         cur += sizeof(D3DFORMAT);
+    m_animationFrameCount = *reinterpret_cast<unsigned short*>(cur); cur += 2;
 
-    // 從記憶體中讀取標頭
-    m_version = *reinterpret_cast<int*>(current_ptr);
-    current_ptr += sizeof(int);
-    if (m_version == 20) {
-        isCompressed = true;
-    }
-
-    m_width = *reinterpret_cast<unsigned short*>(current_ptr);
-    current_ptr += sizeof(unsigned short);
-    m_height = *reinterpret_cast<unsigned short*>(current_ptr);
-    current_ptr += sizeof(unsigned short);
-    m_imageDataSize = *reinterpret_cast<unsigned int*>(current_ptr);
-    current_ptr += sizeof(unsigned int);
-    m_d3dFormat = *reinterpret_cast<D3DFORMAT*>(current_ptr);
-    current_ptr += sizeof(D3DFORMAT);
-    m_animationFrameCount = *reinterpret_cast<unsigned short*>(current_ptr);
-    current_ptr += sizeof(unsigned short);
-
-    // 複製動畫影格資料
+    // 影格表
     if (m_animationFrameCount > 0) {
-        m_pAnimationFrames = new (std::nothrow) AnimationFrameData[m_animationFrameCount];
+        size_t bytes = sizeof(AnimationFrameData) * m_animationFrameCount;
+        m_pAnimationFrames = new(std::nothrow) AnimationFrameData[m_animationFrameCount];
         if (!m_pAnimationFrames) return false;
-
-        size_t animDataSize = sizeof(AnimationFrameData) * m_animationFrameCount;
-        memcpy(m_pAnimationFrames, current_ptr, animDataSize);
-        current_ptr += animDataSize;
+        std::memcpy(m_pAnimationFrames, cur, bytes);
+        cur += bytes;
     }
 
-    m_unknownFlag = *reinterpret_cast<unsigned char*>(current_ptr);
-    current_ptr += sizeof(unsigned char);
+    if (isCompressed && isV20) {
+        // v20: 影格表後立即是壓縮資料，m_imageDataSize = 解壓後大小
+        unsigned char* compressed = cur;                 // 起點即為壓縮資料
+        m_decompressedSize = m_imageDataSize;            // 目標大小
 
-    // 處理像素資料
-    if (isCompressed) {
-        m_decompressedSize = *reinterpret_cast<unsigned int*>(current_ptr);
-        current_ptr += sizeof(unsigned int);
-
-        unsigned char* compressedBuffer = reinterpret_cast<unsigned char*>(current_ptr);
-
-        m_pImageData = new (std::nothrow) unsigned char[m_decompressedSize];
+        m_pImageData = new(std::nothrow) unsigned char[m_decompressedSize];
         if (!m_pImageData) return false;
 
-        unsigned char pixelDepth = GetPixelDepth(m_d3dFormat);
-        run_length_decomp(compressedBuffer, m_imageDataSize, m_pImageData, m_decompressedSize, pixelDepth);
-
-        m_imageDataSize = m_decompressedSize; // 更新大小為解壓後的大小
-
-    }
-    else { // 未壓縮
-        if (m_imageDataSize > 0 && m_imageDataSize < 0x20000000) {
-            m_pImageData = new (std::nothrow) unsigned char[m_imageDataSize];
-            if (!m_pImageData) return false;
-
-            memcpy(m_pImageData, current_ptr, m_imageDataSize);
-        }
+        unsigned char unit = GetPixelDepth(m_d3dFormat); // DXT* 會回 1
+        // 注意：a4（壓縮長度）給個上限即可，邏輯以 a6（輸出）為主
+        run_length_decomp(compressed, m_decompressedSize /*上限*/,
+            m_pImageData, m_decompressedSize, unit);
+        m_imageDataSize = m_decompressedSize;
+        return true;
     }
 
-    return true;
+    // 非 v20（或未壓縮）— 保留原本行為
+    // 讀 unknownFlag
+    m_unknownFlag = *reinterpret_cast<unsigned char*>(cur); cur += 1;
+
+    if (isCompressed) {
+        // 舊版：檔內跟著存了解壓後大小
+        m_decompressedSize = *reinterpret_cast<unsigned int*>(cur); cur += 4;
+        unsigned char* compressed = cur;
+
+        m_pImageData = new(std::nothrow) unsigned char[m_decompressedSize];
+        if (!m_pImageData) return false;
+
+        unsigned char unit = GetPixelDepth(m_d3dFormat);
+        run_length_decomp(compressed, m_imageDataSize /*舊版此欄位為壓縮長度*/,
+            m_pImageData, m_decompressedSize, unit);
+        m_imageDataSize = m_decompressedSize;
+        return true;
+    }
+    else {
+        // 未壓縮：直接拷貝 m_imageDataSize bytes
+        if (m_imageDataSize == 0 || m_imageDataSize > 0x20000000) return false;
+        m_pImageData = new(std::nothrow) unsigned char[m_imageDataSize];
+        if (!m_pImageData) return false;
+        std::memcpy(m_pImageData, cur, m_imageDataSize);
+        return true;
+    }
 }
 
 bool ImageResource::LoadGI(const char* fileName, unsigned char a3) {

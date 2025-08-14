@@ -60,5 +60,6 @@ void CEffect_MiniGame_Fighter_Break::Process()
 void CEffect_MiniGame_Fighter_Break::Draw()
 {
     // 直接將繪製任務委託給內部的 CCAEffect 物件
+    m_ccaEffect.colorNum = 2;
     m_ccaEffect.Draw();
 }

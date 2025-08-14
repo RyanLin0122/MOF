@@ -41,6 +41,25 @@ private:
 
     void SpawnMagicBookEffect();
 
+    void SpawnMiniGameArcherStringEffect();
+
+    void SpawnMiniGameFighterBreakEffect();
+
+    void SpawnMiniGameFighterStringEffect();
+
+    void SpawnMiniGameMagicStickLeftEffect();
+
+    void SpawnMiniGameMagicStickRightEffect();
+
+    void SpawnMiniGamePriestHealEffect();
+
+    void SpawnMiniGamePriestLightEffect();
+
+    void SpawnMiniGameClassSwordEffect();
+
+    void SpawnMiniGameWizardStringEffect();
+
+
     // --- 私有成員 ---
 
     /// @brief 模擬的施法者角色。

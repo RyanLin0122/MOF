@@ -192,12 +192,7 @@ void CCAEffect::Draw()
             Device->SetRenderState(D3DRS_CULLMODE, D3DCULL_NONE);
 
             // 7. 設定渲染狀態並呼叫繪製
-            if (m_ucRenderStateSelector == 0) {
-                (this->*m_pfnDrawRenderState)();
-            }
-            else {
-                (this->*m_pfnDrawEtcRenderState)();
-            }
+
 			printf("CCAEffect::Draw: AnimationID=%d, Frame=%d, Layer=%d\n", m_nAnimationID, m_nCurrentFrame, i);
             // --- 階段 2: Alpha 混合狀態 ---
             Device->SetRenderState(D3DRS_ALPHABLENDENABLE, TRUE);
@@ -215,9 +210,17 @@ void CCAEffect::Draw()
             Device->SetTextureStageState(0, D3DTSS_ALPHAARG1, D3DTA_TEXTURE);
             Device->SetTextureStageState(0, D3DTSS_ALPHAARG2, D3DTA_DIFFUSE);
 
+            if (m_ucRenderStateSelector == 0) {
+                (this->*m_pfnDrawRenderState)();
+            }
+            else {
+                (this->*m_pfnDrawEtcRenderState)();
+            }
+
             // --- 其他確保性設定 ---
             Device->SetRenderState(D3DRS_ALPHATESTENABLE, FALSE);
             Device->SetRenderState(D3DRS_CULLMODE, D3DCULL_NONE);
+            Setup2DState(Device);
             Device->SetFVF(GIVertex::FVF);
             pImage->Draw();
 
@@ -277,4 +280,34 @@ void CCAEffect::DrawEtcRenderState()
     CDeviceManager::GetInstance()->SetRenderState(D3DRS_BLENDOP, m_pEffectData->m_ucEtcBlendOp);
     CDeviceManager::GetInstance()->SetRenderState(D3DRS_SRCBLEND, m_pEffectData->m_ucEtcSrcBlend);
     CDeviceManager::GetInstance()->SetRenderState(D3DRS_DESTBLEND, m_pEffectData->m_ucEtcDestBlend);
+}
+
+//For Debug
+void CCAEffect::Setup2DState(IDirect3DDevice9* Device) {
+    Device->SetRenderState(D3DRS_LIGHTING, FALSE);
+    Device->SetRenderState(D3DRS_ZENABLE, FALSE);
+    Device->SetRenderState(D3DRS_ZWRITEENABLE, FALSE);
+    Device->SetRenderState(D3DRS_CULLMODE, D3DCULL_NONE);
+
+    Device->SetRenderState(D3DRS_ALPHABLENDENABLE, TRUE);
+    Device->SetRenderState(D3DRS_SRCBLEND, D3DBLEND_SRCALPHA);
+    Device->SetRenderState(D3DRS_DESTBLEND, D3DBLEND_ONE); //D3DBLEND_INVSRCCOLOR D3DBLEND_ONE
+
+    Device->SetTextureStageState(0, D3DTSS_COLOROP, D3DTOP_SELECTARG1);
+    Device->SetTextureStageState(0, D3DTSS_COLORARG1, D3DTA_TEXTURE);
+    Device->SetTextureStageState(0, D3DTSS_ALPHAOP, D3DTOP_MODULATE);
+    Device->SetTextureStageState(0, D3DTSS_ALPHAARG1, D3DTA_TEXTURE);
+    Device->SetTextureStageState(0, D3DTSS_ALPHAARG2, D3DTA_DIFFUSE);
+
+    Device->SetTextureStageState(1, D3DTSS_COLOROP, D3DTOP_DISABLE);
+    Device->SetTextureStageState(1, D3DTSS_ALPHAOP, D3DTOP_DISABLE);
+
+    Device->SetSamplerState(0, D3DSAMP_MINFILTER, D3DTEXF_LINEAR);
+    Device->SetSamplerState(0, D3DSAMP_MAGFILTER, D3DTEXF_LINEAR);
+    Device->SetSamplerState(0, D3DSAMP_MIPFILTER, D3DTEXF_LINEAR);
+    Device->SetSamplerState(0, D3DSAMP_ADDRESSU, D3DTADDRESS_CLAMP);
+    Device->SetSamplerState(0, D3DSAMP_ADDRESSV, D3DTADDRESS_CLAMP);
+    if (colorNum > 1) {
+        Device->SetTextureStageState(0, D3DTSS_COLOROP, D3DTOP_MODULATE2X);
+    }
 }

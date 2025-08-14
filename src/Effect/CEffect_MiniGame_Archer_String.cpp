@@ -94,6 +94,7 @@ void CEffect_MiniGame_Archer_String::Draw()
     if (m_pImage && m_pImage->IsInUse())
     {
         CDeviceManager::GetInstance()->ResetRenderState();
+        Device->SetRenderState(D3DRS_ALPHABLENDENABLE, TRUE);
         m_pImage->Draw();
     }
 }
