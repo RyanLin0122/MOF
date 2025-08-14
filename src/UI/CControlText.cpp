@@ -1,302 +1,392 @@
 #include "UI/CControlText.h"
-#include <string>
-#include <cstring> // for strcpy, strcmp
-#include <cstdio>  // for sprintf
+#include <cstdio>
+#include <algorithm>
 
-// --- 模擬的外部依賴 ---
-class DCTTextManager {
-public:
-    char* GetText(int id) { return (char*)""; }
-    char* GetParsedText(int id, int, int) { return (char*)""; }
-};
-DCTTextManager g_DCTTextManager;
+// 將 64 位整數轉換為帶千分位逗號的金額字串
+void Numeric2MoneyByComma(long long Value, char* outputBuffer, int bufferSize, int showPositiveSign)
+{
+    int maxSize = bufferSize;
+    char tempBuffer[1024];
 
-struct stFontInfo {
-    int height;
-    int weight;
-    char fontName[128];
-};
+    // 清空輸出緩衝區和臨時緩衝區
+    memset(outputBuffer, 0, bufferSize);
+    memset(tempBuffer, 0, sizeof(tempBuffer));
 
-class MoFFont {
-public:
-    stFontInfo* GetFontInfo(const char* fontName) { return nullptr; }
-    void SetFont(int height, const char* fontName, int weight) {}
-    float* GetTextLength(float* pSize, const char* fontName, const char* text, int weight) { 
-        if(pSize) { pSize[0] = 0; pSize[1] = 0; }
-        return pSize;
+    // 將數字轉換為字串（10進制）
+    _i64toa(Value, tempBuffer, 10);
+
+    // 如果需要顯示正號且數值為正數，則在前面加上 '+'
+    if (showPositiveSign == 1 && Value > 0) {
+        memmove(&tempBuffer[1], tempBuffer, strlen(tempBuffer));
+        tempBuffer[0] = '+';
     }
-    void SetTextLineA(int x, int y, unsigned long color, const char* text, int align, int, int) {}
-    void SetTextLineShadow(int x, int y, unsigned long color, const char* text, int align) {}
-    void SetTextBoxA(stRect* rect, unsigned long color, const char* text, int lineSpace, int align, bool) {}
-    int GetLineCountByWidth(unsigned short width, const char* text, const char* fontName, int fontHeight, int fontWeight) { return 1; }
-};
-MoFFont g_MoFFont;
 
-void Numeric2MoneyByComma(unsigned int value, char* buffer, int size, int) {}
-// --- 模擬結束 ---
+    // 檢查字串長度是否小於緩衝區大小
+    if ((int)strlen(tempBuffer) < bufferSize) {
+        strcpy(outputBuffer, tempBuffer);
 
+        // 從右邊數來第3位開始插入逗號
+        int insertPos = strlen(outputBuffer) - 3;
 
-/**
- * CControlText 建構函式
- * 初始化文字相關屬性。
- */
+        if (insertPos >= 1) {
+            while ((int)(strlen(outputBuffer) + 1) < maxSize &&
+                (insertPos != 1 || (outputBuffer[0] != '-' && outputBuffer[0] != '+'))) {
+
+                char* insertPoint = &outputBuffer[insertPos];
+
+                // 向右移動字串內容，為逗號騰出空間
+                memmove(&outputBuffer[insertPos + 1], &outputBuffer[insertPos],
+                    strlen(&outputBuffer[insertPos]));
+
+                // 插入逗號
+                *insertPoint = ',';
+
+                // 移動到下一個插入位置（向左3位）
+                insertPos -= 3;
+
+                if (insertPos < 1) {
+                    break;
+                }
+
+                maxSize = bufferSize;
+            }
+        }
+    }
+}
+
+// ============================ 建構 / 解構 ============================
 CControlText::CControlText()
 {
-    m_TextData = "";
-    m_nFontHeight = 12;
-    m_nFontWeight = 400; // Normal
-    m_nTextAlignment = 0; // Left
-    m_dwTextColor = 0xFF600A09; // 預設顏色
-    m_dwTextShadowColor = 0;
-    m_dwTextBackgroundColor = 0;
-    m_nMultiLineSpace = 5;
-    m_bWantSpaceFirstByte = false;
-    m_ucLineCount = 1;
-    m_bRecalculateLines = true; // 初始時需要計算
-    memset(m_szFontName, 0, sizeof(m_szFontName));
-    m_bIsEnable = false; // 文字預設不可互動
+    // 依反編譯預設：行數快取 = 1、需要重算 = 1、字高=12、粗細=400、行距=5、主色 -10483191
+    // 字型名預設為空，第一次 SetText 時若為空，會以 DCTTextManager(3264) 補上。
 }
 
 CControlText::~CControlText()
 {
+    // std::string 自動釋放即可；其餘無擁有資源
 }
 
-/**
- * 清除資料，不僅清除基底類別，也清空文字內容。
- */
+// =============================== 建立 ================================
+void CControlText::Create(CControlBase* pParent)
+{
+    CControlBase::Create(pParent);
+}
+void CControlText::Create(int x, int y, CControlBase* pParent)
+{
+    CControlBase::Create(x, y, pParent);
+}
+void CControlText::Create(int x, int y, uint16_t w, uint16_t h, CControlBase* pParent)
+{
+    CControlBase::Create(x, y, w, h, pParent);
+}
+
+// ============================== 文字存取 =============================
 void CControlText::ClearData()
 {
+    // 先讓基底遞迴
     CControlBase::ClearData();
-    ClearText();
+
+    // 清本物件文字：模擬反編譯中 string 清理的效果
+    m_text.clear();
+    m_isStringData = false;
+    MarkLayoutDirty();
 }
 
-/**
- * 設定文字內容。
- * @param szText 要顯示的文字字串。
- */
-void CControlText::SetText(const char* szText)
+void CControlText::SetText(const char* s)
 {
-    if (!szText)
+    if (!s)
     {
-        ClearText();
+        // 反編譯：若傳入 null，就把字串設成空字串（利用內部空字串）
+        m_text.clear();
+        m_isStringData = false;
+        MarkLayoutDirty();
         return;
     }
 
-    if (m_TextData != szText)
+    // 若字型名尚未設，依反編譯：用 DCTTextManager id=3264 來填預設字型名
+    if (m_fontFace.empty())
     {
-        m_bRecalculateLines = true; // 文字已變更，需要重新計算行數
-        m_TextData = szText;
+        //const char* defFace = g_DCTTextManager.GetText(3264);
+        //if (defFace && *defFace) m_fontFace = defFace;
+    }
+
+    if (m_text != s)
+    {
+        m_text = s;
+        m_isStringData = !m_text.empty();
+        m_needRecalcLineCount = 1; // [43] = 1
     }
 }
 
-void CControlText::SetText(int nDCTID)
+void CControlText::SetText(int stringId)
 {
-    if (nDCTID >= 0)
-    {
-        SetText(g_DCTTextManager.GetText(nDCTID));
-    }
+    //if (stringId >= 0)
+        //SetText(g_DCTTextManager.GetText(stringId));
 }
 
-void CControlText::SetParsedText(int nDCTID)
+void CControlText::SetParsedText(int stringId)
 {
-    if (nDCTID >= 0)
-    {
-        SetText(g_DCTTextManager.GetParsedText(nDCTID, 0, 0));
-    }
+    //if (stringId >= 0)
+        //SetText(g_DCTTextManager.GetParsedText(stringId, 0, 0));
 }
 
-/**
- * 清空文字內容並重設狀態。
- */
 void CControlText::ClearText()
 {
-    if (!m_TextData.empty())
+    m_text.clear();
+    m_isStringData = false;
+    MarkLayoutDirty();
+}
+
+void CControlText::SetTextItoa(int value)
+{
+    char buf[256];
+    std::snprintf(buf, sizeof(buf), "%d", value);
+    SetText(buf);
+}
+
+void CControlText::SetTextMoney(unsigned int value)
+{
+    char buf[256];
+    Numeric2MoneyByComma(value, buf, 256, 0);
+    SetText(buf);
+}
+
+void CControlText::SetTextMoney(int fmtId, unsigned int value)
+{
+    char money[256];
+    char fmt[256];
+    Numeric2MoneyByComma(value, money, 256, 0);
+    const char* f = NULL;// g_DCTTextManager.GetText(fmtId);
+    std::snprintf(fmt, sizeof(fmt), "%s", f ? f : "%s");
+    char outBuf[256];
+    std::snprintf(outBuf, sizeof(outBuf), fmt, money);
+    SetText(outBuf);
+}
+
+void CControlText::SetParsedTextMoney(int fmtId, unsigned int value)
+{
+    char money[256];
+    char fmt[256];
+    Numeric2MoneyByComma(value, money, 256, 0);
+    const char* f = NULL; // g_DCTTextManager.GetParsedText(fmtId, 0, 0);
+    std::snprintf(fmt, sizeof(fmt), "%s", f ? f : "%s");
+    char outBuf[256];
+    std::snprintf(outBuf, sizeof(outBuf), fmt, money);
+    SetText(outBuf);
+}
+
+// ============================ 字型 / 版面 ===========================
+void CControlText::SetFontHeight(int h)
+{
+    m_fontHeight = h;
+    MarkLayoutDirty();
+}
+void CControlText::SetFontWeight(int w)
+{
+    m_fontWeight = w;
+    MarkLayoutDirty();
+}
+
+void CControlText::SetControlSetFont(const char* fontName)
+{
+    stFontInfo* fi = NULL; // g_MoFFont.GetFontInfo(fontName);
+    if (fi)
     {
-        m_TextData.clear();
-        m_bRecalculateLines = true;
+        // 反編譯：*((_DWORD*)fi + 64) 與 +65；字串位於 fi + 128
+        // 這裡假設 stFontInfo 提供能取得高度/粗細/字型名的介面（或等價欄位）
+        // 若你們的 stFontInfo 不同，請在此替換為對應 getter。
+        // 為清楚起見，以下使用「假設的」擷取方法（請替換）：
+        //extern int      FontInfo_GetHeight(stFontInfo*); // 由你們工程提供
+        //extern int      FontInfo_GetWeight(stFontInfo*);
+        //extern const char* FontInfo_GetFace(stFontInfo*);
+
+        //m_fontHeight = FontInfo_GetHeight(fi);
+        //m_fontWeight = FontInfo_GetWeight(fi);
+        //m_fontFace = FontInfo_GetFace(fi) ? FontInfo_GetFace(fi) : "";
+
+        MarkLayoutDirty();
     }
 }
 
-/**
- * 繪製文字。
- * 根據單行或多行模式、是否有陰影等屬性進行繪製。
- */
+void CControlText::SetMultiLineSpace(int px)
+{
+    m_lineSpace = px;
+    MarkLayoutDirty();
+}
+void CControlText::SetMultiLineSize(uint16_t w, int h)
+{
+    m_multiWidth = w;
+    // 反編譯存進 WORD；這裡保留 word 範圍
+    m_multiCellH = static_cast<uint16_t>(std::max(0, std::min(h, 0xFFFF)));
+    MarkLayoutDirty();
+}
+
+// ============================== 繪製 ================================
 void CControlText::Draw()
 {
-    if (!m_bIsVisible || m_TextData.empty())
+    if (!IsVisible() || !m_isStringData) return;
+
+    const char* s = m_text.c_str();
+    const int   x = GetAbsX();
+    const int   y = GetAbsY();
+
+    // 設定字型（對齊反編譯）
+    //g_MoFFont.SetFont(m_fontHeight, m_fontFace.c_str(), m_fontWeight);
+
+    const uint16_t boxW = GetWidth();
+    const uint16_t boxH = GetHeight();
+
+    if (boxW != 0 && boxH != 0)
     {
-        CControlBase::Draw();
-        return;
-    }
-
-    float absPos[2];
-    GetAbsPos(absPos);
-
-    g_MoFFont.SetFont(m_nFontHeight, m_szFontName, m_nFontWeight);
-    const char* szText = m_TextData.c_str();
-
-    // 判斷是多行文字框還是單行文字
-    bool isMultiLine = (m_usWidth > 0 && m_usHeight > 0);
-
-    if (isMultiLine)
-    {
-        stRect rc = { absPos[0], absPos[1], absPos[0] + m_usWidth, absPos[1] + m_usHeight };
-        
-        // 繪製背景顏色
-        if (m_dwTextBackgroundColor != 0)
+        // 文字盒子模式（多行/換行）
+        if (m_colorEdge)  // [38]：先畫一個 (x+1,y+1) 的邊色
         {
-            // CControlAlphaBox m_bgBox; // 假設有一個背景方塊來繪製
-            // m_bgBox.SetAttr(...)
-            // m_bgBox.Draw();
+            RectI__ rc; SetRect__(&rc, x + 1, y + 1, x + boxW, y + boxH);
+            //g_MoFFont.SetTextBoxA(&rc, m_colorEdge, s, m_lineSpace, m_drawFlag, m_wantSpaceFirstByte);
+        }
+        else if (m_colorShadow) // [39]：畫 8 向偏移的陰影框，再畫主色
+        {
+            RectI__ rc;
+
+            // 左  (-1, 0)
+            SetRect__(&rc, x - 1, y, x + boxW - 1, y + boxH);
+            //g_MoFFont.SetTextBoxA(&rc, m_colorShadow, s, m_lineSpace, m_drawFlag, m_wantSpaceFirstByte);
+
+            // 左上 (-1,-1)
+            SetRect__(&rc, x - 1, y - 1, x + boxW - 1, y + boxH - 1);
+            //g_MoFFont.SetTextBoxA(&rc, m_colorShadow, s, m_lineSpace, m_drawFlag, m_wantSpaceFirstByte);
+
+            // 上   (0,-1)
+            SetRect__(&rc, x, y - 1, x + boxW, y + boxH - 1);
+            //g_MoFFont.SetTextBoxA(&rc, m_colorShadow, s, m_lineSpace, m_drawFlag, m_wantSpaceFirstByte);
+
+            // 右上 (+1,-1)
+            SetRect__(&rc, x + 1, y - 1, x + boxW + 1, y + boxH - 1);
+            //g_MoFFont.SetTextBoxA(&rc, m_colorShadow, s, m_lineSpace, m_drawFlag, m_wantSpaceFirstByte);
+
+            // 右  (+1, 0)
+            SetRect__(&rc, x + 1, y, x + boxW + 1, y + boxH);
+            //g_MoFFont.SetTextBoxA(&rc, m_colorShadow, s, m_lineSpace, m_drawFlag, m_wantSpaceFirstByte);
+
+            // 右下(+1,+1)
+            SetRect__(&rc, x + 1, y + 1, x + boxW + 1, y + boxH + 1);
+            //g_MoFFont.SetTextBoxA(&rc, m_colorShadow, s, m_lineSpace, m_drawFlag, m_wantSpaceFirstByte);
+
+            // 下   (0,+1)
+            SetRect__(&rc, x, y + 1, x + boxW, y + boxH + 1);
+            //g_MoFFont.SetTextBoxA(&rc, m_colorShadow, s, m_lineSpace, m_drawFlag, m_wantSpaceFirstByte);
+
+            // 左下 (-1,+1)
+            SetRect__(&rc, x - 1, y + 1, x + boxW - 1, y + boxH + 1);
+            //g_MoFFont.SetTextBoxA(&rc, m_colorShadow, s, m_lineSpace, m_drawFlag, m_wantSpaceFirstByte);
         }
 
-        // 繪製陰影/外框
-        if (m_dwTextShadowColor != 0)
+        // 主色盒子（一定會畫）
         {
-            stRect shadowRc;
-            // 透過8個方向的偏移來實現外框效果
-            shadowRc = { rc.left - 1, rc.top, rc.right - 1, rc.bottom };
-            g_MoFFont.SetTextBoxA(&shadowRc, m_dwTextShadowColor, szText, m_nMultiLineSpace, m_nTextAlignment, m_bWantSpaceFirstByte);
-            shadowRc = { rc.left - 1, rc.top - 1, rc.right - 1, rc.bottom - 1 };
-            g_MoFFont.SetTextBoxA(&shadowRc, m_dwTextShadowColor, szText, m_nMultiLineSpace, m_nTextAlignment, m_bWantSpaceFirstByte);
-            shadowRc = { rc.left, rc.top - 1, rc.right, rc.bottom - 1 };
-            g_MoFFont.SetTextBoxA(&shadowRc, m_dwTextShadowColor, szText, m_nMultiLineSpace, m_nTextAlignment, m_bWantSpaceFirstByte);
-            shadowRc = { rc.left + 1, rc.top - 1, rc.right + 1, rc.bottom - 1 };
-            g_MoFFont.SetTextBoxA(&shadowRc, m_dwTextShadowColor, szText, m_nMultiLineSpace, m_nTextAlignment, m_bWantSpaceFirstByte);
-            shadowRc = { rc.left + 1, rc.top, rc.right + 1, rc.bottom };
-            g_MoFFont.SetTextBoxA(&shadowRc, m_dwTextShadowColor, szText, m_nMultiLineSpace, m_nTextAlignment, m_bWantSpaceFirstByte);
-            shadowRc = { rc.left + 1, rc.top + 1, rc.right + 1, rc.bottom + 1 };
-            g_MoFFont.SetTextBoxA(&shadowRc, m_dwTextShadowColor, szText, m_nMultiLineSpace, m_nTextAlignment, m_bWantSpaceFirstByte);
-            shadowRc = { rc.left, rc.top + 1, rc.right, rc.bottom + 1 };
-            g_MoFFont.SetTextBoxA(&shadowRc, m_dwTextShadowColor, szText, m_nMultiLineSpace, m_nTextAlignment, m_bWantSpaceFirstByte);
-            shadowRc = { rc.left - 1, rc.top + 1, rc.right - 1, rc.bottom + 1 };
-            g_MoFFont.SetTextBoxA(&shadowRc, m_dwTextShadowColor, szText, m_nMultiLineSpace, m_nTextAlignment, m_bWantSpaceFirstByte);
+            RectI__ rc; SetRect__(&rc, x, y, x + boxW, y + boxH);
+            //g_MoFFont.SetTextBoxA(&rc, m_colorMain, s, m_lineSpace, m_drawFlag, m_wantSpaceFirstByte);
         }
-
-        // 繪製主要文字
-        g_MoFFont.SetTextBoxA(&rc, m_dwTextColor, szText, m_nMultiLineSpace, m_nTextAlignment, m_bWantSpaceFirstByte);
     }
-    else // 單行文字
+    else
     {
-        if (m_dwTextShadowColor != 0)
+        // 單行模式
+        if (m_colorEdge)
         {
-            g_MoFFont.SetTextLineShadow(absPos[0], absPos[1], m_dwTextShadowColor, szText, m_nTextAlignment);
+            //g_MoFFont.SetTextLineA(x + 1, y + 1, m_colorEdge, s, m_drawFlag, -1, -1);
         }
-        g_MoFFont.SetTextLineA(absPos[0], absPos[1], m_dwTextColor, szText, m_nTextAlignment, -1, -1);
+        else if (m_colorShadow)
+        {
+            //g_MoFFont.SetTextLineShadow(x, y, m_colorShadow, s, m_drawFlag);
+        }
+
+        //g_MoFFont.SetTextLineA(x, y, m_colorMain, s, m_drawFlag, -1, -1);
     }
 
+    // 子物件照常繪製
     CControlBase::Draw();
 }
 
-/**
- * 獲取渲染後的文字寬度和高度。
- */
-float* CControlText::GetTextLength(float* pSize)
-{
-    if (m_TextData.empty()) {
-        pSize[0] = 0;
-        pSize[1] = 0;
-        return pSize;
-    }
-    return g_MoFFont.GetTextLength(pSize, m_szFontName, m_TextData.c_str(), m_nFontWeight);
-}
-
-/**
- * 獲取多行文字在指定寬度下計算出的總高度。
- */
-int CControlText::GetCalcedTextBoxHeight(unsigned short usWidth)
-{
-    if (m_TextData.empty()) return 0;
-
-    unsigned short width = (usWidth == 0) ? m_usWidth : usWidth;
-    if (width == 0) return 0;
-    
-    return (m_nFontHeight + m_nMultiLineSpace) * GetMultiTextLineCount(width);
-}
-
-/**
- * 使用快取機制獲取多行文字的行數。
- */
-unsigned char CControlText::GetMultiTextLineCount(unsigned short usWidth)
-{
-    if (m_TextData.empty()) return 0;
-    
-    // 如果文字沒有變更，直接返回快取的值
-    if (!m_bRecalculateLines) return m_ucLineCount;
-
-    // 否則，重新計算，更新快取，並清除髒標記
-    m_bRecalculateLines = false;
-    unsigned short width = (usWidth == 0) ? m_usWidth : usWidth;
-    m_ucLineCount = g_MoFFont.GetLineCountByWidth(width, m_TextData.c_str(), m_szFontName, m_nFontHeight, m_nFontWeight);
-    return m_ucLineCount;
-}
-
-// --- 其他 Set/Get 函式實作 ---
-void CControlText::SetTextItoa(int nValue) { char buffer[32]; sprintf(buffer, "%d", nValue); SetText(buffer); }
-void CControlText::SetTextMoney(unsigned int uiValue) { char buffer[32]; Numeric2MoneyByComma(uiValue, buffer, 32, 0); SetText(buffer); }
-void CControlText::SetTextMoney(int nDCTID, unsigned int uiValue) { /* 實作 */ }
-void CControlText::SetParsedTextMoney(int nDCTID, unsigned int uiValue) { /* 實作 */ }
-const char* CControlText::GetText() const { return m_TextData.c_str(); }
-void CControlText::SetFontHeight(int nHeight) { m_nFontHeight = nHeight; m_bRecalculateLines = true; }
-void CControlText::SetFontWeight(int nWeight) { m_nFontWeight = nWeight; m_bRecalculateLines = true; }
-void CControlText::SetControlSetFont(const char* szFontName) {
-    stFontInfo* pFontInfo = g_MoFFont.GetFontInfo(szFontName);
-    if (pFontInfo) {
-        m_nFontHeight = pFontInfo->height;
-        m_nFontWeight = pFontInfo->weight;
-        strncpy(m_szFontName, pFontInfo->fontName, 255);
-        m_szFontName[255] = '\0';
-        m_bRecalculateLines = true;
-    }
-}
-void CControlText::SetMultiLineSpace(int nSpace) { m_nMultiLineSpace = nSpace; m_bRecalculateLines = true; }
-void CControlText::SetMultiLineSize(short usWidth, short usHeight) { m_usWidth = usWidth; m_usHeight = usHeight; m_bRecalculateLines = true; }
-void CControlText::SetTextPosToParentCenter() { 
-    CControlBase::SetCenterPos();
-    m_nTextAlignment = 1; // 1=Center
-    // 原始碼中有 Y-5 的微調
-    m_nPosY -= 5;
-}
-int CControlText::GetFontHeight() const { return m_nFontHeight; }
-const char* CControlText::GetFontFace() const { return m_szFontName; }
-int CControlText::GetCharByteByLine(unsigned char* pLineBytes, int nMaxLines) { return 0; /* 需 MoFFont 完整實作 */ }
-int CControlText::GetMultiLineSpace() const { return m_nMultiLineSpace; }
-void CControlText::SetWantSpaceFirstByte(bool bWantSpace) { m_bWantSpaceFirstByte = bWantSpace; }
-bool CControlText::IsStringData() const { return !m_TextData.empty(); }
-
-/**
- * @brief 判斷一個點是否在矩形內 (windows.h PtInRect 的簡易本地實作)。
- */
-bool PtInRect(const stRect* rc, stPoint pt)
-{
-    return (pt.x >= rc->left && pt.x < rc->right && pt.y >= rc->top && pt.y < rc->bottom);
-}
-
-/**
- * 判斷一個點是否在文字的渲染範圍內。
- * 這個版本是 CControlText 特有的，它基於文字的實際渲染大小，
- * 而不是 CControlBase 的 m_usWidth 和 m_usHeight。
- */
+// ============================== 命中 ================================
+// 追加或替換：CControlText::PtInCtrl
 bool CControlText::PtInCtrl(stPoint pt)
 {
-    if (!m_bIsVisible || m_TextData.empty())
-    {
-        return false;
-    }
+    // 1) 與反編譯一致的前置檢查
+    if (!m_bIsVisible)           return false;  // 等同 *((_DWORD*)this + 12)
+    if (!IsStringData())         return false;  // 等同 *((_DWORD*)this + 32)
 
-    float textSize[2];
-    GetTextLength(textSize);
+    // 2) 取得文字實際尺寸（你已有 GetTextLength 介面）
+    int size[2] = { 0.0f, 0.0f };
+    GetTextLength(size[0], size[1]);                 // size[0] = width, size[1] = height
+    const int w = static_cast<int>(size[0]);
+    const int h = static_cast<int>(size[1]);
+    if (w == 0 || h == 0)        return false;
 
-    if (textSize[0] == 0 || textSize[1] == 0)
-    {
-        return false;
-    }
+    // 3) 取得絕對位置
+    int ax = 0, ay = 0;
+    GetAbsPos(ax, ay);                    // 對齊反編譯 CControlBase::GetAbsPos
 
-    float absPos[2];
-    GetAbsPos(absPos);
+    // 4) 命中測試（右/下為開區間，等同 Win32 PtInRect）
+    const int left = ax;
+    const int top = ay;
+    const int right = ax + w;
+    const int bottom = ay + h;
 
-    stRect rc = { absPos[0], absPos[1], absPos[0] + textSize[0], absPos[1] + textSize[1] };
-
-    return PtInRect(&rc, pt);
+    return (pt.x >= left) && (pt.x < right) &&
+        (pt.y >= top) && (pt.y < bottom);
 }
 
+// ============================== 量測/資訊 ============================
+void CControlText::GetTextLength(int& outW, int& outH)
+{
+    if (!m_isStringData) { outW = outH = 0; return; }
+    int sizeArr[2] = { 0, 0 };
+    //g_MoFFont.GetTextLength(sizeArr, m_fontFace.c_str(), m_text.c_str(), m_fontHeight, m_fontWeight);
+    outW = sizeArr[0];
+    outH = sizeArr[1];
+}
+
+int CControlText::GetCalcedTextBoxHeight(uint16_t width)
+{
+    if (!m_isStringData) return 0;
+    uint16_t w = (width != 0) ? width : m_multiWidth;
+    const uint8_t lines = GetMultiTextLineCount(w);
+    return (m_fontHeight + m_lineSpace) * static_cast<int>(lines);
+}
+
+int CControlText::GetCharByteByLine(uint8_t* outBytesPerLine, int maxLines)
+{
+    if (!m_isStringData) return 0;
+    return 0; // g_MoFFont.GetCharByteByLine(static_cast<uint16_t>(GetFontHeight()),
+        //m_text.c_str(), outBytesPerLine, maxLines);
+}
+
+uint8_t CControlText::GetMultiTextLineCount(uint16_t width)
+{
+    if (!m_isStringData) return 0;
+
+    if (!m_needRecalcLineCount)
+        return m_cachedLineCount;
+
+    uint16_t w = (width != 0) ? width : m_multiWidth;
+    if (w == 0) w = static_cast<uint16_t>(GetWidth());
+
+    uint8_t cnt = 0; // g_MoFFont.GetLineCountByWidth(w, m_text.c_str(),
+        //m_fontFace.c_str(), m_fontHeight, m_fontWeight);
+    m_cachedLineCount = cnt;
+    m_needRecalcLineCount = 0;
+    return cnt;
+}
+
+// =========================== 置中（Y-5） ============================
+void CControlText::SetTextPosToParentCenter()
+{
+    SetCenterPos();                // 置中
+    SetY(GetY() - 5);              // 反編譯：*((DWORD*)this + 7) = v2 - 5
+    m_centeredYMinus5 = true;      // 僅作紀錄
+}
+
+// ============================ 內部工具 ==============================
+void CControlText::MarkLayoutDirty()
+{
+    m_needRecalcLineCount = 1;
+}

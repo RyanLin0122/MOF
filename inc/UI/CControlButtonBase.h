@@ -1,62 +1,58 @@
 #ifndef CCONTROLBUTTONBASE_H
 #define CCONTROLBUTTONBASE_H
 
-#include "UI/CControlImage.h"
-#include "UI/CControlText.h"
+#include "CControlImage.h"
+#include "CControlText.h"
 
-/**
- * @class CControlButtonBase
- * @brief 所有可點擊按鈕的基底類別。
- *
- * 結合了 CControlImage (背景圖) 和 CControlText (文字標籤) 的功能，
- * 並增加了對點擊、滑鼠懸停等狀態的處理，以及點擊時的視覺與聲音反饋。
- */
+// 基底按鈕：以圖片為背景 + 文字子控制，提供按下位移效果
 class CControlButtonBase : public CControlImage
 {
 public:
-    // 建構函式與解構函式
     CControlButtonBase();
     virtual ~CControlButtonBase();
 
-    // --- 初始化 ---
-    // 創建子控制項 (文字) 並進行基本設定
-    void CreateChildren();
-    // 初始化按鈕狀態和預設音效
-    void Init();
+    // ---- 建立 ----
+    // 僅掛載到父控制
+    virtual void Create(CControlBase* pParent) override;
+    // 設定絕對座標 + 掛父
+    virtual void Create(int x, int y, CControlBase* pParent) override;
+    // 設定尺寸 + 絕對座標 + 掛父
+    virtual void Create(int x, int y, uint16_t w, uint16_t h, CControlBase* pParent) override;
 
-    // --- 功能函式 ---
-    // 設定按鈕上顯示的文字
-    void SetText(const char* szText);
-    void SetText(int nDCTID);
+    // ---- 文字 ----
+    // 若你的 CControlText 僅支援字串，可忽略整數版本
+    void SetText(const char* utf8Text);
+    void SetText(int stringId);
 
-    // 播放點擊音效
-    void PlaySoundClick();
+    // 取得內建文字控制（可自訂對齊、字型、陰影等）
+    CControlText* GetTextCtrl() { return &m_Text; }
 
-    // --- 狀態與外觀 ---
-    // 處理按鈕被按下的視覺效果 (讓子物件位移)
-    void ButtonPosDown();
-    // 處理按鈕被放開的視覺效果
-    void ButtonPosUp();
+    // ---- 按下位移效果 ----
+    void EnablePressShift(bool enable) { m_bEnablePressShift = enable; }
+    void SetPressShift(int dx, int dy) { m_pressShiftX = dx; m_pressShiftY = dy; }
+    bool IsPressed() const { return m_bPressed; }
 
-    // 設定是否啟用點擊位移效果以及位移的像素值
-    void SetChildMoveByClick(bool bEnable, int nOffset);
+    // 由事件流程呼叫（或手動呼叫）：
+    void ButtonPosDown(); // 進入按下狀態：子物件位移 + 播放音效（可覆寫）
+    void ButtonPosUp();   // 離開按下狀態：子物件位移復原
 
-    // 檢查滑鼠是否在按鈕上方
-    bool IsMouseOver() const;
+    // 可覆寫：點擊音效（預設不做事，視專案接上音效管理）
+    virtual void PlaySoundClick();
 
 protected:
-    // --- 成員變數 ---
+    // 也可視需求覆寫 OnPrepareDrawing/OnDraw，但基底 CControlImage 已處理繪製
+    // virtual void OnPrepareDrawing() override {}
+    // virtual void OnDraw() override {}
 
-    // 點擊效果相關
-    bool m_bCanMoveChildren;  // 是否啟用點擊時子物件的位移效果
-    bool m_bIsButtonDown;     // 按鈕目前是否處於被按下的狀態
-    int  m_nChildMoveOffset;  // 點擊時子物件位移的像素量
+    // 建立子控制（文字）
+    void CreateChildren();
 
-    // 音效
-    char m_szClickSoundName[32]; // 儲存點擊音效的名稱
-
-    // 複合控制項
-    CControlText m_Text;      // 內含的文字控制項，用於顯示按鈕標籤
+protected:
+    CControlText m_Text;          // 內建一個文字子控制
+    int  m_pressShiftX{ 1 };        // 按下位移 X（預設 1px）
+    int  m_pressShiftY{ 1 };        // 按下位移 Y（預設 1px）
+    bool m_bEnablePressShift{ true };
+    bool m_bPressed{ false };
 };
 
 #endif // CCONTROLBUTTONBASE_H

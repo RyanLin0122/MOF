@@ -1,217 +1,197 @@
 #include "UI/CControlAlphaBox.h"
 #include "Image/CDeviceResetManager.h"
 #include "Image/CDeviceManager.h"
-#include <d3dx9.h>
-#include <d3d9.h> // 假設使用 D3D9
+#include <d3d9.h>
+#include <cstring> // memcpy
 
-/**
- * CControlAlphaBox 建構函式
- * 初始化頂點資料和成員變數。
- */
-CControlAlphaBox::CControlAlphaBox()
-    : m_pVertexBuffer(nullptr), m_bIsCreated(false)
+// ==== 由於專案內的 VertexBufferData 定義不可見，這裡用位移抓 pVB ====
+//   基準顯示：pVB 位於 +8 bytes 位置（*(IDirect3DVertexBuffer9**)(vb+8)）
+static inline IDirect3DVertexBuffer9* GetVB(const VertexBufferData* p)
 {
-    // 初始化頂點預設值
-    for (int i = 0; i < 4; ++i)
-    {
-        m_vertices[i].x = 0.0f;
-        m_vertices[i].y = 0.0f;
-        m_vertices[i].z = 0.5f;   // 深度值
-        m_vertices[i].rhw = 1.0f; // 倒數 W，用於 2D 渲染
-    }
-    SetColor(1.0f, 1.0f, 1.0f, 1.0f); // 預設為不透明白色
+    if (!p) return nullptr;
+    const char* base = reinterpret_cast<const char*>(p);
+    return *reinterpret_cast<IDirect3DVertexBuffer9* const*>(base + 8);
 }
 
-/**
- * CControlAlphaBox 解構函式
- * 釋放 DirectX Vertex Buffer 資源。
- */
+// ==== 顏色工具 =========================================================
+unsigned char CControlAlphaBox::ToByte(float v)
+{
+    if (v >= 1.0f) return 255;
+    if (v <= 0.0f) return 0;
+    return static_cast<unsigned char>(v * 255.0f + 0.5f);
+}
+
+DWORD CControlAlphaBox::PackColor(float r, float g, float b, float a)
+{
+    return (static_cast<DWORD>(ToByte(a)) << 24) |
+        (static_cast<DWORD>(ToByte(r)) << 16) |
+        (static_cast<DWORD>(ToByte(g)) << 8) |
+        (static_cast<DWORD>(ToByte(b)));
+}
+
+// ==== 建構 / 解構 ======================================================
+CControlAlphaBox::CControlAlphaBox()
+{
+    // 既定：白色不透明
+    SetColor(1.f, 1.f, 1.f, 1.f);
+}
+
 CControlAlphaBox::~CControlAlphaBox()
 {
-    if (m_pVertexBuffer)
+    // 與基準一致：由 Reset Manager 刪除 VB
+    if (m_pVBData)
     {
-        CDeviceResetManager::GetInstance()->DeleteVertexBuffer(m_pVertexBuffer);
-        m_pVertexBuffer = nullptr;
+        CDeviceResetManager::GetInstance()->DeleteVertexBuffer(m_pVBData);
+        m_pVBData = nullptr;
     }
 }
 
-/**
- * 創建控制項並初始化繪圖資源。
- */
-void CControlAlphaBox::Create(int nPosX, int nPosY, unsigned short usWidth, unsigned short usHeight, CControlBase* pParent)
-{
-    if (!m_bIsCreated)
-    {
-        m_bIsCreated = true;
-        // 創建一個可容納 4 個頂點的 Vertex Buffer
-        m_pVertexBuffer = CDeviceResetManager::GetInstance()->CreateVertexBuffer(4, sizeof(D3DVertex));
-        if (m_pVertexBuffer)
-        {
-            CControlBase::Create(nPosX, nPosY, usWidth, usHeight, pParent);
-        }
-    }
-}
-
+// ==== Create 多載 ======================================================
 void CControlAlphaBox::Create(CControlBase* pParent)
 {
-    if (!m_bIsCreated)
+    if (m_bCreated) return;
+    m_bCreated = true;
+
+    m_pVBData = CDeviceResetManager::GetInstance()->CreateVertexBuffer(4u, 1u);
+    if (m_pVBData)
     {
-        m_bIsCreated = true;
-        m_pVertexBuffer = CDeviceResetManager::GetInstance()->CreateVertexBuffer(4, sizeof(D3DVertex));
-        if (m_pVertexBuffer)
-        {
-            CControlBase::Create(pParent);
-        }
+        CControlBase::Create(pParent);
     }
 }
 
-void CControlAlphaBox::Create(int nPosX, int nPosY, unsigned short usWidth, unsigned short usHeight, float r, float g, float b, float a, CControlBase* pParent)
+void CControlAlphaBox::Create(int x, int y, unsigned short w, unsigned short h, CControlBase* pParent)
 {
-    if (!m_bIsCreated)
+    if (m_bCreated) return;
+    m_bCreated = true;
+
+    m_pVBData = CDeviceResetManager::GetInstance()->CreateVertexBuffer(4u, 1u);
+    if (m_pVBData)
     {
-        m_bIsCreated = true;
-        m_pVertexBuffer = CDeviceResetManager::GetInstance()->CreateVertexBuffer(4, sizeof(D3DVertex));
-        if (m_pVertexBuffer)
-        {
-            SetColor(r, g, b, a);
-            CControlBase::Create(nPosX, nPosY, usWidth, usHeight, pParent);
-        }
+        CControlBase::Create(x, y, w, h, pParent);
     }
 }
 
-
-/**
- * 準備繪製。
- * 計算方塊的四個頂點在螢幕上的最終座標，並將這些資料寫入 Vertex Buffer。
- */
-void CControlAlphaBox::PrepareDrawing()
+void CControlAlphaBox::Create(int x, int y, unsigned short w, unsigned short h,
+    float r, float g, float b, float a, CControlBase* pParent)
 {
-    // 假設 byte_21CB35D 是一個全域的繪製開關
-    // if (byte_21CB35D) return;
+    if (m_bCreated) return;
+    m_bCreated = true;
 
-    if (m_pVertexBuffer /*&& m_pVertexBuffer->pVB*/)
+    m_pVBData = CDeviceResetManager::GetInstance()->CreateVertexBuffer(4u, 1u);
+    if (m_pVBData)
     {
-        int absPos[2];
-        GetAbsPos((float*)absPos);
-        
-        float left = static_cast<float>(absPos[0]) - 0.5f;
-        float top = static_cast<float>(absPos[1]) - 0.5f;
-        float right = left + static_cast<float>(m_usWidth);
-        float bottom = top + static_cast<float>(m_usHeight);
-
-        // 更新頂點座標
-        m_vertices[0].x = left;  m_vertices[0].y = top;
-        m_vertices[1].x = right; m_vertices[1].y = top;
-        m_vertices[2].x = right; m_vertices[2].y = bottom;
-        m_vertices[3].x = left;  m_vertices[3].y = bottom;
-        
-        // 將頂點資料鎖定並複製到硬體緩衝區
-        void* pVertices = nullptr;
-        // if (SUCCEEDED(m_pVertexBuffer->pVB->Lock(0, sizeof(m_vertices), &pVertices, 0)))
-        // {
-        //     memcpy(pVertices, m_vertices, sizeof(m_vertices));
-        //     m_pVertexBuffer->pVB->Unlock();
-        // }
+        SetColor(r, g, b, a);
+        CControlBase::Create(x, y, w, h, pParent);
     }
-    // 呼叫基底類別的函式以準備子控制項
-    CControlBase::PrepareDrawing();
 }
 
-/**
- * 執行繪製。
- * 設定渲染狀態，並命令 GPU 繪製方塊。
- */
-void CControlAlphaBox::Draw()
+// ==== 幾何更新 =========================================================
+void CControlAlphaBox::UpdateVerticesFromRect()
 {
-    // if (byte_21CB35D) return;
+    // 與基準一致：半像素對齊（-0.5f）
+    const float left = static_cast<float>(GetAbsX()) - 0.5f;
+    const float top = static_cast<float>(GetAbsY()) - 0.5f;
+    const float right = left + static_cast<float>(GetWidth());
+    const float bottom = top + static_cast<float>(GetHeight());
 
-    if (m_pVertexBuffer /*&& m_pVertexBuffer->pVB && Device*/)
-    {
-        // 1. 設定渲染狀態：關閉貼圖
-        CDeviceManager::GetInstance()->SetTexture(0, nullptr);
-        
-        // 2. 綁定 Vertex Buffer
-        // CDeviceManager::SetStreamSource(0, m_pVertexBuffer->pVB, 0, sizeof(D3DVertex));
-        
-        // 3. 設定頂點格式 (Flexible Vertex Format)
-        // D3DFVF_XYZRHW | D3DFVF_DIFFUSE 的值為 0x44
-        // CDeviceManager::SetFVF(D3DFVF_XYZRHW | D3DFVF_DIFFUSE);
-        
-        // 4. 發出繪製命令，使用 Triangle Fan 繪製一個矩形 (2個三角形)
-        // Device->DrawPrimitive(D3DPT_TRIANGLEFAN, 0, 2);
-    }
-    // 呼叫基底類別的函式以繪製子控制項
-    CControlBase::Draw();
+    // TriangleFan：v0=LT, v1=RT, v2=RB, v3=LB
+    const float z = 0.0f;
+    const float rhw = 1.0f;
+
+    m_vtx[0].x = left;  m_vtx[0].y = top;    m_vtx[0].z = z; m_vtx[0].rhw = rhw;
+    m_vtx[1].x = right; m_vtx[1].y = top;    m_vtx[1].z = z; m_vtx[1].rhw = rhw;
+    m_vtx[2].x = right; m_vtx[2].y = bottom; m_vtx[2].z = z; m_vtx[2].rhw = rhw;
+    m_vtx[3].x = left;  m_vtx[3].y = bottom; m_vtx[3].z = z; m_vtx[3].rhw = rhw;
 }
 
-/**
- * 將 RGBA 浮點數顏色轉換為 ARGB 的 DWORD 格式。
- */
-unsigned long FloatToDWORDColor(float r, float g, float b, float a)
-{
-    auto ToByte = [](float val) -> unsigned char {
-        if (val >= 1.0f) return 255;
-        if (val <= 0.0f) return 0;
-        return static_cast<unsigned char>(val * 255.0f + 0.5f);
-    };
-    return (ToByte(a) << 24) | (ToByte(r) << 16) | (ToByte(g) << 8) | ToByte(b);
-}
-
-/**
- * 設定方塊的單一顏色。
- */
+// ==== 顏色 / 透明度 ====================================================
 void CControlAlphaBox::SetColor(float r, float g, float b, float a)
 {
-    unsigned long color = FloatToDWORDColor(r, g, b, a);
-    m_vertices[0].color = color;
-    m_vertices[1].color = color;
-    m_vertices[2].color = color;
-    m_vertices[3].color = color;
+    const DWORD c = PackColor(r, g, b, a);
+    for (int i = 0; i < 4; ++i) m_vtx[i].diffuse = c;
 }
 
-/**
- * 設定方塊的四角漸層顏色。
- */
-void CControlAlphaBox::SetColor(float r1, float g1, float b1, float a1, float r2, float g2, float b2, float a2, float r3, float g3, float b3, float a3, float r4, float g4, float b4, float a4)
+void CControlAlphaBox::SetColor(float r1, float g1, float b1, float a1,
+    float r2, float g2, float b2, float a2,
+    float r3, float g3, float b3, float a3,
+    float r4, float g4, float b4, float a4)
 {
-    m_vertices[0].color = FloatToDWORDColor(r1, g1, b1, a1);
-    m_vertices[1].color = FloatToDWORDColor(r2, g2, b2, a2);
-    m_vertices[2].color = FloatToDWORDColor(r3, g3, b3, a3);
-    m_vertices[3].color = FloatToDWORDColor(r4, g4, b4, a4);
+    m_vtx[0].diffuse = PackColor(r1, g1, b1, a1);
+    m_vtx[1].diffuse = PackColor(r2, g2, b2, a2);
+    m_vtx[2].diffuse = PackColor(r3, g3, b3, a3);
+    m_vtx[3].diffuse = PackColor(r4, g4, b4, a4);
 }
 
-/**
- * 單獨設定透明度。
- * @param alpha 0 (完全透明) 到 255 (完全不透明)。
- */
-void CControlAlphaBox::SetAlpha(unsigned char alpha)
+void CControlAlphaBox::SetAlpha(unsigned char a)
 {
     for (int i = 0; i < 4; ++i)
     {
-        // 清除原有的 Alpha 值，並設定新的 Alpha 值
-        m_vertices[i].color = (m_vertices[i].color & 0x00FFFFFF) | (alpha << 24);
+        // 只換 A，保留 RGB
+        m_vtx[i].diffuse = (m_vtx[i].diffuse & 0x00FFFFFFu) | (static_cast<DWORD>(a) << 24);
     }
 }
 
-/**
- * 快速設定所有屬性。
- */
-void CControlAlphaBox::SetAttr(int nPosX, int nPosY, short usWidth, short usHeight, float r, float g, float b, float a)
+// ==== 其他工具 =========================================================
+void CControlAlphaBox::SetAttr(int x, int y, unsigned short w, unsigned short h,
+    float r, float g, float b, float a)
 {
-    SetAbsPos(nPosX, nPosY);
-    m_usWidth = usWidth;
-    m_usHeight = usHeight;
+    CControlBase::SetAbsPos(x, y);
+    m_usWidth = w;
+    m_usHeight = h;
     SetColor(r, g, b, a);
 }
 
-/**
- * 將方塊大小設定為與父物件相同。
- */
 void CControlAlphaBox::SetRectInParent()
 {
-    if(m_pParent)
+    if (m_pParent)
     {
         m_usWidth = m_pParent->GetWidth();
         m_usHeight = m_pParent->GetHeight();
     }
+}
+
+// ==== 繪製流程（與基準一致） ===========================================
+void CControlAlphaBox::PrepareDrawing()
+{
+    if (!m_bIsVisible) return;
+    if (!m_pVBData)    return;
+
+    IDirect3DVertexBuffer9* vb = GetVB(m_pVBData);
+    if (!vb) return;
+
+    // 更新四角座標
+    UpdateVerticesFromRect();
+
+    // Lock → memcpy 4 顆 2D 顶點（80 bytes）→ Unlock
+    void* dst = nullptr;
+    if (SUCCEEDED(vb->Lock(0, 0, &dst, 0)) && dst)
+    {
+        std::memcpy(dst, m_vtx, sizeof(m_vtx));
+        vb->Unlock();
+        // 基底：讓子控制也有機會做自己的 Prepare
+        CControlBase::PrepareDrawing();
+    }
+}
+
+void CControlAlphaBox::Draw()
+{
+    if (!m_bIsVisible) return;
+    if (!m_pVBData)    return;
+    if (!Device)       return;
+
+    IDirect3DVertexBuffer9* vb = GetVB(m_pVBData);
+    if (!vb) return;
+
+    // 0 號貼圖設為空（基準）
+    CDeviceManager::GetInstance()->SetTexture(0, nullptr);
+    // 綁 VB：stream 0, stride = 20 bytes
+    CDeviceManager::GetInstance()->SetStreamSource(0, vb, 0, sizeof(D3DVertex));
+    // FVF = XYZRHW | DIFFUSE
+    CDeviceManager::GetInstance()->SetFVF(kFVF);
+
+    // TriangleFan 畫 2 個三角形 = 1 個矩形
+    Device->DrawPrimitive(D3DPT_TRIANGLEFAN, 0, 2);
+
+    // 繼續畫子控制
+    CControlBase::Draw();
 }

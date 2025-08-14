@@ -26,3 +26,5 @@ ClientCharacter* ClientCharacterManager::GetCharByAccount(unsigned int) {
 bool ClientCharacterManager::IsMapConqueror(char* Name) {
     return true;
 }
+
+void ClientCharacterManager::ResetMoveTarget(){}

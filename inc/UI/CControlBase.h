@@ -1,151 +1,122 @@
-#ifndef CCONTROLBASE_H
-#define CCONTROLBASE_H
+#pragma once
+#include <cstdint>
+#include "stToolTipData.h"
 
-#include "UI/stToolTipData.h"
-
-// Windows POINT 結構的簡易定義，以避免引入 <windows.h>
-struct stPoint {
-    long x;
-    long y;
-};
-
-/**
- * @struct stRect
- * @brief 自訂的矩形結構，用來取代 RECT。
- */
-struct stRect {
-    long left;
-    long top;
-    long right;
-    long bottom;
-};
-
-/**
- * @class CControlBase
- * @brief 所有 UI 控制項的基底類別。
- *
- * 定義了 UI 元件的通用屬性與行為，例如位置、大小、父子階層關係、
- * 繪製、輸入處理以及工具提示等。
- */
+// 為避免與 Windows 的 windef.h 衝突，改用較冷門的型別名稱
+struct stPoint { int x{ 0 }; int y{ 0 }; };
 class CControlBase
 {
 public:
-    // 建構函式與虛擬解構函式
     CControlBase();
     virtual ~CControlBase();
 
-    // --- 虛擬函式 (可被子類別覆寫) ---
+    // ---- 建立流程 ----
     virtual void Create(CControlBase* pParent);
-    virtual void Create(int nPosX, int nPosY, CControlBase* pParent);
-    virtual void Create(int nPosX, int nPosY, unsigned short usWidth, unsigned short usHeight, CControlBase* pParent);
+    virtual void Create(int x, int y, CControlBase* pParent);
+    virtual void Create(int x, int y, uint16_t w, uint16_t h, CControlBase* pParent);
 
-    // 處理鍵盤與滑鼠輸入事件
-    virtual int* ControlKeyInputProcess(int msg, int key, int x, int y, int a6, int a7);
-
-    // 準備繪製，通常用於計算座標或更新狀態
+    // ---- 繪製流程 ----
     virtual void PrepareDrawing();
-
-    // 執行繪製操作
     virtual void Draw();
 
-    // 初始化登入相關資料
-    virtual void InitLogIn();
-
-    // 清除控制項資料
-    virtual void ClearData();
-
-    // 顯示與隱藏控制項
+    // ---- 顯示/隱藏 ----
     virtual void Show();
     virtual void Hide();
-
-    // 顯示/隱藏所有子控制項
     void ShowChildren();
     void HideChildren();
 
-    // --- 位置與大小相關 ---
-    void SetPos(int nPosX, int nPosY);
-    void SetPos(stPoint pos); // 多載版本
-    void SetX(int nPosX);
-    void SetY(int nPosY);
-    int GetX() const;
-    int GetY() const;
-    unsigned short GetWidth() const;
-    unsigned short GetHeight() const;
+    // ---- 事件傳遞 ----
+    virtual int* ControlKeyInputProcess(int msg, int key, int x, int y, int a6, int a7);
 
-    // 設定與獲取相對於最上層父物件的絕對位置
-    void SetAbsPos(int nAbsX, int nAbsY);
-    void SetAbsPos(stPoint pos); // 多載版本
-    void SetAbsX(int nAbsX);
-    void SetAbsY(int nAbsY);
-    int GetAbsX();
-    int GetAbsY();
-    float* GetAbsPos(float* pPoint);
+    // ---- 子物件鏈結 ----
+    void AddChild(CControlBase* pChild);
+    void DeleteChild();
+    void DelLastChild();
+    CControlBase* GetChild(int index);
+    CControlBase* GetFirstChild() const { return m_pFirstChild; }
+    CControlBase* GetLastChild()  const { return m_pLastChild; }
+    CControlBase* GetParent()     const { return m_pParent; }
 
-    // 將控制項的中心點設置到指定的絕對座標
-    void SetCenterPos(int nAbsCenterX, int nAbsCenterY);
-    // 將控制項置於父物件或螢幕的中央
+    // ---- 位置/尺寸 ----
+    void SetPos(int x, int y);
+    void SetPos(stPoint pt);
+    void SetX(int x);
+    void SetY(int y);
+    int  GetX() const { return m_x; }
+    int  GetY() const { return m_y; }
+
+    void SetAbsPos(int absX, int absY);
+    void SetAbsPos(stPoint pt);
+    void SetAbsX(int absX);
+    void SetAbsY(int absY);
+
+    void GetAbsPos(int& outAbsX, int& outAbsY) const;
+    int  GetAbsX() const;
+    int  GetAbsY() const;
+
+    void     SetSize(uint16_t w, uint16_t h) { m_usWidth = w; m_usHeight = h; }
+    uint16_t GetWidth()  const { return m_usWidth; }
+    uint16_t GetHeight() const { return m_usHeight; }
+
+    void MoveWindow(int dx, int dy);
+    void SetChildPosMove(int dx, int dy);
+
+    // ---- 置中 ----
+    void SetCenterPos(int centerAbsX, int centerAbsY);
     void SetCenterPos();
     void SetCenterXToParent();
     void SetCenterYToParent();
     void SetWindowCenterAbsPos();
 
-    // --- 狀態管理 ---
-    void Active();
-    void NoneActive();
-    bool IsActive() const;
+    // ---- 命中測試（右/下為開區間）----
+    bool PtInCtrl(stPoint pt) const;
+
+    // ---- 旗標/屬性 ----
+    void SetVisible(bool v) { m_bIsVisible = v; }
     bool IsVisible() const { return m_bIsVisible; }
 
-    // --- 工具提示 (ToolTip) ---
-    void SetToolTipData(short usData, int type, int unk, int data, char uiType, short slotIndex, void* extraData);
-    void SetToolTipDataString(char* text, int data);
-    void SetToolTipDataDesc(unsigned short descriptionID);
+    void SetPassKeyInputToParent(bool b) { m_bPassKeyInputToParent = b; }
+    bool GetPassKeyInputToParent() const { return m_bPassKeyInputToParent; }
 
-    // --- 其他 ---
-    bool PtInCtrl(stPoint pt); // 判斷座標點是否在控制項範圍內
-    void SetArrayIndex(int nIndex);
+    void SetCenterOrigin(bool b) { m_bCenterOrigin = b; }
+    bool GetCenterOrigin() const { return m_bCenterOrigin; }
 
-protected:
-    // --- 虛擬函式 (供子類別實作的事件) ---
-    virtual void OnShow() {}
-    virtual void OnHide() {}
+    void SetScale(float sx, float sy) { m_fScaleX = sx; m_fScaleY = sy; }
+    float GetScaleX() const { return m_fScaleX; }
+    float GetScaleY() const { return m_fScaleY; }
 
-    // --- 子控制項管理 ---
-    void AddChild(CControlBase* pChild);
-    void DelLastChild();
-    CControlBase* GetChild(int nIndex);
-    CControlBase* FindClickedChild(stPoint  pt); // 尋找被點擊的子控制項
-
-    void MoveWindow(int nDeltaX, int nDeltaY);
-    void SetChildPosMove(int nDeltaX, int nDeltaY);
+    // ---- ToolTip ----
+    void InitLogIn();
+    void ClearData();
+    void EnableToolTip(bool enable) { m_bToolTipEnabled = enable; }
+    bool IsToolTipEnabled() const { return m_bToolTipEnabled; }
 
 protected:
-    // --- 成員變數 ---
-    CControlBase* m_pParent;      // 指向父控制項
-    CControlBase* m_pPrev;        // 指向前一個兄弟控制項
-    CControlBase* m_pNext;        // 指向後一個兄弟控制項
-    CControlBase* m_pChildHead;   // 指向子控制項鏈結串列的頭部
-    CControlBase* m_pChildTail;   // 指向子控制項鏈結串列的尾部
+    virtual void OnPrepareDrawing() {}
+    virtual void OnDraw() {}
 
-    int m_nPosX;                  // 相對於父控制項的 X 座標
-    int m_nPosY;                  // 相對於父控制項的 Y 座標
-    unsigned short m_usWidth;     // 寬度
-    unsigned short m_usHeight;    // 高度
+protected:
+    // 鏈結/階層
+    CControlBase* m_pParent{ nullptr };
+    CControlBase* m_pPrev{ nullptr };
+    CControlBase* m_pNext{ nullptr };
+    CControlBase* m_pFirstChild{ nullptr };
+    CControlBase* m_pLastChild{ nullptr };
 
-    float m_fScaleX;              // X 軸縮放比例
-    float m_fScaleY;              // Y 軸縮放比例
+    // 幾何
+    int      m_x{ 0 };
+    int      m_y{ 0 };
+    uint16_t m_usWidth{ 0 };
+    uint16_t m_usHeight{ 0 };
+    float    m_fScaleX{ 1.0f };
+    float    m_fScaleY{ 1.0f };
 
-    bool m_bIsActive;             // 是否啟用 (可與玩家互動)
-    bool m_bIsVisible;            // 是否可見
-    bool m_bAbsorbClick;          // 是否吸收點擊事件 (不傳遞給子控制項)
-    bool m_bIsEnable;             // 是否啟用 (接收事件)
-    bool m_bPassKeyInputToParent; // 是否將輸入事件傳遞給父控制項
-    bool m_bHasToolTip;           // 是否有工具提示
-    int  m_nArrayIndex;           // 在容器中的索引
+    // 旗標
+    bool m_bIsVisible{ true };
+    bool m_bPassKeyInputToParent{ false };
+    bool m_bCenterOrigin{ false };
+    bool m_bToolTipEnabled{ false };
 
-    stToolTipData m_ToolTipData;  // 工具提示資料
-
-    bool m_bIsCenterOrigin;       // 座標原點是否在中心
-    int m_nControlID;             // 控制項的類型 ID
+    // ToolTip
+    stToolTipData m_ToolTip;
 };
-
-#endif // CCONTROLBASE_H

@@ -1,5 +1,4 @@
-#ifndef CLISTMGR_H
-#define CLISTMGR_H
+#pragma once
 
 // 由於我們不知道 CUIBase 的具體實現，在此進行前向宣告
 // Forward declaration for CUIBase as its full definition is not provided.
@@ -70,5 +69,3 @@ public:
 private:
     stNode* m_pHead; // 指向鏈結串列的頭部節點
 };
-
-#endif // CLISTMGR_H

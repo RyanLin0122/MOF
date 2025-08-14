@@ -1,4 +1,4 @@
-<?xml version='1.0' encoding='utf-8'?>
+<?xml version="1.0" encoding="utf-8"?>
 <Project xmlns="http://schemas.microsoft.com/developer/msbuild/2003" DefaultTargets="Build">
   <ItemGroup Label="ProjectConfigurations">
     <ProjectConfiguration Include="Debug|Win32">
@@ -268,7 +268,9 @@
     <ClCompile Include="src\UI\CControlImage.cpp" />
     <ClCompile Include="src\UI\CControlText.cpp" />
     <ClCompile Include="src\UI\CControlButtonBase.cpp" />
-    <ClCompile Include="src\UI\CMoveIcon.cpp" /></ItemGroup>
+    <ClCompile Include="src\UI\CMoveIcon.cpp" />
+    <ClCompile Include="src\UI\stToolTipData.cpp" />
+  </ItemGroup>
   <ItemGroup>
     <ClInclude Include="inc\Character\ClientCharacter.h" />
     <ClInclude Include="inc\Character\ClientCharacterManager.h" />
@@ -395,7 +397,8 @@
     <ClInclude Include="inc\UI\CControlImage.h" />
     <ClInclude Include="inc\UI\CControlText.h" />
     <ClInclude Include="inc\UI\CControlButtonBase.h" />
-    <ClInclude Include="inc\UI\CMoveIcon.h" /></ItemGroup>
+    <ClInclude Include="inc\UI\CMoveIcon.h" />
+  </ItemGroup>
   <ItemGroup>
     <Library Include="lib\fmod64vc.lib" />
   </ItemGroup>

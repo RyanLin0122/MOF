@@ -1,259 +1,289 @@
 #include "UI/CControlImage.h"
-#include "Image/cltImageManager.h"
-#include <windows.h> // 為了 timeGetTime
+#undef max
+#undef min
+#include <algorithm>
 
-
-// 將浮點顏色轉換為 DWORD
-unsigned long FloatsToDWORDColor(float r, float g, float b, float a) {
-    auto ToByte = [](float val) -> unsigned char {
-        if (val >= 1.0f) return 255;
-        if (val <= 0.0f) return 0;
-        return static_cast<unsigned char>(val * 255.0f + 0.5f);
-    };
-    return (ToByte(a) << 24) | (ToByte(r) << 16) | (ToByte(g) << 8) | ToByte(b);
-}
-// --- 模擬結束 ---
-
-/**
- * CControlImage 建構函式
- * 初始化所有圖片相關的成員變數。
- */
+// ======================================================================
+// 建構 / 解構（完全對齊你提供的基準預設）
+// ======================================================================
 CControlImage::CControlImage()
 {
-    m_nImageType = 5; // 預設類型
-    m_nImageGIID = 0;
-    m_usImageBlockID = 0xFFFF; // -1 代表無效
-    m_pGameImage = nullptr;
-    m_nAlpha = 255;
-    m_nAngle = 0;
-    m_nRenderType = 3;
-    m_bIsImageLoaded = false;
-    m_cOutputPercentTop = 0;
-    m_nShadeAlpha = 0;
-    m_dwShadeStartTime = timeGetTime();
-    m_nShadeMode = 1;
-    m_nShadeDirection = 1;
-    m_fRed = 1.0f;
-    m_fGreen = 1.0f;
-    m_fBlue = 1.0f;
-    m_fAlphaTint = 1.0f;
-    m_bIsMouseOver = false;
+    // CControlBase::CControlBase() 已先被呼叫（由編譯器完成）
+
+    m_nGIGroup = 5;        // [30]
+    m_nGIID = 0;        // [31]
+    m_usBlockID = 0xFFFF;   // [64]
+    m_pGameImage = nullptr;  // [33]
+
+    m_nAlpha = 255;        // [34]
+    m_nAngle = 0;          // [35]
+    m_drawFlag = 3;          // [144]
+    m_bPrepared = 0;          // [37]
+
+    m_outputPercentFromTop = 0; // [152]
+
+    m_fadeCurA = 0;          // [39]
+    m_lastTick = timeGetTime(); // [40]
+    m_bFadeIn = 1;          // [41]
+    m_fadeStep = 1;          // [42]
+
+    m_fColorR = 1.0f;        // [43]
+    m_fColorG = 1.0f;        // [44]
+    m_fColorB = 1.0f;        // [45]
+    m_fColorA = 1.0f;        // [46]
 }
 
-/**
- * CControlImage 解構函式
- */
 CControlImage::~CControlImage()
 {
+    // 交由 ImageManager 管理池；這裡不持有所有權，不需要 delete
+    // Base 解構即可
 }
 
-/**
- * 清除資料，重設圖片 ID。
- */
-void CControlImage::ClearData()
-{
-    CControlBase::ClearData();
-    m_nImageGIID = 0;
-    m_usImageBlockID = 0xFFFF;
-}
-
-/**
- * 創建控制項，並設定淡入效果。
- */
+// ======================================================================
+// 建立 / 清理
+// ======================================================================
 void CControlImage::Create(CControlBase* pParent)
 {
     CControlBase::Create(pParent);
-    m_nShadeAlpha = 0;
-    SetAlpha(0); // 初始透明度為0，配合淡入效果
+    m_pGameImage = nullptr;
+    m_fadeCurA = 0;
+    SetAlpha(0); // 基準 Create() 會把 alpha 設 0，配合後續淡入
 }
 
-void CControlImage::Create(int nPosX, int nPosY, CControlBase* pParent)
+void CControlImage::Create(int x, int y, CControlBase* pParent)
 {
-    CControlBase::Create(nPosX, nPosY, pParent);
-    m_nShadeAlpha = 0;
+    CControlBase::Create(x, y, pParent);
+    m_pGameImage = nullptr;
+    m_fadeCurA = 0;
     SetAlpha(0);
 }
 
-/**
- * 創建控制項，同時設定圖片資源。
- */
-void CControlImage::Create(int nPosX, int nPosY, unsigned int uiGIID, unsigned short usBlockID, CControlBase* pParent)
+// 這個多載對應基準：Create(x, y, giid, block, parent)
+void CControlImage::Create(int x, int y, unsigned int giid, unsigned short block, CControlBase* pParent)
 {
-    m_usImageBlockID = usBlockID;
-    m_nImageGIID = uiGIID;
-    SetImageSize();
-    CControlBase::Create(nPosX, nPosY, pParent);
-    m_nShadeAlpha = 0;
+    m_usBlockID = block;
+    m_nGIID = static_cast<int>(giid);
+    SetImageSize(); // 先以資源尺寸回填自身寬高
+    CControlBase::Create(x, y, pParent);
+    m_pGameImage = nullptr;
+    m_fadeCurA = 0;
     SetAlpha(0);
 }
 
-/**
- * 設定圖片資源 ID，並更新控制項大小以符合圖片。
- */
-void CControlImage::SetImage(unsigned int uiGIID, unsigned short usBlockID)
+void CControlImage::ClearData()
 {
-    m_nImageGIID = uiGIID;
-    m_usImageBlockID = usBlockID;
+    CControlBase::ClearData();
+    m_nGIID = 0;
+    m_usBlockID = 0xFFFF;
+}
+
+// ======================================================================
+// 設定圖像 ID / 區塊
+// ======================================================================
+void CControlImage::SetImage(unsigned int giid, unsigned short block)
+{
+    m_nGIID = static_cast<int>(giid);
+    m_usBlockID = block;
     SetImageSize();
 }
 
-void CControlImage::SetImageID(unsigned int uiImageType, unsigned int uiGIID, unsigned short usBlockID)
+void CControlImage::SetImageID(unsigned int giGroup, unsigned int giid, unsigned short block)
 {
-    if (m_nImageType != uiImageType || m_nImageGIID != uiGIID || m_usImageBlockID != usBlockID)
+    if (m_nGIGroup != static_cast<int>(giGroup) ||
+        m_nGIID != static_cast<int>(giid) ||
+        m_usBlockID != block)
     {
-        m_nImageType = uiImageType;
-        m_nImageGIID = uiGIID;
-        m_usImageBlockID = usBlockID;
+        m_nGIGroup = static_cast<int>(giGroup);
+        m_nGIID = static_cast<int>(giid);
+        m_usBlockID = block;
         SetImageSize();
     }
 }
 
-void CControlImage::SetImageID(unsigned int uiGIID, unsigned short usBlockID)
+void CControlImage::SetImageID(unsigned int giid, unsigned short block)
 {
-    if (m_nImageGIID != uiGIID || m_usImageBlockID != usBlockID)
+    if (m_nGIID != static_cast<int>(giid) || m_usBlockID != block)
     {
-        m_nImageGIID = uiGIID;
-        m_usImageBlockID = usBlockID;
+        m_nGIID = static_cast<int>(giid);
+        m_usBlockID = block;
         SetImageSize();
     }
 }
 
-/**
- * 根據圖片資源的實際大小，設定控制項的寬和高。
- */
-void CControlImage::SetImageSize()
+// ======================================================================
+// 依資源大小回填控制寬高（基準 SetImageSize）
+// ======================================================================
+bool CControlImage::SetImageSize()
 {
-    if (m_usImageBlockID == 0xFFFF)
+    if (m_usBlockID == 0xFFFF)
     {
         m_usWidth = 0;
         m_usHeight = 0;
-        return;
+        return false;
     }
-    
-    // 透過圖片管理器獲取圖片資訊
-    GameImage* pImage = cltImageManager::GetInstance()->GetGameImage(m_nImageType, m_nImageGIID, 0, true);
-    if (pImage)
+
+    GameImage* gi = cltImageManager::GetInstance()->GetGameImage(m_nGIGroup, m_nGIID, 0, 1);
+    if (!gi)
     {
-        // 從圖片資源中讀取寬高 (此為模擬)
-        // 原始碼中會從 pImage->pBlockInfo->pBlock[m_usImageBlockID] 讀取
-        m_usWidth = 32;  // 假設寬度
-        m_usHeight = 32; // 假設高度
-        cltImageManager::GetInstance()->ReleaseGameImage(pImage);
+        m_usWidth = m_usHeight = 0;
+        return false;
     }
+
+    // 指定 block 後用 GetBlockRect 取寬高
+    gi->SetBlockID(m_usBlockID);
+    RECT rc{}; gi->GetBlockRect(&rc);
+    const int w = std::max(0, (int)(rc.right - rc.left));
+    const int h = std::max(0, (int)(rc.bottom - rc.top));
+
+    m_usWidth = static_cast<uint16_t>(w);
+    m_usHeight = static_cast<uint16_t>(h);
+
+    cltImageManager::GetInstance()->ReleaseGameImage(gi);
+    return (w | h) != 0;
 }
 
-/**
- * 準備繪製。
- * 載入圖片資源、計算淡入效果的透明度、設定渲染屬性。
- */
+// ======================================================================
+// 準備繪製（對齊基準行為）
+// - 取一個 GameImage*（池中物件）
+// - 淡入：更新 m_fadeCurA
+// - 把座標/縮放/角度/Alpha/Block/旗標 等資料塞回 GameImage
+// ======================================================================
 void CControlImage::PrepareDrawing()
 {
-    // 步驟 1: 初始化並進行有效性檢查
-    m_bIsImageLoaded = false;
-    if (!m_bIsVisible || m_usImageBlockID == 0xFFFF)
-    {
-        // 如果不可見或沒有設定圖片，則無需準備，直接處理子物件
-        CControlBase::PrepareDrawing();
-        return;
-    }
+    m_bPrepared = 0;
 
-    // 步驟 2: 獲取底層的 GameImage 資源物件
-    m_pGameImage = cltImageManager::GetInstance()->GetGameImage(m_nImageType, m_nImageGIID, 0, true);
-    if (!m_pGameImage)
-    {
-        // 如果獲取資源失敗，也無法繪製
-        CControlBase::PrepareDrawing();
-        return;
-    }
+    if (!IsVisible()) return;
+    if (m_usBlockID == 0xFFFF) return;
 
-    // 標記為已準備好繪製
-    m_bIsImageLoaded = true;
+    // 向池取一個 GI；若你的引擎在別處已經持有，也可以只在第一次取
+    m_pGameImage = cltImageManager::GetInstance()->GetGameImage(m_nGIGroup, m_nGIID, 0, 1);
+    if (!m_pGameImage) return;
 
-    // 步驟 3: 處理淡入/淡出效果
-    if (m_nShadeMode == 1) // 1 代表淡入模式
+    // ---- 淡入邏輯（與基準相符）----
+    if (m_bFadeIn)
     {
-        if (m_nShadeAlpha < 255)
+        float speedFactor = 1.0f;
+        const unsigned long now = timeGetTime();
+        const unsigned long dt = now - m_lastTick;
+        // 基準：若 (dt/0x23) >= 2，則用 SETTING_FRAME*2.5 當速度倍數
+        if (dt / 0x23 >= 2) speedFactor = static_cast<float>(SETTING_FRAME) * 2.5f;
+        m_lastTick = now;
+
+        if (m_fadeCurA < 255)
         {
-            // 根據時間計算當前的透明度，實現平滑的淡入動畫
-            float fElapsedTime = (float)(timeGetTime() - m_dwShadeStartTime);
-            // 這裡的計算方式與反編譯碼的邏輯一致
-            float fAlphaIncrement = (m_nShadeDirection * (fElapsedTime / 1000.0f) * 30.0f * 255.0f) / (float)60;
-            m_nShadeAlpha += static_cast<int>(fAlphaIncrement);
-
-            if (m_nShadeAlpha > 255) m_nShadeAlpha = 255;
-            if (m_nShadeAlpha < 0)   m_nShadeAlpha = 0;
-
-            m_dwShadeStartTime = timeGetTime();
+            // (__int64)((m_fadeStep * speedFactor * 30.0 / SETTING_FRAME) + m_fadeCurA)
+            const float add = (static_cast<float>(m_fadeStep) * speedFactor * 30.0f) / static_cast<float>(SETTING_FRAME);
+            m_fadeCurA = std::min(255, static_cast<int>(add + static_cast<float>(m_fadeCurA)));
         }
     }
 
-    // 步驟 4: 將 CControlImage 的狀態轉移到底層 GameImage 物件
+    // ---- 把狀態寫回 GameImage ----
+    const int ax = GetAbsX();
+    const int ay = GetAbsY();
 
-    // 4.1 獲取絕對座標
-    int absPos[2];
-    GetAbsPos((float*)absPos);
-
-    // 4.2 設定 GameImage 的屬性
-    m_pGameImage->SetPosition(static_cast<float>(absPos[0]), static_cast<float>(absPos[1]));
-    m_pGameImage->SetScaleXY(m_fScaleX, m_fScaleY);
+    m_pGameImage->SetPosition(static_cast<float>(ax), static_cast<float>(ay));
     m_pGameImage->SetRotation(m_nAngle);
-    m_pGameImage->SetBlockID(m_usImageBlockID);
 
-    // 根據是否有淡入效果，選擇使用 m_nShadeAlpha 還是 m_nAlpha
-    m_pGameImage->SetAlpha(m_nShadeMode ? m_nShadeAlpha : m_nAlpha);
+    // 縮放：沿用 CControlBase 的 Scale
+    m_pGameImage->SetScaleXY(GetScaleX(), GetScaleY());
 
-    // (在您提供的反編譯碼中未見，但一個完整的系統通常會有)
-    // m_pGameImage->SetFlipX( ... );
-    // m_pGameImage->SetFlipY( ... );
+    // Alpha：若淡入啟用，用 m_fadeCurA；否則用 m_nAlpha
+    m_pGameImage->SetAlpha(static_cast<unsigned int>(m_bFadeIn ? m_fadeCurA : m_nAlpha));
 
-    // 步驟 5: 呼叫 GameImage 的 Process 函式
-    // 這一步會使用上面設定好的所有屬性，來計算最終要渲染的頂點座標和顏色
-    m_pGameImage->Process();
+    // Block
+    m_pGameImage->SetBlockID(m_usBlockID);
 
-    // 步驟 6: 遞迴呼叫父類別的 PrepareDrawing，以處理所有子控制項
+    // 旗標（對齊基準預設）
+    m_pGameImage->m_bVertexAnimation = false; // +444 = 0
+    m_pGameImage->m_bFlag_447 = true;         // +447 = 1
+    m_pGameImage->m_bFlag_448 = true;         // +448 = 1
+    m_pGameImage->m_bFlag_449 = true;         // +449 = 1
+    m_pGameImage->m_bFlag_450 = true;         // +450 = 1
+
+    // 輸出比例旗標（基準：+445 = *((BYTE*)this + 152)）
+    m_pGameImage->m_bFlag_445 = (m_outputPercentFromTop != 0);
+
+    // 其餘 drawFlag 在原版可能會影響 GI 內部不同模式；
+    // 這裡不亂動翻轉/顏色運算，維持 GameImage 預設。
+
+    m_bPrepared = 1;
+
+    // 遞迴子物件
     CControlBase::PrepareDrawing();
 }
 
-
-/**
- * 執行繪製。
- */
+// ======================================================================
+// Draw（完全對齊基準：覆蓋顏色 → Draw → 還原預設顏色）
+// 基準把四個 float 0..1（R,G,B,A）轉成 0xAARRGGBB
+// ======================================================================
 void CControlImage::Draw()
 {
-    if (m_bIsVisible && m_bIsImageLoaded && m_pGameImage)
-    {
-        // 設定顏色濾鏡
-        m_pGameImage->SetOverWriteTextureColor(FloatsToDWORDColor(m_fRed, m_fGreen, m_fBlue, m_fAlphaTint));
-        
-        // 呼叫底層繪圖函式
-        m_pGameImage->Draw();
-        
-        // 恢復預設顏色
-        m_pGameImage->SetDefaultTextureColor();
-        
-        CControlBase::Draw();
-    }
+    if (!IsVisible()) return;
+    if (m_usBlockID == 0xFFFF) return;
+    if (!m_bPrepared) return;
+    if (!m_pGameImage) return;
+
+    const uint8_t R = ToByte01(m_fColorR); // [43]
+    const uint8_t G = ToByte01(m_fColorG); // [44]
+    const uint8_t B = ToByte01(m_fColorB); // [45]
+    const uint8_t A = ToByte01(m_fColorA); // [46]
+
+    const unsigned int ARGB =
+        (static_cast<unsigned int>(A) << 24) |
+        (static_cast<unsigned int>(R) << 16) |
+        (static_cast<unsigned int>(G) << 8) |
+        (static_cast<unsigned int>(B));
+
+    m_pGameImage->SetOverWriteTextureColor(ARGB);
+    m_pGameImage->Draw();
+    m_pGameImage->SetDefaultTextureColor();
+
+    // 子物件
+    CControlBase::Draw();
 }
 
+// ======================================================================
+// 隱藏（基準：若啟用淡入，則把目前淡入值/目標 alpha 歸零）
+// ======================================================================
 void CControlImage::Hide()
 {
-    if (m_nShadeMode) {
-        m_nShadeAlpha = 0; // 重設淡入動畫
-        m_dwShadeStartTime = timeGetTime();
+    if (m_bFadeIn)
+    {
+        m_fadeCurA = 0;
+        m_nAlpha = 0;
     }
     CControlBase::Hide();
 }
 
-// ... 其他 Set/Get 函式實作 ...
-void CControlImage::SetImageID(int type, int giid, short blockid) { SetImageID((unsigned int)type, (unsigned int)giid, (unsigned short)blockid); }
-void CControlImage::SetGIID(unsigned int uiGIID) { m_nImageGIID = uiGIID; }
-void CControlImage::SetBlockID(unsigned short usBlockID) { m_usImageBlockID = usBlockID; }
-void CControlImage::SetAlpha(int nAlpha) { m_nAlpha = nAlpha; }
-void CControlImage::SetAngle(int nAngle) { m_nAngle = nAngle; }
-void CControlImage::SetShadeMode(int nMode) { m_nShadeMode = nMode; }
-void CControlImage::SetOutputImagePercentFromTop(unsigned char ucPercent) { m_cOutputPercentTop = ucPercent; }
-int* CControlImage::ControlKeyInputProcess(int msg, int key, int x, int y, int a6, int a7) {
-    stPoint pt = { (long)x, (long)y };
-    m_bIsMouseOver = PtInCtrl(pt);
-    return CControlBase::ControlKeyInputProcess(msg, key, x, y, a6, a7);
+// ======================================================================
+// 事件流程：更新命中快取，並把事件往父層丟（對齊基準精神）
+// ======================================================================
+int* CControlImage::ControlKeyInputProcess(int msg, int key, int x, int y, int a6, int a7)
+{
+    // 反編譯顯示在 msg == 7 或 4（滑鼠相關）時，若座標未變且 a6 != 1，則直接略過處理
+    // 原程式以靜態區域變數記錄上次座標；這裡沿用該設計（跨所有 CControlImage 實例共享）
+    static int s_lastX = 0x7FFFFFFF;
+    static int s_lastY = 0x7FFFFFFF;
+
+    // 與你已修改的基底一致：預設回傳值為父物件指標（不轉交時維持與原版一致的非空語義）
+    int* pResult = reinterpret_cast<int*>(m_pParent);
+
+    if (a6 != 1 && (msg == 7 || msg == 4))  // a6 != 1 時啟用去抖；7/4 為滑鼠移動/相關訊息
+    {
+        if (s_lastX == x && s_lastY == y)
+        {
+            // 座標未變：略過後續處理與上拋，直接回傳父指標語義
+            return pResult;
+        }
+        s_lastX = x;
+        s_lastY = y;
+    }
+
+    // 更新「是否滑入命中」快取（對應 this[47] = CControlBase::PtInCtrl(...)）
+    m_bHover = PtInCtrl(stPoint{ x, y }) ? 1 : 0;
+
+    // 其餘交給基底流程（可能上拋給父）
+    return reinterpret_cast<int*>(
+        CControlBase::ControlKeyInputProcess(msg, key, x, y, a6, a7)
+        );
 }

@@ -1,122 +1,104 @@
 #include "UI/CControlButtonBase.h"
-#include <cstring>
 
-// --- 模擬的外部依賴 ---
-class GameSound {
-public:
-    void PlaySoundA(const char* soundName, int, int) {}
-};
-GameSound g_GameSoundManager;
-// --- 模擬結束 ---
-
-/**
- * CControlButtonBase 建構函式
- * 透過初始化列表呼叫基底和成員的建構函式。
- */
+// ==========================
+// 建構 / 解構
+// ==========================
 CControlButtonBase::CControlButtonBase()
-    : CControlImage(), m_Text()
 {
-    m_bCanMoveChildren = false;
-    m_bIsButtonDown = false;
-    m_nChildMoveOffset = 2; // 預設位移量
-    memset(m_szClickSoundName, 0, sizeof(m_szClickSoundName));
+    // 預設就顯示與可按，位移開啟（視覺習慣）
+    m_bEnablePressShift = true;
+    m_pressShiftX = 1;
+    m_pressShiftY = 1;
 }
 
-/**
- * CControlButtonBase 解構函式
- */
 CControlButtonBase::~CControlButtonBase()
 {
+    // m_Text 為成員，會自動解構；其父子鏈結由 CControlBase 維持
 }
 
-/**
- * 創建並設定子控制項 (文字標籤)。
- */
+// ==========================
+// 建立
+// ==========================
+void CControlButtonBase::Create(CControlBase* pParent)
+{
+    CControlImage::Create(pParent);
+    CreateChildren();
+}
+
+void CControlButtonBase::Create(int x, int y, CControlBase* pParent)
+{
+    CControlImage::Create(x, y, pParent);
+    CreateChildren();
+}
+
+void CControlButtonBase::Create(int x, int y, uint16_t w, uint16_t h, CControlBase* pParent)
+{
+    CControlImage::Create(x, y, w, h, pParent);
+    CreateChildren();
+}
+
 void CControlButtonBase::CreateChildren()
 {
-    // 將 m_Text 物件作為自己的子控制項加入到UI階層中
-    m_Text.Create(this);
+    // 文字作為子控制掛載（相對於按鈕左上角）
+    // 預設放在(0,0)，通常會由 UI 版面或 SetCenterPos() 來置中
+    if (m_Text.GetParent() != this)
+    {
+        m_Text.Create(this);
+        // 常見預設：讓文字居中（你的 CControlText 若有置中 API，可在此設定）
+        // 例如：m_Text.SetAlign(CControlText::AlignCenter);
+        //      m_Text.SetCenterPos();  // 需要 CControlText 支援
+    }
 }
 
-/**
- * 初始化按鈕，設定預設音效。
- */
-void CControlButtonBase::Init()
+// ==========================
+// 文字
+// ==========================
+void CControlButtonBase::SetText(const char* utf8Text)
 {
-    ButtonPosUp(); // 確保按鈕回到彈起狀態
-    strcpy(m_szClickSoundName, "J0003"); // 設定預設點擊音效
+    m_Text.SetText(utf8Text);
 }
 
-/**
- * 設定按鈕上的文字。
- * @param szText 要顯示的文字。
- */
-void CControlButtonBase::SetText(const char* szText)
+void CControlButtonBase::SetText(int stringId)
 {
-    // 這是一個便捷的包裝函式，將操作轉發給內部的 m_Text 物件
-    m_Text.SetText(szText);
+    m_Text.SetText(stringId);
 }
 
-/**
- * 透過文字ID設定按鈕上的文字。
- * @param nDCTID 在文字管理器中的ID。
- */
-void CControlButtonBase::SetText(int nDCTID)
-{
-    m_Text.SetText(nDCTID);
-}
-
-/**
- * 播放點擊音效。
- */
-void CControlButtonBase::PlaySoundClick()
-{
-    g_GameSoundManager.PlaySoundA(m_szClickSoundName, 0, 0);
-}
-
-/**
- * 處理按鈕按下的視覺效果。
- * 如果啟用位移效果，將所有子控制項（主要是文字）向下、向右移動指定像素。
- */
+// ==========================
+// 按下位移效果
+// ==========================
 void CControlButtonBase::ButtonPosDown()
 {
-    if (m_bCanMoveChildren && !m_bIsButtonDown)
+    if (m_bPressed) return;
+    m_bPressed = true;
+
+    if (m_bEnablePressShift)
     {
-        SetChildPosMove(m_nChildMoveOffset, m_nChildMoveOffset);
-        m_bIsButtonDown = true;
+        // 位移所有子物件（包含文字等），營造壓下視覺
+        SetChildPosMove(m_pressShiftX, m_pressShiftY);
     }
+
+    PlaySoundClick();
 }
 
-/**
- * 處理按鈕彈起的視覺效果。
- * 如果按鈕處於按下狀態，將所有子控制項移回原始位置。
- */
 void CControlButtonBase::ButtonPosUp()
 {
-    if (m_bCanMoveChildren && m_bIsButtonDown)
+    if (!m_bPressed) return;
+    m_bPressed = false;
+
+    if (m_bEnablePressShift)
     {
-        SetChildPosMove(-m_nChildMoveOffset, -m_nChildMoveOffset);
-        m_bIsButtonDown = false;
+        // 位移還原
+        SetChildPosMove(-m_pressShiftX, -m_pressShiftY);
     }
 }
 
-/**
- * 設定是否啟用點擊位移效果以及位移量。
- * @param bEnable true為啟用，false為停用。
- * @param nOffset 位移的像素值。
- */
-void CControlButtonBase::SetChildMoveByClick(bool bEnable, int nOffset)
+// ==========================
+// 音效（可被覆寫）
+// ==========================
+void CControlButtonBase::PlaySoundClick()
 {
-    m_bCanMoveChildren = bEnable;
-    m_nChildMoveOffset = nOffset;
-}
-
-/**
- * 檢查滑鼠是否在按鈕上方。
- * 這個 IsMouseOver 是 CControlImage 繼承來的成員 m_bIsMouseOver
- * 在 CControlImage::ControlKeyInputProcess 中被更新。
- */
-bool CControlButtonBase::IsMouseOver() const
-{
-    return m_bIsMouseOver;
+    // 預設不做事；專案若有音效管理（例如 CSoundMgr::Play("BtnClick")），
+    // 可在衍生類別覆寫，或在此直接呼叫。
+    // 例：
+    // CSoundMgr::Play("BtnClick");
 }

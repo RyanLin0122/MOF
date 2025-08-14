@@ -1,34 +1,53 @@
-#ifndef STTOOLTIPDATA_H
-#define STTOOLTIPDATA_H
-
+#pragma once
 #include <string>
+#include <cstring>
 
-/**
- * @struct stToolTipData
- * @brief 儲存工具提示（ToolTip）所需的資料。
- */
-struct stToolTipData
-{
-    int m_nToolTipType;     // 提示類型
-    int m_nData;            // 相關資料 (例如：持續時間、ID等)
-    short m_usData;         // 相關短整型資料
-    int m_nUnk;             // 未知用途的資料
-    std::string m_strText;  // 提示顯示的文字
-    char m_cUIType;         // UI類型
-    short m_usSlotIndex;    // 物品或技能在容器中的索引
-    void* m_pExtraData;     // 指向額外資料的指標
-
-    // 建構函式
+// 工具提示數據結構
+class stToolTipData {
+public:
+    // 建構函數
     stToolTipData();
-    // 解構函式
+
+    // 解構函數
     ~stToolTipData();
 
-    // 初始化函式
+    // 初始化
     void Init();
-    // 設定字串類型的提示資料
-    void SetStringType(char* text, int data);
-    // 設定種類(Kind)類型的提示資料
-    void SetKindType(int type, short usData, int unk, int data, char uiType, short slotIndex, void* extraData);
-};
 
-#endif // STTOOLTIPDATA_H
+    // 設定字串類型的工具提示
+    void SetStringType(const char* text, int color);
+
+    // 設定物品類型的工具提示
+    void SetKindType(int type, short id, int count, int color, char grade, short durability, int extra);
+
+private:
+    // 偏移 0: 類型 (-1=未設定, 1=字串類型, 其他=物品類型)
+    int m_type;
+
+    // 偏移 4: 顏色值
+    int m_color;
+
+    // 偏移 8: 物品ID (僅物品類型使用)
+    short m_itemId;
+
+    // 偏移 10: 保留空間
+    short m_reserved1;
+
+    // 偏移 12: 數量 (僅物品類型使用)
+    int m_count;
+
+    // 偏移 16: 字串數據 (std::string 結構)
+    std::string m_text;
+
+    // 偏移 32: 品級 (僅物品類型使用)
+    char m_grade;
+
+    // 偏移 33: 保留空間
+    char m_reserved2;
+
+    // 偏移 34: 耐久度 (僅物品類型使用)
+    short m_durability;
+
+    // 偏移 36: 額外數據 (僅物品類型使用)
+    int m_extra;
+};
