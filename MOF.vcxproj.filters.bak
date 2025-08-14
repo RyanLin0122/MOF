@@ -369,28 +369,7 @@
     <ClCompile Include="src\Effect\CBulletArrow.cpp">
       <Filter>來源檔案</Filter>
     </ClCompile>
-    <ClCompile Include="src\UI\CListMgr.cpp">
-      <Filter>Source Files</Filter>
-    </ClCompile>
-    <ClCompile Include="src\UI\CControlBase.cpp">
-      <Filter>Source Files</Filter>
-    </ClCompile>
-    <ClCompile Include="src\UI\CControlAlphaBox.cpp">
-      <Filter>Source Files</Filter>
-    </ClCompile>
-    <ClCompile Include="src\UI\CControlImage.cpp">
-      <Filter>Source Files</Filter>
-    </ClCompile>
-    <ClCompile Include="src\UI\CControlText.cpp">
-      <Filter>Source Files</Filter>
-    </ClCompile>
-    <ClCompile Include="src\UI\CControlButtonBase.cpp">
-      <Filter>Source Files</Filter>
-    </ClCompile>
-    <ClCompile Include="src\UI\CMoveIcon.cpp">
-      <Filter>Source Files</Filter>
-    </ClCompile>
-  </ItemGroup>
+  <ClCompile Include="src\UI\CListMgr.cpp"><Filter>Source Files</Filter></ClCompile><ClCompile Include="src\UI\CControlBase.cpp"><Filter>Source Files</Filter></ClCompile><ClCompile Include="src\UI\CControlAlphaBox.cpp"><Filter>Source Files</Filter></ClCompile><ClCompile Include="src\UI\CControlImage.cpp"><Filter>Source Files</Filter></ClCompile><ClCompile Include="src\UI\CControlText.cpp"><Filter>Source Files</Filter></ClCompile><ClCompile Include="src\UI\CControlButtonBase.cpp"><Filter>Source Files</Filter></ClCompile></ItemGroup>
   <ItemGroup>
     <ClInclude Include="inc\nfs.h">
       <Filter>標頭檔</Filter>
@@ -746,7 +725,7 @@
     <ClInclude Include="inc\Effect\CBulletArrow.h">
       <Filter>標頭檔</Filter>
     </ClInclude>
-  <ClInclude Include="inc\UI\CListMgr.h"><Filter>Header Files</Filter></ClInclude><ClInclude Include="inc\UI\CControlBase.h"><Filter>Header Files</Filter></ClInclude><ClInclude Include="inc\UI\CControlAlphaBox.h"><Filter>Header Files</Filter></ClInclude><ClInclude Include="inc\UI\CControlImage.h"><Filter>Header Files</Filter></ClInclude><ClInclude Include="inc\UI\CControlText.h"><Filter>Header Files</Filter></ClInclude><ClInclude Include="inc\UI\CControlButtonBase.h"><Filter>Header Files</Filter></ClInclude><ClInclude Include="inc\UI\CMoveIcon.h"><Filter>Header Files</Filter></ClInclude></ItemGroup>
+  <ClInclude Include="inc\UI\CListMgr.h"><Filter>Header Files</Filter></ClInclude><ClInclude Include="inc\UI\CControlBase.h"><Filter>Header Files</Filter></ClInclude><ClInclude Include="inc\UI\CControlAlphaBox.h"><Filter>Header Files</Filter></ClInclude><ClInclude Include="inc\UI\CControlImage.h"><Filter>Header Files</Filter></ClInclude><ClInclude Include="inc\UI\CControlText.h"><Filter>Header Files</Filter></ClInclude><ClInclude Include="inc\UI\CControlButtonBase.h"><Filter>Header Files</Filter></ClInclude></ItemGroup>
   <ItemGroup>
     <Library Include="lib\fmod64vc.lib" />
   </ItemGroup>

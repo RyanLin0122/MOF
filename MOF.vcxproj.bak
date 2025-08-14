@@ -265,10 +265,7 @@
     <ClCompile Include="src\UI\CControlAlphaBox.cpp" />
     <ClCompile Include="src\UI\CListMgr.cpp" />
     <ClCompile Include="src\UI\CControlBase.cpp" />
-    <ClCompile Include="src\UI\CControlImage.cpp" />
-    <ClCompile Include="src\UI\CControlText.cpp" />
-    <ClCompile Include="src\UI\CControlButtonBase.cpp" />
-    <ClCompile Include="src\UI\CMoveIcon.cpp" /></ItemGroup>
+  <ClCompile Include="src\UI\CControlImage.cpp" /><ClCompile Include="src\UI\CControlText.cpp" /><ClCompile Include="src\UI\CControlButtonBase.cpp" /></ItemGroup>
   <ItemGroup>
     <ClInclude Include="inc\Character\ClientCharacter.h" />
     <ClInclude Include="inc\Character\ClientCharacterManager.h" />
@@ -392,10 +389,7 @@
     <ClInclude Include="inc\UI\CListMgr.h" />
     <ClInclude Include="inc\UI\CControlBase.h" />
     <ClInclude Include="inc\UI\stToolTipData.h" />
-    <ClInclude Include="inc\UI\CControlImage.h" />
-    <ClInclude Include="inc\UI\CControlText.h" />
-    <ClInclude Include="inc\UI\CControlButtonBase.h" />
-    <ClInclude Include="inc\UI\CMoveIcon.h" /></ItemGroup>
+  <ClInclude Include="inc\UI\CControlImage.h" /><ClInclude Include="inc\UI\CControlText.h" /><ClInclude Include="inc\UI\CControlButtonBase.h" /></ItemGroup>
   <ItemGroup>
     <Library Include="lib\fmod64vc.lib" />
   </ItemGroup>
