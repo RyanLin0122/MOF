@@ -22,3 +22,5 @@ extern GameSystemInfo g_Game_System_Info;
 
 extern bool DontDraw;
 extern unsigned char NationCode;
+
+extern bool g_bRenderStateLocked;

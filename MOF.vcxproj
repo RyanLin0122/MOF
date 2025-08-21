@@ -270,6 +270,13 @@
     <ClCompile Include="src\UI\CControlButtonBase.cpp" />
     <ClCompile Include="src\UI\CMoveIcon.cpp" />
     <ClCompile Include="src\UI\stToolTipData.cpp" />
+    <ClCompile Include="src\Font\FileCrypt.cpp" />
+    <ClCompile Include="src\Font\FTInfo.cpp" />
+    <ClCompile Include="src\Font\CMoFFontTextureManager.cpp" />
+    <ClCompile Include="src\Font\TextLineInfoListMgr.cpp" />
+    <ClCompile Include="src\Font\TILInfo.cpp" />
+    <ClCompile Include="src\Font\TextInfoListMgr.cpp" />
+    <ClCompile Include="src\Font\MoFFont.cpp" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="inc\Character\ClientCharacter.h" />
@@ -365,6 +372,7 @@
     <ClInclude Include="inc\fmod\fmoddyn.h" />
     <ClInclude Include="inc\fmod\fmod_errors.h" />
     <ClInclude Include="inc\fmod\wincompat.h" />
+    <ClInclude Include="inc\Font\stFontInfo.h" />
     <ClInclude Include="inc\global.h" />
     <ClInclude Include="inc\Image\BackgroundImage.h" />
     <ClInclude Include="inc\Image\CDeviceManager.h" />
@@ -398,6 +406,14 @@
     <ClInclude Include="inc\UI\CControlText.h" />
     <ClInclude Include="inc\UI\CControlButtonBase.h" />
     <ClInclude Include="inc\UI\CMoveIcon.h" />
+    <ClInclude Include="inc\Font\FileCrypt.h" />
+    <ClInclude Include="inc\Font\FTInfo.h" />
+    <ClInclude Include="inc\Font\CMoFFontTextureManager.h" />
+    <ClInclude Include="inc\Font\TLILInfo.h" />
+    <ClInclude Include="inc\Font\TextLineInfoListMgr.h" />
+    <ClInclude Include="inc\Font\TILInfo.h" />
+    <ClInclude Include="inc\Font\TextInfoListMgr.h" />
+    <ClInclude Include="inc\Font\MoFFont.h" />
   </ItemGroup>
   <ItemGroup>
     <Library Include="lib\fmod64vc.lib" />
