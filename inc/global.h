@@ -3,6 +3,7 @@
 #include <windows.h>   // 用於 HWND, GetConsoleWindow, Sleep
 #include <conio.h>     // 用於 _kbhit, _getch (檢查鍵盤輸入)
 #include <d3d9.h>
+#include "Text/cltTextFileManager.h"
 
 //-----------------------------------------------------------------------------
 // 全域變數
@@ -24,3 +25,5 @@ extern bool DontDraw;
 extern unsigned char NationCode;
 
 extern bool g_bRenderStateLocked;
+
+extern cltTextFileManager g_clTextFileManager;

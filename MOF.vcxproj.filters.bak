@@ -390,9 +390,6 @@
     <ClCompile Include="src\UI\CMoveIcon.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="src\FileCrypt.cpp">
-      <Filter>Source Files</Filter>
-    </ClCompile>
     <ClCompile Include="src\Font\FileCrypt.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
@@ -405,7 +402,25 @@
     <ClCompile Include="src\Font\TextLineInfoListMgr.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-  <ClCompile Include="src\Font\TILInfo.cpp"><Filter>Source Files</Filter></ClCompile><ClCompile Include="src\Font\TextInfoListMgr.cpp"><Filter>Source Files</Filter></ClCompile></ItemGroup>
+    <ClCompile Include="src\Font\TILInfo.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="src\Font\TextInfoListMgr.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="src\Font\MoFFont.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="src\UI\stToolTipData.cpp">
+      <Filter>來源檔案</Filter>
+    </ClCompile>
+    <ClCompile Include="src\Text\Huffman.cpp">
+      <Filter>來源檔案</Filter>
+    </ClCompile>
+    <ClCompile Include="src\Text\cltTextFileManager.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+  </ItemGroup>
   <ItemGroup>
     <ClInclude Include="inc\nfs.h">
       <Filter>標頭檔</Filter>
@@ -782,9 +797,6 @@
     <ClInclude Include="inc\UI\CMoveIcon.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="inc\FileCrypt.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
     <ClInclude Include="inc\Font\FileCrypt.h">
       <Filter>Header Files</Filter>
     </ClInclude>
@@ -800,7 +812,28 @@
     <ClInclude Include="inc\Font\TextLineInfoListMgr.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-  <ClInclude Include="inc\Font\TILInfo.h"><Filter>Header Files</Filter></ClInclude><ClInclude Include="inc\Font\TextInfoListMgr.h"><Filter>Header Files</Filter></ClInclude></ItemGroup>
+    <ClInclude Include="inc\Font\TILInfo.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="inc\Font\TextInfoListMgr.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="inc\Font\MoFFont.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="inc\Font\stFontInfo.h">
+      <Filter>標頭檔</Filter>
+    </ClInclude>
+    <ClInclude Include="inc\UI\stToolTipData.h">
+      <Filter>標頭檔</Filter>
+    </ClInclude>
+    <ClInclude Include="inc\Text\Huffman.h">
+      <Filter>標頭檔</Filter>
+    </ClInclude>
+    <ClInclude Include="inc\Text\cltTextFileManager.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+  </ItemGroup>
   <ItemGroup>
     <Library Include="lib\fmod64vc.lib" />
   </ItemGroup>

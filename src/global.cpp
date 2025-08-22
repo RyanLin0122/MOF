@@ -1,6 +1,5 @@
 #include "global.h"
 
-
 //-----------------------------------------------------------------------------
 // ¥þ°ìÅÜ¼Æ
 //-----------------------------------------------------------------------------
@@ -14,3 +13,5 @@ extern bool DontDraw = false;
 extern unsigned char NationCode = 4;
 
 extern bool g_bRenderStateLocked = false;
+
+extern cltTextFileManager g_clTextFileManager = *(new cltTextFileManager());

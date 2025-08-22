@@ -1,4 +1,4 @@
-<?xml version="1.0" encoding="utf-8"?>
+<?xml version='1.0' encoding='utf-8'?>
 <Project xmlns="http://schemas.microsoft.com/developer/msbuild/2003" DefaultTargets="Build">
   <ItemGroup Label="ProjectConfigurations">
     <ProjectConfiguration Include="Debug|Win32">
@@ -262,6 +262,7 @@
     <ClCompile Include="src\Test\EffectSystemTest.cpp" />
     <ClCompile Include="src\Test\ImageDrawTest.cpp" />
     <ClCompile Include="src\Test\ImageTest.cpp" />
+    <ClCompile Include="src\Text\Huffman.cpp" />
     <ClCompile Include="src\UI\CControlAlphaBox.cpp" />
     <ClCompile Include="src\UI\CListMgr.cpp" />
     <ClCompile Include="src\UI\CControlBase.cpp" />
@@ -277,6 +278,8 @@
     <ClCompile Include="src\Font\TILInfo.cpp" />
     <ClCompile Include="src\Font\TextInfoListMgr.cpp" />
     <ClCompile Include="src\Font\MoFFont.cpp" />
+    <ClCompile Include="src\Text\cltTextFileManager.cpp" />
+    <ClCompile Include="src\Text\DCTTextManager.cpp" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="inc\Character\ClientCharacter.h" />
@@ -398,6 +401,7 @@
     <ClInclude Include="inc\Test\EffectSystemTest.h" />
     <ClInclude Include="inc\Test\ImageDrawTest.h" />
     <ClInclude Include="inc\Test\ImageTest.h" />
+    <ClInclude Include="inc\Text\Huffman.h" />
     <ClInclude Include="inc\UI\CControlAlphaBox.h" />
     <ClInclude Include="inc\UI\CListMgr.h" />
     <ClInclude Include="inc\UI\CControlBase.h" />
@@ -414,6 +418,8 @@
     <ClInclude Include="inc\Font\TILInfo.h" />
     <ClInclude Include="inc\Font\TextInfoListMgr.h" />
     <ClInclude Include="inc\Font\MoFFont.h" />
+    <ClInclude Include="inc\Text\cltTextFileManager.h" />
+    <ClInclude Include="inc\Text\DCTTextManager.h" />
   </ItemGroup>
   <ItemGroup>
     <Library Include="lib\fmod64vc.lib" />
