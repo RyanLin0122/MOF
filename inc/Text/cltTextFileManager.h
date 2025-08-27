@@ -39,4 +39,6 @@ public:
     
     // 根据文件名获取文件头
     Header* GetHeaderByFileName(char* filename);
+
+    Header* GetHeaderByIndex(int index);
 };

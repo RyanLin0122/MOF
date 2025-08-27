@@ -146,3 +146,16 @@ Header* cltTextFileManager::GetHeaderByFileName(char* target_filename) {
     return nullptr;
 }
 
+Header* cltTextFileManager::GetHeaderByIndex(int index) {
+    // 邊界檢查
+    if (index < 0 || index >= 1024) {
+        return nullptr;
+    }
+
+    // 如果檔名是空的，代表這是個無效或未使用的Header，也回傳nullptr
+    if (headers[index].filename[0] == '\0') {
+        return nullptr;
+    }
+
+    return &headers[index];
+}

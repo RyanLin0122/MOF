@@ -134,62 +134,126 @@ void MoFFont::ResetFont() {
     m_bShadowFlag = false;
 }
 
-// 對應反編譯碼: 0x0051B660
 bool MoFFont::InitFontInfo(const char* fileName) {
-    if (!FileCrypt::GetInstance()->DecoderFileCrypt(fileName, "tmp.dat")) {
-        MessageBoxA(0, "FontInfo Error", "Master of Fantasy", 0);
-        return false;
-    }
+    auto ParsePlain = [&](const char* path) -> bool {
+        FILE* p = nullptr;
+        if (fopen_s(&p, path, "rb") != 0 || !p) return false;
 
-    FILE* pFile = nullptr;
-    fopen_s(&pFile, "tmp.dat", "rb");
-    if (!pFile) {
-        DeleteFileA("tmp.dat");
-        return false;
-    }
+        char buffer[2048];
 
-    char buffer[1024];
-    fgets(buffer, sizeof(buffer), pFile); // Nation Code
-    char* context = nullptr;
-    char* token = strtok_s(buffer, "\t\n", &context);
-    if (token) strncpy_s(m_szNationCode, token, sizeof(m_szNationCode) - 1);
+        // --- 跳過前置抬頭行，直到遇到真正的表頭行 ---
+        // 期待的表頭關鍵字（寬鬆判斷）
+        auto is_header = [&](const char* s)->bool {
+            return strstr(s, "Nation") && strstr(s, "Name") && strstr(s, "Size")
+                && strstr(s, "Font") && strstr(s, "Thick");
+            };
 
-    fgets(buffer, sizeof(buffer), pFile); // Header
-    fgets(buffer, sizeof(buffer), pFile); // Header
-
-    long startPos = ftell(pFile);
-    m_nFontInfoCount = 0;
-    while (fgets(buffer, sizeof(buffer), pFile)) {
-        m_nFontInfoCount++;
-    }
-
-    if (m_nFontInfoCount > 0) {
-        m_pFontInfoArray = new stFontInfo[m_nFontInfoCount];
-        fseek(pFile, startPos, SEEK_SET);
-
-        for (int i = 0; i < m_nFontInfoCount; ++i) {
-            fgets(buffer, sizeof(buffer), pFile);
-            context = nullptr;
-            token = strtok_s(buffer, "\t\n", &context);
-            if (token) strncpy_s(m_pFontInfoArray[i].szKeyName, token, sizeof(m_pFontInfoArray[i].szKeyName) - 1);
-
-            token = strtok_s(NULL, "\t\n", &context);
-            if (token) strncpy_s(m_pFontInfoArray[i].szFaceName, token, sizeof(m_pFontInfoArray[i].szFaceName) - 1);
-
-            token = strtok_s(NULL, "\t\n", &context);
-            if (token) m_pFontInfoArray[i].nHeight = atoi(token);
-
-            // 原始碼似乎跳過了幾個欄位
-            token = strtok_s(NULL, "\t\n", &context); // Font name again?
-            token = strtok_s(NULL, "\t\n", &context); // Weight
-            if (token) m_pFontInfoArray[i].nWeight = atoi(token);
+        // 讀首行，去除 UTF-8 BOM（若存在）
+        if (!fgets(buffer, sizeof(buffer), p)) { fclose(p); return false; }
+        if ((unsigned char)buffer[0] == 0xEF &&
+            (unsigned char)buffer[1] == 0xBB &&
+            (unsigned char)buffer[2] == 0xBF) {
+            // 去掉BOM
+            memmove(buffer, buffer + 3, strlen(buffer + 3) + 1);
         }
+
+        // 若首行不是表頭，持續讀到表頭
+        if (!is_header(buffer)) {
+            bool found = false;
+            while (fgets(buffer, sizeof(buffer), p)) {
+                if (is_header(buffer)) { found = true; break; }
+            }
+            if (!found) { fclose(p); return false; }
+        }
+
+        // 到這裡，buffer 裡是表頭行；記錄資料起始位置
+        long dataStart = ftell(p);
+
+        // --- 第一次掃描：計數（跳過空行/註解） ---
+        int count = 0;
+        while (fgets(buffer, sizeof(buffer), p)) {
+            // 跳過空行或以 '#' 開頭的註解（可依需求調整）
+            char* s = buffer;
+            while (*s == ' ' || *s == '\t' || *s == '\r' || *s == '\n') ++s;
+            if (*s == '\0' || *s == '#') continue;
+            ++count;
+        }
+        if (count <= 0) { fclose(p); return false; }
+
+        // --- 配置陣列並第二次掃描：實際解析 ---
+        m_pFontInfoArray = new stFontInfo[count]();
+        m_nFontInfoCount = count;
+
+        fseek(p, dataStart, SEEK_SET);
+
+        int idx = 0;
+        bool nationSet = false;
+
+        while (idx < count && fgets(buffer, sizeof(buffer), p)) {
+            // 跳過空/註解
+            char* s = buffer;
+            while (*s == ' ' || *s == '\t' || *s == '\r' || *s == '\n') ++s;
+            if (*s == '\0' || *s == '#') continue;
+
+            // 依欄位順序：Nation, Name, Size, Font, Thick, Comment
+            char* context = nullptr;
+            char* tok = strtok_s(s, "\t\r\n", &context); // token0: Nation
+            if (!tok) continue;
+            const char* nation = tok;
+
+            tok = strtok_s(nullptr, "\t\r\n", &context); // token1: Name -> KeyName
+            if (tok) strncpy_s(m_pFontInfoArray[idx].szKeyName, tok, _TRUNCATE);
+
+            tok = strtok_s(nullptr, "\t\r\n", &context); // token2: Size -> Height
+            if (tok) m_pFontInfoArray[idx].nHeight = atoi(tok);
+
+            tok = strtok_s(nullptr, "\t\r\n", &context); // token3: Font -> FaceName
+            if (tok) strncpy_s(m_pFontInfoArray[idx].szFaceName, tok, _TRUNCATE);
+
+            tok = strtok_s(nullptr, "\t\r\n", &context); // token4: Thick -> Weight
+            if (tok) m_pFontInfoArray[idx].nWeight = atoi(tok);
+
+            // （如需 Comment 可再讀下一個 token）
+            // tok = strtok_s(nullptr, "\t\r\n", &context); // token5: Comment (optional)
+
+            // 第一次遇到 Nation，存為 m_szNationCode
+            if (!nationSet && nation && *nation) {
+                strncpy_s(m_szNationCode, nation, _TRUNCATE);
+                nationSet = true;
+            }
+
+            ++idx;
+        }
+
+        // 若實際解析到的筆數少於計數，縮減 m_nFontInfoCount
+        if (idx < m_nFontInfoCount) {
+            m_nFontInfoCount = idx;
+        }
+
+        fclose(p);
+        return m_nFontInfoCount > 0;
+        };
+
+    // 1) 先試純文字
+    if (ParsePlain(fileName)) return true;
+
+    // 2) 純文字失敗，再試解密 -> 解析
+    const char* TMP = "tmp.dat";
+    unsigned int ok = FileCrypt::GetInstance()->DecoderFileCrypt(fileName, TMP);
+    if (ok) {
+        bool parsed = ParsePlain(TMP);
+        DeleteFileA(TMP);
+        if (parsed) return true;
+    }
+    else {
+        // 解密失敗也要確保 tmp 被清掉（以防前一次殘留）
+        DeleteFileA(TMP);
     }
 
-    fclose(pFile);
-    DeleteFileA("tmp.dat");
-    return true;
+    MessageBoxA(0, "FontInfo Error", "Master of Fantasy", 0);
+    return false;
 }
+
 
 // 對應反編譯碼: 0x0051B980
 stFontInfo* MoFFont::GetFontInfo(const char* keyName) {

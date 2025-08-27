@@ -1,4 +1,4 @@
-<?xml version='1.0' encoding='utf-8'?>
+<?xml version="1.0" encoding="utf-8"?>
 <Project xmlns="http://schemas.microsoft.com/developer/msbuild/2003" DefaultTargets="Build">
   <ItemGroup Label="ProjectConfigurations">
     <ProjectConfiguration Include="Debug|Win32">
@@ -260,6 +260,7 @@
     <ClCompile Include="src\Sound\COgg.cpp" />
     <ClCompile Include="src\Test\CompTest.cpp" />
     <ClCompile Include="src\Test\EffectSystemTest.cpp" />
+    <ClCompile Include="src\Test\FontSystemTest.cpp" />
     <ClCompile Include="src\Test\ImageDrawTest.cpp" />
     <ClCompile Include="src\Test\ImageTest.cpp" />
     <ClCompile Include="src\Text\Huffman.cpp" />
@@ -399,6 +400,7 @@
     <ClInclude Include="inc\Sound\COgg.h" />
     <ClInclude Include="inc\Test\CompTest.h" />
     <ClInclude Include="inc\Test\EffectSystemTest.h" />
+    <ClInclude Include="inc\Test\FontSystemTest.h" />
     <ClInclude Include="inc\Test\ImageDrawTest.h" />
     <ClInclude Include="inc\Test\ImageTest.h" />
     <ClInclude Include="inc\Text\Huffman.h" />
