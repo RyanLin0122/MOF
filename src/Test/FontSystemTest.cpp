@@ -83,12 +83,12 @@ void FontSystemTest::Render() {
     m_pFont->SetTextLine(1230, 90, 0xFFFF0000, "Right Aligned", 2); // alignment=2 (右)
 
     // 3. 更換字型並繪製帶陰影的標題
-    m_pFont->SetFont("Title");
+    m_pFont->SetFont("Notice");
     m_pFont->SetTextLineShadow(50, 150, 0xFF303030, "This is a Title with Shadow", 0);
     m_pFont->SetTextLine(50, 150, 0xFFFFFF00, "This is a Title with Shadow", 0);
 
     // 4. TextBox 自動換行測試
-    m_pFont->SetFont("Normal");
+    m_pFont->SetFont("CharacterName");
     RECT textBox = { 50, 220, 550, 400 }; // left, top, right, bottom
 
     // 修正：使用字串拼接，確保所有字串在同一行或使用括號

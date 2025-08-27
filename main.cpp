@@ -532,7 +532,12 @@ VOID Render()
 				g_pEffectTest->Render(); // 呼叫新類別的 Render
 			}
 		}
-
+		else if (G_CURRENT_TEST == TEST_FONT) {
+			if (g_pFontTest)
+			{
+				g_pFontTest->Render();
+			}
+		}
 		Device->EndScene();
 	}
 
