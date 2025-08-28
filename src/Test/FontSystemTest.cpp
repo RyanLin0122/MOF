@@ -43,7 +43,7 @@ HRESULT FontSystemTest::Initialize() {
     printf("  字型資訊 FontInfo.dat 載入成功。\n");
 
     // 4. 建立預設要使用的字型
-    if (!m_pFont->CreateMoFFont(g_pd3dDevice, "Notice")) {
+    if (!m_pFont->CreateMoFFont(g_pd3dDevice, "MiniGameMyRank")) {
         MessageBoxA(NULL, "MoFFont::CreateMoFFont 失敗!", "錯誤", MB_OK | MB_ICONERROR);
         return E_FAIL;
     }
@@ -83,7 +83,6 @@ void FontSystemTest::Render() {
     m_pFont->SetTextLine(1230, 90, 0xFFFF0000, "Right Aligned", 2); // alignment=2 (右)
 
     // 3. 更換字型並繪製帶陰影的標題
-    m_pFont->SetFont("CircleName");
     m_pFont->SetTextLineShadow(50, 150, 0xFF303030, "This is a Title with Shadow", 0);
     m_pFont->SetTextLineA(50, 150, 0xFFFFFF00, "This is a Title with Shadow", 0);
 

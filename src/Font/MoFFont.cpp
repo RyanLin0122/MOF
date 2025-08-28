@@ -366,32 +366,38 @@ void MoFFont::SetBlendType(unsigned char blendType) {
 }
 
 // 對應反編譯碼: 0x0051C880
-void MoFFont::SetTextLineA(int x, int y, DWORD color, const char* text, char alignment, int clipLeft, int clipRight) {
-    CDeviceManager::GetInstance()->SetRenderState(D3DRS_ALPHABLENDENABLE, TRUE);
-    if (color == 0xFFFFFFFF) { // 純白，不透明
-        CDeviceManager::GetInstance()->SetRenderState(D3DRS_SRCBLEND, D3DBLEND_ONE); // 2
-        CDeviceManager::GetInstance()->SetRenderState(D3DRS_DESTBLEND, D3DBLEND_ONE); // 2
-    }
-    else if (color == 0xFF000000) { // 純黑，不透明
-        CDeviceManager::GetInstance()->SetRenderState(D3DRS_SRCBLEND, D3DBLEND_ONE); // 1
-        CDeviceManager::GetInstance()->SetRenderState(D3DRS_DESTBLEND, D3DBLEND_ZERO); // 4 in original -> D3DBLEND_SRCCOLOR
-    }
-    else {
-        // 其他顏色，先畫一層底，再疊加顏色
-        CDeviceManager::GetInstance()->SetRenderState(D3DRS_SRCBLEND, D3DBLEND_ONE);
-        CDeviceManager::GetInstance()->SetRenderState(D3DRS_DESTBLEND, D3DBLEND_INVSRCCOLOR);
-        SetTextLine(x, y, 0xFFFFFFFF, text, alignment, clipLeft, clipRight);
+void MoFFont::SetTextLineA(int x, int y, DWORD color, const char* text,
+    char alignment, int clipLeft, int clipRight) {
+    if (g_bRenderStateLocked) return;
 
-        CDeviceManager::GetInstance()->SetRenderState(D3DRS_SRCBLEND, D3DBLEND_ONE);
-        CDeviceManager::GetInstance()->SetRenderState(D3DRS_DESTBLEND, D3DBLEND_ONE);
-    }
+    // 保存原本的混合狀態
+    DWORD oldAlpha, oldSrc, oldDst;
+    Device->GetRenderState(D3DRS_ALPHABLENDENABLE, &oldAlpha);
+    Device->GetRenderState(D3DRS_SRCBLEND, &oldSrc);
+    Device->GetRenderState(D3DRS_DESTBLEND, &oldDst);
+
+    // 開啟加法混合：字形是白底貼圖，乘上頂點色後用加法疊到背景
+    CDeviceManager::GetInstance()->SetRenderState(D3DRS_ALPHABLENDENABLE, TRUE);
+    CDeviceManager::GetInstance()->SetRenderState(D3DRS_SRCBLEND, D3DBLEND_ONE);
+    CDeviceManager::GetInstance()->SetRenderState(D3DRS_DESTBLEND, D3DBLEND_ONE);
+
+    // 確保「Texture * Diffuse」：顏色才會吃到你傳入的 color
+    CDeviceManager::GetInstance()->SetTextureStageState(0, D3DTSS_COLOROP, D3DTOP_MODULATE);
+    CDeviceManager::GetInstance()->SetTextureStageState(0, D3DTSS_COLORARG1, D3DTA_TEXTURE);
+    CDeviceManager::GetInstance()->SetTextureStageState(0, D3DTSS_COLORARG2, D3DTA_DIFFUSE);
+    // Alpha 階段也一併固定，避免外部狀態干擾
+    CDeviceManager::GetInstance()->SetTextureStageState(0, D3DTSS_ALPHAOP, D3DTOP_SELECTARG1);
+    CDeviceManager::GetInstance()->SetTextureStageState(0, D3DTSS_ALPHAARG1, D3DTA_TEXTURE);
+
+    // 只畫「一次」
     SetTextLine(x, y, color, text, alignment, clipLeft, clipRight);
 
-    // 恢復預設混合模式
-    CDeviceManager::GetInstance()->SetRenderState(D3DRS_SRCBLEND, D3DBLEND_SRCALPHA);
-    CDeviceManager::GetInstance()->SetRenderState(D3DRS_DESTBLEND, D3DBLEND_INVSRCALPHA);
-    CDeviceManager::GetInstance()->SetRenderState(D3DRS_ALPHABLENDENABLE, FALSE);
+    // 還原狀態
+    CDeviceManager::GetInstance()->SetRenderState(D3DRS_SRCBLEND, oldSrc);
+    CDeviceManager::GetInstance()->SetRenderState(D3DRS_DESTBLEND, oldDst);
+    CDeviceManager::GetInstance()->SetRenderState(D3DRS_ALPHABLENDENABLE, oldAlpha);
 }
+
 
 // 對應反編譯碼: 0x0051D000
 void MoFFont::SetTextLineShadow(int x, int y, DWORD shadowColor, const char* text, char alignment) {
