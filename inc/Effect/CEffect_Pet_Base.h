@@ -2,42 +2,42 @@
 
 #include "Effect/CEffectBase.h"
 
-// «e¦V«Å§i
+// å‰å‘å®£å‘Š
 class cltPetObject;
 
 /**
  * @class CEffect_Pet_Base
- * @brief ¥Nªíªş¥[¦bÃdª«¨­¤Wªº¤@¦¸©Ê¯S®Äªº°ò©³Ãş§O¡C
+ * @brief ä»£è¡¨é™„åŠ åœ¨å¯µç‰©èº«ä¸Šçš„ä¸€æ¬¡æ€§ç‰¹æ•ˆçš„åŸºåº•é¡åˆ¥ã€‚
  *
- * Ä~©Ó¦Û CEffectBase¡A¬O¤@­Ó¸òÀHÃdª«¼½©ñªº°Êµe¯S®Ä¡C
+ * ç¹¼æ‰¿è‡ª CEffectBaseï¼Œæ˜¯ä¸€å€‹è·Ÿéš¨å¯µç‰©æ’­æ”¾çš„å‹•ç•«ç‰¹æ•ˆã€‚
  */
 class CEffect_Pet_Base : public CEffectBase {
 public:
     CEffect_Pet_Base();
     virtual ~CEffect_Pet_Base();
 
-    // --- µêÀÀ¨ç¦¡ÂĞ¼g ---
+    // --- è™›æ“¬å‡½å¼è¦†å¯« ---
 
-    /// @brief ³B²z¯S®Äªº¥Í©R¶g´Á¡Aª½±µ¨Ì¿à CCAEffect ªº°Êµe¼½©ñª¬ºA¡C
+    /// @brief è™•ç†ç‰¹æ•ˆçš„ç”Ÿå‘½é€±æœŸï¼Œç›´æ¥ä¾è³´ CCAEffect çš„å‹•ç•«æ’­æ”¾ç‹€æ…‹ã€‚
     virtual bool FrameProcess(float fElapsedTime) override;
 
-    /// @brief ·Ç³ÆÃ¸»s«eªºÅŞ¿è§ó·s¡A¦P¨B¾Ö¦³ªÌ¡]Ãdª«¡^ªº¦ì¸m¡C
+    /// @brief æº–å‚™ç¹ªè£½å‰çš„é‚è¼¯æ›´æ–°ï¼ŒåŒæ­¥æ“æœ‰è€…ï¼ˆå¯µç‰©ï¼‰çš„ä½ç½®ã€‚
     virtual void Process() override;
 
-    /// @brief Ã¸»s¯S®Ä¡C
+    /// @brief ç¹ªè£½ç‰¹æ•ˆã€‚
     virtual void Draw() override;
 
-    // --- ±M¦³¨ç¦¡ ---
+    // --- å°ˆæœ‰å‡½å¼ ---
 
-    /// @brief ³]©w¯S®Äªº¸òÀH¥Ø¼Ğ©MµøÄ±¸ê·½¡C
-    /// @param pPetOwner ­n¸òÀHªºÃdª«ª«¥ó¡C
-    /// @param effectKindID ¯S®ÄªººØÃş ID¡C
-    /// @param szFileName ¯S®Ä¸ê·½ (.ea) ªºÀÉ®×¦WºÙ¡C
+    /// @brief è¨­å®šç‰¹æ•ˆçš„è·Ÿéš¨ç›®æ¨™å’Œè¦–è¦ºè³‡æºã€‚
+    /// @param pPetOwner è¦è·Ÿéš¨çš„å¯µç‰©ç‰©ä»¶ã€‚
+    /// @param effectKindID ç‰¹æ•ˆçš„ç¨®é¡ IDã€‚
+    /// @param szFileName ç‰¹æ•ˆè³‡æº (.ea) çš„æª”æ¡ˆåç¨±ã€‚
     void SetEffect(cltPetObject* pPetOwner, unsigned short effectKindID, char* szFileName);
 
 protected:
-    // --- ¦¨­ûÅÜ¼Æ ---
+    // --- æˆå“¡è®Šæ•¸ ---
 
-    /// @brief «ü¦V¯S®Äªº¾Ö¦³ªÌ¡]Ãdª«ª«¥ó¡^¡C
-    cltPetObject* m_pOwnerPet; // ¦ì²¾ +132 (0x84)
+    /// @brief æŒ‡å‘ç‰¹æ•ˆçš„æ“æœ‰è€…ï¼ˆå¯µç‰©ç‰©ä»¶ï¼‰ã€‚
+    cltPetObject* m_pOwnerPet; // ä½ç§» +132 (0x84)
 };

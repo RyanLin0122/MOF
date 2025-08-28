@@ -1,53 +1,53 @@
 #pragma once
 
-// ¬°¤FÅı cltImageManager ¯à°÷½sÄ¶¡A§Ú­Ì»İ­n GameImage ªº©w¸q¡C
-// ³o¸Ì§Ú­Ì¥]§t¤@­Ó®Ú¾Ú GameImage.c ±ÀÂ_¥Xªº GameImage.h ¼ĞÀYÀÉ¡C
+// ç‚ºäº†è®“ cltImageManager èƒ½å¤ ç·¨è­¯ï¼Œæˆ‘å€‘éœ€è¦ GameImage çš„å®šç¾©ã€‚
+// é€™è£¡æˆ‘å€‘åŒ…å«ä¸€å€‹æ ¹æ“š GameImage.c æ¨æ–·å‡ºçš„ GameImage.h æ¨™é ­æª”ã€‚
 #include "Image/GameImage.h" 
 #include "Image/ResourceMgr.h"
 
 /// @class cltImageManager
-/// @brief GameImage ª«¥ó¦ÀºŞ²z¾¹¡C
+/// @brief GameImage ç‰©ä»¶æ± ç®¡ç†å™¨ã€‚
 ///
-/// ­t³dºŞ²z¤@­Ó©T©w¤j¤pªº GameImage ª«¥ó°}¦C¡A
-/// ´£¨ÑÀò¨ú©MÄÀ©ñ GameImage ª«¥óªº¤¶­±¡A¥H¹F¨ì­«½Æ§Q¥Î¡B´£¤É®Ä¯àªº¥Øªº¡C
+/// è² è²¬ç®¡ç†ä¸€å€‹å›ºå®šå¤§å°çš„ GameImage ç‰©ä»¶é™£åˆ—ï¼Œ
+/// æä¾›ç²å–å’Œé‡‹æ”¾ GameImage ç‰©ä»¶çš„ä»‹é¢ï¼Œä»¥é”åˆ°é‡è¤‡åˆ©ç”¨ã€æå‡æ•ˆèƒ½çš„ç›®çš„ã€‚
 class cltImageManager {
 public:
     static cltImageManager* GetInstance();
 
-    /// @brief ¸Ñºc¨ç¦¡¡C
-    /// ·|¦Û°Ê©I¥s°}¦C¤¤©Ò¦³ GameImage ª«¥óªº¸Ñºc¨ç¦¡¡C
+    /// @brief è§£æ§‹å‡½å¼ã€‚
+    /// æœƒè‡ªå‹•å‘¼å«é™£åˆ—ä¸­æ‰€æœ‰ GameImage ç‰©ä»¶çš„è§£æ§‹å‡½å¼ã€‚
     ~cltImageManager();
 
-    /// @brief ªì©l¤ÆºŞ²z¾¹¡C
-    /// ¬°¦À¤¤ªº¨C¤@­Ó GameImage ª«¥ó¹w¥ı«Ø¥ß³»ÂI½w½Ä°Ï¡C
+    /// @brief åˆå§‹åŒ–ç®¡ç†å™¨ã€‚
+    /// ç‚ºæ± ä¸­çš„æ¯ä¸€å€‹ GameImage ç‰©ä»¶é å…ˆå»ºç«‹é ‚é»ç·©è¡å€ã€‚
     void Initialize();
 
-    /// @brief ÄÀ©ñ©Ò¦³¸ê·½¡C
-    /// ­«³]¦À¤¤©Ò¦³ªº GameImage ª«¥ó¡C
+    /// @brief é‡‹æ”¾æ‰€æœ‰è³‡æºã€‚
+    /// é‡è¨­æ± ä¸­æ‰€æœ‰çš„ GameImage ç‰©ä»¶ã€‚
     void Free();
 
-    /// @brief ±q¦À¤¤Àò¨ú¤@­Ó¥i¥Îªº GameImage ª«¥ó¡C
-    /// @param dwGroupID     ¸ê·½ªº¸s²Õ ID (¹ïÀ³ a2)¡C
-    /// @param dwResourceID  ¸ê·½ªº°ß¤@ ID (¹ïÀ³ a3)¡C
-    /// @param a4            ¶Ç»¼µ¹¸ê·½ºŞ²z¾¹ªº°Ñ¼Æ¡C
-    /// @param a5            ¶Ç»¼µ¹¸ê·½ºŞ²z¾¹ªº°Ñ¼Æ¡C
-    /// @return «ü¦V¤@­Ó¤w³]©w¦n¸ê·½ªº GameImage ª«¥óªº«ü¼Ğ¡A¦pªG¦À¤wº¡«hªğ¦^ nullptr¡C
+    /// @brief å¾æ± ä¸­ç²å–ä¸€å€‹å¯ç”¨çš„ GameImage ç‰©ä»¶ã€‚
+    /// @param dwGroupID     è³‡æºçš„ç¾¤çµ„ ID (å°æ‡‰ a2)ã€‚
+    /// @param dwResourceID  è³‡æºçš„å”¯ä¸€ ID (å°æ‡‰ a3)ã€‚
+    /// @param a4            å‚³éçµ¦è³‡æºç®¡ç†å™¨çš„åƒæ•¸ã€‚
+    /// @param a5            å‚³éçµ¦è³‡æºç®¡ç†å™¨çš„åƒæ•¸ã€‚
+    /// @return æŒ‡å‘ä¸€å€‹å·²è¨­å®šå¥½è³‡æºçš„ GameImage ç‰©ä»¶çš„æŒ‡æ¨™ï¼Œå¦‚æœæ± å·²æ»¿å‰‡è¿”å› nullptrã€‚
     GameImage* GetGameImage(unsigned int dwGroupID, unsigned int dwResourceID, int a4 = 0, int a5 = 0);
 
-    /// @brief ±N¤@­Ó GameImage ª«¥óÂkÁÙ¨ì¦À¤¤¡C
-    /// @param pImage ­nÄÀ©ñªº GameImage ª«¥ó«ü¼Ğ¡C
+    /// @brief å°‡ä¸€å€‹ GameImage ç‰©ä»¶æ­¸é‚„åˆ°æ± ä¸­ã€‚
+    /// @param pImage è¦é‡‹æ”¾çš„ GameImage ç‰©ä»¶æŒ‡æ¨™ã€‚
     void ReleaseGameImage(GameImage* pImage);
 
-    /// @brief ÄÀ©ñ©Ò¦³¥¿¦b¨Ï¥Îªº GameImage ª«¥ó¡C
+    /// @brief é‡‹æ”¾æ‰€æœ‰æ­£åœ¨ä½¿ç”¨çš„ GameImage ç‰©ä»¶ã€‚
     void ReleaseAllGameImage();
 
-    /// @brief §ó·s©Ò¦³¥¿¦b¨Ï¥Îªº GameImage ª«¥óªº³»ÂI¸ê®Æ¡C
+    /// @brief æ›´æ–°æ‰€æœ‰æ­£åœ¨ä½¿ç”¨çš„ GameImage ç‰©ä»¶çš„é ‚é»è³‡æ–™ã€‚
     void ProcessAllGameImage();
 
-    // ª«¥ó¦Àªº¤j¤p
+    // ç‰©ä»¶æ± çš„å¤§å°
     static const int MAX_IMAGES = 5000;
 
-    // GameImage ª«¥ó¦À°}¦C
+    // GameImage ç‰©ä»¶æ± é™£åˆ—
     GameImage m_Images[MAX_IMAGES];
 private:
     cltImageManager();

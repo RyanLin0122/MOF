@@ -1,67 +1,67 @@
 #include "Effect/CEffect_Battle_GunSpark.h"
 #include "Effect/CEAManager.h"
-#include "global.h" // °²³]¥Î©óÀò¨ú¥ş°ìÅÜ¼Æ g_Game_System_Info
+#include "global.h" // å‡è¨­ç”¨æ–¼ç²å–å…¨åŸŸè®Šæ•¸ g_Game_System_Info
 
-// °²³]ªº¥ş°ìÅÜ¼Æ
+// å‡è¨­çš„å…¨åŸŸè®Šæ•¸
 extern GameSystemInfo g_Game_System_Info;
 
-// ¹ïÀ³¤Ï²ÕÄ¶½X: 0x0052E720
+// å°æ‡‰åçµ„è­¯ç¢¼: 0x0052E720
 CEffect_Battle_GunSpark::CEffect_Battle_GunSpark()
 {
-    // CEffectBase ªº«Øºc¨ç¦¡·|³Q¦Û°Ê©I¥s
+    // CEffectBase çš„å»ºæ§‹å‡½å¼æœƒè¢«è‡ªå‹•å‘¼å«
 
-    // ¦V CEAManager ½Ğ¨D¯S®Ä¼Æ¾Ú
-    // ¯S®Ä ID: 5, ÀÉ®×¦WºÙ: "Effect/efn_GunSpark.ea"
+    // å‘ CEAManager è«‹æ±‚ç‰¹æ•ˆæ•¸æ“š
+    // ç‰¹æ•ˆ ID: 5, æª”æ¡ˆåç¨±: "Effect/efn_GunSpark.ea"
     CEAManager::GetInstance()->GetEAData(5, "Effect/efn_GunSpark.ea", &m_ccaEffect);
 
-    // ³]©w¼v®æ®É¶¡¨Ã¼½©ñ°Êµe
+    // è¨­å®šå½±æ ¼æ™‚é–“ä¸¦æ’­æ”¾å‹•ç•«
     m_ccaEffect.SetFrameTime();
-    m_ccaEffect.Play(0, false); // ¼½©ñ²Ä¤@­Ó°Êµe§Ç¦C¡A¤£´`Àô
+    m_ccaEffect.Play(0, false); // æ’­æ”¾ç¬¬ä¸€å€‹å‹•ç•«åºåˆ—ï¼Œä¸å¾ªç’°
 }
 
-// ¹ïÀ³¤Ï²ÕÄ¶½X: 0x0052E7B0
+// å°æ‡‰åçµ„è­¯ç¢¼: 0x0052E7B0
 CEffect_Battle_GunSpark::~CEffect_Battle_GunSpark()
 {
 }
 
-// ¹ïÀ³¤Ï²ÕÄ¶½X: 0x0052E7C0
+// å°æ‡‰åçµ„è­¯ç¢¼: 0x0052E7C0
 void CEffect_Battle_GunSpark::SetEffect(float x, float y, bool bFlip)
 {
-    // ³]©w¯S®Äªºªì©l¥@¬É®y¼Ğ
+    // è¨­å®šç‰¹æ•ˆçš„åˆå§‹ä¸–ç•Œåº§æ¨™
     m_fCurrentPosX = x;
     m_fCurrentPosY = y;
 
-    // ³]©w¯S®Ä¬O§_»İ­nÂ½Âà
+    // è¨­å®šç‰¹æ•ˆæ˜¯å¦éœ€è¦ç¿»è½‰
     m_bIsFlip = bFlip;
 }
 
-// ¹ïÀ³¤Ï²ÕÄ¶½X: 0x0052E7E0
+// å°æ‡‰åçµ„è­¯ç¢¼: 0x0052E7E0
 bool CEffect_Battle_GunSpark::FrameProcess(float fElapsedTime)
 {
-    // ±N¥Í©R¶g´ÁºŞ²zªº¥ô°È§¹¥ş©e°Uµ¹¤º³¡ªº CCAEffect ª«¥ó¡C
-    // ·í "efn_GunSpark.ea" °Êµe¼½©ñ§¹²¦®É¡A¦¹¨ç¦¡·|¦^¶Ç true¡C
+    // å°‡ç”Ÿå‘½é€±æœŸç®¡ç†çš„ä»»å‹™å®Œå…¨å§”è¨—çµ¦å…§éƒ¨çš„ CCAEffect ç‰©ä»¶ã€‚
+    // ç•¶ "efn_GunSpark.ea" å‹•ç•«æ’­æ”¾å®Œç•¢æ™‚ï¼Œæ­¤å‡½å¼æœƒå›å‚³ trueã€‚
     return m_ccaEffect.FrameProcess(fElapsedTime);
 }
 
-// ¹ïÀ³¤Ï²ÕÄ¶½X: 0x0052E7F0
+// å°æ‡‰åçµ„è­¯ç¢¼: 0x0052E7F0
 void CEffect_Battle_GunSpark::Process()
 {
-    // ±N¥@¬É®y¼ĞÂà´«¬°¿Ã¹õ®y¼Ğ
+    // å°‡ä¸–ç•Œåº§æ¨™è½‰æ›ç‚ºè¢å¹•åº§æ¨™
     float screenX = m_fCurrentPosX - static_cast<float>(g_Game_System_Info.ScreenX);
     float screenY = m_fCurrentPosY - static_cast<float>(g_Game_System_Info.ScreenY);
 
-    // ¶i¦æµô°Å§PÂ_
+    // é€²è¡Œè£å‰ªåˆ¤æ–·
     m_bIsVisible = IsCliping(screenX, 0.0f);
 
     if (m_bIsVisible) {
-        // §ó·s¤º³¡ CCAEffect ªºª¬ºA
+        // æ›´æ–°å…§éƒ¨ CCAEffect çš„ç‹€æ…‹
         m_ccaEffect.SetPosition(screenX, screenY);
         m_ccaEffect.SetFlipX(m_bIsFlip);
         m_ccaEffect.Process();
     }
 }
 
-// ¹ïÀ³¤Ï²ÕÄ¶½X: 0x0052E830
+// å°æ‡‰åçµ„è­¯ç¢¼: 0x0052E830
 void CEffect_Battle_GunSpark::Draw()
 {
     if (m_bIsVisible) {

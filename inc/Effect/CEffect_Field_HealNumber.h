@@ -1,49 +1,49 @@
 #pragma once
 
 #include "Effect/CEffectBase.h"
-#include "Effect/CCAEffect.h" // ¬°¤F FrameSkip ªº¨Ï¥Î
+#include "Effect/CCAEffect.h" // ç‚ºäº† FrameSkip çš„ä½¿ç”¨
 
-// «e¦V«Å§i
+// å‰å‘å®£å‘Š
 class GameImage;
 
 /**
  * @class CEffect_Field_HealNumber
- * @brief ­t³dÅã¥ÜªvÀø©Î«ì´_¼Æ¦rªºµ{§Ç¤Æ°Êµe¯S®Ä¡C
+ * @brief è² è²¬é¡¯ç¤ºæ²»ç™‚æˆ–æ¢å¾©æ•¸å­—çš„ç¨‹åºåŒ–å‹•ç•«ç‰¹æ•ˆã€‚
  */
 class CEffect_Field_HealNumber : public CEffectBase {
 public:
     CEffect_Field_HealNumber();
     virtual ~CEffect_Field_HealNumber();
 
-    // --- µêÀÀ¨ç¦¡ÂĞ¼g ---
+    // --- è™›æ“¬å‡½å¼è¦†å¯« ---
     virtual bool FrameProcess(float fElapsedTime) override;
     virtual void Process() override;
     virtual void Draw() override;
 
-    // --- ±M¦³¨ç¦¡ ---
-    /// @brief ³]©w¯S®Ä¡C
-    /// @param healValue Åã¥ÜªºªvÀø¼Æ­È¡C
-    /// @param x ¯S®Ä¤¤¤ßÂIªº X ®y¼Ğ¡C
-    /// @param y ¯S®Ä¤¤¤ßÂIªº Y ®y¼Ğ¡C
+    // --- å°ˆæœ‰å‡½å¼ ---
+    /// @brief è¨­å®šç‰¹æ•ˆã€‚
+    /// @param healValue é¡¯ç¤ºçš„æ²»ç™‚æ•¸å€¼ã€‚
+    /// @param x ç‰¹æ•ˆä¸­å¿ƒé»çš„ X åº§æ¨™ã€‚
+    /// @param y ç‰¹æ•ˆä¸­å¿ƒé»çš„ Y åº§æ¨™ã€‚
     void SetEffect(int healValue, float x, float y);
 
 private:
-    static const int MAX_DIGITS = 10; // ³Ì¦hÅã¥Ü10¦ì¼Æ
+    static const int MAX_DIGITS = 10; // æœ€å¤šé¡¯ç¤º10ä½æ•¸
 
-    // --- ¦¨­ûÅÜ¼Æ (®Ú¾Ú Effectall.c @ 0x005356F0 ±ÀÂ_) ---
-    GameImage** m_pNumberImages;     // ¦ì²¾ +132 (0x84): «ü¦V¼Æ¦r GameImage «ü¼Ğ°}¦C
+    // --- æˆå“¡è®Šæ•¸ (æ ¹æ“š Effectall.c @ 0x005356F0 æ¨æ–·) ---
+    GameImage** m_pNumberImages;     // ä½ç§» +132 (0x84): æŒ‡å‘æ•¸å­— GameImage æŒ‡æ¨™é™£åˆ—
 
-    char  m_cDigitCount;             // ¦ì²¾ +146 (0x92): ¼Æ¦rªº¦ì¼Æ
-    unsigned char m_ucState;         // ¦ì²¾ +147 (0x93): °Êµeª¬ºA (0:²H¤J, 1:²H¥X¤Wº})
+    char  m_cDigitCount;             // ä½ç§» +146 (0x92): æ•¸å­—çš„ä½æ•¸
+    unsigned char m_ucState;         // ä½ç§» +147 (0x93): å‹•ç•«ç‹€æ…‹ (0:æ·¡å…¥, 1:æ·¡å‡ºä¸Šæ¼‚)
 
-    float m_fAlpha;                  // ¦ì²¾ +148 (0x94): ¾ãÅé³z©ú«×
-    float m_fScale;                  // ¦ì²¾ +152 (0x98): ¾ãÅéÁY©ñ/ÃC¦â­È
+    float m_fAlpha;                  // ä½ç§» +148 (0x94): æ•´é«”é€æ˜åº¦
+    float m_fScale;                  // ä½ç§» +152 (0x98): æ•´é«”ç¸®æ”¾/é¡è‰²å€¼
 
-    unsigned char m_ucDigitFrames[MAX_DIGITS]; // ¦ì²¾ +136 (0x88): Àx¦s¨C­Ó¼Æ¦rªº¼v®æID
+    unsigned char m_ucDigitFrames[MAX_DIGITS]; // ä½ç§» +136 (0x88): å„²å­˜æ¯å€‹æ•¸å­—çš„å½±æ ¼ID
 
-    float m_fInitialPosX;            // ¦ì²¾ +160 (0xA0): ªì©l X ®y¼Ğ
-    float m_fCurrentPosY;            // ¦ì²¾ +164 (0xA4): ·í«e Y ®y¼Ğ
-    float m_fTotalWidth;             // ¦ì²¾ +168 (0xA8): ¼Æ¦rÁ`¼e«×¡A¥Î©ó©~¤¤
+    float m_fInitialPosX;            // ä½ç§» +160 (0xA0): åˆå§‹ X åº§æ¨™
+    float m_fCurrentPosY;            // ä½ç§» +164 (0xA4): ç•¶å‰ Y åº§æ¨™
+    float m_fTotalWidth;             // ä½ç§» +168 (0xA8): æ•¸å­—ç¸½å¯¬åº¦ï¼Œç”¨æ–¼å±…ä¸­
 
-    FrameSkip m_FrameSkip;           // ¦ì²¾ +172 (0xAC)
+    FrameSkip m_FrameSkip;           // ä½ç§» +172 (0xAC)
 };

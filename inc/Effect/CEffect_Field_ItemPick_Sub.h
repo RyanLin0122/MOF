@@ -1,12 +1,12 @@
 #pragma once
 #include "Effect/CEffectBase.h"
-#include "Effect/CCAEffect.h" // ¬°¤F FrameSkip ªº¨Ï¥Î
+#include "Effect/CCAEffect.h" // ç‚ºäº† FrameSkip çš„ä½¿ç”¨
 
 class GameImage;
 
 /**
  * @class CEffect_Field_ItemPick_Sub_Complete
- * @brief ª««~¬B¨ú§¹¦¨®ÉªºÃz¬µ/§l¦¬¯S®Ä¡C
+ * @brief ç‰©å“æ‹¾å–å®Œæˆæ™‚çš„çˆ†ç‚¸/å¸æ”¶ç‰¹æ•ˆã€‚
  */
 class CEffect_Field_ItemPick_Sub_Complete : public CEffectBase {
 public:
@@ -22,7 +22,7 @@ public:
 
 /**
  * @class CEffect_Field_ItemPick_Sub_Light
- * @brief ª««~­¸¦æ¸ô®|¤Wªº©ì§À¥úÂI¡C
+ * @brief ç‰©å“é£›è¡Œè·¯å¾‘ä¸Šçš„æ‹–å°¾å…‰é»ã€‚
  */
 class CEffect_Field_ItemPick_Sub_Light : public CEffectBase {
 public:
@@ -35,7 +35,7 @@ public:
 
     void SetEffect(float x, float y, bool bFlip);
 private:
-    GameImage* m_pLightImage;   // ¦ì²¾ +132 (0x84)
-    float m_fAlpha;             // ¦ì²¾ +140 (0x8C)
-    FrameSkip m_FrameSkip;      // ¦ì²¾ +164 (0xA4)
+    GameImage* m_pLightImage;   // ä½ç§» +132 (0x84)
+    float m_fAlpha;             // ä½ç§» +140 (0x8C)
+    FrameSkip m_FrameSkip;      // ä½ç§» +164 (0xA4)
 };

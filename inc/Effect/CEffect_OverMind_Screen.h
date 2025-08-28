@@ -1,40 +1,40 @@
 #pragma once
 
-// «e¦V«Å§i
+// å‰å‘å®£å‘Š
 class ClientCharacter;
 class GameImage;
 
 /**
  * @class CEffect_OverMind_Screen
- * @brief ¦b¨¤¦âÀY³»Åã¥Ü¤@­Ó¯S®íªº¥ş¿Ã¹õ/UI¼h¯Å®ÄªG¡C
+ * @brief åœ¨è§’è‰²é ­é ‚é¡¯ç¤ºä¸€å€‹ç‰¹æ®Šçš„å…¨è¢å¹•/UIå±¤ç´šæ•ˆæœã€‚
  *
- * ³o­ÓÃş§O¤£Ä~©Ó CEffectBase¡A¦Ó¬O§@¬° CEffectManager ªº¤@­Ó¦¨­û¡A
- * ¥Î©ó³B²z¤@¨Ç¯S®íªº¡B±`¾nªºµøÄ±®ÄªG¡C
+ * é€™å€‹é¡åˆ¥ä¸ç¹¼æ‰¿ CEffectBaseï¼Œè€Œæ˜¯ä½œç‚º CEffectManager çš„ä¸€å€‹æˆå“¡ï¼Œ
+ * ç”¨æ–¼è™•ç†ä¸€äº›ç‰¹æ®Šçš„ã€å¸¸é§çš„è¦–è¦ºæ•ˆæœã€‚
  */
 class CEffect_OverMind_Screen {
 public:
     CEffect_OverMind_Screen();
     ~CEffect_OverMind_Screen();
 
-    /// @brief ±Ò¥Î¨Ã³]©w¯S®Äªº¥Ø¼Ğ¡C
-    /// @param pTarget ­nªş¥[¯S®Äªº¥Ø¼Ğ¨¤¦â¡C
+    /// @brief å•Ÿç”¨ä¸¦è¨­å®šç‰¹æ•ˆçš„ç›®æ¨™ã€‚
+    /// @param pTarget è¦é™„åŠ ç‰¹æ•ˆçš„ç›®æ¨™è§’è‰²ã€‚
     void SetActive(ClientCharacter* pTarget);
 
-    /// @brief ·Ç³ÆÃ¸»s¼Æ¾Ú¡A§ó·s¯S®Äª¬ºA¡C
+    /// @brief æº–å‚™ç¹ªè£½æ•¸æ“šï¼Œæ›´æ–°ç‰¹æ•ˆç‹€æ…‹ã€‚
     void PrepareDrawing();
 
-    /// @brief Ã¸»s¯S®Ä¡C
+    /// @brief ç¹ªè£½ç‰¹æ•ˆã€‚
     void Draw();
 
-    /// @brief ½ü¸ß¨ç¦¡ (¦b­ì©l½X¤¤³Q©I¥s¡A¦ıµL¹ê§@)¡C
+    /// @brief è¼ªè©¢å‡½å¼ (åœ¨åŸå§‹ç¢¼ä¸­è¢«å‘¼å«ï¼Œä½†ç„¡å¯¦ä½œ)ã€‚
     void Poll() {}
 
 private:
-    // --- ¦¨­ûÅÜ¼Æ (®Ú¾Ú Effectall.c @ 0x00539F80 ±ÀÂ_) ---
+    // --- æˆå“¡è®Šæ•¸ (æ ¹æ“š Effectall.c @ 0x00539F80 æ¨æ–·) ---
 
-    ClientCharacter* m_pTargetCharacter; // ¦ì²¾ +0
-    bool             m_bIsActive;        // ¦ì²¾ +4
-    // ­ì©l½X¤¤¦ì²¾ +8 ³B¦³¤@­Ó¥¼¨Ï¥Îªº DWORD
-    int              m_dwAlpha;          // ¦ì²¾ +12: §@¬°¥Í©R¶g´Á­p®É¾¹©M³z©ú«×
-    GameImage* m_pEffectImage;     // ¦ì²¾ +16: «ü¦V­nÃ¸»sªº GameImage
+    ClientCharacter* m_pTargetCharacter; // ä½ç§» +0
+    bool             m_bIsActive;        // ä½ç§» +4
+    // åŸå§‹ç¢¼ä¸­ä½ç§» +8 è™•æœ‰ä¸€å€‹æœªä½¿ç”¨çš„ DWORD
+    int              m_dwAlpha;          // ä½ç§» +12: ä½œç‚ºç”Ÿå‘½é€±æœŸè¨ˆæ™‚å™¨å’Œé€æ˜åº¦
+    GameImage* m_pEffectImage;     // ä½ç§» +16: æŒ‡å‘è¦ç¹ªè£½çš„ GameImage
 };

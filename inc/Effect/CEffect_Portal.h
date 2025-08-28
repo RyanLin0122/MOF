@@ -4,32 +4,32 @@
 
 /**
  * @class CEffect_Portal
- * @brief ¦b«ü©w®y¼ĞÅã¥Ü¤@­Ó¶Ç°eªùªºµøÄ±¯S®Ä¡C
+ * @brief åœ¨æŒ‡å®šåº§æ¨™é¡¯ç¤ºä¸€å€‹å‚³é€é–€çš„è¦–è¦ºç‰¹æ•ˆã€‚
  *
- * Ä~©Ó¦Û CEffectBase¡A¬O¤@­Ó¦b©T©w®y¼Ğ¼½©ñªº°Êµe¯S®Ä¡A
- * ¨ä¥~Æ[¥i¥Ñ¥~³¡¶Ç¤Jªº¦WºÙ¨M©w¡A¥Í©R¶g´Á¤]¥i¥Ñ¥~³¡±±¨î¡C
+ * ç¹¼æ‰¿è‡ª CEffectBaseï¼Œæ˜¯ä¸€å€‹åœ¨å›ºå®šåº§æ¨™æ’­æ”¾çš„å‹•ç•«ç‰¹æ•ˆï¼Œ
+ * å…¶å¤–è§€å¯ç”±å¤–éƒ¨å‚³å…¥çš„åç¨±æ±ºå®šï¼Œç”Ÿå‘½é€±æœŸä¹Ÿå¯ç”±å¤–éƒ¨æ§åˆ¶ã€‚
  */
 class CEffect_Portal : public CEffectBase {
 public:
     CEffect_Portal();
     virtual ~CEffect_Portal();
 
-    // --- µêÀÀ¨ç¦¡ÂĞ¼g ---
+    // --- è™›æ“¬å‡½å¼è¦†å¯« ---
     virtual bool FrameProcess(float fElapsedTime) override;
     virtual void Process() override;
     virtual void Draw() override;
 
-    // --- ±M¦³¨ç¦¡ ---
-    /// @brief ³]©w¶Ç°eªù¯S®Ä¡C
-    /// @param szEffectName ¯S®Äªº¦WºÙ¥N½X¡A¥Î©ó¬d¸ß¯S®Ä¸ê·½¡C
-    /// @param x ¯S®Ä¤¤¤ßÂIªº X ®y¼Ğ¡C
-    /// @param y ¯S®Ä¤¤¤ßÂIªº Y ®y¼Ğ¡C
+    // --- å°ˆæœ‰å‡½å¼ ---
+    /// @brief è¨­å®šå‚³é€é–€ç‰¹æ•ˆã€‚
+    /// @param szEffectName ç‰¹æ•ˆçš„åç¨±ä»£ç¢¼ï¼Œç”¨æ–¼æŸ¥è©¢ç‰¹æ•ˆè³‡æºã€‚
+    /// @param x ç‰¹æ•ˆä¸­å¿ƒé»çš„ X åº§æ¨™ã€‚
+    /// @param y ç‰¹æ•ˆä¸­å¿ƒé»çš„ Y åº§æ¨™ã€‚
     void SetEffect(char* szEffectName, float x, float y);
 
-    /// @brief ³]©w¯S®Äªºµ²§ôºX¼Ğ¡C
+    /// @brief è¨­å®šç‰¹æ•ˆçš„çµæŸæ——æ¨™ã€‚
     void SetFinished(bool bFinished) { m_bIsFinished = bFinished; }
 
 private:
-    // --- ¦¨­ûÅÜ¼Æ ---
-    bool m_bIsFinished; // ¦ì²¾ +132 (0x84): ¥Î©ó¥~³¡±±¨î¥Í©R¶g´ÁªººX¼Ğ
+    // --- æˆå“¡è®Šæ•¸ ---
+    bool m_bIsFinished; // ä½ç§» +132 (0x84): ç”¨æ–¼å¤–éƒ¨æ§åˆ¶ç”Ÿå‘½é€±æœŸçš„æ——æ¨™
 };

@@ -1,88 +1,88 @@
 #pragma once
 
-#include <windows.h> // ¨Ï¥Î timeGetTime, MessageBoxA µ¥
-#include <cstdio>    // ¨Ï¥Î NULL
+#include <windows.h> // ä½¿ç”¨ timeGetTime, MessageBoxA ç­‰
+#include <cstdio>    // ä½¿ç”¨ NULL
 
 /**
  * @struct ResourceInfo
- * @brief Àx¦s³æ¤@¸ê·½ªº¤¤Ä~¸ê®Æ¡C
+ * @brief å„²å­˜å–®ä¸€è³‡æºçš„ä¸­ç¹¼è³‡æ–™ã€‚
  */
 struct ResourceInfo {
-    unsigned int id;         // ¸ê·½ªº°ß¤@ID
-    void* pData;      // «ü¦V¹ê»Ú¸ê·½¸ê®Æªº«ü¼Ğ
-    int          refCount;   // ¤Ş¥Î­p¼Æ
-    DWORD        timestamp;  // ³Ì«á¤@¦¸³QÄÀ©ñªº®É¶¡ÂW
+    unsigned int id;         // è³‡æºçš„å”¯ä¸€ID
+    void* pData;      // æŒ‡å‘å¯¦éš›è³‡æºè³‡æ–™çš„æŒ‡æ¨™
+    int          refCount;   // å¼•ç”¨è¨ˆæ•¸
+    DWORD        timestamp;  // æœ€å¾Œä¸€æ¬¡è¢«é‡‹æ”¾çš„æ™‚é–“æˆ³
 };
 
 /**
  * @class cltBaseResource
- * @brief ¸ê·½ºŞ²zªº©â¶H°ò©³Ãş§O¡C
+ * @brief è³‡æºç®¡ç†çš„æŠ½è±¡åŸºåº•é¡åˆ¥ã€‚
  *
- * ©w¸q¤F¤@®M³q¥Îªº¸ê·½ºŞ²z®Ø¬[¡A¥]¬A¸ü¤J¡BÄÀ©ñ¡B¤Ş¥Î­p¼Æ©M¦Û°Ê¦^¦¬¡C
- * ¨ãÅéªº¸ê·½¸ü¤J»PÄÀ©ñÅŞ¿è¥Ñ­l¥ÍÃş§O³z¹L¹ê§@¯ÂµêÀÀ¨ç¦¡¨Ó§¹¦¨¡C
+ * å®šç¾©äº†ä¸€å¥—é€šç”¨çš„è³‡æºç®¡ç†æ¡†æ¶ï¼ŒåŒ…æ‹¬è¼‰å…¥ã€é‡‹æ”¾ã€å¼•ç”¨è¨ˆæ•¸å’Œè‡ªå‹•å›æ”¶ã€‚
+ * å…·é«”çš„è³‡æºè¼‰å…¥èˆ‡é‡‹æ”¾é‚è¼¯ç”±è¡ç”Ÿé¡åˆ¥é€éå¯¦ä½œç´”è™›æ“¬å‡½å¼ä¾†å®Œæˆã€‚
  */
 class cltBaseResource {
 public:
-    /// @brief «Øºc¨ç¦¡
+    /// @brief å»ºæ§‹å‡½å¼
     cltBaseResource();
 
-    /// @brief µêÀÀ¸Ñºc¨ç¦¡
+    /// @brief è™›æ“¬è§£æ§‹å‡½å¼
     virtual ~cltBaseResource();
 
-    /// @brief ªì©l¤Æ¸ê·½ºŞ²z¾¹¡C
-    /// @param capacity ¸ê·½°}¦Cªº³Ì¤j®e¶q¡C
-    /// @param timeout ¶¢¸m¸ê·½³Q¦Û°Ê¦^¦¬ªº¶W®É®É¶¡(²@¬í)¡C0ªí¥Ü¤£¦^¦¬¡C
+    /// @brief åˆå§‹åŒ–è³‡æºç®¡ç†å™¨ã€‚
+    /// @param capacity è³‡æºé™£åˆ—çš„æœ€å¤§å®¹é‡ã€‚
+    /// @param timeout é–’ç½®è³‡æºè¢«è‡ªå‹•å›æ”¶çš„è¶…æ™‚æ™‚é–“(æ¯«ç§’)ã€‚0è¡¨ç¤ºä¸å›æ”¶ã€‚
     void Initialize(unsigned int capacity, unsigned int timeout);
 
-    /// @brief ÄÀ©ñ©Ò¦³¤w¤À°tªº¤º³¡°O¾ĞÅé¡C
+    /// @brief é‡‹æ”¾æ‰€æœ‰å·²åˆ†é…çš„å…§éƒ¨è¨˜æ†¶é«”ã€‚
     void Free();
 
-    /// @brief ¨ú±o¸ê·½¡C¦pªG¸ê·½¤£¦s¦b¡A·|¹Á¸Õ¸ü¤J¡C
-    /// @return ¦¨¥\«hªğ¦^«ü¦V¸ê·½¸ê®Æªº«ü¼Ğ¡A§_«hªğ¦^ nullptr¡C
+    /// @brief å–å¾—è³‡æºã€‚å¦‚æœè³‡æºä¸å­˜åœ¨ï¼Œæœƒå˜—è©¦è¼‰å…¥ã€‚
+    /// @return æˆåŠŸå‰‡è¿”å›æŒ‡å‘è³‡æºè³‡æ–™çš„æŒ‡æ¨™ï¼Œå¦å‰‡è¿”å› nullptrã€‚
     void* Get(unsigned int id, int a3, int a4);
 
-    /// @brief ¨ú±o¸ê·½¡A¦ı¦pªG¤£¦s¦b«h¤£¸ü¤J¡C
-    /// @return ¦¨¥\«hªğ¦^«ü¦V¸ê·½¸ê®Æªº«ü¼Ğ¡A§_«hªğ¦^ nullptr¡C
+    /// @brief å–å¾—è³‡æºï¼Œä½†å¦‚æœä¸å­˜åœ¨å‰‡ä¸è¼‰å…¥ã€‚
+    /// @return æˆåŠŸå‰‡è¿”å›æŒ‡å‘è³‡æºè³‡æ–™çš„æŒ‡æ¨™ï¼Œå¦å‰‡è¿”å› nullptrã€‚
     void* Get1(unsigned int id, int a3, unsigned char a4);
 
-    /// @brief ÄÀ©ñ¹ï¤@­Ó¸ê·½ªº¤Ş¥Î¡C
-    /// @return ¦¨¥\ªğ¦^1¡A¸ê·½¤£¦s¦bªğ¦^0¡C
+    /// @brief é‡‹æ”¾å°ä¸€å€‹è³‡æºçš„å¼•ç”¨ã€‚
+    /// @return æˆåŠŸè¿”å›1ï¼Œè³‡æºä¸å­˜åœ¨è¿”å›0ã€‚
     int Release(unsigned int id);
 
-    /// @brief ¨ú±o«ü©w¸ê·½ªº¤Ş¥Î­p¼Æ¡C
-    /// @return ªğ¦^¤Ş¥Î­p¼Æ­È¡A­Y¸ê·½¤£¦s¦b«hªğ¦^0¡C
+    /// @brief å–å¾—æŒ‡å®šè³‡æºçš„å¼•ç”¨è¨ˆæ•¸ã€‚
+    /// @return è¿”å›å¼•ç”¨è¨ˆæ•¸å€¼ï¼Œè‹¥è³‡æºä¸å­˜åœ¨å‰‡è¿”å›0ã€‚
     int GetRefCount(unsigned int id);
 
-    /// @brief ½ü¸ß¨Ã²M²z¶¢¸mªº¸ê·½¡C
+    /// @brief è¼ªè©¢ä¸¦æ¸…ç†é–’ç½®çš„è³‡æºã€‚
     virtual void Poll();
 
-    /// @brief §R°£©Ò¦³¤w¸ü¤Jªº¸ê·½¡C
+    /// @brief åˆªé™¤æ‰€æœ‰å·²è¼‰å…¥çš„è³‡æºã€‚
     void DeleteAllResource();
 
 protected:
-    /// @brief ¹Á¸Õ·s¼W¤@­Ó¸ê·½¨ìºŞ²z¾¹¤¤¡]³q±`¥ÑGet¤º³¡©I¥s¡^¡C
-    /// @return 1:¿ù»~(Bufferº¡), 2:¤w¦s¦b, 3:·s¼W¦¨¥\
+    /// @brief å˜—è©¦æ–°å¢ä¸€å€‹è³‡æºåˆ°ç®¡ç†å™¨ä¸­ï¼ˆé€šå¸¸ç”±Getå…§éƒ¨å‘¼å«ï¼‰ã€‚
+    /// @return 1:éŒ¯èª¤(Bufferæ»¿), 2:å·²å­˜åœ¨, 3:æ–°å¢æˆåŠŸ
     virtual int Add(unsigned int id, int a3, int a4);
 
-    /// @brief ±qºŞ²z¾¹¤¤§R°£¤@­Ó¸ê·½¡C
-    /// @return ¦¨¥\ªğ¦^1¡A¥¢±Ñªğ¦^0¡C
+    /// @brief å¾ç®¡ç†å™¨ä¸­åˆªé™¤ä¸€å€‹è³‡æºã€‚
+    /// @return æˆåŠŸè¿”å›1ï¼Œå¤±æ•—è¿”å›0ã€‚
     virtual int Delete(unsigned int id);
 
-    // --- ¯ÂµêÀÀ¨ç¦¡ (¥Ñ­l¥ÍÃş§O¹ê§@) ---
+    // --- ç´”è™›æ“¬å‡½å¼ (ç”±è¡ç”Ÿé¡åˆ¥å¯¦ä½œ) ---
 
-    /// @brief ±qÀÉ®×¸ü¤J¸ê·½¡C
+    /// @brief å¾æª”æ¡ˆè¼‰å…¥è³‡æºã€‚
     virtual void* LoadResource(unsigned int id, int a3, unsigned char a4) = 0;
 
-    /// @brief ±q«Ê¸ËÀÉ¸ü¤J¸ê·½¡C
+    /// @brief å¾å°è£æª”è¼‰å…¥è³‡æºã€‚
     virtual void* LoadResourceInPack(unsigned int id, int a3, unsigned char a4) = 0;
 
-    /// @brief ÄÀ©ñ¸ê·½¸ê®Æ¡C
+    /// @brief é‡‹æ”¾è³‡æºè³‡æ–™ã€‚
     virtual void FreeResource(void* pResourceData) = 0;
 
 protected:
-    ResourceInfo* m_pResourceArray;           // ¸ê·½¸ê°T°}¦C
-    unsigned int  m_uResourceArrayCapacity;   // °}¦C®e¶q
-    unsigned int  m_uResourceCount;           // ¥Ø«e¸ê·½¼Æ¶q
-    DWORD         m_dwTimeout;                // ¶¢¸m¶W®É®É¶¡(ms)
-    bool          m_bInitialized;             // ¬O§_¤wªì©l¤Æ
+    ResourceInfo* m_pResourceArray;           // è³‡æºè³‡è¨Šé™£åˆ—
+    unsigned int  m_uResourceArrayCapacity;   // é™£åˆ—å®¹é‡
+    unsigned int  m_uResourceCount;           // ç›®å‰è³‡æºæ•¸é‡
+    DWORD         m_dwTimeout;                // é–’ç½®è¶…æ™‚æ™‚é–“(ms)
+    bool          m_bInitialized;             // æ˜¯å¦å·²åˆå§‹åŒ–
 };

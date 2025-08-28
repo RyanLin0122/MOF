@@ -2,47 +2,47 @@
 #include <new>
 #include "Image/GIVertex.h"
 
-// °²³]ªº¥þ°ìÅÜ¼Æ©M©w¸q¡A¨Ó¦Û©ó­ì©l½X¤W¤U¤å
-extern IDirect3DDevice9* Device; // ¥þ°ìD3D¸Ë¸m
+// å‡è¨­çš„å…¨åŸŸè®Šæ•¸å’Œå®šç¾©ï¼Œä¾†è‡ªæ–¼åŽŸå§‹ç¢¼ä¸Šä¸‹æ–‡
+extern IDirect3DDevice9* Device; // å…¨åŸŸD3Dè£ç½®
 
-// VertexBufferDataMgr ªº«Øºc¨ç¦¡
-// ¹ïÀ³¤Ï½sÄ¶½X: 0x00544910
+// VertexBufferDataMgr çš„å»ºæ§‹å‡½å¼
+// å°æ‡‰åç·¨è­¯ç¢¼: 0x00544910
 VertexBufferDataMgr::VertexBufferDataMgr() {
     m_pHead = nullptr;
     m_pTail = nullptr;
     m_nCount = 0;
 }
 
-// VertexBufferDataMgr ªº¸Ñºc¨ç¦¡
-// ¹ïÀ³¤Ï½sÄ¶½X: ¦b Device_Reset_Manager::~Device_Reset_Manager ¤¤³QÁô§t©I¥s
+// VertexBufferDataMgr çš„è§£æ§‹å‡½å¼
+// å°æ‡‰åç·¨è­¯ç¢¼: åœ¨ Device_Reset_Manager::~Device_Reset_Manager ä¸­è¢«éš±å«å‘¼å«
 VertexBufferDataMgr::~VertexBufferDataMgr() {
     DeleteAll();
 }
 
-// ·s¼W¤@­Ó¸`ÂI¨ìÃìµ²¦ê¦Cªº§ÀºÝ
-// ¹ïÀ³¤Ï½sÄ¶½X: 0x00544920
+// æ–°å¢žä¸€å€‹ç¯€é»žåˆ°éˆçµä¸²åˆ—çš„å°¾ç«¯
+// å°æ‡‰åç·¨è­¯ç¢¼: 0x00544920
 VertexBufferData* VertexBufferDataMgr::Add() {
-    // ¤À°t¤@­Ó·sªº¸`ÂI
+    // åˆ†é…ä¸€å€‹æ–°çš„ç¯€é»ž
     VertexBufferData* pNewNode = new (std::nothrow) VertexBufferData();
     if (!pNewNode) {
-        return nullptr; // °O¾ÐÅé¤À°t¥¢±Ñ
+        return nullptr; // è¨˜æ†¶é«”åˆ†é…å¤±æ•—
     }
 
-    // ªì©l¤Æ·s¸`ÂIªº¦¨­ûÅÜ¼Æ
+    // åˆå§‹åŒ–æ–°ç¯€é»žçš„æˆå“¡è®Šæ•¸
     pNewNode->pPrev = nullptr;
     pNewNode->pNext = nullptr;
     pNewNode->pVertexBuffer = nullptr;
     pNewNode->capacity = 0;
     pNewNode->type = 0;
 
-    // ±N·s¸`ÂI¥[¤J¨ìÃìµ²¦ê¦Cªº§À³¡
+    // å°‡æ–°ç¯€é»žåŠ å…¥åˆ°éˆçµä¸²åˆ—çš„å°¾éƒ¨
     if (m_pTail == nullptr) {
-        // ¦pªGÃìµ²¦ê¦C¬OªÅªº
+        // å¦‚æžœéˆçµä¸²åˆ—æ˜¯ç©ºçš„
         m_pHead = pNewNode;
         m_pTail = pNewNode;
     }
     else {
-        // ¦pªGÃìµ²¦ê¦C«DªÅ
+        // å¦‚æžœéˆçµä¸²åˆ—éžç©º
         m_pTail->pNext = pNewNode;
         pNewNode->pPrev = m_pTail;
         m_pTail = pNewNode;
@@ -52,93 +52,93 @@ VertexBufferData* VertexBufferDataMgr::Add() {
     return pNewNode;
 }
 
-// ±qÃìµ²¦ê¦C¤¤§R°£«ü©wªº¸`ÂI
-// ¹ïÀ³¤Ï½sÄ¶½X: 0x00544980
+// å¾žéˆçµä¸²åˆ—ä¸­åˆªé™¤æŒ‡å®šçš„ç¯€é»ž
+// å°æ‡‰åç·¨è­¯ç¢¼: 0x00544980
 void VertexBufferDataMgr::Delete(VertexBufferData* pNode) {
     if (!pNode || m_nCount == 0) {
-        return; // µL®Ä¾Þ§@
+        return; // ç„¡æ•ˆæ“ä½œ
     }
 
-    // ®Ú¾Ú¸`ÂI¦bÃìµ²¦ê¦C¤¤ªº¦ì¸m§ó·s«ü¼Ð
+    // æ ¹æ“šç¯€é»žåœ¨éˆçµä¸²åˆ—ä¸­çš„ä½ç½®æ›´æ–°æŒ‡æ¨™
     if (pNode == m_pHead) {
-        // ¸`ÂI¬OÀY¸`ÂI
+        // ç¯€é»žæ˜¯é ­ç¯€é»ž
         m_pHead = pNode->pNext;
         if (m_pHead) {
             m_pHead->pPrev = nullptr;
         }
         else {
-            // ¦pªG§R°£«áÃìµ²¦ê¦C¬°ªÅ¡A§À«ü¼Ð¤]»Ý³]¬°ªÅ
+            // å¦‚æžœåˆªé™¤å¾Œéˆçµä¸²åˆ—ç‚ºç©ºï¼Œå°¾æŒ‡æ¨™ä¹Ÿéœ€è¨­ç‚ºç©º
             m_pTail = nullptr;
         }
     }
     else if (pNode == m_pTail) {
-        // ¸`ÂI¬O§À¸`ÂI
+        // ç¯€é»žæ˜¯å°¾ç¯€é»ž
         m_pTail = pNode->pPrev;
         m_pTail->pNext = nullptr;
     }
     else {
-        // ¸`ÂI¦b¤¤¶¡
+        // ç¯€é»žåœ¨ä¸­é–“
         pNode->pPrev->pNext = pNode->pNext;
         pNode->pNext->pPrev = pNode->pPrev;
     }
 
-    // ¾P·´¸`ÂIª«¥ó (·|¦Û°Ê©I¥s¨ä¸Ñºc¨ç¦¡¥HÄÀ©ñVB)
+    // éŠ·æ¯€ç¯€é»žç‰©ä»¶ (æœƒè‡ªå‹•å‘¼å«å…¶è§£æ§‹å‡½å¼ä»¥é‡‹æ”¾VB)
     delete pNode;
     m_nCount--;
 
-    // ¦pªG­p¼Æ¾¹¬°0¡A½T«OÀY§À«ü¼Ð³£¬°ªÅ
+    // å¦‚æžœè¨ˆæ•¸å™¨ç‚º0ï¼Œç¢ºä¿é ­å°¾æŒ‡æ¨™éƒ½ç‚ºç©º
     if (m_nCount == 0) {
         m_pHead = nullptr;
         m_pTail = nullptr;
     }
 }
 
-// §R°£©Ò¦³¸`ÂI
-// ¹ïÀ³¤Ï½sÄ¶½X: 0x00544A50
+// åˆªé™¤æ‰€æœ‰ç¯€é»ž
+// å°æ‡‰åç·¨è­¯ç¢¼: 0x00544A50
 void VertexBufferDataMgr::DeleteAll() {
     VertexBufferData* pCurrent = m_pHead;
     while (pCurrent != nullptr) {
         VertexBufferData* pNext = pCurrent->pNext;
-        delete pCurrent; // ©I¥s¸Ñºc¨ç¦¡¨ÃÄÀ©ñ°O¾ÐÅé
+        delete pCurrent; // å‘¼å«è§£æ§‹å‡½å¼ä¸¦é‡‹æ”¾è¨˜æ†¶é«”
         pCurrent = pNext;
     }
-    // ­«³]ºÞ²z¾¹ª¬ºA
+    // é‡è¨­ç®¡ç†å™¨ç‹€æ…‹
     m_pHead = nullptr;
     m_pTail = nullptr;
     m_nCount = 0;
 }
 
-// ¸Ë¸m¿ò¥¢®É¡AÄÀ©ñ©Ò¦³D3D¸ê·½
-// ¹ïÀ³¤Ï½sÄ¶½X: 0x00544A90
+// è£ç½®éºå¤±æ™‚ï¼Œé‡‹æ”¾æ‰€æœ‰D3Dè³‡æº
+// å°æ‡‰åç·¨è­¯ç¢¼: 0x00544A90
 void VertexBufferDataMgr::DeviceLostToRelease() {
     VertexBufferData* pCurrent = m_pHead;
     while (pCurrent != nullptr) {
-        // ÄÀ©ñVertexBuffer¡A¦ý«O¯d¸`ÂI¥»¨­¤Î¨ä¸ê®Æ
+        // é‡‹æ”¾VertexBufferï¼Œä½†ä¿ç•™ç¯€é»žæœ¬èº«åŠå…¶è³‡æ–™
         SafeRelease(pCurrent->pVertexBuffer);
         pCurrent = pCurrent->pNext;
     }
 }
 
-// ¸Ë¸m­«³]«á¡A­«·s¸ü¤JD3D¸ê·½
-// ¹ïÀ³¤Ï½sÄ¶½X: 0x00544AC0
+// è£ç½®é‡è¨­å¾Œï¼Œé‡æ–°è¼‰å…¥D3Dè³‡æº
+// å°æ‡‰åç·¨è­¯ç¢¼: 0x00544AC0
 void VertexBufferDataMgr::DeviceLostToReLoad() {
     VertexBufferData* pCurrent = m_pHead;
     while (pCurrent != nullptr) {
-        // ¦pªG³o­Ó¸`ÂI¤§«e¦³³»ÂI½w½Ä°Ï (§Y¨Ï²{¦b¬OªÅªº) ¥B¦³®e¶q
+        // å¦‚æžœé€™å€‹ç¯€é»žä¹‹å‰æœ‰é ‚é»žç·©è¡å€ (å³ä½¿ç¾åœ¨æ˜¯ç©ºçš„) ä¸”æœ‰å®¹é‡
         if (pCurrent->capacity > 0) {
-            // ®Ú¾ÚÀx¦sªºÃþ«¬©M®e¶q­«·s«Ø¥ßVertexBuffer
-            // ³o¸Ì¥uÁÙ­ì¤F¤Ï½sÄ¶½X¤¤¥X²{ªº GIVertex ¬ÛÃöÅÞ¿è
+            // æ ¹æ“šå„²å­˜çš„é¡žåž‹å’Œå®¹é‡é‡æ–°å»ºç«‹VertexBuffer
+            // é€™è£¡åªé‚„åŽŸäº†åç·¨è­¯ç¢¼ä¸­å‡ºç¾çš„ GIVertex ç›¸é—œé‚è¼¯
             switch (pCurrent->type) {
-                // ®Ú¾Ú¤Ï½sÄ¶½X¡AÃþ«¬ 0, 1, 2, 3 ³£·|¶i¤J³o­Ó¤À¤ä
+                // æ ¹æ“šåç·¨è­¯ç¢¼ï¼Œé¡žåž‹ 0, 1, 2, 3 éƒ½æœƒé€²å…¥é€™å€‹åˆ†æ”¯
             case 0:
             case 1:
             case 2:
             case 3:
                 Device->CreateVertexBuffer(
-                    28 * pCurrent->capacity, // ¤j¤p
-                    520,                     // ¥Îªk (D3DUSAGE_WRITEONLY | D3DUSAGE_DYNAMIC)
+                    28 * pCurrent->capacity, // å¤§å°
+                    520,                     // ç”¨æ³• (D3DUSAGE_WRITEONLY | D3DUSAGE_DYNAMIC)
                     GIVertex::FVF,           // FVF
-                    D3DPOOL_MANAGED,         // °O¾ÐÅé¦À
+                    D3DPOOL_MANAGED,         // è¨˜æ†¶é«”æ± 
                     &pCurrent->pVertexBuffer,
                     NULL
                 );

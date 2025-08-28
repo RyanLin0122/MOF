@@ -4,30 +4,30 @@
 
 /**
  * @class CEffect_UI_SkillSet
- * @brief ¦b UI ¤WÅã¥Ü§Ş¯à³]¸m¦¨¥\®ÉªºµøÄ±¯S®Ä¡C
+ * @brief åœ¨ UI ä¸Šé¡¯ç¤ºæŠ€èƒ½è¨­ç½®æˆåŠŸæ™‚çš„è¦–è¦ºç‰¹æ•ˆã€‚
  *
- * Ä~©Ó¦Û CEffectBase¡A¬O¤@­Ó¦b©T©w¿Ã¹õ®y¼Ğ¼½©ñªº¤@¦¸©Ê°Êµe¯S®Ä¡C
+ * ç¹¼æ‰¿è‡ª CEffectBaseï¼Œæ˜¯ä¸€å€‹åœ¨å›ºå®šè¢å¹•åº§æ¨™æ’­æ”¾çš„ä¸€æ¬¡æ€§å‹•ç•«ç‰¹æ•ˆã€‚
  */
 class CEffect_UI_SkillSet : public CEffectBase {
 public:
     CEffect_UI_SkillSet();
     virtual ~CEffect_UI_SkillSet();
 
-    // --- µêÀÀ¨ç¦¡ÂĞ¼g ---
+    // --- è™›æ“¬å‡½å¼è¦†å¯« ---
 
-    /// @brief ³B²z¯S®Äªº¥Í©R¶g´Á¡Aª½±µ¨Ì¿à CCAEffect ªº°Êµe¼½©ñª¬ºA¡C
+    /// @brief è™•ç†ç‰¹æ•ˆçš„ç”Ÿå‘½é€±æœŸï¼Œç›´æ¥ä¾è³´ CCAEffect çš„å‹•ç•«æ’­æ”¾ç‹€æ…‹ã€‚
     virtual bool FrameProcess(float fElapsedTime) override;
 
-    /// @brief ·Ç³ÆÃ¸»s«eªºÅŞ¿è§ó·s¡C
+    /// @brief æº–å‚™ç¹ªè£½å‰çš„é‚è¼¯æ›´æ–°ã€‚
     virtual void Process() override;
 
-    /// @brief Ã¸»s¯S®Ä¡C
+    /// @brief ç¹ªè£½ç‰¹æ•ˆã€‚
     virtual void Draw() override;
 
-    // --- ±M¦³¨ç¦¡ ---
+    // --- å°ˆæœ‰å‡½å¼ ---
 
-    /// @brief ³]©w¯S®ÄªºÅã¥Ü¦ì¸m¡C
-    /// @param x ¿Ã¹õ X ®y¼Ğ¡C
-    /// @param y ¿Ã¹õ Y ®y¼Ğ¡C
+    /// @brief è¨­å®šç‰¹æ•ˆçš„é¡¯ç¤ºä½ç½®ã€‚
+    /// @param x è¢å¹• X åº§æ¨™ã€‚
+    /// @param y è¢å¹• Y åº§æ¨™ã€‚
     void SetEffect(float x, float y);
 };

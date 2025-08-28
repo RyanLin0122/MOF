@@ -1,88 +1,88 @@
 #include "Effect/CEffect_Skill_Type_Directed.h"
 #include "Effect/CEAManager.h"
 #include "Character/ClientCharacter.h"
-#include "global.h" // °²³]¥Î©óÀò¨ú¥ş°ìÅÜ¼Æ g_Game_System_Info
+#include "global.h" // å‡è¨­ç”¨æ–¼ç²å–å…¨åŸŸè®Šæ•¸ g_Game_System_Info
 
-// °²³]ªº¥ş°ìÅÜ¼Æ
+// å‡è¨­çš„å…¨åŸŸè®Šæ•¸
 extern GameSystemInfo g_Game_System_Info;
 
 
-// ¹ïÀ³¤Ï²ÕÄ¶½X: (¦b CEffectManager::AddEffect ¤¤³Q new)
+// å°æ‡‰åçµ„è­¯ç¢¼: (åœ¨ CEffectManager::AddEffect ä¸­è¢« new)
 CEffect_Skill_Type_Directed::CEffect_Skill_Type_Directed()
     : m_pCasterCharacter(nullptr), m_pTargetCharacter(nullptr)
 {
-    // CEffectBase ªº«Øºc¨ç¦¡·|³Q¦Û°Ê©I¥s
+    // CEffectBase çš„å»ºæ§‹å‡½å¼æœƒè¢«è‡ªå‹•å‘¼å«
 }
 
-// ¹ïÀ³¤Ï²ÕÄ¶½X: (¦b CEffectManager::FrameProcess ¤¤³Q delete)
+// å°æ‡‰åçµ„è­¯ç¢¼: (åœ¨ CEffectManager::FrameProcess ä¸­è¢« delete)
 CEffect_Skill_Type_Directed::~CEffect_Skill_Type_Directed()
 {
 }
 
-// ¹ïÀ³¤Ï²ÕÄ¶½X: (¦b CEffectManager::AddEffect ¤¤³Q©I¥s)
+// å°æ‡‰åçµ„è­¯ç¢¼: (åœ¨ CEffectManager::AddEffect ä¸­è¢«å‘¼å«)
 void CEffect_Skill_Type_Directed::SetEffect(ClientCharacter* pCaster, ClientCharacter* pTarget, unsigned short effectKindID, char* szFileName, unsigned char ucDirectionFlag)
 {
-    // Àò¨ú¨Ã³]©w¯S®Ä¼Æ¾Ú
+    // ç²å–ä¸¦è¨­å®šç‰¹æ•ˆæ•¸æ“š
     CEAManager::GetInstance()->GetEAData(effectKindID, szFileName, &m_ccaEffect);
     m_ccaEffect.SetFrameTime();
-    m_ccaEffect.Play(0, false); // ¼½©ñ²Ä¤@­Ó°Êµe§Ç¦C¡A¤£´`Àô
+    m_ccaEffect.Play(0, false); // æ’­æ”¾ç¬¬ä¸€å€‹å‹•ç•«åºåˆ—ï¼Œä¸å¾ªç’°
 
-    // ¸j©w¬IªkªÌ©M¥Ø¼Ğ
+    // ç¶å®šæ–½æ³•è€…å’Œç›®æ¨™
     m_pCasterCharacter = pCaster;
     m_pTargetCharacter = pTarget;
 
-    // --- Â½ÂàÅŞ¿è ---
-    // ­ì©l½X: if ( a6 >= 2u ) { if ( *((_DWORD *)a2 + 143) == 1 ) *((_BYTE *)this + 56) = 1; }
+    // --- ç¿»è½‰é‚è¼¯ ---
+    // åŸå§‹ç¢¼: if ( a6 >= 2u ) { if ( *((_DWORD *)a2 + 143) == 1 ) *((_BYTE *)this + 56) = 1; }
     // else { *((_BYTE *)this + 56) = a6 != 0; }
     if (ucDirectionFlag >= 2) {
-        // ¦pªGºX¼Ğ >= 2¡A«hÂ½Âà»P§_¨ú¨M©ó¬IªkªÌªº´Â¦V
-        if (pCaster && pCaster->GetActionSide() == 1) { // °²³] GetActionSide() Àò¨ú´Â¦V
+        // å¦‚æœæ——æ¨™ >= 2ï¼Œå‰‡ç¿»è½‰èˆ‡å¦å–æ±ºæ–¼æ–½æ³•è€…çš„æœå‘
+        if (pCaster && pCaster->GetActionSide() == 1) { // å‡è¨­ GetActionSide() ç²å–æœå‘
             m_bIsFlip = true;
         }
     }
     else {
-        // §_«h¡Aª½±µ®Ú¾ÚºX¼Ğ¨M©w¬O§_Â½Âà
+        // å¦å‰‡ï¼Œç›´æ¥æ ¹æ“šæ——æ¨™æ±ºå®šæ˜¯å¦ç¿»è½‰
         m_bIsFlip = (ucDirectionFlag != 0);
     }
 }
 
-// ¹ïÀ³¤Ï²ÕÄ¶½X: (¦b CEffectManager::FrameProcess ¤¤³Q©I¥s)
+// å°æ‡‰åçµ„è­¯ç¢¼: (åœ¨ CEffectManager::FrameProcess ä¸­è¢«å‘¼å«)
 bool CEffect_Skill_Type_Directed::FrameProcess(float fElapsedTime)
 {
-    // »P CEffect_Skill_Type_Once ¬Û¦P¡A¥Í©R¶g´Á§¹¥ş¥Ñ¤º³¡°Êµe¨M©w
+    // èˆ‡ CEffect_Skill_Type_Once ç›¸åŒï¼Œç”Ÿå‘½é€±æœŸå®Œå…¨ç”±å…§éƒ¨å‹•ç•«æ±ºå®š
     return m_ccaEffect.FrameProcess(fElapsedTime);
 }
 
-// ¹ïÀ³¤Ï²ÕÄ¶½X: (¦b CEffectManager::Process ¤¤³Q©I¥s)
+// å°æ‡‰åçµ„è­¯ç¢¼: (åœ¨ CEffectManager::Process ä¸­è¢«å‘¼å«)
 void CEffect_Skill_Type_Directed::Process()
 {
-    // ÀË¬d¥Ø¼Ğ¬O§_¦s¦b
+    // æª¢æŸ¥ç›®æ¨™æ˜¯å¦å­˜åœ¨
     if (!m_pTargetCharacter) {
         m_bIsVisible = FALSE;
         return;
     }
 
-    // ±q¥Ø¼ĞÀò¨ú·í«e¦ì¸m
+    // å¾ç›®æ¨™ç²å–ç•¶å‰ä½ç½®
     float targetX = static_cast<float>(m_pTargetCharacter->GetPosX());
     float targetY = static_cast<float>(m_pTargetCharacter->GetPosY());
 
-    // ³]©w¯S®Ä¦Û¨­ªºÃ¸»s®y¼Ğ
+    // è¨­å®šç‰¹æ•ˆè‡ªèº«çš„ç¹ªè£½åº§æ¨™
     m_fCurrentPosX = targetX;
     m_fCurrentPosY = targetY;
 
-    // ¶i¦æµô°Å§PÂ_
+    // é€²è¡Œè£å‰ªåˆ¤æ–·
     float screenX = m_fCurrentPosX - static_cast<float>(g_Game_System_Info.ScreenX);
     m_bIsVisible = IsCliping(screenX, 0.0f);
 
     if (m_bIsVisible) {
-        // ±N¥@¬É®y¼ĞÂà´«¬°¿Ã¹õ®y¼Ğ«á¶Ç»¼µ¹ CCAEffect
+        // å°‡ä¸–ç•Œåº§æ¨™è½‰æ›ç‚ºè¢å¹•åº§æ¨™å¾Œå‚³éçµ¦ CCAEffect
         m_ccaEffect.SetPosition(screenX, m_fCurrentPosY - static_cast<float>(g_Game_System_Info.ScreenY));
-        m_ccaEffect.SetFlipX(m_bIsFlip); // ±NÂ½Âàª¬ºA¶Ç»¼µ¹ CCAEffect
+        m_ccaEffect.SetFlipX(m_bIsFlip); // å°‡ç¿»è½‰ç‹€æ…‹å‚³éçµ¦ CCAEffect
         m_ccaEffect.Process();
     }
 }
 
-// ¹ïÀ³¤Ï²ÕÄ¶½X: (¦b CEffectManager::Draw ¤¤³Q©I¥s)
+// å°æ‡‰åçµ„è­¯ç¢¼: (åœ¨ CEffectManager::Draw ä¸­è¢«å‘¼å«)
 void CEffect_Skill_Type_Directed::Draw()
 {
     if (m_bIsVisible) {

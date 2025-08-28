@@ -5,7 +5,7 @@
 #include <new> // for std::nothrow
 
 //=============================================================================
-// FrameSkip Ãş§O¹ê§@ (ºû«ù¤£ÅÜ)
+// FrameSkip é¡åˆ¥å¯¦ä½œ (ç¶­æŒä¸è®Š)
 //=============================================================================
 FrameSkip::FrameSkip() : m_fAccumulatedTime(0.0f), m_fTimePerFrame(1.0f / 60.0f) {}
 FrameSkip::~FrameSkip() {}
@@ -29,18 +29,18 @@ bool FrameSkip::Update(float fElapsedTime, int& outFrameCount) {
 }
 
 //=============================================================================
-// CCAEffect Ãş§O¹ê§@ (­«¼gª©¥»)
+// CCAEffect é¡åˆ¥å¯¦ä½œ (é‡å¯«ç‰ˆæœ¬)
 //=============================================================================
 
 CCAEffect::CCAEffect()
 {
-    // ªì©l¤Æ©Ò¦³¦¨­ûÅÜ¼Æ¬°°®²bªºªì©lª¬ºA
+    // åˆå§‹åŒ–æ‰€æœ‰æˆå“¡è®Šæ•¸ç‚ºä¹¾æ·¨çš„åˆå§‹ç‹€æ…‹
     m_pEffectData = nullptr;
     m_fPosX = 0.0f;
     m_fPosY = 0.0f;
     m_bFlipX = false;
     m_fRotation = 0.0f;
-    m_dwAlpha = 255; // ¨Ï¥Î 0-255 ½d³ò
+    m_dwAlpha = 255; // ä½¿ç”¨ 0-255 ç¯„åœ
     m_bIsPlaying = false;
     m_bShow = true;
     m_bIsLooping = false;
@@ -49,25 +49,25 @@ CCAEffect::CCAEffect()
     m_nStartFrame = 0;
     m_nEndFrame = 0;
 
-    // ³]©w¹w³]¼½©ñ³t«×¬° 60 FPS
+    // è¨­å®šé è¨­æ’­æ”¾é€Ÿåº¦ç‚º 60 FPS
     m_FrameSkip.m_fTimePerFrame = 1.0f / 30.0f;
     m_FrameSkip.m_fAccumulatedTime = 0.0f;
 
-    // ªì©l¤Æ´è¬Vª¬ºAªº¨ç¦¡«ü¼Ğ
+    // åˆå§‹åŒ–æ¸²æŸ“ç‹€æ…‹çš„å‡½å¼æŒ‡æ¨™
     m_pfnDrawRenderState = &CCAEffect::DrawRenderState;
     m_pfnDrawEtcRenderState = &CCAEffect::DrawEtcRenderState;
 }
 
 CCAEffect::~CCAEffect()
 {
-    // ¦b³o­Ó·sªº³]­p¤¤¡ACCAEffect ¤£¦A«ù¦³ GameImage ªºªø´Á«ü¼Ğ¡A
-    // ¦]¦¹¸Ñºc¨ç¦¡¤¤¤£¦A»İ­nÄÀ©ñ GameImage ªºÅŞ¿è¡C
-    // GameImage ªºÄÀ©ñ§¹¥ş¥Ñ CEffect_Battle_DownCut µ¥¯S®Äª«¥óªº¸Ñºc¨ç¦¡Ä²µo¡C
+    // åœ¨é€™å€‹æ–°çš„è¨­è¨ˆä¸­ï¼ŒCCAEffect ä¸å†æŒæœ‰ GameImage çš„é•·æœŸæŒ‡æ¨™ï¼Œ
+    // å› æ­¤è§£æ§‹å‡½å¼ä¸­ä¸å†éœ€è¦é‡‹æ”¾ GameImage çš„é‚è¼¯ã€‚
+    // GameImage çš„é‡‹æ”¾å®Œå…¨ç”± CEffect_Battle_DownCut ç­‰ç‰¹æ•ˆç‰©ä»¶çš„è§£æ§‹å‡½å¼è§¸ç™¼ã€‚
 }
 
 void CCAEffect::Reset()
 {
-    // ­«³]©Ò¦³ª¬ºA¡A»P«Øºc¨ç¦¡ÅŞ¿è¤@­P
+    // é‡è¨­æ‰€æœ‰ç‹€æ…‹ï¼Œèˆ‡å»ºæ§‹å‡½å¼é‚è¼¯ä¸€è‡´
     m_pEffectData = nullptr;
     m_fPosX = 0.0f;
     m_fPosY = 0.0f;
@@ -85,9 +85,9 @@ void CCAEffect::Reset()
 
 void CCAEffect::SetFrameTime()
 {
-    // Äµ§i¡G³o­Ó¨ç¦¡ªº­ì©lÅŞ¿è (1.0f / Á`¼v®æ¼Æ) ¬O¦³°İÃDªº¡A
-    // ¥¦·|¾É­P°Êµe¼½©ñ³t«×¤£Ã­©w¡C
-    // «ØÄ³¤£­n©I¥s¦¹¨ç¦¡¡A¦Ó¬OÅı¨t²Î¨Ï¥Î¹w³]ªº 60 FPS ¼½©ñ³t²v¡C
+    // è­¦å‘Šï¼šé€™å€‹å‡½å¼çš„åŸå§‹é‚è¼¯ (1.0f / ç¸½å½±æ ¼æ•¸) æ˜¯æœ‰å•é¡Œçš„ï¼Œ
+    // å®ƒæœƒå°è‡´å‹•ç•«æ’­æ”¾é€Ÿåº¦ä¸ç©©å®šã€‚
+    // å»ºè­°ä¸è¦å‘¼å«æ­¤å‡½å¼ï¼Œè€Œæ˜¯è®“ç³»çµ±ä½¿ç”¨é è¨­çš„ 60 FPS æ’­æ”¾é€Ÿç‡ã€‚
     if (!m_pEffectData) return;
 
     //if (m_pEffectData->m_nTotalFrames > 0) {
@@ -105,30 +105,30 @@ bool CCAEffect::FrameProcess(float fElapsedTime)
     if (m_FrameSkip.Update(fElapsedTime, frameCount)) {
         m_nCurrentFrame += frameCount;
 
-        // ¥¿½Tªº¾P·´±ø¥ó¡G
-        // °Êµe¼v®æ¯Á¤Ş¬° 0 ¨ì (N-1)¡C·í m_nCurrentFrame ¼W¥[¨ì N ®É¡A
-        // ¥Nªí 0 ¨ì (N-1) ªº©Ò¦³¼v®æ³£¤w¼½©ñ§¹²¦¡C
-        // ¦]¦¹¡A`>` ¬O¥¿½Tªº§PÂ_¤l¡C
+        // æ­£ç¢ºçš„éŠ·æ¯€æ¢ä»¶ï¼š
+        // å‹•ç•«å½±æ ¼ç´¢å¼•ç‚º 0 åˆ° (N-1)ã€‚ç•¶ m_nCurrentFrame å¢åŠ åˆ° N æ™‚ï¼Œ
+        // ä»£è¡¨ 0 åˆ° (N-1) çš„æ‰€æœ‰å½±æ ¼éƒ½å·²æ’­æ”¾å®Œç•¢ã€‚
+        // å› æ­¤ï¼Œ`>` æ˜¯æ­£ç¢ºçš„åˆ¤æ–·å­ã€‚
         if (m_nCurrentFrame > m_nEndFrame) {
             if (m_bIsLooping) {
-                m_nCurrentFrame = m_nStartFrame; // ´`Àô¼½©ñ
+                m_nCurrentFrame = m_nStartFrame; // å¾ªç’°æ’­æ”¾
             }
             else {
                 m_bIsPlaying = false;
-                return true; // °Êµeµ²§ô¡A¦^¶Ç true ¥HÄ²µo¾P·´
+                return true; // å‹•ç•«çµæŸï¼Œå›å‚³ true ä»¥è§¸ç™¼éŠ·æ¯€
             }
         }
     }
-    return false; // °Êµe¤´¦b¼½©ñ¡A¦^¶Ç false
+    return false; // å‹•ç•«ä»åœ¨æ’­æ”¾ï¼Œå›å‚³ false
 }
 
 void CCAEffect::Process()
 {
-    // ¦b·sªº³]­p¤¤¡AProcess ¨ç¦¡¥u­t³d§ó·s«DÃ¸¹Ï¬ÛÃöªºÅŞ¿è¡C
-    // ©Ò¦³»P GameImage ¬ÛÃöªº­pºâ³£²¾¦Ü Draw ¨ç¦¡¤¤¡A¥HÁ×§Kª¬ºA¦Ã¬V¡C
-    // ¥Ø«e¦¹¨ç¦¡¥i¥H¬°ªÅ¡A©Î¥u°µ³Ì°ò¥»ªºª¬ºAÀË¬d¡C
+    // åœ¨æ–°çš„è¨­è¨ˆä¸­ï¼ŒProcess å‡½å¼åªè² è²¬æ›´æ–°éç¹ªåœ–ç›¸é—œçš„é‚è¼¯ã€‚
+    // æ‰€æœ‰èˆ‡ GameImage ç›¸é—œçš„è¨ˆç®—éƒ½ç§»è‡³ Draw å‡½å¼ä¸­ï¼Œä»¥é¿å…ç‹€æ…‹æ±¡æŸ“ã€‚
+    // ç›®å‰æ­¤å‡½å¼å¯ä»¥ç‚ºç©ºï¼Œæˆ–åªåšæœ€åŸºæœ¬çš„ç‹€æ…‹æª¢æŸ¥ã€‚
     if (!m_bShow || !m_bIsPlaying || !m_pEffectData || m_nCurrentFrame < 0) {
-        m_bShow = false; // ³]©w¤@­ÓºX¼Ğ¡AÅı Draw ¨ç¦¡ª¾¹D¥»´V¤£»İÃ¸»s
+        m_bShow = false; // è¨­å®šä¸€å€‹æ——æ¨™ï¼Œè®“ Draw å‡½å¼çŸ¥é“æœ¬å¹€ä¸éœ€ç¹ªè£½
     }
     else {
         m_bShow = true;
@@ -137,13 +137,13 @@ void CCAEffect::Process()
 
 void CCAEffect::Draw()
 {
-    // 1. ¶i¦æÃ¸»s«eªº³Ì²×ÀË¬d
+    // 1. é€²è¡Œç¹ªè£½å‰çš„æœ€çµ‚æª¢æŸ¥
     if (!m_bShow || !m_bIsPlaying || !m_pEffectData || m_nCurrentFrame < 0 || m_nCurrentFrame > m_nEndFrame) {
         return;
     }
 
-    // 2. ¹M¾ú¹Ï¼h¡A·Ç³ÆÃ¸»s
-    // (¹ï©ó .ea ®æ¦¡¡A³q±`¥u¦³¤@­Ó¹Ï¼h)
+    // 2. éæ­·åœ–å±¤ï¼Œæº–å‚™ç¹ªè£½
+    // (å°æ–¼ .ea æ ¼å¼ï¼Œé€šå¸¸åªæœ‰ä¸€å€‹åœ–å±¤)
     for (int i = 0; i < m_pEffectData->m_nLayerCount; ++i) {
         VERTEXANIMATIONLAYERINFO* pLayer = &m_pEffectData->m_pLayers[i];
         if (m_nCurrentFrame >= pLayer->m_nFrameCount) continue;
@@ -151,22 +151,22 @@ void CCAEffect::Draw()
         VERTEXANIMATIONFRAMEINFO* pFrame = &pLayer->m_pFrames[m_nCurrentFrame];
         if (pFrame->m_dwImageID == 0) continue;
 
-        // 3. ¦bÃ¸»sªº³o¤@¨è¡A¤~¦VºŞ²z¾¹¡u­É¥Î¡v¤@­Ó GameImage ª«¥ó
+        // 3. åœ¨ç¹ªè£½çš„é€™ä¸€åˆ»ï¼Œæ‰å‘ç®¡ç†å™¨ã€Œå€Ÿç”¨ã€ä¸€å€‹ GameImage ç‰©ä»¶
         GameImage* pImage = cltImageManager::GetInstance()->GetGameImage(7, pFrame->m_dwImageID, 0, 1);
 
         if (pImage) {
-            // 4. ­pºâ³»ÂI
+            // 4. è¨ˆç®—é ‚é»
             GIVertex transformedVertices[4];
             memcpy(transformedVertices, pFrame->m_Vertices, sizeof(transformedVertices));
 
-            // ¥i¿ï¡GÂĞ¼g Alpha ­È¡AÁ×§K¯S®Ä¦]ÀÉ®×³]­p¦Ó´£«e²H¥X
+            // å¯é¸ï¼šè¦†å¯« Alpha å€¼ï¼Œé¿å…ç‰¹æ•ˆå› æª”æ¡ˆè¨­è¨ˆè€Œæå‰æ·¡å‡º
             for (int v = 0; v < 4; ++v) {
                 if (((transformedVertices[v].diffuse_color >> 24) & 0xFF) > 0) {
                     transformedVertices[v].diffuse_color = (transformedVertices[v].diffuse_color & 0x00FFFFFF) | (m_dwAlpha << 24);
                 }
             }
 
-            // 5. À³¥Î±ÛÂà¡BÂ½Âà¡B¥­²¾µ¥ÅÜ´«
+            // 5. æ‡‰ç”¨æ—‹è½‰ã€ç¿»è½‰ã€å¹³ç§»ç­‰è®Šæ›
             if (m_fRotation != 0.0f) {
                 D3DXMATRIX matRotation;
                 D3DXMatrixRotationZ(&matRotation, m_fRotation);
@@ -185,27 +185,27 @@ void CCAEffect::Draw()
                 }
             }
 
-            // 6. ±N­pºâ¦nªº³»ÂIª`¤J GameImage ¨Ã¤W¶Ç¨ì GPU
+            // 6. å°‡è¨ˆç®—å¥½çš„é ‚é»æ³¨å…¥ GameImage ä¸¦ä¸Šå‚³åˆ° GPU
             pImage->VertexAnimationCalculator(transformedVertices);
             pImage->UpdateVertexBuffer();
 
             Device->SetRenderState(D3DRS_CULLMODE, D3DCULL_NONE);
 
-            // 7. ³]©w´è¬Vª¬ºA¨Ã©I¥sÃ¸»s
+            // 7. è¨­å®šæ¸²æŸ“ç‹€æ…‹ä¸¦å‘¼å«ç¹ªè£½
 
 			printf("CCAEffect::Draw: AnimationID=%d, Frame=%d, Layer=%d\n", m_nAnimationID, m_nCurrentFrame, i);
-            // --- ¶¥¬q 2: Alpha ²V¦Xª¬ºA ---
+            // --- éšæ®µ 2: Alpha æ··åˆç‹€æ…‹ ---
             Device->SetRenderState(D3DRS_ALPHABLENDENABLE, TRUE);
             Device->SetRenderState(D3DRS_SRCBLEND, D3DBLEND_SRCALPHA);
             Device->SetRenderState(D3DRS_DESTBLEND, D3DBLEND_INVSRCALPHA);
 
-            // --- ÃöÁä­×¥¿¡G¶¥¬q 1: ¯¾²z²V¦Xª¬ºA ---
-            // ±j¨î¨Ï¥Î¼Ğ·Çªº¡§­¼ªk¡¨¼Ò¦¡¡A¦Ó¤£¬O·|¾É­Pµo¥úªº¡§¥[ªk¡¨¼Ò¦¡
+            // --- é—œéµä¿®æ­£ï¼šéšæ®µ 1: ç´‹ç†æ··åˆç‹€æ…‹ ---
+            // å¼·åˆ¶ä½¿ç”¨æ¨™æº–çš„â€œä¹˜æ³•â€æ¨¡å¼ï¼Œè€Œä¸æ˜¯æœƒå°è‡´ç™¼å…‰çš„â€œåŠ æ³•â€æ¨¡å¼
             Device->SetTextureStageState(0, D3DTSS_COLOROP, D3DTOP_MODULATE);
             Device->SetTextureStageState(0, D3DTSS_COLORARG1, D3DTA_TEXTURE);
             Device->SetTextureStageState(0, D3DTSS_COLORARG2, D3DTA_DIFFUSE);
 
-            // ¦P®É¤]©ú½T³]©w Alpha ªº²V¦X¤è¦¡
+            // åŒæ™‚ä¹Ÿæ˜ç¢ºè¨­å®š Alpha çš„æ··åˆæ–¹å¼
             Device->SetTextureStageState(0, D3DTSS_ALPHAOP, D3DTOP_MODULATE);
             Device->SetTextureStageState(0, D3DTSS_ALPHAARG1, D3DTA_TEXTURE);
             Device->SetTextureStageState(0, D3DTSS_ALPHAARG2, D3DTA_DIFFUSE);
@@ -217,15 +217,15 @@ void CCAEffect::Draw()
                 (this->*m_pfnDrawEtcRenderState)();
             }
 
-            // --- ¨ä¥L½T«O©Ê³]©w ---
+            // --- å…¶ä»–ç¢ºä¿æ€§è¨­å®š ---
             Device->SetRenderState(D3DRS_ALPHATESTENABLE, FALSE);
             Device->SetRenderState(D3DRS_CULLMODE, D3DCULL_NONE);
             Setup2DState(Device);
             Device->SetFVF(GIVertex::FVF);
             pImage->Draw();
 
-            // ª`·N¡GGameImage ªºÂkÁÙ¡A¥Ñ«ù¦³ CCAEffect ªº¥~³¡¯S®ÄÃş§O
-            // (¦p CEffect_Battle_DownCut) ¦b¨ä¸Ñºc®ÉÄ²µo¡A³o¬O¥Ø«e¬[ºcªº³]­p¡C
+            // æ³¨æ„ï¼šGameImage çš„æ­¸é‚„ï¼Œç”±æŒæœ‰ CCAEffect çš„å¤–éƒ¨ç‰¹æ•ˆé¡åˆ¥
+            // (å¦‚ CEffect_Battle_DownCut) åœ¨å…¶è§£æ§‹æ™‚è§¸ç™¼ï¼Œé€™æ˜¯ç›®å‰æ¶æ§‹çš„è¨­è¨ˆã€‚
         }
     }
 }

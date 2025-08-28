@@ -1,22 +1,22 @@
 #include "Effect/cltMoFC_EffectKindInfo.h"
-//#include "cltTextFileManager.h" // °²³]ªºÀÉ®×ºŞ²z¾¹
+//#include "cltTextFileManager.h" // å‡è¨­çš„æª”æ¡ˆç®¡ç†å™¨
 #include <new>
 
-// °²³]ªº¥ş°ìÀÉ®×ºŞ²z¾¹¹ê¨Ò
+// å‡è¨­çš„å…¨åŸŸæª”æ¡ˆç®¡ç†å™¨å¯¦ä¾‹
 extern cltTextFileManager g_clTextFileManager;
 
-// ¹ïÀ³¤Ï²ÕÄ¶½X: 0x0053BC30
+// å°æ‡‰åçµ„è­¯ç¢¼: 0x0053BC30
 cltMoFC_EffectKindInfo::cltMoFC_EffectKindInfo()
 {
-    // ±N«ü¼Ğ°}¦Cªº©Ò¦³¦¨­ûªì©l¤Æ¬°ªÅ«ü¼Ğ
+    // å°‡æŒ‡æ¨™é™£åˆ—çš„æ‰€æœ‰æˆå“¡åˆå§‹åŒ–ç‚ºç©ºæŒ‡æ¨™
     memset(m_pEffectInfo, 0, sizeof(m_pEffectInfo));
 
 }
 
-// ¹ïÀ³¤Ï²ÕÄ¶½X: 0x0053BC70 (Áô§t¤F¹ï¦¨­ûªº²M²z)
+// å°æ‡‰åçµ„è­¯ç¢¼: 0x0053BC70 (éš±å«äº†å°æˆå“¡çš„æ¸…ç†)
 cltMoFC_EffectKindInfo::~cltMoFC_EffectKindInfo()
 {
-    // ÄÀ©ñ©Ò¦³¦b Initialize ¤¤°ÊºA¤À°tªº stEffectKindInfo ª«¥ó
+    // é‡‹æ”¾æ‰€æœ‰åœ¨ Initialize ä¸­å‹•æ…‹åˆ†é…çš„ stEffectKindInfo ç‰©ä»¶
     for (int i = 0; i < 65535; ++i) {
         if (m_pEffectInfo[i]) {
             delete m_pEffectInfo[i];
@@ -25,50 +25,50 @@ cltMoFC_EffectKindInfo::~cltMoFC_EffectKindInfo()
     }
 }
 
-// ¹ïÀ³¤Ï²ÕÄ¶½X: 0x0053BC80
+// å°æ‡‰åçµ„è­¯ç¢¼: 0x0053BC80
 int cltMoFC_EffectKindInfo::Initialize(char* szFileName)
 {
     //FILE* pFile = g_clTextFileManager.fopen(szFileName);
     FILE* pFile = NULL;
     if (!pFile) {
-        return 0; // ÀÉ®×¶}±Ò¥¢±Ñ
+        return 0; // æª”æ¡ˆé–‹å•Ÿå¤±æ•—
     }
 
     char buffer[1024];
-    const char* delimiters = "\t\n"; // ¨Ï¥Î Tab ©M´«¦æ²Å§@¬°¤À¹j²Å
+    const char* delimiters = "\t\n"; // ä½¿ç”¨ Tab å’Œæ›è¡Œç¬¦ä½œç‚ºåˆ†éš”ç¬¦
 
-    // ¸õ¹LÀÉ®×¼ĞÀY (­ì©l½XÅª¨ú¤F4¦¸¡A«e3¦¸¥i¯à¬Oµù¸Ñ©Î¼ĞÃD¦æ)
+    // è·³éæª”æ¡ˆæ¨™é ­ (åŸå§‹ç¢¼è®€å–äº†4æ¬¡ï¼Œå‰3æ¬¡å¯èƒ½æ˜¯è¨»è§£æˆ–æ¨™é¡Œè¡Œ)
     for (int i = 0; i < 4; ++i) {
         if (!fgets(buffer, sizeof(buffer), pFile)) {
             //g_clTextFileManager.fclose(pFile);
-            return 1; // ÀÉ®×¤º®e¤£§¹¾ã¡A¦ıµø¬°¥¿±`µ²§ô
+            return 1; // æª”æ¡ˆå…§å®¹ä¸å®Œæ•´ï¼Œä½†è¦–ç‚ºæ­£å¸¸çµæŸ
         }
     }
 
-    // ¶}©l³v¦æ¸ÑªR
+    // é–‹å§‹é€è¡Œè§£æ
     do {
         char* token = strtok(buffer, delimiters);
-        if (!token) continue; // ªÅ¦æ
+        if (!token) continue; // ç©ºè¡Œ
 
         unsigned short kindID = TranslateKindCode(token);
-        if (kindID == 0) continue; // µL®Äªº Kind Code
+        if (kindID == 0) continue; // ç„¡æ•ˆçš„ Kind Code
 
-        // ¦pªG¸Ó ID ©|¥¼³Q©w¸q
+        // å¦‚æœè©² ID å°šæœªè¢«å®šç¾©
         if (m_pEffectInfo[kindID] == nullptr) {
             stEffectKindInfo* pNewInfo = new (std::nothrow) stEffectKindInfo();
-            if (!pNewInfo) break; // °O¾ĞÅé¤À°t¥¢±Ñ
+            if (!pNewInfo) break; // è¨˜æ†¶é«”åˆ†é…å¤±æ•—
 
             m_pEffectInfo[kindID] = pNewInfo;
             pNewInfo->usKindID = kindID;
 
-            // ¸ÑªRÀÉ®×¦WºÙ (¸õ¹L²Ä¤G­ÓÄæ¦ì)
+            // è§£ææª”æ¡ˆåç¨± (è·³éç¬¬äºŒå€‹æ¬„ä½)
             strtok(nullptr, delimiters);
             token = strtok(nullptr, delimiters);
             if (token) {
                 strcpy_s(pNewInfo->szFileName, sizeof(pNewInfo->szFileName), token);
             }
 
-            // ¸ÑªR¯S®ÄÃş«¬
+            // è§£æç‰¹æ•ˆé¡å‹
             token = strtok(nullptr, delimiters);
             if (token) {
                 if (_stricmp(token, "ONCE") == 0) pNewInfo->ucType = EFFECT_TYPE_ONCE;
@@ -83,43 +83,43 @@ int cltMoFC_EffectKindInfo::Initialize(char* szFileName)
     } while (fgets(buffer, sizeof(buffer), pFile));
 
     //g_clTextFileManager.fclose(pFile);
-    return 1; // ªì©l¤Æ¦¨¥\
+    return 1; // åˆå§‹åŒ–æˆåŠŸ
 }
 
-// ¹ïÀ³¤Ï²ÕÄ¶½X: 0x0053BF20
+// å°æ‡‰åçµ„è­¯ç¢¼: 0x0053BF20
 stEffectKindInfo* cltMoFC_EffectKindInfo::GetEffectKindInfo(unsigned short kindID)
 {
-    // ª½±µ¨Ï¥Î ID §@¬°¯Á¤Ş¬d¸ß°}¦C
+    // ç›´æ¥ä½¿ç”¨ ID ä½œç‚ºç´¢å¼•æŸ¥è©¢é™£åˆ—
     if (kindID > 0 && kindID < 65535) {
         return m_pEffectInfo[kindID];
     }
     return nullptr;
 }
 
-// ¹ïÀ³¤Ï²ÕÄ¶½X: 0x0053BF30
+// å°æ‡‰åçµ„è­¯ç¢¼: 0x0053BF30
 stEffectKindInfo* cltMoFC_EffectKindInfo::GetEffectKindInfo(char* szKindCode)
 {
     unsigned short kindID = TranslateKindCode(szKindCode);
     return GetEffectKindInfo(kindID);
 }
 
-// ¹ïÀ³¤Ï²ÕÄ¶½X: 0x0053BF50
+// å°æ‡‰åçµ„è­¯ç¢¼: 0x0053BF50
 unsigned short cltMoFC_EffectKindInfo::TranslateKindCode(char* szKindCode)
 {
     if (strlen(szKindCode) != 5) {
-        return 0; // ®æ¦¡¤£²Å
+        return 0; // æ ¼å¼ä¸ç¬¦
     }
 
-    // ±N²Ä¤@­Ó¦r¤¸ ('A'~'P') Âà´«¬°°ª¦ì¤¸
+    // å°‡ç¬¬ä¸€å€‹å­—å…ƒ ('A'~'P') è½‰æ›ç‚ºé«˜ä½å…ƒ
     int high_part = (toupper(szKindCode[0]) + 31) << 11;
 
-    // ±N«á¥|¦ì¼Æ¦rÂà´«¬°§C¦ì¤¸
+    // å°‡å¾Œå››ä½æ•¸å­—è½‰æ›ç‚ºä½ä½å…ƒ
     int low_part = atoi(szKindCode + 1);
 
-    // ÀË¬d¼Æ¦r³¡¤À¬O§_¦b¦³®Ä½d³ò¤º (0-2047)
+    // æª¢æŸ¥æ•¸å­—éƒ¨åˆ†æ˜¯å¦åœ¨æœ‰æ•ˆç¯„åœå…§ (0-2047)
     if (low_part < 0x800) { // 0x800 = 2048
         return static_cast<unsigned short>(high_part | low_part);
     }
 
-    return 0; // ¶W¥X½d³ò
+    return 0; // è¶…å‡ºç¯„åœ
 }

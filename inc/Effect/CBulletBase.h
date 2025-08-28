@@ -1,44 +1,44 @@
 #pragma once
 
-#include <d3dx9math.h> // ¬°¤F D3DXVECTOR2
+#include <d3dx9math.h> // ç‚ºäº† D3DXVECTOR2
 
 /**
  * @class CBulletBase
- * @brief Â²³æ§ë®gª«¡]¤l¼u¡^ªº©â¶H°ò©³Ãş§O¡C
+ * @brief ç°¡å–®æŠ•å°„ç‰©ï¼ˆå­å½ˆï¼‰çš„æŠ½è±¡åŸºåº•é¡åˆ¥ã€‚
  *
- * ¬°¹CÀ¸¤¤¿W¥ß©ó CEffectManager ºŞ²zªº­¸¦æª«Åé´£¨Ñ¤@­Ó²Î¤@ªº¤¶­±¡C
+ * ç‚ºéŠæˆ²ä¸­ç¨ç«‹æ–¼ CEffectManager ç®¡ç†çš„é£›è¡Œç‰©é«”æä¾›ä¸€å€‹çµ±ä¸€çš„ä»‹é¢ã€‚
  */
 class CBulletBase {
 public:
     CBulletBase();
     virtual ~CBulletBase();
 
-    // --- ®Ö¤ßµêÀÀ¨ç¦¡ ---
+    // --- æ ¸å¿ƒè™›æ“¬å‡½å¼ ---
 
-    /// @brief ³Ğ«Ø¨Ã³]©w§ë®gª«ªºªì©lª¬ºA¡C
-    /// @param dwOwnerID µo®gªÌªº°ß¤@ ID¡C
-    /// @param pStartPos °_©l¦ì¸m¡C
-    /// @param pEndPos ¥Ø¼Ğ¦ì¸m¡C
-    /// @param fSpeed ­¸¦æ³t«×¡C
-    virtual void Create(unsigned int dwOwnerID, D3DXVECTOR2* pStartPos, D3DXVECTOR2* pEndPos, float fSpeed) = 0; // ¯ÂµêÀÀ
+    /// @brief å‰µå»ºä¸¦è¨­å®šæŠ•å°„ç‰©çš„åˆå§‹ç‹€æ…‹ã€‚
+    /// @param dwOwnerID ç™¼å°„è€…çš„å”¯ä¸€ IDã€‚
+    /// @param pStartPos èµ·å§‹ä½ç½®ã€‚
+    /// @param pEndPos ç›®æ¨™ä½ç½®ã€‚
+    /// @param fSpeed é£›è¡Œé€Ÿåº¦ã€‚
+    virtual void Create(unsigned int dwOwnerID, D3DXVECTOR2* pStartPos, D3DXVECTOR2* pEndPos, float fSpeed) = 0; // ç´”è™›æ“¬
 
-    /// @brief §ó·s§ë®gª«ªºª¬ºA¡]¨Ò¦p¦ì¸m¡^¡C
-    /// @param fElapsedTime ¸g¹Lªº®É¶¡¡C
-    /// @return ¦pªG§ë®gª«À³³Q¾P·´¡A«h¦^¶Ç true¡C
+    /// @brief æ›´æ–°æŠ•å°„ç‰©çš„ç‹€æ…‹ï¼ˆä¾‹å¦‚ä½ç½®ï¼‰ã€‚
+    /// @param fElapsedTime ç¶“éçš„æ™‚é–“ã€‚
+    /// @return å¦‚æœæŠ•å°„ç‰©æ‡‰è¢«éŠ·æ¯€ï¼Œå‰‡å›å‚³ trueã€‚
     virtual bool Process(float fElapsedTime);
 
-    /// @brief Ã¸»s§ë®gª«¡C
-    virtual void Draw() = 0; // ¯ÂµêÀÀ
+    /// @brief ç¹ªè£½æŠ•å°„ç‰©ã€‚
+    virtual void Draw() = 0; // ç´”è™›æ“¬
 
 protected:
-    // --- ¦¨­ûÅÜ¼Æ (®Ú¾Ú Effectall.c @ 0x0052D700 ±ÀÂ_) ---
-    void* m_pVftable;        // ¦ì²¾ +0
+    // --- æˆå“¡è®Šæ•¸ (æ ¹æ“š Effectall.c @ 0x0052D700 æ¨æ–·) ---
+    void* m_pVftable;        // ä½ç§» +0
 
-    unsigned int m_dwOwnerID;  // ¦ì²¾ +4: µo®gªÌªº ID
+    unsigned int m_dwOwnerID;  // ä½ç§» +4: ç™¼å°„è€…çš„ ID
 
-    // ¦ì¸m»P¤è¦V
-    D3DXVECTOR2 m_vecPos;      // ¦ì²¾ +8, +12
-    D3DXVECTOR2 m_vecDir;      // ¦ì²¾ +16, +20
+    // ä½ç½®èˆ‡æ–¹å‘
+    D3DXVECTOR2 m_vecPos;      // ä½ç§» +8, +12
+    D3DXVECTOR2 m_vecDir;      // ä½ç§» +16, +20
 
-    float m_fSpeed;            // ¦ì²¾ +24
+    float m_fSpeed;            // ä½ç§» +24
 };

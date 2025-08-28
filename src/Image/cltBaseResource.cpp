@@ -1,66 +1,66 @@
 #include "Image/cltBaseResource.h"
-#include <cstring> // ¨Ï¥Î memmove, memset
+#include <cstring> // ä½¿ç”¨ memmove, memset
 
-// ¹ïÀ³¤Ï½sÄ¶½X: 0x005442C0
+// å°æ‡‰åç·¨è­¯ç¢¼: 0x005442C0
 cltBaseResource::cltBaseResource() {
-    // ªì©l¤Æ©Ò¦³¦¨­ûÅÜ¼Æ
+    // åˆå§‹åŒ–æ‰€æœ‰æˆå“¡è®Šæ•¸
     m_pResourceArray = nullptr;
     m_uResourceArrayCapacity = 0;
     m_uResourceCount = 0;
     m_dwTimeout = 0;
-    m_bInitialized = false; // ¹ïÀ³ *((_BYTE *)this + 20) = 0;
+    m_bInitialized = false; // å°æ‡‰ *((_BYTE *)this + 20) = 0;
 }
 
-// ¹ïÀ³¤Ï½sÄ¶½X: 0x005442F0
+// å°æ‡‰åç·¨è­¯ç¢¼: 0x005442F0
 cltBaseResource::~cltBaseResource() {
     Free();
 }
 
-// ¹ïÀ³¤Ï½sÄ¶½X: 0x00544300
+// å°æ‡‰åç·¨è­¯ç¢¼: 0x00544300
 void cltBaseResource::Initialize(unsigned int capacity, unsigned int timeout) {
     m_uResourceArrayCapacity = capacity;
     m_dwTimeout = timeout;
     m_uResourceCount = 0;
 
-    // ¤À°t¸ê·½°}¦C°O¾ĞÅé
+    // åˆ†é…è³‡æºé™£åˆ—è¨˜æ†¶é«”
     m_pResourceArray = new ResourceInfo[capacity];
-    // ±N°O¾ĞÅé²M¹s
+    // å°‡è¨˜æ†¶é«”æ¸…é›¶
     memset(m_pResourceArray, 0, sizeof(ResourceInfo) * capacity);
 }
 
-// ¹ïÀ³¤Ï½sÄ¶½X: 0x00544350
+// å°æ‡‰åç·¨è­¯ç¢¼: 0x00544350
 void cltBaseResource::Free() {
     if (m_pResourceArray) {
-        // ¥ıÄÀ©ñ©Ò¦³¸ê·½
+        // å…ˆé‡‹æ”¾æ‰€æœ‰è³‡æº
         DeleteAllResource();
-        // ¦AÄÀ©ñ°}¦C¥»¨­
+        // å†é‡‹æ”¾é™£åˆ—æœ¬èº«
         delete[] m_pResourceArray;
         m_pResourceArray = nullptr;
     }
     m_uResourceArrayCapacity = 0;
 }
 
-// ¹ïÀ³¤Ï½sÄ¶½X: 0x00544380
+// å°æ‡‰åç·¨è­¯ç¢¼: 0x00544380
 void* cltBaseResource::Get(unsigned int id, int a3, int a4) {
-    // ¨Ï¥Î¤@­ÓµL­­°j°é¨Ó½T«O¦b¸ê·½³Q·s¼W«á¯à¦¨¥\¨ú±o
+    // ä½¿ç”¨ä¸€å€‹ç„¡é™è¿´åœˆä¾†ç¢ºä¿åœ¨è³‡æºè¢«æ–°å¢å¾Œèƒ½æˆåŠŸå–å¾—
     while (true) {
         for (unsigned int i = 0; i < m_uResourceCount; ++i) {
             if (m_pResourceArray[i].id == id) {
-                m_pResourceArray[i].refCount++; // ¼W¥[¤Ş¥Î­p¼Æ
-                return m_pResourceArray[i].pData; // ªğ¦^¸ê·½«ü¼Ğ
+                m_pResourceArray[i].refCount++; // å¢åŠ å¼•ç”¨è¨ˆæ•¸
+                return m_pResourceArray[i].pData; // è¿”å›è³‡æºæŒ‡æ¨™
             }
         }
 
-        // ¦pªG§ä¤£¨ì¡A«h©I¥sAdd¨ç¦¡¹Á¸Õ¸ü¤J
+        // å¦‚æœæ‰¾ä¸åˆ°ï¼Œå‰‡å‘¼å«Addå‡½å¼å˜—è©¦è¼‰å…¥
         if (Add(id, a3, a4) != 3) {
             //OutputDebugStringA("Resource Add failed\n");
-            return nullptr; // ·s¼W¥¢±Ñ
+            return nullptr; // æ–°å¢å¤±æ•—
         }
-        // ¦pªGAdd¦¨¥\¡A°j°é·|Ä~Äò¡A¨Ã¦b¤U¤@¦¸­¡¥N¤¤§ä¨ì­è·s¼Wªº¸ê·½
+        // å¦‚æœAddæˆåŠŸï¼Œè¿´åœˆæœƒç¹¼çºŒï¼Œä¸¦åœ¨ä¸‹ä¸€æ¬¡è¿­ä»£ä¸­æ‰¾åˆ°å‰›æ–°å¢çš„è³‡æº
     }
 }
 
-// ¹ïÀ³¤Ï½sÄ¶½X: 0x005443F0
+// å°æ‡‰åç·¨è­¯ç¢¼: 0x005443F0
 void* cltBaseResource::Get1(unsigned int id, int a3, unsigned char a4) {
     for (unsigned int i = 0; i < m_uResourceCount; ++i) {
         if (m_pResourceArray[i].id == id) {
@@ -68,22 +68,22 @@ void* cltBaseResource::Get1(unsigned int id, int a3, unsigned char a4) {
             return m_pResourceArray[i].pData;
         }
     }
-    return nullptr; // §ä¤£¨ìª½±µªğ¦^
+    return nullptr; // æ‰¾ä¸åˆ°ç›´æ¥è¿”å›
 }
 
-// ¹ïÀ³¤Ï½sÄ¶½X: 0x00544440
+// å°æ‡‰åç·¨è­¯ç¢¼: 0x00544440
 int cltBaseResource::Release(unsigned int id) {
     for (unsigned int i = 0; i < m_uResourceCount; ++i) {
         if (m_pResourceArray[i].id == id) {
-            m_pResourceArray[i].refCount--; // ´î¤Ö¤Ş¥Î­p¼Æ
-            m_pResourceArray[i].timestamp = timeGetTime(); // §ó·s®É¶¡ÂW
+            m_pResourceArray[i].refCount--; // æ¸›å°‘å¼•ç”¨è¨ˆæ•¸
+            m_pResourceArray[i].timestamp = timeGetTime(); // æ›´æ–°æ™‚é–“æˆ³
             return 1;
         }
     }
-    return 0; // §ä¤£¨ì¸ê·½
+    return 0; // æ‰¾ä¸åˆ°è³‡æº
 }
 
-// ¹ïÀ³¤Ï½sÄ¶½X: 0x00544680
+// å°æ‡‰åç·¨è­¯ç¢¼: 0x00544680
 int cltBaseResource::GetRefCount(unsigned int id) {
     for (unsigned int i = 0; i < m_uResourceCount; ++i) {
         if (m_pResourceArray[i].id == id) {
@@ -93,71 +93,71 @@ int cltBaseResource::GetRefCount(unsigned int id) {
     return 0;
 }
 
-// ¹ïÀ³¤Ï½sÄ¶½X: 0x00544600
+// å°æ‡‰åç·¨è­¯ç¢¼: 0x00544600
 void cltBaseResource::Poll() {
     if (!m_dwTimeout || m_uResourceCount == 0) {
-        return; // ¦pªG¶W®É³]¬°0©Î¨S¦³¸ê·½¡A«h¤£°õ¦æ
+        return; // å¦‚æœè¶…æ™‚è¨­ç‚º0æˆ–æ²’æœ‰è³‡æºï¼Œå‰‡ä¸åŸ·è¡Œ
     }
 
     DWORD currentTime = timeGetTime();
-    // ±q«á©¹«e¹M¾ú¡A¦]¬°§R°£¾Ş§@·|²¾°Ê¤¸¯À
+    // å¾å¾Œå¾€å‰éæ­·ï¼Œå› ç‚ºåˆªé™¤æ“ä½œæœƒç§»å‹•å…ƒç´ 
     for (int i = m_uResourceCount - 1; i >= 0; --i) {
         if (m_pResourceArray[i].refCount <= 0 && (currentTime - m_pResourceArray[i].timestamp > m_dwTimeout)) {
-            // ©I¥sµêÀÀªºDelete¨ç¦¡¨Ó²¾°£¶W®Éªº¸ê·½
+            // å‘¼å«è™›æ“¬çš„Deleteå‡½å¼ä¾†ç§»é™¤è¶…æ™‚çš„è³‡æº
             this->Delete(m_pResourceArray[i].id);
         }
     }
 }
 
-// ¹ïÀ³¤Ï½sÄ¶½X: 0x00544660
+// å°æ‡‰åç·¨è­¯ç¢¼: 0x00544660
 void cltBaseResource::DeleteAllResource() {
-    // ­«½Æ§R°£²Ä¤@­Ó¤¸¯À¡Aª½¨ì°}¦C¬°ªÅ
+    // é‡è¤‡åˆªé™¤ç¬¬ä¸€å€‹å…ƒç´ ï¼Œç›´åˆ°é™£åˆ—ç‚ºç©º
     while (m_uResourceCount > 0) {
         this->Delete(m_pResourceArray[0].id);
     }
 }
 
-// ¹ïÀ³¤Ï½sÄ¶½X: 0x00544490
+// å°æ‡‰åç·¨è­¯ç¢¼: 0x00544490
 int cltBaseResource::Add(unsigned int id, int a3, int a4) {
-    // ÀË¬d¸ê·½¬O§_¤w¸g¦s¦b
+    // æª¢æŸ¥è³‡æºæ˜¯å¦å·²ç¶“å­˜åœ¨
     for (unsigned int i = 0; i < m_uResourceCount; ++i) {
         if (m_pResourceArray[i].id == id) {
-            return 2; // ¸ê·½¤w¦s¦b
+            return 2; // è³‡æºå·²å­˜åœ¨
         }
     }
 
-    // ÀË¬d°}¦C®e¶q¬O§_¤wº¡
+    // æª¢æŸ¥é™£åˆ—å®¹é‡æ˜¯å¦å·²æ»¿
     if (m_uResourceCount >= m_uResourceArrayCapacity) {
         char text[256];
         wsprintfA(text, "Error! image buffer over: %0x", id);
         MessageBoxA(nullptr, text, "BaseResource::Add", MB_OK);
-        return 1; // °}¦C¤wº¡
+        return 1; // é™£åˆ—å·²æ»¿
     }
 
-    // ©I¥s¯ÂµêÀÀ¨ç¦¡¸ü¤J¸ê·½
-    // ­ì©l½X¤¤¦³­Ó IsInMemory ¥ş°ìºX¼Ğ¨Ó¨M©w©I¥s­ş­Ó¸ü¤J¨ç¦¡
+    // å‘¼å«ç´”è™›æ“¬å‡½å¼è¼‰å…¥è³‡æº
+    // åŸå§‹ç¢¼ä¸­æœ‰å€‹ IsInMemory å…¨åŸŸæ——æ¨™ä¾†æ±ºå®šå‘¼å«å“ªå€‹è¼‰å…¥å‡½å¼
     extern int IsInMemory;
     void* pNewData = IsInMemory ?
         LoadResourceInPack(id, a3, a4) :
         LoadResource(id, a3, a4);
 
     if (!pNewData) {
-        return 0; // ¸ü¤J¥¢±Ñ
+        return 0; // è¼‰å…¥å¤±æ•—
     }
 
-    // ±N·s¸ê·½¥[¤J°}¦C
+    // å°‡æ–°è³‡æºåŠ å…¥é™£åˆ—
     ResourceInfo& newInfo = m_pResourceArray[m_uResourceCount];
     newInfo.id = id;
     newInfo.pData = pNewData;
-    newInfo.refCount = 0; // ªì©l¤Ş¥Î¬°0¡AGet¨ç¦¡·|¥ß§Y±N¨ä+1
+    newInfo.refCount = 0; // åˆå§‹å¼•ç”¨ç‚º0ï¼ŒGetå‡½å¼æœƒç«‹å³å°‡å…¶+1
     newInfo.timestamp = 0;
 
     m_uResourceCount++;
 
-    return 3; // ·s¼W¦¨¥\
+    return 3; // æ–°å¢æˆåŠŸ
 }
 
-// ¹ïÀ³¤Ï½sÄ¶½X: 0x00544580
+// å°æ‡‰åç·¨è­¯ç¢¼: 0x00544580
 int cltBaseResource::Delete(unsigned int id) {
     if (!id || m_uResourceCount == 0) {
         return 0;
@@ -165,10 +165,10 @@ int cltBaseResource::Delete(unsigned int id) {
 
     for (unsigned int i = 0; i < m_uResourceCount; ++i) {
         if (m_pResourceArray[i].id == id) {
-            // ©I¥s¯ÂµêÀÀ¨ç¦¡ÄÀ©ñ¸ê·½¸ê®Æ
+            // å‘¼å«ç´”è™›æ“¬å‡½å¼é‡‹æ”¾è³‡æºè³‡æ–™
             FreeResource(m_pResourceArray[i].pData);
 
-            // ±N°}¦C¤¤«áÄòªº¤¸¯À©¹«e²¾°Ê¡AÂĞ»\±¼³Q§R°£ªº¤¸¯À
+            // å°‡é™£åˆ—ä¸­å¾ŒçºŒçš„å…ƒç´ å¾€å‰ç§»å‹•ï¼Œè¦†è“‹æ‰è¢«åˆªé™¤çš„å…ƒç´ 
             unsigned int numToMove = m_uResourceCount - (i + 1);
             if (numToMove > 0) {
                 memmove(
@@ -179,12 +179,12 @@ int cltBaseResource::Delete(unsigned int id) {
             }
 
             m_uResourceCount--;
-            // ²M²z²¾°Ê«á¦h¥X¨Óªº³Ì«á¤@­Ó¤¸¯À¦ì¸m
+            // æ¸…ç†ç§»å‹•å¾Œå¤šå‡ºä¾†çš„æœ€å¾Œä¸€å€‹å…ƒç´ ä½ç½®
             memset(&m_pResourceArray[m_uResourceCount], 0, sizeof(ResourceInfo));
 
-            return 1; // §R°£¦¨¥\
+            return 1; // åˆªé™¤æˆåŠŸ
         }
     }
 
-    return 0; // §ä¤£¨ì¸ê·½
+    return 0; // æ‰¾ä¸åˆ°è³‡æº
 }

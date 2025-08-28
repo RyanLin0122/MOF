@@ -2,46 +2,46 @@
 
 #include "Effect/CEffectBase.h"
 
-// «e¦V«Å§i
+// å‰å‘å®£å‘Š
 class ClientCharacter;
 
 /**
  * @class CEffect_Skill_Type_Directed_Target
- * @brief ¥Nªí¤@­Ó¸òÀH¥Ø¼Ğªº«ü¦V©Ê§Ş¯à¯S®Ä¡C
+ * @brief ä»£è¡¨ä¸€å€‹è·Ÿéš¨ç›®æ¨™çš„æŒ‡å‘æ€§æŠ€èƒ½ç‰¹æ•ˆã€‚
  *
- * Ä~©Ó¦Û CEffectBase¡A¥Î©ó¹ê²{¦b¥Ø¼Ğ¨­¤W¼½©ñ¡A¦ı¤è¦V¥Ñ¬IªkªÌ¨M©wªºµøÄ±®ÄªG¡C
+ * ç¹¼æ‰¿è‡ª CEffectBaseï¼Œç”¨æ–¼å¯¦ç¾åœ¨ç›®æ¨™èº«ä¸Šæ’­æ”¾ï¼Œä½†æ–¹å‘ç”±æ–½æ³•è€…æ±ºå®šçš„è¦–è¦ºæ•ˆæœã€‚
  */
 class CEffect_Skill_Type_Directed_Target : public CEffectBase {
 public:
     CEffect_Skill_Type_Directed_Target();
     virtual ~CEffect_Skill_Type_Directed_Target();
 
-    // --- µêÀÀ¨ç¦¡ÂĞ¼g ---
+    // --- è™›æ“¬å‡½å¼è¦†å¯« ---
 
-    /// @brief ³B²z¯S®Äªº¥Í©R¶g´Á¡Aª½±µ¨Ì¿à CCAEffect ªº°Êµe¼½©ñª¬ºA¡C
+    /// @brief è™•ç†ç‰¹æ•ˆçš„ç”Ÿå‘½é€±æœŸï¼Œç›´æ¥ä¾è³´ CCAEffect çš„å‹•ç•«æ’­æ”¾ç‹€æ…‹ã€‚
     virtual bool FrameProcess(float fElapsedTime) override;
 
-    /// @brief ·Ç³ÆÃ¸»s«eªºÅŞ¿è§ó·s¡A¦P¨B¥Ø¼Ğªº¦ì¸m¡C
+    /// @brief æº–å‚™ç¹ªè£½å‰çš„é‚è¼¯æ›´æ–°ï¼ŒåŒæ­¥ç›®æ¨™çš„ä½ç½®ã€‚
     virtual void Process() override;
 
-    /// @brief Ã¸»s¯S®Ä¡C
+    /// @brief ç¹ªè£½ç‰¹æ•ˆã€‚
     virtual void Draw() override;
 
-    // --- ±M¦³¨ç¦¡ ---
+    // --- å°ˆæœ‰å‡½å¼ ---
 
-    /// @brief ³]©w¯S®Ä¡C
-    /// @param pCaster ¬IªkªÌ¨¤¦â¡A¥Î©ó¨M©w¯S®Ä¤è¦V¡C
-    /// @param pTarget ¥Ø¼Ğ¨¤¦â¡A¯S®Ä±N¸òÀH¦¹¨¤¦âªº¦ì¸m¡C
-    /// @param effectKindID ¯S®ÄªººØÃş ID¡C
-    /// @param szFileName ¯S®Ä¸ê·½ (.ea) ªºÀÉ®×¦WºÙ¡C
+    /// @brief è¨­å®šç‰¹æ•ˆã€‚
+    /// @param pCaster æ–½æ³•è€…è§’è‰²ï¼Œç”¨æ–¼æ±ºå®šç‰¹æ•ˆæ–¹å‘ã€‚
+    /// @param pTarget ç›®æ¨™è§’è‰²ï¼Œç‰¹æ•ˆå°‡è·Ÿéš¨æ­¤è§’è‰²çš„ä½ç½®ã€‚
+    /// @param effectKindID ç‰¹æ•ˆçš„ç¨®é¡ IDã€‚
+    /// @param szFileName ç‰¹æ•ˆè³‡æº (.ea) çš„æª”æ¡ˆåç¨±ã€‚
     void SetEffect(ClientCharacter* pCaster, ClientCharacter* pTarget, unsigned short effectKindID, char* szFileName);
 
 protected:
-    // --- ¦¨­ûÅÜ¼Æ ---
+    // --- æˆå“¡è®Šæ•¸ ---
 
-    /// @brief «ü¦V¬IªkªÌ¡C
-    ClientCharacter* m_pCasterCharacter; // ¦ì²¾ +132 (0x84)
+    /// @brief æŒ‡å‘æ–½æ³•è€…ã€‚
+    ClientCharacter* m_pCasterCharacter; // ä½ç§» +132 (0x84)
 
-    /// @brief «ü¦V¥Ø¼Ğ¡C
-    ClientCharacter* m_pTargetCharacter; // ¦ì²¾ +136 (0x88)
+    /// @brief æŒ‡å‘ç›®æ¨™ã€‚
+    ClientCharacter* m_pTargetCharacter; // ä½ç§» +136 (0x88)
 };

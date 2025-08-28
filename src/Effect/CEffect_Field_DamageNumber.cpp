@@ -6,10 +6,10 @@
 #include <cstdlib>
 #include <cmath>
 
-// °²³]ªº¥ş°ìÅÜ¼Æ
+// å‡è¨­çš„å…¨åŸŸè®Šæ•¸
 extern GameSystemInfo g_Game_System_Info;
 
-// ¹ïÀ³¤Ï²ÕÄ¶½X: 0x00534CA0
+// å°æ‡‰åçµ„è­¯ç¢¼: 0x00534CA0
 CEffect_Field_DamageNumber::CEffect_Field_DamageNumber()
 {
     m_pNumberImages = nullptr;
@@ -26,23 +26,23 @@ CEffect_Field_DamageNumber::CEffect_Field_DamageNumber()
     m_FrameSkip.m_fTimePerFrame = 1.0f / 60.0f;
 }
 
-// ¹ïÀ³¤Ï²ÕÄ¶½X: 0x00534D40
+// å°æ‡‰åçµ„è­¯ç¢¼: 0x00534D40
 CEffect_Field_DamageNumber::~CEffect_Field_DamageNumber()
 {
     delete[] m_pNumberImages;
 }
 
-// ¹ïÀ³¤Ï²ÕÄ¶½X: 0x00534D80
+// å°æ‡‰åçµ„è­¯ç¢¼: 0x00534D80
 void CEffect_Field_DamageNumber::SetEffect(int damageValue, float x, float y, int type)
 {
     char first_digit_frame, plus_frame, minus_frame;
 
-    if (type == 0) { // ©Çª«¹ïª±®a (¬õ¦â¼Æ¦r)
+    if (type == 0) { // æ€ªç‰©å°ç©å®¶ (ç´…è‰²æ•¸å­—)
         first_digit_frame = 48;
         minus_frame = 59;
         plus_frame = 58;
     }
-    else { // ª±®a¹ï©Çª« (¥Õ¦â¼Æ¦r)
+    else { // ç©å®¶å°æ€ªç‰© (ç™½è‰²æ•¸å­—)
         first_digit_frame = 0;
         minus_frame = 11;
         plus_frame = 10;
@@ -67,21 +67,21 @@ void CEffect_Field_DamageNumber::SetEffect(int damageValue, float x, float y, in
     m_fInitialPosX = x;
     m_fCurrentPosY = y;
 
-    // ¹w¥ı­pºâÁ`¼e«×¥H¶i¦æ©~¤¤
+    // é å…ˆè¨ˆç®—ç¸½å¯¬åº¦ä»¥é€²è¡Œå±…ä¸­
     GameImage* pTempImage = cltImageManager::GetInstance()->GetGameImage(7, 0xB0005A4u, 0, 1);
     if (pTempImage) {
         for (int i = 0; i < m_cDigitCount; ++i) {
             RECT rect;
             pTempImage->SetBlockID(m_ucDigitFrames[i]);
             pTempImage->GetBlockRect(&rect);
-            m_fTotalWidth += static_cast<float>(rect.right - rect.left - 5); // ­ì©l½X¦³ -5 ªº¶¡¶Z½Õ¾ã
+            m_fTotalWidth += static_cast<float>(rect.right - rect.left - 5); // åŸå§‹ç¢¼æœ‰ -5 çš„é–“è·èª¿æ•´
         }
         cltImageManager::GetInstance()->ReleaseGameImage(pTempImage);
     }
-    m_fTotalWidth *= 0.5f; // ¨ú¥b¼e
+    m_fTotalWidth *= 0.5f; // å–åŠå¯¬
 }
 
-// ¹ïÀ³¤Ï²ÕÄ¶½X: 0x00534F00
+// å°æ‡‰åçµ„è­¯ç¢¼: 0x00534F00
 bool CEffect_Field_DamageNumber::FrameProcess(float fElapsedTime)
 {
     int frameCount = 0;
@@ -92,7 +92,7 @@ bool CEffect_Field_DamageNumber::FrameProcess(float fElapsedTime)
 
     switch (m_ucState)
     {
-    case 0: // ¶¥¬q 0: ©ñ¤j
+    case 0: // éšæ®µ 0: æ”¾å¤§
         m_fScale += fFrameCount * 45.0f;
         if (m_fScale >= 210.0f) {
             m_fScale = 210.0f;
@@ -101,7 +101,7 @@ bool CEffect_Field_DamageNumber::FrameProcess(float fElapsedTime)
         m_fCurrentPosY -= fFrameCount * 2.0f;
         break;
 
-    case 1: // ¶¥¬q 1: ÁY¤p
+    case 1: // éšæ®µ 1: ç¸®å°
         m_fScale -= fFrameCount * 10.0f;
         if (m_fScale <= 80.0f) {
             m_fScale = 80.0f;
@@ -109,7 +109,7 @@ bool CEffect_Field_DamageNumber::FrameProcess(float fElapsedTime)
         }
         break;
 
-    case 2: // ¶¥¬q 2: ²H¥X¤Wº}
+    case 2: // éšæ®µ 2: æ·¡å‡ºä¸Šæ¼‚
         m_fAlpha -= fFrameCount * 5.0f;
         m_fCurrentPosY -= fFrameCount * 1.5f;
         break;
@@ -118,7 +118,7 @@ bool CEffect_Field_DamageNumber::FrameProcess(float fElapsedTime)
     return m_fAlpha < 0.0f;
 }
 
-// ¹ïÀ³¤Ï²ÕÄ¶½X: 0x00535040
+// å°æ‡‰åçµ„è­¯ç¢¼: 0x00535040
 void CEffect_Field_DamageNumber::Process()
 {
     float screenX = m_fInitialPosX - static_cast<float>(g_Game_System_Info.ScreenX);
@@ -128,7 +128,7 @@ void CEffect_Field_DamageNumber::Process()
         float screenY = m_fCurrentPosY - static_cast<float>(g_Game_System_Info.ScreenY);
         float currentX = screenX - m_fTotalWidth;
 
-        // ±q«á©¹«e³B²z¼Æ¦r (±q­Ó¦ì¼Æ¶}©l)
+        // å¾å¾Œå¾€å‰è™•ç†æ•¸å­— (å¾å€‹ä½æ•¸é–‹å§‹)
         for (int i = 0; i < m_cDigitCount; ++i) {
             m_pNumberImages[i] = cltImageManager::GetInstance()->GetGameImage(7, 0xB0005A4u, 0, 1);
             if (m_pNumberImages[i]) {
@@ -140,21 +140,21 @@ void CEffect_Field_DamageNumber::Process()
 
                 RECT rect;
                 m_pNumberImages[i]->GetBlockRect(&rect);
-                // ®Ú¾Ú¨C­Ó¼Æ¦rªº¼e«×¨Ó½Õ¾ã¤U¤@­Ó¼Æ¦rªº¦ì¸m
+                // æ ¹æ“šæ¯å€‹æ•¸å­—çš„å¯¬åº¦ä¾†èª¿æ•´ä¸‹ä¸€å€‹æ•¸å­—çš„ä½ç½®
                 currentX += static_cast<float>(rect.right - rect.left - 5) * (m_fScale / 100.f);
             }
         }
     }
 }
 
-// ¹ïÀ³¤Ï²ÕÄ¶½X: 0x005351A0
+// å°æ‡‰åçµ„è­¯ç¢¼: 0x005351A0
 void CEffect_Field_DamageNumber::Draw()
 {
     if (!m_bIsVisible || !m_pNumberImages) return;
 
     CDeviceManager::GetInstance()->ResetRenderState();
 
-    // ±q«á©¹«eÃ¸»s (¥ıµeªº¦b¤U¼h)
+    // å¾å¾Œå¾€å‰ç¹ªè£½ (å…ˆç•«çš„åœ¨ä¸‹å±¤)
     for (int i = m_cDigitCount - 1; i >= 0; --i) {
         if (m_pNumberImages[i] && m_pNumberImages[i]->IsInUse()) {
             m_pNumberImages[i]->Draw();

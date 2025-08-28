@@ -2,34 +2,34 @@
 
 #include "Effect/CBulletBase.h"
 
-// «e¦V«Å§i
+// å‰å‘å®£å‘Š
 class GameImage;
 
 /**
  * @class CBulletArrow
- * @brief ¥Nªí¤@¤äª½½u­¸¦æ¨Ã³vº¥²H¥Xªº½b¥Ú¡C
+ * @brief ä»£è¡¨ä¸€æ”¯ç›´ç·šé£›è¡Œä¸¦é€æ¼¸æ·¡å‡ºçš„ç®­çŸ¢ã€‚
  *
- * Ä~©Ó¦Û CBulletBase¡A¬O¤@­Ó¥Ñµ{¦¡½X±±¨î°ÊµeªºÂ²³æ§ë®gª«¡C
+ * ç¹¼æ‰¿è‡ª CBulletBaseï¼Œæ˜¯ä¸€å€‹ç”±ç¨‹å¼ç¢¼æ§åˆ¶å‹•ç•«çš„ç°¡å–®æŠ•å°„ç‰©ã€‚
  */
 class CBulletArrow : public CBulletBase {
 public:
     CBulletArrow();
     virtual ~CBulletArrow();
 
-    // --- µêÀÀ¨ç¦¡ÂĞ¼g ---
+    // --- è™›æ“¬å‡½å¼è¦†å¯« ---
 
-    /// @brief ³Ğ«Ø¨Ã³]©w½b¥Úªºªì©lª¬ºA¡C
+    /// @brief å‰µå»ºä¸¦è¨­å®šç®­çŸ¢çš„åˆå§‹ç‹€æ…‹ã€‚
     virtual void Create(unsigned int dwOwnerID, D3DXVECTOR2* pStartPos, D3DXVECTOR2* pEndPos, float fSpeed) override;
 
-    /// @brief §ó·s½b¥Úªº¦ì¸m©M³z©ú«×¡C
-    /// @return ¦pªG½b¥Ú¥Í©R¶g´Áµ²§ô¡A«h¦^¶Ç true¡C
+    /// @brief æ›´æ–°ç®­çŸ¢çš„ä½ç½®å’Œé€æ˜åº¦ã€‚
+    /// @return å¦‚æœç®­çŸ¢ç”Ÿå‘½é€±æœŸçµæŸï¼Œå‰‡å›å‚³ trueã€‚
     virtual bool Process(float fElapsedTime) override;
 
-    /// @brief Ã¸»s½b¥Ú¡C
+    /// @brief ç¹ªè£½ç®­çŸ¢ã€‚
     virtual void Draw() override;
 
 private:
-    // --- ¦¨­ûÅÜ¼Æ (®Ú¾Ú Effectall.c @ 0x0052D570 ±ÀÂ_) ---
-    int m_dwAlpha;          // ¦ì²¾ +28: §@¬°¥Í©R¶g´Á­p®É¾¹©M³z©ú«×
-    GameImage* m_pArrowImage;  // ¦ì²¾ +32: «ü¦V½b¥Úªº GameImage
+    // --- æˆå“¡è®Šæ•¸ (æ ¹æ“š Effectall.c @ 0x0052D570 æ¨æ–·) ---
+    int m_dwAlpha;          // ä½ç§» +28: ä½œç‚ºç”Ÿå‘½é€±æœŸè¨ˆæ™‚å™¨å’Œé€æ˜åº¦
+    GameImage* m_pArrowImage;  // ä½ç§» +32: æŒ‡å‘ç®­çŸ¢çš„ GameImage
 };

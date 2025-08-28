@@ -7,7 +7,7 @@
 
 ImageDrawTest::ImageDrawTest()
 {
-    // ¦b«Øºc¨ç¦¡¤¤¡A±N©Ò¦³«ü¼Ğªì©l¤Æ¬° nullptr¡A½T«O¦w¥ş
+    // åœ¨å»ºæ§‹å‡½å¼ä¸­ï¼Œå°‡æ‰€æœ‰æŒ‡æ¨™åˆå§‹åŒ–ç‚º nullptrï¼Œç¢ºä¿å®‰å…¨
     m_pImageManager = nullptr;
     m_pItemImage1 = nullptr;
     m_pItemImage2 = nullptr;
@@ -16,89 +16,89 @@ ImageDrawTest::ImageDrawTest()
 
 ImageDrawTest::~ImageDrawTest()
 {
-    // ¦b¸Ñºc®É¡A¦Û°Ê©I¥s Cleanup ¨ç¦¡ÄÀ©ñ©Ò¦³¸ê·½
+    // åœ¨è§£æ§‹æ™‚ï¼Œè‡ªå‹•å‘¼å« Cleanup å‡½å¼é‡‹æ”¾æ‰€æœ‰è³‡æº
     Cleanup();
 }
 
 HRESULT ImageDrawTest::Initialize()
 {
-    printf("--- [ImageDrawTest] ªì©l¤Æ´ú¸Õ³õ´º ---\n");
+    printf("--- [ImageDrawTest] åˆå§‹åŒ–æ¸¬è©¦å ´æ™¯ ---\n");
 
-    // 1. ¶}±Ò VFS (µêÀÀÀÉ®×¨t²Î)
-    // ResourceMgr ªº«Øºc¨ç¦¡·|ÀË¬d mof.pak ¬O§_¦s¦b¨Ã³]©w m_bUsePackFile ºX¼Ğ¡C
-    printf("  [ImageDrawTest] ¥¿¦b¶}±Ò VFS «Ê¸ËÀÉ mof.pak...\n");
+    // 1. é–‹å•Ÿ VFS (è™›æ“¬æª”æ¡ˆç³»çµ±)
+    // ResourceMgr çš„å»ºæ§‹å‡½å¼æœƒæª¢æŸ¥ mof.pak æ˜¯å¦å­˜åœ¨ä¸¦è¨­å®š m_bUsePackFile æ——æ¨™ã€‚
+    printf("  [ImageDrawTest] æ­£åœ¨é–‹å•Ÿ VFS å°è£æª” mof.pak...\n");
     if (!CMofPacking::GetInstance()->PackFileOpen("mof"))
     {
-        printf("  [ImageDrawTest] ¿ù»~¡GµLªk¶}±Ò mof.pak/mof.paki¡C\n");
+        printf("  [ImageDrawTest] éŒ¯èª¤ï¼šç„¡æ³•é–‹å•Ÿ mof.pak/mof.pakiã€‚\n");
         return E_FAIL;
     }
-    printf("  [ImageDrawTest] VFS ¶}±Ò¦¨¥\¡C\n");
+    printf("  [ImageDrawTest] VFS é–‹å•ŸæˆåŠŸã€‚\n");
 
-    // 2. ªì©l¤Æ¹Ï¤ùª«¥ó¦ÀºŞ²z¾¹
-    printf("  [ImageDrawTest] ¥¿¦bªì©l¤Æ cltImageManager...\n");
+    // 2. åˆå§‹åŒ–åœ–ç‰‡ç‰©ä»¶æ± ç®¡ç†å™¨
+    printf("  [ImageDrawTest] æ­£åœ¨åˆå§‹åŒ– cltImageManager...\n");
     m_pImageManager = cltImageManager::GetInstance();
-    m_pImageManager->Initialize(); // ¬°ª«¥ó¦À¤¤ªº©Ò¦³¹Ï¤ù¹w¥ı«Ø¥ß³»ÂI½w½Ä°Ï
-    printf("  [ImageDrawTest] cltImageManager ªì©l¤Æ§¹²¦¡C\n");
+    m_pImageManager->Initialize(); // ç‚ºç‰©ä»¶æ± ä¸­çš„æ‰€æœ‰åœ–ç‰‡é å…ˆå»ºç«‹é ‚é»ç·©è¡å€
+    printf("  [ImageDrawTest] cltImageManager åˆå§‹åŒ–å®Œç•¢ã€‚\n");
 
-    // 3. ¦P¨B¸ü¤J±z«ü©wªº¸ê·½
-    printf("  [ImageDrawTest] ¥¿¦b¦P¨B¸ü¤J¸ê·½...\n");
+    // 3. åŒæ­¥è¼‰å…¥æ‚¨æŒ‡å®šçš„è³‡æº
+    printf("  [ImageDrawTest] æ­£åœ¨åŒæ­¥è¼‰å…¥è³‡æº...\n");
 
-    // ¸ü¤Jª««~ 1 (ID: 201326853)
-    printf("    ¸ü¤Jª««~ 1 (ID: 201326853, Type: RES_ITEM)...\n");
+    // è¼‰å…¥ç‰©å“ 1 (ID: 201326853)
+    printf("    è¼‰å…¥ç‰©å“ 1 (ID: 201326853, Type: RES_ITEM)...\n");
     m_pItemImage1 = m_pImageManager->GetGameImage(ResourceMgr::RES_ITEM, 201326853);
-    if (!m_pItemImage1) { printf("    ¸ü¤J¥¢±Ñ!\n"); return E_FAIL; }
+    if (!m_pItemImage1) { printf("    è¼‰å…¥å¤±æ•—!\n"); return E_FAIL; }
 
-    // ¸ü¤Jª««~ 2 (ID: 201327617)
-    printf("    ¸ü¤Jª««~ 2 (ID: 201327617, Type: RES_ITEM)...\n");
+    // è¼‰å…¥ç‰©å“ 2 (ID: 201327617)
+    printf("    è¼‰å…¥ç‰©å“ 2 (ID: 201327617, Type: RES_ITEM)...\n");
     m_pItemImage2 = m_pImageManager->GetGameImage(ResourceMgr::RES_ITEM, 201327617);
-    if (!m_pItemImage2) { printf("    ¸ü¤J¥¢±Ñ!\n"); return E_FAIL; }
+    if (!m_pItemImage2) { printf("    è¼‰å…¥å¤±æ•—!\n"); return E_FAIL; }
 
-    // ¸ü¤J¦a¹Ï­I´º (ID: 536871078)
-    printf("    ¸ü¤J¦a¹Ï­I´º (ID: 536871078, Type: RES_MAPBG)...\n");
+    // è¼‰å…¥åœ°åœ–èƒŒæ™¯ (ID: 536871078)
+    printf("    è¼‰å…¥åœ°åœ–èƒŒæ™¯ (ID: 536871078, Type: RES_MAPBG)...\n");
     m_pMapBgImage = m_pImageManager->GetGameImage(ResourceMgr::RES_MAPBG, 536871078);
-    if (!m_pMapBgImage) { printf("    ¸ü¤J¥¢±Ñ!\n"); return E_FAIL; }
+    if (!m_pMapBgImage) { printf("    è¼‰å…¥å¤±æ•—!\n"); return E_FAIL; }
 
-    printf("  [ImageDrawTest] ©Ò¦³¸ê·½¸ü¤J¦¨¥\¡C\n");
+    printf("  [ImageDrawTest] æ‰€æœ‰è³‡æºè¼‰å…¥æˆåŠŸã€‚\n");
 
     return S_OK;
 }
 
 void ImageDrawTest::Render()
 {
-    // ÀË¬dºŞ²z¾¹¬O§_¦s¦b¡A½T«O¦w¥ş
+    // æª¢æŸ¥ç®¡ç†å™¨æ˜¯å¦å­˜åœ¨ï¼Œç¢ºä¿å®‰å…¨
     if (!m_pImageManager) return;
 
-    // --- ³]©wª«¥óª¬ºA ---
-    // ¦bÃ¸»s«e¡A¬°¨C­Óª«¥ó³]©w¦ì¸m¡B°Êµe¼v®æ¡BÁY©ñµ¥Äİ©Ê
+    // --- è¨­å®šç‰©ä»¶ç‹€æ…‹ ---
+    // åœ¨ç¹ªè£½å‰ï¼Œç‚ºæ¯å€‹ç‰©ä»¶è¨­å®šä½ç½®ã€å‹•ç•«å½±æ ¼ã€ç¸®æ”¾ç­‰å±¬æ€§
 
-    // ³B²z¦a¹Ï­I´º
+    // è™•ç†åœ°åœ–èƒŒæ™¯
     if (m_pMapBgImage)
     {
-        m_pMapBgImage->SetPosition(0, 0);     // ©ñ¦b¥ª¤W¨¤
-        m_pMapBgImage->SetBlockID(0);         // Åã¥Ü²Ä¤@­Óµe®æ
-        m_pMapBgImage->Process();             // ­pºâ³»ÂI
+        m_pMapBgImage->SetPosition(0, 0);     // æ”¾åœ¨å·¦ä¸Šè§’
+        m_pMapBgImage->SetBlockID(0);         // é¡¯ç¤ºç¬¬ä¸€å€‹ç•«æ ¼
+        m_pMapBgImage->Process();             // è¨ˆç®—é ‚é»
     }
 
-    // ³B²zª««~ 1
+    // è™•ç†ç‰©å“ 1
     if (m_pItemImage1)
     {
-        m_pItemImage1->SetPosition(100, 200);  // «ü©w¦ì¸m
+        m_pItemImage1->SetPosition(100, 200);  // æŒ‡å®šä½ç½®
         m_pItemImage1->SetBlockID(0);
-        m_pItemImage1->SetScale(150);         // ©ñ¤j¨ì 150%
+        m_pItemImage1->SetScale(150);         // æ”¾å¤§åˆ° 150%
         m_pItemImage1->Process();
     }
 
-    // ³B²zª««~ 2
+    // è™•ç†ç‰©å“ 2
     if (m_pItemImage2)
     {
-        m_pItemImage2->SetPosition(300, 200);  // «ü©w¦ì¸m
+        m_pItemImage2->SetPosition(300, 200);  // æŒ‡å®šä½ç½®
         m_pItemImage2->SetBlockID(0);
-        m_pItemImage2->SetFlipX(true);        // ¤ô¥­Â½Âà
+        m_pItemImage2->SetFlipX(true);        // æ°´å¹³ç¿»è½‰
         m_pItemImage2->Process();
     }
 
-    // --- ¹ê»ÚÃ¸»s ---
-    // Ã¸»s¶¶§Ç«Ü­«­n¡A«áµeªº·|»\¦b¥ıµeªº¤W­±
+    // --- å¯¦éš›ç¹ªè£½ ---
+    // ç¹ªè£½é †åºå¾ˆé‡è¦ï¼Œå¾Œç•«çš„æœƒè“‹åœ¨å…ˆç•«çš„ä¸Šé¢
     if (m_pMapBgImage) m_pMapBgImage->Draw(); //
     if (m_pItemImage1) m_pItemImage1->Draw();
     if (m_pItemImage2) m_pItemImage2->Draw();
@@ -108,14 +108,14 @@ void ImageDrawTest::Cleanup()
 {
     if (m_pImageManager != nullptr)
     {
-        printf("  [ImageDrawTest] ¥¿¦bÄÀ©ñ©Ò¦³ GameImage...\n");
+        printf("  [ImageDrawTest] æ­£åœ¨é‡‹æ”¾æ‰€æœ‰ GameImage...\n");
         m_pImageManager->ReleaseAllGameImage(); //
 
-        printf("  [ImageDrawTest] ¥¿¦b§R°£ cltImageManager...\n");
+        printf("  [ImageDrawTest] æ­£åœ¨åˆªé™¤ cltImageManager...\n");
         delete m_pImageManager;
         m_pImageManager = nullptr;
     }
 
-    // ¥Ñ©ó CMofPacking ©M ResourceMgr ¬O³æ¨Ò¡A¥¦­Ìªº¥Í©R¶g´Á¥Ñ GetInstance/DestroyInstance ºŞ²z
-    // ¦b³o¸Ì§Ú­Ì¤£¤â°Ê§R°£¥¦­Ì¡A¥æ¥Ñ¥Dµ{¦¡ªº Cleanup ¨ç¦¡²Î¤@³B²z¡C
+    // ç”±æ–¼ CMofPacking å’Œ ResourceMgr æ˜¯å–®ä¾‹ï¼Œå®ƒå€‘çš„ç”Ÿå‘½é€±æœŸç”± GetInstance/DestroyInstance ç®¡ç†
+    // åœ¨é€™è£¡æˆ‘å€‘ä¸æ‰‹å‹•åˆªé™¤å®ƒå€‘ï¼Œäº¤ç”±ä¸»ç¨‹å¼çš„ Cleanup å‡½å¼çµ±ä¸€è™•ç†ã€‚
 }

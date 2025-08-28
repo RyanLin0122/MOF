@@ -1,14 +1,14 @@
 #include <iostream>
-#include <stdio.h>     // ノ printf
-#include <windows.h>   // ノ HWND, GetConsoleWindow, Sleep
-#include <conio.h>     // ノ _kbhit, _getch (浪琩龄絃块)
+#include <stdio.h>     // 鐢ㄦ柤 printf
+#include <windows.h>   // 鐢ㄦ柤 HWND, GetConsoleWindow, Sleep
+#include <conio.h>     // 鐢ㄦ柤 _kbhit, _getch (妾㈡煡閸电洡杓稿叆)
 #include <d3d9.h>
 #include "Text/cltTextFileManager.h"
 
 //-----------------------------------------------------------------------------
-// 办跑计
+// 鍏ㄥ煙璁婃暩
 //-----------------------------------------------------------------------------
-// --- 办跑计﹚竡 ---
+// --- 鍏ㄥ煙璁婃暩瀹氱京 ---
 extern int IsInMemory;
 extern bool IsDialogBoxMode;
 

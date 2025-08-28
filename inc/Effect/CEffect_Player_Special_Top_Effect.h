@@ -2,41 +2,41 @@
 
 #include "Effect/CEffectBase.h"
 
-// «e¦V«Å§i
+// å‰å‘å®£å‘Š
 class ClientCharacter;
 
 /**
  * @class CEffect_Player_Special_Top_Effect
- * @brief ¥Nªíª±®a¯S®íª¬ºAªº¡B¦ì©ó¤W¼hªº«ùÄò©Ê¥úÀô¯S®Ä¡C
+ * @brief ä»£è¡¨ç©å®¶ç‰¹æ®Šç‹€æ…‹çš„ã€ä½æ–¼ä¸Šå±¤çš„æŒçºŒæ€§å…‰ç’°ç‰¹æ•ˆã€‚
  *
- * Ä~©Ó¦Û CEffectBase¡A¬O¤@­Ó¸òÀH¨¤¦â¼½©ñªº°Êµe¯S®Ä¡A
- * ¨ä¥Í©R¶g´Á¥Ñ¥~³¡ÅŞ¿è°ÊºA±±¨î¡C
+ * ç¹¼æ‰¿è‡ª CEffectBaseï¼Œæ˜¯ä¸€å€‹è·Ÿéš¨è§’è‰²æ’­æ”¾çš„å‹•ç•«ç‰¹æ•ˆï¼Œ
+ * å…¶ç”Ÿå‘½é€±æœŸç”±å¤–éƒ¨é‚è¼¯å‹•æ…‹æ§åˆ¶ã€‚
  */
 class CEffect_Player_Special_Top_Effect : public CEffectBase {
 public:
     CEffect_Player_Special_Top_Effect();
     virtual ~CEffect_Player_Special_Top_Effect();
 
-    // --- µêÀÀ¨ç¦¡ÂĞ¼g ---
+    // --- è™›æ“¬å‡½å¼è¦†å¯« ---
 
-    /// @brief ®Ú¾Ú¾Ö¦³ªÌ«ü¼Ğ¬O§_¦³®Ä¨Ó¨M©w¬O§_´£«e²×¤î¯S®Ä¡C
+    /// @brief æ ¹æ“šæ“æœ‰è€…æŒ‡æ¨™æ˜¯å¦æœ‰æ•ˆä¾†æ±ºå®šæ˜¯å¦æå‰çµ‚æ­¢ç‰¹æ•ˆã€‚
     virtual bool FrameProcess(float fElapsedTime) override;
 
-    /// @brief ·Ç³ÆÃ¸»s«eªºÅŞ¿è§ó·s¡A¦P¨B¾Ö¦³ªÌªº¦ì¸m¡C
+    /// @brief æº–å‚™ç¹ªè£½å‰çš„é‚è¼¯æ›´æ–°ï¼ŒåŒæ­¥æ“æœ‰è€…çš„ä½ç½®ã€‚
     virtual void Process() override;
 
-    /// @brief Ã¸»s¯S®Ä¡C
+    /// @brief ç¹ªè£½ç‰¹æ•ˆã€‚
     virtual void Draw() override;
 
-    // --- ±M¦³¨ç¦¡ ---
+    // --- å°ˆæœ‰å‡½å¼ ---
 
-    /// @brief ³]©w¯S®Ä¡C
-    /// @param pOwner ­nªş¥[¯S®Äªº¨¤¦â¡C
-    /// @param effectType ¯S®ÄªºÃş«¬¡A¨M©w¤F¨ä¥~Æ[¡C
+    /// @brief è¨­å®šç‰¹æ•ˆã€‚
+    /// @param pOwner è¦é™„åŠ ç‰¹æ•ˆçš„è§’è‰²ã€‚
+    /// @param effectType ç‰¹æ•ˆçš„é¡å‹ï¼Œæ±ºå®šäº†å…¶å¤–è§€ã€‚
     void SetEffect(ClientCharacter* pOwner, unsigned char effectType);
 
 protected:
-    // --- ¦¨­ûÅÜ¼Æ ---
-    ClientCharacter* m_pOwnerCharacter; // ¦ì²¾ +132 (0x84)
-    unsigned char    m_ucEffectType;    // ¦ì²¾ +136 (0x88)
+    // --- æˆå“¡è®Šæ•¸ ---
+    ClientCharacter* m_pOwnerCharacter; // ä½ç§» +132 (0x84)
+    unsigned char    m_ucEffectType;    // ä½ç§» +136 (0x88)
 };

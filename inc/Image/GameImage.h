@@ -2,70 +2,70 @@
 
 #include <d3d9.h>
 #include <d3dx9.h>
-#include "Image/GIVertex.h" // GameImage ¨Ï¥Î GIVertex ®æ¦¡
+#include "Image/GIVertex.h" // GameImage ä½¿ç”¨ GIVertex æ ¼å¼
 #include "Image/ImageResource.h"
 #include "Image/VertexBufferDataMgr.h"
 #include "Image/ImageResourceListDataMgr.h"
 
 
 /// @class GameImage
-/// @brief ¤@­Ó½ÆÂøªº¹CÀ¸¹Ï¹³ª«¥ó¡A¤ä«ùÁY©ñ¡B±ÛÂà¡BÃC¦â²V¦Xµ¥¦hºØ¯S®Ä¡C
+/// @brief ä¸€å€‹è¤‡é›œçš„éŠæˆ²åœ–åƒç‰©ä»¶ï¼Œæ”¯æŒç¸®æ”¾ã€æ—‹è½‰ã€é¡è‰²æ··åˆç­‰å¤šç¨®ç‰¹æ•ˆã€‚
 ///
-/// ¦¹Ãş§O³q±`¥Ñ cltImageManager ª«¥ó¦ÀºŞ²z¡A¥Î©ó°ª®Ä¦aÅã¥Ü¤j¶q°ÊºA¹Ï¹³¡C
+/// æ­¤é¡åˆ¥é€šå¸¸ç”± cltImageManager ç‰©ä»¶æ± ç®¡ç†ï¼Œç”¨æ–¼é«˜æ•ˆåœ°é¡¯ç¤ºå¤§é‡å‹•æ…‹åœ–åƒã€‚
 class GameImage {
 public:
-    // --- ®Ö¤ß¥Í©R¶g´Á»PÃ¸»s¨ç¦¡ ---
+    // --- æ ¸å¿ƒç”Ÿå‘½é€±æœŸèˆ‡ç¹ªè£½å‡½å¼ ---
 
-    /// @brief «Øºc¨ç¦¡¡Gªì©l¤Æ©Ò¦³ª¬ºA¬°¹w³]­È¡C
+    /// @brief å»ºæ§‹å‡½å¼ï¼šåˆå§‹åŒ–æ‰€æœ‰ç‹€æ…‹ç‚ºé è¨­å€¼ã€‚
     GameImage();
 
-    /// @brief ¸Ñºc¨ç¦¡¡GÄÀ©ñ«ù¦³ªº³»ÂI½w½Ä°Ï¡C
+    /// @brief è§£æ§‹å‡½å¼ï¼šé‡‹æ”¾æŒæœ‰çš„é ‚é»ç·©è¡å€ã€‚
     virtual ~GameImage();
 
-    /// @brief ¬°¦¹¹Ï¹³«Ø¥ß¤@­Ó¥i®e¯Ç8­Ó³»ÂIªº½w½Ä°Ï¡C
+    /// @brief ç‚ºæ­¤åœ–åƒå»ºç«‹ä¸€å€‹å¯å®¹ç´8å€‹é ‚é»çš„ç·©è¡å€ã€‚
     void CreateVertexBuffer();
 
-    /// @brief ­«³]¹Ï¹³ª¬ºA¨ÃÄÀ©ñ©Ò¦³¬ÛÃö¸ê·½¡]³»ÂI½w½Ä°Ï©M¹Ï¤ù¸ê·½¡^¡C
+    /// @brief é‡è¨­åœ–åƒç‹€æ…‹ä¸¦é‡‹æ”¾æ‰€æœ‰ç›¸é—œè³‡æºï¼ˆé ‚é»ç·©è¡å€å’Œåœ–ç‰‡è³‡æºï¼‰ã€‚
     void ResetGI();
 
-    /// @brief ±q¸ê·½ºŞ²z¾¹Àò¨ú¹Ï¤ù¸ê®Æ¨Ã»P¦¹ª«¥ó¸j©w¡C
+    /// @brief å¾è³‡æºç®¡ç†å™¨ç²å–åœ–ç‰‡è³‡æ–™ä¸¦èˆ‡æ­¤ç‰©ä»¶ç¶å®šã€‚
     void GetGIData(unsigned int dwGroupID, unsigned int dwResourceID, int a4, int a5);
 
-    /// @brief ÄÀ©ñ¹ï¹Ï¤ù¸ê®Æªº¤Ş¥Î¡A±N¨äÂkÁÙµ¹¸ê·½ºŞ²z¾¹¡C
+    /// @brief é‡‹æ”¾å°åœ–ç‰‡è³‡æ–™çš„å¼•ç”¨ï¼Œå°‡å…¶æ­¸é‚„çµ¦è³‡æºç®¡ç†å™¨ã€‚
     void ReleaseGIData();
 
-    /// @brief ®Ú¾Ú·í«e©Ò¦³ª¬ºA¡]¦ì¸m¡BÁY©ñ¡B±ÛÂàµ¥¡^­pºâ³Ì²×ªº³»ÂI¸ê®Æ¡C
+    /// @brief æ ¹æ“šç•¶å‰æ‰€æœ‰ç‹€æ…‹ï¼ˆä½ç½®ã€ç¸®æ”¾ã€æ—‹è½‰ç­‰ï¼‰è¨ˆç®—æœ€çµ‚çš„é ‚é»è³‡æ–™ã€‚
     bool Process();
 
-    /// @brief ±N¹Ï¹³Ã¸»s¨ì¿Ã¹õ¤W¡C
+    /// @brief å°‡åœ–åƒç¹ªè£½åˆ°è¢å¹•ä¸Šã€‚
     bool Draw();
 
-    // --- ¨ä¥L¥\¯à¨ç¦¡ ---
+    // --- å…¶ä»–åŠŸèƒ½å‡½å¼ ---
 
-    /// @brief Àò¨ú·í«e¼v®æ¦b¯¾²z¤Wªº¹³¯À°Ï°ì¡C
+    /// @brief ç²å–ç•¶å‰å½±æ ¼åœ¨ç´‹ç†ä¸Šçš„åƒç´ å€åŸŸã€‚
     void GetBlockRect(RECT* pOutRect) const;
 
-    /// @brief ¨Ï¥Î¥~³¡´£¨Ñªº³»ÂI¸ê®ÆÂĞ»\¤º³¡³»ÂI¡A¥Î©ó³»ÂI°Êµe¡C
+    /// @brief ä½¿ç”¨å¤–éƒ¨æä¾›çš„é ‚é»è³‡æ–™è¦†è“‹å…§éƒ¨é ‚é»ï¼Œç”¨æ–¼é ‚é»å‹•ç•«ã€‚
     void VertexAnimationCalculator(const GIVertex* pSourceVertices);
 
     void UpdateVertexBuffer();
 
-    /// @brief ±NÃC¦âÂĞ»\­È­«³]¬°¹w³](¥Õ¦â)¡C
+    /// @brief å°‡é¡è‰²è¦†è“‹å€¼é‡è¨­ç‚ºé è¨­(ç™½è‰²)ã€‚
     void SetDefaultTextureColor();
 
-    /// @brief ³]©w¥Î©óÂĞ»\¯¾²zªºÃC¦â¡C
+    /// @brief è¨­å®šç”¨æ–¼è¦†è“‹ç´‹ç†çš„é¡è‰²ã€‚
     void SetOverWriteTextureColor(DWORD color);
 
-    /// @brief Àò¨ú¥Ø«e³]©wªºÂĞ»\ÃC¦â¡C
+    /// @brief ç²å–ç›®å‰è¨­å®šçš„è¦†è“‹é¡è‰²ã€‚
     void GetOverWriteTextureColor(float* pOutColor) const;
 
-    /// @brief ³]©w¬O§_±Ò¥ÎÃC¦âÂĞ»\Ã¸»s¼Ò¦¡¡C
+    /// @brief è¨­å®šæ˜¯å¦å•Ÿç”¨é¡è‰²è¦†è“‹ç¹ªè£½æ¨¡å¼ã€‚
     void SetOverWriteTextureColorDraw(bool bEnable);
 
-    /// @brief ÀË¬d¬O§_±Ò¥ÎÃC¦âÂĞ»\Ã¸»s¼Ò¦¡¡C
+    /// @brief æª¢æŸ¥æ˜¯å¦å•Ÿç”¨é¡è‰²è¦†è“‹ç¹ªè£½æ¨¡å¼ã€‚
     bool IsOverWriteTextureColorDraw() const;
 
-    // --- ¤è«Kªº Setters / Getters ---
+    // --- æ–¹ä¾¿çš„ Setters / Getters ---
 
     void SetBlockID(unsigned short wBlockID) { m_wBlockID = wBlockID; }
     void SetPosition(float x, float y) { m_fPosX = x; m_fPosY = y; }
@@ -78,55 +78,55 @@ public:
     void SetColor(unsigned int dwColor) { m_dwColor = dwColor; }
     ImageResourceListData* GetGIDataPtr() const { return m_pGIData; }
 
-    /// @brief ÀË¬d¦¹ GameImage ª«¥ó¬O§_¥¿¦b³Q¨Ï¥Î¡C
+    /// @brief æª¢æŸ¥æ­¤ GameImage ç‰©ä»¶æ˜¯å¦æ­£åœ¨è¢«ä½¿ç”¨ã€‚
     bool IsInUse() const { return m_pGIData != nullptr; }
 
-    VertexBufferData* m_pVBData;       // ¦ì²¾+4: ³»ÂI½w½Ä°ÏªººŞ²z¸`ÂI
-    ImageResourceListData* m_pGIData;    // ¦ì²¾+8: ¹Ï¤ù¸ê·½ªººŞ²z¸`ÂI
+    VertexBufferData* m_pVBData;       // ä½ç§»+4: é ‚é»ç·©è¡å€çš„ç®¡ç†ç¯€é»
+    ImageResourceListData* m_pGIData;    // ä½ç§»+8: åœ–ç‰‡è³‡æºçš„ç®¡ç†ç¯€é»
 
-    GIVertex m_Vertices[8];              // ¦ì²¾+12: Àx¦s8­Ó³»ÂIªº¸ê®Æ
+    GIVertex m_Vertices[8];              // ä½ç§»+12: å„²å­˜8å€‹é ‚é»çš„è³‡æ–™
 
-    D3DXVECTOR3 m_baseVertices[4];       // ¦ì²¾+236: ¥Î©óÅÜ´«ªº°òÂ¦³»ÂI®y¼Ğ
-    D3DXVECTOR3 m_transformedVertices[4]; // ¦ì²¾+284: ¸g¹LÅÜ´««áªº³»ÂI®y¼Ğ
+    D3DXVECTOR3 m_baseVertices[4];       // ä½ç§»+236: ç”¨æ–¼è®Šæ›çš„åŸºç¤é ‚é»åº§æ¨™
+    D3DXVECTOR3 m_transformedVertices[4]; // ä½ç§»+284: ç¶“éè®Šæ›å¾Œçš„é ‚é»åº§æ¨™
 
-    float m_fPosX;                       // ¦ì²¾+332: Ã¸»sªº X ®y¼Ğ
-    float m_fPosY;                       // ¦ì²¾+336: Ã¸»sªº Y ®y¼Ğ
-    float m_fDrawWidth;                  // ¦ì²¾+340: Ã¸»s¼e«×
-    float m_fDrawHeight;                 // ¦ì²¾+344: Ã¸»s°ª«×
-    float m_fAngleX;                     // ¦ì²¾+348: X¶b¶É±×
-    float m_fAngleY;                     // ¦ì²¾+352: Y¶b¶É±×
+    float m_fPosX;                       // ä½ç§»+332: ç¹ªè£½çš„ X åº§æ¨™
+    float m_fPosY;                       // ä½ç§»+336: ç¹ªè£½çš„ Y åº§æ¨™
+    float m_fDrawWidth;                  // ä½ç§»+340: ç¹ªè£½å¯¬åº¦
+    float m_fDrawHeight;                 // ä½ç§»+344: ç¹ªè£½é«˜åº¦
+    float m_fAngleX;                     // ä½ç§»+348: Xè»¸å‚¾æ–œ
+    float m_fAngleY;                     // ä½ç§»+352: Yè»¸å‚¾æ–œ
 
-    float m_fHotspotX;                   // ¦ì²¾+356
-    float m_fHotspotY;                   // ¦ì²¾+360
-    float m_fHotspotWidth;               // ¦ì²¾+364
-    float m_fHotspotHeight;              // ¦ì²¾+368
+    float m_fHotspotX;                   // ä½ç§»+356
+    float m_fHotspotY;                   // ä½ç§»+360
+    float m_fHotspotWidth;               // ä½ç§»+364
+    float m_fHotspotHeight;              // ä½ç§»+368
 
-    unsigned short m_wBlockID;           // ¦ì²¾+372: °Êµe¼v®æ/°Ï¶ôID
+    unsigned short m_wBlockID;           // ä½ç§»+372: å‹•ç•«å½±æ ¼/å€å¡ŠID
 
-    int m_nScale;                        // ¦ì²¾+376: ¾ãÅéÁY©ñ¤ñ¨Ò (e.g., 100)
-    unsigned int m_dwAlpha;              // ¦ì²¾+380: ³z©ú«× (0-255)
-    unsigned int m_dwColor;              // ¦ì²¾+384: ÃC¦âÂĞ»\ (0-255)
-    int m_nRotation;                     // ¦ì²¾+388: ±ÛÂà¨¤«× (0-359)
+    int m_nScale;                        // ä½ç§»+376: æ•´é«”ç¸®æ”¾æ¯”ä¾‹ (e.g., 100)
+    unsigned int m_dwAlpha;              // ä½ç§»+380: é€æ˜åº¦ (0-255)
+    unsigned int m_dwColor;              // ä½ç§»+384: é¡è‰²è¦†è“‹ (0-255)
+    int m_nRotation;                     // ä½ç§»+388: æ—‹è½‰è§’åº¦ (0-359)
 
-    bool m_bFlipX;                       // ¦ì²¾+392: ¤ô¥­Â½Âà
-    bool m_bFlipY;                       // ¦ì²¾+396: ««ª½Â½Âà
+    bool m_bFlipX;                       // ä½ç§»+392: æ°´å¹³ç¿»è½‰
+    bool m_bFlipY;                       // ä½ç§»+396: å‚ç›´ç¿»è½‰
 
-    unsigned int m_dwColorOp;            // ¦ì²¾+400: ÃC¦â¾Ş§@¼Ò¦¡
-    float m_fCenterX;                    // ¦ì²¾+404: ¤ô¥­Â½Âàªº¤¤¤ßÂI
+    unsigned int m_dwColorOp;            // ä½ç§»+400: é¡è‰²æ“ä½œæ¨¡å¼
+    float m_fCenterX;                    // ä½ç§»+404: æ°´å¹³ç¿»è½‰çš„ä¸­å¿ƒé»
 
-    unsigned int m_dwGroupID;            // ¦ì²¾+408: ¸ê·½¸s²ÕID
-    unsigned int m_dwResourceID;         // ¦ì²¾+412: ¸ê·½ID
+    unsigned int m_dwGroupID;            // ä½ç§»+408: è³‡æºç¾¤çµ„ID
+    unsigned int m_dwResourceID;         // ä½ç§»+412: è³‡æºID
 
-    float m_fScaleX;                     // ¦ì²¾+416: ¿W¥ßªº X ¶bÁY©ñ
-    float m_fScaleY;                     // ¦ì²¾+420: ¿W¥ßªº Y ¶bÁY©ñ
+    float m_fScaleX;                     // ä½ç§»+416: ç¨ç«‹çš„ X è»¸ç¸®æ”¾
+    float m_fScaleY;                     // ä½ç§»+420: ç¨ç«‹çš„ Y è»¸ç¸®æ”¾
 
-    bool m_bDrawPart1;                   // ¦ì²¾+432: ¬O§_Ã¸»s²Ä¤@­Ó¤T¨¤®°
-    bool m_bDrawPart2;                   // ¦ì²¾+436: ¬O§_Ã¸»s²Ä¤G­Ó¤T¨¤®°
+    bool m_bDrawPart1;                   // ä½ç§»+432: æ˜¯å¦ç¹ªè£½ç¬¬ä¸€å€‹ä¸‰è§’æ‰‡
+    bool m_bDrawPart2;                   // ä½ç§»+436: æ˜¯å¦ç¹ªè£½ç¬¬äºŒå€‹ä¸‰è§’æ‰‡
 
-    bool m_bIsProcessed;                 // ¦ì²¾+440: ¼Ğ°O³»ÂI¸ê®Æ¬O§_¤w³B²z
+    bool m_bIsProcessed;                 // ä½ç§»+440: æ¨™è¨˜é ‚é»è³‡æ–™æ˜¯å¦å·²è™•ç†
 
-    bool m_bVertexAnimation;             // ¦ì²¾+444: ³»ÂI°ÊµeºX¼Ğ
-    bool m_bFlag_445;                    // ¦ì²¾+445
+    bool m_bVertexAnimation;             // ä½ç§»+444: é ‚é»å‹•ç•«æ——æ¨™
+    bool m_bFlag_445;                    // ä½ç§»+445
     bool m_bFlag_446;
     bool m_bFlag_447;
     bool m_bFlag_448;
@@ -134,6 +134,6 @@ public:
     bool m_bFlag_450;
     bool m_bFlag_451;
 
-    float m_OverwriteColor[4];           // ¦ì²¾+456: RGBAÃC¦â¡A¥Î©óÂĞ»\¯¾²zÃC¦â
-    bool  m_bUseOverwriteColor;          // ¦ì²¾+472: ¬O§_±Ò¥ÎÃC¦âÂĞ»\Ã¸»s
+    float m_OverwriteColor[4];           // ä½ç§»+456: RGBAé¡è‰²ï¼Œç”¨æ–¼è¦†è“‹ç´‹ç†é¡è‰²
+    bool  m_bUseOverwriteColor;          // ä½ç§»+472: æ˜¯å¦å•Ÿç”¨é¡è‰²è¦†è“‹ç¹ªè£½
 };

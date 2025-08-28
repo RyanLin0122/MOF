@@ -2,68 +2,68 @@
 #include "Effect/CEAManager.h"
 #include "global.h"
 
-// ¹ïÀ³¤Ï²ÕÄ¶½X: 0x00532790
+// å°æ‡‰åçµ„è­¯ç¢¼: 0x00532790
 CEffect_Player_WeatherPreView::CEffect_Player_WeatherPreView()
     : m_fScreenPosX(0.0f), m_fScreenPosY(0.0f)
 {
-    // CEffectBase ªº«Øºc¨ç¦¡·|³Q¦Û°Ê©I¥s
+    // CEffectBase çš„å»ºæ§‹å‡½å¼æœƒè¢«è‡ªå‹•å‘¼å«
 }
 
-// ¹ïÀ³¤Ï²ÕÄ¶½X: 0x005327D0
+// å°æ‡‰åçµ„è­¯ç¢¼: 0x005327D0
 CEffect_Player_WeatherPreView::~CEffect_Player_WeatherPreView()
 {
 }
 
-// ¹ïÀ³¤Ï²ÕÄ¶½X: 0x005327E0
+// å°æ‡‰åçµ„è­¯ç¢¼: 0x005327E0
 void CEffect_Player_WeatherPreView::SetEffect(float x, float y, int baseEffectID, char* szFileName)
 {
-    // ºc«ØÀÉ®×¸ô®|
+    // æ§‹å»ºæª”æ¡ˆè·¯å¾‘
     char szFullPath[256];
     sprintf_s(szFullPath, sizeof(szFullPath), "Effect/%s", szFileName);
 
-    // ®Ú¾Ú°òÂ¦ ID ­pºâ³Ì²×ªº Effect Kind ID
+    // æ ¹æ“šåŸºç¤ ID è¨ˆç®—æœ€çµ‚çš„ Effect Kind ID
     int finalEffectID = baseEffectID + 53;
 
-    // Àò¨ú¨Ã³]©w¯S®Ä¼Æ¾Ú
+    // ç²å–ä¸¦è¨­å®šç‰¹æ•ˆæ•¸æ“š
     CEAManager::GetInstance()->GetEAData(finalEffectID, szFullPath, &m_ccaEffect);
     m_ccaEffect.SetFrameTime();
-    m_ccaEffect.Play(0, false); // ¼½©ñ²Ä¤@­Ó°Êµe§Ç¦C¡A¤£´`Àô
+    m_ccaEffect.Play(0, false); // æ’­æ”¾ç¬¬ä¸€å€‹å‹•ç•«åºåˆ—ï¼Œä¸å¾ªç’°
 
-    // Àx¦s©T©wªº¿Ã¹õ®y¼Ğ
+    // å„²å­˜å›ºå®šçš„è¢å¹•åº§æ¨™
     m_fScreenPosX = x;
     m_fScreenPosY = y;
 }
 
-// ¹ïÀ³¤Ï²ÕÄ¶½X: 0x00532860
+// å°æ‡‰åçµ„è­¯ç¢¼: 0x00532860
 bool CEffect_Player_WeatherPreView::FrameProcess(float fElapsedTime)
 {
-    // §ó·s¤º³¡°Êµe¼v®æ
+    // æ›´æ–°å…§éƒ¨å‹•ç•«å½±æ ¼
     m_ccaEffect.FrameProcess(fElapsedTime);
 
-    // --- ®Ö¤ß¥Í©R¶g´ÁÅŞ¿è ---
-    // ­ì©l½X: return 0;
-    // ¥Ã»·ªğ¦^ false¡Aªí¥Ü¦¹¯S®Ä¤£·|¦Û°Êµ²§ô¡C
+    // --- æ ¸å¿ƒç”Ÿå‘½é€±æœŸé‚è¼¯ ---
+    // åŸå§‹ç¢¼: return 0;
+    // æ°¸é è¿”å› falseï¼Œè¡¨ç¤ºæ­¤ç‰¹æ•ˆä¸æœƒè‡ªå‹•çµæŸã€‚
     return false;
 }
 
-// ¹ïÀ³¤Ï²ÕÄ¶½X: 0x00532880
+// å°æ‡‰åçµ„è­¯ç¢¼: 0x00532880
 void CEffect_Player_WeatherPreView::Process()
 {
-    // --- ®Ö¤ßÅŞ¿è¡Gª½±µ±NÀx¦sªº®y¼Ğ§@¬°¿Ã¹õ®y¼Ğ ---
-    // ­ì©l½X: *((float *)this + 12) = *((float *)this + 33);
+    // --- æ ¸å¿ƒé‚è¼¯ï¼šç›´æ¥å°‡å„²å­˜çš„åº§æ¨™ä½œç‚ºè¢å¹•åº§æ¨™ ---
+    // åŸå§‹ç¢¼: *((float *)this + 12) = *((float *)this + 33);
     //         *((float *)this + 13) = *((float *)this + 34);
 
-    // §ó·s¤º³¡ CCAEffect ªºª¬ºA¡A¤£¶i¦æÄá¼v¾÷®y¼ĞÂà´«
+    // æ›´æ–°å…§éƒ¨ CCAEffect çš„ç‹€æ…‹ï¼Œä¸é€²è¡Œæ”å½±æ©Ÿåº§æ¨™è½‰æ›
     m_ccaEffect.SetPosition(m_fScreenPosX, m_fScreenPosY);
     m_ccaEffect.Process();
 
-    // UI ¯S®ÄÁ`¬O¥i¨£
+    // UI ç‰¹æ•ˆç¸½æ˜¯å¯è¦‹
     m_bIsVisible = TRUE;
 }
 
-// ¹ïÀ³¤Ï²ÕÄ¶½X: 0x005328A0
+// å°æ‡‰åçµ„è­¯ç¢¼: 0x005328A0
 void CEffect_Player_WeatherPreView::Draw()
 {
-    // ª½±µ±NÃ¸»s¥ô°È©e°Uµ¹¤º³¡ªº CCAEffect ª«¥ó
+    // ç›´æ¥å°‡ç¹ªè£½ä»»å‹™å§”è¨—çµ¦å…§éƒ¨çš„ CCAEffect ç‰©ä»¶
     m_ccaEffect.Draw();
 }

@@ -2,62 +2,62 @@
 #include "Effect/CEAManager.h"
 #include "global.h"
 
-// ¹ïÀ³¤Ï²ÕÄ¶½X: 0x00538E60
+// å°æ‡‰åçµ„è­¯ç¢¼: 0x00538E60
 CEffect_MiniGame_Priest_Light::CEffect_MiniGame_Priest_Light()
 {
-    // CEffectBase ªº«Øºc¨ç¦¡·|³Q¦Û°Ê©I¥s
+    // CEffectBase çš„å»ºæ§‹å‡½å¼æœƒè¢«è‡ªå‹•å‘¼å«
 
-    // ¦V CEAManager ½Ğ¨D¯S®Ä¼Æ¾Ú
-    // ¯S®Ä ID: 116, ÀÉ®×¦WºÙ: "Effect/efn_MiniGame_Class_Sword.ea"
-    // ª`·N¡G¦¹³B¸ü¤Jªº¬O¼C¤hªº¯S®Ä¸ê·½
+    // å‘ CEAManager è«‹æ±‚ç‰¹æ•ˆæ•¸æ“š
+    // ç‰¹æ•ˆ ID: 116, æª”æ¡ˆåç¨±: "Effect/efn_MiniGame_Class_Sword.ea"
+    // æ³¨æ„ï¼šæ­¤è™•è¼‰å…¥çš„æ˜¯åŠå£«çš„ç‰¹æ•ˆè³‡æº
     CEAManager::GetInstance()->GetEAData(116, "Effect/efn_MiniGame_Class_Sword.ea", &m_ccaEffect);
 
-    // ³]©w¼v®æ®É¶¡¨Ã¼½©ñ°Êµe
+    // è¨­å®šå½±æ ¼æ™‚é–“ä¸¦æ’­æ”¾å‹•ç•«
     m_ccaEffect.SetFrameTime();
-    m_ccaEffect.Play(0, false); // ¼½©ñ²Ä¤@­Ó°Êµe§Ç¦C¡A¤£´`Àô
+    m_ccaEffect.Play(0, false); // æ’­æ”¾ç¬¬ä¸€å€‹å‹•ç•«åºåˆ—ï¼Œä¸å¾ªç’°
 }
 
-// ¹ïÀ³¤Ï²ÕÄ¶½X: 0x00538EF0
+// å°æ‡‰åçµ„è­¯ç¢¼: 0x00538EF0
 CEffect_MiniGame_Priest_Light::~CEffect_MiniGame_Priest_Light()
 {
 }
 
-// ¹ïÀ³¤Ï²ÕÄ¶½X: 0x00538F00
+// å°æ‡‰åçµ„è­¯ç¢¼: 0x00538F00
 void CEffect_MiniGame_Priest_Light::SetEffect(float x, float y)
 {
-    // ³]©w¯S®Äªºªì©l¥@¬É®y¼Ğ
-    // ­ì©l½X: *((float *)this + 2) = a2; *((float *)this + 3) = a3;
+    // è¨­å®šç‰¹æ•ˆçš„åˆå§‹ä¸–ç•Œåº§æ¨™
+    // åŸå§‹ç¢¼: *((float *)this + 2) = a2; *((float *)this + 3) = a3;
     m_fCurrentPosX = x;
     m_fCurrentPosY = y;
 }
 
-// ¹ïÀ³¤Ï²ÕÄ¶½X: 0x00538F20
+// å°æ‡‰åçµ„è­¯ç¢¼: 0x00538F20
 bool CEffect_MiniGame_Priest_Light::FrameProcess(float fElapsedTime)
 {
-    // ±N¥Í©R¶g´ÁºŞ²zªº¥ô°È§¹¥ş©e°Uµ¹¤º³¡ªº CCAEffect ª«¥ó¡C
+    // å°‡ç”Ÿå‘½é€±æœŸç®¡ç†çš„ä»»å‹™å®Œå…¨å§”è¨—çµ¦å…§éƒ¨çš„ CCAEffect ç‰©ä»¶ã€‚
     return m_ccaEffect.FrameProcess(fElapsedTime);
 }
 
-// ¹ïÀ³¤Ï²ÕÄ¶½X: 0x00538F30
+// å°æ‡‰åçµ„è­¯ç¢¼: 0x00538F30
 void CEffect_MiniGame_Priest_Light::Process()
 {
-    // --- ®Ö¤ßÅŞ¿è¡Gª½±µ±N¥@¬É®y¼Ğ§@¬°¿Ã¹õ®y¼Ğ ---
-    // ­ì©l½X: *((float *)this + 12) = *((float *)this + 2);
+    // --- æ ¸å¿ƒé‚è¼¯ï¼šç›´æ¥å°‡ä¸–ç•Œåº§æ¨™ä½œç‚ºè¢å¹•åº§æ¨™ ---
+    // åŸå§‹ç¢¼: *((float *)this + 12) = *((float *)this + 2);
     //         *((float *)this + 13) = *((float *)this + 3);
     float screenX = m_fCurrentPosX;
     float screenY = m_fCurrentPosY;
 
-    // §ó·s¤º³¡ CCAEffect ªºª¬ºA
+    // æ›´æ–°å…§éƒ¨ CCAEffect çš„ç‹€æ…‹
     m_ccaEffect.SetPosition(screenX, screenY);
     m_ccaEffect.Process();
 
-    // ¦]¬°¬O UI ¯S®Ä¡AÁ`¬O¦b¥iµø½d³ò¤º¡A¤£»İ­nµô°Å
+    // å› ç‚ºæ˜¯ UI ç‰¹æ•ˆï¼Œç¸½æ˜¯åœ¨å¯è¦–ç¯„åœå…§ï¼Œä¸éœ€è¦è£å‰ª
     m_bIsVisible = TRUE;
 }
 
-// ¹ïÀ³¤Ï²ÕÄ¶½X: 0x00538F50
+// å°æ‡‰åçµ„è­¯ç¢¼: 0x00538F50
 void CEffect_MiniGame_Priest_Light::Draw()
 {
-    // ª½±µ±NÃ¸»s¥ô°È©e°Uµ¹¤º³¡ªº CCAEffect ª«¥ó
+    // ç›´æ¥å°‡ç¹ªè£½ä»»å‹™å§”è¨—çµ¦å…§éƒ¨çš„ CCAEffect ç‰©ä»¶
     m_ccaEffect.Draw();
 }

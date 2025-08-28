@@ -4,38 +4,38 @@
 
 /**
  * @class CEffect_Player_WeatherPreView
- * @brief ¦b UI ¼hÅã¥Ü¤Ñ®ğ©Î¦a¹ÏÀô¹Ò¹wÄıªº¯S®Ä¡C
+ * @brief åœ¨ UI å±¤é¡¯ç¤ºå¤©æ°£æˆ–åœ°åœ–ç’°å¢ƒé è¦½çš„ç‰¹æ•ˆã€‚
  *
- * Ä~©Ó¦Û CEffectBase¡A¬O¤@­Ó¦b©T©w¿Ã¹õ®y¼Ğ¼½©ñ¡B
- * ¥B¥Í©R¶g´Á¥Ñ¥~³¡ÅŞ¿è±±¨îªº°Êµe¯S®Ä¡C
+ * ç¹¼æ‰¿è‡ª CEffectBaseï¼Œæ˜¯ä¸€å€‹åœ¨å›ºå®šè¢å¹•åº§æ¨™æ’­æ”¾ã€
+ * ä¸”ç”Ÿå‘½é€±æœŸç”±å¤–éƒ¨é‚è¼¯æ§åˆ¶çš„å‹•ç•«ç‰¹æ•ˆã€‚
  */
 class CEffect_Player_WeatherPreView : public CEffectBase {
 public:
     CEffect_Player_WeatherPreView();
     virtual ~CEffect_Player_WeatherPreView();
 
-    // --- µêÀÀ¨ç¦¡ÂĞ¼g ---
+    // --- è™›æ“¬å‡½å¼è¦†å¯« ---
 
-    /// @brief §ó·s°Êµe¡A¦ı¥Ã¤£¦^¶Ç true¡A¨Ï¯S®Ä«ùÄò¦s¦b¡C
+    /// @brief æ›´æ–°å‹•ç•«ï¼Œä½†æ°¸ä¸å›å‚³ trueï¼Œä½¿ç‰¹æ•ˆæŒçºŒå­˜åœ¨ã€‚
     virtual bool FrameProcess(float fElapsedTime) override;
 
-    /// @brief ·Ç³ÆÃ¸»s«eªºÅŞ¿è§ó·s¡A¨Ï¥Î©T©wªº¿Ã¹õ¦ì¸m¡C
+    /// @brief æº–å‚™ç¹ªè£½å‰çš„é‚è¼¯æ›´æ–°ï¼Œä½¿ç”¨å›ºå®šçš„è¢å¹•ä½ç½®ã€‚
     virtual void Process() override;
 
-    /// @brief Ã¸»s¯S®Ä¡C
+    /// @brief ç¹ªè£½ç‰¹æ•ˆã€‚
     virtual void Draw() override;
 
-    // --- ±M¦³¨ç¦¡ ---
+    // --- å°ˆæœ‰å‡½å¼ ---
 
-    /// @brief ³]©w¯S®Ä¡C
-    /// @param x ¿Ã¹õ X ®y¼Ğ¡C
-    /// @param y ¿Ã¹õ Y ®y¼Ğ¡C
-    /// @param baseEffectID ¯S®Äªº°òÂ¦ ID¡C
-    /// @param szFileName ¯S®Ä¸ê·½ (.ea) ªºÀÉ®×¦WºÙ¡C
+    /// @brief è¨­å®šç‰¹æ•ˆã€‚
+    /// @param x è¢å¹• X åº§æ¨™ã€‚
+    /// @param y è¢å¹• Y åº§æ¨™ã€‚
+    /// @param baseEffectID ç‰¹æ•ˆçš„åŸºç¤ IDã€‚
+    /// @param szFileName ç‰¹æ•ˆè³‡æº (.ea) çš„æª”æ¡ˆåç¨±ã€‚
     void SetEffect(float x, float y, int baseEffectID, char* szFileName);
 
 private:
-    // --- ¦¨­ûÅÜ¼Æ ---
-    float m_fScreenPosX; // ¦ì²¾ +132 (0x84)
-    float m_fScreenPosY; // ¦ì²¾ +136 (0x88)
+    // --- æˆå“¡è®Šæ•¸ ---
+    float m_fScreenPosX; // ä½ç§» +132 (0x84)
+    float m_fScreenPosY; // ä½ç§» +136 (0x88)
 };

@@ -4,10 +4,10 @@
 #include "global.h"
 
 // =======================================================================
-// CEffect_Skill_Freezing (¤W¼h¯S®Ä)
+// CEffect_Skill_Freezing (ä¸Šå±¤ç‰¹æ•ˆ)
 // =======================================================================
 
-// ¹ïÀ³¤Ï²ÕÄ¶½X: 0x00533240
+// å°æ‡‰åçµ„è­¯ç¢¼: 0x00533240
 CEffect_Skill_Freezing::CEffect_Skill_Freezing()
     : m_pOwnerCharacter(nullptr),
     m_nUnknown_a3(0),
@@ -16,15 +16,15 @@ CEffect_Skill_Freezing::CEffect_Skill_Freezing()
 {
     CEAManager::GetInstance()->GetEAData(97, "Effect/Efn-Pvp-Ice-Top.ea", &m_ccaEffect);
     m_ccaEffect.SetFrameTime();
-    m_ccaEffect.Play(0, false); // °Êµe¥»¨­¤£´`Àô¡A¥Ñ FrameProcess ±±¨î¨ä«ùÄò©Ê
+    m_ccaEffect.Play(0, false); // å‹•ç•«æœ¬èº«ä¸å¾ªç’°ï¼Œç”± FrameProcess æ§åˆ¶å…¶æŒçºŒæ€§
 }
 
-// ¹ïÀ³¤Ï²ÕÄ¶½X: 0x005332E0
+// å°æ‡‰åçµ„è­¯ç¢¼: 0x005332E0
 CEffect_Skill_Freezing::~CEffect_Skill_Freezing()
 {
 }
 
-// ¹ïÀ³¤Ï²ÕÄ¶½X: 0x005332F0
+// å°æ‡‰åçµ„è­¯ç¢¼: 0x005332F0
 void CEffect_Skill_Freezing::SetEffect(ClientCharacter* pTarget, int a3)
 {
     if (!pTarget) return;
@@ -35,7 +35,7 @@ void CEffect_Skill_Freezing::SetEffect(ClientCharacter* pTarget, int a3)
     m_fInitialPosY = static_cast<float>(pTarget->GetPosY());
 }
 
-// ¹ïÀ³¤Ï²ÕÄ¶½X: 0x00533320
+// å°æ‡‰åçµ„è­¯ç¢¼: 0x00533320
 bool CEffect_Skill_Freezing::FrameProcess(float fElapsedTime)
 {
     m_ccaEffect.FrameProcess(fElapsedTime);
@@ -44,17 +44,17 @@ bool CEffect_Skill_Freezing::FrameProcess(float fElapsedTime)
         return true;
     }
 
-    // --- ®Ö¤ß¥Í©R¶g´Á§PÂ_ ---
-    // ­ì©l½X: return (~*(_BYTE *)(*((_DWORD *)this + 33) + 9700) & 4) != 0;
-    // ÀË¬d¨¤¦âªº¯S®íª¬ºAºX¼Ğ¤¤¡A¥Nªí¡u¦B­á¡vªº¦ì¤¸¬O§_³Q²M°£
-    if (m_pOwnerCharacter->IsFreezing()) { // °²³] IsFreezing() ¹ê²{¤F¸Ó¦ì¤¸ÀË¬d
-        return false; // ¦pªG¤´¦b¦B­á¡A¯S®ÄÄ~Äò
+    // --- æ ¸å¿ƒç”Ÿå‘½é€±æœŸåˆ¤æ–· ---
+    // åŸå§‹ç¢¼: return (~*(_BYTE *)(*((_DWORD *)this + 33) + 9700) & 4) != 0;
+    // æª¢æŸ¥è§’è‰²çš„ç‰¹æ®Šç‹€æ…‹æ——æ¨™ä¸­ï¼Œä»£è¡¨ã€Œå†°å‡ã€çš„ä½å…ƒæ˜¯å¦è¢«æ¸…é™¤
+    if (m_pOwnerCharacter->IsFreezing()) { // å‡è¨­ IsFreezing() å¯¦ç¾äº†è©²ä½å…ƒæª¢æŸ¥
+        return false; // å¦‚æœä»åœ¨å†°å‡ï¼Œç‰¹æ•ˆç¹¼çºŒ
     }
 
-    return true; // §_«h¡A¯S®Äµ²§ô
+    return true; // å¦å‰‡ï¼Œç‰¹æ•ˆçµæŸ
 }
 
-// ¹ïÀ³¤Ï²ÕÄ¶½X: 0x00533350
+// å°æ‡‰åçµ„è­¯ç¢¼: 0x00533350
 void CEffect_Skill_Freezing::Process()
 {
     if (!m_pOwnerCharacter) {
@@ -73,7 +73,7 @@ void CEffect_Skill_Freezing::Process()
     }
 }
 
-// ¹ïÀ³¤Ï²ÕÄ¶½X: 0x005333B0
+// å°æ‡‰åçµ„è­¯ç¢¼: 0x005333B0
 void CEffect_Skill_Freezing::Draw()
 {
     if (m_bIsVisible) {
@@ -83,10 +83,10 @@ void CEffect_Skill_Freezing::Draw()
 
 
 // =======================================================================
-// CEffect_Skill_Freezing_Sub (©³¼h¯S®Ä)
+// CEffect_Skill_Freezing_Sub (åº•å±¤ç‰¹æ•ˆ)
 // =======================================================================
 
-// ¹ïÀ³¤Ï²ÕÄ¶½X: 0x005333D0
+// å°æ‡‰åçµ„è­¯ç¢¼: 0x005333D0
 CEffect_Skill_Freezing_Sub::CEffect_Skill_Freezing_Sub()
     : m_pOwnerCharacter(nullptr),
     m_nUnknown_a3(0),
@@ -98,12 +98,12 @@ CEffect_Skill_Freezing_Sub::CEffect_Skill_Freezing_Sub()
     m_ccaEffect.Play(0, false);
 }
 
-// ¹ïÀ³¤Ï²ÕÄ¶½X: 0x00533470
+// å°æ‡‰åçµ„è­¯ç¢¼: 0x00533470
 CEffect_Skill_Freezing_Sub::~CEffect_Skill_Freezing_Sub()
 {
 }
 
-// ¹ïÀ³¤Ï²ÕÄ¶½X: 0x00533480
+// å°æ‡‰åçµ„è­¯ç¢¼: 0x00533480
 void CEffect_Skill_Freezing_Sub::SetEffect(ClientCharacter* pTarget, int a3)
 {
     if (!pTarget) return;
@@ -114,7 +114,7 @@ void CEffect_Skill_Freezing_Sub::SetEffect(ClientCharacter* pTarget, int a3)
     m_fInitialPosY = static_cast<float>(pTarget->GetPosY());
 }
 
-// ¹ïÀ³¤Ï²ÕÄ¶½X: 0x005334B0
+// å°æ‡‰åçµ„è­¯ç¢¼: 0x005334B0
 bool CEffect_Skill_Freezing_Sub::FrameProcess(float fElapsedTime)
 {
     m_ccaEffect.FrameProcess(fElapsedTime);
@@ -123,7 +123,7 @@ bool CEffect_Skill_Freezing_Sub::FrameProcess(float fElapsedTime)
         return true;
     }
 
-    // --- ®Ö¤ß¥Í©R¶g´Á§PÂ_ (»P¤W¼h¯S®Ä¬Û¦P) ---
+    // --- æ ¸å¿ƒç”Ÿå‘½é€±æœŸåˆ¤æ–· (èˆ‡ä¸Šå±¤ç‰¹æ•ˆç›¸åŒ) ---
     if (m_pOwnerCharacter->IsFreezing()) {
         return false;
     }
@@ -131,7 +131,7 @@ bool CEffect_Skill_Freezing_Sub::FrameProcess(float fElapsedTime)
     return true;
 }
 
-// ¹ïÀ³¤Ï²ÕÄ¶½X: 0x005334E0
+// å°æ‡‰åçµ„è­¯ç¢¼: 0x005334E0
 void CEffect_Skill_Freezing_Sub::Process()
 {
     if (!m_pOwnerCharacter) {
@@ -150,7 +150,7 @@ void CEffect_Skill_Freezing_Sub::Process()
     }
 }
 
-// ¹ïÀ³¤Ï²ÕÄ¶½X: 0x00533540
+// å°æ‡‰åçµ„è­¯ç¢¼: 0x00533540
 void CEffect_Skill_Freezing_Sub::Draw()
 {
     if (m_bIsVisible) {

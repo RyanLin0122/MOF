@@ -3,55 +3,55 @@
 #include "Character/ClientCharacter.h"
 #include "global.h"
 
-// ¹ïÀ³¤Ï²ÕÄ¶½X: 0x00533880
+// å°æ‡‰åçµ„è­¯ç¢¼: 0x00533880
 CEffect_Skill_HealPray::CEffect_Skill_HealPray()
     : m_pOwnerCharacter(nullptr)
 {
-    // CEffectBase ªº«Øºc¨ç¦¡·|³Q¦Û°Ê©I¥s
-    // ¯S®Ä¸ê·½¬O¦b SetEffect ¤¤°ÊºA¸ü¤Jªº
+    // CEffectBase çš„å»ºæ§‹å‡½å¼æœƒè¢«è‡ªå‹•å‘¼å«
+    // ç‰¹æ•ˆè³‡æºæ˜¯åœ¨ SetEffect ä¸­å‹•æ…‹è¼‰å…¥çš„
 }
 
-// ¹ïÀ³¤Ï²ÕÄ¶½X: 0x005338C0
+// å°æ‡‰åçµ„è­¯ç¢¼: 0x005338C0
 CEffect_Skill_HealPray::~CEffect_Skill_HealPray()
 {
 }
 
-// ¹ïÀ³¤Ï²ÕÄ¶½X: 0x005338D0
+// å°æ‡‰åçµ„è­¯ç¢¼: 0x005338D0
 void CEffect_Skill_HealPray::SetEffect(ClientCharacter* pCaster, unsigned char skillLevel)
 {
     if (!pCaster) return;
 
     const char* szFileName = nullptr;
-    int effectID = 100; // °òÂ¦ ID
+    int effectID = 100; // åŸºç¤ ID
 
-    // ®Ú¾Ú§Ş¯àµ¥¯Å¿ï¾Ü¤£¦Pªº¯S®Ä¸ê·½
+    // æ ¹æ“šæŠ€èƒ½ç­‰ç´šé¸æ“‡ä¸åŒçš„ç‰¹æ•ˆè³‡æº
     if (skillLevel == 1) {
         szFileName = "Effect/efn_HealPray-TopLv2.ea";
     }
     else if (skillLevel == 2) {
         szFileName = "Effect/efn_HealPray-TopLv3.ea";
     }
-    else { // ¹w³]¬°µ¥¯Å 0
+    else { // é è¨­ç‚ºç­‰ç´š 0
         szFileName = "Effect/efn_HealPray.ea";
     }
 
-    // Àò¨ú¨Ã³]©w¯S®Ä¼Æ¾Ú
+    // ç²å–ä¸¦è¨­å®šç‰¹æ•ˆæ•¸æ“š
     CEAManager::GetInstance()->GetEAData(effectID, szFileName, &m_ccaEffect);
     m_ccaEffect.SetFrameTime();
-    m_ccaEffect.Play(0, false); // ¼½©ñ²Ä¤@­Ó°Êµe§Ç¦C¡A¤£´`Àô
+    m_ccaEffect.Play(0, false); // æ’­æ”¾ç¬¬ä¸€å€‹å‹•ç•«åºåˆ—ï¼Œä¸å¾ªç’°
 
-    // ¸j©w¾Ö¦³ªÌ
+    // ç¶å®šæ“æœ‰è€…
     m_pOwnerCharacter = pCaster;
 }
 
-// ¹ïÀ³¤Ï²ÕÄ¶½X: 0x00533940
+// å°æ‡‰åçµ„è­¯ç¢¼: 0x00533940
 bool CEffect_Skill_HealPray::FrameProcess(float fElapsedTime)
 {
-    // ±N¥Í©R¶g´ÁºŞ²zªº¥ô°È§¹¥ş©e°Uµ¹¤º³¡ªº CCAEffect ª«¥ó¡C
+    // å°‡ç”Ÿå‘½é€±æœŸç®¡ç†çš„ä»»å‹™å®Œå…¨å§”è¨—çµ¦å…§éƒ¨çš„ CCAEffect ç‰©ä»¶ã€‚
     return m_ccaEffect.FrameProcess(fElapsedTime);
 }
 
-// ¹ïÀ³¤Ï²ÕÄ¶½X: 0x00533950
+// å°æ‡‰åçµ„è­¯ç¢¼: 0x00533950
 void CEffect_Skill_HealPray::Process()
 {
     if (!m_pOwnerCharacter) {
@@ -59,22 +59,22 @@ void CEffect_Skill_HealPray::Process()
         return;
     }
 
-    // --- ®Ö¤ßÅŞ¿è¡G«ùÄò°lÂÜ¾Ö¦³ªÌ¦ì¸m ---
-    // ±N¥@¬É®y¼ĞÂà´«¬°¿Ã¹õ®y¼Ğ
+    // --- æ ¸å¿ƒé‚è¼¯ï¼šæŒçºŒè¿½è¹¤æ“æœ‰è€…ä½ç½® ---
+    // å°‡ä¸–ç•Œåº§æ¨™è½‰æ›ç‚ºè¢å¹•åº§æ¨™
     float screenX = static_cast<float>(m_pOwnerCharacter->GetPosX() - g_Game_System_Info.ScreenX);
     float screenY = static_cast<float>(m_pOwnerCharacter->GetPosY() - g_Game_System_Info.ScreenY);
 
-    // ¶i¦æµô°Å§PÂ_
+    // é€²è¡Œè£å‰ªåˆ¤æ–·
     m_bIsVisible = IsCliping(screenX, 0.0f);
 
     if (m_bIsVisible) {
-        // §ó·s¤º³¡ CCAEffect ªºª¬ºA
+        // æ›´æ–°å…§éƒ¨ CCAEffect çš„ç‹€æ…‹
         m_ccaEffect.SetPosition(screenX, screenY);
         m_ccaEffect.Process();
     }
 }
 
-// ¹ïÀ³¤Ï²ÕÄ¶½X: 0x005339E0
+// å°æ‡‰åçµ„è­¯ç¢¼: 0x005339E0
 void CEffect_Skill_HealPray::Draw()
 {
     if (m_bIsVisible) {

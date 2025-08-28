@@ -1,37 +1,37 @@
 #include "Image/CDeviceResetManager.h"
 #include <string>
 
-// --- °²³]ªº¥~³¡¥þ°ìÅÜ¼Æ ---
-// ³o¨ÇÅÜ¼Æ¬O¦b­ì©lµ{¦¡ªº¨ä¥L¦a¤è©w¸qªº¡A¦ýCDeviceResetManager¨Ì¿à¥¦­Ì¡C
-extern IDirect3DDevice9* Device;          // ¥þ°ì Direct3D ¸Ë¸m«ü¼Ð
-extern D3DPRESENT_PARAMETERS g_d3dpp;           // ¥þ°ì D3D §e²{°Ñ¼Æ
-extern int IsInMemory;              // ±±¨î¬O±q¿W¥ßÀÉ®×ÁÙ¬O«Ê¸ËÀÉ¸ü¤J (IsInMemory)
-extern bool IsDialogBoxMode;     // ±±¨î¬O§_³]©w DialogBoxMode (IsDialogBoxMode)
+// --- å‡è¨­çš„å¤–éƒ¨å…¨åŸŸè®Šæ•¸ ---
+// é€™äº›è®Šæ•¸æ˜¯åœ¨åŽŸå§‹ç¨‹å¼çš„å…¶ä»–åœ°æ–¹å®šç¾©çš„ï¼Œä½†CDeviceResetManagerä¾è³´å®ƒå€‘ã€‚
+extern IDirect3DDevice9* Device;          // å…¨åŸŸ Direct3D è£ç½®æŒ‡æ¨™
+extern D3DPRESENT_PARAMETERS g_d3dpp;           // å…¨åŸŸ D3D å‘ˆç¾åƒæ•¸
+extern int IsInMemory;              // æŽ§åˆ¶æ˜¯å¾žç¨ç«‹æª”æ¡ˆé‚„æ˜¯å°è£æª”è¼‰å…¥ (IsInMemory)
+extern bool IsDialogBoxMode;     // æŽ§åˆ¶æ˜¯å¦è¨­å®š DialogBoxMode (IsDialogBoxMode)
 
-// --- °²³]ªº³»ÂIFVF©w¸q ---
-// ³o¨Ç¬O®Ú¾ÚCreateVertexBuffer¤¤ªºÅÞ¿è±ÀÂ_ªº
+// --- å‡è¨­çš„é ‚é»žFVFå®šç¾© ---
+// é€™äº›æ˜¯æ ¹æ“šCreateVertexBufferä¸­çš„é‚è¼¯æŽ¨æ–·çš„
 namespace AlphaBoxVertex { const unsigned int FVF = D3DFVF_DIFFUSE | D3DFVF_XYZRHW; }
 namespace ImageVertex { const unsigned int FVF = D3DFVF_TEX1 | D3DFVF_XYZRHW; }
 namespace GIVertex { const unsigned int FVF = D3DFVF_TEX1 | D3DFVF_DIFFUSE | D3DFVF_XYZRHW; }
 
-// --- ÀRºA¦¨­ûªì©l¤Æ ---
+// --- éœæ…‹æˆå“¡åˆå§‹åŒ– ---
 CDeviceResetManager* CDeviceResetManager::s_pInstance = nullptr;
 
-// ¹ïÀ³¤Ï½sÄ¶½X: 0x00544D50
+// å°æ‡‰åç·¨è­¯ç¢¼: 0x00544D50
 CDeviceResetManager::CDeviceResetManager() {
-    // «Øºc¨ç¦¡·|¦Û°Ê©I¥s¦¨­ûÅÜ¼Æªº«Øºc¨ç¦¡
+    // å»ºæ§‹å‡½å¼æœƒè‡ªå‹•å‘¼å«æˆå“¡è®Šæ•¸çš„å»ºæ§‹å‡½å¼
     // m_vertexBufferMgr, m_imageResourceMgr, m_textureMgr
-    m_pSprite = nullptr; // ±N Sprite «ü¼Ðªì©l¤Æ¬°ªÅ
+    m_pSprite = nullptr; // å°‡ Sprite æŒ‡æ¨™åˆå§‹åŒ–ç‚ºç©º
 }
 
-// ¹ïÀ³¤Ï½sÄ¶½X: 0x00544D80
+// å°æ‡‰åç·¨è­¯ç¢¼: 0x00544D80
 CDeviceResetManager::~CDeviceResetManager() {
-    // ÄÀ©ñ Sprite ª«¥ó
+    // é‡‹æ”¾ Sprite ç‰©ä»¶
     SafeRelease(m_pSprite);
-    // m_vertexBufferMgr, m_imageResourceMgr, m_textureMgr ªº¸Ñºc¨ç¦¡·|³Q¦Û°Ê©I¥s
+    // m_vertexBufferMgr, m_imageResourceMgr, m_textureMgr çš„è§£æ§‹å‡½å¼æœƒè¢«è‡ªå‹•å‘¼å«
 }
 
-// ÀRºA GetInstance ¤èªkªº¹ê²{
+// éœæ…‹ GetInstance æ–¹æ³•çš„å¯¦ç¾
 CDeviceResetManager* CDeviceResetManager::GetInstance() {
     if (s_pInstance == nullptr) {
         s_pInstance = new (std::nothrow) CDeviceResetManager();
@@ -39,7 +39,7 @@ CDeviceResetManager* CDeviceResetManager::GetInstance() {
     return s_pInstance;
 }
 
-// ¹ïÀ³¤Ï½sÄ¶½X: 0x00544E00
+// å°æ‡‰åç·¨è­¯ç¢¼: 0x00544E00
 VertexBufferData* CDeviceResetManager::CreateVertexBuffer(unsigned short capacity, unsigned char type) {
     VertexBufferData* pNewNode = m_vertexBufferMgr.Add();
     if (!pNewNode) return nullptr;
@@ -64,7 +64,7 @@ VertexBufferData* CDeviceResetManager::CreateVertexBuffer(unsigned short capacit
         break;
     default:
         m_vertexBufferMgr.Delete(pNewNode);
-        return nullptr; // ¤£¤ä´©ªºÃþ«¬
+        return nullptr; // ä¸æ”¯æ´çš„é¡žåž‹
     }
 
     hr = Device->CreateVertexBuffer(vertexSize * capacity, 8 /*D3DUSAGE_WRITEONLY*/, fvf, D3DPOOL_MANAGED, &pNewNode->pVertexBuffer, nullptr);
@@ -75,27 +75,27 @@ VertexBufferData* CDeviceResetManager::CreateVertexBuffer(unsigned short capacit
         return pNewNode;
     }
 
-    m_vertexBufferMgr.Delete(pNewNode); // «Ø¥ß¥¢±Ñ«h§R°£¸`ÂI
+    m_vertexBufferMgr.Delete(pNewNode); // å»ºç«‹å¤±æ•—å‰‡åˆªé™¤ç¯€é»ž
     return nullptr;
 }
 
-// ¹ïÀ³¤Ï½sÄ¶½X: 0x00544F40
+// å°æ‡‰åç·¨è­¯ç¢¼: 0x00544F40
 void CDeviceResetManager::DeleteVertexBuffer(VertexBufferData* pBufferData) {
     m_vertexBufferMgr.Delete(pBufferData);
 }
 
-// ¹ïÀ³¤Ï½sÄ¶½X: 0x00544F50
+// å°æ‡‰åç·¨è­¯ç¢¼: 0x00544F50
 ImageResourceListData* CDeviceResetManager::CreateImageResource(const char* pFileName, char flag, unsigned char packerType, int a5) {
     ImageResourceListData* pNewNode = m_imageResourceMgr.Add();
     if (!pNewNode) return nullptr;
 
-    // ½Æ»sÀÉ®×¦WºÙ©MºX¼Ð
+    // è¤‡è£½æª”æ¡ˆåç¨±å’Œæ——æ¨™
     strcpy_s(pNewNode->m_szFileName, sizeof(pNewNode->m_szFileName), pFileName);
     pNewNode->m_cFlag = flag;
     pNewNode->m_ucPackerType = packerType;
 
     bool bSuccess = false;
-    // ®Ú¾Ú¥þ°ìºX¼Ð¨M©w¸ü¤J¤è¦¡
+    // æ ¹æ“šå…¨åŸŸæ——æ¨™æ±ºå®šè¼‰å…¥æ–¹å¼
     if (IsInMemory) { // IsInMemory
         bSuccess = pNewNode->m_Resource.LoadGIInPack(pNewNode->m_szFileName, a5, packerType);
     }
@@ -111,12 +111,12 @@ ImageResourceListData* CDeviceResetManager::CreateImageResource(const char* pFil
     return pNewNode;
 }
 
-// ¹ïÀ³¤Ï½sÄ¶½X: 0x00544FE0
+// å°æ‡‰åç·¨è­¯ç¢¼: 0x00544FE0
 void CDeviceResetManager::DeleteImageResource(ImageResourceListData* pImageNode) {
     m_imageResourceMgr.Delete(pImageNode);
 }
 
-// ¹ïÀ³¤Ï½sÄ¶½X: 0x00544FF0
+// å°æ‡‰åç·¨è­¯ç¢¼: 0x00544FF0
 TextureListData* CDeviceResetManager::CreateTexture(const char* pFileName, unsigned char flag) {
     TextureListData* pNewNode = m_textureMgr.Add();
     if (!pNewNode) return nullptr;
@@ -124,7 +124,7 @@ TextureListData* CDeviceResetManager::CreateTexture(const char* pFileName, unsig
     strcpy_s(pNewNode->szFileName, sizeof(pNewNode->szFileName), pFileName);
     pNewNode->flag = flag;
 
-    // ©I¥sD3DX¨ç¦¡±qÀÉ®×«Ø¥ß¯¾²z
+    // å‘¼å«D3DXå‡½å¼å¾žæª”æ¡ˆå»ºç«‹ç´‹ç†
     HRESULT hr = D3DXCreateTextureFromFileExA(
         Device, pFileName, D3DX_DEFAULT_NONPOW2, D3DX_DEFAULT_NONPOW2, D3DX_DEFAULT, 0,
         D3DFMT_UNKNOWN, D3DPOOL_MANAGED, D3DX_FILTER_LINEAR, D3DX_FILTER_LINEAR,
@@ -138,45 +138,45 @@ TextureListData* CDeviceResetManager::CreateTexture(const char* pFileName, unsig
     return pNewNode;
 }
 
-// ¹ïÀ³¤Ï½sÄ¶½X: 0x00545060
+// å°æ‡‰åç·¨è­¯ç¢¼: 0x00545060
 void CDeviceResetManager::DeleteTexture(TextureListData* pTextureNode) {
     m_textureMgr.Delete(pTextureNode);
 }
 
-// ¹ïÀ³¤Ï½sÄ¶½X: 0x00545070
+// å°æ‡‰åç·¨è­¯ç¢¼: 0x00545070
 ID3DXSprite* CDeviceResetManager::GetSpriteObject() {
     if (!m_pSprite) {
         if (FAILED(D3DXCreateSprite(Device, &m_pSprite))) {
-            m_pSprite = nullptr; // ½T«O«Ø¥ß¥¢±Ñ®É«ü¼Ð¬°ªÅ
+            m_pSprite = nullptr; // ç¢ºä¿å»ºç«‹å¤±æ•—æ™‚æŒ‡æ¨™ç‚ºç©º
         }
     }
     return m_pSprite;
 }
 
-// ¹ïÀ³¤Ï½sÄ¶½X: 0x005450A0
+// å°æ‡‰åç·¨è­¯ç¢¼: 0x005450A0
 bool CDeviceResetManager::ResetToDevice(long hresult) {
-    // ÀË¬d¬O§_»Ý­n­«³]¸Ë¸m¡CD3DERR_DEVICENOTRESET ªº­È¬° -2005530519¡C
+    // æª¢æŸ¥æ˜¯å¦éœ€è¦é‡è¨­è£ç½®ã€‚D3DERR_DEVICENOTRESET çš„å€¼ç‚º -2005530519ã€‚
     if (hresult >= 0 || Device->TestCooperativeLevel() != D3DERR_DEVICENOTRESET) {
         return true;
     }
 
-    // --- ¸Ë¸m¿ò¥¢(Lost)¶¥¬q ---
+    // --- è£ç½®éºå¤±(Lost)éšŽæ®µ ---
     if (m_pSprite) {
         m_pSprite->OnLostDevice();
     }
 
-    // --- ­«³](Reset)¶¥¬q ---
+    // --- é‡è¨­(Reset)éšŽæ®µ ---
     if (FAILED(Device->Reset(&g_d3dpp))) {
-        return false; // ­«³]¥¢±Ñ
+        return false; // é‡è¨­å¤±æ•—
     }
 
-    // --- ­«³]¦¨¥\«á¶¥¬q ---
+    // --- é‡è¨­æˆåŠŸå¾ŒéšŽæ®µ ---
     if (m_pSprite) {
         m_pSprite->OnResetDevice();
     }
 
-    // ­«·s³]©w¸Ë¸mªº¦UºØ´è¬Vª¬ºA
-    Device->SetRenderState(D3DRS_CULLMODE, D3DCULL_NONE); // ­ì©l½X³]¬°1(D3DCULL_CW)¡A¦ýD3DCULL_NONE(1)¤~¬O±`¨£­È
+    // é‡æ–°è¨­å®šè£ç½®çš„å„ç¨®æ¸²æŸ“ç‹€æ…‹
+    Device->SetRenderState(D3DRS_CULLMODE, D3DCULL_NONE); // åŽŸå§‹ç¢¼è¨­ç‚º1(D3DCULL_CW)ï¼Œä½†D3DCULL_NONE(1)æ‰æ˜¯å¸¸è¦‹å€¼
     Device->SetRenderState(D3DRS_LIGHTING, FALSE);
     Device->SetRenderState(D3DRS_ZENABLE, D3DZB_FALSE);
     Device->SetRenderState(D3DRS_DITHERENABLE, FALSE);
@@ -184,25 +184,25 @@ bool CDeviceResetManager::ResetToDevice(long hresult) {
     Device->SetRenderState(D3DRS_FOGENABLE, FALSE);
 
     Device->SetRenderState(D3DRS_ALPHATESTENABLE, TRUE);
-    Device->SetRenderState(D3DRS_ALPHAFUNC, D3DCMP_NOTEQUAL); // ­ì©l½X³]¬°6(D3DCMP_NOTEQUAL)
+    Device->SetRenderState(D3DRS_ALPHAFUNC, D3DCMP_NOTEQUAL); // åŽŸå§‹ç¢¼è¨­ç‚º6(D3DCMP_NOTEQUAL)
     Device->SetRenderState(D3DRS_ALPHAREF, 0);
     Device->SetRenderState(D3DRS_ALPHABLENDENABLE, TRUE);
     Device->SetRenderState(D3DRS_SRCBLEND, D3DBLEND_SRCALPHA); // 5
     Device->SetRenderState(D3DRS_DESTBLEND, D3DBLEND_INVSRCALPHA); // 6
 
-    // ³]©w¯¾²zª¬ºA
+    // è¨­å®šç´‹ç†ç‹€æ…‹
     Device->SetTextureStageState(0, D3DTSS_ALPHAOP, D3DTOP_MODULATE); // 4
     Device->SetTextureStageState(0, D3DTSS_ALPHAARG1, D3DTA_TEXTURE); // 2
     Device->SetTextureStageState(0, D3DTSS_ALPHAARG2, D3DTA_DIFFUSE); // 0, DIFFUSE
 
-    // ³]©w±Ä¼Ë¾¹ª¬ºA
+    // è¨­å®šæŽ¡æ¨£å™¨ç‹€æ…‹
     Device->SetSamplerState(0, D3DSAMP_ADDRESSU, D3DTADDRESS_CLAMP); // 3
     Device->SetSamplerState(0, D3DSAMP_ADDRESSV, D3DTADDRESS_CLAMP); // 3
-    Device->SetSamplerState(0, D3DSAMP_MINFILTER, D3DTEXF_POINT); // 1, ¤£¬O±`¨£ªº D3DTEXF_LINEAR
+    Device->SetSamplerState(0, D3DSAMP_MINFILTER, D3DTEXF_POINT); // 1, ä¸æ˜¯å¸¸è¦‹çš„ D3DTEXF_LINEAR
     Device->SetSamplerState(0, D3DSAMP_MAGFILTER, D3DTEXF_POINT); // 1
-    Device->SetSamplerState(0, D3DSAMP_MIPFILTER, D3DTEXF_NONE);  // 0, ¤£¬O±`¨£ªº D3DTEXF_LINEAR
+    Device->SetSamplerState(0, D3DSAMP_MIPFILTER, D3DTEXF_NONE);  // 0, ä¸æ˜¯å¸¸è¦‹çš„ D3DTEXF_LINEAR
 
-    // ®Ú¾ÚºX¼Ð³]©w¹ï¸Ü¤è¶ô¼Ò¦¡
+    // æ ¹æ“šæ——æ¨™è¨­å®šå°è©±æ–¹å¡Šæ¨¡å¼
     if (!IsDialogBoxMode) { // IsDialogBoxMode
         Device->SetDialogBoxMode(TRUE);
     }

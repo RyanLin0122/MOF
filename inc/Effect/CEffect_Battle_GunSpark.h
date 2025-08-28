@@ -4,31 +4,31 @@
 
 /**
  * @class CEffect_Battle_GunSpark
- * @brief ¥Nªíºj¤â®gÀ»®É¦bºj¤f²£¥Íªº¤õªá¯S®Ä¡C
+ * @brief ä»£è¡¨æ§æ‰‹å°„æ“Šæ™‚åœ¨æ§å£ç”¢ç”Ÿçš„ç«èŠ±ç‰¹æ•ˆã€‚
  *
- * Ä~©Ó¦Û CEffectBase¡A¬O¤@­Ó¥Ñ CEffect_Battle_GunShoot Ä²µoªº¤@¦¸©ÊµøÄ±®ÄªG¡C
+ * ç¹¼æ‰¿è‡ª CEffectBaseï¼Œæ˜¯ä¸€å€‹ç”± CEffect_Battle_GunShoot è§¸ç™¼çš„ä¸€æ¬¡æ€§è¦–è¦ºæ•ˆæœã€‚
  */
 class CEffect_Battle_GunSpark : public CEffectBase {
 public:
     CEffect_Battle_GunSpark();
     virtual ~CEffect_Battle_GunSpark();
 
-    // --- µêÀÀ¨ç¦¡ÂĞ¼g ---
+    // --- è™›æ“¬å‡½å¼è¦†å¯« ---
 
-    /// @brief ³B²z¯S®Äªº¥Í©R¶g´Á¡Aª½±µ¨Ì¿à CCAEffect ªº°Êµe¼½©ñª¬ºA¡C
+    /// @brief è™•ç†ç‰¹æ•ˆçš„ç”Ÿå‘½é€±æœŸï¼Œç›´æ¥ä¾è³´ CCAEffect çš„å‹•ç•«æ’­æ”¾ç‹€æ…‹ã€‚
     virtual bool FrameProcess(float fElapsedTime) override;
 
-    /// @brief ·Ç³ÆÃ¸»s«eªºÅŞ¿è§ó·s¡C
+    /// @brief æº–å‚™ç¹ªè£½å‰çš„é‚è¼¯æ›´æ–°ã€‚
     virtual void Process() override;
 
-    /// @brief Ã¸»s¯S®Ä¡C
+    /// @brief ç¹ªè£½ç‰¹æ•ˆã€‚
     virtual void Draw() override;
 
-    // --- ±M¦³¨ç¦¡ ---
+    // --- å°ˆæœ‰å‡½å¼ ---
 
-    /// @brief ³]©w¯S®Ä¡C
-    /// @param x ºj¤f¤õªáªº X ®y¼Ğ¡C
-    /// @param y ºj¤f¤õªáªº Y ®y¼Ğ¡C
-    /// @param bFlip ¬O§_®Ú¾Ú¨¤¦â´Â¦V¤ô¥­Â½Âà¡C
+    /// @brief è¨­å®šç‰¹æ•ˆã€‚
+    /// @param x æ§å£ç«èŠ±çš„ X åº§æ¨™ã€‚
+    /// @param y æ§å£ç«èŠ±çš„ Y åº§æ¨™ã€‚
+    /// @param bFlip æ˜¯å¦æ ¹æ“šè§’è‰²æœå‘æ°´å¹³ç¿»è½‰ã€‚
     void SetEffect(float x, float y, bool bFlip);
 };

@@ -13,11 +13,11 @@
 
 extern LPDIRECT3DDEVICE9 Device;
 
-// ´À´« ImageResource.cpp ¤¤ªº D3DXCreateTextureFromFileInMemoryEx
-// §Ş¥©¡G§Ú­Ì¦b³o¸Ì©w¸q¥¦¡A³sµ²¾¹·|Àu¥ı¨Ï¥Î³o­Óª©¥»¦Ó¤£¬O D3DX ¨ç¦¡®w¤¤ªºª©¥»¡C
-// ³o»İ­n¦b½sÄ¶®É¯S§O³]©w¡A©ÎªÌ½T«O³o­Ó obj ÀÉÀu¥ı³Q³sµ²¡C
-// ¤@­Ó§ó¦w¥şªº§@ªk¬O¨Ï¥Î function hooking ¨ç¦¡®w(¦p MinHook)©Î­×§ï­ì©l½X¨Óª`¤J¨Ì¿à¡C
-// ¬°¨DÂ²³æ¡A§Ú­Ì¥ı°²³]¥i¥H³o¼ËÂĞ»\¡C
+// æ›¿æ› ImageResource.cpp ä¸­çš„ D3DXCreateTextureFromFileInMemoryEx
+// æŠ€å·§ï¼šæˆ‘å€‘åœ¨é€™è£¡å®šç¾©å®ƒï¼Œé€£çµå™¨æœƒå„ªå…ˆä½¿ç”¨é€™å€‹ç‰ˆæœ¬è€Œä¸æ˜¯ D3DX å‡½å¼åº«ä¸­çš„ç‰ˆæœ¬ã€‚
+// é€™éœ€è¦åœ¨ç·¨è­¯æ™‚ç‰¹åˆ¥è¨­å®šï¼Œæˆ–è€…ç¢ºä¿é€™å€‹ obj æª”å„ªå…ˆè¢«é€£çµã€‚
+// ä¸€å€‹æ›´å®‰å…¨çš„ä½œæ³•æ˜¯ä½¿ç”¨ function hooking å‡½å¼åº«(å¦‚ MinHook)æˆ–ä¿®æ”¹åŸå§‹ç¢¼ä¾†æ³¨å…¥ä¾è³´ã€‚
+// ç‚ºæ±‚ç°¡å–®ï¼Œæˆ‘å€‘å…ˆå‡è¨­å¯ä»¥é€™æ¨£è¦†è“‹ã€‚
 HRESULT D3DXCreateTextureFromFileInMemoryEx(
     LPDIRECT3DDEVICE9 pDevice,
     LPCVOID pSrcData,
@@ -35,26 +35,26 @@ HRESULT D3DXCreateTextureFromFileInMemoryEx(
     PALETTEENTRY* pPalette,
     LPDIRECT3DTEXTURE9* ppTexture)
 {
-    // ±N©I¥sÂàµoµ¹§Ú­Ìªº MockDevice
+    // å°‡å‘¼å«è½‰ç™¼çµ¦æˆ‘å€‘çš„ MockDevice
     MockD3DDevice* mockDevice = static_cast<MockD3DDevice*>(pDevice);
     return mockDevice->Mock_D3DXCreateTextureFromFileInMemoryEx(Width, Height, Format, ppTexture);
 }
 
-// ´À´« LoadingThread.cpp ¤¤ªº ResourceMgr::GetInstance()->LoadingImageResource
-// ³o¬O¤ñ¸û´Æ¤âªº³¡¤À¡A¦]¬°­ì©l½Xª½±µ¼g¦º¤F¡C²z·Q±¡ªp¤U¡A­ì©l½XÀ³ª`¤J ResourceMgr ªº¨Ì¿à¡C
-// ¦b³o¸Ì¡A§Ú­Ì±N¦b¾ã¦X´ú¸Õ¤¤´£¨Ñ¤@­Ó¯S®íªº Mock ResourceMgr ¨ÓÅçÃÒ¦æ¬°¡C
-// ¹ï©ó³æ¤¸´ú¸Õ¡A§Ú­Ì«h°²³]¥i¥H´À´«¨ä¦æ¬°¡C
+// æ›¿æ› LoadingThread.cpp ä¸­çš„ ResourceMgr::GetInstance()->LoadingImageResource
+// é€™æ˜¯æ¯”è¼ƒæ£˜æ‰‹çš„éƒ¨åˆ†ï¼Œå› ç‚ºåŸå§‹ç¢¼ç›´æ¥å¯«æ­»äº†ã€‚ç†æƒ³æƒ…æ³ä¸‹ï¼ŒåŸå§‹ç¢¼æ‡‰æ³¨å…¥ ResourceMgr çš„ä¾è³´ã€‚
+// åœ¨é€™è£¡ï¼Œæˆ‘å€‘å°‡åœ¨æ•´åˆæ¸¬è©¦ä¸­æä¾›ä¸€å€‹ç‰¹æ®Šçš„ Mock ResourceMgr ä¾†é©—è­‰è¡Œç‚ºã€‚
+// å°æ–¼å–®å…ƒæ¸¬è©¦ï¼Œæˆ‘å€‘å‰‡å‡è¨­å¯ä»¥æ›¿æ›å…¶è¡Œç‚ºã€‚
 
 ImageSystemTester::ImageSystemTester() {
     m_mockDevice = new MockD3DDevice();
-    // ³Æ¥÷­ì©lªº Device «ü¼Ğ (ÁöµM¦b main ¤¤¬O nullptr)
+    // å‚™ä»½åŸå§‹çš„ Device æŒ‡æ¨™ (é›–ç„¶åœ¨ main ä¸­æ˜¯ nullptr)
     m_originalDevicePtr = Device;
-    // ±N¥ş°ì Device «ü¼Ğ«ü¦V§Ú­Ìªº Mock ª«¥ó
+    // å°‡å…¨åŸŸ Device æŒ‡æ¨™æŒ‡å‘æˆ‘å€‘çš„ Mock ç‰©ä»¶
     Device = m_mockDevice;
 }
 
 ImageSystemTester::~ImageSystemTester() {
-    // ÁÙ­ì¥ş°ì Device «ü¼Ğ
+    // é‚„åŸå…¨åŸŸ Device æŒ‡æ¨™
     Device = m_originalDevicePtr;
     delete m_mockDevice;
     m_mockDevice = nullptr;
@@ -69,16 +69,16 @@ void ImageSystemTester::RunImageTests() {
 
 void ImageSystemTester::Setup() {
     m_mockDevice->ResetCounters();
-    // ²M²z¥i¯à¦s¦bªº³æ¨Òª«¥óª¬ºA
+    // æ¸…ç†å¯èƒ½å­˜åœ¨çš„å–®ä¾‹ç‰©ä»¶ç‹€æ…‹
     if (CDeviceManager::GetInstance()) {
-        // (µLªkª½±µ§R°£¡A¦]¬°«Øºc¨ç¦¡¬O¨p¦³ªº¡C´ú¸Õ®Ø¬[³q±`¦³ friend class ¾÷¨î)
-        // ³o¸Ì§Ú­Ì°²³]¥i¥H­«³]¨ä¤º³¡ª¬ºA
+        // (ç„¡æ³•ç›´æ¥åˆªé™¤ï¼Œå› ç‚ºå»ºæ§‹å‡½å¼æ˜¯ç§æœ‰çš„ã€‚æ¸¬è©¦æ¡†æ¶é€šå¸¸æœ‰ friend class æ©Ÿåˆ¶)
+        // é€™è£¡æˆ‘å€‘å‡è¨­å¯ä»¥é‡è¨­å…¶å…§éƒ¨ç‹€æ…‹
     }
     MockResourceMgr::GetInstance()->Reset();
 }
 
 void ImageSystemTester::Teardown() {
-    // ¥i¥H¦b¦¹³B§R°£´ú¸Õ¤¤«Ø¥ßªºÀÉ®×
+    // å¯ä»¥åœ¨æ­¤è™•åˆªé™¤æ¸¬è©¦ä¸­å»ºç«‹çš„æª”æ¡ˆ
     remove("test_uncompressed.gi");
     remove("test_compressed.gi");
     remove("test_anim.gi");
@@ -86,12 +86,12 @@ void ImageSystemTester::Teardown() {
 
 
 // ----------------------------------------
-// --- ³æ¤¸´ú¸Õ (UNIT TESTS) ---
+// --- å–®å…ƒæ¸¬è©¦ (UNIT TESTS) ---
 // ----------------------------------------
 void ImageSystemTester::RunUnitTests() {
     std::cout << "\n--- Running Unit Tests ---" << std::endl;
 
-    // ­ì¦³ªº´ú¸Õ
+    // åŸæœ‰çš„æ¸¬è©¦
     Setup(); RUN_TEST(Test_GIVertex_Constructor); Teardown();
     Setup(); RUN_TEST(Test_CDeviceManager_Singleton); Teardown();
     Setup(); RUN_TEST(Test_CDeviceManager_StateCaching); Teardown();
@@ -104,7 +104,7 @@ void ImageSystemTester::RunUnitTests() {
     Setup(); RUN_TEST(Test_GameImage_Transformation); Teardown();
     Setup(); RUN_TEST(Test_GameImage_ColorAndAlpha); Teardown();
     Setup(); RUN_TEST(Test_BackgroundImage_Scrolling); Teardown();
-    // ª`·N: ¤Ş¥Î­p¼Æ´ú¸Õ»İ­n¤@­Ó¯u¹êªº¸ê·½¡A¦]¦¹©ñ¦b¾ã¦X´ú¸Õ³¡¤À
+    // æ³¨æ„: å¼•ç”¨è¨ˆæ•¸æ¸¬è©¦éœ€è¦ä¸€å€‹çœŸå¯¦çš„è³‡æºï¼Œå› æ­¤æ”¾åœ¨æ•´åˆæ¸¬è©¦éƒ¨åˆ†
 
 
     std::cout << "--- Unit Tests Finished ---" << std::endl;
@@ -131,15 +131,15 @@ void ImageSystemTester::Test_CDeviceManager_Singleton() {
 void ImageSystemTester::Test_CDeviceManager_StateCaching() {
     CDeviceManager* dm = CDeviceManager::GetInstance();
 
-    // ´ú¸Õ FVF
+    // æ¸¬è©¦ FVF
     dm->SetFVF(D3DFVF_XYZ);
     assert(m_mockDevice->SetFVF_count == 1);
-    dm->SetFVF(D3DFVF_XYZ); // ­«½Æ©I¥s
-    assert(m_mockDevice->SetFVF_count == 1); // ­p¼Æ¾¹¤£À³¼W¥[
+    dm->SetFVF(D3DFVF_XYZ); // é‡è¤‡å‘¼å«
+    assert(m_mockDevice->SetFVF_count == 1); // è¨ˆæ•¸å™¨ä¸æ‡‰å¢åŠ 
     dm->SetFVF(D3DFVF_NORMAL);
-    assert(m_mockDevice->SetFVF_count == 2); // ­p¼Æ¾¹À³¼W¥[
+    assert(m_mockDevice->SetFVF_count == 2); // è¨ˆæ•¸å™¨æ‡‰å¢åŠ 
 
-    // ´ú¸Õ Texture
+    // æ¸¬è©¦ Texture
     IDirect3DBaseTexture9* tex1 = reinterpret_cast<IDirect3DBaseTexture9*>(new char[1]);
     IDirect3DBaseTexture9* tex2 = reinterpret_cast<IDirect3DBaseTexture9*>(new char[1]);
     dm->SetTexture(0, tex1);
@@ -151,7 +151,7 @@ void ImageSystemTester::Test_CDeviceManager_StateCaching() {
     delete[] tex1;
     delete[] tex2;
 
-    // ´ú¸Õ Render State
+    // æ¸¬è©¦ Render State
     dm->SetRenderState(D3DRS_ALPHABLENDENABLE, TRUE);
     assert(m_mockDevice->SetRenderState_count == 1);
     dm->SetRenderState(D3DRS_ALPHABLENDENABLE, TRUE);
@@ -160,7 +160,7 @@ void ImageSystemTester::Test_CDeviceManager_StateCaching() {
     assert(m_mockDevice->SetRenderState_count == 2);
     assert(m_mockDevice->last_render_state_value == FALSE);
 
-    // ´ú¸ÕµL§Ö¨úªº SetTextureStageState
+    // æ¸¬è©¦ç„¡å¿«å–çš„ SetTextureStageState
     dm->SetTextureStageState(0, D3DTSS_COLOROP, D3DTOP_MODULATE);
     dm->SetTextureStageState(0, D3DTSS_COLOROP, D3DTOP_MODULATE);
     assert(m_mockDevice->SetTextureStageState_count == 2);
@@ -171,7 +171,7 @@ void ImageSystemTester::Test_CDeviceManager_ResetRenderState() {
     m_mockDevice->ResetCounters();
 
     dm->ResetRenderState();
-    // À³©I¥s 3 ¦¸ SetRenderState
+    // æ‡‰å‘¼å« 3 æ¬¡ SetRenderState
     assert(m_mockDevice->SetRenderState_count == 3);
 }
 
@@ -190,7 +190,7 @@ void ImageSystemTester::Test_ImageResource_LoadGI_Success() {
     assert(res.m_pImageData != nullptr);
     assert(res.m_imageDataSize == 64 * 32 * 4);
 
-    // ÀË¬d°Êµe¼v®æ¸ê®Æ¬O§_¥¿½TÅª¨ú
+    // æª¢æŸ¥å‹•ç•«å½±æ ¼è³‡æ–™æ˜¯å¦æ­£ç¢ºè®€å–
     assert(res.m_pAnimationFrames[1].width == 123);
 }
 
@@ -211,9 +211,9 @@ void ImageSystemTester::Test_ImageResource_LoadTexture_Success() {
     assert(success == true);
     assert(m_mockDevice->CreateTexture_count == 1);
     assert(res.m_pTexture != nullptr);
-    assert(res.m_pImageData == nullptr); // °O¾ĞÅéÀ³³QÄÀ©ñ
+    assert(res.m_pImageData == nullptr); // è¨˜æ†¶é«”æ‡‰è¢«é‡‹æ”¾
 
-    delete[] res.m_pTexture; // ²M²z fake texture
+    delete[] res.m_pTexture; // æ¸…ç† fake texture
 }
 
 void ImageSystemTester::Test_ImageResource_LoadTexture_Failure() {
@@ -221,13 +221,13 @@ void ImageSystemTester::Test_ImageResource_LoadTexture_Failure() {
     ImageResource res;
     res.LoadGI("test_uncompressed.gi", 0);
 
-    m_mockDevice->force_texture_creation_failure = true; // ±j¨î¥¢±Ñ
+    m_mockDevice->force_texture_creation_failure = true; // å¼·åˆ¶å¤±æ•—
     bool success = res.LoadTexture();
 
     assert(success == false);
     assert(m_mockDevice->CreateTexture_count == 1);
     assert(res.m_pTexture == nullptr);
-    assert(res.m_pImageData == nullptr); // °O¾ĞÅéµL½×¦¨¥\¥¢±Ñ³£À³ÄÀ©ñ
+    assert(res.m_pImageData == nullptr); // è¨˜æ†¶é«”ç„¡è«–æˆåŠŸå¤±æ•—éƒ½æ‡‰é‡‹æ”¾
 }
 
 void ImageSystemTester::Test_LoadingThread_QueueOperations() {
@@ -256,67 +256,67 @@ void ImageSystemTester::Test_LoadingThread_ThreadProcessing() {
     lt.AddBackGroundLoadingRes({184550388, 2, 1});
     lt.AddBackGroundLoadingRes({251658410, 2, 2});
 
-    lt.Poll(); // ±Ò°Ê°õ¦æºü
+    lt.Poll(); // å•Ÿå‹•åŸ·è¡Œç·’
 
-    // --- ¥i¾aªºµ¥«İ ---
-    // ÀË¬d°õ¦æºü±±¨î¥N½X¬O§_¦³®Ä
+    // --- å¯é çš„ç­‰å¾… ---
+    // æª¢æŸ¥åŸ·è¡Œç·’æ§åˆ¶ä»£ç¢¼æ˜¯å¦æœ‰æ•ˆ
     if (lt.m_hThread) {
-        // µ¥«İ¡Aª½¨ì¥Ñ m_hThread ©Ò¥Nªíªº°õ¦æºüµ²§ô¡C
-        // INFINITE ªí¥ÜµL­­´Áµ¥«İ¡Aª½¨ì¥¦§¹¦¨¬°¤î¡C
+        // ç­‰å¾…ï¼Œç›´åˆ°ç”± m_hThread æ‰€ä»£è¡¨çš„åŸ·è¡Œç·’çµæŸã€‚
+        // INFINITE è¡¨ç¤ºç„¡é™æœŸç­‰å¾…ï¼Œç›´åˆ°å®ƒå®Œæˆç‚ºæ­¢ã€‚
         WaitForSingleObject(lt.m_hThread, INFINITE);
 
-        // ¬JµM°õ¦æºüµ²§ô¤F¡A³Ì¦n±N¨ä±±¨î¥N½XÃö³¬
+        // æ—¢ç„¶åŸ·è¡Œç·’çµæŸäº†ï¼Œæœ€å¥½å°‡å…¶æ§åˆ¶ä»£ç¢¼é—œé–‰
         CloseHandle(lt.m_hThread);
-        lt.m_hThread = NULL; // Á×§K­«½ÆÃö³¬
+        lt.m_hThread = NULL; // é¿å…é‡è¤‡é—œé–‰
     }
 
-    // ²{¦b§Ú­Ì¥i¥H 100% ½T©w°õ¦æºü¤w¸g°õ¦æ§¹²¦
+    // ç¾åœ¨æˆ‘å€‘å¯ä»¥ 100% ç¢ºå®šåŸ·è¡Œç·’å·²ç¶“åŸ·è¡Œå®Œç•¢
     assert(lt.m_bIsRunning == false);
 }
 
 void ImageSystemTester::Test_cltImageManager_PoolExhaustionAndReuse() {
-    // ³o­Ó´ú¸ÕÅçÃÒª«¥ó¦Àªº¨â­Ó®Ö¤ß¥\¯à¡G¯ÓºÉ©M¦^¦¬¦A§Q¥Î
+    // é€™å€‹æ¸¬è©¦é©—è­‰ç‰©ä»¶æ± çš„å…©å€‹æ ¸å¿ƒåŠŸèƒ½ï¼šè€—ç›¡å’Œå›æ”¶å†åˆ©ç”¨
     bool vfs_opened = CMofPacking::GetInstance()->PackFileOpen("mof");
-    assert(vfs_opened == true); // ½T«O .pak ÀÉ®×¥»¨­¬O¦s¦bªº
+    assert(vfs_opened == true); // ç¢ºä¿ .pak æª”æ¡ˆæœ¬èº«æ˜¯å­˜åœ¨çš„
     cltImageManager* mgr = cltImageManager::GetInstance();
     mgr->Initialize();
 
-    // --- FIX START: ¨Ï¥Î¤@­Ó§Ú­Ì¦b¥Dµ{¦¡¤¤¤wÅçÃÒ¹L¡B½T©w¦s¦bªº¸ê·½ID ---
+    // --- FIX START: ä½¿ç”¨ä¸€å€‹æˆ‘å€‘åœ¨ä¸»ç¨‹å¼ä¸­å·²é©—è­‰éã€ç¢ºå®šå­˜åœ¨çš„è³‡æºID ---
     const unsigned int VALID_RESOURCE_ID = 201326853;
     const ResourceMgr::eResourceType VALID_RESOURCE_TYPE = ResourceMgr::RES_ITEM;
     // --- FIX END ---
 
 
-    // 1. ´ú¸Õª«¥ó¦À¯ÓºÉ
+    // 1. æ¸¬è©¦ç‰©ä»¶æ± è€—ç›¡
     std::vector<GameImage*> acquired_images;
     acquired_images.reserve(cltImageManager::MAX_IMAGES);
 
     for (int i = 0; i < cltImageManager::MAX_IMAGES; ++i) {
         GameImage* img = mgr->GetGameImage(VALID_RESOURCE_TYPE, VALID_RESOURCE_ID);
-        assert(img != nullptr); // Â_¨¥¡Gª«¥ó¦À¥»¨­ªğ¦^¤F¤@­Ó¦³®Äªºª«¥ó«ü¼Ğ
+        assert(img != nullptr); // æ–·è¨€ï¼šç‰©ä»¶æ± æœ¬èº«è¿”å›äº†ä¸€å€‹æœ‰æ•ˆçš„ç‰©ä»¶æŒ‡æ¨™
 
-        // --- FIX START: ¼W¥[¤@­Ó§óÄY®æªºÂ_¨¥¡A½T«O¸ê·½¤]¦¨¥\¸j©w ---
-        // ³o¨Ï±o´ú¸Õ§ó¥[Ã­°·¡A¯à©è§Ü¦]¸ê·½¤£¦s¦b¦Ó¾É­Pªº°²©Ê¦¨¥\¡C
+        // --- FIX START: å¢åŠ ä¸€å€‹æ›´åš´æ ¼çš„æ–·è¨€ï¼Œç¢ºä¿è³‡æºä¹ŸæˆåŠŸç¶å®š ---
+        // é€™ä½¿å¾—æ¸¬è©¦æ›´åŠ ç©©å¥ï¼Œèƒ½æŠµæŠ—å› è³‡æºä¸å­˜åœ¨è€Œå°è‡´çš„å‡æ€§æˆåŠŸã€‚
         assert(img->IsInUse() == true);
         // --- FIX END ---
 
         acquired_images.push_back(img);
     }
 
-    // ²{¦b¡Aª«¥ó¦ÀÀ³¸Ó¤w¸g³Q 5000 ­Ó¡u¯u¥¿¨Ï¥Î¤¤¡vªºª«¥ó§¹¥ş¶ñº¡¡C
-    // ²Ä 5001 ¦¸Àò¨ú¡A²zÀ³¥¢±Ñ¨Ãªğ¦^ nullptr¡C
+    // ç¾åœ¨ï¼Œç‰©ä»¶æ± æ‡‰è©²å·²ç¶“è¢« 5000 å€‹ã€ŒçœŸæ­£ä½¿ç”¨ä¸­ã€çš„ç‰©ä»¶å®Œå…¨å¡«æ»¿ã€‚
+    // ç¬¬ 5001 æ¬¡ç²å–ï¼Œç†æ‡‰å¤±æ•—ä¸¦è¿”å› nullptrã€‚
     GameImage* extra_img = mgr->GetGameImage(VALID_RESOURCE_TYPE, VALID_RESOURCE_ID);
-    assert(extra_img == nullptr); // ³o­ÓÂ_¨¥²{¦bÀ³¸Ó·|³q¹L¤F
+    assert(extra_img == nullptr); // é€™å€‹æ–·è¨€ç¾åœ¨æ‡‰è©²æœƒé€šéäº†
 
-    // 2. ´ú¸Õ¦^¦¬»P¦A§Q¥Î
+    // 2. æ¸¬è©¦å›æ”¶èˆ‡å†åˆ©ç”¨
     GameImage* first_img = acquired_images[0];
     mgr->ReleaseGameImage(first_img);
 
-    GameImage* reused_img = mgr->GetGameImage(ResourceMgr::RES_UI, 201327578); // ¥Î¤@­Ó¤£¦PªºID¡AÁ×§K§Ö¨ú
+    GameImage* reused_img = mgr->GetGameImage(ResourceMgr::RES_UI, 201327578); // ç”¨ä¸€å€‹ä¸åŒçš„IDï¼Œé¿å…å¿«å–
     assert(reused_img != nullptr);
     assert(reused_img == first_img);
 
-    // ²M²z
+    // æ¸…ç†
     mgr->ReleaseAllGameImage();
 
     delete mgr;
@@ -324,59 +324,59 @@ void ImageSystemTester::Test_cltImageManager_PoolExhaustionAndReuse() {
 }
 
 void ImageSystemTester::Test_GameImage_Transformation() {
-    // ³o­Ó´ú¸ÕÅçÃÒ GameImage ªºÁY©ñ¡B±ÛÂà¡BÂ½Âàµ¥®Ö¤ßÅÜ´«
+    // é€™å€‹æ¸¬è©¦é©—è­‰ GameImage çš„ç¸®æ”¾ã€æ—‹è½‰ã€ç¿»è½‰ç­‰æ ¸å¿ƒè®Šæ›
 
-    // --- FIX: ¦b°ï¿n¤W«Ø¥ß mgr ª«¥ó ---
+    // --- FIX: åœ¨å †ç©ä¸Šå»ºç«‹ mgr ç‰©ä»¶ ---
     cltImageManager* mgr = cltImageManager::GetInstance();
     mgr->Initialize();
 
-    // ¬°¤F´ú¸Õ¡A§Ú­Ì»İ­n¤@­Ó½T©w¦s¦bªº¸ê·½
+    // ç‚ºäº†æ¸¬è©¦ï¼Œæˆ‘å€‘éœ€è¦ä¸€å€‹ç¢ºå®šå­˜åœ¨çš„è³‡æº
     const unsigned int VALID_RESOURCE_ID = 201326853;
     const ResourceMgr::eResourceType VALID_RESOURCE_TYPE = ResourceMgr::RES_ITEM;
-    CMofPacking::GetInstance()->PackFileOpen("mof"); // ½T«OVFS¶}±Ò
+    CMofPacking::GetInstance()->PackFileOpen("mof"); // ç¢ºä¿VFSé–‹å•Ÿ
 
     GameImage* img = mgr->GetGameImage(VALID_RESOURCE_TYPE, VALID_RESOURCE_ID);
     assert(img != nullptr && img->IsInUse());
 
     img->SetBlockID(0);
 
-    // 1. ´ú¸ÕÂ½Âà (ÀË¬d UV ®y¼Ğ)
-    img->Process(); // ¥ı³B²z¤@¦¸¡AÀò¨ú­ì©lUV
+    // 1. æ¸¬è©¦ç¿»è½‰ (æª¢æŸ¥ UV åº§æ¨™)
+    img->Process(); // å…ˆè™•ç†ä¸€æ¬¡ï¼Œç²å–åŸå§‹UV
     float u1_orig = img->m_Vertices[0].texture_u;
     float u2_orig = img->m_Vertices[1].texture_u;
 
     img->SetFlipX(true);
     img->Process();
-    assert(img->m_Vertices[0].texture_u == u2_orig); // UV ®y¼ĞÀ³³Q¥æ´«
+    assert(img->m_Vertices[0].texture_u == u2_orig); // UV åº§æ¨™æ‡‰è¢«äº¤æ›
     assert(img->m_Vertices[1].texture_u == u1_orig);
 
-    img->SetFlipX(false); // «ì´_
+    img->SetFlipX(false); // æ¢å¾©
 
-    // 2. ´ú¸ÕÁY©ñ (ÀË¬d³»ÂI®y¼Ğ)
+    // 2. æ¸¬è©¦ç¸®æ”¾ (æª¢æŸ¥é ‚é»åº§æ¨™)
     img->Process();
     float width_orig = img->m_Vertices[1].position_x - img->m_Vertices[0].position_x;
 
-    img->SetScaleXY(2.0f, 1.0f); // X ¶b©ñ¤j¬° 200%
+    img->SetScaleXY(2.0f, 1.0f); // X è»¸æ”¾å¤§ç‚º 200%
     img->Process();
     float width_scaled = img->m_Vertices[1].position_x - img->m_Vertices[0].position_x;
     assert(abs(width_scaled - (width_orig * 2.0f)) < 0.001f);
 
-    // 3. ´ú¸Õ±ÛÂà (ÀË¬d³»ÂI®y¼Ğ)
-    img->SetScaleXY(1.0f, 1.0f); // «ì´_ÁY©ñ
+    // 3. æ¸¬è©¦æ—‹è½‰ (æª¢æŸ¥é ‚é»åº§æ¨™)
+    img->SetScaleXY(1.0f, 1.0f); // æ¢å¾©ç¸®æ”¾
     img->SetRotation(90);
     img->Process();
     float rotated_width = img->m_Vertices[1].position_x - img->m_Vertices[0].position_x;
     float rotated_height = img->m_Vertices[1].position_y - img->m_Vertices[0].position_y;
     assert(abs(rotated_width) < abs(rotated_height));
 
-    // --- ²M²z ---
+    // --- æ¸…ç† ---
     mgr->ReleaseGameImage(img);
-    CMofPacking::GetInstance()->PackFileClose(); // Ãö³¬VFS
-    delete mgr; // ÄÀ©ñ mgr ª«¥ó
+    CMofPacking::GetInstance()->PackFileClose(); // é—œé–‰VFS
+    delete mgr; // é‡‹æ”¾ mgr ç‰©ä»¶
 }
 
 void ImageSystemTester::Test_GameImage_ColorAndAlpha() {
-    // --- FIX: ¦b°ï¿n¤W«Ø¥ß mgr ª«¥ó ---
+    // --- FIX: åœ¨å †ç©ä¸Šå»ºç«‹ mgr ç‰©ä»¶ ---
     cltImageManager* mgr = cltImageManager::GetInstance();
     mgr->Initialize();
 
@@ -387,13 +387,13 @@ void ImageSystemTester::Test_GameImage_ColorAndAlpha() {
     GameImage* img = mgr->GetGameImage(VALID_RESOURCE_TYPE, VALID_RESOURCE_ID);
     assert(img != nullptr && img->IsInUse());
 
-    // 1. ´ú¸Õ Alpha
+    // 1. æ¸¬è©¦ Alpha
     img->SetAlpha(128);
     img->Process();
-    // ÀË¬d³»ÂIÃC¦â¤¤ªº Alpha ¤À¶q
+    // æª¢æŸ¥é ‚é»é¡è‰²ä¸­çš„ Alpha åˆ†é‡
     assert(((img->m_Vertices[0].diffuse_color >> 24) & 0xFF) == 128);
 
-    // 2. ´ú¸Õ Color (¦Ç¶¥)
+    // 2. æ¸¬è©¦ Color (ç°éš)
     img->SetAlpha(255);
     img->SetColor(100);
     img->Process();
@@ -403,7 +403,7 @@ void ImageSystemTester::Test_GameImage_ColorAndAlpha() {
     assert(((color >> 8) & 0xFF) == 100);  // G
     assert((color & 0xFF) == 100);         // B
 
-    // --- ²M²z ---
+    // --- æ¸…ç† ---
     mgr->ReleaseGameImage(img);
     CMofPacking::GetInstance()->PackFileClose();
     delete mgr;
@@ -411,31 +411,31 @@ void ImageSystemTester::Test_GameImage_ColorAndAlpha() {
 
 void ImageSystemTester::Test_BackgroundImage_Scrolling() {
     BackgroundImage bg;
-    // «Ø¥ß¤@­Ó 512x256 ªº¹Ï¤ù¡A¦ı¨Ó·½¯¾²z¬O 512x1024
+    // å»ºç«‹ä¸€å€‹ 512x256 çš„åœ–ç‰‡ï¼Œä½†ä¾†æºç´‹ç†æ˜¯ 512x1024
     bg.CreateImage("dummy_bg.jpg", 512.0f, 256.0f, 512.0f, 1024.0f);
 
-    // ªì©l V ®y¼Ğ = 1.0 - (256.0 / 1024.0) = 0.75
+    // åˆå§‹ V åº§æ¨™ = 1.0 - (256.0 / 1024.0) = 0.75
     assert(abs(bg.m_fV_Start - 0.75f) < 0.001f);
 
-    // 1. ¦V¤W±²°Ê
-    bg.SetPositionUP(102.4f); // ¦V¤W±²°Ê 10% ªº¯¾²z°ª«×
-    // V ®y¼ĞÀ³´î¤Ö 102.4 / 1024.0 = 0.1
+    // 1. å‘ä¸Šæ²å‹•
+    bg.SetPositionUP(102.4f); // å‘ä¸Šæ²å‹• 10% çš„ç´‹ç†é«˜åº¦
+    // V åº§æ¨™æ‡‰æ¸›å°‘ 102.4 / 1024.0 = 0.1
     assert(abs(bg.m_fV_Start - 0.65f) < 0.001f);
 
-    // 2. ¦V¤U±²°Ê
-    bool at_edge = bg.SetPositionDOWN(204.8f); // ¦V¤U±²°Ê 20%
+    // 2. å‘ä¸‹æ²å‹•
+    bool at_edge = bg.SetPositionDOWN(204.8f); // å‘ä¸‹æ²å‹• 20%
     assert(abs(bg.m_fV_Start - 0.85f) < 0.001f);
-    assert(at_edge == false); // ÁÙ¨S¨ì©³³¡
+    assert(at_edge == false); // é‚„æ²’åˆ°åº•éƒ¨
 
-    // 3. ±²°Ê¨ì©³³¡
-    at_edge = bg.SetPositionDOWN(500.0f); // ¹Á¸Õ±²°Ê¤@­Ó«Ü¤jªº­È
-    assert(abs(bg.m_fV_Start - 0.75f) < 0.001f); // À³³Q­­¨î¦b³Ì¤j­È 0.75
-    assert(at_edge == true); // À³ªğ¦^¤w¨ì¹FÃä¬É
+    // 3. æ²å‹•åˆ°åº•éƒ¨
+    at_edge = bg.SetPositionDOWN(500.0f); // å˜—è©¦æ²å‹•ä¸€å€‹å¾ˆå¤§çš„å€¼
+    assert(abs(bg.m_fV_Start - 0.75f) < 0.001f); // æ‡‰è¢«é™åˆ¶åœ¨æœ€å¤§å€¼ 0.75
+    assert(at_edge == true); // æ‡‰è¿”å›å·²åˆ°é”é‚Šç•Œ
 }
 
 
 // ----------------------------------------
-// --- ¾ã¦X´ú¸Õ (INTEGRATION TESTS) ---
+// --- æ•´åˆæ¸¬è©¦ (INTEGRATION TESTS) ---
 // ----------------------------------------
 void ImageSystemTester::RunIntegrationTests() {
     std::cout << "\n--- Running Integration Tests ---" << std::endl;
@@ -448,12 +448,12 @@ void ImageSystemTester::RunIntegrationTests() {
 
 
 void ImageSystemTester::Test_ImageResource_LoadGIInPack_Success() {
-    // ³o­Ó´ú¸Õ¨Ì¿à©ó main.cpp ¤¤ªº create_vfs_archive() ¤w¸g³Q©I¥s
+    // é€™å€‹æ¸¬è©¦ä¾è³´æ–¼ main.cpp ä¸­çš„ create_vfs_archive() å·²ç¶“è¢«å‘¼å«
 
     ImageResource res;
-    // LoadGIInPack ªº packerType °Ñ¼Æ¦b¦¹°²³]¬° 0 (CMofPacking)
+    // LoadGIInPack çš„ packerType åƒæ•¸åœ¨æ­¤å‡è¨­ç‚º 0 (CMofPacking)
 	CMofPacking* packer = CMofPacking::GetInstance();
-	packer->PackFileOpen("mof"); // ½T«O VFS ¤w¶}±Ò
+	packer->PackFileOpen("mof"); // ç¢ºä¿ VFS å·²é–‹å•Ÿ
     bool success = res.LoadGIInPack("mapbg/1f000386_sky-middle-01.gi", 0, 0);
 
     assert(success == true);
@@ -471,15 +471,15 @@ void ImageSystemTester::Test_ImageResource_LoadGI_RealFileRelativePath() {
     bool success = res.LoadGI(filename, 0);
 
     // Assert
-    // ¦pªGÀÉ®×¤£¦s¦b¡A´ú¸Õ·|¥¢±Ñ¡A³o¬O¹w´Á¦æ¬°¡C
+    // å¦‚æœæª”æ¡ˆä¸å­˜åœ¨ï¼Œæ¸¬è©¦æœƒå¤±æ•—ï¼Œé€™æ˜¯é æœŸè¡Œç‚ºã€‚
     assert(success == true && "Failed to load '1f000386_sky-middle-01.gi'. Make sure it exists in the execution path.");
     assert(res.m_width > 0);
     assert(res.m_height > 0);
     assert(res.m_imageDataSize > 0);
-    assert(res.m_pImageData != nullptr || res.m_pTexture != nullptr); // ¸ü¤J«á¦Ü¤Ö­n¦³¹³¯À¸ê®Æ©Î¯¾²z
+    assert(res.m_pImageData != nullptr || res.m_pTexture != nullptr); // è¼‰å…¥å¾Œè‡³å°‘è¦æœ‰åƒç´ è³‡æ–™æˆ–ç´‹ç†
 }
 
-/// @brief ´ú¸Õ¨Ï¥Îµ´¹ï¸ô®|Åª¨ú¤@­Ó¯u¹ê¦s¦bªº GI ÀÉ®×
+/// @brief æ¸¬è©¦ä½¿ç”¨çµ•å°è·¯å¾‘è®€å–ä¸€å€‹çœŸå¯¦å­˜åœ¨çš„ GI æª”æ¡ˆ
 void ImageSystemTester::Test_ImageResource_LoadGI_RealFileAbsolutePath() {
     std::cout << "\n  [PRE-REQUISITE] This test requires the file '200000a1_static_m0002_1.gi' to exist at 'mofdata\\'." << std::endl;
 
@@ -495,11 +495,11 @@ void ImageSystemTester::Test_ImageResource_LoadGI_RealFileAbsolutePath() {
     assert(res.m_width > 0);
     assert(res.m_height > 0);
     assert(res.m_imageDataSize > 0);
-    assert(res.m_pImageData != nullptr || res.m_pTexture != nullptr); // ¸ü¤J«á¦Ü¤Ö­n¦³¹³¯À¸ê®Æ©Î¯¾²z
+    assert(res.m_pImageData != nullptr || res.m_pTexture != nullptr); // è¼‰å…¥å¾Œè‡³å°‘è¦æœ‰åƒç´ è³‡æ–™æˆ–ç´‹ç†
 }
 
-// --- ¾ã¦X´ú¸Õ¥Îªº¯S®í ResourceMgr ---
-// ³o­Óª©¥»·|¯uªº¥h¸ü¤J ImageResource
+// --- æ•´åˆæ¸¬è©¦ç”¨çš„ç‰¹æ®Š ResourceMgr ---
+// é€™å€‹ç‰ˆæœ¬æœƒçœŸçš„å»è¼‰å…¥ ImageResource
 class RealLoadingResourceMgr {
 public:
     std::map<unsigned int, std::unique_ptr<ImageResource>> loaded_resources;
@@ -511,10 +511,10 @@ public:
     }
 
     void LoadingImageResource(unsigned int groupID, unsigned int resourceID, int a3, char priority) {
-        // ³o­Ó¨ç¦¡±N³Q­I´º°õ¦æºü©I¥s
+        // é€™å€‹å‡½å¼å°‡è¢«èƒŒæ™¯åŸ·è¡Œç·’å‘¼å«
         auto res = std::make_unique<ImageResource>();
 
-        // °²³] resourceID ª½±µ¹ïÀ³ÀÉ¦W
+        // å‡è¨­ resourceID ç›´æ¥å°æ‡‰æª”å
         std::string filename = "res_" + std::to_string(resourceID) + ".gi";
 
         if (res->LoadGI(filename.c_str(), 0)) {
@@ -527,9 +527,9 @@ public:
     void Reset() { loaded_resources.clear(); }
 };
 
-// ´À´« LoadingThread.cpp ¤¤ªº ResourceMgr::GetInstance()->LoadingImageResource
-// ³o¬O³ÌÃøªº³¡¤À¡C¦b¤@­Ó¯u¹êªº±M®×¤¤¡A§A·|¨Ï¥Î¨Ì¿àª`¤J¡C
-// ³o¸Ì§Ú­Ì°²³] LoadingThread.cpp ³Q­×§ï¦¨³o¼Ë¡G
+// æ›¿æ› LoadingThread.cpp ä¸­çš„ ResourceMgr::GetInstance()->LoadingImageResource
+// é€™æ˜¯æœ€é›£çš„éƒ¨åˆ†ã€‚åœ¨ä¸€å€‹çœŸå¯¦çš„å°ˆæ¡ˆä¸­ï¼Œä½ æœƒä½¿ç”¨ä¾è³´æ³¨å…¥ã€‚
+// é€™è£¡æˆ‘å€‘å‡è¨­ LoadingThread.cpp è¢«ä¿®æ”¹æˆé€™æ¨£ï¼š
 /*
 // In LoadingThread.cpp
 #ifdef ENABLE_TESTING
@@ -545,76 +545,76 @@ public:
     ResourceMgr::GetInstance()->LoadingImageResource(...)
 #endif
 */
-// ¥Ñ©ó§Ú­Ì¤£¯à­×§ï­ì©l½X¡A³o­Ó¾ã¦X´ú¸Õªº¹ê§@·|¦³¨Ç§xÃø¡A¦ı§Ú­Ì®i¥Ü¨äÅŞ¿è¡C
+// ç”±æ–¼æˆ‘å€‘ä¸èƒ½ä¿®æ”¹åŸå§‹ç¢¼ï¼Œé€™å€‹æ•´åˆæ¸¬è©¦çš„å¯¦ä½œæœƒæœ‰äº›å›°é›£ï¼Œä½†æˆ‘å€‘å±•ç¤ºå…¶é‚è¼¯ã€‚
 
 void ImageSystemTester::Test_Integration_AsyncLoadAndVerify() {
     std::cout << "  (Note: This test assumes LoadingThread can be re-wired to use a test-specific resource manager.)" << std::endl;
 
-    // 1. ·Ç³ÆÀô¹Ò
+    // 1. æº–å‚™ç’°å¢ƒ
     RealLoadingResourceMgr::GetInstance()->Reset();
 
-    // 2. ³]©w LoadingThread
+    // 2. è¨­å®š LoadingThread
     LoadingThread lt;
     lt.AddBackGroundLoadingRes({ 201326853, 3, 0 });
     lt.AddBackGroundLoadingRes({ 201327617, 3, 0 });
 
-    // 3. °õ¦æ
+    // 3. åŸ·è¡Œ
     lt.Poll();
-    Sleep(200); // µ¥«İ°õ¦æºü§¹¦¨
+    Sleep(200); // ç­‰å¾…åŸ·è¡Œç·’å®Œæˆ
 }
 
 void ImageSystemTester::Test_ResourceMgr_ReferenceCounting() {
-    // ³o­Ó´ú¸Õ»İ­n¯u¹êªºVFS©M¸ê·½ºŞ²z¾¹¡A¦]¦¹¬O¾ã¦X´ú¸Õ
+    // é€™å€‹æ¸¬è©¦éœ€è¦çœŸå¯¦çš„VFSå’Œè³‡æºç®¡ç†å™¨ï¼Œå› æ­¤æ˜¯æ•´åˆæ¸¬è©¦
     CMofPacking::GetInstance()->PackFileOpen("mof");
     ResourceMgr* res_mgr = ResourceMgr::GetInstance();
 
-    // °²³]¦³¤@­Ó cltBaseResource ªº«ü¼Ğ°}¦C¥i¥H¦s¨ú
-    // ¥Ñ©óµLªkª½±µ¦s¨ú¡A§Ú­Ì³z¹L¦æ¬°¨ÓÅçÃÒ
-    // ³o¸Ì§Ú­Ì°²³]¥i¥H³z¹L¤@­Ó«áªù©Î friend class ¨Ó¨ú±o cltGIResource
-    // ¦pªG¤£¦æ¡A«hµLªkª½±µ´ú¸Õ­p¼Æ¡A¥u¯à³z¹L¦æ¬°±ÀÂ_
+    // å‡è¨­æœ‰ä¸€å€‹ cltBaseResource çš„æŒ‡æ¨™é™£åˆ—å¯ä»¥å­˜å–
+    // ç”±æ–¼ç„¡æ³•ç›´æ¥å­˜å–ï¼Œæˆ‘å€‘é€éè¡Œç‚ºä¾†é©—è­‰
+    // é€™è£¡æˆ‘å€‘å‡è¨­å¯ä»¥é€éä¸€å€‹å¾Œé–€æˆ– friend class ä¾†å–å¾— cltGIResource
+    // å¦‚æœä¸è¡Œï¼Œå‰‡ç„¡æ³•ç›´æ¥æ¸¬è©¦è¨ˆæ•¸ï¼Œåªèƒ½é€éè¡Œç‚ºæ¨æ–·
 
-    const unsigned int TEST_ID = 201326853; // ¨Ï¥Î¤@­Ó¤wª¾ªº¦³®ÄID
+    const unsigned int TEST_ID = 201326853; // ä½¿ç”¨ä¸€å€‹å·²çŸ¥çš„æœ‰æ•ˆID
     const ResourceMgr::eResourceType TEST_TYPE = ResourceMgr::RES_ITEM;
 
-    // 1. ªì©lª¬ºA¡A¤Ş¥Î­p¼ÆÀ³¬° 0
-    // °²³]¦³¤@­Ó GetRefCount ªº¤¶­±¡A¦pªG¨S¦³¡A¦¹´ú¸ÕµLªk°õ¦æ
-    // ©¯¹Bªº¬O¡AcltBaseResource ¦³ GetRefCount¡A¥B ResourceMgr ¥¼ÁôÂÃ
-    // ¦ı ResourceMgr ¤º³¡¬O cltGIResource °}¦C¡A§Ú­Ì»İ­n¤@ºØ¤è¦¡¨ú±o¥¦
-    // ¬°¤F´ú¸Õ¡A§Ú­Ì°²³]¥i¥H¶¡±µ¦s¨ú
+    // 1. åˆå§‹ç‹€æ…‹ï¼Œå¼•ç”¨è¨ˆæ•¸æ‡‰ç‚º 0
+    // å‡è¨­æœ‰ä¸€å€‹ GetRefCount çš„ä»‹é¢ï¼Œå¦‚æœæ²’æœ‰ï¼Œæ­¤æ¸¬è©¦ç„¡æ³•åŸ·è¡Œ
+    // å¹¸é‹çš„æ˜¯ï¼ŒcltBaseResource æœ‰ GetRefCountï¼Œä¸” ResourceMgr æœªéš±è—
+    // ä½† ResourceMgr å…§éƒ¨æ˜¯ cltGIResource é™£åˆ—ï¼Œæˆ‘å€‘éœ€è¦ä¸€ç¨®æ–¹å¼å–å¾—å®ƒ
+    // ç‚ºäº†æ¸¬è©¦ï¼Œæˆ‘å€‘å‡è¨­å¯ä»¥é–“æ¥å­˜å–
 
-    // ªì©l¸ü¤J¡AGet¤º³¡·|+1¡A¦ı§Ú­Ì¦b¥~­±®³¤£¨ìRef¡A¥ı°²³]¬O0
+    // åˆå§‹è¼‰å…¥ï¼ŒGetå…§éƒ¨æœƒ+1ï¼Œä½†æˆ‘å€‘åœ¨å¤–é¢æ‹¿ä¸åˆ°Refï¼Œå…ˆå‡è¨­æ˜¯0
 
-    // 2. ²Ä¤@¦¸Àò¨ú
+    // 2. ç¬¬ä¸€æ¬¡ç²å–
     ImageResourceListData* res1 = res_mgr->GetImageResource(TEST_TYPE, TEST_ID);
     assert(res1 != nullptr);
-    // Get() ¤º³¡·|¨Ï refCount ÅÜ¬° 1
-    // ¬°¤FÅçÃÒ¡A§Ú­Ì»İ­n¤@­Ó GetRefCount ¤¶­±
-    // §Ú­Ì°²³] res_mgr ¤º³¡¦³¤@­Ó¤½¶}ªº©Î¥i´ú¸Õªº GetGIResource(type) ¤èªk
+    // Get() å…§éƒ¨æœƒä½¿ refCount è®Šç‚º 1
+    // ç‚ºäº†é©—è­‰ï¼Œæˆ‘å€‘éœ€è¦ä¸€å€‹ GetRefCount ä»‹é¢
+    // æˆ‘å€‘å‡è¨­ res_mgr å…§éƒ¨æœ‰ä¸€å€‹å…¬é–‹çš„æˆ–å¯æ¸¬è©¦çš„ GetGIResource(type) æ–¹æ³•
     // cltGIResource& gi_res = res_mgr->GetGIResource(TEST_TYPE);
     // assert(gi_res.GetRefCount(TEST_ID) == 1);
 
-    // 3. ²Ä¤G¦¸Àò¨ú
+    // 3. ç¬¬äºŒæ¬¡ç²å–
     ImageResourceListData* res2 = res_mgr->GetImageResource(TEST_TYPE, TEST_ID);
-    assert(res2 == res1); // À³¬°¦P¤@­Ó¸ê·½¹êÅé
+    assert(res2 == res1); // æ‡‰ç‚ºåŒä¸€å€‹è³‡æºå¯¦é«”
     // assert(gi_res.GetRefCount(TEST_ID) == 2);
 
-    // 4. ÄÀ©ñ¤@¦¸
+    // 4. é‡‹æ”¾ä¸€æ¬¡
     res_mgr->ReleaseImageResource(TEST_TYPE, TEST_ID);
     // assert(gi_res.GetRefCount(TEST_ID) == 1);
 
-    // 5. ¦AÄÀ©ñ¤@¦¸
+    // 5. å†é‡‹æ”¾ä¸€æ¬¡
     res_mgr->ReleaseImageResource(TEST_TYPE, TEST_ID);
     // assert(gi_res.GetRefCount(TEST_ID) == 0);
 
-    // ¥Ñ©óµLªkª½±µ¦s¨ú¤º³¡­p¼Æ¡A³o­Ó´ú¸Õ¥Ø«e¥u¯àÅçÃÒ Get/Release ¤£·|±Y¼ì¡C
-    // ¦b¯u¹êªº±M®×¤¤¡A·|¬°¤F¥i´ú¸Õ©Ê¦Ó´£¨Ñ¤@­Ó GetRefCount ªº¤¶­±¡C
+    // ç”±æ–¼ç„¡æ³•ç›´æ¥å­˜å–å…§éƒ¨è¨ˆæ•¸ï¼Œé€™å€‹æ¸¬è©¦ç›®å‰åªèƒ½é©—è­‰ Get/Release ä¸æœƒå´©æ½°ã€‚
+    // åœ¨çœŸå¯¦çš„å°ˆæ¡ˆä¸­ï¼Œæœƒç‚ºäº†å¯æ¸¬è©¦æ€§è€Œæä¾›ä¸€å€‹ GetRefCount çš„ä»‹é¢ã€‚
     std::cout << "    (Note: Test verifies Get/Release calls succeed. Actual ref count requires invasive changes to ResourceMgr for verification.)" << std::endl;
 
     CMofPacking::GetInstance()->PackFileClose();
 }
 
 // ----------------------------------------
-// --- ´ú¸Õ»²§U¨ç¦¡¹ê§@ ---
+// --- æ¸¬è©¦è¼”åŠ©å‡½å¼å¯¦ä½œ ---
 // ----------------------------------------
 void ImageSystemTester::CreateDummyGIFile(const std::string& filename, bool compressed, bool with_anim) {
     std::ofstream file(filename, std::ios::binary);
@@ -637,7 +637,7 @@ void ImageSystemTester::CreateDummyGIFile(const std::string& filename, bool comp
     if (with_anim) {
         AnimationFrameData anim_frame[2] = {};
         anim_frame[0].width = 64;
-        anim_frame[1].width = 123; // ¯S¼x­È
+        anim_frame[1].width = 123; // ç‰¹å¾µå€¼
         file.write(reinterpret_cast<const char*>(anim_frame), sizeof(AnimationFrameData) * 2);
     }
 
@@ -645,20 +645,20 @@ void ImageSystemTester::CreateDummyGIFile(const std::string& filename, bool comp
     file.write(reinterpret_cast<const char*>(&unknown_flag), sizeof(unknown_flag));
 
     if (compressed) {
-        // RLE À£ÁY (¦¹³B¶È¬°¥Ü·N¡A¤£¹ê§@¯uªºÀ£ÁYºtºâªk)
+        // RLE å£“ç¸® (æ­¤è™•åƒ…ç‚ºç¤ºæ„ï¼Œä¸å¯¦ä½œçœŸçš„å£“ç¸®æ¼”ç®—æ³•)
         unsigned int decompressed_size = imageDataSize;
-        unsigned int compressed_size = 10; // °²¸ËÀ£ÁY«áÅÜ¤p¤F
+        unsigned int compressed_size = 10; // å‡è£å£“ç¸®å¾Œè®Šå°äº†
 
-        // --- ­×¥¿ÂI¦b³o¸Ì ---
-        // ¥ı±N sizeof ªºµ²ªG (unsigned size_t) Âà«¬¬° signed ªº std::streamoff
-        // µM«á¦A¨ú­t¸¹¡A³o¼Ë¤~¯à±o¨ì¤@­Ó­t¼Æ¦ì²¾¡C
+        // --- ä¿®æ­£é»åœ¨é€™è£¡ ---
+        // å…ˆå°‡ sizeof çš„çµæœ (unsigned size_t) è½‰å‹ç‚º signed çš„ std::streamoff
+        // ç„¶å¾Œå†å–è² è™Ÿï¼Œé€™æ¨£æ‰èƒ½å¾—åˆ°ä¸€å€‹è² æ•¸ä½ç§»ã€‚
         std::streamoff offset = -static_cast<std::streamoff>(sizeof(imageDataSize));
 
-        // ±qÀÉ®×¬yªº¥Ø«e¦ì¸m©¹«e²¾°Ê offset ªº¶ZÂ÷
-        file.seekp(offset, std::ios_base::cur); // ¦^ÀY­×§ï imageDataSize
+        // å¾æª”æ¡ˆæµçš„ç›®å‰ä½ç½®å¾€å‰ç§»å‹• offset çš„è·é›¢
+        file.seekp(offset, std::ios_base::cur); // å›é ­ä¿®æ”¹ imageDataSize
 
         file.write(reinterpret_cast<const char*>(&compressed_size), sizeof(compressed_size));
-        file.seekp(0, std::ios_base::end); // ²¾¦^ÀÉ®×µ²§ÀÄ~Äò¼g¤J
+        file.seekp(0, std::ios_base::end); // ç§»å›æª”æ¡ˆçµå°¾ç¹¼çºŒå¯«å…¥
 
         file.write(reinterpret_cast<const char*>(&decompressed_size), sizeof(decompressed_size));
         std::vector<char> dummy_compressed_data(compressed_size, 'c');

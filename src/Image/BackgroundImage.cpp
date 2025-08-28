@@ -3,27 +3,27 @@
 #include "Image/CDeviceResetManager.h"
 #include <cstring> // for memcpy
 
-// --- ¥~³¡¨Ì¿àªº¥ş°ìÅÜ¼Æ ---
+// --- å¤–éƒ¨ä¾è³´çš„å…¨åŸŸè®Šæ•¸ ---
 extern LPDIRECT3DDEVICE9    Device;
-extern bool                 DontDraw; // ¥ş°ìªº "¤£­nÃ¸»s" ºX¼Ğ
+extern bool                 DontDraw; // å…¨åŸŸçš„ "ä¸è¦ç¹ªè£½" æ——æ¨™
 
 BackgroundImage::BackgroundImage()
 {
-    // ±N©Ò¦³«ü¼Ğ©M¼Æ­È¦¨­ûªì©l¤Æ¬° 0 ©Î nullptr
+    // å°‡æ‰€æœ‰æŒ‡æ¨™å’Œæ•¸å€¼æˆå“¡åˆå§‹åŒ–ç‚º 0 æˆ– nullptr
     Reset();
 
-    // ªì©l¤Æ¥»¦a³»ÂI§Ö¨ú
+    // åˆå§‹åŒ–æœ¬åœ°é ‚é»å¿«å–
     for (int i = 0; i < 4; ++i)
     {
-        // ®Ú¾Ú¤Ï½sÄ¶µ{¦¡½XªºÅŞ¿èªì©l¤Æ
+        // æ ¹æ“šåç·¨è­¯ç¨‹å¼ç¢¼çš„é‚è¼¯åˆå§‹åŒ–
         m_imageVertices[i] = { 0.0f, 0.0f, 0.0f, 1.0f, 0.0f, 0.0f };
-        m_giVertices[i] = GIVertex(); // ¨Ï¥Î GIVertex ªº¹w³]«Øºc¨ç¦¡
+        m_giVertices[i] = GIVertex(); // ä½¿ç”¨ GIVertex çš„é è¨­å»ºæ§‹å‡½å¼
     }
 }
 
 BackgroundImage::~BackgroundImage()
 {
-    // ¦b¸Ñºc®ÉÄÀ©ñ D3D ¸ê·½
+    // åœ¨è§£æ§‹æ™‚é‡‹æ”¾ D3D è³‡æº
     if (m_pTexData) {
         CDeviceResetManager::GetInstance()->DeleteTexture(m_pTexData);
     }
@@ -34,7 +34,7 @@ BackgroundImage::~BackgroundImage()
 
 void BackgroundImage::Reset()
 {
-    // ÄÀ©ñ D3D ¸ê·½
+    // é‡‹æ”¾ D3D è³‡æº
     if (m_pTexData) {
         CDeviceResetManager::GetInstance()->DeleteTexture(m_pTexData);
         m_pTexData = nullptr;
@@ -44,7 +44,7 @@ void BackgroundImage::Reset()
         m_pVBData = nullptr;
     }
 
-    // ­«³]©Ò¦³¼Æ­È¦¨­û
+    // é‡è¨­æ‰€æœ‰æ•¸å€¼æˆå“¡
     m_fTexWidth = 0.0f;
     m_fTexHeight = 0.0f;
     m_fImgWidth = 0.0f;
@@ -59,10 +59,10 @@ void BackgroundImage::Reset()
 
 void BackgroundImage::CreateImage(const char* szFilename, float imgWidth, float imgHeight, float texWidth, float texHeight)
 {
-    Reset(); // ¥ı²M°£ÂÂ¸ê·½
+    Reset(); // å…ˆæ¸…é™¤èˆŠè³‡æº
 
     m_pTexData = CDeviceResetManager::GetInstance()->CreateTexture(szFilename, 0);
-    m_pVBData = CDeviceResetManager::GetInstance()->CreateVertexBuffer(4, 2); // Ãş«¬ 2: ImageVertex
+    m_pVBData = CDeviceResetManager::GetInstance()->CreateVertexBuffer(4, 2); // é¡å‹ 2: ImageVertex
 
     m_fImgWidth = imgWidth;
     m_fImgHeight = imgHeight;
@@ -72,17 +72,17 @@ void BackgroundImage::CreateImage(const char* szFilename, float imgWidth, float 
     m_fU_Start = 0.0f;
     m_fU_End = m_fImgWidth / m_fTexWidth;
     m_fV_End = m_fImgHeight / m_fTexHeight;
-    m_fV_Start = 1.0f - m_fV_End; // V ®y¼Ğ±q©³³¡¶}©l­pºâ
+    m_fV_Start = 1.0f - m_fV_End; // V åº§æ¨™å¾åº•éƒ¨é–‹å§‹è¨ˆç®—
 }
 
 void BackgroundImage::CreateBlackBG(float x, float y, float width, float height)
 {
-    Reset(); // ¥ı²M°£ÂÂ¸ê·½
+    Reset(); // å…ˆæ¸…é™¤èˆŠè³‡æº
 
-    m_pVBData = CDeviceResetManager::GetInstance()->CreateVertexBuffer(4, 0); // Ãş«¬ 0: GIVertex
+    m_pVBData = CDeviceResetManager::GetInstance()->CreateVertexBuffer(4, 0); // é¡å‹ 0: GIVertex
     if (!m_pVBData) return;
 
-    // ³]©w¥|­Ó³»ÂIªº¿Ã¹õ®y¼Ğ©MÃC¦â
+    // è¨­å®šå››å€‹é ‚é»çš„è¢å¹•åº§æ¨™å’Œé¡è‰²
     float left = x - 0.5f;
     float top = y - 0.5f;
     float right = x + width - 0.5f;
@@ -105,7 +105,7 @@ void BackgroundImage::CreateBlackBG(float x, float y, float width, float height)
     m_giVertices[3].position_y = bottom;
     m_giVertices[3].diffuse_color = blackColor;
 
-    // ±N³»ÂI¸ê®Æ¤W¶Ç¨ì GPU
+    // å°‡é ‚é»è³‡æ–™ä¸Šå‚³åˆ° GPU
     if (m_pVBData && m_pVBData->pVertexBuffer) {
         void* pV = nullptr;
         if (SUCCEEDED(m_pVBData->pVertexBuffer->Lock(0, 0, &pV, 0))) {
@@ -126,7 +126,7 @@ bool BackgroundImage::SetPositionUP(float delta)
     m_fV_Start -= (delta / m_fTexHeight);
     if (m_fV_Start < 0.0f) {
         m_fV_Start = 0.0f;
-        return true; // ¤w¹F³»³¡
+        return true; // å·²é”é ‚éƒ¨
     }
     return false;
 }
@@ -137,7 +137,7 @@ bool BackgroundImage::SetPositionDOWN(float delta)
     float maxV = 1.0f - m_fV_End;
     if (m_fV_Start > maxV) {
         m_fV_Start = maxV;
-        return true; // ¤w¹F©³³¡
+        return true; // å·²é”åº•éƒ¨
     }
     return false;
 }
@@ -146,7 +146,7 @@ void BackgroundImage::Process()
 {
     if (!m_pVBData) return;
 
-    // ®Ú¾Ú¦ì¸m©M UV °_ÂI­pºâ³Ì²×ªº³»ÂI¸ê®Æ
+    // æ ¹æ“šä½ç½®å’Œ UV èµ·é»è¨ˆç®—æœ€çµ‚çš„é ‚é»è³‡æ–™
     float left = m_fPosX - 0.5f;
     float top = m_fPosY - 0.5f;
     float right = left + m_fImgWidth;
@@ -157,7 +157,7 @@ void BackgroundImage::Process()
     m_imageVertices[2] = { right, bottom, 0.5f, 1.0f, m_fU_End,   m_fV_End + m_fV_Start };
     m_imageVertices[3] = { left,  bottom, 0.5f, 1.0f, m_fU_Start, m_fV_End + m_fV_Start };
 
-    // ±N³»ÂI¸ê®Æ¤W¶Ç¨ì GPU
+    // å°‡é ‚é»è³‡æ–™ä¸Šå‚³åˆ° GPU
     if (m_pVBData && m_pVBData->pVertexBuffer) {
         void* pV = nullptr;
         if (SUCCEEDED(m_pVBData->pVertexBuffer->Lock(0, 0, &pV, 0))) {
@@ -181,10 +181,10 @@ void BackgroundImage::RenderBlackBG()
 {
     if (DontDraw || !m_pVBData) return;
 
-    CDeviceManager::GetInstance()->SetTexture(0, nullptr); // ¤£¨Ï¥Î¯¾²z
+    CDeviceManager::GetInstance()->SetTexture(0, nullptr); // ä¸ä½¿ç”¨ç´‹ç†
     CDeviceManager::GetInstance()->SetStreamSource(0, m_pVBData->pVertexBuffer, 0, sizeof(GIVertex));
-    // FVF À³¬° D3DFVF_XYZRHW | D3DFVF_DIFFUSE (0x44) ©Î¥]§t¯¾²z®y¼Ğªº 0x144
-    // ¦ı¬°©¾©ó­ì©l½X¡A³o¸Ì¨Ï¥Î¥¦°O¸üªº 0x104
+    // FVF æ‡‰ç‚º D3DFVF_XYZRHW | D3DFVF_DIFFUSE (0x44) æˆ–åŒ…å«ç´‹ç†åº§æ¨™çš„ 0x144
+    // ä½†ç‚ºå¿ æ–¼åŸå§‹ç¢¼ï¼Œé€™è£¡ä½¿ç”¨å®ƒè¨˜è¼‰çš„ 0x104
     CDeviceManager::GetInstance()->SetFVF(D3DFVF_XYZRHW | D3DFVF_TEX1);
     Device->DrawPrimitive(D3DPT_TRIANGLEFAN, 0, 2);
 }

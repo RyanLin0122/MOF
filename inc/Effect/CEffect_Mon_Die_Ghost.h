@@ -2,37 +2,37 @@
 
 #include "Effect/CEffectBase.h"
 
-// «e¦V«Å§i
+// å‰å‘å®£å‘Š
 class ClientCharacter;
 
 /**
  * @class CEffect_Mon_Die_Ghost
- * @brief ¥Nªí©Çª«¦º¤`®É¥X²{ªºÆF»î¯S®Ä¡C
+ * @brief ä»£è¡¨æ€ªç‰©æ­»äº¡æ™‚å‡ºç¾çš„éˆé­‚ç‰¹æ•ˆã€‚
  *
- * Ä~©Ó¦Û CEffectBase¡A¬O¤@­Ó¦b©T©w®y¼Ğ¼½©ñ¤@¦¸ªº°Êµe¯S®Ä¡C
+ * ç¹¼æ‰¿è‡ª CEffectBaseï¼Œæ˜¯ä¸€å€‹åœ¨å›ºå®šåº§æ¨™æ’­æ”¾ä¸€æ¬¡çš„å‹•ç•«ç‰¹æ•ˆã€‚
  */
 class CEffect_Mon_Die_Ghost : public CEffectBase {
 public:
     CEffect_Mon_Die_Ghost();
     virtual ~CEffect_Mon_Die_Ghost();
 
-    // --- µêÀÀ¨ç¦¡ÂĞ¼g ---
+    // --- è™›æ“¬å‡½å¼è¦†å¯« ---
 
-    /// @brief ³B²z¯S®Äªº¥Í©R¶g´Á¡Aª½±µ¨Ì¿à CCAEffect ªº°Êµe¼½©ñª¬ºA¡C
+    /// @brief è™•ç†ç‰¹æ•ˆçš„ç”Ÿå‘½é€±æœŸï¼Œç›´æ¥ä¾è³´ CCAEffect çš„å‹•ç•«æ’­æ”¾ç‹€æ…‹ã€‚
     virtual bool FrameProcess(float fElapsedTime) override;
 
-    /// @brief ·Ç³ÆÃ¸»s«eªºÅŞ¿è§ó·s¡A¨Ï¥Î©T©wªºªì©l¦ì¸m¡C
+    /// @brief æº–å‚™ç¹ªè£½å‰çš„é‚è¼¯æ›´æ–°ï¼Œä½¿ç”¨å›ºå®šçš„åˆå§‹ä½ç½®ã€‚
     virtual void Process() override;
 
-    /// @brief Ã¸»s¯S®Ä¡C
+    /// @brief ç¹ªè£½ç‰¹æ•ˆã€‚
     virtual void Draw() override;
 
-    // --- ±M¦³¨ç¦¡ ---
+    // --- å°ˆæœ‰å‡½å¼ ---
 
-    /// @brief ³]©w¯S®ÄªºÅã¥Ü¦ì¸m¡C
-    /// @param pDeadMonster ¦º¤`ªº©Çª«¨¤¦âª«¥ó¡C
+    /// @brief è¨­å®šç‰¹æ•ˆçš„é¡¯ç¤ºä½ç½®ã€‚
+    /// @param pDeadMonster æ­»äº¡çš„æ€ªç‰©è§’è‰²ç‰©ä»¶ã€‚
     void SetEffect(ClientCharacter* pDeadMonster);
 
 private:
-    // ¦¹Ãş§O¨S¦³ÃB¥~ªº¦¨­ûÅÜ¼Æ¡A©Ò¦³¦ì¸m¸ê°T³£Àx¦s¦b CEffectBase ¤¤¡C
+    // æ­¤é¡åˆ¥æ²’æœ‰é¡å¤–çš„æˆå“¡è®Šæ•¸ï¼Œæ‰€æœ‰ä½ç½®è³‡è¨Šéƒ½å„²å­˜åœ¨ CEffectBase ä¸­ã€‚
 };

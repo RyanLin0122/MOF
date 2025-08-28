@@ -5,17 +5,17 @@
 #include "global.h"
 #include <cstdlib> // for rand()
 
-// °²³]ªº¥ş°ìÅÜ¼Æ
+// å‡è¨­çš„å…¨åŸŸè®Šæ•¸
 extern GameSystemInfo g_Game_System_Info;
 
-// ¹ïÀ³¤Ï²ÕÄ¶½X: 0x005371D0
-CEffect_Field_Walkdust::CEffect_Field_Walkdust() : CEffectBase() // ¥¿½T©I¥s°ò©³Ãş§O«Øºc¨ç¦¡
+// å°æ‡‰åçµ„è­¯ç¢¼: 0x005371D0
+CEffect_Field_Walkdust::CEffect_Field_Walkdust() : CEffectBase() // æ­£ç¢ºå‘¼å«åŸºåº•é¡åˆ¥å»ºæ§‹å‡½å¼
 {
     m_pEffectImage = nullptr;
     m_fAlpha = 250.0f;       // 1137180672
     m_fScale = 50.0f;        // 1092616192
     m_fRotation = 0.0f;
-    m_cInitialFrame = rand() % 4; // ÀH¾÷¿ï¾Ü 0-3 ªºªì©l¼v®æ
+    m_cInitialFrame = rand() % 4; // éš¨æ©Ÿé¸æ“‡ 0-3 çš„åˆå§‹å½±æ ¼
     m_bIsFlip = false;
     m_dwResourceID = 0;
     m_fScaleX_Rate = 1.0f;   // 1065353216
@@ -25,25 +25,25 @@ CEffect_Field_Walkdust::CEffect_Field_Walkdust() : CEffectBase() // ¥¿½T©I¥s°ò©³
     m_bMoveRight = false;
     m_bIsVisible = FALSE;
 
-    // ­ì©l½X: *((_DWORD *)this + 43) = 993738471; (0x3B4CCCC7 -> ~0.03f)
+    // åŸå§‹ç¢¼: *((_DWORD *)this + 43) = 993738471; (0x3B4CCCC7 -> ~0.03f)
     m_FrameSkip.m_fTimePerFrame = 1.0f / 33.0f;
 }
 
 CEffect_Field_Walkdust::~CEffect_Field_Walkdust()
 {
-    // GameImage ¥Ñ cltImageManager ºŞ²z¡A¦¹³B¤£»İ delete
+    // GameImage ç”± cltImageManager ç®¡ç†ï¼Œæ­¤è™•ä¸éœ€ delete
 }
 
 void CEffect_Field_Walkdust::SetEffect(float x, float y, bool bFlip, unsigned int resourceID, int a6, char frameID, bool bMoveRight)
 {
-    // --- ÃöÁä­×¥¿ ---
-    // ±N¹ï¥¼©w¸q¦¨­û m_bFlipX ªº½á­È¡A
-    // §ï¬°¹ï±q CEffectBase Ä~©Ó¨Óªº¦¨­û m_bIsFlip ½á­È¡C
+    // --- é—œéµä¿®æ­£ ---
+    // å°‡å°æœªå®šç¾©æˆå“¡ m_bFlipX çš„è³¦å€¼ï¼Œ
+    // æ”¹ç‚ºå°å¾ CEffectBase ç¹¼æ‰¿ä¾†çš„æˆå“¡ m_bIsFlip è³¦å€¼ã€‚
     m_bIsFlip = bFlip;
 
     m_fCurrentPosY = y - 13.0f;
 
-    // ... ¨ç¦¡ªº¨ä¾l³¡¤À¤£ÅÜ ...
+    // ... å‡½å¼çš„å…¶é¤˜éƒ¨åˆ†ä¸è®Š ...
     if (a6 != 0) {
         m_fScaleX_Rate = 0.0f;
         m_cInitialFrame = frameID;
@@ -65,32 +65,32 @@ void CEffect_Field_Walkdust::SetEffect(float x, float y, bool bFlip, unsigned in
     m_bMoveRight = bMoveRight;
 }
 
-// ¹ïÀ³¤Ï²ÕÄ¶½X: 0x00537330
+// å°æ‡‰åçµ„è­¯ç¢¼: 0x00537330
 bool CEffect_Field_Walkdust::FrameProcess(float fElapsedTime)
 {
     int frameCount = 0;
     if (!m_FrameSkip.Update(fElapsedTime, frameCount)) {
-        return false; // ¦pªG¨S¦³¼v®æ±À¶i¡A«h¤£°µ¥ô¦ó¨Æ
+        return false; // å¦‚æœæ²’æœ‰å½±æ ¼æ¨é€²ï¼Œå‰‡ä¸åšä»»ä½•äº‹
     }
 
-    // §ó·s±ÛÂà
+    // æ›´æ–°æ—‹è½‰
     m_fRotation += static_cast<float>(frameCount) * 0.5f;
 
-    // §ó·sÁY©ñ
+    // æ›´æ–°ç¸®æ”¾
     m_fScale += static_cast<float>(frameCount) * m_fScaleX_Rate;
 
-    // §ó·s³z©ú«×
+    // æ›´æ–°é€æ˜åº¦
     m_fAlpha -= static_cast<float>(frameCount) * m_fAlpha_Rate;
 
-    // §ó·s Y ®y¼Ğ (¤W¤É)
+    // æ›´æ–° Y åº§æ¨™ (ä¸Šå‡)
     m_fCurrentPosY -= static_cast<float>(frameCount) * 0.1f;
 
-    // ÀË¬d¥Í©R¶g´Á¬O§_µ²§ô
+    // æª¢æŸ¥ç”Ÿå‘½é€±æœŸæ˜¯å¦çµæŸ
     if (m_fAlpha < 0.0f) {
         return true;
     }
 
-    // ¦pªG³]©w¤F¤ô¥­º}²¾
+    // å¦‚æœè¨­å®šäº†æ°´å¹³æ¼‚ç§»
     if (m_bMoveRight) {
         m_fCurrentPosX += 0.25f;
     }
@@ -98,7 +98,7 @@ bool CEffect_Field_Walkdust::FrameProcess(float fElapsedTime)
     return false;
 }
 
-// ¹ïÀ³¤Ï²ÕÄ¶½X: 0x00537430
+// å°æ‡‰åçµ„è­¯ç¢¼: 0x00537430
 void CEffect_Field_Walkdust::Process()
 {
     float screenX = m_fCurrentPosX;
@@ -106,12 +106,12 @@ void CEffect_Field_Walkdust::Process()
         screenX -= static_cast<float>(g_Game_System_Info.ScreenWidth);
     }
 
-    // --- ÃöÁä­×¥¿ ---
-    // ¦]¬°²{¦bÄ~©Ó¦Û CEffectBase¡A¥i¥Hª½±µ©I¥s IsCliping ¦¨­û¨ç¦¡¡C
+    // --- é—œéµä¿®æ­£ ---
+    // å› ç‚ºç¾åœ¨ç¹¼æ‰¿è‡ª CEffectBaseï¼Œå¯ä»¥ç›´æ¥å‘¼å« IsCliping æˆå“¡å‡½å¼ã€‚
     m_bIsVisible = IsCliping(screenX, 0.0f);
     if (!m_bIsVisible) return;
 
-    // Àò¨ú GameImage
+    // ç²å– GameImage
     m_pEffectImage = cltImageManager::GetInstance()->GetGameImage(7, m_dwResourceID, 0, 1);
 
     if (m_pEffectImage) {
@@ -130,7 +130,7 @@ void CEffect_Field_Walkdust::Process()
     }
 }
 
-// ¹ïÀ³¤Ï²ÕÄ¶½X: 0x005375B0
+// å°æ‡‰åçµ„è­¯ç¢¼: 0x005375B0
 void CEffect_Field_Walkdust::Draw()
 {
     if (m_bIsVisible && m_pEffectImage && m_pEffectImage->IsInUse())

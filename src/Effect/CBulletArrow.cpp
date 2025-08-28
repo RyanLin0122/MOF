@@ -2,66 +2,66 @@
 #include "Image/GameImage.h"
 #include "Image/cltImageManager.h"
 
-// ¹ïÀ³¤Ï²ÕÄ¶½X: 0x0052D570
+// å°æ‡‰åçµ„è­¯ç¢¼: 0x0052D570
 CBulletArrow::CBulletArrow()
     : m_pArrowImage(nullptr)
 {
-    // CBulletBase ªº«Øºc¨ç¦¡·|³Q¦Û°Ê©I¥s
+    // CBulletBase çš„å»ºæ§‹å‡½å¼æœƒè¢«è‡ªå‹•å‘¼å«
 
-    // ­ì©l½X: *((_DWORD *)this + 7) = 256;
+    // åŸå§‹ç¢¼: *((_DWORD *)this + 7) = 256;
     m_dwAlpha = 256;
 }
 
-// ¹ïÀ³¤Ï²ÕÄ¶½X: 0x0052D5B0
+// å°æ‡‰åçµ„è­¯ç¢¼: 0x0052D5B0
 CBulletArrow::~CBulletArrow()
 {
 }
 
-// ¹ïÀ³¤Ï²ÕÄ¶½X: 0x0052D5C0
+// å°æ‡‰åçµ„è­¯ç¢¼: 0x0052D5C0
 void CBulletArrow::Create(unsigned int dwOwnerID, D3DXVECTOR2* pStartPos, D3DXVECTOR2* pEndPos, float fSpeed)
 {
     m_dwOwnerID = dwOwnerID;
     m_vecPos = *pStartPos;
     m_fSpeed = fSpeed;
 
-    // ­pºâ¤è¦V¦V¶q¨Ã³æ¦ì¤Æ
+    // è¨ˆç®—æ–¹å‘å‘é‡ä¸¦å–®ä½åŒ–
     m_vecDir = *pEndPos - *pStartPos;
     D3DXVec2Normalize(&m_vecDir, &m_vecDir);
 }
 
-// ¹ïÀ³¤Ï²ÕÄ¶½X: 0x0052D620
+// å°æ‡‰åçµ„è­¯ç¢¼: 0x0052D620
 bool CBulletArrow::Process(float fElapsedTime)
 {
-    // --- ®Ö¤ßÅŞ¿è ---
+    // --- æ ¸å¿ƒé‚è¼¯ ---
 
-    // 1. §ó·s¦ì¸m
-    // ­ì©l½X: v10 = *((float *)this + 4) + *((float *)this + 2);
+    // 1. æ›´æ–°ä½ç½®
+    // åŸå§‹ç¢¼: v10 = *((float *)this + 4) + *((float *)this + 2);
     //         v3 = *((float *)this + 5) + *((float *)this + 3);
-    // ª`·N¡G­ì©l½X¦ü¥G¨S¦³±N³t«×­¼¤W¤è¦V¡A³o¥i¯à¬O¤@­Óbug©ÎÂ²¤Æ¡C
-    // ¤@­Ó§ó§¹¾ãªº¹ê²{À³¸Ó¬O: m_vecPos += m_vecDir * m_fSpeed * fElapsedTime;
-    // ¦ı¬°¤F©¾¹êÁÙ­ì¡A§Ú­Ì¼ÒÀÀ¨ä¦æ¬°¡C
+    // æ³¨æ„ï¼šåŸå§‹ç¢¼ä¼¼ä¹æ²’æœ‰å°‡é€Ÿåº¦ä¹˜ä¸Šæ–¹å‘ï¼Œé€™å¯èƒ½æ˜¯ä¸€å€‹bugæˆ–ç°¡åŒ–ã€‚
+    // ä¸€å€‹æ›´å®Œæ•´çš„å¯¦ç¾æ‡‰è©²æ˜¯: m_vecPos += m_vecDir * m_fSpeed * fElapsedTime;
+    // ä½†ç‚ºäº†å¿ å¯¦é‚„åŸï¼Œæˆ‘å€‘æ¨¡æ“¬å…¶è¡Œç‚ºã€‚
     m_vecPos += m_vecDir;
 
-    // 2. Àò¨ú¨Ã³]©w GameImage
+    // 2. ç²å–ä¸¦è¨­å®š GameImage
     m_pArrowImage = cltImageManager::GetInstance()->GetGameImage(7, 0xB00001Cu, 0, 1);
 
     if (m_pArrowImage) {
-        m_pArrowImage->SetBlockID(0); // ±j¨î¨Ï¥Î²Ä0´V
+        m_pArrowImage->SetBlockID(0); // å¼·åˆ¶ä½¿ç”¨ç¬¬0å¹€
         m_pArrowImage->SetPosition(m_vecPos.x, m_vecPos.y);
-        m_pArrowImage->SetAlpha(m_dwAlpha); // ³]©w³z©ú«×
+        m_pArrowImage->SetAlpha(m_dwAlpha); // è¨­å®šé€æ˜åº¦
         m_pArrowImage->Process();
     }
 
-    // 3. §ó·s¥Í©R¶g´Á­p®É¾¹
-    // ­ì©l½X: v8 = *((_DWORD *)this + 7) - 1;
+    // 3. æ›´æ–°ç”Ÿå‘½é€±æœŸè¨ˆæ™‚å™¨
+    // åŸå§‹ç¢¼: v8 = *((_DWORD *)this + 7) - 1;
     m_dwAlpha--;
 
-    // 4. ÀË¬d¥Í©R¶g´Á¬O§_µ²§ô
-    // ­ì©l½X: return v8 == 0;
+    // 4. æª¢æŸ¥ç”Ÿå‘½é€±æœŸæ˜¯å¦çµæŸ
+    // åŸå§‹ç¢¼: return v8 == 0;
     return (m_dwAlpha <= 0);
 }
 
-// ¹ïÀ³¤Ï²ÕÄ¶½X: 0x0052D6E0
+// å°æ‡‰åçµ„è­¯ç¢¼: 0x0052D6E0
 void CBulletArrow::Draw()
 {
     if (m_pArrowImage && m_pArrowImage->IsInUse())

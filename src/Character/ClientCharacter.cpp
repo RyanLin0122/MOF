@@ -1,33 +1,33 @@
 #include "Character/ClientCharacter.h"
 
-/// @brief «Øºc¨ç¦¡
+/// @brief å»ºæ§‹å‡½å¼
 ClientCharacter::ClientCharacter() {
-	m_wMapID = 0; // °²³]ªì©l¦a¹Ï ID ¬° 0
+	m_wMapID = 0; // å‡è¨­åˆå§‹åœ°åœ– ID ç‚º 0
 	m_iPosX = 600;
 	m_iPosY = 300;
 }
 
-/// @brief µêÀÀ¸Ñºc¨ç¦¡
+/// @brief è™›æ“¬è§£æ§‹å‡½å¼
 ClientCharacter::~ClientCharacter() {
 
 }
 
-/// @brief ¨ú±o¨¤¦âªº X ®y¼Ğ
+/// @brief å–å¾—è§’è‰²çš„ X åº§æ¨™
 int ClientCharacter::GetPosX() {
 	return m_iPosX;
 }
-/// @brief ¨ú±o¨¤¦âªº Y ®y¼Ğ
+/// @brief å–å¾—è§’è‰²çš„ Y åº§æ¨™
 int ClientCharacter::GetPosY() {
 	return m_iPosY;
 }
 void ClientCharacter::SetPosX(float x) {
 	m_iPosX = x;
 }
-/// @brief ¨ú±o¨¤¦âªº Y ®y¼Ğ
+/// @brief å–å¾—è§’è‰²çš„ Y åº§æ¨™
 void ClientCharacter::SetPosY(float y) {
 	m_iPosY = y;
 }
-/// @brief ¨ú±o¨¤¦âªº°ª«×
+/// @brief å–å¾—è§’è‰²çš„é«˜åº¦
 int ClientCharacter::GetCharHeight() {
 	return 100;
 }

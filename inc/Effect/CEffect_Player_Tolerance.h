@@ -2,50 +2,50 @@
 
 #include "Effect/CEffectBase.h"
 
-// «e¦V«Å§i
+// å‰å‘å®£å‘Š
 class ClientCharacter;
 
 /**
  * @class CEffect_Player_Tolerance
- * @brief ¥Nªíª±®aÀò±o§Ü©Ê®É¡A¦ì©ó¤W¼hªºµøÄ±¯S®Ä¡C
+ * @brief ä»£è¡¨ç©å®¶ç²å¾—æŠ—æ€§æ™‚ï¼Œä½æ–¼ä¸Šå±¤çš„è¦–è¦ºç‰¹æ•ˆã€‚
  */
 class CEffect_Player_Tolerance : public CEffectBase {
 public:
     CEffect_Player_Tolerance();
     virtual ~CEffect_Player_Tolerance();
 
-    // --- µêÀÀ¨ç¦¡ÂĞ¼g ---
+    // --- è™›æ“¬å‡½å¼è¦†å¯« ---
     virtual bool FrameProcess(float fElapsedTime) override;
     virtual void Process() override;
     virtual void Draw() override;
 
-    // --- ±M¦³¨ç¦¡ ---
-    /// @param toleranceType §Ü©ÊºØÃş (1-3)¡A¨M©w¯S®Ä¥~Æ[¡C
+    // --- å°ˆæœ‰å‡½å¼ ---
+    /// @param toleranceType æŠ—æ€§ç¨®é¡ (1-3)ï¼Œæ±ºå®šç‰¹æ•ˆå¤–è§€ã€‚
     void SetEffect(ClientCharacter* pOwner, unsigned char toleranceType);
 
 protected:
-    ClientCharacter* m_pOwnerCharacter; // ¦ì²¾ +132 (0x84)
+    ClientCharacter* m_pOwnerCharacter; // ä½ç§» +132 (0x84)
 };
 
 
 /**
  * @class CEffect_Player_Tolerance_Sub
- * @brief ¥Nªíª±®aÀò±o§Ü©Ê®É¡A¦ì©ó©³¼hªºµøÄ±¯S®Ä¡C
+ * @brief ä»£è¡¨ç©å®¶ç²å¾—æŠ—æ€§æ™‚ï¼Œä½æ–¼åº•å±¤çš„è¦–è¦ºç‰¹æ•ˆã€‚
  */
 class CEffect_Player_Tolerance_Sub : public CEffectBase {
 public:
     CEffect_Player_Tolerance_Sub();
     virtual ~CEffect_Player_Tolerance_Sub();
 
-    // --- µêÀÀ¨ç¦¡ÂĞ¼g ---
+    // --- è™›æ“¬å‡½å¼è¦†å¯« ---
     virtual bool FrameProcess(float fElapsedTime) override;
     virtual void Process() override;
     virtual void Draw() override;
 
-    // --- ±M¦³¨ç¦¡ ---
-    /// @param toleranceType §Ü©ÊºØÃş (1-3)¡A¨M©w¯S®Ä¥~Æ[¡C
+    // --- å°ˆæœ‰å‡½å¼ ---
+    /// @param toleranceType æŠ—æ€§ç¨®é¡ (1-3)ï¼Œæ±ºå®šç‰¹æ•ˆå¤–è§€ã€‚
     void SetEffect(ClientCharacter* pOwner, unsigned char toleranceType);
 
 protected:
-    ClientCharacter* m_pOwnerCharacter; // ¦ì²¾ +132 (0x84)
+    ClientCharacter* m_pOwnerCharacter; // ä½ç§» +132 (0x84)
 };

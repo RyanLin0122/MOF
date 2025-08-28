@@ -3,19 +3,19 @@
 #include "Character/ClientCharacter.h"
 #include "global.h"
 
-// ¹ïÀ³¤Ï²ÕÄ¶½X: 0x00532290
+// å°æ‡‰åçµ„è­¯ç¢¼: 0x00532290
 CEffect_Player_Special_Top_Effect::CEffect_Player_Special_Top_Effect()
     : m_pOwnerCharacter(nullptr), m_ucEffectType(0)
 {
-    // CEffectBase ªº«Øºc¨ç¦¡·|³Q¦Û°Ê©I¥s
+    // CEffectBase çš„å»ºæ§‹å‡½å¼æœƒè¢«è‡ªå‹•å‘¼å«
 }
 
-// ¹ïÀ³¤Ï²ÕÄ¶½X: 0x005322D0
+// å°æ‡‰åçµ„è­¯ç¢¼: 0x005322D0
 CEffect_Player_Special_Top_Effect::~CEffect_Player_Special_Top_Effect()
 {
 }
 
-// ¹ïÀ³¤Ï²ÕÄ¶½X: 0x005322E0
+// å°æ‡‰åçµ„è­¯ç¢¼: 0x005322E0
 void CEffect_Player_Special_Top_Effect::SetEffect(ClientCharacter* pOwner, unsigned char effectType)
 {
     if (!pOwner) return;
@@ -25,39 +25,39 @@ void CEffect_Player_Special_Top_Effect::SetEffect(ClientCharacter* pOwner, unsig
     const char* szFileName = nullptr;
     int effectID = 0;
 
-    // ®Ú¾Ú¶Ç¤Jªº effectType ¿ï¾Ü­n¸ü¤Jªº¯S®Ä¸ê·½
+    // æ ¹æ“šå‚³å…¥çš„ effectType é¸æ“‡è¦è¼‰å…¥çš„ç‰¹æ•ˆè³‡æº
     if (effectType == 1) {
         effectID = 51;
         szFileName = "Effect/efn-LiveeventMc-Top.ea";
     }
     else {
-        // ­ì©l½X¤¤ v5 ¥¼©w¸q¡Aªí¥Ü¦pªG effectType ¤£¬O 1¡A¥i¯à·|¾É­P¿ù»~
-        // ³o¸Ì§Ú­Ì°²³]¦³¤@­Ó¹w³]©Î¿ù»~³B²z
+        // åŸå§‹ç¢¼ä¸­ v5 æœªå®šç¾©ï¼Œè¡¨ç¤ºå¦‚æœ effectType ä¸æ˜¯ 1ï¼Œå¯èƒ½æœƒå°è‡´éŒ¯èª¤
+        // é€™è£¡æˆ‘å€‘å‡è¨­æœ‰ä¸€å€‹é è¨­æˆ–éŒ¯èª¤è™•ç†
         return;
     }
 
-    // Àò¨ú¨Ã³]©w¯S®Ä¼Æ¾Ú
+    // ç²å–ä¸¦è¨­å®šç‰¹æ•ˆæ•¸æ“š
     CEAManager::GetInstance()->GetEAData(effectID, (char*)szFileName, &m_ccaEffect);
     m_ccaEffect.SetFrameTime();
-    m_ccaEffect.Play(0, false); // °Êµe¥»¨­¥i¯à¤£´`Àô¡A¥Ñ FrameProcess ±±¨î¨ä«ùÄò©Ê
+    m_ccaEffect.Play(0, false); // å‹•ç•«æœ¬èº«å¯èƒ½ä¸å¾ªç’°ï¼Œç”± FrameProcess æ§åˆ¶å…¶æŒçºŒæ€§
 
-    // ¸j©w¾Ö¦³ªÌ
+    // ç¶å®šæ“æœ‰è€…
     m_pOwnerCharacter = pOwner;
 }
 
-// ¹ïÀ³¤Ï²ÕÄ¶½X: 0x00532370
+// å°æ‡‰åçµ„è­¯ç¢¼: 0x00532370
 bool CEffect_Player_Special_Top_Effect::FrameProcess(float fElapsedTime)
 {
-    // §ó·s¤º³¡°Êµe¼v®æ
+    // æ›´æ–°å…§éƒ¨å‹•ç•«å½±æ ¼
     m_ccaEffect.FrameProcess(fElapsedTime);
 
-    // --- ®Ö¤ß¥Í©R¶g´Á§PÂ_ ---
-    // ­ì©l½X: return *((_DWORD *)this + 33) == 0;
-    // ¦pªG¾Ö¦³ªÌ«ü¼Ğ³Q¥~³¡³]¬° nullptr¡A«h¯S®Äµ²§ô
+    // --- æ ¸å¿ƒç”Ÿå‘½é€±æœŸåˆ¤æ–· ---
+    // åŸå§‹ç¢¼: return *((_DWORD *)this + 33) == 0;
+    // å¦‚æœæ“æœ‰è€…æŒ‡æ¨™è¢«å¤–éƒ¨è¨­ç‚º nullptrï¼Œå‰‡ç‰¹æ•ˆçµæŸ
     return (m_pOwnerCharacter == nullptr);
 }
 
-// ¹ïÀ³¤Ï²ÕÄ¶½X: 0x005323B0
+// å°æ‡‰åçµ„è­¯ç¢¼: 0x005323B0
 void CEffect_Player_Special_Top_Effect::Process()
 {
     if (!m_pOwnerCharacter) {
@@ -65,31 +65,31 @@ void CEffect_Player_Special_Top_Effect::Process()
         return;
     }
 
-    // ¦pªG¨¤¦â³B©óÁô¨­µ¥¯S®íª¬ºA¡A«h¤£Åã¥Ü
+    // å¦‚æœè§’è‰²è™•æ–¼éš±èº«ç­‰ç‰¹æ®Šç‹€æ…‹ï¼Œå‰‡ä¸é¡¯ç¤º
     if (m_pOwnerCharacter->IsHide() || m_pOwnerCharacter->GetSomeOtherState()) {
         m_bIsVisible = FALSE;
         return;
     }
 
-    // ±N¥@¬É®y¼ĞÂà´«¬°¿Ã¹õ®y¼Ğ
+    // å°‡ä¸–ç•Œåº§æ¨™è½‰æ›ç‚ºè¢å¹•åº§æ¨™
     float screenX = static_cast<float>(m_pOwnerCharacter->GetPosX() - g_Game_System_Info.ScreenX);
     float screenY = static_cast<float>(m_pOwnerCharacter->GetPosY() - g_Game_System_Info.ScreenY);
 
-    // ®Ú¾Ú¨¤¦â´Â¦V³]©wÂ½Âà
+    // æ ¹æ“šè§’è‰²æœå‘è¨­å®šç¿»è½‰
     m_bIsFlip = (m_pOwnerCharacter->GetActionSide() != 0);
 
-    // ¶i¦æµô°Å§PÂ_
+    // é€²è¡Œè£å‰ªåˆ¤æ–·
     m_bIsVisible = IsCliping(screenX, 0.0f);
 
     if (m_bIsVisible) {
-        // §ó·s¤º³¡ CCAEffect ªºª¬ºA
+        // æ›´æ–°å…§éƒ¨ CCAEffect çš„ç‹€æ…‹
         m_ccaEffect.SetPosition(screenX, screenY);
         m_ccaEffect.SetFlipX(m_bIsFlip);
         m_ccaEffect.Process();
     }
 }
 
-// ¹ïÀ³¤Ï²ÕÄ¶½X: 0x00532470
+// å°æ‡‰åçµ„è­¯ç¢¼: 0x00532470
 void CEffect_Player_Special_Top_Effect::Draw()
 {
     if (m_bIsVisible) {

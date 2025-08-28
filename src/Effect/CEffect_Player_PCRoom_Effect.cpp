@@ -3,60 +3,60 @@
 #include "Character/ClientCharacter.h"
 #include "global.h"
 
-// ¹ïÀ³¤Ï²ÕÄ¶½X: 0x00531E80
+// å°æ‡‰åçµ„è­¯ç¢¼: 0x00531E80
 CEffect_Player_PCRoom_Effect::CEffect_Player_PCRoom_Effect()
     : m_pOwnerCharacter(nullptr)
 {
-    // CEffectBase ªº«Øºc¨ç¦¡·|³Q¦Û°Ê©I¥s
-    // ³o­ÓÃş§Oªº¯S®Ä¸ê·½¬O¦b SetEffect ¤¤°ÊºA¸ü¤Jªº
+    // CEffectBase çš„å»ºæ§‹å‡½å¼æœƒè¢«è‡ªå‹•å‘¼å«
+    // é€™å€‹é¡åˆ¥çš„ç‰¹æ•ˆè³‡æºæ˜¯åœ¨ SetEffect ä¸­å‹•æ…‹è¼‰å…¥çš„
 }
 
-// ¹ïÀ³¤Ï²ÕÄ¶½X: 0x00531EC0
+// å°æ‡‰åçµ„è­¯ç¢¼: 0x00531EC0
 CEffect_Player_PCRoom_Effect::~CEffect_Player_PCRoom_Effect()
 {
 }
 
-// ¹ïÀ³¤Ï²ÕÄ¶½X: 0x00531ED0
+// å°æ‡‰åçµ„è­¯ç¢¼: 0x00531ED0
 void CEffect_Player_PCRoom_Effect::SetEffect(ClientCharacter* pOwner)
 {
     if (!pOwner) return;
 
-    // ¸ü¤J¯S®Ä¼Æ¾Ú
+    // è¼‰å…¥ç‰¹æ•ˆæ•¸æ“š
     CEAManager::GetInstance()->GetEAData(49, "Effect/efn_PCroom.ea", &m_ccaEffect);
 
-    // ³]©w¼v®æ®É¶¡¨Ã¼½©ñ°Êµe
+    // è¨­å®šå½±æ ¼æ™‚é–“ä¸¦æ’­æ”¾å‹•ç•«
     m_ccaEffect.SetFrameTime();
-    m_ccaEffect.Play(0, false); // °Êµe¥»¨­¥i¯à¤£´`Àô¡A¥Ñ FrameProcess ±±¨î¨ä«ùÄò©Ê
+    m_ccaEffect.Play(0, false); // å‹•ç•«æœ¬èº«å¯èƒ½ä¸å¾ªç’°ï¼Œç”± FrameProcess æ§åˆ¶å…¶æŒçºŒæ€§
 
-    // ¸j©w¾Ö¦³ªÌ
+    // ç¶å®šæ“æœ‰è€…
     m_pOwnerCharacter = pOwner;
 }
 
-// ¹ïÀ³¤Ï²ÕÄ¶½X: 0x00531F10
+// å°æ‡‰åçµ„è­¯ç¢¼: 0x00531F10
 bool CEffect_Player_PCRoom_Effect::FrameProcess(float fElapsedTime)
 {
-    // §ó·s¤º³¡°Êµe¼v®æ
+    // æ›´æ–°å…§éƒ¨å‹•ç•«å½±æ ¼
     m_ccaEffect.FrameProcess(fElapsedTime);
 
-    // --- ®Ö¤ß¥Í©R¶g´Á§PÂ_ ---
+    // --- æ ¸å¿ƒç”Ÿå‘½é€±æœŸåˆ¤æ–· ---
     ClientCharacter* pOwner = m_pOwnerCharacter;
     if (!pOwner) {
-        return true; // ¦pªG¾Ö¦³ªÌ«ü¼Ğ¬°ªÅ¡A¯S®Äµ²§ô
+        return true; // å¦‚æœæ“æœ‰è€…æŒ‡æ¨™ç‚ºç©ºï¼Œç‰¹æ•ˆçµæŸ
     }
 
-    // ÀË¬d¨¤¦â¬O§_¤´³B©ó PC Room ª¬ºA
-    // ­ì©l½X: if ( *(_DWORD *)(v3 + 11556) ) return 0;
+    // æª¢æŸ¥è§’è‰²æ˜¯å¦ä»è™•æ–¼ PC Room ç‹€æ…‹
+    // åŸå§‹ç¢¼: if ( *(_DWORD *)(v3 + 11556) ) return 0;
     //         if ( *(_BYTE *)(v3 + 11560) == 1 ) return 0;
-    if (pOwner->IsPCRoomUser() || pOwner->IsPCRoomPremium()) { // °²³]ªº¨ç¦¡
-        // ¦pªG¬O¡A¯S®ÄÄ~Äò¦s¦b
+    if (pOwner->IsPCRoomUser() || pOwner->IsPCRoomPremium()) { // å‡è¨­çš„å‡½å¼
+        // å¦‚æœæ˜¯ï¼Œç‰¹æ•ˆç¹¼çºŒå­˜åœ¨
         return false;
     }
 
-    // §_«h¡A¯S®Äµ²§ô
+    // å¦å‰‡ï¼Œç‰¹æ•ˆçµæŸ
     return true;
 }
 
-// ¹ïÀ³¤Ï²ÕÄ¶½X: 0x00531F80
+// å°æ‡‰åçµ„è­¯ç¢¼: 0x00531F80
 void CEffect_Player_PCRoom_Effect::Process()
 {
     if (!m_pOwnerCharacter) {
@@ -64,31 +64,31 @@ void CEffect_Player_PCRoom_Effect::Process()
         return;
     }
 
-    // ¦pªG¨¤¦â³B©óÁô¨­µ¥¯S®íª¬ºA¡A«h¤£Åã¥Ü
+    // å¦‚æœè§’è‰²è™•æ–¼éš±èº«ç­‰ç‰¹æ®Šç‹€æ…‹ï¼Œå‰‡ä¸é¡¯ç¤º
     if (m_pOwnerCharacter->IsHide() || m_pOwnerCharacter->GetSomeOtherState()) {
         m_bIsVisible = FALSE;
         return;
     }
 
-    // ±N¥@¬É®y¼ĞÂà´«¬°¿Ã¹õ®y¼Ğ
+    // å°‡ä¸–ç•Œåº§æ¨™è½‰æ›ç‚ºè¢å¹•åº§æ¨™
     float screenX = static_cast<float>(m_pOwnerCharacter->GetPosX() - g_Game_System_Info.ScreenX);
     float screenY = static_cast<float>(m_pOwnerCharacter->GetPosY() - g_Game_System_Info.ScreenY);
 
-    // ®Ú¾Ú¨¤¦â´Â¦V³]©wÂ½Âà
+    // æ ¹æ“šè§’è‰²æœå‘è¨­å®šç¿»è½‰
     m_bIsFlip = (m_pOwnerCharacter->GetActionSide() != 0);
 
-    // ¶i¦æµô°Å§PÂ_
+    // é€²è¡Œè£å‰ªåˆ¤æ–·
     m_bIsVisible = IsCliping(screenX, 0.0f);
 
     if (m_bIsVisible) {
-        // §ó·s¤º³¡ CCAEffect ªºª¬ºA
+        // æ›´æ–°å…§éƒ¨ CCAEffect çš„ç‹€æ…‹
         m_ccaEffect.SetPosition(screenX, screenY);
         m_ccaEffect.SetFlipX(m_bIsFlip);
         m_ccaEffect.Process();
     }
 }
 
-// ¹ïÀ³¤Ï²ÕÄ¶½X: 0x00532040
+// å°æ‡‰åçµ„è­¯ç¢¼: 0x00532040
 void CEffect_Player_PCRoom_Effect::Draw()
 {
     if (m_bIsVisible) {

@@ -1,7 +1,7 @@
 #pragma once
 
 #include "Effect/CEffectBase.h"
-#include "Effect/CCAEffect.h" // ¥]§t FrameSkip ªº©w¸q
+#include "Effect/CCAEffect.h" // åŒ…å« FrameSkip çš„å®šç¾©
 #include "Character/ClientCharacter.h"
 #include <d3dx9math.h>
 
@@ -13,7 +13,7 @@ public:
     CEffect_Battle_GunShoot();
     virtual ~CEffect_Battle_GunShoot();
 
-    // ... (¨ä¥L¨ç¦¡«Å§i¤£ÅÜ) ...
+    // ... (å…¶ä»–å‡½å¼å®£å‘Šä¸è®Š) ...
     virtual bool FrameProcess(float fElapsedTime) override;
     virtual void Process() override;
     virtual void Draw() override;
@@ -21,19 +21,19 @@ public:
     void SetEffect(D3DXVECTOR2* pStartPos, D3DXVECTOR2* pEndPos, bool bFlip, unsigned short a5, int hitInfoID);
 
 private:
-    // --- ¦¨­ûÅÜ¼Æ (­×¥¿»P·s¼W) ---
+    // --- æˆå“¡è®Šæ•¸ (ä¿®æ­£èˆ‡æ–°å¢) ---
 
-    // ­ì©l½X *((_DWORD *)this + 33) ªº¦ì¸m¡A²{¦b©ú½T¨ä¥Î³~
-    GameImage* m_pBulletImage;      // ¦ì²¾ +132 (0x84): ¥Nªí¤l¼u/¼u¹Dªº GameImage
+    // åŸå§‹ç¢¼ *((_DWORD *)this + 33) çš„ä½ç½®ï¼Œç¾åœ¨æ˜ç¢ºå…¶ç”¨é€”
+    GameImage* m_pBulletImage;      // ä½ç§» +132 (0x84): ä»£è¡¨å­å½ˆ/å½ˆé“çš„ GameImage
 
-    ClientCharacter* m_pTargetCharacter;  // ¦ì²¾ +136 (0x88): ¥Ø¼Ğ¨¤¦â
+    ClientCharacter* m_pTargetCharacter;  // ä½ç§» +136 (0x88): ç›®æ¨™è§’è‰²
 
-    float   m_fTotalDistance;    // ¦ì²¾ +140 (0x8C): Á`¶ZÂ÷
-    float   m_fTraveledDistance; // ¦ì²¾ +144 (0x90): ¤w­¸¦æ¶ZÂ÷
+    float   m_fTotalDistance;    // ä½ç§» +140 (0x8C): ç¸½è·é›¢
+    float   m_fTraveledDistance; // ä½ç§» +144 (0x90): å·²é£›è¡Œè·é›¢
 
-    FrameSkip m_MovementFrameSkip; // ¦ì²¾ +148 (0x94)
+    FrameSkip m_MovementFrameSkip; // ä½ç§» +148 (0x94)
 
-    int     m_nHitInfoID;        // ¦ì²¾ +160 (0xA0)
-    int     m_dwCasterAccountID; // ¦ì²¾ +164 (0xA4)
-    unsigned short m_usUnk_a4;   // ¦ì²¾ +168 (0xA8): SetEffect ¶Ç¤Jªº¥¼ª¾°Ñ¼Æ a4
+    int     m_nHitInfoID;        // ä½ç§» +160 (0xA0)
+    int     m_dwCasterAccountID; // ä½ç§» +164 (0xA4)
+    unsigned short m_usUnk_a4;   // ä½ç§» +168 (0xA8): SetEffect å‚³å…¥çš„æœªçŸ¥åƒæ•¸ a4
 };

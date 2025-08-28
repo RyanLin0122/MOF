@@ -5,43 +5,43 @@
 
 /**
  * @class CEffect_Skill_Type_Directed
- * @brief ¥Nªí¦b¥Ø¼Ğ¨¤¦â¦ì¸m¼½©ñ¤@¦¸ªº«ü¦V©Ê§Ş¯à¯S®Ä¡C
+ * @brief ä»£è¡¨åœ¨ç›®æ¨™è§’è‰²ä½ç½®æ’­æ”¾ä¸€æ¬¡çš„æŒ‡å‘æ€§æŠ€èƒ½ç‰¹æ•ˆã€‚
  *
- * Ä~©Ó¦Û CEffectBase¡A¥Î©ó¹ê²{»İ­nºë½T©R¤¤¦b¥Ø¼Ğ¨­¤WªºµøÄ±®ÄªG¡C
- * ¯S®Äªº¦ì¸m·|«ùÄò°lÂÜ¥Ø¼Ğ¨¤¦â¡A¨ä¥Í©R¶g´Á¥Ñ°Êµe¥»¨­ªø«×¨M©w¡C
+ * ç¹¼æ‰¿è‡ª CEffectBaseï¼Œç”¨æ–¼å¯¦ç¾éœ€è¦ç²¾ç¢ºå‘½ä¸­åœ¨ç›®æ¨™èº«ä¸Šçš„è¦–è¦ºæ•ˆæœã€‚
+ * ç‰¹æ•ˆçš„ä½ç½®æœƒæŒçºŒè¿½è¹¤ç›®æ¨™è§’è‰²ï¼Œå…¶ç”Ÿå‘½é€±æœŸç”±å‹•ç•«æœ¬èº«é•·åº¦æ±ºå®šã€‚
  */
 class CEffect_Skill_Type_Directed : public CEffectBase {
 public:
     CEffect_Skill_Type_Directed();
     virtual ~CEffect_Skill_Type_Directed();
 
-    // --- µêÀÀ¨ç¦¡ÂĞ¼g ---
+    // --- è™›æ“¬å‡½å¼è¦†å¯« ---
 
-    /// @brief ³B²z¯S®Äªº¥Í©R¶g´Á¡Aª½±µ¨Ì¿à CCAEffect ªº°Êµe¼½©ñª¬ºA¡C
+    /// @brief è™•ç†ç‰¹æ•ˆçš„ç”Ÿå‘½é€±æœŸï¼Œç›´æ¥ä¾è³´ CCAEffect çš„å‹•ç•«æ’­æ”¾ç‹€æ…‹ã€‚
     virtual bool FrameProcess(float fElapsedTime) override;
 
-    /// @brief ·Ç³ÆÃ¸»s«eªºÅŞ¿è§ó·s¡A¥D­n¤u§@¬O¦P¨B¥Ø¼Ğªº¦ì¸m¡C
+    /// @brief æº–å‚™ç¹ªè£½å‰çš„é‚è¼¯æ›´æ–°ï¼Œä¸»è¦å·¥ä½œæ˜¯åŒæ­¥ç›®æ¨™çš„ä½ç½®ã€‚
     virtual void Process() override;
 
-    /// @brief Ã¸»s¯S®Ä¡C
+    /// @brief ç¹ªè£½ç‰¹æ•ˆã€‚
     virtual void Draw() override;
 
-    // --- ±M¦³¨ç¦¡ ---
+    // --- å°ˆæœ‰å‡½å¼ ---
 
-    /// @brief ³]©w¯S®Ä¡C
-    /// @param pCaster ¬IªkªÌ¨¤¦â¡A¥Î©ó¨M©w¯S®Ä¤è¦V¡C
-    /// @param pTarget ¥Ø¼Ğ¨¤¦â¡A¯S®Ä±N¸òÀH¦¹¨¤¦âªº¦ì¸m¡C
-    /// @param effectKindID ¯S®ÄªººØÃş ID¡C
-    /// @param szFileName ¯S®Ä¸ê·½ (.ea) ªºÀÉ®×¦WºÙ¡C
-    /// @param ucDirectionFlag ¤è¦VºX¼Ğ¡A¥Î©ó¨M©wÂ½ÂàÅŞ¿è¡C
+    /// @brief è¨­å®šç‰¹æ•ˆã€‚
+    /// @param pCaster æ–½æ³•è€…è§’è‰²ï¼Œç”¨æ–¼æ±ºå®šç‰¹æ•ˆæ–¹å‘ã€‚
+    /// @param pTarget ç›®æ¨™è§’è‰²ï¼Œç‰¹æ•ˆå°‡è·Ÿéš¨æ­¤è§’è‰²çš„ä½ç½®ã€‚
+    /// @param effectKindID ç‰¹æ•ˆçš„ç¨®é¡ IDã€‚
+    /// @param szFileName ç‰¹æ•ˆè³‡æº (.ea) çš„æª”æ¡ˆåç¨±ã€‚
+    /// @param ucDirectionFlag æ–¹å‘æ——æ¨™ï¼Œç”¨æ–¼æ±ºå®šç¿»è½‰é‚è¼¯ã€‚
     void SetEffect(ClientCharacter* pCaster, ClientCharacter* pTarget, unsigned short effectKindID, char* szFileName, unsigned char ucDirectionFlag);
 
 protected:
-    // --- ¦¨­ûÅÜ¼Æ ---
+    // --- æˆå“¡è®Šæ•¸ ---
 
-    /// @brief «ü¦V¬IªkªÌ¡C
-    ClientCharacter* m_pCasterCharacter; // ¦ì²¾ +132 (0x84)
+    /// @brief æŒ‡å‘æ–½æ³•è€…ã€‚
+    ClientCharacter* m_pCasterCharacter; // ä½ç§» +132 (0x84)
 
-    /// @brief «ü¦V¥Ø¼Ğ¡C¯S®Äªº¦ì¸m·|®Ú¾Ú¦¹¨¤¦âªº¦ì¸m°ÊºA§ó·s¡C
-    ClientCharacter* m_pTargetCharacter; // ¦ì²¾ +136 (0x88)
+    /// @brief æŒ‡å‘ç›®æ¨™ã€‚ç‰¹æ•ˆçš„ä½ç½®æœƒæ ¹æ“šæ­¤è§’è‰²çš„ä½ç½®å‹•æ…‹æ›´æ–°ã€‚
+    ClientCharacter* m_pTargetCharacter; // ä½ç§» +136 (0x88)
 };

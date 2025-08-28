@@ -1,72 +1,72 @@
 #include "Effect/CEffect_Pet_Base.h"
 #include "Effect/CEAManager.h"
-#include "Pet/cltPetObject.h" // °²³]Ãdª«ª«¥óªº©w¸q¦b¦¹
+#include "Pet/cltPetObject.h" // å‡è¨­å¯µç‰©ç‰©ä»¶çš„å®šç¾©åœ¨æ­¤
 #include "global.h"
 
-// ¹ïÀ³¤Ï²ÕÄ¶½X: 0x00539090
+// å°æ‡‰åçµ„è­¯ç¢¼: 0x00539090
 CEffect_Pet_Base::CEffect_Pet_Base()
     : m_pOwnerPet(nullptr)
 {
-    // CEffectBase ªº«Øºc¨ç¦¡·|³Q¦Û°Ê©I¥s
+    // CEffectBase çš„å»ºæ§‹å‡½å¼æœƒè¢«è‡ªå‹•å‘¼å«
 }
 
-// ¹ïÀ³¤Ï²ÕÄ¶½X: 0x005390D0
+// å°æ‡‰åçµ„è­¯ç¢¼: 0x005390D0
 CEffect_Pet_Base::~CEffect_Pet_Base()
 {
 }
 
-// ¹ïÀ³¤Ï²ÕÄ¶½X: 0x005390E0
+// å°æ‡‰åçµ„è­¯ç¢¼: 0x005390E0
 void CEffect_Pet_Base::SetEffect(cltPetObject* pPetOwner, unsigned short effectKindID, char* szFileName)
 {
     if (!pPetOwner) return;
 
-    // ºc«Ø§¹¾ãªºÀÉ®×¸ô®|
+    // æ§‹å»ºå®Œæ•´çš„æª”æ¡ˆè·¯å¾‘
     char szFullPath[256];
     sprintf_s(szFullPath, sizeof(szFullPath), "Effect/%s", szFileName);
 
-    // Àò¨ú¨Ã³]©w¯S®Ä¼Æ¾Ú
+    // ç²å–ä¸¦è¨­å®šç‰¹æ•ˆæ•¸æ“š
     CEAManager::GetInstance()->GetEAData(effectKindID, szFullPath, &m_ccaEffect);
     m_ccaEffect.SetFrameTime();
-    m_ccaEffect.Play(0, false); // ¼½©ñ²Ä¤@­Ó°Êµe§Ç¦C¡A¤£´`Àô
+    m_ccaEffect.Play(0, false); // æ’­æ”¾ç¬¬ä¸€å€‹å‹•ç•«åºåˆ—ï¼Œä¸å¾ªç’°
 
-    // ¸j©w¾Ö¦³ªÌ
+    // ç¶å®šæ“æœ‰è€…
     m_pOwnerPet = pPetOwner;
 }
 
-// ¹ïÀ³¤Ï²ÕÄ¶½X: 0x00539150
+// å°æ‡‰åçµ„è­¯ç¢¼: 0x00539150
 bool CEffect_Pet_Base::FrameProcess(float fElapsedTime)
 {
-    // ±N¥Í©R¶g´ÁºŞ²zªº¥ô°È§¹¥ş©e°Uµ¹¤º³¡ªº CCAEffect ª«¥ó¡C
+    // å°‡ç”Ÿå‘½é€±æœŸç®¡ç†çš„ä»»å‹™å®Œå…¨å§”è¨—çµ¦å…§éƒ¨çš„ CCAEffect ç‰©ä»¶ã€‚
     return m_ccaEffect.FrameProcess(fElapsedTime);
 }
 
-// ¹ïÀ³¤Ï²ÕÄ¶½X: 0x00539160
+// å°æ‡‰åçµ„è­¯ç¢¼: 0x00539160
 void CEffect_Pet_Base::Process()
 {
-    // ÀË¬d¾Ö¦³ªÌ¬O§_¦s¦b
+    // æª¢æŸ¥æ“æœ‰è€…æ˜¯å¦å­˜åœ¨
     if (!m_pOwnerPet) {
         m_bIsVisible = FALSE;
         return;
     }
 
-    // --- ®Ö¤ßÅŞ¿è¡G«ùÄò°lÂÜÃdª«¦ì¸m ---
-    // ­ì©l½X: v4 = (float)(*(_DWORD *)(v2 + 2948) - dword_A73088);
+    // --- æ ¸å¿ƒé‚è¼¯ï¼šæŒçºŒè¿½è¹¤å¯µç‰©ä½ç½® ---
+    // åŸå§‹ç¢¼: v4 = (float)(*(_DWORD *)(v2 + 2948) - dword_A73088);
 
-    // ±N¥@¬É®y¼ĞÂà´«¬°¿Ã¹õ®y¼Ğ
+    // å°‡ä¸–ç•Œåº§æ¨™è½‰æ›ç‚ºè¢å¹•åº§æ¨™
     float screenX = static_cast<float>(m_pOwnerPet->GetPosX() - g_Game_System_Info.ScreenWidth);
     float screenY = static_cast<float>(m_pOwnerPet->GetPosY() - g_Game_System_Info.ScreenHeight);
 
-    // ¶i¦æµô°Å§PÂ_
+    // é€²è¡Œè£å‰ªåˆ¤æ–·
     m_bIsVisible = IsCliping(screenX, 0.0f);
 
     if (m_bIsVisible) {
-        // §ó·s¤º³¡ CCAEffect ªºª¬ºA
+        // æ›´æ–°å…§éƒ¨ CCAEffect çš„ç‹€æ…‹
         m_ccaEffect.SetPosition(screenX, screenY);
         m_ccaEffect.Process();
     }
 }
 
-// ¹ïÀ³¤Ï²ÕÄ¶½X: 0x005391E0
+// å°æ‡‰åçµ„è­¯ç¢¼: 0x005391E0
 void CEffect_Pet_Base::Draw()
 {
     if (m_bIsVisible) {

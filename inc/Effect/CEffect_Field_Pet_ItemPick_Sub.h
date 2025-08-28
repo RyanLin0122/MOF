@@ -1,6 +1,6 @@
 #pragma once
 #include "Effect/CEffectBase.h"
-#include "Effect/CCAEffect.h" // ¬°¤F FrameSkip ªº¨Ï¥Î
+#include "Effect/CCAEffect.h" // ç‚ºäº† FrameSkip çš„ä½¿ç”¨
 
 class GameImage;
 
@@ -30,5 +30,5 @@ private:
     GameImage* m_pLightImage;
     float m_fAlpha;
     FrameSkip m_FrameSkip;
-    // Àx¦s¦ì¸mªº¦¨­û¤w¦b CEffectBase ¤¤
+    // å„²å­˜ä½ç½®çš„æˆå“¡å·²åœ¨ CEffectBase ä¸­
 };

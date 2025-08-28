@@ -4,41 +4,41 @@
 
 /**
  * @class CEffect_Skill_Trap_Explosion
- * @brief ¥Nªí³´¨ÀÄ²µo®ÉªºÃz¬µµøÄ±¯S®Ä¡C
+ * @brief ä»£è¡¨é™·é˜±è§¸ç™¼æ™‚çš„çˆ†ç‚¸è¦–è¦ºç‰¹æ•ˆã€‚
  *
- * Ä~©Ó¦Û CEffectBase¡A¬O¤@­Ó¦b©T©w®y¼Ğ¼½©ñªº¤@¦¸©Ê°Êµe¯S®Ä¡A
- * ¨ä¥~Æ[·|®Ú¾Ú§Ş¯àµ¥¯ÅÅÜ¤Æ¡C
+ * ç¹¼æ‰¿è‡ª CEffectBaseï¼Œæ˜¯ä¸€å€‹åœ¨å›ºå®šåº§æ¨™æ’­æ”¾çš„ä¸€æ¬¡æ€§å‹•ç•«ç‰¹æ•ˆï¼Œ
+ * å…¶å¤–è§€æœƒæ ¹æ“šæŠ€èƒ½ç­‰ç´šè®ŠåŒ–ã€‚
  */
 class CEffect_Skill_Trap_Explosion : public CEffectBase {
 public:
     CEffect_Skill_Trap_Explosion();
     virtual ~CEffect_Skill_Trap_Explosion();
 
-    // --- µêÀÀ¨ç¦¡ÂĞ¼g ---
+    // --- è™›æ“¬å‡½å¼è¦†å¯« ---
 
-    /// @brief ³B²z¯S®Äªº¥Í©R¶g´Á¡Aª½±µ¨Ì¿à CCAEffect ªº°Êµe¼½©ñª¬ºA¡C
+    /// @brief è™•ç†ç‰¹æ•ˆçš„ç”Ÿå‘½é€±æœŸï¼Œç›´æ¥ä¾è³´ CCAEffect çš„å‹•ç•«æ’­æ”¾ç‹€æ…‹ã€‚
     virtual bool FrameProcess(float fElapsedTime) override;
 
-    /// @brief ·Ç³ÆÃ¸»s«eªºÅŞ¿è§ó·s¡A¨Ï¥Î©T©wªºªì©l¦ì¸m¡C
+    /// @brief æº–å‚™ç¹ªè£½å‰çš„é‚è¼¯æ›´æ–°ï¼Œä½¿ç”¨å›ºå®šçš„åˆå§‹ä½ç½®ã€‚
     virtual void Process() override;
 
-    /// @brief Ã¸»s¯S®Ä¡C
+    /// @brief ç¹ªè£½ç‰¹æ•ˆã€‚
     virtual void Draw() override;
 
-    // --- ±M¦³¨ç¦¡ ---
+    // --- å°ˆæœ‰å‡½å¼ ---
 
-    /// @brief ³]©w¯S®Ä¡C
-    /// @param x ¯S®Ä¤¤¤ßÂIªº X ®y¼Ğ¡C
-    /// @param y ¯S®Ä¤¤¤ßÂIªº Y ®y¼Ğ¡C
-    /// @param skillLevel §Ş¯àµ¥¯Å (0-2)¡A¨M©w¯S®Äªº¥~Æ[¡C
+    /// @brief è¨­å®šç‰¹æ•ˆã€‚
+    /// @param x ç‰¹æ•ˆä¸­å¿ƒé»çš„ X åº§æ¨™ã€‚
+    /// @param y ç‰¹æ•ˆä¸­å¿ƒé»çš„ Y åº§æ¨™ã€‚
+    /// @param skillLevel æŠ€èƒ½ç­‰ç´š (0-2)ï¼Œæ±ºå®šç‰¹æ•ˆçš„å¤–è§€ã€‚
     void SetEffect(float x, float y, unsigned char skillLevel);
 
 protected:
-    // --- ¦¨­ûÅÜ¼Æ (®Ú¾Ú Effectall.c @ 0x005340B0 ±ÀÂ_) ---
+    // --- æˆå“¡è®Šæ•¸ (æ ¹æ“š Effectall.c @ 0x005340B0 æ¨æ–·) ---
 
-    /// @brief ¯S®Ä³Ğ«Ø®Éªº X ®y¼Ğ§Ö·Ó¡C
-    float m_fInitialPosX;       // ¦ì²¾ +132 (0x84)
+    /// @brief ç‰¹æ•ˆå‰µå»ºæ™‚çš„ X åº§æ¨™å¿«ç…§ã€‚
+    float m_fInitialPosX;       // ä½ç§» +132 (0x84)
 
-    /// @brief ¯S®Ä³Ğ«Ø®Éªº Y ®y¼Ğ§Ö·Ó¡C
-    float m_fInitialPosY;       // ¦ì²¾ +136 (0x88)
+    /// @brief ç‰¹æ•ˆå‰µå»ºæ™‚çš„ Y åº§æ¨™å¿«ç…§ã€‚
+    float m_fInitialPosY;       // ä½ç§» +136 (0x88)
 };

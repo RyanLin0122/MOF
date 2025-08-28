@@ -2,33 +2,33 @@
 
 #include <d3d9.h>
 
-// «e¦V«Å§i¡AÁ×§K¦b¼ĞÀYÀÉ¤¤¤Ş¤J¹L¦h¤£¥²­nªº¤º®e
+// å‰å‘å®£å‘Šï¼Œé¿å…åœ¨æ¨™é ­æª”ä¸­å¼•å…¥éå¤šä¸å¿…è¦çš„å…§å®¹
 class cltImageManager;
 class GameImage;
 
 /// @class ImageDrawTest
-/// @brief «Ê¸Ë¤F¸ü¤J¡B³B²z©M´è¬V GameImage ªº©Ò¦³´ú¸ÕÅŞ¿è¡C
+/// @brief å°è£äº†è¼‰å…¥ã€è™•ç†å’Œæ¸²æŸ“ GameImage çš„æ‰€æœ‰æ¸¬è©¦é‚è¼¯ã€‚
 class ImageDrawTest
 {
 public:
     ImageDrawTest();
     ~ImageDrawTest();
 
-    /// @brief ªì©l¤Æ´ú¸ÕÀô¹Ò¡A¥]¬A¶}±ÒVFS¡B«Ø¥ßºŞ²z¾¹©M¸ü¤J¹Ï¤ù¸ê·½¡C
-    /// @return ¦¨¥\ªğ¦^ S_OK¡A¥¢±Ñªğ¦^ E_FAIL¡C
+    /// @brief åˆå§‹åŒ–æ¸¬è©¦ç’°å¢ƒï¼ŒåŒ…æ‹¬é–‹å•ŸVFSã€å»ºç«‹ç®¡ç†å™¨å’Œè¼‰å…¥åœ–ç‰‡è³‡æºã€‚
+    /// @return æˆåŠŸè¿”å› S_OKï¼Œå¤±æ•—è¿”å› E_FAILã€‚
     HRESULT Initialize();
 
-    /// @brief °õ¦æ¨C¤@´Vªº´è¬VÅŞ¿è¡C
+    /// @brief åŸ·è¡Œæ¯ä¸€å¹€çš„æ¸²æŸ“é‚è¼¯ã€‚
     void Render();
 
 private:
-    /// @brief ÄÀ©ñ©Ò¦³¸ê·½¡C
+    /// @brief é‡‹æ”¾æ‰€æœ‰è³‡æºã€‚
     void Cleanup();
 
 private:
-    // --- ¦¨­ûÅÜ¼Æ ---
-    cltImageManager* m_pImageManager; // ¹Ï¤ùª«¥ó¦ÀºŞ²z¾¹
-    GameImage* m_pItemImage1;   // ²Ä¤@­Óª««~¹Ï¤ù
-    GameImage* m_pItemImage2;   // ²Ä¤G­Óª««~¹Ï¤ù
-    GameImage* m_pMapBgImage;   // ¦a¹Ï­I´º¹Ï¤ù
+    // --- æˆå“¡è®Šæ•¸ ---
+    cltImageManager* m_pImageManager; // åœ–ç‰‡ç‰©ä»¶æ± ç®¡ç†å™¨
+    GameImage* m_pItemImage1;   // ç¬¬ä¸€å€‹ç‰©å“åœ–ç‰‡
+    GameImage* m_pItemImage2;   // ç¬¬äºŒå€‹ç‰©å“åœ–ç‰‡
+    GameImage* m_pMapBgImage;   // åœ°åœ–èƒŒæ™¯åœ–ç‰‡
 };

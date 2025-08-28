@@ -5,32 +5,32 @@
 
 /**
  * @class CEffect_Battle_StaffShoot
- * @brief ¥Nªíªk§ú®g¥XªºÅ]ªk§ë®gª«¯S®Ä¡C
+ * @brief ä»£è¡¨æ³•æ–å°„å‡ºçš„é­”æ³•æŠ•å°„ç‰©ç‰¹æ•ˆã€‚
  *
- * Ä~©Ó¦Û CEffectBase¡A¥Î©ó¹ê²{ª½½u­¸¦æªºÅ]ªk¼u®ÄªG¡C
+ * ç¹¼æ‰¿è‡ª CEffectBaseï¼Œç”¨æ–¼å¯¦ç¾ç›´ç·šé£›è¡Œçš„é­”æ³•å½ˆæ•ˆæœã€‚
  */
 class CEffect_Battle_StaffShoot : public CEffectBase {
 public:
     CEffect_Battle_StaffShoot();
     virtual ~CEffect_Battle_StaffShoot();
 
-    // --- µêÀÀ¨ç¦¡ÂĞ¼g ---
+    // --- è™›æ“¬å‡½å¼è¦†å¯« ---
     virtual bool FrameProcess(float fElapsedTime) override;
     virtual void Process() override;
     virtual void Draw() override;
 
-    // --- ±M¦³¨ç¦¡ ---
-    /// @brief ³]©w¯S®Ä¡C
-    /// @param pStartPos §ë®gª«ªº°_©l¥@¬É®y¼Ğ¡C
-    /// @param pEndPos §ë®gª«ªº¥Ø¼Ğ¥@¬É®y¼Ğ¡C
-    /// @param bFlip ¬O§_¤ô¥­Â½Âà¡C
+    // --- å°ˆæœ‰å‡½å¼ ---
+    /// @brief è¨­å®šç‰¹æ•ˆã€‚
+    /// @param pStartPos æŠ•å°„ç‰©çš„èµ·å§‹ä¸–ç•Œåº§æ¨™ã€‚
+    /// @param pEndPos æŠ•å°„ç‰©çš„ç›®æ¨™ä¸–ç•Œåº§æ¨™ã€‚
+    /// @param bFlip æ˜¯å¦æ°´å¹³ç¿»è½‰ã€‚
     void SetEffect(D3DXVECTOR2* pStartPos, D3DXVECTOR2* pEndPos, bool bFlip);
 
 private:
-    // --- ¦¨­ûÅÜ¼Æ (®Ú¾Ú Effectall.c @ 0x0052F420 ±ÀÂ_) ---
+    // --- æˆå“¡è®Šæ•¸ (æ ¹æ“š Effectall.c @ 0x0052F420 æ¨æ–·) ---
 
-    // CEffectBase ¤w¥]§t m_ccaEffect (¦ì²¾+36), m_fSpeed (¦ì²¾+24) µ¥
+    // CEffectBase å·²åŒ…å« m_ccaEffect (ä½ç§»+36), m_fSpeed (ä½ç§»+24) ç­‰
 
-    float m_fTraveledDistance; // ¦ì²¾ +132 (0x84): ¤w­¸¦æªº¶ZÂ÷
-    float m_fTotalDistance;    // ¦ì²¾ +136 (0x88): °_ÂI¨ì²×ÂIªºÁ`¶ZÂ÷
+    float m_fTraveledDistance; // ä½ç§» +132 (0x84): å·²é£›è¡Œçš„è·é›¢
+    float m_fTotalDistance;    // ä½ç§» +136 (0x88): èµ·é»åˆ°çµ‚é»çš„ç¸½è·é›¢
 };

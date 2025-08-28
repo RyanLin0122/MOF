@@ -8,7 +8,7 @@
 #include "Effect/CEffect_Battle_HorizonCut.h"
 #include "Effect/CEffect_Battle_MagicBook.h"
 
-// --- ·s¼Wªº¤p¹CÀ¸¯S®Ä¼ĞÀYÀÉ ---
+// --- æ–°å¢çš„å°éŠæˆ²ç‰¹æ•ˆæ¨™é ­æª” ---
 #include "Effect/CEffect_MiniGame_Archer_String.h"
 #include "Effect/CEffect_MiniGame_Fighter_Break.h"
 #include "Effect/CEffect_MiniGame_Fighter_String.h"
@@ -36,65 +36,65 @@ EffectSystemTest::~EffectSystemTest()
 
 HRESULT EffectSystemTest::Initialize()
 {
-    printf("--- [EffectSystemTest] ªì©l¤Æ¶}©l ---\n");
+    printf("--- [EffectSystemTest] åˆå§‹åŒ–é–‹å§‹ ---\n");
 
-    // ¨BÆJ 1: ½T«O©Ò¦³¬ÛÃöªººŞ²z¾¹³£¤w«Ø¥ß¡C
-    // GetInstance() ·|¦b»İ­n®É¦Û°Ê«Ø¥ß³æ¨Òª«¥ó¡C
+    // æ­¥é©Ÿ 1: ç¢ºä¿æ‰€æœ‰ç›¸é—œçš„ç®¡ç†å™¨éƒ½å·²å»ºç«‹ã€‚
+    // GetInstance() æœƒåœ¨éœ€è¦æ™‚è‡ªå‹•å»ºç«‹å–®ä¾‹ç‰©ä»¶ã€‚
     CEffectManager::GetInstance();
     CEAManager::GetInstance();
 
-    // ª`·N¡GcltMoFC_EffectKindInfo ºŞ²z¾¹ÁöµM¦s¦b¡A¦ı CEffect_Battle_DownCut
-    // ¬Oª½±µ¹ê¨Ò¤Æªº¡A¤£³z¹L CEffectManager ªº AddEffect ¤u¼t¨ç¦¡¡C
-    // ¦]¦¹¡A¥Ø«e§Ú­Ì¤£»İ­nªì©l¤Æ g_clEffectKindInfo->Initialize(filename)¡C
+    // æ³¨æ„ï¼šcltMoFC_EffectKindInfo ç®¡ç†å™¨é›–ç„¶å­˜åœ¨ï¼Œä½† CEffect_Battle_DownCut
+    // æ˜¯ç›´æ¥å¯¦ä¾‹åŒ–çš„ï¼Œä¸é€é CEffectManager çš„ AddEffect å·¥å» å‡½å¼ã€‚
+    // å› æ­¤ï¼Œç›®å‰æˆ‘å€‘ä¸éœ€è¦åˆå§‹åŒ– g_clEffectKindInfo->Initialize(filename)ã€‚
 
-    // ¨BÆJ 2: «Ø¥ß¤@­Ó¼ÒÀÀªº¬IªkªÌ¨¤¦â¡C
-    printf("  ¥¿¦b«Ø¥ß¼ÒÀÀ¬IªkªÌ (ClientCharacter)...\n");
+    // æ­¥é©Ÿ 2: å»ºç«‹ä¸€å€‹æ¨¡æ“¬çš„æ–½æ³•è€…è§’è‰²ã€‚
+    printf("  æ­£åœ¨å»ºç«‹æ¨¡æ“¬æ–½æ³•è€… (ClientCharacter)...\n");
     m_pCaster = new ClientCharacter();
     if (!m_pCaster) {
-        printf("¿ù»~¡G«Ø¥ß ClientCharacter ¥¢±Ñ¡C\n");
+        printf("éŒ¯èª¤ï¼šå»ºç«‹ ClientCharacter å¤±æ•—ã€‚\n");
         return E_FAIL;
     }
     m_pTarget = new ClientCharacter();
     m_pTarget->SetPosX(900);
     m_pTarget->SetPosY(200);
     if (!m_pTarget) {
-        printf("¿ù»~¡G«Ø¥ß ClientCharacter ¥¢±Ñ¡C\n");
+        printf("éŒ¯èª¤ï¼šå»ºç«‹ ClientCharacter å¤±æ•—ã€‚\n");
         return E_FAIL;
     }
-    printf("--- [EffectSystemTest] ªì©l¤Æ¦¨¥\ ---\n");
+    printf("--- [EffectSystemTest] åˆå§‹åŒ–æˆåŠŸ ---\n");
     return S_OK;
 }
 
 void EffectSystemTest::Cleanup()
 {
-    printf("--- [EffectSystemTest] ²M²z¸ê·½ ---\n");
+    printf("--- [EffectSystemTest] æ¸…ç†è³‡æº ---\n");
 
-    // ³z¹L CEffectManager §R°£©Ò¦³¤´¦b¬¡°Ê¤¤ªº¯S®Ä¡C
+    // é€é CEffectManager åˆªé™¤æ‰€æœ‰ä»åœ¨æ´»å‹•ä¸­çš„ç‰¹æ•ˆã€‚
     CEffectManager::GetInstance()->BulletListAllDel();
 
-    // §R°£¼ÒÀÀ¨¤¦â¡C
+    // åˆªé™¤æ¨¡æ“¬è§’è‰²ã€‚
     if (m_pCaster) {
         delete m_pCaster;
         m_pCaster = nullptr;
-        printf("  ¤w§R°£¼ÒÀÀ¬IªkªÌ¡C\n");
+        printf("  å·²åˆªé™¤æ¨¡æ“¬æ–½æ³•è€…ã€‚\n");
     }
 }
 
 void EffectSystemTest::Update(float fElapsedTime)
 {
-    // ²Ö¥[®É¶¡
+    // ç´¯åŠ æ™‚é–“
     m_fTimeSinceLastEffect += fElapsedTime;
 
-    // ¨C¹j 3.0 ¬í²£¥Í¤@­Ó·sªº¯S®Ä
+    // æ¯éš” 3.0 ç§’ç”¢ç”Ÿä¸€å€‹æ–°çš„ç‰¹æ•ˆ
     if (m_fTimeSinceLastEffect > 3.0f) {
-        // --- ­ì¦³ªº¾Ô°«¯S®Ä ---
+        // --- åŸæœ‰çš„æˆ°é¬¥ç‰¹æ•ˆ ---
         //SpawnDownCutEffect();
         //SpawnUpperCutEffect();
         //SpawnHitNormalEffect();
         //SpawnHorizenCutEffect();
         //SpawnMagicBookEffect();
 
-        // --- ·s¼Wªº¤p¹CÀ¸¯S®Ä (½Ğ¤@¦¸¨ú®øµù¸Ñ¤@­Ó¨Ó´ú¸Õ) ---
+        // --- æ–°å¢çš„å°éŠæˆ²ç‰¹æ•ˆ (è«‹ä¸€æ¬¡å–æ¶ˆè¨»è§£ä¸€å€‹ä¾†æ¸¬è©¦) ---
         //SpawnMiniGameArcherStringEffect();
         //SpawnMiniGameFighterBreakEffect();
         //SpawnMiniGameFighterStringEffect();
@@ -103,24 +103,24 @@ void EffectSystemTest::Update(float fElapsedTime)
         //SpawnMiniGamePriestHealEffect();
         //SpawnMiniGamePriestLightEffect();
         //SpawnMiniGameClassSwordEffect();
-        //SpawnMiniGameWizardStringEffect(); // ¨Ò¦p¡G´ú¸Õªk®v¤å¦r¯S®Ä
+        //SpawnMiniGameWizardStringEffect(); // ä¾‹å¦‚ï¼šæ¸¬è©¦æ³•å¸«æ–‡å­—ç‰¹æ•ˆ
 
-        m_fTimeSinceLastEffect = 0.0f; // ­«¸m­p®É¾¹
+        m_fTimeSinceLastEffect = 0.0f; // é‡ç½®è¨ˆæ™‚å™¨
     }
 
-    // §ó·s©Ò¦³¦b CEffectManager ¤¤µù¥Uªº¯S®Ä¡C
-    // ³o·|©I¥s¨C­Ó¯S®Äªº FrameProcess ¨ç¦¡¡A³B²z¨ä¥Í©R¶g´Á¡C
+    // æ›´æ–°æ‰€æœ‰åœ¨ CEffectManager ä¸­è¨»å†Šçš„ç‰¹æ•ˆã€‚
+    // é€™æœƒå‘¼å«æ¯å€‹ç‰¹æ•ˆçš„ FrameProcess å‡½å¼ï¼Œè™•ç†å…¶ç”Ÿå‘½é€±æœŸã€‚
     CEffectManager::GetInstance()->FrameProcess(fElapsedTime, false);
 }
 
 void EffectSystemTest::Render()
 {
-    // ¨BÆJ 1: ©I¥s©Ò¦³¯S®Äªº Process ¨ç¦¡¡C
-    // ³o·|§ó·s¯S®Äªº¦ì¸m¡B¥i¨£©Êµ¥Ã¸»s«e©Ò»İªºª¬ºA¡C
+    // æ­¥é©Ÿ 1: å‘¼å«æ‰€æœ‰ç‰¹æ•ˆçš„ Process å‡½å¼ã€‚
+    // é€™æœƒæ›´æ–°ç‰¹æ•ˆçš„ä½ç½®ã€å¯è¦‹æ€§ç­‰ç¹ªè£½å‰æ‰€éœ€çš„ç‹€æ…‹ã€‚
     CEffectManager::GetInstance()->Process();
 
-    // ¨BÆJ 2: ©I¥s©Ò¦³¯S®Äªº Draw ¨ç¦¡¡C
-    // ³o·|±N¯S®Äªº³»ÂI¼Æ¾Ú´£¥æµ¹´è¬VºŞ½u¡C
+    // æ­¥é©Ÿ 2: å‘¼å«æ‰€æœ‰ç‰¹æ•ˆçš„ Draw å‡½å¼ã€‚
+    // é€™æœƒå°‡ç‰¹æ•ˆçš„é ‚é»æ•¸æ“šæäº¤çµ¦æ¸²æŸ“ç®¡ç·šã€‚
     CEffectManager::GetInstance()->Draw();
 }
 
@@ -128,17 +128,17 @@ void EffectSystemTest::SpawnDownCutEffect()
 {
     if (!m_pCaster) return;
 
-    printf("  ¥¿¦b²£¥Í CEffect_Battle_DownCut ¯S®Ä...\n");
+    printf("  æ­£åœ¨ç”¢ç”Ÿ CEffect_Battle_DownCut ç‰¹æ•ˆ...\n");
 
-    // ¨BÆJ 1: ª½±µ new ¤@­Ó CEffect_Battle_DownCut ª«¥ó¡C
-    // ¨ä«Øºc¨ç¦¡·|¦Û°Ê¦V CEAManager ½Ğ¨D "efn_downcut.ea" ¯S®Ä¼Æ¾Ú¡C
+    // æ­¥é©Ÿ 1: ç›´æ¥ new ä¸€å€‹ CEffect_Battle_DownCut ç‰©ä»¶ã€‚
+    // å…¶å»ºæ§‹å‡½å¼æœƒè‡ªå‹•å‘ CEAManager è«‹æ±‚ "efn_downcut.ea" ç‰¹æ•ˆæ•¸æ“šã€‚
     CEffect_Battle_DownCut* pEffect = new CEffect_Battle_DownCut();
 
-    // ¨BÆJ 2: ±q¼ÒÀÀ¨¤¦âÀò¨ú¦ì¸m¡C
+    // æ­¥é©Ÿ 2: å¾æ¨¡æ“¬è§’è‰²ç²å–ä½ç½®ã€‚
     float x = static_cast<float>(m_pCaster->GetPosX());
     float y = static_cast<float>(m_pCaster->GetPosY());
 
-    // ¨BÆJ 3: ³]©w¯S®Äªº¦ì¸m»P¤è¦V (ÀH¾÷Â½Âà¥H´ú¸Õ¨âºØ±¡ªp)¡C
+    // æ­¥é©Ÿ 3: è¨­å®šç‰¹æ•ˆçš„ä½ç½®èˆ‡æ–¹å‘ (éš¨æ©Ÿç¿»è½‰ä»¥æ¸¬è©¦å…©ç¨®æƒ…æ³)ã€‚
     bool bFlip = (rand() % 2 == 0);
     pEffect->SetEffect(x, y, bFlip, 0);
 
@@ -149,11 +149,11 @@ void EffectSystemTest::SpawnHitNormalEffect()
 {
     if (!m_pCaster) return;
 
-    printf("  ¥¿¦b²£¥Í CEffect_Battle_Hit_Normal ¯S®Ä...\n");
+    printf("  æ­£åœ¨ç”¢ç”Ÿ CEffect_Battle_Hit_Normal ç‰¹æ•ˆ...\n");
 
     CEffect_Battle_Hit_Normal* pEffect = new CEffect_Battle_Hit_Normal();
 
-    // ¨BÆJ 2: ±q¼ÒÀÀ¨¤¦âÀò¨ú¦ì¸m¡C
+    // æ­¥é©Ÿ 2: å¾æ¨¡æ“¬è§’è‰²ç²å–ä½ç½®ã€‚
     float x = static_cast<float>(m_pCaster->GetPosX());
     float y = static_cast<float>(m_pCaster->GetPosY());
 
@@ -167,7 +167,7 @@ void EffectSystemTest::SpawnUpperCutEffect()
 {
     if (!m_pCaster) return;
 
-    printf("  ¥¿¦b²£¥Í CEffect_Battle_UpperCut ¯S®Ä...\n");
+    printf("  æ­£åœ¨ç”¢ç”Ÿ CEffect_Battle_UpperCut ç‰¹æ•ˆ...\n");
 
     CEffect_Battle_UpperCut* pEffect = new CEffect_Battle_UpperCut();
 
@@ -184,7 +184,7 @@ void EffectSystemTest::SpawnHorizenCutEffect()
 {
     if (!m_pCaster) return;
 
-    printf("  ¥¿¦b²£¥Í CEffect_Battle_HorizenCut ¯S®Ä...\n");
+    printf("  æ­£åœ¨ç”¢ç”Ÿ CEffect_Battle_HorizenCut ç‰¹æ•ˆ...\n");
 
     CEffect_Battle_HorizonCut* pEffect = new CEffect_Battle_HorizonCut();
 
@@ -201,7 +201,7 @@ void EffectSystemTest::SpawnMagicBookEffect()
 {
     if (!m_pCaster) return;
     if (!m_pTarget) return;
-    printf("  ¥¿¦b²£¥Í CEffect_Battle_MagicBook ¯S®Ä...\n");
+    printf("  æ­£åœ¨ç”¢ç”Ÿ CEffect_Battle_MagicBook ç‰¹æ•ˆ...\n");
 
     CEffect_Battle_MagicBook* pEffect = new CEffect_Battle_MagicBook();
 
@@ -214,16 +214,16 @@ void EffectSystemTest::SpawnMagicBookEffect()
     CEffectManager::GetInstance()->BulletAdd(pEffect);
 }
 
-// --- ¥H¤U¬°·s¼Wªº¤p¹CÀ¸¯S®Ä¥Í¦¨¨ç¦¡ ---
+// --- ä»¥ä¸‹ç‚ºæ–°å¢çš„å°éŠæˆ²ç‰¹æ•ˆç”Ÿæˆå‡½å¼ ---
 
 void EffectSystemTest::SpawnMiniGameArcherStringEffect()
 {
     if (!m_pCaster) return;
-    printf("  ¥¿¦b²£¥Í CEffect_MiniGame_Archer_String ¯S®Ä...\n");
+    printf("  æ­£åœ¨ç”¢ç”Ÿ CEffect_MiniGame_Archer_String ç‰¹æ•ˆ...\n");
     CEffect_MiniGame_Archer_String* pEffect = new CEffect_MiniGame_Archer_String();
     float x = static_cast<float>(m_pCaster->GetPosX());
     float y = static_cast<float>(m_pCaster->GetPosY());
-    // ³]©w­nÅã¥Üªº¤å¦r¼v®æ¯Á¤Ş (¨Ò¦p 0)¡A¥H¤Î¦ì¸m
+    // è¨­å®šè¦é¡¯ç¤ºçš„æ–‡å­—å½±æ ¼ç´¢å¼• (ä¾‹å¦‚ 0)ï¼Œä»¥åŠä½ç½®
     pEffect->SetEffect(0, x, y);
     CEffectManager::GetInstance()->BulletAdd(pEffect);
 }
@@ -231,7 +231,7 @@ void EffectSystemTest::SpawnMiniGameArcherStringEffect()
 void EffectSystemTest::SpawnMiniGameFighterBreakEffect()
 {
     if (!m_pCaster) return;
-    printf("  ¥¿¦b²£¥Í CEffect_MiniGame_Fighter_Break ¯S®Ä...\n");
+    printf("  æ­£åœ¨ç”¢ç”Ÿ CEffect_MiniGame_Fighter_Break ç‰¹æ•ˆ...\n");
     CEffect_MiniGame_Fighter_Break* pEffect = new CEffect_MiniGame_Fighter_Break();
     float x = static_cast<float>(m_pCaster->GetPosX());
     float y = static_cast<float>(m_pCaster->GetPosY());
@@ -242,11 +242,11 @@ void EffectSystemTest::SpawnMiniGameFighterBreakEffect()
 void EffectSystemTest::SpawnMiniGameFighterStringEffect()
 {
     if (!m_pCaster) return;
-    printf("  ¥¿¦b²£¥Í CEffect_MiniGame_Fighter_String ¯S®Ä...\n");
+    printf("  æ­£åœ¨ç”¢ç”Ÿ CEffect_MiniGame_Fighter_String ç‰¹æ•ˆ...\n");
     CEffect_MiniGame_Fighter_String* pEffect = new CEffect_MiniGame_Fighter_String();
     float x = static_cast<float>(m_pCaster->GetPosX());
     float y = static_cast<float>(m_pCaster->GetPosY());
-    // ³]©w­nÅã¥Üªº¤å¦r¼v®æ¯Á¤Ş (¨Ò¦p 0)¡A¥H¤Î¦ì¸m
+    // è¨­å®šè¦é¡¯ç¤ºçš„æ–‡å­—å½±æ ¼ç´¢å¼• (ä¾‹å¦‚ 0)ï¼Œä»¥åŠä½ç½®
     pEffect->SetEffect(0, x, y);
     CEffectManager::GetInstance()->BulletAdd(pEffect);
 }
@@ -254,7 +254,7 @@ void EffectSystemTest::SpawnMiniGameFighterStringEffect()
 void EffectSystemTest::SpawnMiniGameMagicStickLeftEffect()
 {
     if (!m_pCaster) return;
-    printf("  ¥¿¦b²£¥Í CEffect_MiniGame_MagicStick_Left ¯S®Ä...\n");
+    printf("  æ­£åœ¨ç”¢ç”Ÿ CEffect_MiniGame_MagicStick_Left ç‰¹æ•ˆ...\n");
     CEffect_MiniGame_MagicStick_Left* pEffect = new CEffect_MiniGame_MagicStick_Left();
     float x = static_cast<float>(m_pCaster->GetPosX());
     float y = static_cast<float>(m_pCaster->GetPosY());
@@ -265,7 +265,7 @@ void EffectSystemTest::SpawnMiniGameMagicStickLeftEffect()
 void EffectSystemTest::SpawnMiniGameMagicStickRightEffect()
 {
     if (!m_pCaster) return;
-    printf("  ¥¿¦b²£¥Í CEffect_MiniGame_MagicStick_Right ¯S®Ä...\n");
+    printf("  æ­£åœ¨ç”¢ç”Ÿ CEffect_MiniGame_MagicStick_Right ç‰¹æ•ˆ...\n");
     CEffect_MiniGame_MagicStick_Right* pEffect = new CEffect_MiniGame_MagicStick_Right();
     float x = static_cast<float>(m_pCaster->GetPosX());
     float y = static_cast<float>(m_pCaster->GetPosY());
@@ -276,7 +276,7 @@ void EffectSystemTest::SpawnMiniGameMagicStickRightEffect()
 void EffectSystemTest::SpawnMiniGamePriestHealEffect()
 {
     if (!m_pCaster) return;
-    printf("  ¥¿¦b²£¥Í CEffect_MiniGame_Priest_Heal ¯S®Ä...\n");
+    printf("  æ­£åœ¨ç”¢ç”Ÿ CEffect_MiniGame_Priest_Heal ç‰¹æ•ˆ...\n");
     CEffect_MiniGame_Priest_Heal* pEffect = new CEffect_MiniGame_Priest_Heal();
     float x = static_cast<float>(m_pCaster->GetPosX());
     float y = static_cast<float>(m_pCaster->GetPosY());
@@ -287,7 +287,7 @@ void EffectSystemTest::SpawnMiniGamePriestHealEffect()
 void EffectSystemTest::SpawnMiniGamePriestLightEffect()
 {
     if (!m_pCaster) return;
-    printf("  ¥¿¦b²£¥Í CEffect_MiniGame_Priest_Light ¯S®Ä...\n");
+    printf("  æ­£åœ¨ç”¢ç”Ÿ CEffect_MiniGame_Priest_Light ç‰¹æ•ˆ...\n");
     CEffect_MiniGame_Priest_Light* pEffect = new CEffect_MiniGame_Priest_Light();
     float x = static_cast<float>(m_pCaster->GetPosX());
     float y = static_cast<float>(m_pCaster->GetPosY());
@@ -298,7 +298,7 @@ void EffectSystemTest::SpawnMiniGamePriestLightEffect()
 void EffectSystemTest::SpawnMiniGameClassSwordEffect()
 {
     if (!m_pCaster) return;
-    printf("  ¥¿¦b²£¥Í CEffect_MiniGame_Class_Sword ¯S®Ä...\n");
+    printf("  æ­£åœ¨ç”¢ç”Ÿ CEffect_MiniGame_Class_Sword ç‰¹æ•ˆ...\n");
     CEffect_MiniGame_Class_Sword* pEffect = new CEffect_MiniGame_Class_Sword();
     float x = static_cast<float>(m_pCaster->GetPosX());
     float y = static_cast<float>(m_pCaster->GetPosY());
@@ -309,11 +309,11 @@ void EffectSystemTest::SpawnMiniGameClassSwordEffect()
 void EffectSystemTest::SpawnMiniGameWizardStringEffect()
 {
     if (!m_pCaster) return;
-    printf("  ¥¿¦b²£¥Í CEffect_MiniGame_Wizard_String ¯S®Ä...\n");
+    printf("  æ­£åœ¨ç”¢ç”Ÿ CEffect_MiniGame_Wizard_String ç‰¹æ•ˆ...\n");
     CEffect_MiniGame_Wizard_String* pEffect = new CEffect_MiniGame_Wizard_String();
     float x = static_cast<float>(m_pCaster->GetPosX());
     float y = static_cast<float>(m_pCaster->GetPosY());
-    // ³]©w­nÅã¥Üªº¤å¦r¼v®æ¯Á¤Ş (¨Ò¦p 0)¡A¥H¤Î¦ì¸m
+    // è¨­å®šè¦é¡¯ç¤ºçš„æ–‡å­—å½±æ ¼ç´¢å¼• (ä¾‹å¦‚ 0)ï¼Œä»¥åŠä½ç½®
     pEffect->SetEffect(0, x, y);
     CEffectManager::GetInstance()->BulletAdd(pEffect);
 }

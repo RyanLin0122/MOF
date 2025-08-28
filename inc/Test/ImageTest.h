@@ -10,7 +10,7 @@
 #include <d3dx9.h>
 
 
-// --- «e¦V«Å§i ---
+// --- å‰å‘å®£å‘Š ---
 class ImageResource;
 
 #define RUN_TEST(test_name) \
@@ -23,14 +23,14 @@ class ImageResource;
             std::cout << "  [FAIL] " << #test_name << " with exception: " << e.what() << std::endl; \
         } \
     } while(0)
-// --- Mock ª«¥ó ---
+// --- Mock ç‰©ä»¶ ---
 
 /// @class MockD3DDevice
-/// @brief ¼ÒÀÀ IDirect3DDevice9¡A¥Î©ó°lÂÜ API ©I¥s¦¸¼Æ©M°Ñ¼Æ¡A¦Ó¤£»İ¯u¹êªº GPU¡C
-/// ª`·N¡G³o¬O¤@­ÓÂ²¤Æª©¡A¶È¹ê§@´ú¸Õ©Ò»İªº¨ç¦¡¡C
+/// @brief æ¨¡æ“¬ IDirect3DDevice9ï¼Œç”¨æ–¼è¿½è¹¤ API å‘¼å«æ¬¡æ•¸å’Œåƒæ•¸ï¼Œè€Œä¸éœ€çœŸå¯¦çš„ GPUã€‚
+/// æ³¨æ„ï¼šé€™æ˜¯ä¸€å€‹ç°¡åŒ–ç‰ˆï¼Œåƒ…å¯¦ä½œæ¸¬è©¦æ‰€éœ€çš„å‡½å¼ã€‚
 class MockD3DDevice : public IDirect3DDevice9 {
 public:
-    // ©I¥s­p¼Æ¾¹ (ºû«ù¤£ÅÜ)
+    // å‘¼å«è¨ˆæ•¸å™¨ (ç¶­æŒä¸è®Š)
     int SetFVF_count = 0;
     int SetStreamSource_count = 0;
     int SetTexture_count = 0;
@@ -39,7 +39,7 @@ public:
     int CreateTexture_count = 0;
     int DrawPrimitiveUP_count = 0;
 
-    // Àx¦s³Ì«á¤@¦¸©I¥sªº°Ñ¼Æ (ºû«ù¤£ÅÜ)
+    // å„²å­˜æœ€å¾Œä¸€æ¬¡å‘¼å«çš„åƒæ•¸ (ç¶­æŒä¸è®Š)
     DWORD last_fvf = 0;
     IDirect3DVertexBuffer9* last_vertex_buffer = nullptr;
     UINT last_stride = 0;
@@ -47,10 +47,10 @@ public:
     D3DRENDERSTATETYPE last_render_state_type = (D3DRENDERSTATETYPE)0;
     DWORD last_render_state_value = 0;
 
-    // ±±¨î¼ÒÀÀ¨ç¦¡ªº¦æ¬° (ºû«ù¤£ÅÜ)
+    // æ§åˆ¶æ¨¡æ“¬å‡½å¼çš„è¡Œç‚º (ç¶­æŒä¸è®Š)
     bool force_texture_creation_failure = false;
 
-    // ­«³]ª¬ºA (ºû«ù¤£ÅÜ)
+    // é‡è¨­ç‹€æ…‹ (ç¶­æŒä¸è®Š)
     void ResetCounters() {
         SetFVF_count = 0;
         SetStreamSource_count = 0;
@@ -62,7 +62,7 @@ public:
         force_texture_creation_failure = false;
     }
 
-    // --- ¼ÒÀÀ D3DX ¨ç¦¡ (ºû«ù¤£ÅÜ) ---
+    // --- æ¨¡æ“¬ D3DX å‡½å¼ (ç¶­æŒä¸è®Š) ---
     HRESULT Mock_D3DXCreateTextureFromFileInMemoryEx(UINT width, UINT height, D3DFORMAT format, IDirect3DTexture9** ppTexture) {
         CreateTexture_count++;
         if (force_texture_creation_failure) {
@@ -79,7 +79,7 @@ public:
     ULONG STDMETHODCALLTYPE Release() { return 1; }
 
     /*** IDirect3DDevice9 methods ***/
-    // ¥H¤U¬O¬°¤FÅı³o­ÓÃş§OÅÜ¦¨¡u¨ãÅéÃş§O¡v¦Ó·s¼Wªº³Ì¤p¹ê§@
+    // ä»¥ä¸‹æ˜¯ç‚ºäº†è®“é€™å€‹é¡åˆ¥è®Šæˆã€Œå…·é«”é¡åˆ¥ã€è€Œæ–°å¢çš„æœ€å°å¯¦ä½œ
     HRESULT STDMETHODCALLTYPE TestCooperativeLevel() { return S_OK; }
     UINT STDMETHODCALLTYPE GetAvailableTextureMem() { return 1024 * 1024 * 128; } // Return a large value
     HRESULT STDMETHODCALLTYPE EvictManagedResources() { return S_OK; }
@@ -224,7 +224,7 @@ public:
 
 
 /// @class MockResourceMgr
-/// @brief ¼ÒÀÀ ResourceMgr¡A¥Î©ó´ú¸Õ LoadingThread ¬O§_¥¿½T©I¥s¨ä¤¶­±¡C
+/// @brief æ¨¡æ“¬ ResourceMgrï¼Œç”¨æ–¼æ¸¬è©¦ LoadingThread æ˜¯å¦æ­£ç¢ºå‘¼å«å…¶ä»‹é¢ã€‚
 class MockResourceMgr {
 public:
     struct CallInfo {
@@ -253,7 +253,7 @@ public:
 };
 
 /// @class ImageSystemTester
-/// @brief ¾ã¦X©Ò¦³´ú¸Õ®×¨Òªº°õ¦æ¾¹Ãş§O¡C
+/// @brief æ•´åˆæ‰€æœ‰æ¸¬è©¦æ¡ˆä¾‹çš„åŸ·è¡Œå™¨é¡åˆ¥ã€‚
 class ImageSystemTester {
 public:
     ImageSystemTester();
@@ -267,7 +267,7 @@ private:
     void Setup();
     void Teardown();
 
-    // --- ³æ¤¸´ú¸Õ ---
+    // --- å–®å…ƒæ¸¬è©¦ ---
     void Test_GIVertex_Constructor();
     void Test_CDeviceManager_Singleton();
     void Test_CDeviceManager_StateCaching();
@@ -281,10 +281,10 @@ private:
     void Test_LoadingThread_ThreadProcessing();
     void Test_ImageResource_LoadGI_RealFileAbsolutePath();
     void Test_ImageResource_LoadGI_RealFileRelativePath();
-    // --- ¾ã¦X´ú¸Õ ---
+    // --- æ•´åˆæ¸¬è©¦ ---
     void Test_Integration_AsyncLoadAndVerify();
     // GameImage Tests
-    void Test_GameImage_Transformation(); // ±NÁY©ñ¡B±ÛÂà¡BÂ½Âà¦X¨Ö´ú¸Õ
+    void Test_GameImage_Transformation(); // å°‡ç¸®æ”¾ã€æ—‹è½‰ã€ç¿»è½‰åˆä½µæ¸¬è©¦
     void Test_GameImage_ColorAndAlpha();
 
     // BackgroundImage Tests
@@ -295,11 +295,11 @@ private:
 
     // ResourceMgr Tests
     void Test_ResourceMgr_ReferenceCounting();
-    // --- ´ú¸Õ»²§U¨ç¦¡ ---
+    // --- æ¸¬è©¦è¼”åŠ©å‡½å¼ ---
     void CreateDummyGIFile(const std::string& filename, bool compressed, bool with_anim);
 
 private:
     MockD3DDevice* m_mockDevice;
-    // ¥ş°ìªº Device «ü¼Ğ»İ­n«ü¦V§Ú­Ìªº Mock ª«¥ó
+    // å…¨åŸŸçš„ Device æŒ‡æ¨™éœ€è¦æŒ‡å‘æˆ‘å€‘çš„ Mock ç‰©ä»¶
     IDirect3DDevice9* m_originalDevicePtr;
 };

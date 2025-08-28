@@ -2,43 +2,43 @@
 
 #include "Effect/CEffectBase.h"
 
-// «e¦V«Å§i
+// å‰å‘å®£å‘Š
 class ClientCharacter;
 
 /**
  * @class CEffect_Skill_Integrity
- * @brief ¥Nªí¨¤¦â³B©ó®æ¾×©Î´î¶Ëª¬ºA®Éªº«ùÄò©ÊµøÄ±¯S®Ä¡C
+ * @brief ä»£è¡¨è§’è‰²è™•æ–¼æ ¼æ“‹æˆ–æ¸›å‚·ç‹€æ…‹æ™‚çš„æŒçºŒæ€§è¦–è¦ºç‰¹æ•ˆã€‚
  *
- * Ä~©Ó¦Û CEffectBase¡A¬O¤@­Ó¦b©T©w®y¼Ğ¼½©ñªº°Êµe¯S®Ä¡A
- * ¨ä¥Í©R¶g´Á¥Ñ¥Ø¼Ğ¨¤¦âªº¯S®íª¬ºAºX¼Ğ°ÊºA±±¨î¡C
+ * ç¹¼æ‰¿è‡ª CEffectBaseï¼Œæ˜¯ä¸€å€‹åœ¨å›ºå®šåº§æ¨™æ’­æ”¾çš„å‹•ç•«ç‰¹æ•ˆï¼Œ
+ * å…¶ç”Ÿå‘½é€±æœŸç”±ç›®æ¨™è§’è‰²çš„ç‰¹æ®Šç‹€æ…‹æ——æ¨™å‹•æ…‹æ§åˆ¶ã€‚
  */
 class CEffect_Skill_Integrity : public CEffectBase {
 public:
     CEffect_Skill_Integrity();
     virtual ~CEffect_Skill_Integrity();
 
-    // --- µêÀÀ¨ç¦¡ÂĞ¼g ---
+    // --- è™›æ“¬å‡½å¼è¦†å¯« ---
 
-    /// @brief ®Ú¾Ú¥Ø¼Ğ¨¤¦âªºª¬ºA¨M©w¬O§_´£«e²×¤î¯S®Ä¡C
+    /// @brief æ ¹æ“šç›®æ¨™è§’è‰²çš„ç‹€æ…‹æ±ºå®šæ˜¯å¦æå‰çµ‚æ­¢ç‰¹æ•ˆã€‚
     virtual bool FrameProcess(float fElapsedTime) override;
 
-    /// @brief ·Ç³ÆÃ¸»s«eªºÅŞ¿è§ó·s¡A¨Ï¥Î©T©wªºªì©l¦ì¸m¡C
+    /// @brief æº–å‚™ç¹ªè£½å‰çš„é‚è¼¯æ›´æ–°ï¼Œä½¿ç”¨å›ºå®šçš„åˆå§‹ä½ç½®ã€‚
     virtual void Process() override;
 
-    /// @brief Ã¸»s¯S®Ä¡C
+    /// @brief ç¹ªè£½ç‰¹æ•ˆã€‚
     virtual void Draw() override;
 
-    // --- ±M¦³¨ç¦¡ ---
+    // --- å°ˆæœ‰å‡½å¼ ---
 
-    /// @brief ³]©w¯S®Ä¡C
-    /// @param pTarget ­nªş¥[¯S®Äªº¥Ø¼Ğ¨¤¦â¡C
-    /// @param a3 ¥¼¨Ï¥Îªº°Ñ¼Æ¡A«O¯d¥H²Å¦X­ì©l½X¡C
+    /// @brief è¨­å®šç‰¹æ•ˆã€‚
+    /// @param pTarget è¦é™„åŠ ç‰¹æ•ˆçš„ç›®æ¨™è§’è‰²ã€‚
+    /// @param a3 æœªä½¿ç”¨çš„åƒæ•¸ï¼Œä¿ç•™ä»¥ç¬¦åˆåŸå§‹ç¢¼ã€‚
     void SetEffect(ClientCharacter* pTarget, int a3);
 
 protected:
-    // --- ¦¨­ûÅÜ¼Æ ---
-    ClientCharacter* m_pOwnerCharacter; // ¦ì²¾ +132 (0x84)
-    int              m_nUnknown_a3;     // ¦ì²¾ +136 (0x88)
-    float            m_fInitialPosX;    // ¦ì²¾ +144 (0x90)
-    float            m_fInitialPosY;    // ¦ì²¾ +148 (0x94)
+    // --- æˆå“¡è®Šæ•¸ ---
+    ClientCharacter* m_pOwnerCharacter; // ä½ç§» +132 (0x84)
+    int              m_nUnknown_a3;     // ä½ç§» +136 (0x88)
+    float            m_fInitialPosX;    // ä½ç§» +144 (0x90)
+    float            m_fInitialPosY;    // ä½ç§» +148 (0x94)
 };

@@ -3,93 +3,93 @@
 #include "global.h"
 #include <cmath>
 
-// °²³]ªº¥ş°ìÅÜ¼Æ
+// å‡è¨­çš„å…¨åŸŸè®Šæ•¸
 extern GameSystemInfo g_Game_System_Info;
 
-// ¹ïÀ³¤Ï²ÕÄ¶½X: 0x0052F420
+// å°æ‡‰åçµ„è­¯ç¢¼: 0x0052F420
 CEffect_Battle_StaffShoot::CEffect_Battle_StaffShoot()
     : m_fTraveledDistance(0.0f), m_fTotalDistance(0.0f)
 {
-    // CEffectBase ªº«Øºc¨ç¦¡·|³Q¦Û°Ê©I¥s
+    // CEffectBase çš„å»ºæ§‹å‡½å¼æœƒè¢«è‡ªå‹•å‘¼å«
 
-    // ¦V CEAManager ½Ğ¨D¯S®Ä¼Æ¾Ú
-    // ¯S®Ä ID: 11, ÀÉ®×¦WºÙ: "Effect/efn_staffshoot.ea"
+    // å‘ CEAManager è«‹æ±‚ç‰¹æ•ˆæ•¸æ“š
+    // ç‰¹æ•ˆ ID: 11, æª”æ¡ˆåç¨±: "Effect/efn_staffshoot.ea"
     CEAManager::GetInstance()->GetEAData(11, "Effect/efn_staffshoot.ea", &m_ccaEffect);
 
-    // ³]©w¼v®æ®É¶¡¨Ã¼½©ñ°Êµe
+    // è¨­å®šå½±æ ¼æ™‚é–“ä¸¦æ’­æ”¾å‹•ç•«
     m_ccaEffect.SetFrameTime();
-    m_ccaEffect.Play(0, false); // °Êµe¥u¼½©ñ¤@¦¸
+    m_ccaEffect.Play(0, false); // å‹•ç•«åªæ’­æ”¾ä¸€æ¬¡
 }
 
-// ¹ïÀ³¤Ï²ÕÄ¶½X: 0x0052F4C0
+// å°æ‡‰åçµ„è­¯ç¢¼: 0x0052F4C0
 CEffect_Battle_StaffShoot::~CEffect_Battle_StaffShoot()
 {
 }
 
-// ¹ïÀ³¤Ï²ÕÄ¶½X: 0x0052F4D0
+// å°æ‡‰åçµ„è­¯ç¢¼: 0x0052F4D0
 void CEffect_Battle_StaffShoot::SetEffect(D3DXVECTOR2* pStartPos, D3DXVECTOR2* pEndPos, bool bFlip)
 {
     if (!pStartPos || !pEndPos) return;
 
-    // ¨BÆJ 1: ³]©wªì©l¦ì¸m
+    // æ­¥é©Ÿ 1: è¨­å®šåˆå§‹ä½ç½®
     m_fCurrentPosX = pStartPos->x;
     m_fCurrentPosY = pStartPos->y;
 
-    // ¨BÆJ 2: ­pºâ­¸¦æ¦V¶q
+    // æ­¥é©Ÿ 2: è¨ˆç®—é£›è¡Œå‘é‡
     D3DXVECTOR2 vecDirection = *pEndPos - *pStartPos;
 
-    // ¨BÆJ 3: ­pºâÁ`¶ZÂ÷©M³t«×
+    // æ­¥é©Ÿ 3: è¨ˆç®—ç¸½è·é›¢å’Œé€Ÿåº¦
     m_fTotalDistance = D3DXVec2Length(&vecDirection);
-    m_fSpeed = m_fTotalDistance * 0.02f; // ³t«×¬OÁ`¶ZÂ÷ªº 2%
+    m_fSpeed = m_fTotalDistance * 0.02f; // é€Ÿåº¦æ˜¯ç¸½è·é›¢çš„ 2%
 
-    // ¨BÆJ 4: ±N¦V¶q³æ¦ì¤Æ¥HÀò±o¯Â¤è¦V
+    // æ­¥é©Ÿ 4: å°‡å‘é‡å–®ä½åŒ–ä»¥ç²å¾—ç´”æ–¹å‘
     D3DXVec2Normalize(&vecDirection, &vecDirection);
     m_fDirectionX = vecDirection.x;
     m_fDirectionY = vecDirection.y;
 
-    // ¨BÆJ 5: ³]©wÂ½Âà
+    // æ­¥é©Ÿ 5: è¨­å®šç¿»è½‰
     m_bIsFlip = bFlip;
 }
 
-// ¹ïÀ³¤Ï²ÕÄ¶½X: 0x0052F570
+// å°æ‡‰åçµ„è­¯ç¢¼: 0x0052F570
 bool CEffect_Battle_StaffShoot::FrameProcess(float fElapsedTime)
 {
-    // §ó·sµøÄ±°Êµeªº¼v®æ
+    // æ›´æ–°è¦–è¦ºå‹•ç•«çš„å½±æ ¼
     m_ccaEffect.FrameProcess(fElapsedTime);
 
-    // ÀË¬d¬O§_¤w¨ì¹F©Î¶W¹L¥Ø¼Ğ¶ZÂ÷
-    // ­ì©l½X: return *((float *)this + 33) > (double)*((float *)this + 34);
+    // æª¢æŸ¥æ˜¯å¦å·²åˆ°é”æˆ–è¶…éç›®æ¨™è·é›¢
+    // åŸå§‹ç¢¼: return *((float *)this + 33) > (double)*((float *)this + 34);
     return m_fTraveledDistance > m_fTotalDistance;
 }
 
-// ¹ïÀ³¤Ï²ÕÄ¶½X: 0x0052F5A0
+// å°æ‡‰åçµ„è­¯ç¢¼: 0x0052F5A0
 void CEffect_Battle_StaffShoot::Process()
 {
-    // ¨BÆJ 1: §ó·s¦ì¸m
-    // ­ì©l½X: v5 = *((float *)this + 4) + *((float *)this + 2);
+    // æ­¥é©Ÿ 1: æ›´æ–°ä½ç½®
+    // åŸå§‹ç¢¼: v5 = *((float *)this + 4) + *((float *)this + 2);
     //         v2 = *((float *)this + 5) + *((float *)this + 3);
-    // ª`·N¡G­ì©l½X¤¤±N³t«×­¼¤J¤F¤è¦V¦V¶q¡A§Ú­Ìªºª©¥»±N¦b Process ¤¤À³¥Î³t«×
+    // æ³¨æ„ï¼šåŸå§‹ç¢¼ä¸­å°‡é€Ÿåº¦ä¹˜å…¥äº†æ–¹å‘å‘é‡ï¼Œæˆ‘å€‘çš„ç‰ˆæœ¬å°‡åœ¨ Process ä¸­æ‡‰ç”¨é€Ÿåº¦
     m_fCurrentPosX += m_fDirectionX * m_fSpeed;
     m_fCurrentPosY += m_fDirectionY * m_fSpeed;
 
-    // ¨BÆJ 2: ²Ö­p¤w­¸¦æ¶ZÂ÷
-    // ­ì©l½X: *((float *)this + 33) = *((float *)this + 6) + *((float *)this + 33);
+    // æ­¥é©Ÿ 2: ç´¯è¨ˆå·²é£›è¡Œè·é›¢
+    // åŸå§‹ç¢¼: *((float *)this + 33) = *((float *)this + 6) + *((float *)this + 33);
     m_fTraveledDistance += m_fSpeed;
 
-    // ¨BÆJ 3: Âà´«¬°¿Ã¹õ®y¼Ğ¨Ã¶i¦æµô°Å§PÂ_
+    // æ­¥é©Ÿ 3: è½‰æ›ç‚ºè¢å¹•åº§æ¨™ä¸¦é€²è¡Œè£å‰ªåˆ¤æ–·
     float screenX = m_fCurrentPosX - static_cast<float>(g_Game_System_Info.ScreenX);
     float screenY = m_fCurrentPosY - static_cast<float>(g_Game_System_Info.ScreenY);
     m_bIsVisible = IsCliping(screenX, 0.0f);
 
     if (m_bIsVisible) {
-        // §ó·s¤º³¡ CCAEffect ªºª¬ºA
+        // æ›´æ–°å…§éƒ¨ CCAEffect çš„ç‹€æ…‹
         m_ccaEffect.SetPosition(screenX, screenY);
         m_ccaEffect.SetFlipX(m_bIsFlip);
         m_ccaEffect.Process();
     }
 }
 
-// ¹ïÀ³¤Ï²ÕÄ¶½X: 0x0052F620
+// å°æ‡‰åçµ„è­¯ç¢¼: 0x0052F620
 void CEffect_Battle_StaffShoot::Draw()
 {
     if (m_bIsVisible) {

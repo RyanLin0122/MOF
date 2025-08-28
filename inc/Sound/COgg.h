@@ -1,36 +1,36 @@
 #ifndef COGG_H
 #define COGG_H
 
-#include <fmod/fmod.h>      // FMOD ���Įw API
-#include <windows.h>   // FSOUND_SetHWND �ݭn HWND
+#include <fmod/fmod.h>      // FMOD 音效庫 API
+#include <windows.h>   // FSOUND_SetHWND 需要 HWND
 
 class COgg {
 public:
-    COgg();                          // �غc�禡
-    virtual ~COgg();                 // �����Ѻc�禡
+    COgg();                          // 建構函式
+    virtual ~COgg();                 // 虛擬解構函式
 
-    // ��l�� COgg �t�ΡA�]�w FMOD �÷ǳƼ���Ѽ�
-    // a2: �@�Ӿ�ưѼơA�Ω�M�w��y���`���Ҧ� (0: ���`��, �D0: �`��)
+    // 初始化 COgg 系統，設定 FMOD 並準備播放參數
+    // a2: 一個整數參數，用於決定串流的循環模式 (0: 不循環, 非0: 循環)
     void Initalize(int loopEnabled);
 
-    // ������w�� Ogg Vorbis �ɮ�
-    // filePath: Ogg �ɮת����|�ΦW�� (�p�G dword_829254 �� true�A�h���ʸˤ����ɮ׸��|)
+    // 播放指定的 Ogg Vorbis 檔案
+    // filePath: Ogg 檔案的路徑或名稱 (如果 dword_829254 為 true，則為封裝內的檔案路徑)
     void Play(const char* filePath);
 
-    // ����ثe���񪺦�y
+    // 停止目前播放的串流
     void Stop();
 
 private:
     char* m_pMemoryBuffer;
-    // �}�ҭ��T��y�A�ھ� dword_829254 �M�w�O�q�ɮרt�Ϊ����}���٬O�q CMofPacking ���J
-    // filePath: Ogg �ɮת����|�ΦW��
+    // 開啟音訊串流，根據 dword_829254 決定是從檔案系統直接開啟還是從 CMofPacking 載入
+    // filePath: Ogg 檔案的路徑或名稱
     void OpenStreem(const char* filePath);
 
-    // �����ܼ� (�ھ� cogg.c �����O����첾���_)
-    FSOUND_STREAM* m_pStream;        // ���V FMOD ���T��y������ (���� this+1)
-    int            m_nVolume;          // ���q�j�p (0-255) (���� this+2)
-    int            m_nChannelId;       // FMOD �Ω󼽩񦹦�y���n�D ID (���� this+3)
-    unsigned int   m_nStreamOpenMode;  // �}�� FMOD ��y�ɨϥΪ��Ҧ��X�� (���� this+4)
+    // 成員變數 (根據 cogg.c 中的記憶體位移推斷)
+    FSOUND_STREAM* m_pStream;        // 指向 FMOD 音訊串流的指標 (對應 this+1)
+    int            m_nVolume;          // 音量大小 (0-255) (對應 this+2)
+    int            m_nChannelId;       // FMOD 用於播放此串流的聲道 ID (對應 this+3)
+    unsigned int   m_nStreamOpenMode;  // 開啟 FMOD 串流時使用的模式旗標 (對應 this+4)
 };
 
 #endif // COGG_H

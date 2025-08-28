@@ -2,26 +2,26 @@
 #include "Image/GameImage.h"
 #include "Image/cltImageManager.h"
 #include "Image/CDeviceManager.h"
-#include "Effect/CEffectManager.h" // ¬°¤F»¼Âk³Ğ«Ø
+#include "Effect/CEffectManager.h" // ç‚ºäº†éæ­¸å‰µå»º
 #include "global.h"
 #include <cstdlib> // for rand()
 #include <cmath>   // for sin(), cos()
 
-// ¹ïÀ³¤Ï²ÕÄ¶½X: 0x0052FCD0
+// å°æ‡‰åçµ„è­¯ç¢¼: 0x0052FCD0
 CEffectUseHitMulti::CEffectUseHitMulti()
 {
-    // CEffectBase «Øºc¨ç¦¡¤w©I¥s
+    // CEffectBase å»ºæ§‹å‡½å¼å·²å‘¼å«
     m_FrameSkip.m_fTimePerFrame = 1.0f / 60.0f; // 1015580809 -> 0.01666f
 
-    // ªì©l¤Æ²É¤l°}¦C
+    // åˆå§‹åŒ–ç²’å­é™£åˆ—
     for (int i = 0; i < MAX_PARTICLES; ++i) {
         m_Particles[i].pImage = nullptr;
         m_Particles[i].fAlpha = 250.0f; // 1133903872
         m_Particles[i].fScale = 0.0f;
         m_Particles[i].cFrameIndex = 0;
         m_Particles[i].ucOwnerDirection = 0;
-        m_Particles[i].bIsActive = false; // ªì©l¬°«D¬¡°Ê
-        // ... ¨ä¥Lªì©l¤Æ ...
+        m_Particles[i].bIsActive = false; // åˆå§‹ç‚ºéæ´»å‹•
+        // ... å…¶ä»–åˆå§‹åŒ– ...
         m_Particles[i].fVelX = 1.0f; // 1065353216
         m_Particles[i].fVelY = 1.0f; // 1065353216
     }
@@ -33,11 +33,11 @@ CEffectUseHitMulti::~CEffectUseHitMulti()
 {
 }
 
-// ¹ïÀ³¤Ï²ÕÄ¶½X: 0x0052FD80
-// ¹ïÀ³¤Ï²ÕÄ¶½X: 0x0052FD80
+// å°æ‡‰åçµ„è­¯ç¢¼: 0x0052FD80
+// å°æ‡‰åçµ„è­¯ç¢¼: 0x0052FD80
 void CEffectUseHitMulti::SetEffect2(float x, float y, unsigned char ucOwnerDirection, int effectType)
 {
-    // ¨BÆJ 1: ®Ú¾Ú effectType ¨M©w²É¤l¼Æ¶q¡B¸ê·½ID©M¯S®í¦æ¬°
+    // æ­¥é©Ÿ 1: æ ¹æ“š effectType æ±ºå®šç²’å­æ•¸é‡ã€è³‡æºIDå’Œç‰¹æ®Šè¡Œç‚º
     m_bUseAdditiveBlend = true;
     m_nEffectType = effectType;
 
@@ -46,7 +46,7 @@ void CEffectUseHitMulti::SetEffect2(float x, float y, unsigned char ucOwnerDirec
     case 1:
         m_uParticleCount = 8;
         m_dwResourceID = 184550915; // 0xB00059B
-        // ¦³ 60% ªº¾÷²v»¼Âk³Ğ«Ø¤@­Ó type 4 ªº¤l¯S®Ä
+        // æœ‰ 60% çš„æ©Ÿç‡éæ­¸å‰µå»ºä¸€å€‹ type 4 çš„å­ç‰¹æ•ˆ
         if ((rand() % 10) > 3) {
             CEffectUseHitMulti* pSubEffect = new CEffectUseHitMulti();
             if (pSubEffect) {
@@ -62,10 +62,10 @@ void CEffectUseHitMulti::SetEffect2(float x, float y, unsigned char ucOwnerDirec
     case 3:
         m_uParticleCount = 3;
         m_dwResourceID = 184550807; // 0xB000597
-        m_bUseAdditiveBlend = false; // ¦¹Ãş«¬¨Ï¥Î´¶³q Alpha ²V¦X
+        m_bUseAdditiveBlend = false; // æ­¤é¡å‹ä½¿ç”¨æ™®é€š Alpha æ··åˆ
         break;
     case 4:
-        m_uParticleCount = (rand() % 5) + 3; // ÀH¾÷ 3 ¨ì 7 ­Ó²É¤l
+        m_uParticleCount = (rand() % 5) + 3; // éš¨æ©Ÿ 3 åˆ° 7 å€‹ç²’å­
         m_dwResourceID = 184550917; // 0xB00059D
         break;
     default:
@@ -74,18 +74,18 @@ void CEffectUseHitMulti::SetEffect2(float x, float y, unsigned char ucOwnerDirec
         break;
     }
 
-    // ¨BÆJ 2: ¹M¾ú¨Ãªì©l¤Æ¨C¤@­Ó²É¤l
+    // æ­¥é©Ÿ 2: éæ­·ä¸¦åˆå§‹åŒ–æ¯ä¸€å€‹ç²’å­
     for (unsigned int i = 0; i < m_uParticleCount; ++i)
     {
         Particle& p = m_Particles[i];
 
-        // 2a. ³]©w³q¥Îªì©lª¬ºA
+        // 2a. è¨­å®šé€šç”¨åˆå§‹ç‹€æ…‹
         p.bIsActive = true;
         p.fPosY = y - 30.0f;
         p.ucOwnerDirection = ucOwnerDirection;
         p.fRotation_Unused = 0.0f;
 
-        // ®Ú¾Ú¨¤¦â´Â¦V³]©w°òÂ¦ X ®y¼Ğ
+        // æ ¹æ“šè§’è‰²æœå‘è¨­å®šåŸºç¤ X åº§æ¨™
         if (ucOwnerDirection == 1)      p.fPosX = x - 10.0f;
         else if (ucOwnerDirection == 0) p.fPosX = x + 10.0f;
         else                            p.fPosX = x;
@@ -93,12 +93,12 @@ void CEffectUseHitMulti::SetEffect2(float x, float y, unsigned char ucOwnerDirec
 
         float angle = 0.0f;
 
-        // 2b. ®Ú¾Ú effectType ¹ï¨C­Ó²É¤l¶i¦æÀH¾÷¤Æ
+        // 2b. æ ¹æ“š effectType å°æ¯å€‹ç²’å­é€²è¡Œéš¨æ©ŸåŒ–
         switch (effectType)
         {
         case 1:
             p.cFrameIndex = 0;
-            if (i >= 2) { // «e¨â­Ó²É¤l¸û¤j¡A«áÄòªº¸û¤p
+            if (i >= 2) { // å‰å…©å€‹ç²’å­è¼ƒå¤§ï¼Œå¾ŒçºŒçš„è¼ƒå°
                 p.fAlpha = (float)(rand() % 200 + 200);
                 angle = (ucOwnerDirection == 1)
                     ? ((float)(rand() % 157) * 0.005f + 2.5933f)
@@ -147,11 +147,11 @@ void CEffectUseHitMulti::SetEffect2(float x, float y, unsigned char ucOwnerDirec
 
             p.fPosY += 10.0f;
             p.fSpeed = (float)(rand() % 8 + 1) * 0.9f;
-            p.fAngle = (angle + 0.8f) * 57.295776f; // ©·«×Âà¨¤«×
+            p.fAngle = (angle + 0.8f) * 57.295776f; // å¼§åº¦è½‰è§’åº¦
             break;
         }
 
-        // 2c. ®Ú¾Ú¨¤«×­pºâ³Ì²×ªº³t«×¦V¶q
+        // 2c. æ ¹æ“šè§’åº¦è¨ˆç®—æœ€çµ‚çš„é€Ÿåº¦å‘é‡
         float cosA = cosf(angle);
         float sinA = sinf(angle);
         float vecX = cosA - sinA;
@@ -168,7 +168,7 @@ void CEffectUseHitMulti::SetEffect2(float x, float y, unsigned char ucOwnerDirec
     }
 }
 
-// ¹ïÀ³¤Ï²ÕÄ¶½X: 0x00530350
+// å°æ‡‰åçµ„è­¯ç¢¼: 0x00530350
 bool CEffectUseHitMulti::FrameProcess(float fElapsedTime)
 {
     int frameCount = 0;
@@ -180,7 +180,7 @@ bool CEffectUseHitMulti::FrameProcess(float fElapsedTime)
     for (unsigned int i = 0; i < m_uParticleCount; ++i) {
         Particle& p = m_Particles[i];
         if (p.bIsActive) {
-            // §ó·s²É¤lª«²z
+            // æ›´æ–°ç²’å­ç‰©ç†
             switch (m_nEffectType) {
             case 1: case 3:
                 p.fAlpha -= (float)frameCount * 1.8f;
@@ -197,7 +197,7 @@ bool CEffectUseHitMulti::FrameProcess(float fElapsedTime)
             p.fPosX += (float)frameCount * p.fVelX * p.fSpeed;
             p.fPosY += (float)frameCount * p.fVelY * p.fSpeed;
 
-            // ÀË¬d¥Í©R¶g´Á
+            // æª¢æŸ¥ç”Ÿå‘½é€±æœŸ
             if ((m_nEffectType == 4 && p.fScale <= 0.0f) || p.fAlpha <= 0.0f) {
                 p.bIsActive = false;
             }
@@ -210,7 +210,7 @@ bool CEffectUseHitMulti::FrameProcess(float fElapsedTime)
     return allParticlesInactive;
 }
 
-// ¹ïÀ³¤Ï²ÕÄ¶½X: 0x00530530
+// å°æ‡‰åçµ„è­¯ç¢¼: 0x00530530
 void CEffectUseHitMulti::Process()
 {
     for (unsigned int i = 0; i < m_uParticleCount; ++i) {
@@ -239,10 +239,10 @@ void CEffectUseHitMulti::Process()
     }
 }
 
-// ¹ïÀ³¤Ï²ÕÄ¶½X: 0x005306A0
+// å°æ‡‰åçµ„è­¯ç¢¼: 0x005306A0
 void CEffectUseHitMulti::Draw()
 {
-    // ®Ú¾Ú¯S®ÄÃş«¬³]©w²V¦X¼Ò¦¡
+    // æ ¹æ“šç‰¹æ•ˆé¡å‹è¨­å®šæ··åˆæ¨¡å¼
     if (m_bUseAdditiveBlend) {
         CDeviceManager::GetInstance()->SetRenderState(D3DRS_SRCBLEND, D3DBLEND_SRCALPHA); // 0xA -> 5
         CDeviceManager::GetInstance()->SetRenderState(D3DRS_DESTBLEND, D3DBLEND_ONE); // 2
@@ -252,7 +252,7 @@ void CEffectUseHitMulti::Draw()
         CDeviceManager::GetInstance()->SetRenderState(D3DRS_DESTBLEND, D3DBLEND_INVSRCALPHA); // 6
     }
 
-    // Ã¸»s©Ò¦³¬¡°Ê¥B¥i¨£ªº²É¤l
+    // ç¹ªè£½æ‰€æœ‰æ´»å‹•ä¸”å¯è¦‹çš„ç²’å­
     for (unsigned int i = 0; i < m_uParticleCount; ++i) {
         Particle& p = m_Particles[i];
         if (p.bIsActive && p.bIsVisible && p.pImage && p.pImage->IsInUse()) {
@@ -260,6 +260,6 @@ void CEffectUseHitMulti::Draw()
         }
     }
 
-    // «ì´_¹w³]²V¦X¼Ò¦¡
+    // æ¢å¾©é è¨­æ··åˆæ¨¡å¼
     CDeviceManager::GetInstance()->ResetRenderState();
 }

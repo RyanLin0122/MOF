@@ -2,35 +2,35 @@
 
 #include "Effect/CEffectBase.h"
 
-// «e¦V«Å§i
+// å‰å‘å®£å‘Š
 class ClientCharacter;
 
 /**
  * @class CEffect_MapEffect
- * @brief ¦b¦a¹Ïªº©T©w®y¼Ğ¼½©ñ¡A¥B¥Í©R¶g´Á¥Ñ¥~³¡±ø¥ó±±¨îªº¯S®Ä¡C
+ * @brief åœ¨åœ°åœ–çš„å›ºå®šåº§æ¨™æ’­æ”¾ï¼Œä¸”ç”Ÿå‘½é€±æœŸç”±å¤–éƒ¨æ¢ä»¶æ§åˆ¶çš„ç‰¹æ•ˆã€‚
  */
 class CEffect_MapEffect : public CEffectBase {
 public:
     CEffect_MapEffect();
     virtual ~CEffect_MapEffect();
 
-    // --- µêÀÀ¨ç¦¡ÂĞ¼g ---
+    // --- è™›æ“¬å‡½å¼è¦†å¯« ---
 
-    /// @brief ®Ú¾Ú¸j©w¨¤¦âªºª¬ºA ID ¨Ó§PÂ_¬O§_À³¸Óµ²§ô¯S®Ä¡C
+    /// @brief æ ¹æ“šç¶å®šè§’è‰²çš„ç‹€æ…‹ ID ä¾†åˆ¤æ–·æ˜¯å¦æ‡‰è©²çµæŸç‰¹æ•ˆã€‚
     virtual bool FrameProcess(float fElapsedTime) override;
     virtual void Process() override;
     virtual void Draw() override;
 
-    // --- ±M¦³¨ç¦¡ ---
+    // --- å°ˆæœ‰å‡½å¼ ---
 
-    /// @brief ³]©w¯S®Ä (³z¹L¦WºÙ)¡C
+    /// @brief è¨­å®šç‰¹æ•ˆ (é€éåç¨±)ã€‚
     void SetEffect(char* szEffectName, unsigned short requiredStateID, ClientCharacter* pStateOwner, int x, int y);
 
-    /// @brief ³]©w¯S®Ä (³z¹L ID)¡C
+    /// @brief è¨­å®šç‰¹æ•ˆ (é€é ID)ã€‚
     void SetEffect(unsigned short effectKindID, unsigned short requiredStateID, ClientCharacter* pStateOwner, int x, int y);
 
 private:
-    // --- ¦¨­ûÅÜ¼Æ (®Ú¾Ú Effectall.c @ 0x00537810 ±ÀÂ_) ---
-    ClientCharacter* m_pStateOwner;     // ¦ì²¾ +132 (0x84): ¨äª¬ºA¨M©w¯S®Ä¥Í©R¶g´Áªº¨¤¦â
-    unsigned short   m_wRequiredStateID;  // ¦ì²¾ +136 (0x88): ºû«ù¯S®Ä¦s¦b©Ò»İªºª¬ºA ID
+    // --- æˆå“¡è®Šæ•¸ (æ ¹æ“š Effectall.c @ 0x00537810 æ¨æ–·) ---
+    ClientCharacter* m_pStateOwner;     // ä½ç§» +132 (0x84): å…¶ç‹€æ…‹æ±ºå®šç‰¹æ•ˆç”Ÿå‘½é€±æœŸçš„è§’è‰²
+    unsigned short   m_wRequiredStateID;  // ä½ç§» +136 (0x88): ç¶­æŒç‰¹æ•ˆå­˜åœ¨æ‰€éœ€çš„ç‹€æ…‹ ID
 };

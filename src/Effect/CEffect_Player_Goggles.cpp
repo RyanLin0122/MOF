@@ -5,7 +5,7 @@
 #include "global.h"
 #include <cstdlib>
 
-// ¹ïÀ³¤Ï²ÕÄ¶½X: 0x005318B0
+// å°æ‡‰åçµ„è­¯ç¢¼: 0x005318B0
 CEffect_Player_Goggles::CEffect_Player_Goggles()
 {
     m_pImage = nullptr;
@@ -20,22 +20,22 @@ CEffect_Player_Goggles::CEffect_Player_Goggles()
     m_dwResourceID = 0;
     m_isUiEffect = 0;
 
-    // ­ì©l½X: *((_DWORD *)this + 43) = 993738471; (0x3B4CCCC7 -> ~0.03f)
+    // åŸå§‹ç¢¼: *((_DWORD *)this + 43) = 993738471; (0x3B4CCCC7 -> ~0.03f)
     m_FrameSkip.m_fTimePerFrame = 1.0f / 33.0f;
 }
 
-// ¹ïÀ³¤Ï²ÕÄ¶½X: 0x00531960
+// å°æ‡‰åçµ„è­¯ç¢¼: 0x00531960
 CEffect_Player_Goggles::~CEffect_Player_Goggles()
 {
 }
 
-// ¹ïÀ³¤Ï²ÕÄ¶½X: 0x00531980
+// å°æ‡‰åçµ„è­¯ç¢¼: 0x00531980
 void CEffect_Player_Goggles::SetEffect(float x, float y, bool bFlip, unsigned int resourceID, int isUiEffect)
 {
     m_isUiEffect = isUiEffect;
     m_bIsFlip = bFlip;
     m_fScaleX_Rate = 0.0f;
-    m_fCurrentPosY = y - 100.0f; // ªì©l Y ®y¼Ğ¦³¸û¤j°¾²¾
+    m_fCurrentPosY = y - 100.0f; // åˆå§‹ Y åº§æ¨™æœ‰è¼ƒå¤§åç§»
     m_fAlpha_Rate = 0.5f;       // 1058642330 (0x3F000000)
 
     if (bFlip) {
@@ -48,7 +48,7 @@ void CEffect_Player_Goggles::SetEffect(float x, float y, bool bFlip, unsigned in
     m_dwResourceID = resourceID;
 }
 
-// ¹ïÀ³¤Ï²ÕÄ¶½X: 0x00531A00
+// å°æ‡‰åçµ„è­¯ç¢¼: 0x00531A00
 bool CEffect_Player_Goggles::FrameProcess(float fElapsedTime)
 {
     int frameCount = 0;
@@ -57,22 +57,22 @@ bool CEffect_Player_Goggles::FrameProcess(float fElapsedTime)
     }
     float fFrameCount = static_cast<float>(frameCount);
 
-    // §ó·s±ÛÂà (¦b­ì©l½X¤¤¡A¦¹¦¨­û³Q¥Î§@ÁY©ñ)
+    // æ›´æ–°æ—‹è½‰ (åœ¨åŸå§‹ç¢¼ä¸­ï¼Œæ­¤æˆå“¡è¢«ç”¨ä½œç¸®æ”¾)
     m_fScale += fFrameCount * 0.5f;
 
-    // §ó·sÃC¦â­È (¦b­ì©l½X¤¤¡A¦¹¦¨­û³Q¥Î§@±ÛÂà)
+    // æ›´æ–°é¡è‰²å€¼ (åœ¨åŸå§‹ç¢¼ä¸­ï¼Œæ­¤æˆå“¡è¢«ç”¨ä½œæ—‹è½‰)
     m_fRotation += fFrameCount * m_fScaleX_Rate;
 
-    // §ó·s³z©ú«×
+    // æ›´æ–°é€æ˜åº¦
     m_fAlpha -= fFrameCount * m_fAlpha_Rate;
 
-    // §ó·s Y ®y¼Ğ (¤Wº})
+    // æ›´æ–° Y åº§æ¨™ (ä¸Šæ¼‚)
     m_fCurrentPosY -= fFrameCount * 0.1f;
 
     return m_fAlpha < 0.0f;
 }
 
-// ¹ïÀ³¤Ï²ÕÄ¶½X: 0x00531AF0
+// å°æ‡‰åçµ„è­¯ç¢¼: 0x00531AF0
 void CEffect_Player_Goggles::Process()
 {
     float screenX = m_fCurrentPosX;
@@ -103,7 +103,7 @@ void CEffect_Player_Goggles::Process()
     }
 }
 
-// ¹ïÀ³¤Ï²ÕÄ¶½X: 0x00531C70
+// å°æ‡‰åçµ„è­¯ç¢¼: 0x00531C70
 void CEffect_Player_Goggles::Draw()
 {
     if (m_bIsVisible && m_pImage && m_pImage->IsInUse())

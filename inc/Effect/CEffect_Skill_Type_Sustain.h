@@ -5,42 +5,42 @@
 
 /**
  * @class CEffect_Skill_Type_Sustain
- * @brief ¥Nªí¦b¬IªkªÌ¨­¤W«ùÄò¦s¦bªº§Ş¯à¯S®Ä¡]¨Ò¦p Buff/Debuff¡^¡C
+ * @brief ä»£è¡¨åœ¨æ–½æ³•è€…èº«ä¸ŠæŒçºŒå­˜åœ¨çš„æŠ€èƒ½ç‰¹æ•ˆï¼ˆä¾‹å¦‚ Buff/Debuffï¼‰ã€‚
  *
- * Ä~©Ó¦Û CEffectBase¡A¥Î©ó¹ê²{»P¨¤¦â§Ş¯àª¬ºA¦P¨Bªº«ùÄò©ÊµøÄ±®ÄªG¡C
- * ¨ä¥Í©R¶g´Á¤£¨Ì¿à©ó°Êµeªø«×¡A¦Ó¬O¥Ñ¬IªkªÌ¨­¤Wªº§Ş¯àª¬ºA¬O§_¦s¦b¨M©w¡C
+ * ç¹¼æ‰¿è‡ª CEffectBaseï¼Œç”¨æ–¼å¯¦ç¾èˆ‡è§’è‰²æŠ€èƒ½ç‹€æ…‹åŒæ­¥çš„æŒçºŒæ€§è¦–è¦ºæ•ˆæœã€‚
+ * å…¶ç”Ÿå‘½é€±æœŸä¸ä¾è³´æ–¼å‹•ç•«é•·åº¦ï¼Œè€Œæ˜¯ç”±æ–½æ³•è€…èº«ä¸Šçš„æŠ€èƒ½ç‹€æ…‹æ˜¯å¦å­˜åœ¨æ±ºå®šã€‚
  */
 class CEffect_Skill_Type_Sustain : public CEffectBase {
 public:
     CEffect_Skill_Type_Sustain();
     virtual ~CEffect_Skill_Type_Sustain();
 
-    // --- µêÀÀ¨ç¦¡ÂĞ¼g ---
+    // --- è™›æ“¬å‡½å¼è¦†å¯« ---
 
-    /// @brief ³B²z¯S®Äªº¥Í©R¶g´Á¡AÀË¬d¾Ö¦³ªÌªº«ùÄò§Ş¯àª¬ºA¡C
+    /// @brief è™•ç†ç‰¹æ•ˆçš„ç”Ÿå‘½é€±æœŸï¼Œæª¢æŸ¥æ“æœ‰è€…çš„æŒçºŒæŠ€èƒ½ç‹€æ…‹ã€‚
     virtual bool FrameProcess(float fElapsedTime) override;
 
-    /// @brief ·Ç³ÆÃ¸»s«eªºÅŞ¿è§ó·s¡A¦P¨B¾Ö¦³ªÌªº¦ì¸m¡C
+    /// @brief æº–å‚™ç¹ªè£½å‰çš„é‚è¼¯æ›´æ–°ï¼ŒåŒæ­¥æ“æœ‰è€…çš„ä½ç½®ã€‚
     virtual void Process() override;
 
-    /// @brief Ã¸»s¯S®Ä¡C
+    /// @brief ç¹ªè£½ç‰¹æ•ˆã€‚
     virtual void Draw() override;
 
-    // --- ±M¦³¨ç¦¡ ---
+    // --- å°ˆæœ‰å‡½å¼ ---
 
-    /// @brief ³]©w¯S®Ä¡C
-    /// @param pCaster ¬IªkªÌ¨¤¦â¡A¯S®Ä±N¸òÀH¦¹¨¤¦â¡C
-    /// @param effectKindID ¯S®ÄªººØÃş ID¡C
-    /// @param szFileName ¯S®Ä¸ê·½ (.ea) ªºÀÉ®×¦WºÙ¡C
-    /// @param sustainSkillID ¦¹¯S®Ä¹ïÀ³ªº«ùÄò©Ê§Ş¯à ID¡A¥Î©óÀË¬d¥Í©R¶g´Á¡C
+    /// @brief è¨­å®šç‰¹æ•ˆã€‚
+    /// @param pCaster æ–½æ³•è€…è§’è‰²ï¼Œç‰¹æ•ˆå°‡è·Ÿéš¨æ­¤è§’è‰²ã€‚
+    /// @param effectKindID ç‰¹æ•ˆçš„ç¨®é¡ IDã€‚
+    /// @param szFileName ç‰¹æ•ˆè³‡æº (.ea) çš„æª”æ¡ˆåç¨±ã€‚
+    /// @param sustainSkillID æ­¤ç‰¹æ•ˆå°æ‡‰çš„æŒçºŒæ€§æŠ€èƒ½ IDï¼Œç”¨æ–¼æª¢æŸ¥ç”Ÿå‘½é€±æœŸã€‚
     void SetEffect(ClientCharacter* pCaster, unsigned short effectKindID, char* szFileName, unsigned short sustainSkillID);
 
 protected:
-    // --- ¦¨­ûÅÜ¼Æ ---
+    // --- æˆå“¡è®Šæ•¸ ---
 
-    /// @brief «ü¦V¯S®Äªº¾Ö¦³ªÌ¡C
-    ClientCharacter* m_pOwnerCharacter; // ¦ì²¾ +132 (0x84)
+    /// @brief æŒ‡å‘ç‰¹æ•ˆçš„æ“æœ‰è€…ã€‚
+    ClientCharacter* m_pOwnerCharacter; // ä½ç§» +132 (0x84)
 
-    /// @brief ¦¹¯S®Ä¸j©wªº«ùÄò©Ê§Ş¯à ID¡C
-    unsigned short m_sSustainSkillID;   // ¦ì²¾ +136 (0x88)
+    /// @brief æ­¤ç‰¹æ•ˆç¶å®šçš„æŒçºŒæ€§æŠ€èƒ½ IDã€‚
+    unsigned short m_sSustainSkillID;   // ä½ç§» +136 (0x88)
 };

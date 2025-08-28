@@ -4,31 +4,31 @@
 
 /**
  * @class CEffect_MiniGame_MagicStick_Right
- * @brief ¥Nªí¤p¹CÀ¸¤¤±q¥k°¼µo¥XªºÅ]ªk§ú§ğÀ»¯S®Ä¡C
+ * @brief ä»£è¡¨å°éŠæˆ²ä¸­å¾å³å´ç™¼å‡ºçš„é­”æ³•æ–æ”»æ“Šç‰¹æ•ˆã€‚
  *
- * Ä~©Ó¦Û CEffectBase¡A¬O¤@­Ó¦b©T©w®y¼Ğ¼½©ñ¤@¦¸ªºÂ²³æ°Êµe¯S®Ä¡A
- * ³q±`¥Î©ó UI ¼h©ÎµLÄá¼v¾÷ºu°Êªº³õ´º¡C
+ * ç¹¼æ‰¿è‡ª CEffectBaseï¼Œæ˜¯ä¸€å€‹åœ¨å›ºå®šåº§æ¨™æ’­æ”¾ä¸€æ¬¡çš„ç°¡å–®å‹•ç•«ç‰¹æ•ˆï¼Œ
+ * é€šå¸¸ç”¨æ–¼ UI å±¤æˆ–ç„¡æ”å½±æ©Ÿæ»¾å‹•çš„å ´æ™¯ã€‚
  */
 class CEffect_MiniGame_MagicStick_Right : public CEffectBase {
 public:
     CEffect_MiniGame_MagicStick_Right();
     virtual ~CEffect_MiniGame_MagicStick_Right();
 
-    // --- µêÀÀ¨ç¦¡ÂĞ¼g ---
+    // --- è™›æ“¬å‡½å¼è¦†å¯« ---
 
-    /// @brief ³B²z¯S®Äªº¥Í©R¶g´Á¡Aª½±µ¨Ì¿à CCAEffect ªº°Êµe¼½©ñª¬ºA¡C
+    /// @brief è™•ç†ç‰¹æ•ˆçš„ç”Ÿå‘½é€±æœŸï¼Œç›´æ¥ä¾è³´ CCAEffect çš„å‹•ç•«æ’­æ”¾ç‹€æ…‹ã€‚
     virtual bool FrameProcess(float fElapsedTime) override;
 
-    /// @brief ·Ç³ÆÃ¸»s«eªºÅŞ¿è§ó·s¡A¨Ï¥Î©T©wªºªì©l¦ì¸m¡C
+    /// @brief æº–å‚™ç¹ªè£½å‰çš„é‚è¼¯æ›´æ–°ï¼Œä½¿ç”¨å›ºå®šçš„åˆå§‹ä½ç½®ã€‚
     virtual void Process() override;
 
-    /// @brief Ã¸»s¯S®Ä¡C
+    /// @brief ç¹ªè£½ç‰¹æ•ˆã€‚
     virtual void Draw() override;
 
-    // --- ±M¦³¨ç¦¡ ---
+    // --- å°ˆæœ‰å‡½å¼ ---
 
-    /// @brief ³]©w¯S®ÄªºÅã¥Ü¦ì¸m¡C
-    /// @param x ¯S®Ä¤¤¤ßÂIªº X ®y¼Ğ¡C
-    /// @param y ¯S®Ä¤¤¤ßÂIªº Y ®y¼Ğ¡C
+    /// @brief è¨­å®šç‰¹æ•ˆçš„é¡¯ç¤ºä½ç½®ã€‚
+    /// @param x ç‰¹æ•ˆä¸­å¿ƒé»çš„ X åº§æ¨™ã€‚
+    /// @param y ç‰¹æ•ˆä¸­å¿ƒé»çš„ Y åº§æ¨™ã€‚
     void SetEffect(float x, float y);
 };

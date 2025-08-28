@@ -5,76 +5,76 @@
 #include "global.h"
 #include <cstdlib>
 
-// °²³]ªº¥ş°ìÅÜ¼Æ
+// å‡è¨­çš„å…¨åŸŸè®Šæ•¸
 extern GameSystemInfo g_Game_System_Info;
 
-// ¹ïÀ³¤Ï²ÕÄ¶½X: 0x00539F60
+// å°æ‡‰åçµ„è­¯ç¢¼: 0x00539F60
 CEffect_OverMind_Screen::CEffect_OverMind_Screen()
     : m_pTargetCharacter(nullptr),
     m_bIsActive(false),
     m_dwAlpha(0),
     m_pEffectImage(nullptr)
 {
-    // ­ì©l½Xªº«Øºc¨ç¦¡¬°ªÅ¡A©Ò¦³ªì©l¤Æ³£¦b SetActive ¤¤¶i¦æ
+    // åŸå§‹ç¢¼çš„å»ºæ§‹å‡½å¼ç‚ºç©ºï¼Œæ‰€æœ‰åˆå§‹åŒ–éƒ½åœ¨ SetActive ä¸­é€²è¡Œ
 }
 
 CEffect_OverMind_Screen::~CEffect_OverMind_Screen()
 {
-    // GameImage ¥Ñ cltImageManager ºŞ²z¡A¦¹³B¤£»İ delete
+    // GameImage ç”± cltImageManager ç®¡ç†ï¼Œæ­¤è™•ä¸éœ€ delete
 }
 
-// ¹ïÀ³¤Ï²ÕÄ¶½X: 0x00539F80
+// å°æ‡‰åçµ„è­¯ç¢¼: 0x00539F80
 void CEffect_OverMind_Screen::SetActive(ClientCharacter* pTarget)
 {
     m_pTargetCharacter = pTarget;
     m_bIsActive = true;
-    m_dwAlpha = 255; // ªì©l¤Æ³z©ú«×/¥Í©R¶g´Á­p®É¾¹
+    m_dwAlpha = 255; // åˆå§‹åŒ–é€æ˜åº¦/ç”Ÿå‘½é€±æœŸè¨ˆæ™‚å™¨
 }
 
-// ¹ïÀ³¤Ï²ÕÄ¶½X: 0x00539FB0
+// å°æ‡‰åçµ„è­¯ç¢¼: 0x00539FB0
 void CEffect_OverMind_Screen::PrepareDrawing()
 {
     if (!m_bIsActive || !m_pTargetCharacter) {
         return;
     }
 
-    // Àò¨ú¯S®Ä¨Ï¥Îªº GameImage
+    // ç²å–ç‰¹æ•ˆä½¿ç”¨çš„ GameImage
     m_pEffectImage = cltImageManager::GetInstance()->GetGameImage(7, 0x20000091u, 0, 1);
     if (!m_pEffectImage) {
-        m_bIsActive = false; // ¦pªGÀò¨ú¤£¨ì¹Ï¤ù¡A«hª½±µµ²§ô¯S®Ä
+        m_bIsActive = false; // å¦‚æœç²å–ä¸åˆ°åœ–ç‰‡ï¼Œå‰‡ç›´æ¥çµæŸç‰¹æ•ˆ
         return;
     }
 
-    // ­pºâ¿Ã¹õ®y¼Ğ
+    // è¨ˆç®—è¢å¹•åº§æ¨™
     float screenX = static_cast<float>(m_pTargetCharacter->GetPosX() - g_Game_System_Info.ScreenWidth);
-    float screenY = static_cast<float>(m_pTargetCharacter->GetPosY() - g_Game_System_Info.ScreenHeight - 30); // ¦b¨¤¦âÀY³»¤W¤è30¹³¯À
+    float screenY = static_cast<float>(m_pTargetCharacter->GetPosY() - g_Game_System_Info.ScreenHeight - 30); // åœ¨è§’è‰²é ­é ‚ä¸Šæ–¹30åƒç´ 
 
-    // ³]©w GameImage Äİ©Ê
+    // è¨­å®š GameImage å±¬æ€§
     m_pEffectImage->SetPosition(screenX, screenY);
     m_pEffectImage->SetBlockID(0);
 
-    // ³]©w³z©ú«×¡AÀHµÛ®É¶¡»¼´î
+    // è¨­å®šé€æ˜åº¦ï¼Œéš¨è‘—æ™‚é–“éæ¸›
     m_pEffectImage->SetAlpha(m_dwAlpha % 255);
 
-    // ³]©w¤@­ÓÀH¾÷ªºÃC¦â/ÁY©ñ­È¡A²£¥Í°{Ã{®ÄªG
+    // è¨­å®šä¸€å€‹éš¨æ©Ÿçš„é¡è‰²/ç¸®æ”¾å€¼ï¼Œç”¢ç”Ÿé–ƒçˆæ•ˆæœ
     m_pEffectImage->SetColor(rand() % 500 + 100);
 
-    // §ó·s GameImage ªº³»ÂI½w½Ä°Ï
+    // æ›´æ–° GameImage çš„é ‚é»ç·©è¡å€
     m_pEffectImage->Process();
 
-    // §ó·s¥Í©R¶g´Á­p®É¾¹
+    // æ›´æ–°ç”Ÿå‘½é€±æœŸè¨ˆæ™‚å™¨
     m_dwAlpha -= 25;
     if (m_dwAlpha < 1) {
-        m_bIsActive = false; // ¥Í©R¶g´Áµ²§ô
+        m_bIsActive = false; // ç”Ÿå‘½é€±æœŸçµæŸ
     }
 }
 
-// ¹ïÀ³¤Ï²ÕÄ¶½X: 0x0053A090
+// å°æ‡‰åçµ„è­¯ç¢¼: 0x0053A090
 void CEffect_OverMind_Screen::Draw()
 {
     if (m_bIsActive && m_pEffectImage && m_pEffectImage->IsInUse())
     {
-        // ÁöµM­ì©l½X¨S¦³³]©w²V¦X¼Ò¦¡¡A¦ı¦¹Ãş¯S®Ä³q±`¨Ï¥Î Alpha ²V¦X
+        // é›–ç„¶åŸå§‹ç¢¼æ²’æœ‰è¨­å®šæ··åˆæ¨¡å¼ï¼Œä½†æ­¤é¡ç‰¹æ•ˆé€šå¸¸ä½¿ç”¨ Alpha æ··åˆ
         // CDeviceManager::GetInstance()->ResetRenderState();
         m_pEffectImage->Draw();
     }

@@ -1,11 +1,11 @@
 #include "Effect/CEffect_Field_Recall_Potal.h"
 #include "Effect/CEAManager.h"
-#include "Effect/cltMoFC_EffectKindInfo.h" // »İ­n¯S®ÄºØÃş¸ê°TºŞ²z¾¹
+#include "Effect/cltMoFC_EffectKindInfo.h" // éœ€è¦ç‰¹æ•ˆç¨®é¡è³‡è¨Šç®¡ç†å™¨
 #include "Effect/CEffectManager.h"
 #include "global.h"
 
 
-// ÁöµM­ì©l½X¨S¦³´£¨Ñ«Øºc/¸Ñºc¨ç¦¡¡A¦ı¬°¤F§¹¾ã©Ê¦Ó²K¥[
+// é›–ç„¶åŸå§‹ç¢¼æ²’æœ‰æä¾›å»ºæ§‹/è§£æ§‹å‡½å¼ï¼Œä½†ç‚ºäº†å®Œæ•´æ€§è€Œæ·»åŠ 
 CEffect_Field_Recall_Potal::CEffect_Field_Recall_Potal()
     : m_bIsFinished(false)
 {
@@ -15,58 +15,58 @@ CEffect_Field_Recall_Potal::~CEffect_Field_Recall_Potal()
 {
 }
 
-// ¹ïÀ³¤Ï²ÕÄ¶½X: 0x005370C0
+// å°æ‡‰åçµ„è­¯ç¢¼: 0x005370C0
 void CEffect_Field_Recall_Potal::SetEffect(char* szEffectName, float x, float y)
 {
-    // ¨BÆJ 1: ®Ú¾Ú¦WºÙ¬d§ä¯S®Ä¸ê°T
+    // æ­¥é©Ÿ 1: æ ¹æ“šåç¨±æŸ¥æ‰¾ç‰¹æ•ˆè³‡è¨Š
     stEffectKindInfo* pKindInfo = CEffectManager::GetInstance()->g_clEffectKindInfo.GetEffectKindInfo(szEffectName);
     if (!pKindInfo) {
-        return; // §ä¤£¨ì¹ïÀ³ªº¯S®Ä©w¸q
+        return; // æ‰¾ä¸åˆ°å°æ‡‰çš„ç‰¹æ•ˆå®šç¾©
     }
 
-    // ¨BÆJ 2: ºc«Ø§¹¾ãªºÀÉ®×¸ô®|
+    // æ­¥é©Ÿ 2: æ§‹å»ºå®Œæ•´çš„æª”æ¡ˆè·¯å¾‘
     char szFullPath[256];
     sprintf_s(szFullPath, sizeof(szFullPath), "Effect/%s", pKindInfo->szFileName);
 
-    // ¨BÆJ 3: ¸ü¤J¯S®Ä¼Æ¾Ú¨Ã¶}©l¼½©ñ
+    // æ­¥é©Ÿ 3: è¼‰å…¥ç‰¹æ•ˆæ•¸æ“šä¸¦é–‹å§‹æ’­æ”¾
     CEAManager::GetInstance()->GetEAData(pKindInfo->usKindID, szFullPath, &m_ccaEffect);
     m_ccaEffect.SetFrameTime();
-    m_ccaEffect.Play(0, false); // ¼½©ñ²Ä¤@­Ó°Êµe§Ç¦C¡A¤£´`Àô
+    m_ccaEffect.Play(0, false); // æ’­æ”¾ç¬¬ä¸€å€‹å‹•ç•«åºåˆ—ï¼Œä¸å¾ªç’°
 
-    // ¨BÆJ 4: ³]©w¯S®Ä¦ì¸m©Mªì©lª¬ºA
+    // æ­¥é©Ÿ 4: è¨­å®šç‰¹æ•ˆä½ç½®å’Œåˆå§‹ç‹€æ…‹
     m_fCurrentPosX = x;
     m_fCurrentPosY = y;
     m_bIsFinished = false;
 }
 
-// ¹ïÀ³¤Ï²ÕÄ¶½X: 0x00537160
+// å°æ‡‰åçµ„è­¯ç¢¼: 0x00537160
 bool CEffect_Field_Recall_Potal::FrameProcess(float fElapsedTime)
 {
-    // §ó·s¤º³¡°Êµeªº¼v®æ
+    // æ›´æ–°å…§éƒ¨å‹•ç•«çš„å½±æ ¼
     m_ccaEffect.FrameProcess(fElapsedTime);
 
-    // ªğ¦^¥Í©R¶g´ÁºX¼Ğ¡A¥Ñ¥~³¡ÅŞ¿è¨M©w¦ó®Éµ²§ô
+    // è¿”å›ç”Ÿå‘½é€±æœŸæ——æ¨™ï¼Œç”±å¤–éƒ¨é‚è¼¯æ±ºå®šä½•æ™‚çµæŸ
     return m_bIsFinished;
 }
 
-// ¹ïÀ³¤Ï²ÕÄ¶½X: 0x00537180
+// å°æ‡‰åçµ„è­¯ç¢¼: 0x00537180
 void CEffect_Field_Recall_Potal::Process()
 {
-    // ±N¥@¬É®y¼ĞÂà´«¬°¿Ã¹õ®y¼Ğ
+    // å°‡ä¸–ç•Œåº§æ¨™è½‰æ›ç‚ºè¢å¹•åº§æ¨™
     float screenX = m_fCurrentPosX - static_cast<float>(g_Game_System_Info.ScreenX);
     float screenY = m_fCurrentPosY - static_cast<float>(g_Game_System_Info.ScreenY);
 
-    // ¶i¦æµô°Å§PÂ_
+    // é€²è¡Œè£å‰ªåˆ¤æ–·
     m_bIsVisible = IsCliping(screenX, 0.0f);
 
     if (m_bIsVisible) {
-        // §ó·s¤º³¡ CCAEffect ªºª¬ºA
+        // æ›´æ–°å…§éƒ¨ CCAEffect çš„ç‹€æ…‹
         m_ccaEffect.SetPosition(screenX, screenY);
         m_ccaEffect.Process();
     }
 }
 
-// ¹ïÀ³¤Ï²ÕÄ¶½X: 0x005371C0
+// å°æ‡‰åçµ„è­¯ç¢¼: 0x005371C0
 void CEffect_Field_Recall_Potal::Draw()
 {
     if (m_bIsVisible) {

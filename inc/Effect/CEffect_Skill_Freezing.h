@@ -2,54 +2,54 @@
 
 #include "Effect/CEffectBase.h"
 
-// «e¦V«Å§i
+// å‰å‘å®£å‘Š
 class ClientCharacter;
 
 /**
  * @class CEffect_Skill_Freezing
- * @brief ¥Nªí¨¤¦â³Q¦B­á®É¡A¦ì©ó¤W¼hªºµøÄ±¯S®Ä¡C
+ * @brief ä»£è¡¨è§’è‰²è¢«å†°å‡æ™‚ï¼Œä½æ–¼ä¸Šå±¤çš„è¦–è¦ºç‰¹æ•ˆã€‚
  */
 class CEffect_Skill_Freezing : public CEffectBase {
 public:
     CEffect_Skill_Freezing();
     virtual ~CEffect_Skill_Freezing();
 
-    // --- µêÀÀ¨ç¦¡ÂĞ¼g ---
+    // --- è™›æ“¬å‡½å¼è¦†å¯« ---
     virtual bool FrameProcess(float fElapsedTime) override;
     virtual void Process() override;
     virtual void Draw() override;
 
-    // --- ±M¦³¨ç¦¡ ---
+    // --- å°ˆæœ‰å‡½å¼ ---
     void SetEffect(ClientCharacter* pTarget, int a3);
 
 protected:
-    ClientCharacter* m_pOwnerCharacter; // ¦ì²¾ +132 (0x84)
-    int              m_nUnknown_a3;     // ¦ì²¾ +136 (0x88)
-    float            m_fInitialPosX;    // ¦ì²¾ +144 (0x90)
-    float            m_fInitialPosY;    // ¦ì²¾ +148 (0x94)
+    ClientCharacter* m_pOwnerCharacter; // ä½ç§» +132 (0x84)
+    int              m_nUnknown_a3;     // ä½ç§» +136 (0x88)
+    float            m_fInitialPosX;    // ä½ç§» +144 (0x90)
+    float            m_fInitialPosY;    // ä½ç§» +148 (0x94)
 };
 
 
 /**
  * @class CEffect_Skill_Freezing_Sub
- * @brief ¥Nªí¨¤¦â³Q¦B­á®É¡A¦ì©ó©³¼hªºµøÄ±¯S®Ä¡C
+ * @brief ä»£è¡¨è§’è‰²è¢«å†°å‡æ™‚ï¼Œä½æ–¼åº•å±¤çš„è¦–è¦ºç‰¹æ•ˆã€‚
  */
 class CEffect_Skill_Freezing_Sub : public CEffectBase {
 public:
     CEffect_Skill_Freezing_Sub();
     virtual ~CEffect_Skill_Freezing_Sub();
 
-    // --- µêÀÀ¨ç¦¡ÂĞ¼g ---
+    // --- è™›æ“¬å‡½å¼è¦†å¯« ---
     virtual bool FrameProcess(float fElapsedTime) override;
     virtual void Process() override;
     virtual void Draw() override;
 
-    // --- ±M¦³¨ç¦¡ ---
+    // --- å°ˆæœ‰å‡½å¼ ---
     void SetEffect(ClientCharacter* pTarget, int a3);
 
 protected:
-    ClientCharacter* m_pOwnerCharacter; // ¦ì²¾ +132 (0x84)
-    int              m_nUnknown_a3;     // ¦ì²¾ +136 (0x88)
-    float            m_fInitialPosX;    // ¦ì²¾ +144 (0x90)
-    float            m_fInitialPosY;    // ¦ì²¾ +148 (0x94)
+    ClientCharacter* m_pOwnerCharacter; // ä½ç§» +132 (0x84)
+    int              m_nUnknown_a3;     // ä½ç§» +136 (0x88)
+    float            m_fInitialPosX;    // ä½ç§» +144 (0x90)
+    float            m_fInitialPosY;    // ä½ç§» +148 (0x94)
 };

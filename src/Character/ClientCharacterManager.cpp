@@ -20,7 +20,7 @@ ClientCharacterManager::~ClientCharacterManager() {
 }
 
 ClientCharacter* ClientCharacterManager::GetCharByAccount(unsigned int) {
-	return new ClientCharacter(); // °²³]³o¸Ìªğ¦^¤@­Ó·sªº ClientCharacter ¹ê¨Ò
+	return new ClientCharacter(); // å‡è¨­é€™è£¡è¿”å›ä¸€å€‹æ–°çš„ ClientCharacter å¯¦ä¾‹
 }
 
 bool ClientCharacterManager::IsMapConqueror(char* Name) {

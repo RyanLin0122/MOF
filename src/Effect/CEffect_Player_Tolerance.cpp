@@ -4,20 +4,20 @@
 #include "global.h"
 
 // =======================================================================
-// CEffect_Player_Tolerance (¤W¼h¯S®Ä)
+// CEffect_Player_Tolerance (ä¸Šå±¤ç‰¹æ•ˆ)
 // =======================================================================
 
 CEffect_Player_Tolerance::CEffect_Player_Tolerance()
     : m_pOwnerCharacter(nullptr)
 {
-    // CEffectBase ªº«Øºc¨ç¦¡·|³Q¦Û°Ê©I¥s
+    // CEffectBase çš„å»ºæ§‹å‡½å¼æœƒè¢«è‡ªå‹•å‘¼å«
 }
 
 CEffect_Player_Tolerance::~CEffect_Player_Tolerance()
 {
 }
 
-// ¹ïÀ³¤Ï²ÕÄ¶½X: 0x005324E0
+// å°æ‡‰åçµ„è­¯ç¢¼: 0x005324E0
 void CEffect_Player_Tolerance::SetEffect(ClientCharacter* pOwner, unsigned char toleranceType)
 {
     if (!pOwner) return;
@@ -39,23 +39,23 @@ void CEffect_Player_Tolerance::SetEffect(ClientCharacter* pOwner, unsigned char 
         szFileName = "Effect/effect-mon03-Top.ea";
         break;
     default:
-        return; // ¥¼ª¾Ãş«¬
+        return; // æœªçŸ¥é¡å‹
     }
 
     CEAManager::GetInstance()->GetEAData(effectID, (char*)szFileName, &m_ccaEffect);
     m_ccaEffect.SetFrameTime();
-    m_ccaEffect.Play(0, false); // ¼½©ñ¤@¦¸
+    m_ccaEffect.Play(0, false); // æ’­æ”¾ä¸€æ¬¡
 
     m_pOwnerCharacter = pOwner;
 }
 
-// ¹ïÀ³¤Ï²ÕÄ¶½X: 0x00532550
+// å°æ‡‰åçµ„è­¯ç¢¼: 0x00532550
 bool CEffect_Player_Tolerance::FrameProcess(float fElapsedTime)
 {
     return m_ccaEffect.FrameProcess(fElapsedTime);
 }
 
-// ¹ïÀ³¤Ï²ÕÄ¶½X: 0x00532560
+// å°æ‡‰åçµ„è­¯ç¢¼: 0x00532560
 void CEffect_Player_Tolerance::Process()
 {
     if (!m_pOwnerCharacter) {
@@ -74,7 +74,7 @@ void CEffect_Player_Tolerance::Process()
     }
 }
 
-// ¹ïÀ³¤Ï²ÕÄ¶½X: 0x005325F0
+// å°æ‡‰åçµ„è­¯ç¢¼: 0x005325F0
 void CEffect_Player_Tolerance::Draw()
 {
     if (m_bIsVisible) {
@@ -84,7 +84,7 @@ void CEffect_Player_Tolerance::Draw()
 
 
 // =======================================================================
-// CEffect_Player_Tolerance_Sub (©³¼h¯S®Ä)
+// CEffect_Player_Tolerance_Sub (åº•å±¤ç‰¹æ•ˆ)
 // =======================================================================
 
 CEffect_Player_Tolerance_Sub::CEffect_Player_Tolerance_Sub()
@@ -96,7 +96,7 @@ CEffect_Player_Tolerance_Sub::~CEffect_Player_Tolerance_Sub()
 {
 }
 
-// ¹ïÀ³¤Ï²ÕÄ¶½X: 0x00532660
+// å°æ‡‰åçµ„è­¯ç¢¼: 0x00532660
 void CEffect_Player_Tolerance_Sub::SetEffect(ClientCharacter* pOwner, unsigned char toleranceType)
 {
     if (!pOwner) return;
@@ -118,23 +118,23 @@ void CEffect_Player_Tolerance_Sub::SetEffect(ClientCharacter* pOwner, unsigned c
         szFileName = "Effect/effect-mon03-Bottom.ea";
         break;
     default:
-        return; // ¥¼ª¾Ãş«¬
+        return; // æœªçŸ¥é¡å‹
     }
 
     CEAManager::GetInstance()->GetEAData(effectID, (char*)szFileName, &m_ccaEffect);
     m_ccaEffect.SetFrameTime();
-    m_ccaEffect.Play(0, false); // ¼½©ñ¤@¦¸
+    m_ccaEffect.Play(0, false); // æ’­æ”¾ä¸€æ¬¡
 
     m_pOwnerCharacter = pOwner;
 }
 
-// ¹ïÀ³¤Ï²ÕÄ¶½X: 0x005326D0
+// å°æ‡‰åçµ„è­¯ç¢¼: 0x005326D0
 bool CEffect_Player_Tolerance_Sub::FrameProcess(float fElapsedTime)
 {
     return m_ccaEffect.FrameProcess(fElapsedTime);
 }
 
-// ¹ïÀ³¤Ï²ÕÄ¶½X: 0x005326E0
+// å°æ‡‰åçµ„è­¯ç¢¼: 0x005326E0
 void CEffect_Player_Tolerance_Sub::Process()
 {
     if (!m_pOwnerCharacter) {
@@ -153,7 +153,7 @@ void CEffect_Player_Tolerance_Sub::Process()
     }
 }
 
-// ¹ïÀ³¤Ï²ÕÄ¶½X: 0x00532770
+// å°æ‡‰åçµ„è­¯ç¢¼: 0x00532770
 void CEffect_Player_Tolerance_Sub::Draw()
 {
     if (m_bIsVisible) {

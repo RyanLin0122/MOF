@@ -1,14 +1,14 @@
 #pragma once
 
 #include "Effect/CEffectBase.h"
-#include "Effect/CCAEffect.h" // ¬°¤F FrameSkip ªº¨Ï¥Î
+#include "Effect/CCAEffect.h" // ç‚ºäº† FrameSkip çš„ä½¿ç”¨
 #include "Character/ClientCharacter.h"
 #include <d3dx9math.h>
 
 
 /**
  * @class CEffect_Field_ItemPick
- * @brief ª±®a¬B¨úª««~ªºÅŞ¿è±±¨î¾¹»P­y¸ñ¥Í¦¨¾¹¡C
+ * @brief ç©å®¶æ‹¾å–ç‰©å“çš„é‚è¼¯æ§åˆ¶å™¨èˆ‡è»Œè·¡ç”Ÿæˆå™¨ã€‚
  */
 class CEffect_Field_ItemPick : public CEffectBase {
 public:
@@ -19,25 +19,25 @@ public:
     virtual void Process() override;
     virtual void Draw() override;
 
-    /// @brief ³]©w¯S®Äªº°_ÂI©M¥Ø¼Ğª±®a¡C
+    /// @brief è¨­å®šç‰¹æ•ˆçš„èµ·é»å’Œç›®æ¨™ç©å®¶ã€‚
     void SetEffect(D3DXVECTOR2* pStartPosition, unsigned int dwOwnerAccountID);
 
 private:
-    ClientCharacter* m_pOwnerCharacter;   // ¦ì²¾ +132 (0x84): «ü¦V¥Ø¼Ğª±®a
-    unsigned int     m_dwOwnerAccountID;  // ¦ì²¾ +136 (0x88): ª±®aªº±b¸¹ ID
+    ClientCharacter* m_pOwnerCharacter;   // ä½ç§» +132 (0x84): æŒ‡å‘ç›®æ¨™ç©å®¶
+    unsigned int     m_dwOwnerAccountID;  // ä½ç§» +136 (0x88): ç©å®¶çš„å¸³è™Ÿ ID
 
-    unsigned int m_dwTotalFrame;        // ¦ì²¾ +140 (0x8C): Á`­p®É¾¹
-    unsigned char m_ucState;            // ¦ì²¾ +144 (0x90): ­¸¦æª¬ºA¾÷ (0-4)
+    unsigned int m_dwTotalFrame;        // ä½ç§» +140 (0x8C): ç¸½è¨ˆæ™‚å™¨
+    unsigned char m_ucState;            // ä½ç§» +144 (0x90): é£›è¡Œç‹€æ…‹æ©Ÿ (0-4)
 
-    float m_fSpeedFactor;         // ¦ì²¾ +148 (0x94)
-    // char m_cUnk152;            // ¦ì²¾ +152 (0x98)
+    float m_fSpeedFactor;         // ä½ç§» +148 (0x94)
+    // char m_cUnk152;            // ä½ç§» +152 (0x98)
 
-    float m_fCurrentPosX;         // ¦ì²¾ +156 (0x9C)
-    float m_fCurrentPosY;         // ¦ì²¾ +160 (0xA0)
-    float m_fTargetPosX;          // ¦ì²¾ +172 (0xAC)
-    float m_fTargetPosY;          // ¦ì²¾ +176 (0xB0)
+    float m_fCurrentPosX;         // ä½ç§» +156 (0x9C)
+    float m_fCurrentPosY;         // ä½ç§» +160 (0xA0)
+    float m_fTargetPosX;          // ä½ç§» +172 (0xAC)
+    float m_fTargetPosY;          // ä½ç§» +176 (0xB0)
 
-    FrameSkip m_FrameSkip;        // ¦ì²¾ +180 (0xB4)
+    FrameSkip m_FrameSkip;        // ä½ç§» +180 (0xB4)
 
-    int m_nSubEffectTimer;        // ¦ì²¾ +192 (0xC0): ¥Í¦¨¤l¯S®Äªº­p®É¾¹
+    int m_nSubEffectTimer;        // ä½ç§» +192 (0xC0): ç”Ÿæˆå­ç‰¹æ•ˆçš„è¨ˆæ™‚å™¨
 };

@@ -4,13 +4,13 @@
 #include "Image/CDeviceManager.h"
 #include "global.h"
 
-// °²³]ªº¥ş°ìÅÜ¼Æ
+// å‡è¨­çš„å…¨åŸŸè®Šæ•¸
 extern GameSystemInfo g_Game_System_Info;
 
-// ¹ïÀ³¤Ï²ÕÄ¶½X: 0x005341C0
+// å°æ‡‰åçµ„è­¯ç¢¼: 0x005341C0
 CEffect_Field_AttackMiss::CEffect_Field_AttackMiss()
 {
-    // CEffectBase «Øºc¨ç¦¡¤w¦Û°Ê©I¥s
+    // CEffectBase å»ºæ§‹å‡½å¼å·²è‡ªå‹•å‘¼å«
     m_pMissImage = nullptr;
     m_ucState = 0;
     m_fAlpha = 240.0f;      // 1132396544 (0x43700000)
@@ -18,24 +18,24 @@ CEffect_Field_AttackMiss::CEffect_Field_AttackMiss()
     m_fInitialPosX = 0.0f;
     m_fCurrentPosY = 0.0f;
 
-    // ­ì©l½X: *((_DWORD *)this + 42) = 1015580809; (0x3C888889 -> ~1/60)
+    // åŸå§‹ç¢¼: *((_DWORD *)this + 42) = 1015580809; (0x3C888889 -> ~1/60)
     m_FrameSkip.m_fTimePerFrame = 1.0f / 60.0f;
 }
 
-// ¹ïÀ³¤Ï²ÕÄ¶½X: 0x00534250
+// å°æ‡‰åçµ„è­¯ç¢¼: 0x00534250
 CEffect_Field_AttackMiss::~CEffect_Field_AttackMiss()
 {
 }
 
-// ¹ïÀ³¤Ï²ÕÄ¶½X: 0x00534270
+// å°æ‡‰åçµ„è­¯ç¢¼: 0x00534270
 void CEffect_Field_AttackMiss::SetEffect(float x, float y)
 {
-    // ³]©w¯S®Äªºªì©l¥@¬É®y¼Ğ
+    // è¨­å®šç‰¹æ•ˆçš„åˆå§‹ä¸–ç•Œåº§æ¨™
     m_fInitialPosX = x;
     m_fCurrentPosY = y;
 }
 
-// ¹ïÀ³¤Ï²ÕÄ¶½X: 0x00534290
+// å°æ‡‰åçµ„è­¯ç¢¼: 0x00534290
 bool CEffect_Field_AttackMiss::FrameProcess(float fElapsedTime)
 {
     int frameCount = 0;
@@ -44,57 +44,57 @@ bool CEffect_Field_AttackMiss::FrameProcess(float fElapsedTime)
     }
 
     if (m_ucState == 0) {
-        // --- ¶¥¬q 0: ²H¤J»P°±¯d ---
+        // --- éšæ®µ 0: æ·¡å…¥èˆ‡åœç•™ ---
         m_fAlpha -= static_cast<float>(frameCount * 2);
         if (m_fAlpha < 220.0f) {
             m_fAlpha = 220.0f;
-            m_ucState = 1; // ¤Á´«¨ì¤U¤@¶¥¬q
+            m_ucState = 1; // åˆ‡æ›åˆ°ä¸‹ä¸€éšæ®µ
         }
     }
     else if (m_ucState == 1) {
-        // --- ¶¥¬q 1: ²H¥X»P¤Wº} ---
+        // --- éšæ®µ 1: æ·¡å‡ºèˆ‡ä¸Šæ¼‚ ---
         m_fAlpha -= static_cast<float>(frameCount * 5);
-        m_fCurrentPosY -= static_cast<float>(frameCount); // Y ®y¼Ğ´î¤Ö¡A²£¥Í¤Wº}®ÄªG
+        m_fCurrentPosY -= static_cast<float>(frameCount); // Y åº§æ¨™æ¸›å°‘ï¼Œç”¢ç”Ÿä¸Šæ¼‚æ•ˆæœ
     }
 
-    // ·í³z©ú«×­°¦Ü 0 ¥H¤U®É¡A¯S®Ä¥Í©R¶g´Áµ²§ô
+    // ç•¶é€æ˜åº¦é™è‡³ 0 ä»¥ä¸‹æ™‚ï¼Œç‰¹æ•ˆç”Ÿå‘½é€±æœŸçµæŸ
     return m_fAlpha < 0.0f;
 }
 
-// ¹ïÀ³¤Ï²ÕÄ¶½X: 0x00534380
+// å°æ‡‰åçµ„è­¯ç¢¼: 0x00534380
 void CEffect_Field_AttackMiss::Process()
 {
     float screenX = m_fInitialPosX - static_cast<float>(g_Game_System_Info.ScreenX);
     m_bIsVisible = IsCliping(screenX, 0.0f);
 
     if (m_bIsVisible) {
-        // ±qª«¥ó¦ÀÀò¨ú "MISS" ¹Ï¤ù
-        // ¸ê·½ ID: 0xB0005A4u (¦@¨É¼Æ¦r/¤å¦r¹ÏÀÉ), ¼v®æ ID: 62
+        // å¾ç‰©ä»¶æ± ç²å– "MISS" åœ–ç‰‡
+        // è³‡æº ID: 0xB0005A4u (å…±äº«æ•¸å­—/æ–‡å­—åœ–æª”), å½±æ ¼ ID: 62
         m_pMissImage = cltImageManager::GetInstance()->GetGameImage(7, 0xB0005A4u, 0, 1);
 
         if (m_pMissImage) {
             float screenY = m_fCurrentPosY - static_cast<float>(g_Game_System_Info.ScreenY);
 
             m_pMissImage->SetPosition(screenX, screenY);
-            m_pMissImage->SetBlockID(62); // "MISS" ¦r¼Ë¦b¹ÏÀÉ¤¤ªº¯Á¤Ş
+            m_pMissImage->SetBlockID(62); // "MISS" å­—æ¨£åœ¨åœ–æª”ä¸­çš„ç´¢å¼•
 
-            // ±N­pºâ¥Xªº Alpha ©M Color À³¥Î¨ì GameImage
+            // å°‡è¨ˆç®—å‡ºçš„ Alpha å’Œ Color æ‡‰ç”¨åˆ° GameImage
             float clampedAlpha = (m_fAlpha > 255.0f) ? 255.0f : m_fAlpha;
             m_pMissImage->SetAlpha(static_cast<unsigned int>(clampedAlpha));
             m_pMissImage->SetColor(static_cast<unsigned int>(m_fColorValue));
 
-            // §ó·s³»ÂI½w½Ä°Ï
+            // æ›´æ–°é ‚é»ç·©è¡å€
             m_pMissImage->Process();
         }
     }
 }
 
-// ¹ïÀ³¤Ï²ÕÄ¶½X: 0x00534460
+// å°æ‡‰åçµ„è­¯ç¢¼: 0x00534460
 void CEffect_Field_AttackMiss::Draw()
 {
     if (m_bIsVisible && m_pMissImage && m_pMissImage->IsInUse())
     {
-        // ³]©w¼Ğ·Çªº Alpha ²V¦X¼Ò¦¡
+        // è¨­å®šæ¨™æº–çš„ Alpha æ··åˆæ¨¡å¼
         CDeviceManager::GetInstance()->SetRenderState(D3DRS_BLENDOP, D3DBLENDOP_ADD);
         CDeviceManager::GetInstance()->SetRenderState(D3DRS_SRCBLEND, D3DBLEND_SRCALPHA);
         CDeviceManager::GetInstance()->SetRenderState(D3DRS_DESTBLEND, D3DBLEND_INVSRCALPHA);

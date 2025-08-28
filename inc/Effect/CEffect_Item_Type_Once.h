@@ -5,44 +5,44 @@
 
 /**
  * @class CEffect_Item_Type_Once
- * @brief ¥Nªí¦b¨¤¦â¨Ï¥Îª««~®É¡A©ó©T©w¦ì¸m¼½©ñ¤@¦¸ªº¯S®Ä¡C
+ * @brief ä»£è¡¨åœ¨è§’è‰²ä½¿ç”¨ç‰©å“æ™‚ï¼Œæ–¼å›ºå®šä½ç½®æ’­æ”¾ä¸€æ¬¡çš„ç‰¹æ•ˆã€‚
  *
- * Ä~©Ó¦Û CEffectBase¡A»P CEffect_Skill_Type_Once ªº¥D­n°Ï§O¦b©ó¡A
- * ¦¹¯S®Äªº¦ì¸m¦b³Ğ«Ø®É´N¤w©T©w¡A¤£·|ÀH¨¤¦â²¾°Ê¦Ó§ó·s¡C
+ * ç¹¼æ‰¿è‡ª CEffectBaseï¼Œèˆ‡ CEffect_Skill_Type_Once çš„ä¸»è¦å€åˆ¥åœ¨æ–¼ï¼Œ
+ * æ­¤ç‰¹æ•ˆçš„ä½ç½®åœ¨å‰µå»ºæ™‚å°±å·²å›ºå®šï¼Œä¸æœƒéš¨è§’è‰²ç§»å‹•è€Œæ›´æ–°ã€‚
  */
 class CEffect_Item_Type_Once : public CEffectBase {
 public:
     CEffect_Item_Type_Once();
     virtual ~CEffect_Item_Type_Once();
 
-    // --- µêÀÀ¨ç¦¡ÂĞ¼g ---
+    // --- è™›æ“¬å‡½å¼è¦†å¯« ---
 
-    /// @brief ³B²z¯S®Äªº¥Í©R¶g´Á¡Aª½±µ¨Ì¿à CCAEffect ªº°Êµe¼½©ñª¬ºA¡C
+    /// @brief è™•ç†ç‰¹æ•ˆçš„ç”Ÿå‘½é€±æœŸï¼Œç›´æ¥ä¾è³´ CCAEffect çš„å‹•ç•«æ’­æ”¾ç‹€æ…‹ã€‚
     virtual bool FrameProcess(float fElapsedTime) override;
 
-    /// @brief ·Ç³ÆÃ¸»s«eªºÅŞ¿è§ó·s¡A¨Ï¥Î³Ğ«Ø®Éªºªì©l¦ì¸m¡C
+    /// @brief æº–å‚™ç¹ªè£½å‰çš„é‚è¼¯æ›´æ–°ï¼Œä½¿ç”¨å‰µå»ºæ™‚çš„åˆå§‹ä½ç½®ã€‚
     virtual void Process() override;
 
-    /// @brief Ã¸»s¯S®Ä¡C
+    /// @brief ç¹ªè£½ç‰¹æ•ˆã€‚
     virtual void Draw() override;
 
-    // --- ±M¦³¨ç¦¡ ---
+    // --- å°ˆæœ‰å‡½å¼ ---
 
-    /// @brief ³]©w¯S®Ä¡C
-    /// @param pUser ¨Ï¥Îª««~ªº¨¤¦â¡C
-    /// @param effectKindID ¯S®ÄªººØÃş ID¡C
-    /// @param szFileName ¯S®Ä¸ê·½ (.ea) ªºÀÉ®×¦WºÙ¡C
+    /// @brief è¨­å®šç‰¹æ•ˆã€‚
+    /// @param pUser ä½¿ç”¨ç‰©å“çš„è§’è‰²ã€‚
+    /// @param effectKindID ç‰¹æ•ˆçš„ç¨®é¡ IDã€‚
+    /// @param szFileName ç‰¹æ•ˆè³‡æº (.ea) çš„æª”æ¡ˆåç¨±ã€‚
     void SetEffect(ClientCharacter* pUser, unsigned short effectKindID, char* szFileName);
 
 protected:
-    // --- ¦¨­ûÅÜ¼Æ (®Ú¾Ú Effectall.c @ 0x00539200 ±ÀÂ_) ---
+    // --- æˆå“¡è®Šæ•¸ (æ ¹æ“š Effectall.c @ 0x00539200 æ¨æ–·) ---
 
-    /// @brief «ü¦V¨Ï¥Îª««~ªº¨¤¦â¡C
-    ClientCharacter* m_pOwnerCharacter; // ¦ì²¾ +132 (0x84)
+    /// @brief æŒ‡å‘ä½¿ç”¨ç‰©å“çš„è§’è‰²ã€‚
+    ClientCharacter* m_pOwnerCharacter; // ä½ç§» +132 (0x84)
 
-    /// @brief ¯S®Ä³Ğ«Ø®É¡A¾Ö¦³ªÌªº X ®y¼Ğ§Ö·Ó¡C
-    float m_fInitialPosX;       // ¦ì²¾ +136 (0x88)
+    /// @brief ç‰¹æ•ˆå‰µå»ºæ™‚ï¼Œæ“æœ‰è€…çš„ X åº§æ¨™å¿«ç…§ã€‚
+    float m_fInitialPosX;       // ä½ç§» +136 (0x88)
 
-    /// @brief ¯S®Ä³Ğ«Ø®É¡A¾Ö¦³ªÌªº Y ®y¼Ğ§Ö·Ó¡C
-    float m_fInitialPosY;       // ¦ì²¾ +140 (0x8C)
+    /// @brief ç‰¹æ•ˆå‰µå»ºæ™‚ï¼Œæ“æœ‰è€…çš„ Y åº§æ¨™å¿«ç…§ã€‚
+    float m_fInitialPosY;       // ä½ç§» +140 (0x8C)
 };

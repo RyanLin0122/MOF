@@ -3,49 +3,49 @@
 #include "Effect/CEffectBase.h"
 #include "Effect/CCAEffect.h"
 
-// «e¦V«Å§i
+// å‰å‘å®£å‘Š
 class GameImage;
 
 /**
  * @class CEffect_Use_Hit
- * @brief ¦bµe­±¤WÅã¥Ü´¶³q§ğÀ»©R¤¤¤õªáªºµ{§Ç¤Æ°Êµe¯S®Ä¡C
+ * @brief åœ¨ç•«é¢ä¸Šé¡¯ç¤ºæ™®é€šæ”»æ“Šå‘½ä¸­ç«èŠ±çš„ç¨‹åºåŒ–å‹•ç•«ç‰¹æ•ˆã€‚
  */
 class CEffect_Use_Hit : public CEffectBase {
 public:
     CEffect_Use_Hit();
     virtual ~CEffect_Use_Hit();
 
-    // --- µêÀÀ¨ç¦¡ÂĞ¼g ---
+    // --- è™›æ“¬å‡½å¼è¦†å¯« ---
     virtual bool FrameProcess(float fElapsedTime) override;
     virtual void Process() override;
     virtual void Draw() override;
 
-    // --- ±M¦³¨ç¦¡ ---
-    /// @brief ³]©w¯S®Ä¡C
-    /// @param x ªì©l X ®y¼Ğ¡C
-    /// @param y ªì©l Y ®y¼Ğ¡C
-    /// @param directionType ¤è¦VÃş«¬ (0-2)¡A¼vÅTªì©l¦ì¸m°¾²¾¡C
+    // --- å°ˆæœ‰å‡½å¼ ---
+    /// @brief è¨­å®šç‰¹æ•ˆã€‚
+    /// @param x åˆå§‹ X åº§æ¨™ã€‚
+    /// @param y åˆå§‹ Y åº§æ¨™ã€‚
+    /// @param directionType æ–¹å‘é¡å‹ (0-2)ï¼Œå½±éŸ¿åˆå§‹ä½ç½®åç§»ã€‚
     void SetEffect(float x, float y, unsigned char directionType);
 
 private:
-    // --- ¦¨­ûÅÜ¼Æ (®Ú¾Ú Effectall.c @ 0x0052F870 ±ÀÂ_) ---
-    GameImage* m_pImage;              // ¦ì²¾ +132 (0x84)
+    // --- æˆå“¡è®Šæ•¸ (æ ¹æ“š Effectall.c @ 0x0052F870 æ¨æ–·) ---
+    GameImage* m_pImage;              // ä½ç§» +132 (0x84)
 
-    // °Êµeª¬ºA
-    float   m_fAlpha;            // ¦ì²¾ +136 (0x88)
-    float   m_fScale;            // ¦ì²¾ +140 (0x8C)
-    float   m_fRotation;         // ¦ì²¾ +144 (0x90)
-    char    m_cCurrentFrame;     // ¦ì²¾ +152 (0x98)
-    char    m_cDirectionType;    // ¦ì²¾ +153 (0x99)
+    // å‹•ç•«ç‹€æ…‹
+    float   m_fAlpha;            // ä½ç§» +136 (0x88)
+    float   m_fScale;            // ä½ç§» +140 (0x8C)
+    float   m_fRotation;         // ä½ç§» +144 (0x90)
+    char    m_cCurrentFrame;     // ä½ç§» +152 (0x98)
+    char    m_cDirectionType;    // ä½ç§» +153 (0x99)
 
-    // ¦ì¸m»Pª«²z
-    float   m_fCurrentPosX;      // ¦ì²¾ +156 (0x9C)
-    float   m_fCurrentPosY;      // ¦ì²¾ +160 (0xA0)
-    float   m_fScaleX_Rate;      // ¦ì²¾ +180 (0xB4): ÁY©ñ X ÅÜ¤Æ²v
-    float   m_fAlpha_Rate;       // ¦ì²¾ +184 (0xB8): Alpha ÅÜ¤Æ²v
+    // ä½ç½®èˆ‡ç‰©ç†
+    float   m_fCurrentPosX;      // ä½ç§» +156 (0x9C)
+    float   m_fCurrentPosY;      // ä½ç§» +160 (0xA0)
+    float   m_fScaleX_Rate;      // ä½ç§» +180 (0xB4): ç¸®æ”¾ X è®ŠåŒ–ç‡
+    float   m_fAlpha_Rate;       // ä½ç§» +184 (0xB8): Alpha è®ŠåŒ–ç‡
 
-    FrameSkip m_FrameSkip;       // ¦ì²¾ +164 (0xA4)
+    FrameSkip m_FrameSkip;       // ä½ç§» +164 (0xA4)
 
-    unsigned int m_dwResourceID; // ¦ì²¾ +176 (0xB0)
-    float        m_fFrameCounter;  // ¦ì²¾ +192 (0xC0): ¯BÂI¼Æ¼v®æ­p¼Æ¾¹
+    unsigned int m_dwResourceID; // ä½ç§» +176 (0xB0)
+    float        m_fFrameCounter;  // ä½ç§» +192 (0xC0): æµ®é»æ•¸å½±æ ¼è¨ˆæ•¸å™¨
 };

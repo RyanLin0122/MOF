@@ -1,45 +1,45 @@
 #pragma once
 
 #include "Effect/CEffectBase.h"
-#include "Effect/CCAEffect.h" // ¬°¤F FrameSkip ªº¨Ï¥Î
+#include "Effect/CCAEffect.h" // ç‚ºäº† FrameSkip çš„ä½¿ç”¨
 
-// «e¦V«Å§i
+// å‰å‘å®£å‘Š
 class GameImage;
 
 /**
  * @class CEffect_Field_AttackMiss
- * @brief ¦bµe­±¤WÅã¥Ü "MISS" ¦r¼Ëªºµ{§Ç¤Æ°Êµe¯S®Ä¡C
+ * @brief åœ¨ç•«é¢ä¸Šé¡¯ç¤º "MISS" å­—æ¨£çš„ç¨‹åºåŒ–å‹•ç•«ç‰¹æ•ˆã€‚
  *
- * Ä~©Ó¦Û CEffectBase¡A¥Î©óÅã¥Ü§ğÀ»¥¼©R¤¤ªºµøÄ±¦^õX¡C
- * ¨ä°Êµe¡]²H¤J¡B¤Wº}¡B²H¥X¡^§¹¥ş¥Ñµ{¦¡½X±±¨î¡C
+ * ç¹¼æ‰¿è‡ª CEffectBaseï¼Œç”¨æ–¼é¡¯ç¤ºæ”»æ“Šæœªå‘½ä¸­çš„è¦–è¦ºå›é¥‹ã€‚
+ * å…¶å‹•ç•«ï¼ˆæ·¡å…¥ã€ä¸Šæ¼‚ã€æ·¡å‡ºï¼‰å®Œå…¨ç”±ç¨‹å¼ç¢¼æ§åˆ¶ã€‚
  */
 class CEffect_Field_AttackMiss : public CEffectBase {
 public:
     CEffect_Field_AttackMiss();
     virtual ~CEffect_Field_AttackMiss();
 
-    // --- µêÀÀ¨ç¦¡ÂĞ¼g ---
+    // --- è™›æ“¬å‡½å¼è¦†å¯« ---
     virtual bool FrameProcess(float fElapsedTime) override;
     virtual void Process() override;
     virtual void Draw() override;
 
-    // --- ±M¦³¨ç¦¡ ---
-    /// @brief ³]©w¯S®Äªºªì©l¦ì¸m¡C
+    // --- å°ˆæœ‰å‡½å¼ ---
+    /// @brief è¨­å®šç‰¹æ•ˆçš„åˆå§‹ä½ç½®ã€‚
     void SetEffect(float x, float y);
 
 private:
-    // --- ¦¨­ûÅÜ¼Æ (®Ú¾Ú Effectall.c @ 0x005341C0 ±ÀÂ_) ---
-    GameImage* m_pMissImage;        // ¦ì²¾ +132 (0x84): «ü¦V "MISS" ¦r¼Ëªº GameImage
+    // --- æˆå“¡è®Šæ•¸ (æ ¹æ“š Effectall.c @ 0x005341C0 æ¨æ–·) ---
+    GameImage* m_pMissImage;        // ä½ç§» +132 (0x84): æŒ‡å‘ "MISS" å­—æ¨£çš„ GameImage
 
-    // °Êµeª¬ºA
-    unsigned char m_ucState;        // ¦ì²¾ +136 (0x88): 0=²H¤J, 1=²H¥X¤Wº}
-    float         m_fAlpha;         // ¦ì²¾ +140 (0x8C): ·í«e³z©ú«×
-    float         m_fColorValue;    // ¦ì²¾ +144 (0x90): ·í«eÃC¦â­È
+    // å‹•ç•«ç‹€æ…‹
+    unsigned char m_ucState;        // ä½ç§» +136 (0x88): 0=æ·¡å…¥, 1=æ·¡å‡ºä¸Šæ¼‚
+    float         m_fAlpha;         // ä½ç§» +140 (0x8C): ç•¶å‰é€æ˜åº¦
+    float         m_fColorValue;    // ä½ç§» +144 (0x90): ç•¶å‰é¡è‰²å€¼
 
-    // ¦ì¸m
-    float         m_fInitialPosX;   // ¦ì²¾ +152 (0x98): ªì©l X ®y¼Ğ
-    float         m_fCurrentPosY;   // ¦ì²¾ +156 (0x9C): ·í«e Y ®y¼Ğ
+    // ä½ç½®
+    float         m_fInitialPosX;   // ä½ç§» +152 (0x98): åˆå§‹ X åº§æ¨™
+    float         m_fCurrentPosY;   // ä½ç§» +156 (0x9C): ç•¶å‰ Y åº§æ¨™
 
-    // ­p®É¾¹
-    FrameSkip m_FrameSkip;          // ¦ì²¾ +160 (0xA0)
+    // è¨ˆæ™‚å™¨
+    FrameSkip m_FrameSkip;          // ä½ç§» +160 (0xA0)
 };

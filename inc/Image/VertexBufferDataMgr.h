@@ -1,7 +1,7 @@
 #pragma once
 
 #include <d3d9.h>
-#include <cstdio> // ¥Î©ó NULL
+#include <cstdio> // ç”¨æ–¼ NULL
 
 template<typename T>
 void SafeRelease(T*& p) {
@@ -11,58 +11,58 @@ void SafeRelease(T*& p) {
     }
 }
 
-// ®Ú¾Ú¤Ï½sÄ¶µ{¦¡½X¤¤ªº¥Îªk¡A©w¸qVertexBufferDataµ²ºc
-// ¤j¤p¬° 0x10 (16¦ì¤¸²Õ)
+// æ ¹æ“šåç·¨è­¯ç¨‹å¼ç¢¼ä¸­çš„ç”¨æ³•ï¼Œå®šç¾©VertexBufferDataçµæ§‹
+// å¤§å°ç‚º 0x10 (16ä½å…ƒçµ„)
 struct VertexBufferData {
-    VertexBufferData* pPrev;          // ¦ì²¾ +0: «ü¦V«e¤@­Ó¸`ÂI
-    VertexBufferData* pNext;          // ¦ì²¾ +4: «ü¦V«á¤@­Ó¸`ÂI
-    IDirect3DVertexBuffer9* pVertexBuffer; // ¦ì²¾ +8: «ü¦VD3D³»ÂI½w½Ä°Ïª«¥ó
-    unsigned short capacity;          // ¦ì²¾ +12: ½w½Ä°Ï®e¶q
-    unsigned char type;               // ¦ì²¾ +14: ³»ÂIÃş«¬
-    char _padding;                    // ¸É»ô¦Ü16¦ì¤¸²Õ
+    VertexBufferData* pPrev;          // ä½ç§» +0: æŒ‡å‘å‰ä¸€å€‹ç¯€é»
+    VertexBufferData* pNext;          // ä½ç§» +4: æŒ‡å‘å¾Œä¸€å€‹ç¯€é»
+    IDirect3DVertexBuffer9* pVertexBuffer; // ä½ç§» +8: æŒ‡å‘D3Dé ‚é»ç·©è¡å€ç‰©ä»¶
+    unsigned short capacity;          // ä½ç§» +12: ç·©è¡å€å®¹é‡
+    unsigned char type;               // ä½ç§» +14: é ‚é»é¡å‹
+    char _padding;                    // è£œé½Šè‡³16ä½å…ƒçµ„
 
-    // ¸`ÂIªº¸Ñºc¨ç¦¡
+    // ç¯€é»çš„è§£æ§‹å‡½å¼
     ~VertexBufferData() {
-        // ¦b¸`ÂI³Q¾P·´®É¡A¦Û°ÊÄÀ©ñ¨ä¾Ö¦³ªºD3D¸ê·½
+        // åœ¨ç¯€é»è¢«éŠ·æ¯€æ™‚ï¼Œè‡ªå‹•é‡‹æ”¾å…¶æ“æœ‰çš„D3Dè³‡æº
         SafeRelease(pVertexBuffer);
     }
 };
 
 /**
  * @class VertexBufferDataMgr
- * @brief ºŞ²zVertexBufferData¸`ÂIªºÂù¦VÃìµ²¦ê¦C¡C
+ * @brief ç®¡ç†VertexBufferDataç¯€é»çš„é›™å‘éˆçµä¸²åˆ—ã€‚
  *
- * ³o­ÓºŞ²z¾¹­t³d«Ø¥ß¡B§R°£¡B¨Ã¦bD3D¸Ë¸m¿ò¥¢®É³B²z©Ò¦³ªº³»ÂI½w½Ä°Ï¸ê·½¡C
+ * é€™å€‹ç®¡ç†å™¨è² è²¬å»ºç«‹ã€åˆªé™¤ã€ä¸¦åœ¨D3Dè£ç½®éºå¤±æ™‚è™•ç†æ‰€æœ‰çš„é ‚é»ç·©è¡å€è³‡æºã€‚
  */
 class VertexBufferDataMgr {
 public:
-    /// @brief «Øºc¨ç¦¡
+    /// @brief å»ºæ§‹å‡½å¼
     VertexBufferDataMgr();
 
-    /// @brief ¸Ñºc¨ç¦¡
+    /// @brief è§£æ§‹å‡½å¼
     ~VertexBufferDataMgr();
 
-    /// @brief ·s¼W¤@­Ó¸`ÂI¨ìÃìµ²¦ê¦C§À³¡¨Ãªğ¦^¡C
-    /// @return «ü¦V·s«Ø¥ßªºVertexBufferData¸`ÂIªº«ü¼Ğ¡C
+    /// @brief æ–°å¢ä¸€å€‹ç¯€é»åˆ°éˆçµä¸²åˆ—å°¾éƒ¨ä¸¦è¿”å›ã€‚
+    /// @return æŒ‡å‘æ–°å»ºç«‹çš„VertexBufferDataç¯€é»çš„æŒ‡æ¨™ã€‚
     VertexBufferData* Add();
 
-    /// @brief ±qÃìµ²¦ê¦C¤¤§R°£«ü©wªº¸`ÂI¡C
-    /// @param pNode ­n§R°£ªº¸`ÂI«ü¼Ğ¡C
+    /// @brief å¾éˆçµä¸²åˆ—ä¸­åˆªé™¤æŒ‡å®šçš„ç¯€é»ã€‚
+    /// @param pNode è¦åˆªé™¤çš„ç¯€é»æŒ‡æ¨™ã€‚
     void Delete(VertexBufferData* pNode);
 
-    /// @brief §R°£¨ÃÄÀ©ñºŞ²z¾¹¤¤ªº©Ò¦³¸`ÂI©M¸ê·½¡C
+    /// @brief åˆªé™¤ä¸¦é‡‹æ”¾ç®¡ç†å™¨ä¸­çš„æ‰€æœ‰ç¯€é»å’Œè³‡æºã€‚
     void DeleteAll();
 
-    /// @brief ³B²zD3D¸Ë¸m¿ò¥¢¨Æ¥ó¡C
-    /// ¦¹¨ç¦¡·|ÄÀ©ñ©Ò¦³³»ÂI½w½Ä°Ï¡A¦ı«O¯d¸`ÂIµ²ºc¥H«K«áÄò­««Ø¡C
+    /// @brief è™•ç†D3Dè£ç½®éºå¤±äº‹ä»¶ã€‚
+    /// æ­¤å‡½å¼æœƒé‡‹æ”¾æ‰€æœ‰é ‚é»ç·©è¡å€ï¼Œä½†ä¿ç•™ç¯€é»çµæ§‹ä»¥ä¾¿å¾ŒçºŒé‡å»ºã€‚
     void DeviceLostToRelease();
 
-    /// @brief ³B²zD3D¸Ë¸m­«³]¨Æ¥ó¡C
-    /// ¦¹¨ç¦¡·|®Ú¾Ú¤§«eÀx¦sªº¸ê°T¡A­«·s«Ø¥ß©Ò¦³³»ÂI½w½Ä°Ï¡C
+    /// @brief è™•ç†D3Dè£ç½®é‡è¨­äº‹ä»¶ã€‚
+    /// æ­¤å‡½å¼æœƒæ ¹æ“šä¹‹å‰å„²å­˜çš„è³‡è¨Šï¼Œé‡æ–°å»ºç«‹æ‰€æœ‰é ‚é»ç·©è¡å€ã€‚
     void DeviceLostToReLoad();
 
 private:
-    VertexBufferData* m_pHead; // Ãìµ²¦ê¦CªºÀY«ü¼Ğ
-    VertexBufferData* m_pTail; // Ãìµ²¦ê¦Cªº§À«ü¼Ğ
-    int m_nCount;              // Ãìµ²¦ê¦C¤¤ªº¸`ÂI¼Æ¶q
+    VertexBufferData* m_pHead; // éˆçµä¸²åˆ—çš„é ­æŒ‡æ¨™
+    VertexBufferData* m_pTail; // éˆçµä¸²åˆ—çš„å°¾æŒ‡æ¨™
+    int m_nCount;              // éˆçµä¸²åˆ—ä¸­çš„ç¯€é»æ•¸é‡
 };

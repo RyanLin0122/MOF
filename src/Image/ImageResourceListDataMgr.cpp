@@ -1,76 +1,76 @@
 #include "Image/ImageResourceListDataMgr.h"
-#include <cstring> // ¥Î©ó strcpy
+#include <cstring> // ç”¨æ–¼ strcpy
 
-// °²³]³o¬O¤@­Ó¥þ°ìÅÜ¼Æ¡A¥Î©ó¨M©w¸ê·½ªº¸ü¤J¤è¦¡¡A¦p¦P¦b¤Ï½sÄ¶µ{¦¡½X¤¤©Ò¨£
-// 0: ±q¿W¥ßÀÉ®×¸ü¤J, «D0: ±q«Ê¸ËÀÉ¸ü¤J
+// å‡è¨­é€™æ˜¯ä¸€å€‹å…¨åŸŸè®Šæ•¸ï¼Œç”¨æ–¼æ±ºå®šè³‡æºçš„è¼‰å…¥æ–¹å¼ï¼Œå¦‚åŒåœ¨åç·¨è­¯ç¨‹å¼ç¢¼ä¸­æ‰€è¦‹
+// 0: å¾žç¨ç«‹æª”æ¡ˆè¼‰å…¥, éž0: å¾žå°è£æª”è¼‰å…¥
 extern int IsInMemory;
 
 //--------------------------------------------------------------------------------
-// ImageResourceListData (¸`ÂI) ªº¹ê²{
+// ImageResourceListData (ç¯€é»ž) çš„å¯¦ç¾
 //--------------------------------------------------------------------------------
 
 ImageResourceListData::ImageResourceListData() {
     pPrev = nullptr;
     pNext = nullptr;
 
-    // m_Resource ªº«Øºc¨ç¦¡·|³Q¦Û°Ê©I¥s
+    // m_Resource çš„å»ºæ§‹å‡½å¼æœƒè¢«è‡ªå‹•å‘¼å«
 
-    // ®Ú¾Ú­ì©l½X¤¤ªº¦æ¬°¡A¦b Add() ¨ç¦¡¤¤³o¨Ç­È·|³Qªì©l¤Æ
+    // æ ¹æ“šåŽŸå§‹ç¢¼ä¸­çš„è¡Œç‚ºï¼Œåœ¨ Add() å‡½å¼ä¸­é€™äº›å€¼æœƒè¢«åˆå§‹åŒ–
     memset(m_szFileName, 0, sizeof(m_szFileName));
     m_cFlag = 0;
     m_ucPackerType = 0;
 }
 
 ImageResourceListData::~ImageResourceListData() {
-    // m_Resource ªº¸Ñºc¨ç¦¡·|¦b¦¹³B³Q¦Û°Ê©I¥s¡AÄÀ©ñ¨ä¤º³¡¸ê·½
+    // m_Resource çš„è§£æ§‹å‡½å¼æœƒåœ¨æ­¤è™•è¢«è‡ªå‹•å‘¼å«ï¼Œé‡‹æ”¾å…¶å…§éƒ¨è³‡æº
 }
 
 
 //--------------------------------------------------------------------------------
-// ImageResourceListDataMgr ªº¹ê²{
+// ImageResourceListDataMgr çš„å¯¦ç¾
 //--------------------------------------------------------------------------------
 
 ImageResourceListDataMgr::ImageResourceListDataMgr() {
-    // ªì©l¤ÆÃìµ²¦ê¦CªºÀY¡B§À«ü¼Ð©M­p¼Æ¾¹
+    // åˆå§‹åŒ–éˆçµä¸²åˆ—çš„é ­ã€å°¾æŒ‡æ¨™å’Œè¨ˆæ•¸å™¨
     m_pHead = nullptr;
     m_pTail = nullptr;
     m_nCount = 0;
 }
 
 ImageResourceListDataMgr::~ImageResourceListDataMgr() {
-    // ¦bºÞ²z¾¹³Q¾P·´®É¡A½T«O©Ò¦³¤w¤À°tªº¸`ÂI³£³QÄÀ©ñ
+    // åœ¨ç®¡ç†å™¨è¢«éŠ·æ¯€æ™‚ï¼Œç¢ºä¿æ‰€æœ‰å·²åˆ†é…çš„ç¯€é»žéƒ½è¢«é‡‹æ”¾
     DeleteAll();
 }
 
 ImageResourceListData* ImageResourceListDataMgr::Add() {
-    // «Ø¥ß¤@­Ó·sªº¸`ÂIª«¥ó
+    // å»ºç«‹ä¸€å€‹æ–°çš„ç¯€é»žç‰©ä»¶
     ImageResourceListData* pNewNode = new ImageResourceListData();
 
-    // ¦pªGÃìµ²¦ê¦C¬OªÅªº¡A«h·s¸`ÂI¬J¬OÀY¤]¬O§À
+    // å¦‚æžœéˆçµä¸²åˆ—æ˜¯ç©ºçš„ï¼Œå‰‡æ–°ç¯€é»žæ—¢æ˜¯é ­ä¹Ÿæ˜¯å°¾
     if (m_pHead == nullptr) {
         m_pHead = pNewNode;
         m_pTail = pNewNode;
     }
     else {
-        // §_«h¡A±N·s¸`ÂIªþ¥[¨ìÃìµ²¦ê¦Cªº¥½§À
+        // å¦å‰‡ï¼Œå°‡æ–°ç¯€é»žé™„åŠ åˆ°éˆçµä¸²åˆ—çš„æœ«å°¾
         m_pTail->pNext = pNewNode;
         pNewNode->pPrev = m_pTail;
         m_pTail = pNewNode;
     }
 
-    // ¼W¥[¸`ÂI­p¼Æ
+    // å¢žåŠ ç¯€é»žè¨ˆæ•¸
     m_nCount++;
 
     return pNewNode;
 }
 
 void ImageResourceListDataMgr::Delete(ImageResourceListData* pNodeToDelete) {
-    // ¦pªG­p¼Æ¬°0©Î«ü¼Ð¬°ªÅ¡A«h¤£°õ¦æ¥ô¦ó¾Þ§@
+    // å¦‚æžœè¨ˆæ•¸ç‚º0æˆ–æŒ‡æ¨™ç‚ºç©ºï¼Œå‰‡ä¸åŸ·è¡Œä»»ä½•æ“ä½œ
     if (m_nCount == 0 || !pNodeToDelete) {
         return;
     }
 
-    // §ó·s¬Û¾F¸`ÂIªº«ü¼Ð
+    // æ›´æ–°ç›¸é„°ç¯€é»žçš„æŒ‡æ¨™
     if (pNodeToDelete->pPrev) {
         pNodeToDelete->pPrev->pNext = pNodeToDelete->pNext;
     }
@@ -78,7 +78,7 @@ void ImageResourceListDataMgr::Delete(ImageResourceListData* pNodeToDelete) {
         pNodeToDelete->pNext->pPrev = pNodeToDelete->pPrev;
     }
 
-    // §ó·sÀY/§À«ü¼Ð¡]¦pªG³Q§R°£ªº¸`ÂI¬OÀY©Î§À¡^
+    // æ›´æ–°é ­/å°¾æŒ‡æ¨™ï¼ˆå¦‚æžœè¢«åˆªé™¤çš„ç¯€é»žæ˜¯é ­æˆ–å°¾ï¼‰
     if (m_pHead == pNodeToDelete) {
         m_pHead = pNodeToDelete->pNext;
     }
@@ -86,13 +86,13 @@ void ImageResourceListDataMgr::Delete(ImageResourceListData* pNodeToDelete) {
         m_pTail = pNodeToDelete->pPrev;
     }
 
-    // ¹ê»Ú§R°£¸`ÂI¨ÃÄÀ©ñ°O¾ÐÅé
+    // å¯¦éš›åˆªé™¤ç¯€é»žä¸¦é‡‹æ”¾è¨˜æ†¶é«”
     delete pNodeToDelete;
 
-    // ´î¤Ö¸`ÂI­p¼Æ
+    // æ¸›å°‘ç¯€é»žè¨ˆæ•¸
     m_nCount--;
 
-    // ¦pªGÃìµ²¦ê¦CÅÜªÅ¡A­«³]ÀY§À«ü¼Ð
+    // å¦‚æžœéˆçµä¸²åˆ—è®Šç©ºï¼Œé‡è¨­é ­å°¾æŒ‡æ¨™
     if (m_nCount == 0) {
         m_pHead = nullptr;
         m_pTail = nullptr;
@@ -107,30 +107,30 @@ void ImageResourceListDataMgr::DeleteAll() {
         pCurrent = pNext;
     }
 
-    // ­«³]ºÞ²z¾¹ª¬ºA
+    // é‡è¨­ç®¡ç†å™¨ç‹€æ…‹
     m_pHead = nullptr;
     m_pTail = nullptr;
     m_nCount = 0;
 }
 
 void ImageResourceListDataMgr::DeviceLostToRelease() {
-    // ¹M¾ú©Ò¦³¸`ÂI¡A©I¥s¨ä¸ê·½ªº ResetGIData ¤èªk
+    // éæ­·æ‰€æœ‰ç¯€é»žï¼Œå‘¼å«å…¶è³‡æºçš„ ResetGIData æ–¹æ³•
     for (ImageResourceListData* pNode = m_pHead; pNode != nullptr; pNode = pNode->pNext) {
         pNode->m_Resource.ResetGIData();
     }
 }
 
 void ImageResourceListDataMgr::DeviceLostToReLoad() {
-    // ¹M¾ú©Ò¦³¸`ÂI¡A®Ú¾ÚÀÉ®×¨Ó·½­«·s¸ü¤J¸ê·½
+    // éæ­·æ‰€æœ‰ç¯€é»žï¼Œæ ¹æ“šæª”æ¡ˆä¾†æºé‡æ–°è¼‰å…¥è³‡æº
     for (ImageResourceListData* pNode = m_pHead; pNode != nullptr; pNode = pNode->pNext) {
         if (IsInMemory) {
-            // ±q«Ê¸ËÀÉ¸ü¤J (packerType Àx¦s¦b m_ucPackerType ¤¤)
-            // ª`·N¡G­ì©l½X¤¤ LoadGIInPack ªº²Ä¤T­Ó°Ñ¼Æ a5 ¥¼¦b ImageResourceListData ¤¤Àx¦s
-            // ³o¸Ì°²³]¨ä¬° 0 ©Î¨ä¥L¹w³]­È¡C
+            // å¾žå°è£æª”è¼‰å…¥ (packerType å„²å­˜åœ¨ m_ucPackerType ä¸­)
+            // æ³¨æ„ï¼šåŽŸå§‹ç¢¼ä¸­ LoadGIInPack çš„ç¬¬ä¸‰å€‹åƒæ•¸ a5 æœªåœ¨ ImageResourceListData ä¸­å„²å­˜
+            // é€™è£¡å‡è¨­å…¶ç‚º 0 æˆ–å…¶ä»–é è¨­å€¼ã€‚
             pNode->m_Resource.LoadGIInPack(pNode->m_szFileName, pNode->m_ucPackerType, 0);
         }
         else {
-            // ±q¿W¥ßÀÉ®×¸ü¤J
+            // å¾žç¨ç«‹æª”æ¡ˆè¼‰å…¥
             pNode->m_Resource.LoadGI(pNode->m_szFileName, pNode->m_ucPackerType);
         }
     }

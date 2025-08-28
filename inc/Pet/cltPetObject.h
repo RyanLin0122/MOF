@@ -2,20 +2,20 @@
 
 class cltPetObject {
 public:
-	// л╪║cичжб
+	// х╗║цзЛхЗ╜х╝П
 	cltPetObject(float posX, float posY);
 	~cltPetObject();
 
-	// и·▒o├dклк║ X оy╝╨
+	// хПЦх╛Чхп╡чЙйчЪД X х║зциЩ
 	float GetPosX();
-	// и·▒o├dклк║ Y оy╝╨
+	// хПЦх╛Чхп╡чЙйчЪД Y х║зциЩ
 	float GetPosY();
-	// │]йw├dклк║ X оy╝╨
+	// шинхоЪхп╡чЙйчЪД X х║зциЩ
 	void SetPosX(float posX);
-	// │]йw├dклк║ Y оy╝╨
+	// шинхоЪхп╡чЙйчЪД Y х║зциЩ
 	void SetPosY(float posY);
 
 private:
-	float m_PosX; //├dклк║ X оy╝╨
-	float m_PosY; //├dклк║ Y оy╝╨
+	float m_PosX; //хп╡чЙйчЪД X х║зциЩ
+	float m_PosY; //хп╡чЙйчЪД Y х║зциЩ
 };

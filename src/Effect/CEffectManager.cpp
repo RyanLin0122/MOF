@@ -1,10 +1,10 @@
 #include "Effect/CEffectManager.h"
-#include "Effect/cltMoFC_EffectKindInfo.h" // °²³]ªº¯S®Ä¸ê°TºŞ²z¾¹
-#include "Character/ClientCharacter.h"       // ¨¤¦âÃş§O
-#include "Image/CDeviceManager.h"        // ¬°¤F­«³]´è¬Vª¬ºA
+#include "Effect/cltMoFC_EffectKindInfo.h" // å‡è¨­çš„ç‰¹æ•ˆè³‡è¨Šç®¡ç†å™¨
+#include "Character/ClientCharacter.h"       // è§’è‰²é¡åˆ¥
+#include "Image/CDeviceManager.h"        // ç‚ºäº†é‡è¨­æ¸²æŸ“ç‹€æ…‹
 #include <new>
 
-// --- ¦UºØ¨ãÅé¯S®ÄÃş§Oªº¼ĞÀYÀÉ ---
+// --- å„ç¨®å…·é«”ç‰¹æ•ˆé¡åˆ¥çš„æ¨™é ­æª” ---
 #include "Effect/CEffect_Skill_Type_Once.h"
 #include "Effect/CEffect_Skill_Type_Directed.h"
 #include "Effect/CEffect_Skill_Type_Sustain.h"
@@ -14,7 +14,7 @@
 #include "Character/ClientCharacterManager.h"
 
 
-// ÀRºA¹ê¨Òªì©l¤Æ
+// éœæ…‹å¯¦ä¾‹åˆå§‹åŒ–
 CEffectManager* CEffectManager::s_pInstance = nullptr;
 
 CEffectManager* CEffectManager::GetInstance() {
@@ -24,21 +24,21 @@ CEffectManager* CEffectManager::GetInstance() {
     return s_pInstance;
 }
 
-// ¹ïÀ³¤Ï²ÕÄ¶½X: 0x0053AEE0
+// å°æ‡‰åçµ„è­¯ç¢¼: 0x0053AEE0
 CEffectManager::CEffectManager() : m_pHead(nullptr), m_pTail(nullptr), m_uEffectCount(0)
 {
-    // m_OverMindScreenEffect & cltMoFC_EffectKindInfo ©M m_SkillTypeOnceEffect ªº«Øºc¨ç¦¡·|¦b¦¹³B¦Û°Ê©I¥s
+    // m_OverMindScreenEffect & cltMoFC_EffectKindInfo å’Œ m_SkillTypeOnceEffect çš„å»ºæ§‹å‡½å¼æœƒåœ¨æ­¤è™•è‡ªå‹•å‘¼å«
 	//g_clEffectKindInfo->Initialize("Effect/EffectKindInfo.txt");
 }
 
-// ¹ïÀ³¤Ï²ÕÄ¶½X: 0x0053AEE0
+// å°æ‡‰åçµ„è­¯ç¢¼: 0x0053AEE0
 CEffectManager::~CEffectManager()
 {
     BulletListAllDel();
-    // m_OverMindScreenEffect ©M m_SkillTypeOnceEffect ªº¸Ñºc¨ç¦¡·|¦b¦¹³B¦Û°Ê©I¥s
+    // m_OverMindScreenEffect å’Œ m_SkillTypeOnceEffect çš„è§£æ§‹å‡½å¼æœƒåœ¨æ­¤è™•è‡ªå‹•å‘¼å«
 }
 
-// ¹ïÀ³¤Ï²ÕÄ¶½X: 0x0053AF40
+// å°æ‡‰åçµ„è­¯ç¢¼: 0x0053AF40
 void CEffectManager::BulletAdd(CEffectBase* pEffect)
 {
     if (!pEffect) return;
@@ -49,12 +49,12 @@ void CEffectManager::BulletAdd(CEffectBase* pEffect)
     pNewNode->pEffect = pEffect;
     pNewNode->pNext = nullptr;
 
-    if (m_pHead == nullptr) { // ¦pªG¬O²Ä¤@­Ó¸`ÂI
+    if (m_pHead == nullptr) { // å¦‚æœæ˜¯ç¬¬ä¸€å€‹ç¯€é»
         m_pHead = pNewNode;
         m_pTail = pNewNode;
         pNewNode->pPrev = nullptr;
     }
-    else { // ¥[¤J¨ìÃìµ²¦ê¦C§Àºİ
+    else { // åŠ å…¥åˆ°éˆçµä¸²åˆ—å°¾ç«¯
         m_pTail->pNext = pNewNode;
         pNewNode->pPrev = m_pTail;
         m_pTail = pNewNode;
@@ -62,51 +62,51 @@ void CEffectManager::BulletAdd(CEffectBase* pEffect)
     m_uEffectCount++;
 }
 
-// ¹ïÀ³¤Ï²ÕÄ¶½X: 0x0053AFA0
+// å°æ‡‰åçµ„è­¯ç¢¼: 0x0053AFA0
 CEffectBase* CEffectManager::AddEffect(unsigned short effectKindID, ClientCharacter* pCaster, ClientCharacter* pTarget, int a5, unsigned short a6, unsigned short a7, unsigned char a8)
 {
     stEffectKindInfo* pKindInfo = this->g_clEffectKindInfo.GetEffectKindInfo(effectKindID);
     if (!pKindInfo) return nullptr;
 
-    // ¦pªG¯S®ÄÀÉ®×¦W¬O "0"¡A¥B¤£¬O¯S®íÃş«¬5¡A«h¤£³Ğ«Ø
+    // å¦‚æœç‰¹æ•ˆæª”æ¡ˆåæ˜¯ "0"ï¼Œä¸”ä¸æ˜¯ç‰¹æ®Šé¡å‹5ï¼Œå‰‡ä¸å‰µå»º
     if (strcmp(pKindInfo->szFileName, "0") == 0 && pKindInfo->ucType != 5) {
         return nullptr;
     }
 
     CEffectBase* pNewEffect = nullptr;
 
-    // ®Ú¾Ú¯S®ÄºØÃş(Type)¡A³Ğ«Ø¹ïÀ³ªº¯S®Äª«¥ó
+    // æ ¹æ“šç‰¹æ•ˆç¨®é¡(Type)ï¼Œå‰µå»ºå°æ‡‰çš„ç‰¹æ•ˆç‰©ä»¶
     switch (pKindInfo->ucType)
     {
-    case 1: // ¤@¦¸©Ê¬IªkªÌ¯S®Ä
+    case 1: // ä¸€æ¬¡æ€§æ–½æ³•è€…ç‰¹æ•ˆ
         pNewEffect = new CEffect_Skill_Type_Once();
         static_cast<CEffect_Skill_Type_Once*>(pNewEffect)->SetEffect(pCaster, effectKindID, pKindInfo->szFileName);
         break;
-    case 2: // «ü¦V©Ê¯S®Ä
+    case 2: // æŒ‡å‘æ€§ç‰¹æ•ˆ
         pNewEffect = new CEffect_Skill_Type_Directed();
         static_cast<CEffect_Skill_Type_Directed*>(pNewEffect)->SetEffect(pCaster, pTarget, effectKindID, pKindInfo->szFileName, a8);
         break;
-    case 3: // «ùÄò©Ê¯S®Ä
+    case 3: // æŒçºŒæ€§ç‰¹æ•ˆ
         pNewEffect = new CEffect_Skill_Type_Sustain();
         static_cast<CEffect_Skill_Type_Sustain*>(pNewEffect)->SetEffect(pCaster, effectKindID, pKindInfo->szFileName, a7);
         break;
-    case 4: // §ë®gª«¯S®Ä
+    case 4: // æŠ•å°„ç‰©ç‰¹æ•ˆ
         pNewEffect = new CEffect_Skill_Type_ShootUnit();
         static_cast<CEffect_Skill_Type_ShootUnit*>(pNewEffect)->SetEffect(pCaster, pTarget, effectKindID, pKindInfo->szFileName, a5);
         break;
-    case 5: // ¯S®í¡Gºj¤â®gÀ»
+    case 5: // ç‰¹æ®Šï¼šæ§æ‰‹å°„æ“Š
         pNewEffect = new CEffect_Battle_GunShoot();
         if (pTarget) {
             int hitedNum = pTarget->GetHitedInfoNum(pCaster->GetAccountID());
             static_cast<CEffect_Battle_GunShoot*>(pNewEffect)->SetEffect(pCaster, pTarget, a6, hitedNum);
         }
         break;
-    case 6: // ª««~¨Ï¥Î¯S®Ä
+    case 6: // ç‰©å“ä½¿ç”¨ç‰¹æ•ˆ
         pNewEffect = new CEffect_Item_Type_Once();
         static_cast<CEffect_Item_Type_Once*>(pNewEffect)->SetEffect(pCaster, effectKindID, pKindInfo->szFileName);
         break;
     default:
-        // ¨ä¥LÃş«¬¤£³B²z
+        // å…¶ä»–é¡å‹ä¸è™•ç†
         break;
     }
 
@@ -117,25 +117,25 @@ CEffectBase* CEffectManager::AddEffect(unsigned short effectKindID, ClientCharac
     return pNewEffect;
 }
 
-// ¹ïÀ³¤Ï²ÕÄ¶½X: 0x0053B280
+// å°æ‡‰åçµ„è­¯ç¢¼: 0x0053B280
 CEffectBase* CEffectManager::AddEffect(char* szEffectName, ClientCharacter* pCaster)
 {
     unsigned short kindID = this->g_clEffectKindInfo.TranslateKindCode(szEffectName);
     return AddEffect(kindID, pCaster, nullptr, 0, 0, 0, 2);
 }
 
-// ¹ïÀ³¤Ï²ÕÄ¶½X: 0x0053B5A0
+// å°æ‡‰åçµ„è­¯ç¢¼: 0x0053B5A0
 void CEffectManager::FrameProcess(float fElapsedTime, bool bForceDeleteAll)
 {
     EffectInfo* pCurrent = m_pHead;
     while (pCurrent)
     {
-        EffectInfo* pNext = pCurrent->pNext; // ¥ı«O¦s¤U¤@­Ó¸`ÂI
+        EffectInfo* pNext = pCurrent->pNext; // å…ˆä¿å­˜ä¸‹ä¸€å€‹ç¯€é»
         bool isFinished = pCurrent->pEffect->FrameProcess(fElapsedTime);
 
         if (isFinished || bForceDeleteAll)
         {
-            // --- ±qÃìµ²¦ê¦C¤¤²¾°£¸`ÂI ---
+            // --- å¾éˆçµä¸²åˆ—ä¸­ç§»é™¤ç¯€é» ---
             if (pCurrent->pPrev) {
                 pCurrent->pPrev->pNext = pCurrent->pNext;
             }
@@ -150,20 +150,20 @@ void CEffectManager::FrameProcess(float fElapsedTime, bool bForceDeleteAll)
                 m_pTail = pCurrent->pPrev;
             }
 
-            // --- §R°£¯S®Äª«¥ó©M¸`ÂI¥»¨­ ---
+            // --- åˆªé™¤ç‰¹æ•ˆç‰©ä»¶å’Œç¯€é»æœ¬èº« ---
             if (pCurrent->pEffect) {
                 delete pCurrent->pEffect;
             }
             delete pCurrent;
             m_uEffectCount--;
         }
-        pCurrent = pNext; // ²¾°Ê¨ì¤U¤@­Ó¸`ÂI
+        pCurrent = pNext; // ç§»å‹•åˆ°ä¸‹ä¸€å€‹ç¯€é»
     }
 
-    // m_OverMindScreenEffect.Poll(); // ­ì©l½X¦³¦¹©I¥s¡A¦ı¸ÓÃş§OµL¦¹¨ç¦¡
+    // m_OverMindScreenEffect.Poll(); // åŸå§‹ç¢¼æœ‰æ­¤å‘¼å«ï¼Œä½†è©²é¡åˆ¥ç„¡æ­¤å‡½å¼
 }
 
-// ¹ïÀ³¤Ï²ÕÄ¶½X: 0x0053B6B0
+// å°æ‡‰åçµ„è­¯ç¢¼: 0x0053B6B0
 void CEffectManager::Process()
 {
     for (EffectInfo* pNode = m_pHead; pNode != nullptr; pNode = pNode->pNext) {
@@ -174,7 +174,7 @@ void CEffectManager::Process()
     m_OverMindScreenEffect.PrepareDrawing();
 }
 
-// ¹ïÀ³¤Ï²ÕÄ¶½X: 0x0053B6E0
+// å°æ‡‰åçµ„è­¯ç¢¼: 0x0053B6E0
 void CEffectManager::Draw()
 {
     if (m_uEffectCount > 0) {
@@ -188,14 +188,14 @@ void CEffectManager::Draw()
     m_OverMindScreenEffect.Draw();
 }
 
-// ¹ïÀ³¤Ï²ÕÄ¶½X: 0x0053B730
+// å°æ‡‰åçµ„è­¯ç¢¼: 0x0053B730
 bool CEffectManager::DeleteEffect(CEffectBase* pEffect)
 {
     if (!pEffect) return false;
 
     for (EffectInfo* pNode = m_pHead; pNode != nullptr; pNode = pNode->pNext) {
         if (pNode->pEffect == pEffect) {
-            // --- ÅŞ¿è»P FrameProcess ¤¤ªº§R°£³¡¤À§¹¥ş¬Û¦P ---
+            // --- é‚è¼¯èˆ‡ FrameProcess ä¸­çš„åˆªé™¤éƒ¨åˆ†å®Œå…¨ç›¸åŒ ---
             if (pNode->pPrev) pNode->pPrev->pNext = pNode->pNext;
             else m_pHead = pNode->pNext;
 
@@ -211,18 +211,18 @@ bool CEffectManager::DeleteEffect(CEffectBase* pEffect)
     return false;
 }
 
-// ¹ïÀ³¤Ï²ÕÄ¶½X: 0x0053B820
+// å°æ‡‰åçµ„è­¯ç¢¼: 0x0053B820
 void CEffectManager::AddEtcEffect(unsigned short type, unsigned int accountID)
 {
     ClientCharacter* pChar = ClientCharacterManager::GetInstance()->GetCharByAccount(accountID);
     if (pChar) {
-        if (type == 0) { // °²³] 0 ¥Nªí OverMind ®ÄªG
+        if (type == 0) { // å‡è¨­ 0 ä»£è¡¨ OverMind æ•ˆæœ
             m_OverMindScreenEffect.SetActive(pChar);
         }
     }
 }
 
-// ¹ïÀ³¤Ï²ÕÄ¶½X: 0x0053B550
+// å°æ‡‰åçµ„è­¯ç¢¼: 0x0053B550
 void CEffectManager::BulletListAllDel()
 {
     EffectInfo* pCurrent = m_pHead;

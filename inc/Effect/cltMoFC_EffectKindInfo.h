@@ -5,75 +5,75 @@
 #include <cstring>
 #include <cctype> // for toupper
 
-// «e¦V«Å§i
-class cltTextFileManager; // °²³]ªºÀÉ®×ºŞ²zÃş§O
+// å‰å‘å®£å‘Š
+class cltTextFileManager; // å‡è¨­çš„æª”æ¡ˆç®¡ç†é¡åˆ¥
 
 /**
  * @enum E_EFFECT_TYPE
- * @brief ©w¸q¯S®Äªº¦æ¬°Ãş«¬¡A±q Initialize ¨ç¦¡ªºÅŞ¿è±ÀÂ_¡C
+ * @brief å®šç¾©ç‰¹æ•ˆçš„è¡Œç‚ºé¡å‹ï¼Œå¾ Initialize å‡½å¼çš„é‚è¼¯æ¨æ–·ã€‚
  */
 enum E_EFFECT_TYPE : unsigned char {
     EFFECT_TYPE_UNKNOWN = 0,
-    EFFECT_TYPE_ONCE = 1, // ¦b¬IªkªÌ¦ì¸m¼½©ñ¤@¦¸
-    EFFECT_TYPE_DIRECTED = 2, // ¦b¥Ø¼Ğ¦ì¸m¼½©ñ¤@¦¸
-    EFFECT_TYPE_SUSTAIN = 3, // ¦b¬IªkªÌ¨­¤W«ùÄò¼½©ñ
-    EFFECT_TYPE_SHOOT_UNIT = 4, // §@¬°§ë®gª«­¸¦æ
-    EFFECT_TYPE_SHOOT_NO_EA = 5, // §ë®gª«¡A¦ı¤£¨Ï¥Î .ea ÀÉ®× (¨Ò¦p¤l¼u)
-    EFFECT_TYPE_ITEM_ONCE = 6  // ª««~¨Ï¥Î®Éªº¤@¦¸©Ê¯S®Ä
+    EFFECT_TYPE_ONCE = 1, // åœ¨æ–½æ³•è€…ä½ç½®æ’­æ”¾ä¸€æ¬¡
+    EFFECT_TYPE_DIRECTED = 2, // åœ¨ç›®æ¨™ä½ç½®æ’­æ”¾ä¸€æ¬¡
+    EFFECT_TYPE_SUSTAIN = 3, // åœ¨æ–½æ³•è€…èº«ä¸ŠæŒçºŒæ’­æ”¾
+    EFFECT_TYPE_SHOOT_UNIT = 4, // ä½œç‚ºæŠ•å°„ç‰©é£›è¡Œ
+    EFFECT_TYPE_SHOOT_NO_EA = 5, // æŠ•å°„ç‰©ï¼Œä½†ä¸ä½¿ç”¨ .ea æª”æ¡ˆ (ä¾‹å¦‚å­å½ˆ)
+    EFFECT_TYPE_ITEM_ONCE = 6  // ç‰©å“ä½¿ç”¨æ™‚çš„ä¸€æ¬¡æ€§ç‰¹æ•ˆ
 };
 
 /**
  * @struct stEffectKindInfo
- * @brief (¤j¤p: 132 bytes) Àx¦s³æ¤@¯S®ÄºØÃşªº§¹¾ã©w¸q¡C
+ * @brief (å¤§å°: 132 bytes) å„²å­˜å–®ä¸€ç‰¹æ•ˆç¨®é¡çš„å®Œæ•´å®šç¾©ã€‚
  */
 struct stEffectKindInfo {
-    /// @brief (¦ì²¾ +0) ¯S®Äªº°ß¤@¼Æ¦r ID¡C
+    /// @brief (ä½ç§» +0) ç‰¹æ•ˆçš„å”¯ä¸€æ•¸å­— IDã€‚
     unsigned short usKindID;
 
-    /// @brief (¦ì²¾ +2) ¯S®Ä¸ê·½ÀÉ (.ea) ªº¦WºÙ¡C
+    /// @brief (ä½ç§» +2) ç‰¹æ•ˆè³‡æºæª” (.ea) çš„åç¨±ã€‚
     char szFileName[128];
 
-    /// @brief (¦ì²¾ +130) ¯S®Äªº¦æ¬°Ãş«¬¡C
+    /// @brief (ä½ç§» +130) ç‰¹æ•ˆçš„è¡Œç‚ºé¡å‹ã€‚
     E_EFFECT_TYPE ucType;
 
-    /// @brief (¦ì²¾ +131) ¬°¤F°O¾ĞÅé¹ï»ôªº¶ñ¥R¦ì¤¸²Õ¡C
+    /// @brief (ä½ç§» +131) ç‚ºäº†è¨˜æ†¶é«”å°é½Šçš„å¡«å……ä½å…ƒçµ„ã€‚
     char padding;
 };
 
 /**
  * @class cltMoFC_EffectKindInfo
- * @brief ºŞ²z©Ò¦³¯S®ÄºØÃş©w¸qªº¸ê®Æ®w¡C
- * * §@¬°¤@­Ó³æ¨Ò©Î¥ş°ìª«¥ó¡A¥¦¸ü¤J¨Ã´£¨Ñ¹ï stEffectKindInfo µ²ºcªº§Ö³t¬d¸ß¡C
+ * @brief ç®¡ç†æ‰€æœ‰ç‰¹æ•ˆç¨®é¡å®šç¾©çš„è³‡æ–™åº«ã€‚
+ * * ä½œç‚ºä¸€å€‹å–®ä¾‹æˆ–å…¨åŸŸç‰©ä»¶ï¼Œå®ƒè¼‰å…¥ä¸¦æä¾›å° stEffectKindInfo çµæ§‹çš„å¿«é€ŸæŸ¥è©¢ã€‚
  */
 class cltMoFC_EffectKindInfo {
 public:
     cltMoFC_EffectKindInfo();
     ~cltMoFC_EffectKindInfo();
 
-    /// @brief ±q«ü©wªº¤å¦rÀÉ®×¸ü¤J©Ò¦³¯S®Ä©w¸q¡C
-    /// @param szFileName ¥]§t¯S®Ä©w¸qªºÀÉ®×¸ô®|¡C
-    /// @return ¦¨¥\ªğ¦^ 1¡A¥¢±Ñªğ¦^ 0¡C
+    /// @brief å¾æŒ‡å®šçš„æ–‡å­—æª”æ¡ˆè¼‰å…¥æ‰€æœ‰ç‰¹æ•ˆå®šç¾©ã€‚
+    /// @param szFileName åŒ…å«ç‰¹æ•ˆå®šç¾©çš„æª”æ¡ˆè·¯å¾‘ã€‚
+    /// @return æˆåŠŸè¿”å› 1ï¼Œå¤±æ•—è¿”å› 0ã€‚
     int Initialize(char* szFileName);
 
-    /// @brief ®Ú¾Ú¼Æ¦r ID Àò¨ú¯S®Ä©w¸q¡C
-    /// @param kindID ¯S®Äªº short Ãş«¬ ID¡C
-    /// @return «ü¦V stEffectKindInfo ªº«ü¼Ğ¡A­Y¤£¦s¦b«h¬° nullptr¡C
+    /// @brief æ ¹æ“šæ•¸å­— ID ç²å–ç‰¹æ•ˆå®šç¾©ã€‚
+    /// @param kindID ç‰¹æ•ˆçš„ short é¡å‹ IDã€‚
+    /// @return æŒ‡å‘ stEffectKindInfo çš„æŒ‡æ¨™ï¼Œè‹¥ä¸å­˜åœ¨å‰‡ç‚º nullptrã€‚
     stEffectKindInfo* GetEffectKindInfo(unsigned short kindID);
 
-    /// @brief ®Ú¾Ú¦r¦ê ID Àò¨ú¯S®Ä©w¸q¡C
-    /// @param szKindCode ®æ¦¡¬° "A0001" ªº¦r¦ê ID¡C
-    /// @return «ü¦V stEffectKindInfo ªº«ü¼Ğ¡A­Y¤£¦s¦b«h¬° nullptr¡C
+    /// @brief æ ¹æ“šå­—ä¸² ID ç²å–ç‰¹æ•ˆå®šç¾©ã€‚
+    /// @param szKindCode æ ¼å¼ç‚º "A0001" çš„å­—ä¸² IDã€‚
+    /// @return æŒ‡å‘ stEffectKindInfo çš„æŒ‡æ¨™ï¼Œè‹¥ä¸å­˜åœ¨å‰‡ç‚º nullptrã€‚
     stEffectKindInfo* GetEffectKindInfo(char* szKindCode);
 
-    /// @brief ±N¦r¦ê ID Âà´«¬° short Ãş«¬ªº¼Æ¦r¯Á¤Ş¡C
-    /// @param szKindCode ®æ¦¡¬° "A0001" ªº¦r¦ê ID¡C
-    /// @return ¹ïÀ³ªº short ¯Á¤Ş¡C
+    /// @brief å°‡å­—ä¸² ID è½‰æ›ç‚º short é¡å‹çš„æ•¸å­—ç´¢å¼•ã€‚
+    /// @param szKindCode æ ¼å¼ç‚º "A0001" çš„å­—ä¸² IDã€‚
+    /// @return å°æ‡‰çš„ short ç´¢å¼•ã€‚
     unsigned short TranslateKindCode(char* szKindCode);
 
 private:
-    // µêÀÀ¨ç¦¡ªí«ü¼Ğ¡A¥Ñ½sÄ¶¾¹ºŞ²z
-    // void* m_pVftable; // ¦ì²¾ +0
+    // è™›æ“¬å‡½å¼è¡¨æŒ‡æ¨™ï¼Œç”±ç·¨è­¯å™¨ç®¡ç†
+    // void* m_pVftable; // ä½ç§» +0
 
-    // «ü¼Ğ°}¦C¡A¥Î©ó§Ö³t¬d¸ß¡C°}¦C¤j¤p 65535 (0xFFF F)¡C
-    stEffectKindInfo* m_pEffectInfo[65535]; // ¦ì²¾ +4
+    // æŒ‡æ¨™é™£åˆ—ï¼Œç”¨æ–¼å¿«é€ŸæŸ¥è©¢ã€‚é™£åˆ—å¤§å° 65535 (0xFFF F)ã€‚
+    stEffectKindInfo* m_pEffectInfo[65535]; // ä½ç§» +4
 };

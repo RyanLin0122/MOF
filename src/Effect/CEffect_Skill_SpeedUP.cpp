@@ -3,60 +3,60 @@
 #include "Character/ClientCharacter.h"
 #include "global.h"
 
-// ¹ïÀ³¤Ï²ÕÄ¶½X: 0x00533DD0
+// å°æ‡‰åçµ„è­¯ç¢¼: 0x00533DD0
 CEffect_Skill_SpeedUP::CEffect_Skill_SpeedUP()
     : m_pOwnerCharacter(nullptr)
 {
-    // CEffectBase ªº«Øºc¨ç¦¡·|³Q¦Û°Ê©I¥s
+    // CEffectBase çš„å»ºæ§‹å‡½å¼æœƒè¢«è‡ªå‹•å‘¼å«
 
-    // ¦V CEAManager ½Ğ¨D¯S®Ä¼Æ¾Ú
-    // ¯S®Ä ID: 99, ÀÉ®×¦WºÙ: "Effect/efn_SpeedUp.ea"
+    // å‘ CEAManager è«‹æ±‚ç‰¹æ•ˆæ•¸æ“š
+    // ç‰¹æ•ˆ ID: 99, æª”æ¡ˆåç¨±: "Effect/efn_SpeedUp.ea"
     CEAManager::GetInstance()->GetEAData(99, "Effect/efn_SpeedUp.ea", &m_ccaEffect);
 
-    // ³]©w¼v®æ®É¶¡¨Ã¼½©ñ°Êµe
+    // è¨­å®šå½±æ ¼æ™‚é–“ä¸¦æ’­æ”¾å‹•ç•«
     m_ccaEffect.SetFrameTime();
-    m_ccaEffect.Play(0, false); // ¼½©ñ²Ä¤@­Ó°Êµe§Ç¦C¡A¤£´`Àô
+    m_ccaEffect.Play(0, false); // æ’­æ”¾ç¬¬ä¸€å€‹å‹•ç•«åºåˆ—ï¼Œä¸å¾ªç’°
 }
 
-// ¹ïÀ³¤Ï²ÕÄ¶½X: 0x00533E70
+// å°æ‡‰åçµ„è­¯ç¢¼: 0x00533E70
 CEffect_Skill_SpeedUP::~CEffect_Skill_SpeedUP()
 {
 }
 
-// ¹ïÀ³¤Ï²ÕÄ¶½X: 0x00533E80
+// å°æ‡‰åçµ„è­¯ç¢¼: 0x00533E80
 void CEffect_Skill_SpeedUP::SetEffect(ClientCharacter* pOwner)
 {
     if (!pOwner) return;
 
-    // ¸j©w¾Ö¦³ªÌ
+    // ç¶å®šæ“æœ‰è€…
     m_pOwnerCharacter = pOwner;
 
-    // ­ì©l½X: *((_DWORD *)a2 + 174) = 0;
-    // ¥ß§Y³]©w¨¤¦âªº¤@­ÓºX¼Ğ¡]¥i¯à¬O¡u·Ç³Æ¥[³t¡v¡^
-    pOwner->SetPreparingSpeedUp(false); // °²³]ªº¨ç¦¡
+    // åŸå§‹ç¢¼: *((_DWORD *)a2 + 174) = 0;
+    // ç«‹å³è¨­å®šè§’è‰²çš„ä¸€å€‹æ——æ¨™ï¼ˆå¯èƒ½æ˜¯ã€Œæº–å‚™åŠ é€Ÿã€ï¼‰
+    pOwner->SetPreparingSpeedUp(false); // å‡è¨­çš„å‡½å¼
 }
 
-// ¹ïÀ³¤Ï²ÕÄ¶½X: 0x00533EA0
+// å°æ‡‰åçµ„è­¯ç¢¼: 0x00533EA0
 bool CEffect_Skill_SpeedUP::FrameProcess(float fElapsedTime)
 {
-    // --- ®Ö¤ß¥Í©R¶g´Á»PÄ²µoÅŞ¿è ---
+    // --- æ ¸å¿ƒç”Ÿå‘½é€±æœŸèˆ‡è§¸ç™¼é‚è¼¯ ---
 
-    // ÀË¬d°Êµe¬O§_¼½©ñ§¹²¦
+    // æª¢æŸ¥å‹•ç•«æ˜¯å¦æ’­æ”¾å®Œç•¢
     if (m_ccaEffect.FrameProcess(fElapsedTime)) {
-        // °Êµe¤wµ²§ô
+        // å‹•ç•«å·²çµæŸ
         if (m_pOwnerCharacter) {
-            // ­ì©l½X: *(_DWORD *)(v3 + 696) = 1;
-            // ³]©w¨¤¦â¨­¤W¯u¥¿ªº¡u¥[³t¡vºX¼Ğ
-            m_pOwnerCharacter->SetCanSpeedUp(true); // °²³]ªº¨ç¦¡
+            // åŸå§‹ç¢¼: *(_DWORD *)(v3 + 696) = 1;
+            // è¨­å®šè§’è‰²èº«ä¸ŠçœŸæ­£çš„ã€ŒåŠ é€Ÿã€æ——æ¨™
+            m_pOwnerCharacter->SetCanSpeedUp(true); // å‡è¨­çš„å‡½å¼
         }
-        return true; // ¯S®Äµ²§ô
+        return true; // ç‰¹æ•ˆçµæŸ
     }
 
-    // °Êµe©|¥¼µ²§ô¡A¯S®ÄÄ~Äò¦s¦b
+    // å‹•ç•«å°šæœªçµæŸï¼Œç‰¹æ•ˆç¹¼çºŒå­˜åœ¨
     return false;
 }
 
-// ¹ïÀ³¤Ï²ÕÄ¶½X: 0x00533EE0
+// å°æ‡‰åçµ„è­¯ç¢¼: 0x00533EE0
 void CEffect_Skill_SpeedUP::Process()
 {
     if (!m_pOwnerCharacter) {
@@ -64,18 +64,18 @@ void CEffect_Skill_SpeedUP::Process()
         return;
     }
 
-    // --- «ùÄò°lÂÜ¾Ö¦³ªÌ¦ì¸m ---
+    // --- æŒçºŒè¿½è¹¤æ“æœ‰è€…ä½ç½® ---
     float screenX = static_cast<float>(m_pOwnerCharacter->GetPosX() - g_Game_System_Info.ScreenX);
     float screenY = static_cast<float>(m_pOwnerCharacter->GetPosY() - g_Game_System_Info.ScreenY);
 
-    // §ó·s¤º³¡ CCAEffect ªºª¬ºA
+    // æ›´æ–°å…§éƒ¨ CCAEffect çš„ç‹€æ…‹
     m_ccaEffect.SetPosition(screenX, screenY);
     m_ccaEffect.Process();
 
     m_bIsVisible = TRUE;
 }
 
-// ¹ïÀ³¤Ï²ÕÄ¶½X: 0x00533F30
+// å°æ‡‰åçµ„è­¯ç¢¼: 0x00533F30
 void CEffect_Skill_SpeedUP::Draw()
 {
     if (m_bIsVisible) {

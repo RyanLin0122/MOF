@@ -6,17 +6,17 @@
 #include <cstdlib>
 #include <cmath>
 
-// °²³]ªº¥ş°ìÅÜ¼Æ
+// å‡è¨­çš„å…¨åŸŸè®Šæ•¸
 extern GameSystemInfo g_Game_System_Info;
 
-// ¹ïÀ³¤Ï²ÕÄ¶½X: 0x00537A40
+// å°æ‡‰åçµ„è­¯ç¢¼: 0x00537A40
 CEffect_Field_Miss::CEffect_Field_Miss()
 {
     m_pMissImage = nullptr;
     m_fAlpha = 250.0f;        // 1137180672 (0x437A0000)
-    m_fScale = 2.0f;          // 0x40000000 -> 2.0f, ¥i¯à¬O¤@­ÓÁY©ñ©ÎÃC¦â­È
+    m_fScale = 2.0f;          // 0x40000000 -> 2.0f, å¯èƒ½æ˜¯ä¸€å€‹ç¸®æ”¾æˆ–é¡è‰²å€¼
     m_fRotation = 0.0f;
-    m_cInitialFrame = rand() % 4; // ÁöµM¥¼¨Ï¥Î¡A¦ı­ì©l½X¦³¦¹¦æ¬°
+    m_cInitialFrame = rand() % 4; // é›–ç„¶æœªä½¿ç”¨ï¼Œä½†åŸå§‹ç¢¼æœ‰æ­¤è¡Œç‚º
     m_fCurrentPosX = 0.0f;
     m_fCurrentPosY = 0.0f;
     m_fVelX = 0.0f;
@@ -24,7 +24,7 @@ CEffect_Field_Miss::CEffect_Field_Miss()
     m_fSpeedFactor = 0.0f;
     m_dwResourceID = 0;
 
-    // ­ì©l½X: *((_DWORD *)this + 43) = 993738471; (0x3B4CCCC7 -> ~0.03f)
+    // åŸå§‹ç¢¼: *((_DWORD *)this + 43) = 993738471; (0x3B4CCCC7 -> ~0.03f)
     m_FrameSkip.m_fTimePerFrame = 1.0f / 33.0f;
 }
 
@@ -32,21 +32,21 @@ CEffect_Field_Miss::~CEffect_Field_Miss()
 {
 }
 
-// ¹ïÀ³¤Ï²ÕÄ¶½X: 0x00537B10
+// å°æ‡‰åçµ„è­¯ç¢¼: 0x00537B10
 void CEffect_Field_Miss::SetEffect(float x, float y)
 {
     m_dwResourceID = 184550807; // 0xB000597
     m_fCurrentPosX = x - 35.0f;
     m_fCurrentPosY = y - 13.0f;
 
-    // ÀH¾÷¤Æªì©l­¸¦æ¨¤«×©M³t«×
+    // éš¨æ©ŸåŒ–åˆå§‹é£›è¡Œè§’åº¦å’Œé€Ÿåº¦
     float angle = static_cast<float>(rand() % 628) * 0.01f;
     m_fVelX = -sinf(angle);
     m_fVelY = cosf(angle);
     m_fSpeedFactor = (static_cast<float>(rand() % 5 + 3) + 1.0f) * 0.01f;
 }
 
-// ¹ïÀ³¤Ï²ÕÄ¶½X: 0x00537BA0
+// å°æ‡‰åçµ„è­¯ç¢¼: 0x00537BA0
 bool CEffect_Field_Miss::FrameProcess(float fElapsedTime)
 {
     int frameCount = 0;
@@ -55,27 +55,27 @@ bool CEffect_Field_Miss::FrameProcess(float fElapsedTime)
     }
     float fFrameCount = static_cast<float>(frameCount);
 
-    // §ó·s±ÛÂà (­ì©l½X¤¤ m_fRotation ¹ê»Ú¤W¬O m_fScale)
+    // æ›´æ–°æ—‹è½‰ (åŸå§‹ç¢¼ä¸­ m_fRotation å¯¦éš›ä¸Šæ˜¯ m_fScale)
     m_fScale += fFrameCount * 1.8f * 0.33333334f;
 
-    // §ó·s³z©ú«×
+    // æ›´æ–°é€æ˜åº¦
     m_fAlpha -= fFrameCount * 1.5f;
 
-    // §ó·sÃC¦â­È (­ì©l½X¤¤ m_fScale ¹ê»Ú¤W¬O m_fColorValue)
+    // æ›´æ–°é¡è‰²å€¼ (åŸå§‹ç¢¼ä¸­ m_fScale å¯¦éš›ä¸Šæ˜¯ m_fColorValue)
     // m_fColorValue += fFrameCount * 1.5f;
 
-    // §ó·s¦ì¸m¡A²£¥Íº}²¾®ÄªG
+    // æ›´æ–°ä½ç½®ï¼Œç”¢ç”Ÿæ¼‚ç§»æ•ˆæœ
     m_fCurrentPosX += m_fVelX * m_fSpeedFactor * fFrameCount;
     m_fCurrentPosY += m_fVelY * m_fSpeedFactor * fFrameCount;
 
     return m_fAlpha < 0.0f;
 }
 
-// ¹ïÀ³¤Ï²ÕÄ¶½X: 0x00537CB0
+// å°æ‡‰åçµ„è­¯ç¢¼: 0x00537CB0
 void CEffect_Field_Miss::Process()
 {
     float screenX = m_fCurrentPosX;
-    // ®Ú¾Ú­ì©l½X¡A¦¹¯S®Ä¦ü¥G¤£¦Ò¼{Äá¼v¾÷®y¼Ğ¡Aª½±µ¨Ï¥Î¥@¬É®y¼Ğ§@¬°¿Ã¹õ®y¼Ğ
+    // æ ¹æ“šåŸå§‹ç¢¼ï¼Œæ­¤ç‰¹æ•ˆä¼¼ä¹ä¸è€ƒæ…®æ”å½±æ©Ÿåº§æ¨™ï¼Œç›´æ¥ä½¿ç”¨ä¸–ç•Œåº§æ¨™ä½œç‚ºè¢å¹•åº§æ¨™
     m_bIsVisible = IsCliping(screenX, 0.0f);
 
     if (m_bIsVisible) {
@@ -85,20 +85,20 @@ void CEffect_Field_Miss::Process()
             float screenY = m_fCurrentPosY;
 
             m_pMissImage->SetPosition(screenX, screenY);
-            // ­ì©l½X¤¤±NÀH¾÷ªº m_cInitialFrame ³]µ¹¤F BlockID¡A¦ı¹ê»Ú®ÄªGÀ³¬° "MISS"
+            // åŸå§‹ç¢¼ä¸­å°‡éš¨æ©Ÿçš„ m_cInitialFrame è¨­çµ¦äº† BlockIDï¼Œä½†å¯¦éš›æ•ˆæœæ‡‰ç‚º "MISS"
             m_pMissImage->SetBlockID(62);
 
             float clampedAlpha = (m_fAlpha > 255.0f) ? 255.0f : m_fAlpha;
             m_pMissImage->SetAlpha(static_cast<unsigned int>(clampedAlpha));
-            m_pMissImage->SetColor(static_cast<unsigned int>(m_fScale)); // ­ì©l½X±N m_fScale ³]µ¹ Color
-            m_pMissImage->SetRotation(static_cast<int>(m_fRotation)); // ­ì©l½X±N m_fRotation ³]µ¹ Rotation
+            m_pMissImage->SetColor(static_cast<unsigned int>(m_fScale)); // åŸå§‹ç¢¼å°‡ m_fScale è¨­çµ¦ Color
+            m_pMissImage->SetRotation(static_cast<int>(m_fRotation)); // åŸå§‹ç¢¼å°‡ m_fRotation è¨­çµ¦ Rotation
 
             m_pMissImage->Process();
         }
     }
 }
 
-// ¹ïÀ³¤Ï²ÕÄ¶½X: 0x00537DF0
+// å°æ‡‰åçµ„è­¯ç¢¼: 0x00537DF0
 void CEffect_Field_Miss::Draw()
 {
     if (m_bIsVisible && m_pMissImage && m_pMissImage->IsInUse())

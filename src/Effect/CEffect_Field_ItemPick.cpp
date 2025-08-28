@@ -5,11 +5,11 @@
 #include "Effect/CEffectManager.h"
 #include "global.h"
 
-// °²³]ªº¥ş°ìÅÜ¼Æ
+// å‡è¨­çš„å…¨åŸŸè®Šæ•¸
 extern GameSystemInfo g_Game_System_Info;
 extern int SETTING_FRAME;
 
-// ¹ïÀ³¤Ï²ÕÄ¶½X: 0x00535BD0
+// å°æ‡‰åçµ„è­¯ç¢¼: 0x00535BD0
 CEffect_Field_ItemPick::CEffect_Field_ItemPick()
 {
     m_pOwnerCharacter = nullptr;
@@ -28,7 +28,7 @@ CEffect_Field_ItemPick::CEffect_Field_ItemPick()
 
 CEffect_Field_ItemPick::~CEffect_Field_ItemPick() {}
 
-// ¹ïÀ³¤Ï²ÕÄ¶½X: 0x00535C80
+// å°æ‡‰åçµ„è­¯ç¢¼: 0x00535C80
 void CEffect_Field_ItemPick::SetEffect(D3DXVECTOR2* pStartPosition, unsigned int dwOwnerAccountID)
 {
     m_fCurrentPosX = pStartPosition->x;
@@ -37,7 +37,7 @@ void CEffect_Field_ItemPick::SetEffect(D3DXVECTOR2* pStartPosition, unsigned int
     m_pOwnerCharacter = nullptr;
 }
 
-// ¹ïÀ³¤Ï²ÕÄ¶½X: 0x00535CC0
+// å°æ‡‰åçµ„è­¯ç¢¼: 0x00535CC0
 bool CEffect_Field_ItemPick::FrameProcess(float fElapsedTime)
 {
     int frameCount = 0;
@@ -47,7 +47,7 @@ bool CEffect_Field_ItemPick::FrameProcess(float fElapsedTime)
     float fFrameCount = static_cast<float>(frameCount);
 
     m_pOwnerCharacter = ClientCharacterManager::GetInstance()->GetCharByAccount(m_dwOwnerAccountID);
-    if (!m_pOwnerCharacter) return true; // ¥Ø¼Ğ®ø¥¢¡A¯S®Äµ²§ô
+    if (!m_pOwnerCharacter) return true; // ç›®æ¨™æ¶ˆå¤±ï¼Œç‰¹æ•ˆçµæŸ
 
     m_dwTotalFrame += frameCount;
 
@@ -65,7 +65,7 @@ bool CEffect_Field_ItemPick::FrameProcess(float fElapsedTime)
 
     D3DXVec2Normalize(&vecToTarget, &vecToTarget);
 
-    // ª¬ºA¾÷±±¨îªº²¾°ÊÅŞ¿è
+    // ç‹€æ…‹æ©Ÿæ§åˆ¶çš„ç§»å‹•é‚è¼¯
     switch (m_ucState) {
     case 0:
         m_fCurrentPosY -= fFrameCount * 0.3f;
@@ -100,7 +100,7 @@ bool CEffect_Field_ItemPick::FrameProcess(float fElapsedTime)
     return false;
 }
 
-// ¹ïÀ³¤Ï²ÕÄ¶½X: 0x00536210
+// å°æ‡‰åçµ„è­¯ç¢¼: 0x00536210
 void CEffect_Field_ItemPick::Process()
 {
     m_nSubEffectTimer++;
@@ -119,5 +119,5 @@ void CEffect_Field_ItemPick::Process()
 
 void CEffect_Field_ItemPick::Draw()
 {
-    // ¥D±±¨î¾¹¤£¥i¨£
+    // ä¸»æ§åˆ¶å™¨ä¸å¯è¦‹
 }

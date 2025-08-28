@@ -6,10 +6,10 @@
 #include <cstdlib>
 #include <cmath>
 
-// °²³]ªº¥ş°ìÅÜ¼Æ
+// å‡è¨­çš„å…¨åŸŸè®Šæ•¸
 extern GameSystemInfo g_Game_System_Info;
 
-// ¹ïÀ³¤Ï²ÕÄ¶½X: 0x005356F0
+// å°æ‡‰åçµ„è­¯ç¢¼: 0x005356F0
 CEffect_Field_HealNumber::CEffect_Field_HealNumber()
 {
     m_pNumberImages = nullptr;
@@ -26,16 +26,16 @@ CEffect_Field_HealNumber::CEffect_Field_HealNumber()
     m_FrameSkip.m_fTimePerFrame = 1.0f / 60.0f;
 }
 
-// ¹ïÀ³¤Ï²ÕÄ¶½X: 0x00535790
+// å°æ‡‰åçµ„è­¯ç¢¼: 0x00535790
 CEffect_Field_HealNumber::~CEffect_Field_HealNumber()
 {
     delete[] m_pNumberImages;
 }
 
-// ¹ïÀ³¤Ï²ÕÄ¶½X: 0x005357D0
+// å°æ‡‰åçµ„è­¯ç¢¼: 0x005357D0
 void CEffect_Field_HealNumber::SetEffect(int healValue, float x, float y)
 {
-    // ªvÀø¼Æ¦r¨Ï¥Î¹ÏÀÉ¤¤±q¯Á¤Ş 36 ¶}©lªºÂÅºñ¦â¼Æ¦r
+    // æ²»ç™‚æ•¸å­—ä½¿ç”¨åœ–æª”ä¸­å¾ç´¢å¼• 36 é–‹å§‹çš„è—ç¶ è‰²æ•¸å­—
     const char first_digit_frame = 36;
     const char plus_frame = 46;
     const char minus_frame = 47;
@@ -59,7 +59,7 @@ void CEffect_Field_HealNumber::SetEffect(int healValue, float x, float y)
     m_fInitialPosX = x;
     m_fCurrentPosY = y;
 
-    // ¹w¥ı­pºâÁ`¼e«×¥H¶i¦æ©~¤¤
+    // é å…ˆè¨ˆç®—ç¸½å¯¬åº¦ä»¥é€²è¡Œå±…ä¸­
     GameImage* pTempImage = cltImageManager::GetInstance()->GetGameImage(7, 0xB0005A4u, 0, 1);
     if (pTempImage) {
         for (int i = 0; i < m_cDigitCount; ++i) {
@@ -70,10 +70,10 @@ void CEffect_Field_HealNumber::SetEffect(int healValue, float x, float y)
         }
         cltImageManager::GetInstance()->ReleaseGameImage(pTempImage);
     }
-    m_fTotalWidth *= 0.5f; // ¨ú¥b¼e
+    m_fTotalWidth *= 0.5f; // å–åŠå¯¬
 }
 
-// ¹ïÀ³¤Ï²ÕÄ¶½X: 0x00535910
+// å°æ‡‰åçµ„è­¯ç¢¼: 0x00535910
 bool CEffect_Field_HealNumber::FrameProcess(float fElapsedTime)
 {
     int frameCount = 0;
@@ -82,14 +82,14 @@ bool CEffect_Field_HealNumber::FrameProcess(float fElapsedTime)
     }
     float fFrameCount = static_cast<float>(frameCount);
 
-    if (m_ucState == 0) { // ¶¥¬q 0: ²H¤J»P°±¯d
+    if (m_ucState == 0) { // éšæ®µ 0: æ·¡å…¥èˆ‡åœç•™
         m_fAlpha -= fFrameCount * 2.0f;
         if (m_fAlpha < 220.0f) {
             m_fAlpha = 220.0f;
             m_ucState = 1;
         }
     }
-    else if (m_ucState == 1) { // ¶¥¬q 1: ²H¥X»P¤Wº}
+    else if (m_ucState == 1) { // éšæ®µ 1: æ·¡å‡ºèˆ‡ä¸Šæ¼‚
         m_fAlpha -= fFrameCount * 5.0f;
         m_fCurrentPosY -= fFrameCount;
     }
@@ -97,7 +97,7 @@ bool CEffect_Field_HealNumber::FrameProcess(float fElapsedTime)
     return m_fAlpha < 0.0f;
 }
 
-// ¹ïÀ³¤Ï²ÕÄ¶½X: 0x00535A00
+// å°æ‡‰åçµ„è­¯ç¢¼: 0x00535A00
 void CEffect_Field_HealNumber::Process()
 {
     float screenX = m_fInitialPosX - static_cast<float>(g_Game_System_Info.ScreenX);
@@ -107,7 +107,7 @@ void CEffect_Field_HealNumber::Process()
         float screenY = m_fCurrentPosY - static_cast<float>(g_Game_System_Info.ScreenY);
         float currentX = screenX - m_fTotalWidth;
 
-        // ±q«á©¹«e³B²z¼Æ¦r (±q­Ó¦ì¼Æ¶}©l)
+        // å¾å¾Œå¾€å‰è™•ç†æ•¸å­— (å¾å€‹ä½æ•¸é–‹å§‹)
         for (int i = 0; i < m_cDigitCount; ++i) {
             m_pNumberImages[i] = cltImageManager::GetInstance()->GetGameImage(7, 0xB0005A4u, 0, 1);
             if (m_pNumberImages[i]) {
@@ -121,21 +121,21 @@ void CEffect_Field_HealNumber::Process()
 
                 RECT rect;
                 m_pNumberImages[i]->GetBlockRect(&rect);
-                // ®Ú¾Ú¨C­Ó¼Æ¦rªº¼e«×¨Ó½Õ¾ã¤U¤@­Ó¼Æ¦rªº¦ì¸m
-                currentX += static_cast<float>(rect.right - rect.left - 3); // ­ì©l½X¦³ -3 ªº¶¡¶Z½Õ¾ã
+                // æ ¹æ“šæ¯å€‹æ•¸å­—çš„å¯¬åº¦ä¾†èª¿æ•´ä¸‹ä¸€å€‹æ•¸å­—çš„ä½ç½®
+                currentX += static_cast<float>(rect.right - rect.left - 3); // åŸå§‹ç¢¼æœ‰ -3 çš„é–“è·èª¿æ•´
             }
         }
     }
 }
 
-// ¹ïÀ³¤Ï²ÕÄ¶½X: 0x00535B60
+// å°æ‡‰åçµ„è­¯ç¢¼: 0x00535B60
 void CEffect_Field_HealNumber::Draw()
 {
     if (!m_bIsVisible || !m_pNumberImages) return;
 
     CDeviceManager::GetInstance()->ResetRenderState();
 
-    // ±q«á©¹«eÃ¸»s (¥ıµeªº¦b¤U¼h¡A§Y­Ó¦ì¼Æ)
+    // å¾å¾Œå¾€å‰ç¹ªè£½ (å…ˆç•«çš„åœ¨ä¸‹å±¤ï¼Œå³å€‹ä½æ•¸)
     for (int i = 0; i < m_cDigitCount; ++i) {
         if (m_pNumberImages[i] && m_pNumberImages[i]->IsInUse()) {
             m_pNumberImages[i]->Draw();

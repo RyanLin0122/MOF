@@ -2,81 +2,81 @@
 
 #include <d3d9.h>
 #include <d3dx9.h>
-#include "Image/VertexBufferDataMgr.h"     // ¥]§t¤§«eÁÙ­ìªº VertexBuffer ºŞ²z¾¹
-#include "Image/ImageResourceListDataMgr.h"// ¥]§t ImageResource ºŞ²z¾¹
-#include "Image/TextureListDataMgr.h"      // ¥]§t¤§«eÁÙ­ìªº Texture ºŞ²z¾¹
+#include "Image/VertexBufferDataMgr.h"     // åŒ…å«ä¹‹å‰é‚„åŸçš„ VertexBuffer ç®¡ç†å™¨
+#include "Image/ImageResourceListDataMgr.h"// åŒ…å« ImageResource ç®¡ç†å™¨
+#include "Image/TextureListDataMgr.h"      // åŒ…å«ä¹‹å‰é‚„åŸçš„ Texture ç®¡ç†å™¨
 
 /**
  * @class CDeviceResetManager
- * @brief ¶°¤¤ºŞ²zD3D¸ê·½¡A¨Ã³B²z¸Ë¸m¿ò¥¢(Lost)»P­«³](Reset)ªº®Ö¤ßÅŞ¿è¡C
+ * @brief é›†ä¸­ç®¡ç†D3Dè³‡æºï¼Œä¸¦è™•ç†è£ç½®éºå¤±(Lost)èˆ‡é‡è¨­(Reset)çš„æ ¸å¿ƒé‚è¼¯ã€‚
  *
- * ³o­ÓÃş§O¨Ï¥Î³æ¨Ò¼Ò¦¡(Singleton)¡A½T«Oµ{¦¡¤¤¥u¦³¤@­Ó¹ê¨Ò¡C
- * ¥¦«Ê¸Ë¤F¹ï Vertex Buffers¡BImage Resources ©M Textures ªº¥Í©R¶g´ÁºŞ²z¡C
+ * é€™å€‹é¡åˆ¥ä½¿ç”¨å–®ä¾‹æ¨¡å¼(Singleton)ï¼Œç¢ºä¿ç¨‹å¼ä¸­åªæœ‰ä¸€å€‹å¯¦ä¾‹ã€‚
+ * å®ƒå°è£äº†å° Vertex Buffersã€Image Resources å’Œ Textures çš„ç”Ÿå‘½é€±æœŸç®¡ç†ã€‚
  */
 class CDeviceResetManager {
 public:
-    /// @brief ¨ú±o°ß¤@ªºÃş§O¹ê¨Ò¡C
+    /// @brief å–å¾—å”¯ä¸€çš„é¡åˆ¥å¯¦ä¾‹ã€‚
     static CDeviceResetManager* GetInstance();
 
-    /// @brief ¸Ñºc¨ç¦¡¡C
+    /// @brief è§£æ§‹å‡½å¼ã€‚
     ~CDeviceResetManager();
 
-    /// @brief «Ø¥ß¤@­Ó«ü©wÃş«¬ªº³»ÂI½w½Ä°Ï¡C
-    /// @param capacity ³»ÂI½w½Ä°Ï¯à®e¯Çªº³»ÂI¼Æ¶q¡C
-    /// @param type ³»ÂIÃş«¬ (0/3: GIVertex, 1: AlphaBoxVertex, 2: ImageVertex)¡C
-    /// @return «ü¦V·s«Ø¥ßªº VertexBufferData ¸`ÂIªº«ü¼Ğ¡C
+    /// @brief å»ºç«‹ä¸€å€‹æŒ‡å®šé¡å‹çš„é ‚é»ç·©è¡å€ã€‚
+    /// @param capacity é ‚é»ç·©è¡å€èƒ½å®¹ç´çš„é ‚é»æ•¸é‡ã€‚
+    /// @param type é ‚é»é¡å‹ (0/3: GIVertex, 1: AlphaBoxVertex, 2: ImageVertex)ã€‚
+    /// @return æŒ‡å‘æ–°å»ºç«‹çš„ VertexBufferData ç¯€é»çš„æŒ‡æ¨™ã€‚
     VertexBufferData* CreateVertexBuffer(unsigned short capacity, unsigned char type);
 
-    /// @brief §R°£¤@­Ó³»ÂI½w½Ä°Ï¡C
-    /// @param pBufferData ­n§R°£ªº³»ÂI½w½Ä°Ï¸`ÂI¡C
+    /// @brief åˆªé™¤ä¸€å€‹é ‚é»ç·©è¡å€ã€‚
+    /// @param pBufferData è¦åˆªé™¤çš„é ‚é»ç·©è¡å€ç¯€é»ã€‚
     void DeleteVertexBuffer(VertexBufferData* pBufferData);
 
-    /// @brief «Ø¥ß¤@­Ó¹Ï¤ù¸ê·½¡C
-    /// @param pFileName ¹Ï¤ùÀÉ®×ªº¸ô®|©Î¦b«Ê¸ËÀÉ¤¤ªº¦WºÙ¡C
-    /// @param flag ¶Ç»¼µ¹ LoadGI/LoadGIInPack ªººX¼Ğ¡C
-    /// @param packerType ¶Ç»¼µ¹ LoadGI/LoadGIInPack ªº¥´¥]¾¹Ãş«¬¡C
-    /// @param a5 ¶Ç»¼µ¹ LoadGIInPack ªº°Ñ¼Æ(³q±`¬O«Ê¸ËÀÉÃş«¬)¡C
-    /// @return «ü¦V·s«Ø¥ßªº ImageResourceListData ¸`ÂIªº«ü¼Ğ¡C
+    /// @brief å»ºç«‹ä¸€å€‹åœ–ç‰‡è³‡æºã€‚
+    /// @param pFileName åœ–ç‰‡æª”æ¡ˆçš„è·¯å¾‘æˆ–åœ¨å°è£æª”ä¸­çš„åç¨±ã€‚
+    /// @param flag å‚³éçµ¦ LoadGI/LoadGIInPack çš„æ——æ¨™ã€‚
+    /// @param packerType å‚³éçµ¦ LoadGI/LoadGIInPack çš„æ‰“åŒ…å™¨é¡å‹ã€‚
+    /// @param a5 å‚³éçµ¦ LoadGIInPack çš„åƒæ•¸(é€šå¸¸æ˜¯å°è£æª”é¡å‹)ã€‚
+    /// @return æŒ‡å‘æ–°å»ºç«‹çš„ ImageResourceListData ç¯€é»çš„æŒ‡æ¨™ã€‚
     ImageResourceListData* CreateImageResource(const char* pFileName, char flag, unsigned char packerType, int a5);
 
-    /// @brief §R°£¤@­Ó¹Ï¤ù¸ê·½¡C
-    /// @param pImageNode ­n§R°£ªº¹Ï¤ù¸ê·½¸`ÂI¡C
+    /// @brief åˆªé™¤ä¸€å€‹åœ–ç‰‡è³‡æºã€‚
+    /// @param pImageNode è¦åˆªé™¤çš„åœ–ç‰‡è³‡æºç¯€é»ã€‚
     void DeleteImageResource(ImageResourceListData* pImageNode);
 
-    /// @brief ±qÀÉ®×«Ø¥ß¤@­Ó¯¾²z¡C
-    /// @param pFileName ¯¾²zÀÉ®×ªº¸ô®|¡C
-    /// @param flag ­ì©l½X¤¤ªººX¼Ğ¡C
-    /// @return «ü¦V·s«Ø¥ßªº TextureListData ¸`ÂIªº«ü¼Ğ¡C
+    /// @brief å¾æª”æ¡ˆå»ºç«‹ä¸€å€‹ç´‹ç†ã€‚
+    /// @param pFileName ç´‹ç†æª”æ¡ˆçš„è·¯å¾‘ã€‚
+    /// @param flag åŸå§‹ç¢¼ä¸­çš„æ——æ¨™ã€‚
+    /// @return æŒ‡å‘æ–°å»ºç«‹çš„ TextureListData ç¯€é»çš„æŒ‡æ¨™ã€‚
     TextureListData* CreateTexture(const char* pFileName, unsigned char flag);
 
-    /// @brief §R°£¤@­Ó¯¾²z¡C
-    /// @param pTextureNode ­n§R°£ªº¯¾²z¸`ÂI¡C
+    /// @brief åˆªé™¤ä¸€å€‹ç´‹ç†ã€‚
+    /// @param pTextureNode è¦åˆªé™¤çš„ç´‹ç†ç¯€é»ã€‚
     void DeleteTexture(TextureListData* pTextureNode);
 
-    /// @brief ¨ú±o¦@¨Éªº ID3DXSprite ª«¥ó¡A¦pªG¤£¦s¦b«h«Ø¥ß¤@­Ó¡C
-    /// @return «ü¦V ID3DXSprite ª«¥óªº«ü¼Ğ¡C
+    /// @brief å–å¾—å…±äº«çš„ ID3DXSprite ç‰©ä»¶ï¼Œå¦‚æœä¸å­˜åœ¨å‰‡å»ºç«‹ä¸€å€‹ã€‚
+    /// @return æŒ‡å‘ ID3DXSprite ç‰©ä»¶çš„æŒ‡æ¨™ã€‚
     ID3DXSprite* GetSpriteObject();
 
-    /// @brief ³B²z¸Ë¸m­«³]¡C
-    /// @param hresult ¨Ó¦Û Present() ©Î¨ä¥L D3D ©I¥sªºªğ¦^½X¡C
-    /// @return ¦pªG¸Ë¸mª¬ºA¥¿±`©Î¤w¦¨¥\­«³]¡Aªğ¦^ true¡C
+    /// @brief è™•ç†è£ç½®é‡è¨­ã€‚
+    /// @param hresult ä¾†è‡ª Present() æˆ–å…¶ä»– D3D å‘¼å«çš„è¿”å›ç¢¼ã€‚
+    /// @return å¦‚æœè£ç½®ç‹€æ…‹æ­£å¸¸æˆ–å·²æˆåŠŸé‡è¨­ï¼Œè¿”å› trueã€‚
     bool ResetToDevice(long hresult);
 
 private:
-    /// @brief ¨p¦³«Øºc¨ç¦¡¡A¨¾¤î¥~³¡ª½±µ«Ø¥ß¡C
+    /// @brief ç§æœ‰å»ºæ§‹å‡½å¼ï¼Œé˜²æ­¢å¤–éƒ¨ç›´æ¥å»ºç«‹ã€‚
     CDeviceResetManager();
 
-    // §R°£«ş¨©«Øºc¨ç¦¡©M½á­È¹Bºâ¤l¡A½T«O³æ¨Òªº°ß¤@©Ê
+    // åˆªé™¤æ‹·è²å»ºæ§‹å‡½å¼å’Œè³¦å€¼é‹ç®—å­ï¼Œç¢ºä¿å–®ä¾‹çš„å”¯ä¸€æ€§
     CDeviceResetManager(const CDeviceResetManager&) = delete;
     CDeviceResetManager& operator=(const CDeviceResetManager&) = delete;
 
 private:
-    // «ü¦V°ß¤@¹ê¨ÒªºÀRºA«ü¼Ğ
+    // æŒ‡å‘å”¯ä¸€å¯¦ä¾‹çš„éœæ…‹æŒ‡æ¨™
     static CDeviceResetManager* s_pInstance;
 
-    // ¦¨­ûÅÜ¼Æ (¶¶§Ç©M¤j¤p»P¤Ï½sÄ¶½X¤@­P)
-    VertexBufferDataMgr      m_vertexBufferMgr;      // ¦ì²¾: +0
-    ImageResourceListDataMgr m_imageResourceMgr;     // ¦ì²¾: +12
-    TextureListDataMgr       m_textureMgr;           // ¦ì²¾: +24
-    ID3DXSprite* m_pSprite;              // ¦ì²¾: +36
+    // æˆå“¡è®Šæ•¸ (é †åºå’Œå¤§å°èˆ‡åç·¨è­¯ç¢¼ä¸€è‡´)
+    VertexBufferDataMgr      m_vertexBufferMgr;      // ä½ç§»: +0
+    ImageResourceListDataMgr m_imageResourceMgr;     // ä½ç§»: +12
+    TextureListDataMgr       m_textureMgr;           // ä½ç§»: +24
+    ID3DXSprite* m_pSprite;              // ä½ç§»: +36
 };

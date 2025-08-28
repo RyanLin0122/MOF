@@ -6,17 +6,17 @@
 #include <cstdlib>
 #include <cmath>
 
-// °²³]ªº¥ş°ìÅÜ¼Æ
+// å‡è¨­çš„å…¨åŸŸè®Šæ•¸
 extern GameSystemInfo g_Game_System_Info;
 
-// ¹ïÀ³¤Ï²ÕÄ¶½X: 0x00535210
+// å°æ‡‰åçµ„è­¯ç¢¼: 0x00535210
 CEffect_Field_ExpNumber::CEffect_Field_ExpNumber()
 {
     m_pNumberImages = nullptr;
     m_cDigitCount = 0;
     m_ucState = 0;
     m_fAlpha = 255.0f;        // 1132396544 (0x437F0000)
-    m_fScale = 80.0f;         // 1117782016 (0x42A00000), ÁöµM¥¼¨Ï¥Î¡A¦ı¤´ªì©l¤Æ
+    m_fScale = 80.0f;         // 1117782016 (0x42A00000), é›–ç„¶æœªä½¿ç”¨ï¼Œä½†ä»åˆå§‹åŒ–
     memset(m_ucDigitFrames, 0, sizeof(m_ucDigitFrames));
     m_fInitialPosX = 0.0f;
     m_fCurrentPosY = 0.0f;
@@ -26,16 +26,16 @@ CEffect_Field_ExpNumber::CEffect_Field_ExpNumber()
     m_FrameSkip.m_fTimePerFrame = 1.0f / 60.0f;
 }
 
-// ¹ïÀ³¤Ï²ÕÄ¶½X: 0x005352B0
+// å°æ‡‰åçµ„è­¯ç¢¼: 0x005352B0
 CEffect_Field_ExpNumber::~CEffect_Field_ExpNumber()
 {
     delete[] m_pNumberImages;
 }
 
-// ¹ïÀ³¤Ï²ÕÄ¶½X: 0x005352F0
+// å°æ‡‰åçµ„è­¯ç¢¼: 0x005352F0
 void CEffect_Field_ExpNumber::SetEffect(int expValue, float x, float y)
 {
-    // ¸gÅç­È¼Æ¦r¨Ï¥Î¹ÏÀÉ¤¤±q¯Á¤Ş 12 ¶}©lªººñ¦â¼Æ¦r
+    // ç¶“é©—å€¼æ•¸å­—ä½¿ç”¨åœ–æª”ä¸­å¾ç´¢å¼• 12 é–‹å§‹çš„ç¶ è‰²æ•¸å­—
     const char first_digit_frame = 12;
     const char plus_frame = 22;
     const char minus_frame = 23;
@@ -59,7 +59,7 @@ void CEffect_Field_ExpNumber::SetEffect(int expValue, float x, float y)
     m_fInitialPosX = x;
     m_fCurrentPosY = y;
 
-    // ¹w¥ı­pºâÁ`¼e«×¥H¶i¦æ©~¤¤
+    // é å…ˆè¨ˆç®—ç¸½å¯¬åº¦ä»¥é€²è¡Œå±…ä¸­
     GameImage* pTempImage = cltImageManager::GetInstance()->GetGameImage(7, 0xB0005A4u, 0, 1);
     if (pTempImage) {
         for (int i = 0; i < m_cDigitCount; ++i) {
@@ -70,10 +70,10 @@ void CEffect_Field_ExpNumber::SetEffect(int expValue, float x, float y)
         }
         cltImageManager::GetInstance()->ReleaseGameImage(pTempImage);
     }
-    m_fTotalWidth *= 0.5f; // ¨ú¥b¼e
+    m_fTotalWidth *= 0.5f; // å–åŠå¯¬
 }
 
-// ¹ïÀ³¤Ï²ÕÄ¶½X: 0x00535430
+// å°æ‡‰åçµ„è­¯ç¢¼: 0x00535430
 bool CEffect_Field_ExpNumber::FrameProcess(float fElapsedTime)
 {
     int frameCount = 0;
@@ -82,7 +82,7 @@ bool CEffect_Field_ExpNumber::FrameProcess(float fElapsedTime)
     }
     float fFrameCount = static_cast<float>(frameCount);
 
-    if (m_ucState == 0) { // ¶¥¬q 0: ²H¤J»P°±¯d
+    if (m_ucState == 0) { // éšæ®µ 0: æ·¡å…¥èˆ‡åœç•™
         m_fAlpha -= fFrameCount * 2.0f;
         if (m_fAlpha < 220.0f) {
             m_fAlpha = 220.0f;
@@ -90,7 +90,7 @@ bool CEffect_Field_ExpNumber::FrameProcess(float fElapsedTime)
         }
         m_fCurrentPosY -= fFrameCount * 0.5f;
     }
-    else if (m_ucState == 1) { // ¶¥¬q 1: ²H¥X»P¤Wº}
+    else if (m_ucState == 1) { // éšæ®µ 1: æ·¡å‡ºèˆ‡ä¸Šæ¼‚
         m_fAlpha -= fFrameCount * 5.0f;
         m_fCurrentPosY -= fFrameCount * 1.0f;
     }
@@ -98,7 +98,7 @@ bool CEffect_Field_ExpNumber::FrameProcess(float fElapsedTime)
     return m_fAlpha < 0.0f;
 }
 
-// ¹ïÀ³¤Ï²ÕÄ¶½X: 0x00535530
+// å°æ‡‰åçµ„è­¯ç¢¼: 0x00535530
 void CEffect_Field_ExpNumber::Process()
 {
     float screenX = m_fInitialPosX - static_cast<float>(g_Game_System_Info.ScreenX);
@@ -108,7 +108,7 @@ void CEffect_Field_ExpNumber::Process()
         float screenY = m_fCurrentPosY - static_cast<float>(g_Game_System_Info.ScreenY);
         float currentX = screenX - m_fTotalWidth;
 
-        // ±q«á©¹«e³B²z¼Æ¦r (±q­Ó¦ì¼Æ¶}©l)
+        // å¾å¾Œå¾€å‰è™•ç†æ•¸å­— (å¾å€‹ä½æ•¸é–‹å§‹)
         for (int i = 0; i < m_cDigitCount; ++i) {
             m_pNumberImages[i] = cltImageManager::GetInstance()->GetGameImage(7, 0xB0005A4u, 0, 1);
             if (m_pNumberImages[i]) {
@@ -119,24 +119,24 @@ void CEffect_Field_ExpNumber::Process()
                 float clampedAlpha = (m_fAlpha > 254.0f) ? 254.0f : m_fAlpha;
                 m_pNumberImages[i]->SetAlpha(static_cast<unsigned int>(clampedAlpha));
 
-                // ¸gÅç­È¼Æ¦r¨S¦³ÁY©ñ°Êµe¡AÃC¦â©T©w
+                // ç¶“é©—å€¼æ•¸å­—æ²’æœ‰ç¸®æ”¾å‹•ç•«ï¼Œé¡è‰²å›ºå®š
 
                 RECT rect;
                 m_pNumberImages[i]->GetBlockRect(&rect);
-                currentX += static_cast<float>(rect.right - rect.left - 6); // ­ì©l½X¦³ -6 ªº¶¡¶Z½Õ¾ã
+                currentX += static_cast<float>(rect.right - rect.left - 6); // åŸå§‹ç¢¼æœ‰ -6 çš„é–“è·èª¿æ•´
             }
         }
     }
 }
 
-// ¹ïÀ³¤Ï²ÕÄ¶½X: 0x00535680
+// å°æ‡‰åçµ„è­¯ç¢¼: 0x00535680
 void CEffect_Field_ExpNumber::Draw()
 {
     if (!m_bIsVisible || !m_pNumberImages) return;
 
     CDeviceManager::GetInstance()->ResetRenderState();
 
-    // ±q«á©¹«eÃ¸»s (¥ıµeªº¦b¤U¼h¡A§Y­Ó¦ì¼Æ)
+    // å¾å¾Œå¾€å‰ç¹ªè£½ (å…ˆç•«çš„åœ¨ä¸‹å±¤ï¼Œå³å€‹ä½æ•¸)
     for (int i = 0; i < m_cDigitCount; ++i) {
         if (m_pNumberImages[i] && m_pNumberImages[i]->IsInUse()) {
             m_pNumberImages[i]->Draw();

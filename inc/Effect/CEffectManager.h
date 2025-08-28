@@ -1,91 +1,91 @@
 #pragma once
 #include "Effect/CEffectBase.h"
 #include "Effect/CEffect_OverMind_Screen.h"
-#include "Effect/CEffect_Skill_Type_Once.h" // ÁöµM¦b´£¨Ñªºµ{¦¡½X¤¤¥¼¨£¨ä¥Î³~¡A¦ı¨Ì¾Ú«Øºc¨ç¦¡ÁÙ­ì
+#include "Effect/CEffect_Skill_Type_Once.h" // é›–ç„¶åœ¨æä¾›çš„ç¨‹å¼ç¢¼ä¸­æœªè¦‹å…¶ç”¨é€”ï¼Œä½†ä¾æ“šå»ºæ§‹å‡½å¼é‚„åŸ
 #include "Effect/cltMoFC_EffectKindInfo.h"
 
 /**
  * @struct EffectInfo
- * @brief ¥Î©ó¦ê±µ CEffectBase ª«¥óªºÂù¦VÃìµ²¦ê¦C¸`ÂI¡C
- * (¤j¤p: 12 bytes)
+ * @brief ç”¨æ–¼ä¸²æ¥ CEffectBase ç‰©ä»¶çš„é›™å‘éˆçµä¸²åˆ—ç¯€é»ã€‚
+ * (å¤§å°: 12 bytes)
  */
 struct EffectInfo {
-    EffectInfo* pPrev;       // «ü¦V¤W¤@­Ó¸`ÂI
-    EffectInfo* pNext;       // «ü¦V«á¤@­Ó¸`ÂI
-    CEffectBase* pEffect;    // «ü¦V¹ê»Úªº¯S®Äª«¥ó
+    EffectInfo* pPrev;       // æŒ‡å‘ä¸Šä¸€å€‹ç¯€é»
+    EffectInfo* pNext;       // æŒ‡å‘å¾Œä¸€å€‹ç¯€é»
+    CEffectBase* pEffect;    // æŒ‡å‘å¯¦éš›çš„ç‰¹æ•ˆç‰©ä»¶
 };
 
 /**
  * @class CEffectManager
- * @brief ¯S®ÄºŞ²z¾¹¡A¨Ï¥Î³æ¨Ò¼Ò¦¡¡C
- * * ­t³d©Ò¦³°ÊºA¹CÀ¸¯S®Äªº¥Í©R¶g´ÁºŞ²z¡C¥¦ºûÅ@¤@­Ó CEffectBase ª«¥óªº
- * Âù¦VÃìµ²¦ê¦C¡A¨Ã¦b¨C¤@´V¤¤³B²z¥¦­Ìªº§ó·s¡BÃ¸»s©M¾P·´¡C
+ * @brief ç‰¹æ•ˆç®¡ç†å™¨ï¼Œä½¿ç”¨å–®ä¾‹æ¨¡å¼ã€‚
+ * * è² è²¬æ‰€æœ‰å‹•æ…‹éŠæˆ²ç‰¹æ•ˆçš„ç”Ÿå‘½é€±æœŸç®¡ç†ã€‚å®ƒç¶­è­·ä¸€å€‹ CEffectBase ç‰©ä»¶çš„
+ * é›™å‘éˆçµä¸²åˆ—ï¼Œä¸¦åœ¨æ¯ä¸€å¹€ä¸­è™•ç†å®ƒå€‘çš„æ›´æ–°ã€ç¹ªè£½å’ŒéŠ·æ¯€ã€‚
  */
 class CEffectManager {
 public:
-    /// @brief ¨ú±o°ß¤@ªººŞ²z¾¹¹ê¨Ò¡C
+    /// @brief å–å¾—å”¯ä¸€çš„ç®¡ç†å™¨å¯¦ä¾‹ã€‚
     static CEffectManager* GetInstance();
 
-    /// @brief ¸Ñºc¨ç¦¡¡A·|²M²z©Ò¦³´İ¾lªº¯S®Ä¡C
+    /// @brief è§£æ§‹å‡½å¼ï¼Œæœƒæ¸…ç†æ‰€æœ‰æ®˜é¤˜çš„ç‰¹æ•ˆã€‚
     ~CEffectManager();
 
-    // --- ¯S®ÄºŞ²z®Ö¤ß¨ç¦¡ ---
+    // --- ç‰¹æ•ˆç®¡ç†æ ¸å¿ƒå‡½å¼ ---
 
-    /// @brief ±N¤@­Ó¤w¸g«Ø¥ßªº¯S®Äª«¥ó¥[¤J¨ìºŞ²z¾¹ªºÃìµ²¦ê¦C¤¤¡C
-    /// @param pEffect «ü¦V CEffectBase ­l¥ÍÃş§Oª«¥óªº«ü¼Ğ¡C
+    /// @brief å°‡ä¸€å€‹å·²ç¶“å»ºç«‹çš„ç‰¹æ•ˆç‰©ä»¶åŠ å…¥åˆ°ç®¡ç†å™¨çš„éˆçµä¸²åˆ—ä¸­ã€‚
+    /// @param pEffect æŒ‡å‘ CEffectBase è¡ç”Ÿé¡åˆ¥ç‰©ä»¶çš„æŒ‡æ¨™ã€‚
     void BulletAdd(CEffectBase* pEffect);
 
-    /// @brief ®Ú¾Ú¯S®ÄºØÃşID¡A«Ø¥ß¨Ã¥[¤J¤@­Ó·sªº¯S®Ä¡C
-    /// ³o¬O¥D­nªº¯S®Ä¤u¼t¨ç¦¡¡C
-    /// @param effectKindID ¯S®ÄºØÃşªºID (¹ïÀ³ .ea ÀÉ®×)¡C
-    /// @param pCaster ¬IªkªÌ©Î¨Ó·½¨¤¦â¡C
-    /// @param pTarget ¥Ø¼Ğ¨¤¦â¡C
-    /// @param ... ¨ä¥L°Ñ¼Æ¥Î©ó¯S©w¯S®Ä¡C
-    /// @return ¦¨¥\«Ø¥ß¨Ã¥[¤Jªº¯S®Äª«¥ó«ü¼Ğ¡A¥¢±Ñ«hªğ¦^ nullptr¡C
+    /// @brief æ ¹æ“šç‰¹æ•ˆç¨®é¡IDï¼Œå»ºç«‹ä¸¦åŠ å…¥ä¸€å€‹æ–°çš„ç‰¹æ•ˆã€‚
+    /// é€™æ˜¯ä¸»è¦çš„ç‰¹æ•ˆå·¥å» å‡½å¼ã€‚
+    /// @param effectKindID ç‰¹æ•ˆç¨®é¡çš„ID (å°æ‡‰ .ea æª”æ¡ˆ)ã€‚
+    /// @param pCaster æ–½æ³•è€…æˆ–ä¾†æºè§’è‰²ã€‚
+    /// @param pTarget ç›®æ¨™è§’è‰²ã€‚
+    /// @param ... å…¶ä»–åƒæ•¸ç”¨æ–¼ç‰¹å®šç‰¹æ•ˆã€‚
+    /// @return æˆåŠŸå»ºç«‹ä¸¦åŠ å…¥çš„ç‰¹æ•ˆç‰©ä»¶æŒ‡æ¨™ï¼Œå¤±æ•—å‰‡è¿”å› nullptrã€‚
     CEffectBase* AddEffect(unsigned short effectKindID, ClientCharacter* pCaster, ClientCharacter* pTarget = nullptr, int a5 = 0, unsigned short a6 = 0, unsigned short a7 = 0, unsigned char a8 = 2);
 
-    /// @brief ®Ú¾Ú¯S®Ä¦WºÙ¡A«Ø¥ß¨Ã¥[¤J¤@­Ó·sªº¯S®Ä¡C
+    /// @brief æ ¹æ“šç‰¹æ•ˆåç¨±ï¼Œå»ºç«‹ä¸¦åŠ å…¥ä¸€å€‹æ–°çš„ç‰¹æ•ˆã€‚
     CEffectBase* AddEffect(char* szEffectName, ClientCharacter* pCaster);
 
-    /// @brief ³B²z©Ò¦³¨üºŞ²z¯S®Äªº¥Í©R¶g´Á¡A¨Ã²¾°£¤wµ²§ôªº¯S®Ä¡C
-    /// @param fElapsedTime ¸g¹Lªº®É¶¡¡C
-    /// @param bForceDeleteAll ¬O§_±j¨î§R°£©Ò¦³¯S®Ä¡C
+    /// @brief è™•ç†æ‰€æœ‰å—ç®¡ç†ç‰¹æ•ˆçš„ç”Ÿå‘½é€±æœŸï¼Œä¸¦ç§»é™¤å·²çµæŸçš„ç‰¹æ•ˆã€‚
+    /// @param fElapsedTime ç¶“éçš„æ™‚é–“ã€‚
+    /// @param bForceDeleteAll æ˜¯å¦å¼·åˆ¶åˆªé™¤æ‰€æœ‰ç‰¹æ•ˆã€‚
     void FrameProcess(float fElapsedTime, bool bForceDeleteAll = false);
 
-    /// @brief ©I¥s©Ò¦³¨üºŞ²z¯S®Äªº Process ¨ç¦¡¡A·Ç³ÆÃ¸»s¼Æ¾Ú¡C
+    /// @brief å‘¼å«æ‰€æœ‰å—ç®¡ç†ç‰¹æ•ˆçš„ Process å‡½å¼ï¼Œæº–å‚™ç¹ªè£½æ•¸æ“šã€‚
     void Process();
 
-    /// @brief ©I¥s©Ò¦³¨üºŞ²z¯S®Äªº Draw ¨ç¦¡¡A±N¨äÃ¸»s¨ì¿Ã¹õ¡C
+    /// @brief å‘¼å«æ‰€æœ‰å—ç®¡ç†ç‰¹æ•ˆçš„ Draw å‡½å¼ï¼Œå°‡å…¶ç¹ªè£½åˆ°è¢å¹•ã€‚
     void Draw();
 
-    /// @brief ±qºŞ²z¾¹¤¤¤â°Ê§R°£¤@­Ó«ü©wªº¯S®Ä¡C
-    /// @param pEffect ­n§R°£ªº¯S®Äª«¥ó«ü¼Ğ¡C
-    /// @return ¦¨¥\ªğ¦^ true¡A¥¢±Ñªğ¦^ false¡C
+    /// @brief å¾ç®¡ç†å™¨ä¸­æ‰‹å‹•åˆªé™¤ä¸€å€‹æŒ‡å®šçš„ç‰¹æ•ˆã€‚
+    /// @param pEffect è¦åˆªé™¤çš„ç‰¹æ•ˆç‰©ä»¶æŒ‡æ¨™ã€‚
+    /// @return æˆåŠŸè¿”å› trueï¼Œå¤±æ•—è¿”å› falseã€‚
     bool DeleteEffect(CEffectBase* pEffect);
 
-    /// @brief ³B²z¯S®íªº¡B«DÃìµ²¦ê¦CºŞ²zªº¯S®Ä¡]¦p¥ş¿Ã¹õ®ÄªG¡^¡C
+    /// @brief è™•ç†ç‰¹æ®Šçš„ã€ééˆçµä¸²åˆ—ç®¡ç†çš„ç‰¹æ•ˆï¼ˆå¦‚å…¨è¢å¹•æ•ˆæœï¼‰ã€‚
     void AddEtcEffect(unsigned short type, unsigned int accountID);
 
-    /// @brief ²MªÅ©Ò¦³¯S®ÄÃìµ²¦ê¦C¡C
+    /// @brief æ¸…ç©ºæ‰€æœ‰ç‰¹æ•ˆéˆçµä¸²åˆ—ã€‚
     void BulletListAllDel();
 	
     cltMoFC_EffectKindInfo g_clEffectKindInfo;
     
 private:
-    // --- ¨p¦³¦¨­û ---
+    // --- ç§æœ‰æˆå“¡ ---
 
-    // ¨p¦³«Øºc¨ç¦¡¡A½T«O³æ¨Ò¼Ò¦¡
+    // ç§æœ‰å»ºæ§‹å‡½å¼ï¼Œç¢ºä¿å–®ä¾‹æ¨¡å¼
     CEffectManager();
     CEffectManager(const CEffectManager&) = delete;
     CEffectManager& operator=(const CEffectManager&) = delete;
     static CEffectManager* s_pInstance;
 
-    // ¯S®ÄÃìµ²¦ê¦CªºÀY§À«ü¼Ğ©M­p¼Æ¾¹
-    EffectInfo* m_pHead;           // ¦ì²¾ +0
-    EffectInfo* m_pTail;           // ¦ì²¾ +4
-    unsigned int     m_uEffectCount;    // ¦ì²¾ +8
+    // ç‰¹æ•ˆéˆçµä¸²åˆ—çš„é ­å°¾æŒ‡æ¨™å’Œè¨ˆæ•¸å™¨
+    EffectInfo* m_pHead;           // ä½ç§» +0
+    EffectInfo* m_pTail;           // ä½ç§» +4
+    unsigned int     m_uEffectCount;    // ä½ç§» +8
 
-    // ¯S®íªº¡B§@¬°¦¨­ûÅÜ¼Æªº¯S®Äª«¥ó
-    CEffect_OverMind_Screen m_OverMindScreenEffect; // ¦ì²¾ +12
-    CEffect_Skill_Type_Once m_SkillTypeOnceEffect;  // ¦ì²¾ +32, ÁöµM¥Î³~¤£©ú¡A¦ı¨Ì¾Ú«Øºc¨ç¦¡ÁÙ­ì
+    // ç‰¹æ®Šçš„ã€ä½œç‚ºæˆå“¡è®Šæ•¸çš„ç‰¹æ•ˆç‰©ä»¶
+    CEffect_OverMind_Screen m_OverMindScreenEffect; // ä½ç§» +12
+    CEffect_Skill_Type_Once m_SkillTypeOnceEffect;  // ä½ç§» +32, é›–ç„¶ç”¨é€”ä¸æ˜ï¼Œä½†ä¾æ“šå»ºæ§‹å‡½å¼é‚„åŸ
 };

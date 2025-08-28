@@ -1,18 +1,18 @@
 #include "Image/Image.h"
-#include "Image/CDeviceManager.h"       // °²³] CDeviceManager ªº©w¸q¦b¦¹
+#include "Image/CDeviceManager.h"       // å‡è¨­ CDeviceManager çš„å®šç¾©åœ¨æ­¤
 
-// --- ¥~³¡¨Ì¿àªº¥ş°ìÅÜ¼Æ ---
+// --- å¤–éƒ¨ä¾è³´çš„å…¨åŸŸè®Šæ•¸ ---
 extern LPDIRECT3DDEVICE9    Device;
-extern bool                 DontDraw; // ¥ş°ìªº "¤£­nÃ¸»s" ºX¼Ğ
+extern bool                 DontDraw; // å…¨åŸŸçš„ "ä¸è¦ç¹ªè£½" æ——æ¨™
 
 Image::Image()
 {
-    // ªì©l¤Æ«ü¼Ğ©MºX¼Ğ
+    // åˆå§‹åŒ–æŒ‡æ¨™å’Œæ——æ¨™
     m_pVBData = nullptr;
     m_pTexData = nullptr;
     m_bIsCreated = false;
 
-    // ªì©l¤Æ¦¨­ûÅÜ¼Æ
+    // åˆå§‹åŒ–æˆå“¡è®Šæ•¸
     m_nGridX = 0;
     m_fFrameWidth = 0.0f;
     m_fFrameHeight = 0.0f;
@@ -20,7 +20,7 @@ Image::Image()
     m_fGridHeight = 0.0f;
     m_nWord_28 = 0;
     g_Device_Reset_Manager = CDeviceResetManager::GetInstance();
-    // ªì©l¤Æ³»ÂI°}¦C©M°òÂ¦³»ÂI°}¦C
+    // åˆå§‹åŒ–é ‚é»é™£åˆ—å’ŒåŸºç¤é ‚é»é™£åˆ—
     for (int i = 0; i < 4; ++i)
     {
         m_vertices[i] = { 0.0f, 0.0f, 0.0f, 1.0f, 0.0f, 0.0f };
@@ -30,36 +30,36 @@ Image::Image()
 
 Image::~Image()
 {
-    // ¦b¸Ñºc®É©I¥s Free ¨ÓÄÀ©ñ¸ê·½
+    // åœ¨è§£æ§‹æ™‚å‘¼å« Free ä¾†é‡‹æ”¾è³‡æº
     this->Free();
 }
 
 bool Image::CreateImage(const char* szFilename, int texWidth, int texHeight, int frameWidth, int frameHeight)
 {
-    // ³]©w¤Ø¤o©M®æ½u¸ê°T
+    // è¨­å®šå°ºå¯¸å’Œæ ¼ç·šè³‡è¨Š
     m_fFrameWidth = (float)frameWidth;
     m_fFrameHeight = (float)frameHeight;
     m_nGridX = texWidth / frameWidth;
     m_fGridWidth = (float)frameWidth / (float)texWidth;
     m_fGridHeight = (float)frameHeight / (float)texHeight;
 
-    // «Ø¥ß³»ÂI½w½Ä°Ï©M¯¾²z
-    m_pVBData = g_Device_Reset_Manager->CreateVertexBuffer(4, 2); // Ãş«¬ 2 ¹ïÀ³ ImageVertex
+    // å»ºç«‹é ‚é»ç·©è¡å€å’Œç´‹ç†
+    m_pVBData = g_Device_Reset_Manager->CreateVertexBuffer(4, 2); // é¡å‹ 2 å°æ‡‰ ImageVertex
     m_pTexData = g_Device_Reset_Manager->CreateTexture(szFilename, 0);
 
     if (!m_pVBData || !m_pTexData)
     {
-        Free(); // ¦pªG¥ô¤@¶µ«Ø¥ß¥¢±Ñ¡A«h²M²z©Ò¦³¸ê·½
+        Free(); // å¦‚æœä»»ä¸€é …å»ºç«‹å¤±æ•—ï¼Œå‰‡æ¸…ç†æ‰€æœ‰è³‡æº
         return false;
     }
 
-    // ­pºâ¥Î©ó±ÛÂà©M©w¦ìªº°òÂ¦³»ÂI¡]¥H (0,0) ¬°¤¤¤ß¡^
+    // è¨ˆç®—ç”¨æ–¼æ—‹è½‰å’Œå®šä½çš„åŸºç¤é ‚é»ï¼ˆä»¥ (0,0) ç‚ºä¸­å¿ƒï¼‰
     float halfW = m_fFrameWidth * 0.5f;
     float halfH = m_fFrameHeight * 0.5f;
-    m_baseVertices[0] = { -halfW, -halfH, 0.0f }; // ¥ª¤W
-    m_baseVertices[1] = { halfW, -halfH, 0.0f }; // ¥k¤W
-    m_baseVertices[2] = { halfW,  halfH, 0.0f }; // ¥k¤U
-    m_baseVertices[3] = { -halfW,  halfH, 0.0f }; // ¥ª¤U
+    m_baseVertices[0] = { -halfW, -halfH, 0.0f }; // å·¦ä¸Š
+    m_baseVertices[1] = { halfW, -halfH, 0.0f }; // å³ä¸Š
+    m_baseVertices[2] = { halfW,  halfH, 0.0f }; // å³ä¸‹
+    m_baseVertices[3] = { -halfW,  halfH, 0.0f }; // å·¦ä¸‹
 
     m_bIsCreated = true;
     return true;
@@ -67,7 +67,7 @@ bool Image::CreateImage(const char* szFilename, int texWidth, int texHeight, int
 
 void Image::Free()
 {
-    // ¨Ï¥Î CDeviceResetManager ¨Ó¦w¥ş¦a§R°£¸ê·½
+    // ä½¿ç”¨ CDeviceResetManager ä¾†å®‰å…¨åœ°åˆªé™¤è³‡æº
     if (m_pTexData)
     {
         g_Device_Reset_Manager->DeleteTexture(m_pTexData);
@@ -85,8 +85,8 @@ void Image::SetImage(float x, float y, unsigned short frameID)
 {
     if (!m_bIsCreated) return;
 
-    // 1. ­pºâ¿Ã¹õ®y¼Ğ
-    // ª`·N¡G­ì©l½X¤¤¦³ -0.5 ªº°¾²¾¡A³o³q±`¬O¬°¤F¹ï»ô¹³¯À¤¤¤ß
+    // 1. è¨ˆç®—è¢å¹•åº§æ¨™
+    // æ³¨æ„ï¼šåŸå§‹ç¢¼ä¸­æœ‰ -0.5 çš„åç§»ï¼Œé€™é€šå¸¸æ˜¯ç‚ºäº†å°é½Šåƒç´ ä¸­å¿ƒ
     m_vertices[0].x = x - 0.5f;
     m_vertices[0].y = y - 0.5f;
     m_vertices[1].x = x + m_fFrameWidth - 0.5f;
@@ -96,7 +96,7 @@ void Image::SetImage(float x, float y, unsigned short frameID)
     m_vertices[3].x = x - 0.5f;
     m_vertices[3].y = y + m_fFrameHeight - 0.5f;
 
-    // 2. ­pºâ¯¾²z (UV) ®y¼Ğ
+    // 2. è¨ˆç®—ç´‹ç† (UV) åº§æ¨™
     float tx = (float)(frameID % m_nGridX) * m_fGridWidth;
     float ty = (float)(frameID / m_nGridX) * m_fGridHeight;
     m_vertices[0].u = tx;
@@ -108,14 +108,14 @@ void Image::SetImage(float x, float y, unsigned short frameID)
     m_vertices[3].u = tx;
     m_vertices[3].v = ty + m_fGridHeight;
 
-    // 3. ±N³»ÂI¸ê®Æ§ó·s¨ìµwÅé½w½Ä°Ï
+    // 3. å°‡é ‚é»è³‡æ–™æ›´æ–°åˆ°ç¡¬é«”ç·©è¡å€
     this->Process();
 }
 
 void Image::SetPosition(float x, float y)
 {
-    // ±N°òÂ¦³»ÂI®Ú¾Ú«ü©w¦ì¸m¶i¦æ¥­²¾¡A±o¨ì³Ì²×ªº¿Ã¹õ³»ÂI®y¼Ğ
-    // ¦P¼Ë¡A-0.5f ¬O¬°¤F¹³¯À¹ï»ô
+    // å°‡åŸºç¤é ‚é»æ ¹æ“šæŒ‡å®šä½ç½®é€²è¡Œå¹³ç§»ï¼Œå¾—åˆ°æœ€çµ‚çš„è¢å¹•é ‚é»åº§æ¨™
+    // åŒæ¨£ï¼Œ-0.5f æ˜¯ç‚ºäº†åƒç´ å°é½Š
     for (int i = 0; i < 4; ++i)
     {
         m_vertices[i].x = x + m_baseVertices[i].x - 0.5f;
@@ -128,10 +128,10 @@ void Image::SetAngle(float radians)
     D3DXMATRIX matRotation;
     D3DXMatrixRotationZ(&matRotation, radians);
 
-    // ¨Ï¥Î±ÛÂà¯x°}ÅÜ´«°òÂ¦³»ÂI
-    // ³o¸Ì¤£¯àª½±µ­×§ï m_baseVertices¡A§_«h·|²Ö¿n±ÛÂà
-    // ­ì©l½XªºÅŞ¿è¬Oª½±µÅÜ´« m_baseVertices¡A³o¥i¯à¬O¤@­Ó bug ©Î¯S©w³]­p
-    // ¦¹³B¬°©¾¹êÁÙ­ì
+    // ä½¿ç”¨æ—‹è½‰çŸ©é™£è®Šæ›åŸºç¤é ‚é»
+    // é€™è£¡ä¸èƒ½ç›´æ¥ä¿®æ”¹ m_baseVerticesï¼Œå¦å‰‡æœƒç´¯ç©æ—‹è½‰
+    // åŸå§‹ç¢¼çš„é‚è¼¯æ˜¯ç›´æ¥è®Šæ› m_baseVerticesï¼Œé€™å¯èƒ½æ˜¯ä¸€å€‹ bug æˆ–ç‰¹å®šè¨­è¨ˆ
+    // æ­¤è™•ç‚ºå¿ å¯¦é‚„åŸ
     for (int i = 0; i < 4; ++i)
     {
         D3DXVec3TransformCoord(&m_baseVertices[i], &m_baseVertices[i], &matRotation);
@@ -142,57 +142,57 @@ void Image::DrawImage()
 {
     if (!m_bIsCreated || DontDraw || !m_pVBData || !m_pVBData->pVertexBuffer) return;
 
-    // ¨Ï¥Î¦Û¨­ªº³»ÂI½w½Ä°Ï¨ÓÃ¸»s
-    this->DrawImage(m_pVBData->pVertexBuffer); // °²³] pVertexBuffer ¦b VertexBufferData ¤¤
+    // ä½¿ç”¨è‡ªèº«çš„é ‚é»ç·©è¡å€ä¾†ç¹ªè£½
+    this->DrawImage(m_pVBData->pVertexBuffer); // å‡è¨­ pVertexBuffer åœ¨ VertexBufferData ä¸­
 }
 
 void Image::DrawImage(IDirect3DVertexBuffer9* pVB)
 {
-    // ¦pªG¸ê·½¥¼«Ø¥ß¡B¥ş°ìºX¼Ğ¬° true ©Î¨S¦³¯¾²z¡A«h¤£°õ¦æ
+    // å¦‚æœè³‡æºæœªå»ºç«‹ã€å…¨åŸŸæ——æ¨™ç‚º true æˆ–æ²’æœ‰ç´‹ç†ï¼Œå‰‡ä¸åŸ·è¡Œ
     if (!m_bIsCreated || !m_pTexData || !m_pTexData->pTexture) return;
 
-    // ¨Ï¥Î¥ş°ìªº CDeviceManager ¨Ó³]©w´è¬Vª¬ºA¨ÃÃ¸»s
-    // ³oÁÙ­ì¤F¤Ï½sÄ¶µ{¦¡½X¤¤ªº©I¥s¬yµ{
+    // ä½¿ç”¨å…¨åŸŸçš„ CDeviceManager ä¾†è¨­å®šæ¸²æŸ“ç‹€æ…‹ä¸¦ç¹ªè£½
+    // é€™é‚„åŸäº†åç·¨è­¯ç¨‹å¼ç¢¼ä¸­çš„å‘¼å«æµç¨‹
 
-    // 1. ³]©w­n¨Ï¥Îªº¯¾²z
+    // 1. è¨­å®šè¦ä½¿ç”¨çš„ç´‹ç†
     CDeviceManager::GetInstance()->SetTexture(0, m_pTexData->pTexture);
 
-    // 2. ³]©w³»ÂI¦ê¬y¨Ó·½
+    // 2. è¨­å®šé ‚é»ä¸²æµä¾†æº
     CDeviceManager::GetInstance()->SetStreamSource(0, pVB, 0, sizeof(ImageVertex));
 
-    // 3. ³]©w³»ÂI®æ¦¡ (FVF)
-    // 0x104 ¥Nªí D3DFVF_XYZRHW | D3DFVF_TEX1
+    // 3. è¨­å®šé ‚é»æ ¼å¼ (FVF)
+    // 0x104 ä»£è¡¨ D3DFVF_XYZRHW | D3DFVF_TEX1
     CDeviceManager::GetInstance()->SetFVF(D3DFVF_XYZRHW | D3DFVF_TEX1);
 
-    // 4. ©I¥s Direct3D ªº DrawPrimitive ¨ç¦¡¶i¦æÃ¸»s
-    // D3DPT_TRIANGLEFAN ·|¨Ï¥Î 4 ­Ó³»ÂIÃ¸»s¤@­Ó¥Ñ¨â­Ó¤T¨¤§Î²Õ¦¨ªº¯x§Î
+    // 4. å‘¼å« Direct3D çš„ DrawPrimitive å‡½å¼é€²è¡Œç¹ªè£½
+    // D3DPT_TRIANGLEFAN æœƒä½¿ç”¨ 4 å€‹é ‚é»ç¹ªè£½ä¸€å€‹ç”±å…©å€‹ä¸‰è§’å½¢çµ„æˆçš„çŸ©å½¢
     Device->DrawPrimitive(D3DPT_TRIANGLEFAN, 0, 2);
 }
 
 void Image::Process()
 {
-    // ¦pªG¸ê·½¥¼«Ø¥ß¡B¥ş°ìºX¼Ğ¬° true ©Î¨S¦³³»ÂI½w½Ä°Ï¡A«h¤£°õ¦æ
+    // å¦‚æœè³‡æºæœªå»ºç«‹ã€å…¨åŸŸæ——æ¨™ç‚º true æˆ–æ²’æœ‰é ‚é»ç·©è¡å€ï¼Œå‰‡ä¸åŸ·è¡Œ
     if (!m_bIsCreated || DontDraw || !m_pVBData || !m_pVBData->pVertexBuffer) return;
 
-    // Âê©w³»ÂI½w½Ä°Ï
+    // é–å®šé ‚é»ç·©è¡å€
     void* pV = nullptr;
     HRESULT hr = m_pVBData->pVertexBuffer->Lock(0, sizeof(m_vertices), &pV, 0);
 
     if (SUCCEEDED(hr) && pV != nullptr)
     {
-        // ±N¥Ø«eªº³»ÂI¸ê®Æ (m_vertices) ½Æ»s¨ìµwÅé½w½Ä°Ï¤¤
+        // å°‡ç›®å‰çš„é ‚é»è³‡æ–™ (m_vertices) è¤‡è£½åˆ°ç¡¬é«”ç·©è¡å€ä¸­
         memcpy(pV, m_vertices, sizeof(m_vertices));
-        // ¸ÑÂê½w½Ä°Ï
+        // è§£é–ç·©è¡å€
         m_pVBData->pVertexBuffer->Unlock();
     }
 }
 
 void Image::SetLRReverse()
 {
-    // ³o­Ó¨ç¦¡³z¹L¥æ´«¥ª¥k¨â°¼ªº°òÂ¦³»ÂI¨Ó¹ê²{¤ô¥­Â½Âà¡C
-    // ¥æ´« ¥ª¤W(0) ©M ¥k¤W(1)
+    // é€™å€‹å‡½å¼é€éäº¤æ›å·¦å³å…©å´çš„åŸºç¤é ‚é»ä¾†å¯¦ç¾æ°´å¹³ç¿»è½‰ã€‚
+    // äº¤æ› å·¦ä¸Š(0) å’Œ å³ä¸Š(1)
     std::swap(m_baseVertices[0], m_baseVertices[1]);
-    // ¥æ´« ¥ª¤U(3) ©M ¥k¤U(2)
+    // äº¤æ› å·¦ä¸‹(3) å’Œ å³ä¸‹(2)
     std::swap(m_baseVertices[3], m_baseVertices[2]);
 }
 
@@ -200,11 +200,11 @@ void Image::SetBlockID(unsigned short blockID)
 {
     if (!m_bIsCreated || m_nGridX == 0) return;
 
-    // ®Ú¾Ú°Ï¶ô ID (¼v®æ½s¸¹) ­pºâ¯¾²zªº UV ®y¼Ğ
+    // æ ¹æ“šå€å¡Š ID (å½±æ ¼ç·¨è™Ÿ) è¨ˆç®—ç´‹ç†çš„ UV åº§æ¨™
     float tx = (float)(blockID % m_nGridX) * m_fGridWidth;
     float ty = (float)(blockID / m_nGridX) * m_fGridHeight;
 
-    // ±N­pºâ¥Xªº UV ®y¼Ğ³]©w¨ì³Ì²×ªº³»ÂI¸ê®Æ¤¤
+    // å°‡è¨ˆç®—å‡ºçš„ UV åº§æ¨™è¨­å®šåˆ°æœ€çµ‚çš„é ‚é»è³‡æ–™ä¸­
     m_vertices[0].u = tx;
     m_vertices[0].v = ty;
     m_vertices[1].u = tx + m_fGridWidth;
@@ -217,7 +217,7 @@ void Image::SetBlockID(unsigned short blockID)
 
 void Image::GetVerTextInfo(int* gridX, float* width, float* height, float* gridWidth, float* gridHeight)
 {
-    // ÀË¬d¶Ç¤Jªº«ü¼Ğ¬O§_¦³®Ä¡AÁ×§Kµ{¦¡±Y¼ì
+    // æª¢æŸ¥å‚³å…¥çš„æŒ‡æ¨™æ˜¯å¦æœ‰æ•ˆï¼Œé¿å…ç¨‹å¼å´©æ½°
     if (gridX)      *gridX = m_nGridX;
     if (width)      *width = m_fFrameWidth;
     if (height)     *height = m_fFrameHeight;

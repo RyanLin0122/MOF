@@ -1,68 +1,68 @@
 #pragma once
 
-#include "ImageResource.h" // °²³] ImageResource.h ¤w³Q©w¸q¥B¥i³Q¥]§t
+#include "ImageResource.h" // å‡è¨­ ImageResource.h å·²è¢«å®šç¾©ä¸”å¯è¢«åŒ…å«
 
-// «e¦V«Å§i
+// å‰å‘å®£å‘Š
 struct ImageResourceListData;
 
 /// @class ImageResourceListDataMgr
-/// @brief ºŞ²z ImageResourceListData ¸`ÂIªºÂù¦VÃìµ²¦ê¦C¡C
+/// @brief ç®¡ç† ImageResourceListData ç¯€é»çš„é›™å‘éˆçµä¸²åˆ—ã€‚
 ///
-/// ³o­ÓºŞ²z¾¹­t³d«Ø¥ß¡B§R°£©M°lÂÜ©Ò¦³ªº¹Ï¤ù¸ê·½¡C
-/// ¥¦ªº¦æ¬°¬O±q¤Ï½sÄ¶ªº C µ{¦¡½X¤¤ÁÙ­ìªº¡C
+/// é€™å€‹ç®¡ç†å™¨è² è²¬å»ºç«‹ã€åˆªé™¤å’Œè¿½è¹¤æ‰€æœ‰çš„åœ–ç‰‡è³‡æºã€‚
+/// å®ƒçš„è¡Œç‚ºæ˜¯å¾åç·¨è­¯çš„ C ç¨‹å¼ç¢¼ä¸­é‚„åŸçš„ã€‚
 class ImageResourceListDataMgr {
 public:
-    /// @brief «Øºc¨ç¦¡
+    /// @brief å»ºæ§‹å‡½å¼
     ImageResourceListDataMgr();
 
-    /// @brief ¸Ñºc¨ç¦¡
+    /// @brief è§£æ§‹å‡½å¼
     ~ImageResourceListDataMgr();
 
-    /// @brief ¦bÃìµ²¦ê¦Cªº¥½§À·s¼W¤@­Ó·sªº¸ê·½¸`ÂI¡C
-    /// @return «ü¦V·s«Ø¥ßªº ImageResourceListData ¸`ÂIªº«ü¼Ğ¡C
+    /// @brief åœ¨éˆçµä¸²åˆ—çš„æœ«å°¾æ–°å¢ä¸€å€‹æ–°çš„è³‡æºç¯€é»ã€‚
+    /// @return æŒ‡å‘æ–°å»ºç«‹çš„ ImageResourceListData ç¯€é»çš„æŒ‡æ¨™ã€‚
     ImageResourceListData* Add();
 
-    /// @brief ±qÃìµ²¦ê¦C¤¤§R°£«ü©wªº¸ê·½¸`ÂI¡C
-    /// @param pNode ­n§R°£ªº¸`ÂI«ü¼Ğ¡C
+    /// @brief å¾éˆçµä¸²åˆ—ä¸­åˆªé™¤æŒ‡å®šçš„è³‡æºç¯€é»ã€‚
+    /// @param pNode è¦åˆªé™¤çš„ç¯€é»æŒ‡æ¨™ã€‚
     void Delete(ImageResourceListData* pNode);
 
-    /// @brief §R°£Ãìµ²¦ê¦C¤¤ªº©Ò¦³¸`ÂI¡C
+    /// @brief åˆªé™¤éˆçµä¸²åˆ—ä¸­çš„æ‰€æœ‰ç¯€é»ã€‚
     void DeleteAll();
 
-    /// @brief ·í Direct3D ¸Ë¸m¿ò¥¢ (Device Lost) ®É©I¥s¡C
-    /// ¹M¾ú©Ò¦³¸ê·½¨ÃÄÀ©ñ¥¦­Ìªº¯¾²z¡A¦ı«O¯d°O¾ĞÅé¤¤ªº¸ê®Æ¡C
+    /// @brief ç•¶ Direct3D è£ç½®éºå¤± (Device Lost) æ™‚å‘¼å«ã€‚
+    /// éæ­·æ‰€æœ‰è³‡æºä¸¦é‡‹æ”¾å®ƒå€‘çš„ç´‹ç†ï¼Œä½†ä¿ç•™è¨˜æ†¶é«”ä¸­çš„è³‡æ–™ã€‚
     void DeviceLostToRelease();
 
-    /// @brief ·í Direct3D ¸Ë¸m­«³] (Reset) «á©I¥s¡C
-    /// ¹M¾ú©Ò¦³¸ê·½¨Ã®Ú¾Ú«O¯dªºÀÉ®×¸ê°T­«·s¸ü¤J¥¦­Ì¡C
+    /// @brief ç•¶ Direct3D è£ç½®é‡è¨­ (Reset) å¾Œå‘¼å«ã€‚
+    /// éæ­·æ‰€æœ‰è³‡æºä¸¦æ ¹æ“šä¿ç•™çš„æª”æ¡ˆè³‡è¨Šé‡æ–°è¼‰å…¥å®ƒå€‘ã€‚
     void DeviceLostToReLoad();
 
 private:
-    ImageResourceListData* m_pHead; // «ü¦VÃìµ²¦ê¦Cªº²Ä¤@­Ó¸`ÂI
-    ImageResourceListData* m_pTail; // «ü¦VÃìµ²¦ê¦Cªº³Ì«á¤@­Ó¸`ÂI
-    int m_nCount;                   // Ãìµ²¦ê¦C¤¤¸`ÂIªºÁ`¼Æ
+    ImageResourceListData* m_pHead; // æŒ‡å‘éˆçµä¸²åˆ—çš„ç¬¬ä¸€å€‹ç¯€é»
+    ImageResourceListData* m_pTail; // æŒ‡å‘éˆçµä¸²åˆ—çš„æœ€å¾Œä¸€å€‹ç¯€é»
+    int m_nCount;                   // éˆçµä¸²åˆ—ä¸­ç¯€é»çš„ç¸½æ•¸
 };
 
 /// @struct ImageResourceListData
-/// @brief Âù¦VÃìµ²¦ê¦C¤¤ªº¸`ÂI¡A¥Î©ó¦s©ñ¤@­Ó¹Ï¤ù¸ê·½¤Î¨ä¤¸¼Æ¾Ú¡C
+/// @brief é›™å‘éˆçµä¸²åˆ—ä¸­çš„ç¯€é»ï¼Œç”¨æ–¼å­˜æ”¾ä¸€å€‹åœ–ç‰‡è³‡æºåŠå…¶å…ƒæ•¸æ“šã€‚
 ///
-/// µ²ºc¬O®Ú¾Ú¤Ï½sÄ¶µ{¦¡½X¤¤ªº°O¾ĞÅé§G§½©M¤j¤p (0x138 bytes) ±ÀÂ_¥X¨Óªº¡C
+/// çµæ§‹æ˜¯æ ¹æ“šåç·¨è­¯ç¨‹å¼ç¢¼ä¸­çš„è¨˜æ†¶é«”ä½ˆå±€å’Œå¤§å° (0x138 bytes) æ¨æ–·å‡ºä¾†çš„ã€‚
 struct ImageResourceListData {
-    ImageResourceListData* pPrev;       // «ü¦V«e¤@­Ó¸`ÂI
-    ImageResourceListData* pNext;       // «ü¦V«á¤@­Ó¸`ÂI
-    ImageResource m_Resource;           // ´O¤Jªº¹Ï¤ù¸ê·½ª«¥ó
+    ImageResourceListData* pPrev;       // æŒ‡å‘å‰ä¸€å€‹ç¯€é»
+    ImageResourceListData* pNext;       // æŒ‡å‘å¾Œä¸€å€‹ç¯€é»
+    ImageResource m_Resource;           // åµŒå…¥çš„åœ–ç‰‡è³‡æºç‰©ä»¶
 
-    // ±q CDeviceResetManager::CreateImageResource ±ÀÂ_¥Xªº¦¨­û
-    char m_szFileName[255];             // ¸ê·½ªºÀÉ®×¦WºÙ
-    char m_cFlag;                       // ¥¼¨Ï¥ÎªººX¼Ğ (¹ïÀ³ a3)
-    unsigned char m_ucPackerType;       // «Ê¸ËÀÉÃş«¬ (¹ïÀ³ a4)
-    char m_padding[3];                  // °O¾ĞÅé¹ï»ôªº¶ñ¥R¦ì¤¸²Õ
+    // å¾ CDeviceResetManager::CreateImageResource æ¨æ–·å‡ºçš„æˆå“¡
+    char m_szFileName[255];             // è³‡æºçš„æª”æ¡ˆåç¨±
+    char m_cFlag;                       // æœªä½¿ç”¨çš„æ——æ¨™ (å°æ‡‰ a3)
+    unsigned char m_ucPackerType;       // å°è£æª”é¡å‹ (å°æ‡‰ a4)
+    char m_padding[3];                  // è¨˜æ†¶é«”å°é½Šçš„å¡«å……ä½å…ƒçµ„
 
-    /// @brief ¸`ÂIªº«Øºc¨ç¦¡
+    /// @brief ç¯€é»çš„å»ºæ§‹å‡½å¼
     ImageResourceListData();
 
-    /// @brief ¸`ÂIªº¸Ñºc¨ç¦¡
-    // ¦b­ì©l½X¤¤¡A¦³¤@­Ó©ú½Tªº¸Ñºc¨ç¦¡³Q©I¥s¡A
-    // ¥D­n¥Øªº¬OÄ²µo ImageResource ªº¸Ñºc¡C¦b C++ ¤¤¡A³o¬O¦Û°Ê³B²zªº¡C
+    /// @brief ç¯€é»çš„è§£æ§‹å‡½å¼
+    // åœ¨åŸå§‹ç¢¼ä¸­ï¼Œæœ‰ä¸€å€‹æ˜ç¢ºçš„è§£æ§‹å‡½å¼è¢«å‘¼å«ï¼Œ
+    // ä¸»è¦ç›®çš„æ˜¯è§¸ç™¼ ImageResource çš„è§£æ§‹ã€‚åœ¨ C++ ä¸­ï¼Œé€™æ˜¯è‡ªå‹•è™•ç†çš„ã€‚
     ~ImageResourceListData();
 };

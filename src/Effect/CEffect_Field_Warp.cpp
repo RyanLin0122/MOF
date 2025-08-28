@@ -13,13 +13,13 @@ CEffect_Field_Warp::~CEffect_Field_Warp()
 {
 }
 
-// ¹ïÀ³¤Ï²ÕÄ¶½X: 0x00537610
+// å°æ‡‰åçµ„è­¯ç¢¼: 0x00537610
 void CEffect_Field_Warp::SetEffect(unsigned short warpType, float x, float y, ClientCharacter* pOwner)
 {
     const char* szFileName = nullptr;
     int effectID = 0;
 
-    // ®Ú¾Ú¶Ç¤Jªº warpType ¿ï¾Ü­n¸ü¤Jªº¯S®Ä¸ê·½
+    // æ ¹æ“šå‚³å…¥çš„ warpType é¸æ“‡è¦è¼‰å…¥çš„ç‰¹æ•ˆè³‡æº
     switch (warpType)
     {
     case 1:
@@ -39,52 +39,52 @@ void CEffect_Field_Warp::SetEffect(unsigned short warpType, float x, float y, Cl
         break;
 
     default:
-        // ¦pªG¶Ç¤J¥¼ª¾ªºÃş«¬¡A«h¤£³Ğ«Ø¯S®Ä
+        // å¦‚æœå‚³å…¥æœªçŸ¥çš„é¡å‹ï¼Œå‰‡ä¸å‰µå»ºç‰¹æ•ˆ
         return;
     }
 
-    // Àò¨ú¨Ã³]©w¯S®Ä¼Æ¾Ú
+    // ç²å–ä¸¦è¨­å®šç‰¹æ•ˆæ•¸æ“š
     CEAManager::GetInstance()->GetEAData(effectID, (char*)szFileName, &m_ccaEffect);
     m_ccaEffect.SetFrameTime();
-    m_ccaEffect.Play(0, false); // ¼½©ñ²Ä¤@­Ó°Êµe§Ç¦C¡A¤£´`Àô
+    m_ccaEffect.Play(0, false); // æ’­æ”¾ç¬¬ä¸€å€‹å‹•ç•«åºåˆ—ï¼Œä¸å¾ªç’°
 
-    // ³]©wªì©l¦ì¸m©M¸òÀH¥Ø¼Ğ
+    // è¨­å®šåˆå§‹ä½ç½®å’Œè·Ÿéš¨ç›®æ¨™
     m_fCurrentPosX = x;
     m_fCurrentPosY = y;
     m_pOwnerCharacter = pOwner;
 }
 
-// ¹ïÀ³¤Ï²ÕÄ¶½X: 0x00537700
+// å°æ‡‰åçµ„è­¯ç¢¼: 0x00537700
 bool CEffect_Field_Warp::FrameProcess(float fElapsedTime)
 {
-    // ¥Í©R¶g´Á¥Ñ¤º³¡°Êµe¨M©w
+    // ç”Ÿå‘½é€±æœŸç”±å…§éƒ¨å‹•ç•«æ±ºå®š
     return m_ccaEffect.FrameProcess(fElapsedTime);
 }
 
-// ¹ïÀ³¤Ï²ÕÄ¶½X: 0x00537710
+// å°æ‡‰åçµ„è­¯ç¢¼: 0x00537710
 void CEffect_Field_Warp::Process()
 {
-    // ¦pªG¸j©w¤F¨¤¦â¡A«h«ùÄò§ó·s¦ì¸m¬°¸Ó¨¤¦âªº¦ì¸m
+    // å¦‚æœç¶å®šäº†è§’è‰²ï¼Œå‰‡æŒçºŒæ›´æ–°ä½ç½®ç‚ºè©²è§’è‰²çš„ä½ç½®
     if (m_pOwnerCharacter) {
         m_fCurrentPosX = static_cast<float>(m_pOwnerCharacter->GetPosX());
         m_fCurrentPosY = static_cast<float>(m_pOwnerCharacter->GetPosY());
     }
 
-    // ±N¥@¬É®y¼ĞÂà´«¬°¿Ã¹õ®y¼Ğ
+    // å°‡ä¸–ç•Œåº§æ¨™è½‰æ›ç‚ºè¢å¹•åº§æ¨™
     float screenX = m_fCurrentPosX - static_cast<float>(g_Game_System_Info.ScreenX);
     float screenY = m_fCurrentPosY - static_cast<float>(g_Game_System_Info.ScreenY);
 
-    // ¶i¦æµô°Å§PÂ_
+    // é€²è¡Œè£å‰ªåˆ¤æ–·
     m_bIsVisible = IsCliping(screenX, 0.0f);
 
     if (m_bIsVisible) {
-        // §ó·s¤º³¡ CCAEffect ªºª¬ºA
+        // æ›´æ–°å…§éƒ¨ CCAEffect çš„ç‹€æ…‹
         m_ccaEffect.SetPosition(screenX, screenY);
         m_ccaEffect.Process();
     }
 }
 
-// ¹ïÀ³¤Ï²ÕÄ¶½X: 0x00537770
+// å°æ‡‰åçµ„è­¯ç¢¼: 0x00537770
 void CEffect_Field_Warp::Draw()
 {
     if (m_bIsVisible) {

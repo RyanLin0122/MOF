@@ -4,32 +4,32 @@
 
 /**
  * @class CEffect_Battle_DownCut
- * @brief ¥Nªí¤U¼A±ÙÀ»ªº¤M¥ú©Î¼C®ğ¯S®Ä¡C
+ * @brief ä»£è¡¨ä¸‹åŠˆæ–¬æ“Šçš„åˆ€å…‰æˆ–åŠæ°£ç‰¹æ•ˆã€‚
  *
- * Ä~©Ó¦Û CEffectBase¡A¬O¤@­Ó¦b©T©w®y¼Ğ¼½©ñ¤@¦¸ªºÂ²³æ°Êµe¯S®Ä¡C
+ * ç¹¼æ‰¿è‡ª CEffectBaseï¼Œæ˜¯ä¸€å€‹åœ¨å›ºå®šåº§æ¨™æ’­æ”¾ä¸€æ¬¡çš„ç°¡å–®å‹•ç•«ç‰¹æ•ˆã€‚
  */
 class CEffect_Battle_DownCut : public CEffectBase {
 public:
     CEffect_Battle_DownCut();
     virtual ~CEffect_Battle_DownCut();
 
-    // --- µêÀÀ¨ç¦¡ÂĞ¼g ---
+    // --- è™›æ“¬å‡½å¼è¦†å¯« ---
 
-    /// @brief ³B²z¯S®Äªº¥Í©R¶g´Á¡Aª½±µ¨Ì¿à CCAEffect ªº°Êµe¼½©ñª¬ºA¡C
+    /// @brief è™•ç†ç‰¹æ•ˆçš„ç”Ÿå‘½é€±æœŸï¼Œç›´æ¥ä¾è³´ CCAEffect çš„å‹•ç•«æ’­æ”¾ç‹€æ…‹ã€‚
     virtual bool FrameProcess(float fElapsedTime) override;
 
-    /// @brief ·Ç³ÆÃ¸»s«eªºÅŞ¿è§ó·s¡A¨Ï¥Î©T©wªºªì©l¦ì¸m¡C
+    /// @brief æº–å‚™ç¹ªè£½å‰çš„é‚è¼¯æ›´æ–°ï¼Œä½¿ç”¨å›ºå®šçš„åˆå§‹ä½ç½®ã€‚
     virtual void Process() override;
 
-    /// @brief Ã¸»s¯S®Ä¡C
+    /// @brief ç¹ªè£½ç‰¹æ•ˆã€‚
     virtual void Draw() override;
 
-    // --- ±M¦³¨ç¦¡ ---
+    // --- å°ˆæœ‰å‡½å¼ ---
 
-    /// @brief ³]©w¯S®ÄªºÅã¥Ü¦ì¸m©M¤è¦V¡C
-    /// @param x ¯S®Ä¤¤¤ßÂIªº X ®y¼Ğ¡C
-    /// @param y ¯S®Ä¤¤¤ßÂIªº Y ®y¼Ğ¡C
-    /// @param bFlip ¬O§_¤ô¥­Â½Âà¡C
-    /// @param a5 ¥¼¨Ï¥Îªº°Ñ¼Æ¡A«O¯d¥H²Å¦X­ì©l½X¡C
+    /// @brief è¨­å®šç‰¹æ•ˆçš„é¡¯ç¤ºä½ç½®å’Œæ–¹å‘ã€‚
+    /// @param x ç‰¹æ•ˆä¸­å¿ƒé»çš„ X åº§æ¨™ã€‚
+    /// @param y ç‰¹æ•ˆä¸­å¿ƒé»çš„ Y åº§æ¨™ã€‚
+    /// @param bFlip æ˜¯å¦æ°´å¹³ç¿»è½‰ã€‚
+    /// @param a5 æœªä½¿ç”¨çš„åƒæ•¸ï¼Œä¿ç•™ä»¥ç¬¦åˆåŸå§‹ç¢¼ã€‚
     void SetEffect(float x, float y, bool bFlip, unsigned char a5);
 };

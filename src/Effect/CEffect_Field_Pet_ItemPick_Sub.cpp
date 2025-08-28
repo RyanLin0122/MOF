@@ -5,13 +5,13 @@
 #include "Image/CDeviceManager.h"
 #include "global.h"
 
-// ... °²³]ªº¥ş°ìÅÜ¼Æ ...
+// ... å‡è¨­çš„å…¨åŸŸè®Šæ•¸ ...
 
 // =======================================================================
 // CEffect_Field_Pet_ItemPick_Sub_Complete
 // =======================================================================
 
-// ¹ïÀ³¤Ï²ÕÄ¶½X: 0x00536D60
+// å°æ‡‰åçµ„è­¯ç¢¼: 0x00536D60
 CEffect_Field_Pet_ItemPick_Sub_Complete::CEffect_Field_Pet_ItemPick_Sub_Complete()
 {
     CEAManager::GetInstance()->GetEAData(106, "Effect/Pet-ItemPick.ea", &m_ccaEffect);
@@ -55,7 +55,7 @@ void CEffect_Field_Pet_ItemPick_Sub_Complete::Draw()
 // CEffect_Field_Pet_ItemPick_Sub_Light
 // =======================================================================
 
-// ¹ïÀ³¤Ï²ÕÄ¶½X: 0x00536E80
+// å°æ‡‰åçµ„è­¯ç¢¼: 0x00536E80
 CEffect_Field_Pet_ItemPick_Sub_Light::CEffect_Field_Pet_ItemPick_Sub_Light()
 {
     m_pLightImage = nullptr;
@@ -65,7 +65,7 @@ CEffect_Field_Pet_ItemPick_Sub_Light::CEffect_Field_Pet_ItemPick_Sub_Light()
 
 CEffect_Field_Pet_ItemPick_Sub_Light::~CEffect_Field_Pet_ItemPick_Sub_Light() {}
 
-// ¹ïÀ³¤Ï²ÕÄ¶½X: 0x00536F20
+// å°æ‡‰åçµ„è­¯ç¢¼: 0x00536F20
 void CEffect_Field_Pet_ItemPick_Sub_Light::SetEffect(float x, float y, bool bFlip)
 {
     m_fCurrentPosX = x;
@@ -73,7 +73,7 @@ void CEffect_Field_Pet_ItemPick_Sub_Light::SetEffect(float x, float y, bool bFli
     m_bIsFlip = bFlip;
 }
 
-// ¹ïÀ³¤Ï²ÕÄ¶½X: 0x00536F40
+// å°æ‡‰åçµ„è­¯ç¢¼: 0x00536F40
 bool CEffect_Field_Pet_ItemPick_Sub_Light::FrameProcess(float fElapsedTime)
 {
     int frameCount = 0;
@@ -83,7 +83,7 @@ bool CEffect_Field_Pet_ItemPick_Sub_Light::FrameProcess(float fElapsedTime)
     return m_fAlpha < 0.0f;
 }
 
-// ¹ïÀ³¤Ï²ÕÄ¶½X: 0x00536FD0
+// å°æ‡‰åçµ„è­¯ç¢¼: 0x00536FD0
 void CEffect_Field_Pet_ItemPick_Sub_Light::Process()
 {
     m_pLightImage = cltImageManager::GetInstance()->GetGameImage(7, 0x1D00011A, 0, 1);
@@ -98,7 +98,7 @@ void CEffect_Field_Pet_ItemPick_Sub_Light::Process()
     }
 }
 
-// ¹ïÀ³¤Ï²ÕÄ¶½X: 0x00537070
+// å°æ‡‰åçµ„è­¯ç¢¼: 0x00537070
 void CEffect_Field_Pet_ItemPick_Sub_Light::Draw()
 {
     if (m_pLightImage && m_pLightImage->IsInUse()) {

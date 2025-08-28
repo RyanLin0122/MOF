@@ -1,4 +1,6 @@
-﻿#include <iostream>
+﻿#define UNICODE
+#define _UNICODE
+#include <iostream>
 #include <stdio.h>     // 用於 printf
 #include <windows.h>   // 用於 HWND, GetConsoleWindow, Sleep
 #include <conio.h>     // 用於 _kbhit, _getch (檢查鍵盤輸入)
@@ -354,7 +356,7 @@ void CreateDebugConsole()
 //-----------------------------------------------------------------------------
 // Windows 應用程式主進入點
 //-----------------------------------------------------------------------------
-int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine, int nCmdShow)
+int APIENTRY  wWinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPWSTR lpCmdLine, int nCmdShow)
 {
 	DWORD lastTime = 0;
 	CreateDebugConsole();
@@ -363,12 +365,15 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine
 	//text_manager_test();
 	test_func();
 
-	WNDCLASSEXA wc = { sizeof(WNDCLASSEX), CS_CLASSDC, WndProc, 0L, 0L,
-					  GetModuleHandle(NULL), NULL, NULL, NULL, NULL,
-					  "D3D GameImage Test", NULL };
-	RegisterClassExA(&wc);
+	WNDCLASSEXW wc{ sizeof(WNDCLASSEXW) };
+	wc.lpfnWndProc = WndProc;
+	wc.hInstance = hInstance;
+	wc.hCursor = LoadCursor(nullptr, IDC_ARROW);
+	wc.lpszClassName = L"D3D GameImage Test";
 
-	g_hWnd = CreateWindowExA(0, "D3D GameImage Test", "GameImage 渲染測試模式 (模組化版本)",
+	RegisterClassEx(&wc);
+
+	g_hWnd = CreateWindowExW(0, wc.lpszClassName, L"Game 渲染測試模式 (模組化版本)",
 		WS_OVERLAPPEDWINDOW, 100, 100, 1280, 720,
 		NULL, NULL, wc.hInstance, NULL);
 
@@ -439,7 +444,7 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine
 	}
 
 	Cleanup();
-	UnregisterClassA("D3D GameImage Test", wc.hInstance);
+	UnregisterClass(L"D3D GameImage Test", wc.hInstance);
 	return 0;
 }
 
@@ -460,7 +465,7 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
 		return 0;
 	}
 	// 其他訊息交給預設的處理函式 (使用 ANSI 版本)
-	return DefWindowProcA(hWnd, message, wParam, lParam);
+	return DefWindowProc(hWnd, message, wParam, lParam);
 }
 
 

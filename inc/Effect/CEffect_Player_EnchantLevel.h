@@ -2,41 +2,41 @@
 
 #include "Effect/CEffectBase.h"
 
-// «e¦V«Å§i
+// å‰å‘å®£å‘Š
 class ClientCharacter;
 
 /**
  * @class CEffect_Player_EnchantLevel
- * @brief ¥Nªíª±®a¸Ë³Æ±j¤Æµ¥¯Åªº«ùÄò©Ê¥úÀô¯S®Ä¡C
+ * @brief ä»£è¡¨ç©å®¶è£å‚™å¼·åŒ–ç­‰ç´šçš„æŒçºŒæ€§å…‰ç’°ç‰¹æ•ˆã€‚
  *
- * Ä~©Ó¦Û CEffectBase¡A¬O¤@­Ó¸òÀH¨¤¦â¼½©ñªº°Êµe¯S®Ä¡A
- * ¨ä¥Í©R¶g´Á¥Ñ¨¤¦âª¬ºA°ÊºA±±¨î¡C
+ * ç¹¼æ‰¿è‡ª CEffectBaseï¼Œæ˜¯ä¸€å€‹è·Ÿéš¨è§’è‰²æ’­æ”¾çš„å‹•ç•«ç‰¹æ•ˆï¼Œ
+ * å…¶ç”Ÿå‘½é€±æœŸç”±è§’è‰²ç‹€æ…‹å‹•æ…‹æ§åˆ¶ã€‚
  */
 class CEffect_Player_EnchantLevel : public CEffectBase {
 public:
     CEffect_Player_EnchantLevel();
     virtual ~CEffect_Player_EnchantLevel();
 
-    // --- µêÀÀ¨ç¦¡ÂĞ¼g ---
+    // --- è™›æ“¬å‡½å¼è¦†å¯« ---
 
-    /// @brief ®Ú¾Ú¨¤¦âª¬ºA¨M©w¬O§_´£«e²×¤î¯S®Ä¡C
+    /// @brief æ ¹æ“šè§’è‰²ç‹€æ…‹æ±ºå®šæ˜¯å¦æå‰çµ‚æ­¢ç‰¹æ•ˆã€‚
     virtual bool FrameProcess(float fElapsedTime) override;
 
-    /// @brief ·Ç³ÆÃ¸»s«eªºÅŞ¿è§ó·s¡A¦P¨B¾Ö¦³ªÌªº¦ì¸m¡C
+    /// @brief æº–å‚™ç¹ªè£½å‰çš„é‚è¼¯æ›´æ–°ï¼ŒåŒæ­¥æ“æœ‰è€…çš„ä½ç½®ã€‚
     virtual void Process() override;
 
-    /// @brief Ã¸»s¯S®Ä¡C
+    /// @brief ç¹ªè£½ç‰¹æ•ˆã€‚
     virtual void Draw() override;
 
-    // --- ±M¦³¨ç¦¡ ---
+    // --- å°ˆæœ‰å‡½å¼ ---
 
-    /// @brief ³]©w¯S®Ä¡C
-    /// @param pOwner ­nªş¥[¯S®Äªº¨¤¦â¡C
-    /// @param effectKindID ¯S®ÄªººØÃş ID¡C
-    /// @param szFileName ¯S®Ä¸ê·½ (.ea) ªºÀÉ®×¦WºÙ¡C
+    /// @brief è¨­å®šç‰¹æ•ˆã€‚
+    /// @param pOwner è¦é™„åŠ ç‰¹æ•ˆçš„è§’è‰²ã€‚
+    /// @param effectKindID ç‰¹æ•ˆçš„ç¨®é¡ IDã€‚
+    /// @param szFileName ç‰¹æ•ˆè³‡æº (.ea) çš„æª”æ¡ˆåç¨±ã€‚
     void SetEffect(ClientCharacter* pOwner, unsigned short effectKindID, char* szFileName);
 
 protected:
-    // --- ¦¨­ûÅÜ¼Æ ---
-    ClientCharacter* m_pOwnerCharacter; // ¦ì²¾ +132 (0x84)
+    // --- æˆå“¡è®Šæ•¸ ---
+    ClientCharacter* m_pOwnerCharacter; // ä½ç§» +132 (0x84)
 };

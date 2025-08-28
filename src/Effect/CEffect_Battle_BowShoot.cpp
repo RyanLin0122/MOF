@@ -3,10 +3,10 @@
 #include "Character/ClientCharacter.h"
 #include "global.h"
 
-// °²³]ªº¥ş°ìÅÜ¼Æ
+// å‡è¨­çš„å…¨åŸŸè®Šæ•¸
 extern GameSystemInfo g_Game_System_Info;
 
-// ¹ïÀ³¤Ï²ÕÄ¶½X: 0x0052D770
+// å°æ‡‰åçµ„è­¯ç¢¼: 0x0052D770
 CEffect_Battle_BowShoot::CEffect_Battle_BowShoot()
     : m_pTargetCharacter(nullptr),
     m_fTotalDistance(0.0f),
@@ -14,31 +14,31 @@ CEffect_Battle_BowShoot::CEffect_Battle_BowShoot()
     m_fAngle(0.0f),
     m_nHitInfoID(0)
 {
-    // CEffectBase «Øºc¨ç¦¡¤w¦Û°Ê©I¥s
+    // CEffectBase å»ºæ§‹å‡½å¼å·²è‡ªå‹•å‘¼å«
 
-    // ¸ü¤J½b¥ÚªºµøÄ±°Êµe
+    // è¼‰å…¥ç®­çŸ¢çš„è¦–è¦ºå‹•ç•«
     CEAManager::GetInstance()->GetEAData(3, "Effect/efn_bowshoot.ea", &m_ccaEffect);
     m_ccaEffect.SetFrameTime();
-    m_ccaEffect.Play(0, true); // ½b¥Ú­¸¦æ°ÊµeÀ³´`Àô¼½©ñ
+    m_ccaEffect.Play(0, true); // ç®­çŸ¢é£›è¡Œå‹•ç•«æ‡‰å¾ªç’°æ’­æ”¾
 
-    // ³]©w²¾°Ê­p®É¾¹ªº§ó·sÀW²v (30 FPS)
-    // ­ì©l½X: *((_DWORD *)this + 38) = 995783694;
+    // è¨­å®šç§»å‹•è¨ˆæ™‚å™¨çš„æ›´æ–°é »ç‡ (30 FPS)
+    // åŸå§‹ç¢¼: *((_DWORD *)this + 38) = 995783694;
     m_MovementFrameSkip.m_fTimePerFrame = 1.0f / 30.0f;
 }
 
-// ¹ïÀ³¤Ï²ÕÄ¶½X: 0x0052D850
+// å°æ‡‰åçµ„è­¯ç¢¼: 0x0052D850
 CEffect_Battle_BowShoot::~CEffect_Battle_BowShoot()
 {
 }
 
-// ¹ïÀ³¤Ï²ÕÄ¶½X: 0x0052D870
+// å°æ‡‰åçµ„è­¯ç¢¼: 0x0052D870
 void CEffect_Battle_BowShoot::SetEffect(ClientCharacter* pCaster, ClientCharacter* pTarget, bool a4, int hitInfoID)
 {
     if (!pCaster || !pTarget) return;
 
     m_pTargetCharacter = pTarget;
     m_nHitInfoID = hitInfoID;
-    m_fSpeed = 2.0f; // ­ì©l½Xµw½s½X
+    m_fSpeed = 2.0f; // åŸå§‹ç¢¼ç¡¬ç·¨ç¢¼
 
     D3DXVECTOR2 startPos(static_cast<float>(pCaster->GetPosX()), static_cast<float>(pCaster->GetPosY()));
     D3DXVECTOR2 endPos(static_cast<float>(pTarget->GetPosX()), static_cast<float>(pTarget->GetPosY()));
@@ -51,94 +51,94 @@ void CEffect_Battle_BowShoot::SetEffect(ClientCharacter* pCaster, ClientCharacte
     if (m_fTotalDistance < 0.0f) m_fTotalDistance = 0.0f;
 
     D3DXVec2Normalize(&vec, &vec);
-    m_fDirectionX = vec.x * m_fSpeed; // ­ì©l½X¦b¦¹³B±N³t«×­¼¤J¤F¤è¦V¦V¶q
+    m_fDirectionX = vec.x * m_fSpeed; // åŸå§‹ç¢¼åœ¨æ­¤è™•å°‡é€Ÿåº¦ä¹˜å…¥äº†æ–¹å‘å‘é‡
     m_fDirectionY = vec.y * m_fSpeed;
 
-    // ®Ú¾Ú¬IªkªÌ»P¥Ø¼Ğªº¬Û¹ï¦ì¸m¨M©w¬O§_Â½Âà
+    // æ ¹æ“šæ–½æ³•è€…èˆ‡ç›®æ¨™çš„ç›¸å°ä½ç½®æ±ºå®šæ˜¯å¦ç¿»è½‰
     m_bIsFlip = (pCaster->GetPosX() - pTarget->GetPosX()) > 0;
 
-    // ­pºâ­¸¦æ¨¤«×
+    // è¨ˆç®—é£›è¡Œè§’åº¦
     D3DXVECTOR2 refVec(m_bIsFlip ? -1.0f : 1.0f, 0.0f);
     float dotProduct = D3DXVec2Dot(&refVec, &vec);
     m_fAngle = acosf(dotProduct);
 
-    // ­ì©l½X¤¤¦³¤@­Ó½ÆÂøªº§PÂ_¨M©w¨¤«×¥¿­t¡A¥iÂ²¤Æ¬°ÀË¬d Y ¤À¶q
+    // åŸå§‹ç¢¼ä¸­æœ‰ä¸€å€‹è¤‡é›œçš„åˆ¤æ–·æ±ºå®šè§’åº¦æ­£è² ï¼Œå¯ç°¡åŒ–ç‚ºæª¢æŸ¥ Y åˆ†é‡
     if (vec.y < 0) {
         m_fAngle = -m_fAngle;
     }
 }
 
 /**
- * @brief ³]©w¤}½b¯S®Ä (®y¼Ğª©¥»)¡C
- * @param pStartPos §ë®gª«ªº°_©l¥@¬É®y¼Ğ¡C
- * @param pEndPos §ë®gª«ªº¥Ø¼Ğ¥@¬É®y¼Ğ¡C
- * @param fFlip Â½ÂàºX¼Ğ (¦b­ì©l½X¤¤¬° float¡A¦ı¦æ¬°Ãş¦ü bool)¡C
- * @param hitInfoID À»¤¤¥Ø¼Ğ®É¶Ç»¼ªº¸ê°T ID¡C
- * @note ¦¹¨ç¦¡ªºÅŞ¿èºë½TÁÙ­ì¦Û Effectall.c ¤¤ 0x0052DC00 ªº¦P¦W¨ç¦¡¡C
+ * @brief è¨­å®šå¼“ç®­ç‰¹æ•ˆ (åº§æ¨™ç‰ˆæœ¬)ã€‚
+ * @param pStartPos æŠ•å°„ç‰©çš„èµ·å§‹ä¸–ç•Œåº§æ¨™ã€‚
+ * @param pEndPos æŠ•å°„ç‰©çš„ç›®æ¨™ä¸–ç•Œåº§æ¨™ã€‚
+ * @param fFlip ç¿»è½‰æ——æ¨™ (åœ¨åŸå§‹ç¢¼ä¸­ç‚º floatï¼Œä½†è¡Œç‚ºé¡ä¼¼ bool)ã€‚
+ * @param hitInfoID æ“Šä¸­ç›®æ¨™æ™‚å‚³éçš„è³‡è¨Š IDã€‚
+ * @note æ­¤å‡½å¼çš„é‚è¼¯ç²¾ç¢ºé‚„åŸè‡ª Effectall.c ä¸­ 0x0052DC00 çš„åŒåå‡½å¼ã€‚
  */
 void CEffect_Battle_BowShoot::SetEffect(D3DXVECTOR2* pStartPos, D3DXVECTOR2* pEndPos, float fFlip, int hitInfoID)
 {
     if (!pStartPos || !pEndPos) return;
 
-    // ¨BÆJ 1: ³]©wªì©lÄİ©Ê
+    // æ­¥é©Ÿ 1: è¨­å®šåˆå§‹å±¬æ€§
     m_nHitInfoID = hitInfoID;
-    m_fSpeed = 2.0f; // °Ñ·Ó¨¤¦âª©¥»ªº³]©w¡A³]©w¤@­Ó°òÂ¦³t«×
+    m_fSpeed = 2.0f; // åƒç…§è§’è‰²ç‰ˆæœ¬çš„è¨­å®šï¼Œè¨­å®šä¸€å€‹åŸºç¤é€Ÿåº¦
 
-    // ³]©w¯S®Äªºªì©l¦ì¸m
-    // ­ì©l½X: *((_DWORD *)this + 2) = *(_DWORD *)a2;
+    // è¨­å®šç‰¹æ•ˆçš„åˆå§‹ä½ç½®
+    // åŸå§‹ç¢¼: *((_DWORD *)this + 2) = *(_DWORD *)a2;
     //         *((_DWORD *)this + 3) = *((_DWORD *)a2 + 1);
     m_fCurrentPosX = pStartPos->x;
     m_fCurrentPosY = pStartPos->y;
 
-    // ¨BÆJ 2: ­pºâ­¸¦æ¦V¶q©MÁ`¶ZÂ÷
-    // ­ì©l½X: v19 = *(float *)a3 - *(float *)a2;
+    // æ­¥é©Ÿ 2: è¨ˆç®—é£›è¡Œå‘é‡å’Œç¸½è·é›¢
+    // åŸå§‹ç¢¼: v19 = *(float *)a3 - *(float *)a2;
     //         v7 = *((float *)a3 + 1) - *((float *)a2 + 1);
     D3DXVECTOR2 vecDirection = *pEndPos - *pStartPos;
 
-    // ­ì©l½X: *((float *)this + 34) = sqrt(v8 * v8 + v9) - 60.0;
+    // åŸå§‹ç¢¼: *((float *)this + 34) = sqrt(v8 * v8 + v9) - 60.0;
     m_fTotalDistance = D3DXVec2Length(&vecDirection) - 60.0f;
     if (m_fTotalDistance < 0.0f) {
         m_fTotalDistance = 0.0f;
     }
 
-    // ¨BÆJ 3: ±N¦V¶q³æ¦ì¤Æ¥HÀò±o¯Â¤è¦V¡A¨Ã­¼¤W³t«×
-    // ­ì©l½X: D3DXVec2Normalize((char *)this + 16, (char *)this + 16);
+    // æ­¥é©Ÿ 3: å°‡å‘é‡å–®ä½åŒ–ä»¥ç²å¾—ç´”æ–¹å‘ï¼Œä¸¦ä¹˜ä¸Šé€Ÿåº¦
+    // åŸå§‹ç¢¼: D3DXVec2Normalize((char *)this + 16, (char *)this + 16);
     //         v20 = *((float *)this + 6) * *v6;
     D3DXVec2Normalize(&vecDirection, &vecDirection);
     m_fDirectionX = vecDirection.x * m_fSpeed;
     m_fDirectionY = vecDirection.y * m_fSpeed;
 
-    // ¨BÆJ 4: ³]©wÂ½ÂàºX¼Ğ
-    // ­ì©l½X: *((_BYTE *)this + 56) = LOBYTE(a4);
+    // æ­¥é©Ÿ 4: è¨­å®šç¿»è½‰æ——æ¨™
+    // åŸå§‹ç¢¼: *((_BYTE *)this + 56) = LOBYTE(a4);
     m_bIsFlip = (static_cast<int>(fFlip) != 0);
 
-    // ¨BÆJ 5: ­pºâ­¸¦æ¨¤«×¥H«K¥¿½T´è¬V
-    // ³o¬qÅŞ¿è»P¨¤¦âª©¥»ªº SetEffect §¹¥ş¬Û¦P¡A¥Î©ó¨Ï½b¥ÚµøÄ±¤W´Â¦V¥Ø¼Ğ
-    D3DXVECTOR2 refVec(m_bIsFlip ? -1.0f : 1.0f, 0.0f); // ®Ú¾ÚÂ½Âàª¬ºA³]©w¤ô¥­°Ñ¦Ò¦V¶q
+    // æ­¥é©Ÿ 5: è¨ˆç®—é£›è¡Œè§’åº¦ä»¥ä¾¿æ­£ç¢ºæ¸²æŸ“
+    // é€™æ®µé‚è¼¯èˆ‡è§’è‰²ç‰ˆæœ¬çš„ SetEffect å®Œå…¨ç›¸åŒï¼Œç”¨æ–¼ä½¿ç®­çŸ¢è¦–è¦ºä¸Šæœå‘ç›®æ¨™
+    D3DXVECTOR2 refVec(m_bIsFlip ? -1.0f : 1.0f, 0.0f); // æ ¹æ“šç¿»è½‰ç‹€æ…‹è¨­å®šæ°´å¹³åƒè€ƒå‘é‡
 
-    // ­pºâ°Ñ¦Ò¦V¶q»P­¸¦æ¤è¦V¦V¶qªºÂI¿n
+    // è¨ˆç®—åƒè€ƒå‘é‡èˆ‡é£›è¡Œæ–¹å‘å‘é‡çš„é»ç©
     float dotProduct = D3DXVec2Dot(&refVec, &vecDirection);
 
-    // ¨Ï¥Î¤Ï¾l©¶¨ç¼Æ­pºâ§¨¨¤¡]©·«×¡^
+    // ä½¿ç”¨åé¤˜å¼¦å‡½æ•¸è¨ˆç®—å¤¾è§’ï¼ˆå¼§åº¦ï¼‰
     m_fAngle = acosf(dotProduct);
 
-    // ®Ú¾Ú Y ¶b¤è¦V¨M©w¨¤«×ªº¥¿­t
-    // ­ì©l½X¤¤ v14 | v15 ¬O¤@­Ó½ÆÂø¥B¥i¯à¦]¤Ï²ÕÄ¶¥X¿ùªº§PÂ_¡A
-    // ¨ä®Ú¥»¥Øªº¬O§PÂ_¦V¶q¬O¦b°Ñ¦Ò¦V¶qªº¶¶®É°wÁÙ¬O°f®É°w¤è¦V¡C
-    // ÀË¬d Y ¤À¶q¬O§óª½±µ¥Bµ¥®Äªº¹ê²{¡C
+    // æ ¹æ“š Y è»¸æ–¹å‘æ±ºå®šè§’åº¦çš„æ­£è² 
+    // åŸå§‹ç¢¼ä¸­ v14 | v15 æ˜¯ä¸€å€‹è¤‡é›œä¸”å¯èƒ½å› åçµ„è­¯å‡ºéŒ¯çš„åˆ¤æ–·ï¼Œ
+    // å…¶æ ¹æœ¬ç›®çš„æ˜¯åˆ¤æ–·å‘é‡æ˜¯åœ¨åƒè€ƒå‘é‡çš„é †æ™‚é‡é‚„æ˜¯é€†æ™‚é‡æ–¹å‘ã€‚
+    // æª¢æŸ¥ Y åˆ†é‡æ˜¯æ›´ç›´æ¥ä¸”ç­‰æ•ˆçš„å¯¦ç¾ã€‚
     if (vecDirection.y < 0) {
         m_fAngle = -m_fAngle;
     }
 }
 
-// ¹ïÀ³¤Ï²ÕÄ¶½X: 0x0052DE10
+// å°æ‡‰åçµ„è­¯ç¢¼: 0x0052DE10
 bool CEffect_Battle_BowShoot::FrameProcess(float fElapsedTime)
 {
     m_ccaEffect.FrameProcess(fElapsedTime);
 
     int moveFrameCount = 0;
     if (m_MovementFrameSkip.Update(fElapsedTime, moveFrameCount)) {
-        float moveDistance = static_cast<float>(moveFrameCount); // ³t«×¤w­¼¤J¦V¶q¡A³o¸Ì«Y¼Æ¬°1
+        float moveDistance = static_cast<float>(moveFrameCount); // é€Ÿåº¦å·²ä¹˜å…¥å‘é‡ï¼Œé€™è£¡ä¿‚æ•¸ç‚º1
         m_fTraveledDistance += moveDistance;
 
         if (m_fTraveledDistance >= m_fTotalDistance) {
@@ -155,7 +155,7 @@ bool CEffect_Battle_BowShoot::FrameProcess(float fElapsedTime)
     return false;
 }
 
-// ¹ïÀ³¤Ï²ÕÄ¶½X: 0x0052DF10
+// å°æ‡‰åçµ„è­¯ç¢¼: 0x0052DF10
 void CEffect_Battle_BowShoot::Process()
 {
     float screenX = m_fCurrentPosX - static_cast<float>(g_Game_System_Info.ScreenX);
@@ -170,7 +170,7 @@ void CEffect_Battle_BowShoot::Process()
     }
 }
 
-// ¹ïÀ³¤Ï²ÕÄ¶½X: 0x0052DF60
+// å°æ‡‰åçµ„è­¯ç¢¼: 0x0052DF60
 void CEffect_Battle_BowShoot::Draw()
 {
     if (m_bIsVisible) {

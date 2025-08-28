@@ -7,10 +7,10 @@
 #include "Effect/CEffect_Battle_GunSpark.h"
 #include "global.h"
 
-// °²³]ªº¥ş°ìÅÜ¼Æ
+// å‡è¨­çš„å…¨åŸŸè®Šæ•¸
 extern GameSystemInfo g_Game_System_Info;
 
-// ¹ïÀ³¤Ï²ÕÄ¶½X: 0x0052E090
+// å°æ‡‰åçµ„è­¯ç¢¼: 0x0052E090
 CEffect_Battle_GunShoot::CEffect_Battle_GunShoot()
     : m_pTargetCharacter(nullptr),
     m_fTotalDistance(0.0f),
@@ -18,10 +18,10 @@ CEffect_Battle_GunShoot::CEffect_Battle_GunShoot()
     m_nHitInfoID(0),
     m_dwCasterAccountID(0)
 {
-    // CEffectBase «Øºc¨ç¦¡¤w¦Û°Ê©I¥s
+    // CEffectBase å»ºæ§‹å‡½å¼å·²è‡ªå‹•å‘¼å«
 
-    // ­ì©l½X: *((_DWORD *)this + 39) = 993397601; (0x3B360B61 -> 0.0271f ~ 1/36.8)
-    // ³]©w²¾°Ê­p®É¾¹ªº§ó·sÀW²v
+    // åŸå§‹ç¢¼: *((_DWORD *)this + 39) = 993397601; (0x3B360B61 -> 0.0271f ~ 1/36.8)
+    // è¨­å®šç§»å‹•è¨ˆæ™‚å™¨çš„æ›´æ–°é »ç‡
     m_MovementFrameSkip.m_fTimePerFrame = 1.0f / 37.0f;
 }
 
@@ -29,7 +29,7 @@ CEffect_Battle_GunShoot::~CEffect_Battle_GunShoot()
 {
 }
 
-// ¹ïÀ³¤Ï²ÕÄ¶½X: 0x0052E130
+// å°æ‡‰åçµ„è­¯ç¢¼: 0x0052E130
 void CEffect_Battle_GunShoot::SetEffect(ClientCharacter* pCaster, ClientCharacter* pTarget, unsigned short a4, int hitInfoID)
 {
     if (!pCaster || !pTarget) return;
@@ -41,22 +41,22 @@ void CEffect_Battle_GunShoot::SetEffect(ClientCharacter* pCaster, ClientCharacte
     D3DXVECTOR2 startPos(static_cast<float>(pCaster->GetPosX()), static_cast<float>(pCaster->GetPosY()));
     D3DXVECTOR2 endPos(static_cast<float>(pTarget->GetPosX()), static_cast<float>(pTarget->GetPosY()));
 
-    // --- Ä²µo¶}¤õ®ÉªºªşÄİ¯S®Ä ---
-    if (pCaster->GetActionSide() == 1) { // ´Â¥k
-        startPos.x -= 70.0f; // ½Õ¾ã¯S®Ä°_©l¦ì¸m¥H¤Ç°tºj¤f
+    // --- è§¸ç™¼é–‹ç«æ™‚çš„é™„å±¬ç‰¹æ•ˆ ---
+    if (pCaster->GetActionSide() == 1) { // æœå³
+        startPos.x -= 70.0f; // èª¿æ•´ç‰¹æ•ˆèµ·å§‹ä½ç½®ä»¥åŒ¹é…æ§å£
 
-        // «Ø¥ß·Ï¹Ğ®ÄªG
+        // å»ºç«‹ç…™å¡µæ•ˆæœ
         CEffect_Field_Walkdust* pDust = new CEffect_Field_Walkdust();
         pDust->SetEffect(startPos.x + 55.0f, startPos.y - 45.0f, false, 0, 0, 0, 0);
         CEffectManager::GetInstance()->BulletAdd(pDust);
 
-        // «Ø¥ßºj¤f¤õªá
+        // å»ºç«‹æ§å£ç«èŠ±
         CEffect_Battle_GunSpark* pSpark = new CEffect_Battle_GunSpark();
         pSpark->SetEffect(startPos.x, startPos.y, true);
         CEffectManager::GetInstance()->BulletAdd(pSpark);
 
     }
-    else { // ´Â¥ª
+    else { // æœå·¦
         startPos.x += 5.0f;
 
         CEffect_Field_Walkdust* pDust = new CEffect_Field_Walkdust();
@@ -68,27 +68,27 @@ void CEffect_Battle_GunShoot::SetEffect(ClientCharacter* pCaster, ClientCharacte
         CEffectManager::GetInstance()->BulletAdd(pSpark);
     }
 
-    // --- ­pºâ­¸¦æ¸ô®| ---
+    // --- è¨ˆç®—é£›è¡Œè·¯å¾‘ ---
     m_fCurrentPosX = startPos.x;
     m_fCurrentPosY = startPos.y;
 
     D3DXVECTOR2 vec = endPos - startPos;
-    m_fTotalDistance = D3DXVec2Length(&vec) - 60.0f; // ´£«e¤@ÂI¶ZÂ÷Ä²µo©R¤¤
+    m_fTotalDistance = D3DXVec2Length(&vec) - 60.0f; // æå‰ä¸€é»è·é›¢è§¸ç™¼å‘½ä¸­
 
     D3DXVec2Normalize(&vec, &vec);
     m_fDirectionX = vec.x;
     m_fDirectionY = vec.y;
 
-    m_fSpeed = 10.0f; // ³]©w­¸¦æ³t«×
+    m_fSpeed = 10.0f; // è¨­å®šé£›è¡Œé€Ÿåº¦
 }
 
-// ¥t¤@­Ó SetEffect ¦h¸ü¡AÁöµM¥¼¦b CEffectManager ¤¤ª½±µ¨Ï¥Î¡A¦ı¦s¦b©ó­ì©l½X¤¤
+// å¦ä¸€å€‹ SetEffect å¤šè¼‰ï¼Œé›–ç„¶æœªåœ¨ CEffectManager ä¸­ç›´æ¥ä½¿ç”¨ï¼Œä½†å­˜åœ¨æ–¼åŸå§‹ç¢¼ä¸­
 void CEffect_Battle_GunShoot::SetEffect(D3DXVECTOR2* pStartPos, D3DXVECTOR2* pEndPos, bool bFlip, unsigned short a5, int hitInfoID)
 {
-    // ... Ãş¦üªº¦V¶q©M¶ZÂ÷­pºâÅŞ¿è ...
+    // ... é¡ä¼¼çš„å‘é‡å’Œè·é›¢è¨ˆç®—é‚è¼¯ ...
 }
 
-// ¹ïÀ³¤Ï²ÕÄ¶½X: 0x0052E520
+// å°æ‡‰åçµ„è­¯ç¢¼: 0x0052E520
 bool CEffect_Battle_GunShoot::FrameProcess(float fElapsedTime)
 {
     int moveFrameCount = 0;
@@ -100,77 +100,77 @@ bool CEffect_Battle_GunShoot::FrameProcess(float fElapsedTime)
             if (m_pTargetCharacter) {
                 m_pTargetCharacter->SetHited(m_nHitInfoID, 16);
             }
-            return true; // ¨ì¹F¥Ø¼Ğ¡A¯S®Äµ²§ô
+            return true; // åˆ°é”ç›®æ¨™ï¼Œç‰¹æ•ˆçµæŸ
         }
         else {
             m_fCurrentPosX += m_fDirectionX * moveDistance;
             m_fCurrentPosY += m_fDirectionY * moveDistance;
         }
     }
-    return false; // Ä~Äò­¸¦æ
+    return false; // ç¹¼çºŒé£›è¡Œ
 }
 
 /**
- * @brief ·Ç³ÆÃ¸»s«eªºÅŞ¿è§ó·s¡A®Ö¤ß¤u§@¬OÀò¨ú¨Ã³]©w¤l¼u¹Ï¹³ªºª¬ºA¡C
- * @note ¦¹¨ç¦¡ºë½TÁÙ­ì¦Û Effectall.c ¤¤ 0x0052E610 ªºÅŞ¿è¡C
+ * @brief æº–å‚™ç¹ªè£½å‰çš„é‚è¼¯æ›´æ–°ï¼Œæ ¸å¿ƒå·¥ä½œæ˜¯ç²å–ä¸¦è¨­å®šå­å½ˆåœ–åƒçš„ç‹€æ…‹ã€‚
+ * @note æ­¤å‡½å¼ç²¾ç¢ºé‚„åŸè‡ª Effectall.c ä¸­ 0x0052E610 çš„é‚è¼¯ã€‚
  */
 void CEffect_Battle_GunShoot::Process()
 {
-    // ±qª«¥ó¦ÀÀò¨ú©Î§ó·s¤l¼uªº GameImage ¹ê¨Ò
-    // ¸ê·½ ID 0xC000171u ¬Oµw½s½Xªº
+    // å¾ç‰©ä»¶æ± ç²å–æˆ–æ›´æ–°å­å½ˆçš„ GameImage å¯¦ä¾‹
+    // è³‡æº ID 0xC000171u æ˜¯ç¡¬ç·¨ç¢¼çš„
     m_pBulletImage = cltImageManager::GetInstance()->GetGameImage(7, 0xC000171u, 0, 1);
 
     if (m_pBulletImage)
     {
-        // ±N¥@¬É®y¼ĞÂà´«¬°¿Ã¹õ®y¼Ğ
-        // ­ì©l½X: v4 = *((float *)this + 2) - (double)dword_A73088;
+        // å°‡ä¸–ç•Œåº§æ¨™è½‰æ›ç‚ºè¢å¹•åº§æ¨™
+        // åŸå§‹ç¢¼: v4 = *((float *)this + 2) - (double)dword_A73088;
         //         v3 = *((float *)this + 3) - (double)dword_A7308C - 60.0;
         float screenX = m_fCurrentPosX - static_cast<float>(g_Game_System_Info.ScreenX);
-        float screenY = m_fCurrentPosY - static_cast<float>(g_Game_System_Info.ScreenY) - 60.0f; // Y¶b¦³60¹³¯ÀªºÃB¥~°¾²¾
+        float screenY = m_fCurrentPosY - static_cast<float>(g_Game_System_Info.ScreenY) - 60.0f; // Yè»¸æœ‰60åƒç´ çš„é¡å¤–åç§»
 
-        // --- ¶}©l³]©w GameImage ªº©Ò¦³Äİ©Ê ---
+        // --- é–‹å§‹è¨­å®š GameImage çš„æ‰€æœ‰å±¬æ€§ ---
 
-        // ³]©w¦ì¸m
+        // è¨­å®šä½ç½®
         m_pBulletImage->SetPosition(screenX, screenY);
 
-        // ³]©w°Êµe¼v®æ ID
-        // ­ì©l½X: *((_WORD *)v2 + 186) = *((_WORD *)this + 82); (this+164 -> m_usUnk_a4)
+        // è¨­å®šå‹•ç•«å½±æ ¼ ID
+        // åŸå§‹ç¢¼: *((_WORD *)v2 + 186) = *((_WORD *)this + 82); (this+164 -> m_usUnk_a4)
         m_pBulletImage->SetBlockID(m_usUnk_a4);
 
-        // ³]©w³z©ú«×
-        // ­ì©l½X: *(_DWORD *)(v5 + 380) = 255;
+        // è¨­å®šé€æ˜åº¦
+        // åŸå§‹ç¢¼: *(_DWORD *)(v5 + 380) = 255;
         m_pBulletImage->SetAlpha(255);
 
-        // ³]©wÃC¦â
-        // ­ì©l½X: *(_DWORD *)(v6 + 376) = 100;
+        // è¨­å®šé¡è‰²
+        // åŸå§‹ç¢¼: *(_DWORD *)(v6 + 376) = 100;
         m_pBulletImage->SetColor(100);
 
-        // ¶Ç»¼¬IªkªÌªº AccountID¡A¥i¯à¥Î©ó Shader
-        // ­ì©l½X: *(_DWORD *)(*((_DWORD *)this + 33) + 392) = *((_DWORD *)this + 42);
-        // m_pBulletImage->m_dwSomeShaderData = m_dwCasterAccountID; // °²³] GameImage ¦³¦¹¦¨­û
+        // å‚³éæ–½æ³•è€…çš„ AccountIDï¼Œå¯èƒ½ç”¨æ–¼ Shader
+        // åŸå§‹ç¢¼: *(_DWORD *)(*((_DWORD *)this + 33) + 392) = *((_DWORD *)this + 42);
+        // m_pBulletImage->m_dwSomeShaderData = m_dwCasterAccountID; // å‡è¨­ GameImage æœ‰æ­¤æˆå“¡
 
-        // §ó·s³»ÂI½w½Ä°Ï
+        // æ›´æ–°é ‚é»ç·©è¡å€
         m_pBulletImage->Process();
     }
 }
 
 /**
- * @brief Ã¸»s¤l¼u¹Ï¹³¡C
- * @note ¦¹¨ç¦¡ºë½TÁÙ­ì¦Û Effectall.c ¤¤ 0x0052E6D0 ªºÅŞ¿è¡C
+ * @brief ç¹ªè£½å­å½ˆåœ–åƒã€‚
+ * @note æ­¤å‡½å¼ç²¾ç¢ºé‚„åŸè‡ª Effectall.c ä¸­ 0x0052E6D0 çš„é‚è¼¯ã€‚
  */
 void CEffect_Battle_GunShoot::Draw()
 {
     if (m_pBulletImage && m_pBulletImage->IsInUse())
     {
-        // ³]©w¯S®Ä±M¥Îªº Alpha ²V¦X¼Ò¦¡
+        // è¨­å®šç‰¹æ•ˆå°ˆç”¨çš„ Alpha æ··åˆæ¨¡å¼
         CDeviceManager::GetInstance()->SetRenderState(D3DRS_BLENDOP, D3DBLENDOP_ADD);
         CDeviceManager::GetInstance()->SetRenderState(D3DRS_SRCBLEND, D3DBLEND_SRCALPHA);  // 5
         CDeviceManager::GetInstance()->SetRenderState(D3DRS_DESTBLEND, D3DBLEND_INVSRCALPHA); // 6
 
-        // Ã¸»s¹Ï¹³
+        // ç¹ªè£½åœ–åƒ
         m_pBulletImage->Draw();
 
-        // ª`·N¡G­ì©l½X¦b Draw ¤§«á¨S¦³«ì´_ RenderState¡A
-        // ³o³q±`¥Ñ CEffectManager::Draw µ²§Àªº ResetRenderState ²Î¤@³B²z¡C
+        // æ³¨æ„ï¼šåŸå§‹ç¢¼åœ¨ Draw ä¹‹å¾Œæ²’æœ‰æ¢å¾© RenderStateï¼Œ
+        // é€™é€šå¸¸ç”± CEffectManager::Draw çµå°¾çš„ ResetRenderState çµ±ä¸€è™•ç†ã€‚
     }
 }

@@ -1,11 +1,11 @@
 #include "Image/cltImageManager.h"
-#include <windows.h> // ¬°¤F MessageBoxA
-#include <cstdio>    // ¬°¤F wsprintfA
+#include <windows.h> // ç‚ºäº† MessageBoxA
+#include <cstdio>    // ç‚ºäº† wsprintfA
 
-// ªì©l¤ÆÀRºA¦¨­û«ü¼Ğ
+// åˆå§‹åŒ–éœæ…‹æˆå“¡æŒ‡æ¨™
 cltImageManager* cltImageManager::s_pInstance = nullptr;
 
-// ÀRºA GetInstance ¤èªkªº¹ê²{
+// éœæ…‹ GetInstance æ–¹æ³•çš„å¯¦ç¾
 cltImageManager* cltImageManager::GetInstance() {
     if (s_pInstance == nullptr) {
         s_pInstance = new (std::nothrow) cltImageManager();
@@ -14,53 +14,53 @@ cltImageManager* cltImageManager::GetInstance() {
 }
 
 cltImageManager::cltImageManager() {
-    // C++ ªº°}¦C¦¨­û m_Images ·|¦b¦¹³B¦Û°Ê©I¥s 5000 ¦¸ GameImage ªº¹w³]«Øºc¨ç¦¡¡C
-    // ³o¹ïÀ³¤F `eh vector constructor iterator` ªº¦æ¬°¡C
-    // ¤£»İ­nÃB¥~ªºµ{¦¡½X¡C
+    // C++ çš„é™£åˆ—æˆå“¡ m_Images æœƒåœ¨æ­¤è™•è‡ªå‹•å‘¼å« 5000 æ¬¡ GameImage çš„é è¨­å»ºæ§‹å‡½å¼ã€‚
+    // é€™å°æ‡‰äº† `eh vector constructor iterator` çš„è¡Œç‚ºã€‚
+    // ä¸éœ€è¦é¡å¤–çš„ç¨‹å¼ç¢¼ã€‚
 }
 
 cltImageManager::~cltImageManager() {
-    // C++ ¦b¾P·´ cltImageManager ª«¥ó®É¡A·|¦Û°Ê©I¥s m_Images °}¦C¤¤
-    // ¨C­Ó GameImage ª«¥óªº¸Ñºc¨ç¦¡¡C
-    // ³o¹ïÀ³¤F `eh vector destructor iterator` ªº¦æ¬°¡C
-    // ¤£»İ­nÃB¥~ªºµ{¦¡½X¡C
+    // C++ åœ¨éŠ·æ¯€ cltImageManager ç‰©ä»¶æ™‚ï¼Œæœƒè‡ªå‹•å‘¼å« m_Images é™£åˆ—ä¸­
+    // æ¯å€‹ GameImage ç‰©ä»¶çš„è§£æ§‹å‡½å¼ã€‚
+    // é€™å°æ‡‰äº† `eh vector destructor iterator` çš„è¡Œç‚ºã€‚
+    // ä¸éœ€è¦é¡å¤–çš„ç¨‹å¼ç¢¼ã€‚
 }
 
 void cltImageManager::Initialize() {
-    // ¬°¦À¤¤ªº¨C¤@­Ó GameImage ª«¥ó¹w¥ı«Ø¥ß³»ÂI½w½Ä°Ï¡C
+    // ç‚ºæ± ä¸­çš„æ¯ä¸€å€‹ GameImage ç‰©ä»¶é å…ˆå»ºç«‹é ‚é»ç·©è¡å€ã€‚
     for (int i = 0; i < MAX_IMAGES; ++i) {
         m_Images[i].CreateVertexBuffer();
     }
 }
 
 void cltImageManager::Free() {
-    // ­«³]¦À¤¤©Ò¦³ªº GameImage ª«¥ó¡AÄÀ©ñ¥¦­Ì¦û¥Îªº¸ê·½¡C
+    // é‡è¨­æ± ä¸­æ‰€æœ‰çš„ GameImage ç‰©ä»¶ï¼Œé‡‹æ”¾å®ƒå€‘ä½”ç”¨çš„è³‡æºã€‚
     for (int i = 0; i < MAX_IMAGES; ++i) {
         m_Images[i].ResetGI();
     }
 }
 
 GameImage* cltImageManager::GetGameImage(unsigned int dwGroupID, unsigned int dwResourceID, int a4, int a5) {
-    // °Ñ¼Æ a2 ¦b¤Ï½sÄ¶µ{¦¡½X¤¤³Q©R¦W¬° dwGroupID
-    // °Ñ¼Æ a3 ¦b¤Ï½sÄ¶µ{¦¡½X¤¤³Q©R¦W¬° dwResourceID
+    // åƒæ•¸ a2 åœ¨åç·¨è­¯ç¨‹å¼ç¢¼ä¸­è¢«å‘½åç‚º dwGroupID
+    // åƒæ•¸ a3 åœ¨åç·¨è­¯ç¨‹å¼ç¢¼ä¸­è¢«å‘½åç‚º dwResourceID
 
-    // ¤Ï½sÄ¶µ{¦¡½X¤¤ªº¤@­ÓÀË¬d¡A¦pªG groupID ¬° 0¡A«hÀË¬d¸ê·½¬O§_¤w¦b¸ü¤J¦Cªí¤¤¡C
+    // åç·¨è­¯ç¨‹å¼ç¢¼ä¸­çš„ä¸€å€‹æª¢æŸ¥ï¼Œå¦‚æœ groupID ç‚º 0ï¼Œå‰‡æª¢æŸ¥è³‡æºæ˜¯å¦å·²åœ¨è¼‰å…¥åˆ—è¡¨ä¸­ã€‚
     if (dwGroupID == 0 && ResourceMgr::GetInstance()->FindInResLoadingList(dwResourceID)) {
         return nullptr;
     }
 
-    // ¹M¾úª«¥ó¦À¡A´M§ä²Ä¤@­Ó¥¼³Q¨Ï¥Îªº GameImage¡C
+    // éæ­·ç‰©ä»¶æ± ï¼Œå°‹æ‰¾ç¬¬ä¸€å€‹æœªè¢«ä½¿ç”¨çš„ GameImageã€‚
     for (int i = 0; i < MAX_IMAGES; ++i) {
         if (!m_Images[i].IsInUse()) {
-            // §ä¨ì¤F¶¢¸mª«¥ó¡AÅı¥¦¥hÀò¨ú¹Ï¤ù¸ê·½¡C
+            // æ‰¾åˆ°äº†é–’ç½®ç‰©ä»¶ï¼Œè®“å®ƒå»ç²å–åœ–ç‰‡è³‡æºã€‚
             GameImage* pImage = &m_Images[i];
             pImage->GetGIData(dwGroupID, dwResourceID, a4, a5);
-            // ¦b±N GameImage ª«¥ó¥æ¥X¥h¤§«e¡A½T«O¨ä D3D ¯¾²z¤w¸g³Q«Ø¥ß¡C
+            // åœ¨å°‡ GameImage ç‰©ä»¶äº¤å‡ºå»ä¹‹å‰ï¼Œç¢ºä¿å…¶ D3D ç´‹ç†å·²ç¶“è¢«å»ºç«‹ã€‚
             if (pImage->IsInUse()) {
-                // ¨Ï¥Î§Ú­Ì­è­è·s¼Wªº getter ¨ú±o¸ê·½¸ê®Æ«ü¼Ğ
+                // ä½¿ç”¨æˆ‘å€‘å‰›å‰›æ–°å¢çš„ getter å–å¾—è³‡æºè³‡æ–™æŒ‡æ¨™
                 ImageResourceListData* pGIData = pImage->GetGIDataPtr();
                 if (pGIData) {
-                    // Ä²µo±q°O¾ĞÅé¨ì VRAM ªº¯¾²z¸ü¤J
+                    // è§¸ç™¼å¾è¨˜æ†¶é«”åˆ° VRAM çš„ç´‹ç†è¼‰å…¥
                     pGIData->m_Resource.LoadTexture();
                 }
             }
@@ -68,7 +68,7 @@ GameImage* cltImageManager::GetGameImage(unsigned int dwGroupID, unsigned int dw
         }
     }
 
-    // ¦pªG¹M¾ú§¹²¦³£¨S§ä¨ì¶¢¸mª«¥ó¡Aªí¥Üª«¥ó¦À¤wº¡¡C
+    // å¦‚æœéæ­·å®Œç•¢éƒ½æ²’æ‰¾åˆ°é–’ç½®ç‰©ä»¶ï¼Œè¡¨ç¤ºç‰©ä»¶æ± å·²æ»¿ã€‚
     CHAR Text[256];
     wsprintfA(Text, "Put image over=>%0x:%0x", dwGroupID, dwResourceID);
     MessageBoxA(NULL, Text, "Error", 0);
@@ -78,9 +78,9 @@ GameImage* cltImageManager::GetGameImage(unsigned int dwGroupID, unsigned int dw
 
 void cltImageManager::ReleaseGameImage(GameImage* pImage) {
     if (pImage) {
-        // ÂkÁÙª«¥ó¨ì¦À¤¤ªº¤èªk´N¬O©I¥s¨ä ReleaseGIData¡A
-        // ³o·|ÄÀ©ñ¨ä¹Ï¤ù¸ê·½¡A¨Ã±N¨ä¼Ğ°O¬°¥¼¨Ï¥Îª¬ºA¡C
-        // ­ì©l½X¤¤·|ÀË¬d¸ê·½«ü¼Ğ¬O§_¦s¦b¡A§Ú­Ì¤]¿í´`³o­ÓÅŞ¿è¡C
+        // æ­¸é‚„ç‰©ä»¶åˆ°æ± ä¸­çš„æ–¹æ³•å°±æ˜¯å‘¼å«å…¶ ReleaseGIDataï¼Œ
+        // é€™æœƒé‡‹æ”¾å…¶åœ–ç‰‡è³‡æºï¼Œä¸¦å°‡å…¶æ¨™è¨˜ç‚ºæœªä½¿ç”¨ç‹€æ…‹ã€‚
+        // åŸå§‹ç¢¼ä¸­æœƒæª¢æŸ¥è³‡æºæŒ‡æ¨™æ˜¯å¦å­˜åœ¨ï¼Œæˆ‘å€‘ä¹Ÿéµå¾ªé€™å€‹é‚è¼¯ã€‚
         if (pImage->IsInUse()) {
             pImage->ReleaseGIData();
         }
@@ -97,7 +97,7 @@ void cltImageManager::ReleaseAllGameImage() {
 
 void cltImageManager::ProcessAllGameImage() {
     for (int i = 0; i < MAX_IMAGES; ++i) {
-        // ¥u¹ï¥¿¦b¨Ï¥Î¤¤ªº GameImage ¶i¦æ³»ÂI¹Bºâ¡C
+        // åªå°æ­£åœ¨ä½¿ç”¨ä¸­çš„ GameImage é€²è¡Œé ‚é»é‹ç®—ã€‚
         if (m_Images[i].IsInUse()) {
             m_Images[i].Process();
         }

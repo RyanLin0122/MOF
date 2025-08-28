@@ -4,42 +4,42 @@
 
 /**
  * @class CEffect_UI_WorldMap_Light
- * @brief ¦b UI ¥@¬É¦a¹Ï¤WÅã¥Üªº«ùÄò´`Àô¥úÂI¯S®Ä¡C
+ * @brief åœ¨ UI ä¸–ç•Œåœ°åœ–ä¸Šé¡¯ç¤ºçš„æŒçºŒå¾ªç’°å…‰é»ç‰¹æ•ˆã€‚
  *
- * Ä~©Ó¦Û CEffectBase¡A¬O¤@­Ó¦b©T©w¿Ã¹õ®y¼Ğ¼½©ñªº°Êµe¯S®Ä¡A
- * ¨ä¥Í©R¶g´Á¥Ñ¥~³¡ÅŞ¿è±±¨î¡C
+ * ç¹¼æ‰¿è‡ª CEffectBaseï¼Œæ˜¯ä¸€å€‹åœ¨å›ºå®šè¢å¹•åº§æ¨™æ’­æ”¾çš„å‹•ç•«ç‰¹æ•ˆï¼Œ
+ * å…¶ç”Ÿå‘½é€±æœŸç”±å¤–éƒ¨é‚è¼¯æ§åˆ¶ã€‚
  */
 class CEffect_UI_WorldMap_Light : public CEffectBase {
 public:
     CEffect_UI_WorldMap_Light();
     virtual ~CEffect_UI_WorldMap_Light();
 
-    // --- µêÀÀ¨ç¦¡ÂĞ¼g ---
+    // --- è™›æ“¬å‡½å¼è¦†å¯« ---
 
-    /// @brief §ó·s°Êµe¡A¥Í©R¶g´Á¥Ñ m_bIsFinished ºX¼Ğ±±¨î¡C
+    /// @brief æ›´æ–°å‹•ç•«ï¼Œç”Ÿå‘½é€±æœŸç”± m_bIsFinished æ——æ¨™æ§åˆ¶ã€‚
     virtual bool FrameProcess(float fElapsedTime) override;
 
-    /// @brief ·Ç³ÆÃ¸»s«eªºÅŞ¿è§ó·s¡C
+    /// @brief æº–å‚™ç¹ªè£½å‰çš„é‚è¼¯æ›´æ–°ã€‚
     virtual void Process() override;
 
-    /// @brief Ã¸»s¯S®Ä¡C
+    /// @brief ç¹ªè£½ç‰¹æ•ˆã€‚
     virtual void Draw() override;
 
-    // --- ±M¦³¨ç¦¡ ---
+    // --- å°ˆæœ‰å‡½å¼ ---
 
-    /// @brief ³]©w¯S®ÄªºÅã¥Ü¦ì¸m¡C
-    /// @param x ¿Ã¹õ X ®y¼Ğ¡C
-    /// @param y ¿Ã¹õ Y ®y¼Ğ¡C
+    /// @brief è¨­å®šç‰¹æ•ˆçš„é¡¯ç¤ºä½ç½®ã€‚
+    /// @param x è¢å¹• X åº§æ¨™ã€‚
+    /// @param y è¢å¹• Y åº§æ¨™ã€‚
     void SetEffect(float x, float y);
 
-    /// @brief ³]©w¯S®Äªºµ²§ôºX¼Ğ¡C
+    /// @brief è¨­å®šç‰¹æ•ˆçš„çµæŸæ——æ¨™ã€‚
     void SetFinished(bool bFinished) { m_bIsFinished = bFinished; }
 
-    /// @brief ³]©w¤@­Ó¥¼ª¾ªº¸T¥ÎºX¼Ğ¡C
+    /// @brief è¨­å®šä¸€å€‹æœªçŸ¥çš„ç¦ç”¨æ——æ¨™ã€‚
     void SetDisable(int disableFlag);
 
 private:
-    // --- ¦¨­ûÅÜ¼Æ ---
-    bool m_bIsFinished; // ¦ì²¾ +132 (0x84): ¥Î©ó¥~³¡±±¨î¥Í©R¶g´ÁªººX¼Ğ
-    int  m_nDisableFlag; // ¦ì²¾ +136 (0x88): ¥¼ª¾¥Î³~ªººX¼Ğ
+    // --- æˆå“¡è®Šæ•¸ ---
+    bool m_bIsFinished; // ä½ç§» +132 (0x84): ç”¨æ–¼å¤–éƒ¨æ§åˆ¶ç”Ÿå‘½é€±æœŸçš„æ——æ¨™
+    int  m_nDisableFlag; // ä½ç§» +136 (0x88): æœªçŸ¥ç”¨é€”çš„æ——æ¨™
 };

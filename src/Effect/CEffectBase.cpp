@@ -1,14 +1,14 @@
 #include "Effect/CEffectBase.h"
 #include "global.h"
 
-// ���]�������ܼơA�Ω� IsCliping �禡
-// �o���ܼ����b�C���D�t�Τ��w�q�M��s
+// 假設的全域變數，用於 IsCliping 函式
+// 這些變數應在遊戲主系統中定義和更新
 extern GameSystemInfo g_Game_System_Info;
 
-// �����ϲ�Ķ�X: 0x0053A2C0
+// 對應反組譯碼: 0x0053A2C0
 CEffectBase::CEffectBase()
 {
-    // m_ccaEffect �|�b���B�۰ʩI�s��غc�禡�A������l�X�����G
+    // m_ccaEffect 會在此處自動呼叫其建構函式，對應原始碼中的：
     // CCAEffect::CCAEffect((CEffectBase *)((char *)this + 36));
 
     m_pOwner = nullptr;          // *((_DWORD *)this + 1) = 0;
@@ -21,37 +21,37 @@ CEffectBase::CEffectBase()
     m_bIsVisible = false;
 }
 
-// �����ϲ�Ķ�X: 0x0053A300
+// 對應反組譯碼: 0x0053A300
 CEffectBase::~CEffectBase()
 {
-    // *(_DWORD *)this = &CEffectBase::`vftable'; // �ѽsĶ���B�z
-    // m_ccaEffect ���Ѻc�禡�|�b���B�۰ʳQ�I�s�A������l�X�����G
+    // *(_DWORD *)this = &CEffectBase::`vftable'; // 由編譯器處理
+    // m_ccaEffect 的解構函式會在此處自動被呼叫，對應原始碼中的：
     // CCAEffect::~CCAEffect((CEffectBase *)((char *)this + 36));
 }
 
 /**
- * @brief �B�z�S�Ī��ͩR�g���C
- * �o�O�����O���w�]�欰�A������^ false�A���ܯS�ĥä������C
- * �l�����O�����мg���禡�H���Ѧۤv����������C
+ * @brief 處理特效的生命週期。
+ * 這是基底類別的預設行為，直接返回 false，表示特效永不結束。
+ * 衍生類別必須覆寫此函式以提供自己的結束條件。
  */
- // �����ϲ�Ķ�X: 0x0053A310
+ // 對應反組譯碼: 0x0053A310
 bool CEffectBase::FrameProcess(float fElapsedTime)
 {
-    // �w�]���p�U�A�S�Ĥ��|�۰ʵ����C
+    // 預設情況下，特效不會自動結束。
     return false; // return 0;
 }
 
 /**
- * @brief �ˬd�S�ĬO�_�b�ù����i���d�򤺡A�[�W�@�ӽw�İϡC
- * �o�O���F�u�Ʈį�A�קK�B�z�Mø�s�����b�ù��~���S�ġC
+ * @brief 檢查特效是否在螢幕的可視範圍內，加上一個緩衝區。
+ * 這是為了優化效能，避免處理和繪製完全在螢幕外的特效。
  */
- // �����ϲ�Ķ�X: 0x0053A340
+ // 對應反組譯碼: 0x0053A340
 bool CEffectBase::IsCliping(float x, float y)
 {
-    // ��l�X���ϥ� 150.0 �@���ù��~���w�İ�
+    // 原始碼中使用 150.0 作為螢幕外的緩衝區
     const float fBuffer = 150.0f;
 
-    // �ˬd X �y�ЬO�_�b [ -�w�İ�, �ù��e�� + �w�İ� ] ���d��
+    // 檢查 X 座標是否在 [ -緩衝區, 螢幕寬度 + 緩衝區 ] 的範圍內
     if (x + fBuffer < 0.0f) {
         return false;
     }
@@ -59,7 +59,7 @@ bool CEffectBase::IsCliping(float x, float y)
         return false;
     }
 
-    // ��l�X�S���ˬd Y �y�СA���@�ӧ��㪺��@�q�`�|�]�t��
+    // 原始碼沒有檢查 Y 座標，但一個完整的實作通常會包含它
     // if (y + fBuffer < 0.0f) return FALSE;
     // if (y > static_cast<float>(g_Game_System_Info.ScreenHeight) + fBuffer) return FALSE;
 

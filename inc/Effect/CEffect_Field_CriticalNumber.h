@@ -1,53 +1,53 @@
 #pragma once
 
 #include "Effect/CEffectBase.h"
-#include "Effect/CCAEffect.h" // ¬°¤F FrameSkip ªº¨Ï¥Î
+#include "Effect/CCAEffect.h" // ç‚ºäº† FrameSkip çš„ä½¿ç”¨
 
-// «e¦V«Å§i
+// å‰å‘å®£å‘Š
 class GameImage;
 
 /**
  * @class CEffect_Field_CriticalNumber
- * @brief ­t³dÅã¥Ü¼ÉÀ»¶Ë®`¼Æ¦rªºµ{§Ç¤Æ°Êµe¯S®Ä¡C
+ * @brief è² è²¬é¡¯ç¤ºæš´æ“Šå‚·å®³æ•¸å­—çš„ç¨‹åºåŒ–å‹•ç•«ç‰¹æ•ˆã€‚
  */
 class CEffect_Field_CriticalNumber : public CEffectBase {
 public:
     CEffect_Field_CriticalNumber();
     virtual ~CEffect_Field_CriticalNumber();
 
-    // --- µêÀÀ¨ç¦¡ÂĞ¼g ---
+    // --- è™›æ“¬å‡½å¼è¦†å¯« ---
     virtual bool FrameProcess(float fElapsedTime) override;
     virtual void Process() override;
     virtual void Draw() override;
 
-    // --- ±M¦³¨ç¦¡ ---
-    /// @brief ³]©w¯S®Ä¡C
-    /// @param damageValue Åã¥Üªº¶Ë®`¼Æ­È¡C
-    /// @param x ¯S®Ä¤¤¤ßÂIªº X ®y¼Ğ¡C
-    /// @param y ¯S®Ä¤¤¤ßÂIªº Y ®y¼Ğ¡C
-    /// @param type Ãş«¬ (0: ª±®a¹ï©Çª«, 1: ©Çª«¹ïª±®a)¡A¨M©w¼Æ¦rÃC¦â¡C
+    // --- å°ˆæœ‰å‡½å¼ ---
+    /// @brief è¨­å®šç‰¹æ•ˆã€‚
+    /// @param damageValue é¡¯ç¤ºçš„å‚·å®³æ•¸å€¼ã€‚
+    /// @param x ç‰¹æ•ˆä¸­å¿ƒé»çš„ X åº§æ¨™ã€‚
+    /// @param y ç‰¹æ•ˆä¸­å¿ƒé»çš„ Y åº§æ¨™ã€‚
+    /// @param type é¡å‹ (0: ç©å®¶å°æ€ªç‰©, 1: æ€ªç‰©å°ç©å®¶)ï¼Œæ±ºå®šæ•¸å­—é¡è‰²ã€‚
     void SetEffect(int damageValue, float x, float y, int type);
 
 private:
-    static const int MAX_DIGITS = 10; // ³Ì¦hÅã¥Ü10¦ì¼Æ
+    static const int MAX_DIGITS = 10; // æœ€å¤šé¡¯ç¤º10ä½æ•¸
 
-    // --- ¦¨­ûÅÜ¼Æ (®Ú¾Ú Effectall.c @ 0x005344C0 ±ÀÂ_) ---
-    GameImage** m_pNumberImages;     // ¦ì²¾ +132 (0x84): «ü¦V¼Æ¦r GameImage «ü¼Ğ°}¦C
-    GameImage* m_pFlashImage;       // ¦ì²¾ +136 (0x88): ­I´º°{¥ú
-    GameImage* m_pTextImage;        // ¦ì²¾ +140 (0x8C): «e´º¤å¦r (CRITICAL)
+    // --- æˆå“¡è®Šæ•¸ (æ ¹æ“š Effectall.c @ 0x005344C0 æ¨æ–·) ---
+    GameImage** m_pNumberImages;     // ä½ç§» +132 (0x84): æŒ‡å‘æ•¸å­— GameImage æŒ‡æ¨™é™£åˆ—
+    GameImage* m_pFlashImage;       // ä½ç§» +136 (0x88): èƒŒæ™¯é–ƒå…‰
+    GameImage* m_pTextImage;        // ä½ç§» +140 (0x8C): å‰æ™¯æ–‡å­— (CRITICAL)
 
-    float m_fScale;                  // ¦ì²¾ +144 (0x90): ¾ãÅéÁY©ñ­È
-    float m_fAlpha;                  // ¦ì²¾ +148 (0x94): ¾ãÅé³z©ú«×
+    float m_fScale;                  // ä½ç§» +144 (0x90): æ•´é«”ç¸®æ”¾å€¼
+    float m_fAlpha;                  // ä½ç§» +148 (0x94): æ•´é«”é€æ˜åº¦
 
-    char  m_cDigitCount;             // ¦ì²¾ +166 (0xA6): ¼Æ¦rªº¦ì¼Æ
-    unsigned char m_ucState;         // ¦ì²¾ +167 (0xA7): °Êµeª¬ºA (0:©ñ¤j, 1:ÁY¤p, 2:²H¥X)
-    unsigned short m_usTextImageFrame; // ¦ì²¾ +204 (0xCC): «e´º¤å¦rªº¼v®æ ID
+    char  m_cDigitCount;             // ä½ç§» +166 (0xA6): æ•¸å­—çš„ä½æ•¸
+    unsigned char m_ucState;         // ä½ç§» +167 (0xA7): å‹•ç•«ç‹€æ…‹ (0:æ”¾å¤§, 1:ç¸®å°, 2:æ·¡å‡º)
+    unsigned short m_usTextImageFrame; // ä½ç§» +204 (0xCC): å‰æ™¯æ–‡å­—çš„å½±æ ¼ ID
 
-    float m_fInitialPosX;            // ¦ì²¾ +180 (0xB4): ªì©l X ®y¼Ğ
-    float m_fCurrentPosY;            // ¦ì²¾ +184 (0xB8): ·í«e Y ®y¼Ğ
-    float m_fTotalWidth;             // ¦ì²¾ +188 (0xBC): ¼Æ¦rÁ`¼e«×¡A¥Î©ó©~¤¤
+    float m_fInitialPosX;            // ä½ç§» +180 (0xB4): åˆå§‹ X åº§æ¨™
+    float m_fCurrentPosY;            // ä½ç§» +184 (0xB8): ç•¶å‰ Y åº§æ¨™
+    float m_fTotalWidth;             // ä½ç§» +188 (0xBC): æ•¸å­—ç¸½å¯¬åº¦ï¼Œç”¨æ–¼å±…ä¸­
 
-    unsigned char m_ucDigitFrames[MAX_DIGITS]; // ¦ì²¾ +156 (0x9C): Àx¦s¨C­Ó¼Æ¦rªº¼v®æID
+    unsigned char m_ucDigitFrames[MAX_DIGITS]; // ä½ç§» +156 (0x9C): å„²å­˜æ¯å€‹æ•¸å­—çš„å½±æ ¼ID
 
-    FrameSkip m_FrameSkip;           // ¦ì²¾ +192 (0xC0)
+    FrameSkip m_FrameSkip;           // ä½ç§» +192 (0xC0)
 };

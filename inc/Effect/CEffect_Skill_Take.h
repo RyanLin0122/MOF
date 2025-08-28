@@ -2,40 +2,40 @@
 
 #include "Effect/CEffectBase.h"
 
-// «e¦V«Å§i
+// å‰å‘å®£å‘Š
 class ClientCharacter;
 
 /**
  * @class CEffect_Skill_Take
- * @brief ¥Nªí§Ş¯àµo°Ê©Îµú°Û®ÉªºµøÄ±¯S®Ä¡C
+ * @brief ä»£è¡¨æŠ€èƒ½ç™¼å‹•æˆ–è© å”±æ™‚çš„è¦–è¦ºç‰¹æ•ˆã€‚
  *
- * Ä~©Ó¦Û CEffectBase¡A¬O¤@­Ó¸òÀH¨¤¦â¼½©ñªº¤@¦¸©Ê°Êµe¯S®Ä¡C
+ * ç¹¼æ‰¿è‡ª CEffectBaseï¼Œæ˜¯ä¸€å€‹è·Ÿéš¨è§’è‰²æ’­æ”¾çš„ä¸€æ¬¡æ€§å‹•ç•«ç‰¹æ•ˆã€‚
  */
 class CEffect_Skill_Take : public CEffectBase {
 public:
     CEffect_Skill_Take();
     virtual ~CEffect_Skill_Take();
 
-    // --- µêÀÀ¨ç¦¡ÂĞ¼g ---
+    // --- è™›æ“¬å‡½å¼è¦†å¯« ---
 
-    /// @brief ³B²z¯S®Äªº¥Í©R¶g´Á¡Aª½±µ¨Ì¿à CCAEffect ªº°Êµe¼½©ñª¬ºA¡C
+    /// @brief è™•ç†ç‰¹æ•ˆçš„ç”Ÿå‘½é€±æœŸï¼Œç›´æ¥ä¾è³´ CCAEffect çš„å‹•ç•«æ’­æ”¾ç‹€æ…‹ã€‚
     virtual bool FrameProcess(float fElapsedTime) override;
 
-    /// @brief ·Ç³ÆÃ¸»s«eªºÅŞ¿è§ó·s¡A¦P¨B¾Ö¦³ªÌªº¦ì¸m¡C
+    /// @brief æº–å‚™ç¹ªè£½å‰çš„é‚è¼¯æ›´æ–°ï¼ŒåŒæ­¥æ“æœ‰è€…çš„ä½ç½®ã€‚
     virtual void Process() override;
 
-    /// @brief Ã¸»s¯S®Ä¡C
+    /// @brief ç¹ªè£½ç‰¹æ•ˆã€‚
     virtual void Draw() override;
 
-    // --- ±M¦³¨ç¦¡ ---
+    // --- å°ˆæœ‰å‡½å¼ ---
 
-    /// @brief ³]©w¯S®Äªº¸òÀH¥Ø¼Ğ¡C
-    /// @param pOwner ¬Iªk¨¤¦â¡C
+    /// @brief è¨­å®šç‰¹æ•ˆçš„è·Ÿéš¨ç›®æ¨™ã€‚
+    /// @param pOwner æ–½æ³•è§’è‰²ã€‚
     void SetEffect(ClientCharacter* pOwner);
 
 protected:
-    // --- ¦¨­ûÅÜ¼Æ ---
+    // --- æˆå“¡è®Šæ•¸ ---
 
-    /// @brief «ü¦V¯S®Äªº¾Ö¦³ªÌ¡]¬Iªk¨¤¦â¡^¡C
-    ClientCharacter* m_pOwnerCharacter; // ¦ì²¾ +132 (0x84)
+    /// @brief æŒ‡å‘ç‰¹æ•ˆçš„æ“æœ‰è€…ï¼ˆæ–½æ³•è§’è‰²ï¼‰ã€‚
+    ClientCharacter* m_pOwnerCharacter; // ä½ç§» +132 (0x84)
 };

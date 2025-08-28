@@ -2,26 +2,26 @@
 #include "Effect/CEAManager.h"
 #include "global.h"
 
-// ¹ïÀ³¤Ï²ÕÄ¶½X: 0x00533C90
+// å°æ‡‰åçµ„è­¯ç¢¼: 0x00533C90
 CEffect_Skill_Resurrection::CEffect_Skill_Resurrection()
     : m_fInitialPosX(0.0f), m_fInitialPosY(0.0f)
 {
-    // CEffectBase ªº«Øºc¨ç¦¡·|³Q¦Û°Ê©I¥s
-    // ¯S®Ä¸ê·½¬O¦b SetEffect ¤¤°ÊºA¸ü¤Jªº
+    // CEffectBase çš„å»ºæ§‹å‡½å¼æœƒè¢«è‡ªå‹•å‘¼å«
+    // ç‰¹æ•ˆè³‡æºæ˜¯åœ¨ SetEffect ä¸­å‹•æ…‹è¼‰å…¥çš„
 }
 
-// ¹ïÀ³¤Ï²ÕÄ¶½X: 0x00533CD0
+// å°æ‡‰åçµ„è­¯ç¢¼: 0x00533CD0
 CEffect_Skill_Resurrection::~CEffect_Skill_Resurrection()
 {
 }
 
-// ¹ïÀ³¤Ï²ÕÄ¶½X: 0x00533CE0
+// å°æ‡‰åçµ„è­¯ç¢¼: 0x00533CE0
 void CEffect_Skill_Resurrection::SetEffect(float x, float y, unsigned char skillLevel)
 {
     const char* szFileName = nullptr;
     int effectID = 0;
 
-    // ®Ú¾Ú§Ş¯àµ¥¯Å¿ï¾Ü¤£¦Pªº¯S®Ä¸ê·½
+    // æ ¹æ“šæŠ€èƒ½ç­‰ç´šé¸æ“‡ä¸åŒçš„ç‰¹æ•ˆè³‡æº
     if (skillLevel == 1) {
         effectID = 72;
         szFileName = "Effect/efn_resurrectionLv2.ea";
@@ -30,47 +30,47 @@ void CEffect_Skill_Resurrection::SetEffect(float x, float y, unsigned char skill
         effectID = 73;
         szFileName = "Effect/efn_resurrectionLv3.ea";
     }
-    else { // ¹w³]¬°µ¥¯Å 0
+    else { // é è¨­ç‚ºç­‰ç´š 0
         effectID = 71;
         szFileName = "Effect/efn_Resurrection.ea";
     }
 
-    // Àò¨ú¨Ã³]©w¯S®Ä¼Æ¾Ú
+    // ç²å–ä¸¦è¨­å®šç‰¹æ•ˆæ•¸æ“š
     CEAManager::GetInstance()->GetEAData(effectID, szFileName, &m_ccaEffect);
     m_ccaEffect.SetFrameTime();
-    m_ccaEffect.Play(0, false); // ¼½©ñ²Ä¤@­Ó°Êµe§Ç¦C¡A¤£´`Àô
+    m_ccaEffect.Play(0, false); // æ’­æ”¾ç¬¬ä¸€å€‹å‹•ç•«åºåˆ—ï¼Œä¸å¾ªç’°
 
-    // Àx¦s¦ì¸m§Ö·Ó
+    // å„²å­˜ä½ç½®å¿«ç…§
     m_fInitialPosX = x;
     m_fInitialPosY = y;
 }
 
-// ¹ïÀ³¤Ï²ÕÄ¶½X: 0x00533D60
+// å°æ‡‰åçµ„è­¯ç¢¼: 0x00533D60
 bool CEffect_Skill_Resurrection::FrameProcess(float fElapsedTime)
 {
-    // ±N¥Í©R¶g´ÁºŞ²zªº¥ô°È§¹¥ş©e°Uµ¹¤º³¡ªº CCAEffect ª«¥ó¡C
+    // å°‡ç”Ÿå‘½é€±æœŸç®¡ç†çš„ä»»å‹™å®Œå…¨å§”è¨—çµ¦å…§éƒ¨çš„ CCAEffect ç‰©ä»¶ã€‚
     return m_ccaEffect.FrameProcess(fElapsedTime);
 }
 
-// ¹ïÀ³¤Ï²ÕÄ¶½X: 0x00533D70
+// å°æ‡‰åçµ„è­¯ç¢¼: 0x00533D70
 void CEffect_Skill_Resurrection::Process()
 {
-    // --- ®Ö¤ßÅŞ¿è¡G¨Ï¥ÎÀx¦sªºªì©l¦ì¸m ---
-    // ±N¥@¬É®y¼ĞÂà´«¬°¿Ã¹õ®y¼Ğ
+    // --- æ ¸å¿ƒé‚è¼¯ï¼šä½¿ç”¨å„²å­˜çš„åˆå§‹ä½ç½® ---
+    // å°‡ä¸–ç•Œåº§æ¨™è½‰æ›ç‚ºè¢å¹•åº§æ¨™
     float screenX = m_fInitialPosX - static_cast<float>(g_Game_System_Info.ScreenX);
     float screenY = m_fInitialPosY - static_cast<float>(g_Game_System_Info.ScreenY);
 
-    // ¶i¦æµô°Å§PÂ_
+    // é€²è¡Œè£å‰ªåˆ¤æ–·
     m_bIsVisible = IsCliping(screenX, 0.0f);
 
     if (m_bIsVisible) {
-        // §ó·s¤º³¡ CCAEffect ªºª¬ºA
+        // æ›´æ–°å…§éƒ¨ CCAEffect çš„ç‹€æ…‹
         m_ccaEffect.SetPosition(screenX, screenY);
         m_ccaEffect.Process();
     }
 }
 
-// ¹ïÀ³¤Ï²ÕÄ¶½X: 0x00533DC0
+// å°æ‡‰åçµ„è­¯ç¢¼: 0x00533DC0
 void CEffect_Skill_Resurrection::Draw()
 {
     if (m_bIsVisible) {

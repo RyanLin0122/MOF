@@ -2,37 +2,37 @@
 
 #include "Effect/CEffectBase.h"
 
-// «e¦V«Å§i
+// å‰å‘å®£å‘Š
 class ClientCharacter;
 
 /**
  * @class CEffect_WeddingHall
- * @brief ¦b±BÂ§¦a¹Ïªº©T©w®y¼Ğ¼½©ñ¡A¥B¥Í©R¶g´Á¥Ñª±®a¬O§_¦b¦a¹Ï¤º¨M©wªº¯S®Ä¡C
+ * @brief åœ¨å©šç¦®åœ°åœ–çš„å›ºå®šåº§æ¨™æ’­æ”¾ï¼Œä¸”ç”Ÿå‘½é€±æœŸç”±ç©å®¶æ˜¯å¦åœ¨åœ°åœ–å…§æ±ºå®šçš„ç‰¹æ•ˆã€‚
  */
 class CEffect_WeddingHall : public CEffectBase {
 public:
     CEffect_WeddingHall();
     virtual ~CEffect_WeddingHall();
 
-    // --- µêÀÀ¨ç¦¡ÂĞ¼g ---
+    // --- è™›æ“¬å‡½å¼è¦†å¯« ---
 
-    /// @brief ®Ú¾Ú¸j©w¨¤¦âªº¦a¹ÏID¨Ó§PÂ_¬O§_À³¸Óµ²§ô¯S®Ä¡C
+    /// @brief æ ¹æ“šç¶å®šè§’è‰²çš„åœ°åœ–IDä¾†åˆ¤æ–·æ˜¯å¦æ‡‰è©²çµæŸç‰¹æ•ˆã€‚
     virtual bool FrameProcess(float fElapsedTime) override;
     virtual void Process() override;
     virtual void Draw() override;
 
-    // --- ±M¦³¨ç¦¡ ---
+    // --- å°ˆæœ‰å‡½å¼ ---
 
-    /// @brief ªì©l¤Æ¯S®Ä¸ê·½¡C
+    /// @brief åˆå§‹åŒ–ç‰¹æ•ˆè³‡æºã€‚
     void Init();
 
-    /// @brief ³]©w¯S®Ä¡C
-    /// @param x ¯S®Ä¤¤¤ßÂIªº X ®y¼Ğ¡C
-    /// @param y ¯S®Ä¤¤¤ßÂIªº Y ®y¼Ğ¡C
-    /// @param pPlayer ª±®a¨¤¦â¡A¥Î©óÀË¬d¦a¹ÏID¡C
+    /// @brief è¨­å®šç‰¹æ•ˆã€‚
+    /// @param x ç‰¹æ•ˆä¸­å¿ƒé»çš„ X åº§æ¨™ã€‚
+    /// @param y ç‰¹æ•ˆä¸­å¿ƒé»çš„ Y åº§æ¨™ã€‚
+    /// @param pPlayer ç©å®¶è§’è‰²ï¼Œç”¨æ–¼æª¢æŸ¥åœ°åœ–IDã€‚
     void SetEffect(float x, float y, ClientCharacter* pPlayer);
 
 private:
-    // --- ¦¨­ûÅÜ¼Æ (®Ú¾Ú Effectall.c @ 0x00537ED0 ±ÀÂ_) ---
-    ClientCharacter* m_pOwnerPlayer; // ¦ì²¾ +132 (0x84): ¨ä¦a¹ÏID¨M©w¯S®Ä¥Í©R¶g´Áªº¨¤¦â
+    // --- æˆå“¡è®Šæ•¸ (æ ¹æ“š Effectall.c @ 0x00537ED0 æ¨æ–·) ---
+    ClientCharacter* m_pOwnerPlayer; // ä½ç§» +132 (0x84): å…¶åœ°åœ–IDæ±ºå®šç‰¹æ•ˆç”Ÿå‘½é€±æœŸçš„è§’è‰²
 };

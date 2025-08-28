@@ -1,7 +1,7 @@
 #pragma once
 #include <d3dx9math.h>
 
-// «e¦V«Å§i (Forward Declarations)
+// å‰å‘å®£å‘Š (Forward Declarations)
 class CCA;
 class CCANormal;
 class GameImage;
@@ -15,16 +15,16 @@ struct stCharOrder { int a; };
 
 /**
  * @class ClientCharacter
- * @brief ¥Nªí¹CÀ¸¥@¬É¤¤©Ò¦³¨¤¦âªº°òÂ¦Ãş§O (ª±®a¡B©Çª«¡BNPC)¡C
- * ­t³dºŞ²z¨¤¦âªºª¬ºA¡B°Êµe¡B¦ì¸m¡B«ü¥O©M¬ÛÃö¯S®Ä¡C
+ * @brief ä»£è¡¨éŠæˆ²ä¸–ç•Œä¸­æ‰€æœ‰è§’è‰²çš„åŸºç¤é¡åˆ¥ (ç©å®¶ã€æ€ªç‰©ã€NPC)ã€‚
+ * è² è²¬ç®¡ç†è§’è‰²çš„ç‹€æ…‹ã€å‹•ç•«ã€ä½ç½®ã€æŒ‡ä»¤å’Œç›¸é—œç‰¹æ•ˆã€‚
  */
 class ClientCharacter {
 public:
-    // --- ¤èªk­ì«¬ (Method Prototypes) ---
+    // --- æ–¹æ³•åŸå‹ (Method Prototypes) ---
     ClientCharacter();
     ~ClientCharacter();
 
-    // ®Ö¤ß§ó·s»PÃ¸»s
+    // æ ¸å¿ƒæ›´æ–°èˆ‡ç¹ªè£½
     int Poll(int a2);
     void PrepareDrawingPlayer();
     void PrepareDrawingMonster();
@@ -32,7 +32,7 @@ public:
     void DrawPlayer(int a2);
     void DrawMonster(int a2);
 
-    // ª¬ºA»P«ü¥O³B²z
+    // ç‹€æ…‹èˆ‡æŒ‡ä»¤è™•ç†
     void ProcessOrder();
     void PushOrder(stCharOrder* pOrder);
     void PopOrder(stCharOrder* pOrder);
@@ -41,10 +41,10 @@ public:
     void SetActionState(unsigned int state);
     void SetSpecialState(unsigned char state);
 
-    // ¯S®Ä³Ğ«Ø»PºŞ²z
+    // ç‰¹æ•ˆå‰µå»ºèˆ‡ç®¡ç†
     void CreateUseSkillEffect();
     void CreateNormalAttackEffect(unsigned char motionType, unsigned int targetAccountID, unsigned char hitInfo);
-    // ... ¨ä¥L©Ò¦³¦b .cpp ÀÉ¤¤ÁÙ­ìªº¨ç¦¡­ì«¬ ...
+    // ... å…¶ä»–æ‰€æœ‰åœ¨ .cpp æª”ä¸­é‚„åŸçš„å‡½å¼åŸå‹ ...
 
     // Getters & Setters
     int GetPosX() const;
@@ -58,13 +58,13 @@ public:
     bool GetSustainSkillState(unsigned short skillID) const;
     int GetHitedInfoNum(unsigned int casterAccountID);
     void SetHited(int hitInfoID, int value);
-    // ... ¨ä¥L Getters & Setters ...
+    // ... å…¶ä»– Getters & Setters ...
 
-    /// @brief ¨ú±o¨¤¦âªº X ®y¼Ğ
+    /// @brief å–å¾—è§’è‰²çš„ X åº§æ¨™
     int GetPosX();
-    /// @brief ¨ú±o¨¤¦âªº Y ®y¼Ğ
+    /// @brief å–å¾—è§’è‰²çš„ Y åº§æ¨™
     int GetPosY();
-    /// @brief ¨ú±o¨¤¦âªº°ª«×
+    /// @brief å–å¾—è§’è‰²çš„é«˜åº¦
     int GetCharHeight();
     bool IsHide();
 
@@ -96,90 +96,90 @@ public:
 	void SetPreparingSpeedUp(bool value) { m_preparingSpeedUp = value; }
 
 private:
-    // ¤º³¡»²§U¨ç¦¡
+    // å…§éƒ¨è¼”åŠ©å‡½å¼
     void DecideDrawFrame(unsigned int* pOutResourceID, unsigned short* pOutBlockID);
     void DecideDrawFrame();
     void PrepareDrawingHPBox();
     void DrawHPBox();
     void InitScreenName(int a2);
 
-    // --- Äİ©Ê («ö°O¾ĞÅé¦ì²¾±Æ¦C) ---
+    // --- å±¬æ€§ (æŒ‰è¨˜æ†¶é«”ä½ç§»æ’åˆ—) ---
 
     // --- Offset 0x0000 - 0x00FF ---
-    void* m_pVftable;                                 // ¦ì²¾ +0
-    GameImage* m_pShadowImage;                        // ¦ì²¾ +4
-    GameImage* m_pShadowImage_Sub;                    // ¦ì²¾ +8
-    void* m_pMonsterAniInfo;                          // ¦ì²¾ +16
-    unsigned int m_dwUnknown_20;                      // ¦ì²¾ +20
-    unsigned int m_dwUnknown_24;                      // ¦ì²¾ +24
-    unsigned int m_dwUnknown_28;                      // ¦ì²¾ +28
-    unsigned int m_dwUnknown_32;                      // ¦ì²¾ +32
-    GameImage* m_pGogglesImage;                       // ¦ì²¾ +64
-    unsigned short m_wUnknown_68;                     // ¦ì²¾ +68
-    unsigned int m_dwAttackSpeed;                     // ¦ì²¾ +68 (*((_DWORD *)this + 17))
-    unsigned char m_ucAttackAniRate;                  // ¦ì²¾ +72 (*((_BYTE *)this + 72))
-    // ... (¨ä¥L±q 0x0 ¨ì 0xFF ªº¤p«¬ª¬ºAºX¼Ğ©M«ü¼Ğ)
+    void* m_pVftable;                                 // ä½ç§» +0
+    GameImage* m_pShadowImage;                        // ä½ç§» +4
+    GameImage* m_pShadowImage_Sub;                    // ä½ç§» +8
+    void* m_pMonsterAniInfo;                          // ä½ç§» +16
+    unsigned int m_dwUnknown_20;                      // ä½ç§» +20
+    unsigned int m_dwUnknown_24;                      // ä½ç§» +24
+    unsigned int m_dwUnknown_28;                      // ä½ç§» +28
+    unsigned int m_dwUnknown_32;                      // ä½ç§» +32
+    GameImage* m_pGogglesImage;                       // ä½ç§» +64
+    unsigned short m_wUnknown_68;                     // ä½ç§» +68
+    unsigned int m_dwAttackSpeed;                     // ä½ç§» +68 (*((_DWORD *)this + 17))
+    unsigned char m_ucAttackAniRate;                  // ä½ç§» +72 (*((_BYTE *)this + 72))
+    // ... (å…¶ä»–å¾ 0x0 åˆ° 0xFF çš„å°å‹ç‹€æ…‹æ——æ¨™å’ŒæŒ‡æ¨™)
 
     // --- Offset 0x0100 - 0x02FF ---
-    unsigned char m_ucDigitFrames_Unk[10];            // ¦ì²¾ +280
-    unsigned char m_ucDoubleAttackMotion[2];          // ¦ì²¾ +286 (*((_BYTE *)this + 286))
-    unsigned char m_ucAttackMotionType;               // ¦ì²¾ +288 (*((_BYTE *)this + 288))
-    unsigned char m_ucAlpha;                          // ¦ì²¾ +312 (*((_BYTE *)this + 312))
+    unsigned char m_ucDigitFrames_Unk[10];            // ä½ç§» +280
+    unsigned char m_ucDoubleAttackMotion[2];          // ä½ç§» +286 (*((_BYTE *)this + 286))
+    unsigned char m_ucAttackMotionType;               // ä½ç§» +288 (*((_BYTE *)this + 288))
+    unsigned char m_ucAlpha;                          // ä½ç§» +312 (*((_BYTE *)this + 312))
 
     // --- Offset 0x0300 - 0x1FFF ---
-    char m_szName[128];                               // ¦ì²¾ +460
-    unsigned short m_wKind;                           // ¦ì²¾ +568
-    int m_dwLR_Flag;                                  // ¦ì²¾ +572 (*((_DWORD *)this + 143))
-	unsigned short m_wMapID;						  // ¦ì²¾ +592
-    unsigned char m_ucSex;                            // ¦ì²¾ +594
-    unsigned char m_ucHair;                           // ¦ì²¾ +595
-    unsigned char m_ucFace;                           // ¦ì²¾ +596
-    char m_cCharState;                                // ¦ì²¾ +604 (Stun, etc.)
-    int m_dwTransformation;                           // ¦ì²¾ +676
-    stCharOrder* m_pCurrentOrder;                     // ¦ì²¾ +708
-    unsigned char m_ucHittedSkillMotion;              // ¦ì²¾ +732 (*((_BYTE *)this + 732))
-    unsigned char m_ucAttackType;                     // ¦ì²¾ +738 (*((_BYTE *)this + 738))
-    stCharOrder m_OrderQueue[100];                    // ¦ì²¾ +744
+    char m_szName[128];                               // ä½ç§» +460
+    unsigned short m_wKind;                           // ä½ç§» +568
+    int m_dwLR_Flag;                                  // ä½ç§» +572 (*((_DWORD *)this + 143))
+	unsigned short m_wMapID;						  // ä½ç§» +592
+    unsigned char m_ucSex;                            // ä½ç§» +594
+    unsigned char m_ucHair;                           // ä½ç§» +595
+    unsigned char m_ucFace;                           // ä½ç§» +596
+    char m_cCharState;                                // ä½ç§» +604 (Stun, etc.)
+    int m_dwTransformation;                           // ä½ç§» +676
+    stCharOrder* m_pCurrentOrder;                     // ä½ç§» +708
+    unsigned char m_ucHittedSkillMotion;              // ä½ç§» +732 (*((_BYTE *)this + 732))
+    unsigned char m_ucAttackType;                     // ä½ç§» +738 (*((_BYTE *)this + 738))
+    stCharOrder m_OrderQueue[100];                    // ä½ç§» +744
 
     // --- Offset 0x2000 - 0x2FFF ---
-    //CControlChatBallon m_ChatBallon;                  // ¦ì²¾ +4448
-    unsigned int m_dwAccountID;                       // ¦ì²¾ +456 (*((_DWORD *)this + 114))
+    //CControlChatBallon m_ChatBallon;                  // ä½ç§» +4448
+    unsigned int m_dwAccountID;                       // ä½ç§» +456 (*((_DWORD *)this + 114))
 
-    // ... (¤j¶q UI ±±¨î¶µ©M¨t²Îª«¥ó) ...
-    //CControlAlphaBox m_HPBox_Back;                    // ¦ì²¾ +7452
-    //CControlAlphaBox m_HPBox_Front;                   // ¦ì²¾ +7660
-    //CControlAlphaBox m_NameBox;                       // ¦ì²¾ +9732
-    char m_szScreenName[128];                         // ¦ì²¾ +9984
+    // ... (å¤§é‡ UI æ§åˆ¶é …å’Œç³»çµ±ç‰©ä»¶) ...
+    //CControlAlphaBox m_HPBox_Back;                    // ä½ç§» +7452
+    //CControlAlphaBox m_HPBox_Front;                   // ä½ç§» +7660
+    //CControlAlphaBox m_NameBox;                       // ä½ç§» +9732
+    char m_szScreenName[128];                         // ä½ç§» +9984
 
     // --- Offset 0x3000+ ---
-    //cltMoF_CharacterActionStateSystem m_ActionStateSystem; // ¦ì²¾ +11544
-    //cltPetObject m_PetObject;                         // ¦ì²¾ +11564
-    //clTransportObject m_TransportObject;              // ¦ì²¾ +14616
+    //cltMoF_CharacterActionStateSystem m_ActionStateSystem; // ä½ç§» +11544
+    //cltPetObject m_PetObject;                         // ä½ç§» +11564
+    //clTransportObject m_TransportObject;              // ä½ç§» +14616
 
-    // --- °Êµe±±¨î¾¹ ---
-    CCA* m_pCCA;                                      // ¦ì²¾ +4348 (*((_DWORD *)this + 1087))
-    CCANormal* m_pCCANormal;                          // ¦ì²¾ +4352 (*((_DWORD *)this + 1088))
+    // --- å‹•ç•«æ§åˆ¶å™¨ ---
+    CCA* m_pCCA;                                      // ä½ç§» +4348 (*((_DWORD *)this + 1087))
+    CCANormal* m_pCCANormal;                          // ä½ç§» +4352 (*((_DWORD *)this + 1088))
 
-    // --- ®Ö¤ß¦ì¸m»Pª¬ºA ---
-    int m_iPosX;                                      // ¦ì²¾ +4384 (*((_DWORD *)this + 1096))
-    int m_iPosY;                                      // ¦ì²¾ +4388 (*((_DWORD *)this + 1097))
-    int m_iPrevPosX;                                  // ¦ì²¾ +4392 (*((_DWORD *)this + 1098))
-    int m_iPrevPosY;                                  // ¦ì²¾ +4396 (*((_DWORD *)this + 1099))
+    // --- æ ¸å¿ƒä½ç½®èˆ‡ç‹€æ…‹ ---
+    int m_iPosX;                                      // ä½ç§» +4384 (*((_DWORD *)this + 1096))
+    int m_iPosY;                                      // ä½ç§» +4388 (*((_DWORD *)this + 1097))
+    int m_iPrevPosX;                                  // ä½ç§» +4392 (*((_DWORD *)this + 1098))
+    int m_iPrevPosY;                                  // ä½ç§» +4396 (*((_DWORD *)this + 1099))
 
-    int m_iDestX;                                     // ¦ì²¾ +556 (*((_DWORD *)this + 139))
-    int m_iDestY;                                     // ¦ì²¾ +560 (*((_DWORD *)this + 140))
-    float m_fMoveSpeed;                               // ¦ì²¾ +564 (*((float *)this + 141))
+    int m_iDestX;                                     // ä½ç§» +556 (*((_DWORD *)this + 139))
+    int m_iDestY;                                     // ä½ç§» +560 (*((_DWORD *)this + 140))
+    float m_fMoveSpeed;                               // ä½ç§» +564 (*((float *)this + 141))
 
-    unsigned int m_dwActionState;                     // ¦ì²¾ +9684 (*((_DWORD *)this + 2421))
-	bool m_fashionItemActive;                         // ¦ì²¾ +9688 (*((_BYTE *)this + 4376))
-    unsigned short m_wCurrentFrame;                   // ¦ì²¾ +9694 (*((_WORD *)this + 4847))
-    unsigned short m_wTotalFrame;                     // ¦ì²¾ +9688 (*((_WORD *)this + 4844))
-	bool m_isFreezing;                                // ¦ì²¾ +9700 bit4
-    bool m_canMove;                                   // ¦ì²¾ +9700 bit1
-    bool m_isIntegrityActive;                         // ¦ì²¾ +9700 bit0
-    int m_someOtherState;                             // ¦ì²¾ +11528
-    bool m_isPCRoomUser;                              // ¦ì²¾ +11556
-    bool m_isPCRoomPremium;                           // ¦ì²¾ +11560
-	bool m_preparingSpeedUp;                          // ¦ì²¾ *((_DWORD *)a2 + 174)
-	bool m_canSpeedUp;                                // ¦ì²¾ *(_DWORD *)(v3 + 696)
+    unsigned int m_dwActionState;                     // ä½ç§» +9684 (*((_DWORD *)this + 2421))
+	bool m_fashionItemActive;                         // ä½ç§» +9688 (*((_BYTE *)this + 4376))
+    unsigned short m_wCurrentFrame;                   // ä½ç§» +9694 (*((_WORD *)this + 4847))
+    unsigned short m_wTotalFrame;                     // ä½ç§» +9688 (*((_WORD *)this + 4844))
+	bool m_isFreezing;                                // ä½ç§» +9700 bit4
+    bool m_canMove;                                   // ä½ç§» +9700 bit1
+    bool m_isIntegrityActive;                         // ä½ç§» +9700 bit0
+    int m_someOtherState;                             // ä½ç§» +11528
+    bool m_isPCRoomUser;                              // ä½ç§» +11556
+    bool m_isPCRoomPremium;                           // ä½ç§» +11560
+	bool m_preparingSpeedUp;                          // ä½ç§» *((_DWORD *)a2 + 174)
+	bool m_canSpeedUp;                                // ä½ç§» *(_DWORD *)(v3 + 696)
 };

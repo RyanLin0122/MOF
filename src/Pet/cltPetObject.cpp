@@ -1,24 +1,24 @@
 #include "Pet/cltPetObject.h"
 
 
-// «Øºc¨ç¦¡
+// å»ºæ§‹å‡½å¼
 cltPetObject::cltPetObject(float posX, float posY) : m_PosX(posX), m_PosY(posY) {}
-// µêÀÀ¸Ñºc¨ç¦¡
+// è™›æ“¬è§£æ§‹å‡½å¼
 cltPetObject::~cltPetObject() {}
 
-// ¨ú±oÃdª«ªº X ®y¼Ğ
+// å–å¾—å¯µç‰©çš„ X åº§æ¨™
 float cltPetObject::GetPosX(){
 	return m_PosX;
 }
-// ¨ú±oÃdª«ªº Y ®y¼Ğ
+// å–å¾—å¯µç‰©çš„ Y åº§æ¨™
 float cltPetObject::GetPosY(){
 	return m_PosY;
 }
-// ³]©wÃdª«ªº X ®y¼Ğ
+// è¨­å®šå¯µç‰©çš„ X åº§æ¨™
 void cltPetObject::SetPosX(float posX) {
 	m_PosX = posX;
 }
-// ³]©wÃdª«ªº Y ®y¼Ğ
+// è¨­å®šå¯µç‰©çš„ Y åº§æ¨™
 void cltPetObject::SetPosY(float posY) {
 	m_PosY = posY;
 }

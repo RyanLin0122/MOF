@@ -1,9 +1,9 @@
 #include "Image/TextureListDataMgr.h"
-#include <cstring> // ¥Î©ó memset
+#include <cstring> // ç”¨æ–¼ memset
 #include <new>
 
-// °²³]ªº¥ş°ìÅÜ¼Æ¡A¨Ó¦Û©ó­ì©l½X¤W¤U¤å
-extern IDirect3DDevice9* Device; // ¥ş°ìD3D¸Ë¸m
+// å‡è¨­çš„å…¨åŸŸè®Šæ•¸ï¼Œä¾†è‡ªæ–¼åŸå§‹ç¢¼ä¸Šä¸‹æ–‡
+extern IDirect3DDevice9* Device; // å…¨åŸŸD3Dè£ç½®
 
 template<typename T>
 void SafeRelease(T*& p) {
@@ -13,44 +13,44 @@ void SafeRelease(T*& p) {
     }
 }
 
-// TextureListDataMgr ªº«Øºc¨ç¦¡
-// ¹ïÀ³¤Ï½sÄ¶½X: 0x00544710
+// TextureListDataMgr çš„å»ºæ§‹å‡½å¼
+// å°æ‡‰åç·¨è­¯ç¢¼: 0x00544710
 TextureListDataMgr::TextureListDataMgr() {
     m_pHead = nullptr;
     m_pTail = nullptr;
     m_nCount = 0;
 }
 
-// TextureListDataMgr ªº¸Ñºc¨ç¦¡
-// ¹ïÀ³¤Ï½sÄ¶½X: ¦b Device_Reset_Manager::~Device_Reset_Manager ¤¤³QÁô§t©I¥s
+// TextureListDataMgr çš„è§£æ§‹å‡½å¼
+// å°æ‡‰åç·¨è­¯ç¢¼: åœ¨ Device_Reset_Manager::~Device_Reset_Manager ä¸­è¢«éš±å«å‘¼å«
 TextureListDataMgr::~TextureListDataMgr() {
     DeleteAll();
 }
 
-// ·s¼W¤@­Ó¸`ÂI¨ìÃìµ²¦ê¦Cªº§Àºİ
-// ¹ïÀ³¤Ï½sÄ¶½X: 0x00544720
+// æ–°å¢ä¸€å€‹ç¯€é»åˆ°éˆçµä¸²åˆ—çš„å°¾ç«¯
+// å°æ‡‰åç·¨è­¯ç¢¼: 0x00544720
 TextureListData* TextureListDataMgr::Add() {
-    // ¤À°t¤@­Ó·sªº¸`ÂI
+    // åˆ†é…ä¸€å€‹æ–°çš„ç¯€é»
     TextureListData* pNewNode = new (std::nothrow) TextureListData();
     if (!pNewNode) {
-        return nullptr; // °O¾ĞÅé¤À°t¥¢±Ñ
+        return nullptr; // è¨˜æ†¶é«”åˆ†é…å¤±æ•—
     }
 
-    // ªì©l¤Æ·s¸`ÂIªº¦¨­ûÅÜ¼Æ
+    // åˆå§‹åŒ–æ–°ç¯€é»çš„æˆå“¡è®Šæ•¸
     pNewNode->pPrev = nullptr;
     pNewNode->pNext = nullptr;
     pNewNode->pTexture = nullptr;
     std::memset(pNewNode->szFileName, 0, sizeof(pNewNode->szFileName));
     pNewNode->flag = 0;
 
-    // ±N·s¸`ÂI¥[¤J¨ìÃìµ²¦ê¦Cªº§À³¡
+    // å°‡æ–°ç¯€é»åŠ å…¥åˆ°éˆçµä¸²åˆ—çš„å°¾éƒ¨
     if (m_pTail == nullptr) {
-        // ¦pªGÃìµ²¦ê¦C¬OªÅªº
+        // å¦‚æœéˆçµä¸²åˆ—æ˜¯ç©ºçš„
         m_pHead = pNewNode;
         m_pTail = pNewNode;
     }
     else {
-        // ¦pªGÃìµ²¦ê¦C«DªÅ
+        // å¦‚æœéˆçµä¸²åˆ—éç©º
         m_pTail->pNext = pNewNode;
         pNewNode->pPrev = m_pTail;
         m_pTail = pNewNode;
@@ -60,14 +60,14 @@ TextureListData* TextureListDataMgr::Add() {
     return pNewNode;
 }
 
-// ±qÃìµ²¦ê¦C¤¤§R°£«ü©wªº¸`ÂI
-// ¹ïÀ³¤Ï½sÄ¶½X: 0x00544780
+// å¾éˆçµä¸²åˆ—ä¸­åˆªé™¤æŒ‡å®šçš„ç¯€é»
+// å°æ‡‰åç·¨è­¯ç¢¼: 0x00544780
 void TextureListDataMgr::Delete(TextureListData* pNode) {
     if (!pNode || m_nCount == 0) {
-        return; // µL®Ä¾Ş§@
+        return; // ç„¡æ•ˆæ“ä½œ
     }
 
-    // ®Ú¾Ú¸`ÂI¦bÃìµ²¦ê¦C¤¤ªº¦ì¸m§ó·s«ü¼Ğ
+    // æ ¹æ“šç¯€é»åœ¨éˆçµä¸²åˆ—ä¸­çš„ä½ç½®æ›´æ–°æŒ‡æ¨™
     if (pNode == m_pHead) {
         m_pHead = pNode->pNext;
         if (m_pHead) {
@@ -86,49 +86,49 @@ void TextureListDataMgr::Delete(TextureListData* pNode) {
         pNode->pNext->pPrev = pNode->pPrev;
     }
 
-    // ¾P·´¸`ÂIª«¥ó (·|¦Û°Ê©I¥s¨ä¸Ñºc¨ç¦¡¥HÄÀ©ñTexture)
+    // éŠ·æ¯€ç¯€é»ç‰©ä»¶ (æœƒè‡ªå‹•å‘¼å«å…¶è§£æ§‹å‡½å¼ä»¥é‡‹æ”¾Texture)
     delete pNode;
     m_nCount--;
 
-    // ¦pªG­p¼Æ¾¹¬°0¡A½T«OÀY§À«ü¼Ğ³£¬°ªÅ
+    // å¦‚æœè¨ˆæ•¸å™¨ç‚º0ï¼Œç¢ºä¿é ­å°¾æŒ‡æ¨™éƒ½ç‚ºç©º
     if (m_nCount == 0) {
         m_pHead = nullptr;
         m_pTail = nullptr;
     }
 }
 
-// §R°£©Ò¦³¸`ÂI
-// ¹ïÀ³¤Ï½sÄ¶½X: 0x00544850
+// åˆªé™¤æ‰€æœ‰ç¯€é»
+// å°æ‡‰åç·¨è­¯ç¢¼: 0x00544850
 void TextureListDataMgr::DeleteAll() {
     TextureListData* pCurrent = m_pHead;
     while (pCurrent != nullptr) {
         TextureListData* pNext = pCurrent->pNext;
-        delete pCurrent; // ©I¥s¸Ñºc¨ç¦¡¨ÃÄÀ©ñ°O¾ĞÅé
+        delete pCurrent; // å‘¼å«è§£æ§‹å‡½å¼ä¸¦é‡‹æ”¾è¨˜æ†¶é«”
         pCurrent = pNext;
     }
-    // ­«³]ºŞ²z¾¹ª¬ºA
+    // é‡è¨­ç®¡ç†å™¨ç‹€æ…‹
     m_pHead = nullptr;
     m_pTail = nullptr;
     m_nCount = 0;
 }
 
-// ¸Ë¸m¿ò¥¢®É¡AÄÀ©ñ©Ò¦³D3D¸ê·½
-// ¹ïÀ³¤Ï½sÄ¶½X: 0x00544890
+// è£ç½®éºå¤±æ™‚ï¼Œé‡‹æ”¾æ‰€æœ‰D3Dè³‡æº
+// å°æ‡‰åç·¨è­¯ç¢¼: 0x00544890
 void TextureListDataMgr::DeviceLostToRelease() {
     TextureListData* pCurrent = m_pHead;
     while (pCurrent != nullptr) {
-        // ÄÀ©ñTexture¡A¦ı«O¯d¸`ÂI¥»¨­¤Î¨äÀÉ®×¦W
+        // é‡‹æ”¾Textureï¼Œä½†ä¿ç•™ç¯€é»æœ¬èº«åŠå…¶æª”æ¡ˆå
         SafeRelease(pCurrent->pTexture);
         pCurrent = pCurrent->pNext;
     }
 }
 
-// ¸Ë¸m­«³]«á¡A­«·s¸ü¤JD3D¸ê·½
-// ¹ïÀ³¤Ï½sÄ¶½X: 0x005448C0
+// è£ç½®é‡è¨­å¾Œï¼Œé‡æ–°è¼‰å…¥D3Dè³‡æº
+// å°æ‡‰åç·¨è­¯ç¢¼: 0x005448C0
 void TextureListDataMgr::DeviceLostToReLoad() {
     TextureListData* pCurrent = m_pHead;
     while (pCurrent != nullptr) {
-        // ¦pªGÀÉ®×¦W¦s¦b¡A«h¹Á¸Õ­«·s¸ü¤J¯¾²z
+        // å¦‚æœæª”æ¡ˆåå­˜åœ¨ï¼Œå‰‡å˜—è©¦é‡æ–°è¼‰å…¥ç´‹ç†
         if (pCurrent->szFileName[0] != '\0') {
             D3DXCreateTextureFromFileExA(
                 Device,

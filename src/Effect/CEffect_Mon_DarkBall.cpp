@@ -4,10 +4,10 @@
 #include "global.h"
 #include <cmath>
 
-// °²³]ªº¥ş°ìÅÜ¼Æ
+// å‡è¨­çš„å…¨åŸŸè®Šæ•¸
 extern GameSystemInfo g_Game_System_Info;
 
-// ¹ïÀ³¤Ï²ÕÄ¶½X: 0x00530770
+// å°æ‡‰åçµ„è­¯ç¢¼: 0x00530770
 CEffect_Mon_DarkBall::CEffect_Mon_DarkBall()
     : m_fTraveledDistance(0.0f),
     m_fTotalDistance(0.0f),
@@ -15,33 +15,33 @@ CEffect_Mon_DarkBall::CEffect_Mon_DarkBall()
     m_fAngle(0.0f),
     m_nHitInfoID(0)
 {
-    // CEffectBase «Øºc¨ç¦¡¤w¦Û°Ê©I¥s
+    // CEffectBase å»ºæ§‹å‡½å¼å·²è‡ªå‹•å‘¼å«
 
-    // ¸ü¤J¯S®ÄªºµøÄ±°Êµe
+    // è¼‰å…¥ç‰¹æ•ˆçš„è¦–è¦ºå‹•ç•«
     CEAManager::GetInstance()->GetEAData(108, "Effect/efn_Mop_DarkBall.ea", &m_ccaEffect);
     m_ccaEffect.SetFrameTime();
-    m_ccaEffect.Play(0, false); // °Êµe¤£´`Àô¡A¦ı¦]¬°¬O§ë®gª«¡A³q±`·|¦Û¦æ³B²z´`ÀôÅŞ¿è©Î¨Ï¥Î³æ´V°Êµe
+    m_ccaEffect.Play(0, false); // å‹•ç•«ä¸å¾ªç’°ï¼Œä½†å› ç‚ºæ˜¯æŠ•å°„ç‰©ï¼Œé€šå¸¸æœƒè‡ªè¡Œè™•ç†å¾ªç’°é‚è¼¯æˆ–ä½¿ç”¨å–®å¹€å‹•ç•«
 
-    // ³]©w²¾°Ê­p®É¾¹ªº§ó·sÀW²v (30 FPS)
-    // ­ì©l½X: *((_DWORD *)this + 38) = 995783694;
+    // è¨­å®šç§»å‹•è¨ˆæ™‚å™¨çš„æ›´æ–°é »ç‡ (30 FPS)
+    // åŸå§‹ç¢¼: *((_DWORD *)this + 38) = 995783694;
     m_MovementFrameSkip.m_fTimePerFrame = 1.0f / 30.0f;
 }
 
-// ¹ïÀ³¤Ï²ÕÄ¶½X: 0x00530840
+// å°æ‡‰åçµ„è­¯ç¢¼: 0x00530840
 CEffect_Mon_DarkBall::~CEffect_Mon_DarkBall()
 {
 }
 
-// ¹ïÀ³¤Ï²ÕÄ¶½X: 0x00530860
+// å°æ‡‰åçµ„è­¯ç¢¼: 0x00530860
 void CEffect_Mon_DarkBall::SetEffect(ClientCharacter* pCaster, ClientCharacter* pTarget, float fFlip, int hitInfoID)
 {
     if (!pCaster || !pTarget) return;
 
     m_pTargetCharacter = pTarget;
     m_nHitInfoID = hitInfoID;
-    m_fSpeed = 2.0f; // ³t«×¦b­ì©l½X¤¤³Qµw½s½X¬° 2.0 (0x40000000)
+    m_fSpeed = 2.0f; // é€Ÿåº¦åœ¨åŸå§‹ç¢¼ä¸­è¢«ç¡¬ç·¨ç¢¼ç‚º 2.0 (0x40000000)
 
-    // ®Ú¾Ú¬IªkªÌ´Â¦V¡A¹ï°_©l X ®y¼Ğ¶i¦æ°¾²¾
+    // æ ¹æ“šæ–½æ³•è€…æœå‘ï¼Œå°èµ·å§‹ X åº§æ¨™é€²è¡Œåç§»
     float startX = static_cast<float>(pCaster->GetPosX());
     if (static_cast<int>(fFlip) != 0) {
         startX -= 50.0f;
@@ -57,7 +57,7 @@ void CEffect_Mon_DarkBall::SetEffect(ClientCharacter* pCaster, ClientCharacter* 
     m_fCurrentPosY = startPos.y;
 
     D3DXVECTOR2 vecDirection = endPos - startPos;
-    m_fTotalDistance = D3DXVec2Length(&vecDirection) - 5.0f; // ´£«e 5.0 ³æ¦ìÄ²µo
+    m_fTotalDistance = D3DXVec2Length(&vecDirection) - 5.0f; // æå‰ 5.0 å–®ä½è§¸ç™¼
     if (m_fTotalDistance < 0.0f) m_fTotalDistance = 0.0f;
 
     D3DXVec2Normalize(&vecDirection, &vecDirection);
@@ -74,10 +74,10 @@ void CEffect_Mon_DarkBall::SetEffect(ClientCharacter* pCaster, ClientCharacter* 
     }
 }
 
-// ¹ïÀ³¤Ï²ÕÄ¶½X: 0x00530B60
+// å°æ‡‰åçµ„è­¯ç¢¼: 0x00530B60
 void CEffect_Mon_DarkBall::SetEffect(D3DXVECTOR2* pStartPos, D3DXVECTOR2* pEndPos, float fFlip, int hitInfoID)
 {
-    // ... ®y¼Ğª©¥»ªº SetEffect¡AÅŞ¿è»P BowShoot ©M MagicBook ªºª©¥»§¹¥ş¬Û¦P ...
+    // ... åº§æ¨™ç‰ˆæœ¬çš„ SetEffectï¼Œé‚è¼¯èˆ‡ BowShoot å’Œ MagicBook çš„ç‰ˆæœ¬å®Œå…¨ç›¸åŒ ...
     if (!pStartPos || !pEndPos) return;
 
     m_nHitInfoID = hitInfoID;
@@ -86,7 +86,7 @@ void CEffect_Mon_DarkBall::SetEffect(D3DXVECTOR2* pStartPos, D3DXVECTOR2* pEndPo
     m_fCurrentPosY = pStartPos->y;
 
     D3DXVECTOR2 vecDirection = *pEndPos - *pStartPos;
-    m_fTotalDistance = D3DXVec2Length(&vecDirection) - 60.0f; // ®y¼Ğª©¥»¨Ï¥Î¤£¦Pªº´£«e¶q
+    m_fTotalDistance = D3DXVec2Length(&vecDirection) - 60.0f; // åº§æ¨™ç‰ˆæœ¬ä½¿ç”¨ä¸åŒçš„æå‰é‡
     if (m_fTotalDistance < 0.0f) m_fTotalDistance = 0.0f;
 
     D3DXVec2Normalize(&vecDirection, &vecDirection);
@@ -104,7 +104,7 @@ void CEffect_Mon_DarkBall::SetEffect(D3DXVECTOR2* pStartPos, D3DXVECTOR2* pEndPo
 }
 
 
-// ¹ïÀ³¤Ï²ÕÄ¶½X: 0x00530D70
+// å°æ‡‰åçµ„è­¯ç¢¼: 0x00530D70
 bool CEffect_Mon_DarkBall::FrameProcess(float fElapsedTime)
 {
     m_ccaEffect.FrameProcess(fElapsedTime);
@@ -128,10 +128,10 @@ bool CEffect_Mon_DarkBall::FrameProcess(float fElapsedTime)
     return false;
 }
 
-// ¹ïÀ³¤Ï²ÕÄ¶½X: 0x00530E70
+// å°æ‡‰åçµ„è­¯ç¢¼: 0x00530E70
 void CEffect_Mon_DarkBall::Process()
 {
-    // »P BowShoot ¤£¦P¡A¦¹¨ç¦¡¨S¦³µô°Å§PÂ_¡A¦Ó¬Oª½±µ­pºâ
+    // èˆ‡ BowShoot ä¸åŒï¼Œæ­¤å‡½å¼æ²’æœ‰è£å‰ªåˆ¤æ–·ï¼Œè€Œæ˜¯ç›´æ¥è¨ˆç®—
     float screenX = m_fCurrentPosX - static_cast<float>(g_Game_System_Info.ScreenX);
     float screenY = m_fCurrentPosY - static_cast<float>(g_Game_System_Info.ScreenY);
 
@@ -141,9 +141,9 @@ void CEffect_Mon_DarkBall::Process()
     m_bIsVisible = TRUE;
 }
 
-// ¹ïÀ³¤Ï²ÕÄ¶½X: 0x00530EA0
+// å°æ‡‰åçµ„è­¯ç¢¼: 0x00530EA0
 void CEffect_Mon_DarkBall::Draw()
 {
-    // ¨S¦³ isVisible ÀË¬d¡Aª½±µ©I¥s Draw
+    // æ²’æœ‰ isVisible æª¢æŸ¥ï¼Œç›´æ¥å‘¼å« Draw
     m_ccaEffect.Draw();
 }

@@ -3,40 +3,40 @@
 #include "Character/ClientCharacter.h"
 #include "global.h"
 
-// °²³]ªº¥ş°ìÅÜ¼Æ
+// å‡è¨­çš„å…¨åŸŸè®Šæ•¸
 extern GameSystemInfo g_Game_System_Info;
 
-// ¹ïÀ³¤Ï²ÕÄ¶½X: 0x00531240
+// å°æ‡‰åçµ„è­¯ç¢¼: 0x00531240
 CEffect_Mon_Die_Ghost::CEffect_Mon_Die_Ghost()
 {
-    // CEffectBase ªº«Øºc¨ç¦¡·|³Q¦Û°Ê©I¥s
+    // CEffectBase çš„å»ºæ§‹å‡½å¼æœƒè¢«è‡ªå‹•å‘¼å«
 
-    // ¦V CEAManager ½Ğ¨D¯S®Ä¼Æ¾Ú
-    // ¯S®Ä ID: 112, ÀÉ®×¦WºÙ: "Effect/efn-mon-dead.ea"
+    // å‘ CEAManager è«‹æ±‚ç‰¹æ•ˆæ•¸æ“š
+    // ç‰¹æ•ˆ ID: 112, æª”æ¡ˆåç¨±: "Effect/efn-mon-dead.ea"
     CEAManager::GetInstance()->GetEAData(112, "Effect/efn-mon-dead.ea", &m_ccaEffect);
 
-    // ³]©w¼v®æ®É¶¡¨Ã¼½©ñ°Êµe
+    // è¨­å®šå½±æ ¼æ™‚é–“ä¸¦æ’­æ”¾å‹•ç•«
     m_ccaEffect.SetFrameTime();
-    m_ccaEffect.Play(0, false); // ¼½©ñ²Ä¤@­Ó°Êµe§Ç¦C¡A¤£´`Àô
+    m_ccaEffect.Play(0, false); // æ’­æ”¾ç¬¬ä¸€å€‹å‹•ç•«åºåˆ—ï¼Œä¸å¾ªç’°
 }
 
-// ¹ïÀ³¤Ï²ÕÄ¶½X: 0x005312D0
+// å°æ‡‰åçµ„è­¯ç¢¼: 0x005312D0
 CEffect_Mon_Die_Ghost::~CEffect_Mon_Die_Ghost()
 {
 }
 
-// ¹ïÀ³¤Ï²ÕÄ¶½X: 0x005312E0
+// å°æ‡‰åçµ„è­¯ç¢¼: 0x005312E0
 void CEffect_Mon_Die_Ghost::SetEffect(ClientCharacter* pDeadMonster)
 {
     if (!pDeadMonster) {
-        // ¦pªG¶Ç¤Jªº«ü¼Ğ¬°ªÅ¡A«h¤£³]©w¦ì¸m¡A¯S®Ä¥i¯à¦b (0,0) ¼½©ñ©Î¤£¥i¨£
+        // å¦‚æœå‚³å…¥çš„æŒ‡æ¨™ç‚ºç©ºï¼Œå‰‡ä¸è¨­å®šä½ç½®ï¼Œç‰¹æ•ˆå¯èƒ½åœ¨ (0,0) æ’­æ”¾æˆ–ä¸å¯è¦‹
         m_fCurrentPosX = 0.0f;
         m_fCurrentPosY = 0.0f;
         return;
     }
 
-    // --- ®Ö¤ßÅŞ¿è¡GÀx¦s¦ì¸m§Ö·Ó¡A¨Ã®Ú¾Ú´Â¦V¶i¦æ°¾²¾ ---
-    // ­ì©l½X: *((float *)this + 33) = (float)(*((_DWORD *)a2 + 1096) + (*((_DWORD *)a2 + 143) != 1 ? -15 : 15));
+    // --- æ ¸å¿ƒé‚è¼¯ï¼šå„²å­˜ä½ç½®å¿«ç…§ï¼Œä¸¦æ ¹æ“šæœå‘é€²è¡Œåç§» ---
+    // åŸå§‹ç¢¼: *((float *)this + 33) = (float)(*((_DWORD *)a2 + 1096) + (*((_DWORD *)a2 + 143) != 1 ? -15 : 15));
     //         *((float *)this + 34) = (float)*((int *)a2 + 1097);
 
     float offsetX = (pDeadMonster->GetActionSide() != 1) ? -15.0f : 15.0f;
@@ -44,35 +44,35 @@ void CEffect_Mon_Die_Ghost::SetEffect(ClientCharacter* pDeadMonster)
     m_fCurrentPosY = static_cast<float>(pDeadMonster->GetPosY());
 }
 
-// ¹ïÀ³¤Ï²ÕÄ¶½X: 0x00531330
+// å°æ‡‰åçµ„è­¯ç¢¼: 0x00531330
 bool CEffect_Mon_Die_Ghost::FrameProcess(float fElapsedTime)
 {
-    // ±N¥Í©R¶g´ÁºŞ²zªº¥ô°È§¹¥ş©e°Uµ¹¤º³¡ªº CCAEffect ª«¥ó¡C
-    // ·í "efn-mon-dead.ea" °Êµe¼½©ñ§¹²¦®É¡A¦¹¨ç¦¡·|¦^¶Ç true¡C
+    // å°‡ç”Ÿå‘½é€±æœŸç®¡ç†çš„ä»»å‹™å®Œå…¨å§”è¨—çµ¦å…§éƒ¨çš„ CCAEffect ç‰©ä»¶ã€‚
+    // ç•¶ "efn-mon-dead.ea" å‹•ç•«æ’­æ”¾å®Œç•¢æ™‚ï¼Œæ­¤å‡½å¼æœƒå›å‚³ trueã€‚
     return m_ccaEffect.FrameProcess(fElapsedTime);
 }
 
-// ¹ïÀ³¤Ï²ÕÄ¶½X: 0x00531340
+// å°æ‡‰åçµ„è­¯ç¢¼: 0x00531340
 void CEffect_Mon_Die_Ghost::Process()
 {
-    // ±N¥@¬É®y¼ĞÂà´«¬°¿Ã¹õ®y¼Ğ
-    // ­ì©l½X: v3 = *((float *)this + 33) - (double)dword_A73088;
+    // å°‡ä¸–ç•Œåº§æ¨™è½‰æ›ç‚ºè¢å¹•åº§æ¨™
+    // åŸå§‹ç¢¼: v3 = *((float *)this + 33) - (double)dword_A73088;
     float screenX = m_fCurrentPosX - static_cast<float>(g_Game_System_Info.ScreenX);
     float screenY = m_fCurrentPosY - static_cast<float>(g_Game_System_Info.ScreenY);
 
-    // ¶i¦æµô°Å§PÂ_
-    // ­ì©l½X: v2 = CEffectBase::IsCliping(this, v3, 0.0);
+    // é€²è¡Œè£å‰ªåˆ¤æ–·
+    // åŸå§‹ç¢¼: v2 = CEffectBase::IsCliping(this, v3, 0.0);
     m_bIsVisible = IsCliping(screenX, 0.0f);
 
     if (m_bIsVisible) {
-        // §ó·s¤º³¡ CCAEffect ªºª¬ºA
-        // ­ì©l½X: *((float *)this + 12) = ...; *((float *)this + 13) = ...;
+        // æ›´æ–°å…§éƒ¨ CCAEffect çš„ç‹€æ…‹
+        // åŸå§‹ç¢¼: *((float *)this + 12) = ...; *((float *)this + 13) = ...;
         m_ccaEffect.SetPosition(screenX, screenY);
         m_ccaEffect.Process();
     }
 }
 
-// ¹ïÀ³¤Ï²ÕÄ¶½X: 0x00531390
+// å°æ‡‰åçµ„è­¯ç¢¼: 0x00531390
 void CEffect_Mon_Die_Ghost::Draw()
 {
     if (m_bIsVisible) {

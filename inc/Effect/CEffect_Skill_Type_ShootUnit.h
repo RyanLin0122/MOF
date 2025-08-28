@@ -1,6 +1,6 @@
 #pragma once
 #include "Effect/CEffectBase.h"
-#include "Effect/CCAEffect.h" // ¬°¤F FrameSkip
+#include "Effect/CCAEffect.h" // ç‚ºäº† FrameSkip
 #include "Character/ClientCharacter.h"
 #include <d3dx9math.h>
 
@@ -21,9 +21,9 @@ protected:
     float   m_fTotalDistance;
     float   m_fTraveledDistance;
 
-    // --- ÃöÁä­×¥¿ ---
-    // ³o­Ó FrameSkip ª«¥ó±Mªù¥Î©ó±±¨î§ë®gª«ªº²¾°Ê©M¥Í©R¶g´Á
-    FrameSkip m_MovementFrameSkip; // ¦ì²¾ +144 (0x90)
+    // --- é—œéµä¿®æ­£ ---
+    // é€™å€‹ FrameSkip ç‰©ä»¶å°ˆé–€ç”¨æ–¼æ§åˆ¶æŠ•å°„ç‰©çš„ç§»å‹•å’Œç”Ÿå‘½é€±æœŸ
+    FrameSkip m_MovementFrameSkip; // ä½ç§» +144 (0x90)
 
     float   m_fAngle;
     int     m_nHitInfoID;

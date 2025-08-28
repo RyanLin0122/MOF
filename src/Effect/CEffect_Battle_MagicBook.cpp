@@ -5,7 +5,7 @@
 #include "global.h"
 #include <cmath>
 
-// ¹ïÀ³¤Ï²ÕÄ¶½X: 0x0052EBA0
+// å°æ‡‰åçµ„è­¯ç¢¼: 0x0052EBA0
 CEffect_Battle_MagicBook::CEffect_Battle_MagicBook()
     : m_pTargetCharacter(nullptr),
     m_fTotalDistance(0.0f),
@@ -13,24 +13,24 @@ CEffect_Battle_MagicBook::CEffect_Battle_MagicBook()
     m_fAngle(0.0f),
     m_nHitInfoID(0)
 {
-    // CEffectBase «Øºc¨ç¦¡¤w¦Û°Ê©I¥s
+    // CEffectBase å»ºæ§‹å‡½å¼å·²è‡ªå‹•å‘¼å«
 
-    // ¸ü¤J¯S®ÄªºµøÄ±°Êµe
+    // è¼‰å…¥ç‰¹æ•ˆçš„è¦–è¦ºå‹•ç•«
     CEAManager::GetInstance()->GetEAData(6, "Effect/efn-firebids01.ea", &m_ccaEffect);
     m_ccaEffect.SetFrameTime();
-    m_ccaEffect.Play(0, true); // §ë®gª«°ÊµeÀ³´`Àô¼½©ñ
+    m_ccaEffect.Play(0, true); // æŠ•å°„ç‰©å‹•ç•«æ‡‰å¾ªç’°æ’­æ”¾
 
-    // ³]©w²¾°Ê­p®É¾¹ªº§ó·sÀW²v (30 FPS)
-    // ­ì©l½X: *((_DWORD *)this + 38) = 995783694;
+    // è¨­å®šç§»å‹•è¨ˆæ™‚å™¨çš„æ›´æ–°é »ç‡ (30 FPS)
+    // åŸå§‹ç¢¼: *((_DWORD *)this + 38) = 995783694;
     m_MovementFrameSkip.m_fTimePerFrame = 1.0f / 30.0f;
 }
 
-// ¹ïÀ³¤Ï²ÕÄ¶½X: 0x0052EC70
+// å°æ‡‰åçµ„è­¯ç¢¼: 0x0052EC70
 CEffect_Battle_MagicBook::~CEffect_Battle_MagicBook()
 {
 }
 
-// ¹ïÀ³¤Ï²ÕÄ¶½X: 0x0052EC90
+// å°æ‡‰åçµ„è­¯ç¢¼: 0x0052EC90
 void CEffect_Battle_MagicBook::SetEffect(ClientCharacter* pCaster, ClientCharacter* pTarget, bool bFlip, int hitInfoID)
 {
     if (!pCaster || !pTarget) return;
@@ -39,17 +39,17 @@ void CEffect_Battle_MagicBook::SetEffect(ClientCharacter* pCaster, ClientCharact
     m_nHitInfoID = hitInfoID;
     m_fSpeed = 10.0f;
 
-    // --- ¨BÆJ 1: ¥¿±`¸ü¤J¯S®Ä¼Æ¾Ú ---
+    // --- æ­¥é©Ÿ 1: æ­£å¸¸è¼‰å…¥ç‰¹æ•ˆæ•¸æ“š ---
     CEAManager::GetInstance()->GetEAData(6, "MoFData/Effect/efn-firebids01.ea", &m_ccaEffect);
     m_ccaEffect.SetFrameTime();
     m_ccaEffect.Play(0, true);
 
-    // --- ¨BÆJ 2: ¤â°ÊÂĞ¼g²V¦X¼Ò¦¡ (ÃöÁä­×¥¿) ---
-    // µL½×ÀÉ®×¤¤©w¸qªº¬O¤°»ò¡A§Ú­Ì³£±j¨î¨ä¨Ï¥Î¥[ªk²V¦X
-    //m_ccaEffect.m_ucSrcBlend = D3DBLEND_SRCALPHA; // ­È¬° 5
-    //m_ccaEffect.m_ucDestBlend = D3DBLEND_ONE;      // ­È¬° 2
+    // --- æ­¥é©Ÿ 2: æ‰‹å‹•è¦†å¯«æ··åˆæ¨¡å¼ (é—œéµä¿®æ­£) ---
+    // ç„¡è«–æª”æ¡ˆä¸­å®šç¾©çš„æ˜¯ä»€éº¼ï¼Œæˆ‘å€‘éƒ½å¼·åˆ¶å…¶ä½¿ç”¨åŠ æ³•æ··åˆ
+    //m_ccaEffect.m_ucSrcBlend = D3DBLEND_SRCALPHA; // å€¼ç‚º 5
+    //m_ccaEffect.m_ucDestBlend = D3DBLEND_ONE;      // å€¼ç‚º 2
 
-    // --- «áÄòªºª«²z­pºâ¤£ÅÜ ---
+    // --- å¾ŒçºŒçš„ç‰©ç†è¨ˆç®—ä¸è®Š ---
     D3DXVECTOR2 startPos(static_cast<float>(pCaster->GetPosX()), static_cast<float>(pCaster->GetPosY() - 15));
     D3DXVECTOR2 endPos(static_cast<float>(pTarget->GetPosX()), static_cast<float>(pTarget->GetPosY() - (pTarget->GetCharHeight() >> 2)));
 
@@ -73,13 +73,13 @@ void CEffect_Battle_MagicBook::SetEffect(ClientCharacter* pCaster, ClientCharact
     }
 }
 
-// ¹ïÀ³¤Ï²ÕÄ¶½X: 0x0052EF90
+// å°æ‡‰åçµ„è­¯ç¢¼: 0x0052EF90
 void CEffect_Battle_MagicBook::SetEffect(D3DXVECTOR2* pStartPos, D3DXVECTOR2* pEndPos, float fFlip, int hitInfoID)
 {
     if (!pStartPos || !pEndPos) return;
 
     m_nHitInfoID = hitInfoID;
-    m_fSpeed = 10.0f; // ¦P¼Ë´£¤É³t«×
+    m_fSpeed = 10.0f; // åŒæ¨£æå‡é€Ÿåº¦
     m_fCurrentPosX = pStartPos->x;
     m_fCurrentPosY = pStartPos->y;
 
@@ -100,15 +100,15 @@ void CEffect_Battle_MagicBook::SetEffect(D3DXVECTOR2* pStartPos, D3DXVECTOR2* pE
     }
 }
 
-// ¹ïÀ³¤Ï²ÕÄ¶½X: 0x0052F1A0
+// å°æ‡‰åçµ„è­¯ç¢¼: 0x0052F1A0
 bool CEffect_Battle_MagicBook::FrameProcess(float fElapsedTime)
 {
     m_ccaEffect.FrameProcess(fElapsedTime);
 
     int moveFrameCount = 0;
     if (m_MovementFrameSkip.Update(fElapsedTime, moveFrameCount)) {
-        // --- ¾P·´ Bug ­×¥¿ ---
-        // ¹ê»Ú²¾°Ê¶ZÂ÷»İ­n­¼¤W³t«×
+        // --- éŠ·æ¯€ Bug ä¿®æ­£ ---
+        // å¯¦éš›ç§»å‹•è·é›¢éœ€è¦ä¹˜ä¸Šé€Ÿåº¦
         float moveDistance = m_fSpeed * static_cast<float>(moveFrameCount);
         m_fTraveledDistance += moveDistance;
 
@@ -116,10 +116,10 @@ bool CEffect_Battle_MagicBook::FrameProcess(float fElapsedTime)
             if (m_pTargetCharacter) {
                 m_pTargetCharacter->SetHited(m_nHitInfoID, 16);
             }
-            return true; // ¨ì¹F¥Ø¼Ğ¡Aªğ¦^ true ¥H¾P·´¯S®Ä
+            return true; // åˆ°é”ç›®æ¨™ï¼Œè¿”å› true ä»¥éŠ·æ¯€ç‰¹æ•ˆ
         }
         else {
-            // §ó·s¦ì¸m
+            // æ›´æ–°ä½ç½®
             m_fCurrentPosX += m_fDirectionX * moveDistance;
             m_fCurrentPosY += m_fDirectionY * moveDistance;
         }
@@ -127,7 +127,7 @@ bool CEffect_Battle_MagicBook::FrameProcess(float fElapsedTime)
     return false;
 }
 
-// ¹ïÀ³¤Ï²ÕÄ¶½X: 0x0052F2A0
+// å°æ‡‰åçµ„è­¯ç¢¼: 0x0052F2A0
 void CEffect_Battle_MagicBook::Process()
 {
     float screenX = m_fCurrentPosX - static_cast<float>(g_Game_System_Info.ScreenX);
@@ -142,13 +142,13 @@ void CEffect_Battle_MagicBook::Process()
     }
 }
 
-// ¹ïÀ³¤Ï²ÕÄ¶½X: 0x0052F2F0
+// å°æ‡‰åçµ„è­¯ç¢¼: 0x0052F2F0
 void CEffect_Battle_MagicBook::Draw()
 {
     if (m_bIsVisible) {
-        // --- Ã¸»sÅŞ¿èÂ²¤Æ ---
-        // ²{¦b¤£¦A»İ­n¤â°Ê³]©w´è¬Vª¬ºA¡A¦]¬° m_ccaEffect ¤º³¡·|¦Û°Ê
-        // ¨Ï¥Î§Ú­Ì¦b SetEffect ¤¤­×¥¿¹Lªº¥¿½T²V¦X¼Ò¦¡¡C
+        // --- ç¹ªè£½é‚è¼¯ç°¡åŒ– ---
+        // ç¾åœ¨ä¸å†éœ€è¦æ‰‹å‹•è¨­å®šæ¸²æŸ“ç‹€æ…‹ï¼Œå› ç‚º m_ccaEffect å…§éƒ¨æœƒè‡ªå‹•
+        // ä½¿ç”¨æˆ‘å€‘åœ¨ SetEffect ä¸­ä¿®æ­£éçš„æ­£ç¢ºæ··åˆæ¨¡å¼ã€‚
         m_ccaEffect.Draw();
     }
 }

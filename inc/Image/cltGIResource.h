@@ -1,41 +1,41 @@
 #pragma once
 
-#include "Image/cltBaseResource.h" // ¥]§t°ò©³Ãş§Oªº©w¸q
+#include "Image/cltBaseResource.h" // åŒ…å«åŸºåº•é¡åˆ¥çš„å®šç¾©
 
-// «e¦V«Å§i¡AÁ×§K¤£¥²­nªº include
+// å‰å‘å®£å‘Šï¼Œé¿å…ä¸å¿…è¦çš„ include
 struct ImageResourceListData;
 class CDeviceResetManager;
 
 /// @class cltGIResource
-/// @brief GI ¹Ï¤ù¸ê·½ºŞ²z¾¹¡C
+/// @brief GI åœ–ç‰‡è³‡æºç®¡ç†å™¨ã€‚
 ///
-/// Ä~©Ó¦Û cltBaseResource¡A±Mªù­t³d¸ü¤J¡BºŞ²z©MÄÀ©ñ GI ®æ¦¡ªº¹Ï¤ù¸ê·½¡C
+/// ç¹¼æ‰¿è‡ª cltBaseResourceï¼Œå°ˆé–€è² è²¬è¼‰å…¥ã€ç®¡ç†å’Œé‡‹æ”¾ GI æ ¼å¼çš„åœ–ç‰‡è³‡æºã€‚
 class cltGIResource : public cltBaseResource {
 public:
     cltGIResource();
     virtual ~cltGIResource();
 
-    /// @brief ªì©l¤Æ GI ¸ê·½ºŞ²z¾¹¡C
-    /// @param pPath ¦s©ñ GI ¸ê·½ªº°òÂ¦¸ô®|¡C
-    /// @param timeout ¸ê·½¦Û°Ê¦^¦¬ªº¹O®É®É¶¡¡C
+    /// @brief åˆå§‹åŒ– GI è³‡æºç®¡ç†å™¨ã€‚
+    /// @param pPath å­˜æ”¾ GI è³‡æºçš„åŸºç¤è·¯å¾‘ã€‚
+    /// @param timeout è³‡æºè‡ªå‹•å›æ”¶çš„é€¾æ™‚æ™‚é–“ã€‚
     void Initialize(const char* pPath, unsigned int timeout);
 
 protected:
-    /// @brief ±q¿W¥ßÀÉ®×¸ü¤J GI ¸ê·½¡C
+    /// @brief å¾ç¨ç«‹æª”æ¡ˆè¼‰å…¥ GI è³‡æºã€‚
     /// @override
     virtual void* LoadResource(unsigned int id, int a3, unsigned char a4) override;
 
-    /// @brief ±q«Ê¸ËÀÉ (pack file) ¸ü¤J GI ¸ê·½¡C
+    /// @brief å¾å°è£æª” (pack file) è¼‰å…¥ GI è³‡æºã€‚
     /// @override
     virtual void* LoadResourceInPack(unsigned int id, int a3, unsigned char a4) override;
 
-    /// @brief ÄÀ©ñ¤@­Ó¤w¸ü¤Jªº GI ¸ê·½¡C
+    /// @brief é‡‹æ”¾ä¸€å€‹å·²è¼‰å…¥çš„ GI è³‡æºã€‚
     /// @override
     virtual void FreeResource(void* pResourceData) override;
 
 private:
-    char m_szBasePath[260];          // ¸ê·½ªº°òÂ¦·j´M¸ô®| (¦ì²¾ +24)
-    char m_szNationPath[260];        // °Ï°ì¤Æ¸ê·½ªº«á³Æ¸ô®| (¦ì²¾ +284)
-    bool m_bNationPathSearched;      // ¬O§_¤w¸g·j´M¹L°Ï°ì¤Æ¸ô®|ªººX¼Ğ (¦ì²¾ +544, dword at +136)
+    char m_szBasePath[260];          // è³‡æºçš„åŸºç¤æœå°‹è·¯å¾‘ (ä½ç§» +24)
+    char m_szNationPath[260];        // å€åŸŸåŒ–è³‡æºçš„å¾Œå‚™è·¯å¾‘ (ä½ç§» +284)
+    bool m_bNationPathSearched;      // æ˜¯å¦å·²ç¶“æœå°‹éå€åŸŸåŒ–è·¯å¾‘çš„æ——æ¨™ (ä½ç§» +544, dword at +136)
     int  m_bFirstLoad;
 };

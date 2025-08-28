@@ -4,88 +4,88 @@
 #include <d3dx9.h>
 #include "Image/CDeviceResetManager.h"
 
-// «e¦V«Å§i¡AÁ×§K¤£¥²­nªº¼ĞÀYÀÉ¤Ş¥Î
+// å‰å‘å®£å‘Šï¼Œé¿å…ä¸å¿…è¦çš„æ¨™é ­æª”å¼•ç”¨
 struct VertexBufferData;
 struct TextureListData;
 
 /// @struct ImageVertex
-/// @brief ¥Î©óÃ¸»s2D¹Ï¤ùªº³»ÂI®æ¦¡¡A¹ïÀ³ D3DFVF_XYZRHW | D3DFVF_TEX1¡C
+/// @brief ç”¨æ–¼ç¹ªè£½2Dåœ–ç‰‡çš„é ‚é»æ ¼å¼ï¼Œå°æ‡‰ D3DFVF_XYZRHW | D3DFVF_TEX1ã€‚
 struct ImageVertex {
-    float x, y, z, rhw; // ¦ì¸m (Reciprocal of Homogeneous W)
-    float u, v;         // ¯¾²z®y¼Ğ
+    float x, y, z, rhw; // ä½ç½® (Reciprocal of Homogeneous W)
+    float u, v;         // ç´‹ç†åº§æ¨™
 };
 
 /// @class Image
-/// @brief ­t³dºŞ²z©MÃ¸»s³æ¤@ 2D ¹Ï¤ùªº°òÂ¦Ãş§O¡C
+/// @brief è² è²¬ç®¡ç†å’Œç¹ªè£½å–®ä¸€ 2D åœ–ç‰‡çš„åŸºç¤é¡åˆ¥ã€‚
 ///
-/// ³o­ÓÃş§O³B²z¤@­Ó¥Ñ¥|­Ó³»ÂI²Õ¦¨ªº¯x§Î¡A¨Ã±N¨ä¹ïÀ³ªº¯¾²z°Ï¶ôÃ¸»s¨ì¿Ã¹õ¤W¡C
+/// é€™å€‹é¡åˆ¥è™•ç†ä¸€å€‹ç”±å››å€‹é ‚é»çµ„æˆçš„çŸ©å½¢ï¼Œä¸¦å°‡å…¶å°æ‡‰çš„ç´‹ç†å€å¡Šç¹ªè£½åˆ°è¢å¹•ä¸Šã€‚
 class Image {
 public:
     Image();
-    virtual ~Image(); // °ò©³Ãş§O«ØÄ³¨Ï¥ÎµêÀÀ¸Ñºc¨ç¦¡
+    virtual ~Image(); // åŸºåº•é¡åˆ¥å»ºè­°ä½¿ç”¨è™›æ“¬è§£æ§‹å‡½å¼
 
-    /// @brief «Ø¥ß¹Ï¤ù¸ê·½¡A¥]¬A¯¾²z©M³»ÂI½w½Ä°Ï¡C
-    /// @param szFilename ¯¾²zÀÉ®×ªº¸ô®|¡C
-    /// @param texWidth ¾ã­Ó¯¾²zªº¼e«×¡C
-    /// @param texHeight ¾ã­Ó¯¾²zªº°ª«×¡C
-    /// @param frameWidth ¹Ï¤ù¤¤³æ¤@¼v®æªº¼e«×¡C
-    /// @param frameHeight ¹Ï¤ù¤¤³æ¤@¼v®æªº°ª«×¡C
-    /// @return ¦¨¥\ªğ¦^ true¡A¥¢±Ñªğ¦^ false¡C
+    /// @brief å»ºç«‹åœ–ç‰‡è³‡æºï¼ŒåŒ…æ‹¬ç´‹ç†å’Œé ‚é»ç·©è¡å€ã€‚
+    /// @param szFilename ç´‹ç†æª”æ¡ˆçš„è·¯å¾‘ã€‚
+    /// @param texWidth æ•´å€‹ç´‹ç†çš„å¯¬åº¦ã€‚
+    /// @param texHeight æ•´å€‹ç´‹ç†çš„é«˜åº¦ã€‚
+    /// @param frameWidth åœ–ç‰‡ä¸­å–®ä¸€å½±æ ¼çš„å¯¬åº¦ã€‚
+    /// @param frameHeight åœ–ç‰‡ä¸­å–®ä¸€å½±æ ¼çš„é«˜åº¦ã€‚
+    /// @return æˆåŠŸè¿”å› trueï¼Œå¤±æ•—è¿”å› falseã€‚
     bool CreateImage(const char* szFilename, int texWidth, int texHeight, int frameWidth, int frameHeight);
 
-    /// @brief ÄÀ©ñ¥Ñ CreateImage «Ø¥ßªº¸ê·½¡C
+    /// @brief é‡‹æ”¾ç”± CreateImage å»ºç«‹çš„è³‡æºã€‚
     void Free();
 
-    /// @brief ³]©w¹Ï¤ùªºÃ¸»s¦ì¸m©M­nÅã¥Üªº¼v®æ¡C
-    /// @param x ¿Ã¹õ¤Wªº X ®y¼Ğ¡C
-    /// @param y ¿Ã¹õ¤Wªº Y ®y¼Ğ¡C
-    /// @param frameID ­nÅã¥Üªº¼v®æ½s¸¹¡C
+    /// @brief è¨­å®šåœ–ç‰‡çš„ç¹ªè£½ä½ç½®å’Œè¦é¡¯ç¤ºçš„å½±æ ¼ã€‚
+    /// @param x è¢å¹•ä¸Šçš„ X åº§æ¨™ã€‚
+    /// @param y è¢å¹•ä¸Šçš„ Y åº§æ¨™ã€‚
+    /// @param frameID è¦é¡¯ç¤ºçš„å½±æ ¼ç·¨è™Ÿã€‚
     void SetImage(float x, float y, unsigned short frameID);
 
-    /// @brief ³]©w¹Ï¤ùªº³Ì²×Ã¸»s¦ì¸m¡C
+    /// @brief è¨­å®šåœ–ç‰‡çš„æœ€çµ‚ç¹ªè£½ä½ç½®ã€‚
     void SetPosition(float x, float y);
 
-    /// @brief ³]©w¹Ï¤ùªº±ÛÂà¨¤«×¡]Â¶ Z ¶b¡^¡C
-    /// @param radians ±ÛÂàªº©·«×¡C
+    /// @brief è¨­å®šåœ–ç‰‡çš„æ—‹è½‰è§’åº¦ï¼ˆç¹ Z è»¸ï¼‰ã€‚
+    /// @param radians æ—‹è½‰çš„å¼§åº¦ã€‚
     void SetAngle(float radians);
 
-    /// @brief ¥ª¥kÂ½Âà¹Ï¤ù¡C
+    /// @brief å·¦å³ç¿»è½‰åœ–ç‰‡ã€‚
     void SetLRReverse();
 
-    /// @brief ª½±µ³]©w­nÅã¥Üªº¯¾²z°Ï¶ô¡]¼v®æ¡^¡C
+    /// @brief ç›´æ¥è¨­å®šè¦é¡¯ç¤ºçš„ç´‹ç†å€å¡Šï¼ˆå½±æ ¼ï¼‰ã€‚
     void SetBlockID(unsigned short blockID);
 
-    /// @brief ±N¥Ø«eªº³»ÂI¸ê®Æ§ó·s¨ì³»ÂI½w½Ä°Ï¤¤¡C
+    /// @brief å°‡ç›®å‰çš„é ‚é»è³‡æ–™æ›´æ–°åˆ°é ‚é»ç·©è¡å€ä¸­ã€‚
     void Process();
 
-    /// @brief ¨Ï¥Î¦Û¨­ªº³»ÂI½w½Ä°Ï¨ÓÃ¸»s¹Ï¤ù¡C
+    /// @brief ä½¿ç”¨è‡ªèº«çš„é ‚é»ç·©è¡å€ä¾†ç¹ªè£½åœ–ç‰‡ã€‚
     void DrawImage();
 
-    /// @brief ¨Ï¥Î¥~³¡´£¨Ñªº³»ÂI½w½Ä°Ï¨ÓÃ¸»s¹Ï¤ù¡C
+    /// @brief ä½¿ç”¨å¤–éƒ¨æä¾›çš„é ‚é»ç·©è¡å€ä¾†ç¹ªè£½åœ–ç‰‡ã€‚
     void DrawImage(IDirect3DVertexBuffer9* pVB);
 
-    /// @brief ¨ú±o¹Ï¤ùªº¯¾²z»P®æ½u¸ê°T¡C
+    /// @brief å–å¾—åœ–ç‰‡çš„ç´‹ç†èˆ‡æ ¼ç·šè³‡è¨Šã€‚
     void GetVerTextInfo(int* gridX, float* width, float* height, float* gridWidth, float* gridHeight);
 
 protected:
-    // --- ¦¨­ûÅÜ¼Æ (®Ú¾Ú¤Ï½sÄ¶µ{¦¡½Xªº°O¾ĞÅé¦ì²¾±ÀÂ_) ---
+    // --- æˆå“¡è®Šæ•¸ (æ ¹æ“šåç·¨è­¯ç¨‹å¼ç¢¼çš„è¨˜æ†¶é«”ä½ç§»æ¨æ–·) ---
 
-    VertexBufferData* m_pVBData;      // ¦ì²¾ 0:   «ü¦V³»ÂI½w½Ä°ÏºŞ²z¸`ÂIªº«ü¼Ğ
-    TextureListData* m_pTexData;     // ¦ì²¾ 4:   «ü¦V¯¾²zºŞ²z¸`ÂIªº«ü¼Ğ
-    int              m_nGridX;         // ¦ì²¾ 8:   ¯¾²z¦b X ¶b¤W¥i®e¯Çªº¼v®æ¼Æ
-    float            m_fFrameWidth;    // ¦ì²¾ 12:  ³æ¤@¼v®æªº¼e«×
-    float            m_fFrameHeight;   // ¦ì²¾ 16:  ³æ¤@¼v®æªº°ª«×
-    float            m_fGridWidth;     // ¦ì²¾ 20:  ³æ¤@¼v®æ¼e«×¦ûÁ`¼e«×ªº¤ñ¨Ò (U)
-    float            m_fGridHeight;    // ¦ì²¾ 24:  ³æ¤@¼v®æ°ª«×¥eÁ`°ª«×ªº¤ñ¨Ò (V)
-    unsigned short   m_nWord_28;       // ¦ì²¾ 28:  ¥¼ª¾¥Î³~ªº WORD
+    VertexBufferData* m_pVBData;      // ä½ç§» 0:   æŒ‡å‘é ‚é»ç·©è¡å€ç®¡ç†ç¯€é»çš„æŒ‡æ¨™
+    TextureListData* m_pTexData;     // ä½ç§» 4:   æŒ‡å‘ç´‹ç†ç®¡ç†ç¯€é»çš„æŒ‡æ¨™
+    int              m_nGridX;         // ä½ç§» 8:   ç´‹ç†åœ¨ X è»¸ä¸Šå¯å®¹ç´çš„å½±æ ¼æ•¸
+    float            m_fFrameWidth;    // ä½ç§» 12:  å–®ä¸€å½±æ ¼çš„å¯¬åº¦
+    float            m_fFrameHeight;   // ä½ç§» 16:  å–®ä¸€å½±æ ¼çš„é«˜åº¦
+    float            m_fGridWidth;     // ä½ç§» 20:  å–®ä¸€å½±æ ¼å¯¬åº¦ä½”ç¸½å¯¬åº¦çš„æ¯”ä¾‹ (U)
+    float            m_fGridHeight;    // ä½ç§» 24:  å–®ä¸€å½±æ ¼é«˜åº¦å ç¸½é«˜åº¦çš„æ¯”ä¾‹ (V)
+    unsigned short   m_nWord_28;       // ä½ç§» 28:  æœªçŸ¥ç”¨é€”çš„ WORD
 
-    ImageVertex      m_vertices[4];    // ¦ì²¾ 32:  ³Ì²×­nÃ¸»sªº4­Ó³»ÂI¸ê®Æ (96 bytes)
+    ImageVertex      m_vertices[4];    // ä½ç§» 32:  æœ€çµ‚è¦ç¹ªè£½çš„4å€‹é ‚é»è³‡æ–™ (96 bytes)
 
-    D3DXVECTOR3      m_baseVertices[4]; // ¦ì²¾ 128: ¥Î©ó±ÛÂà©M©w¦ìªº°òÂ¦³»ÂI®y¼Ğ (48 bytes)
+    D3DXVECTOR3      m_baseVertices[4]; // ä½ç§» 128: ç”¨æ–¼æ—‹è½‰å’Œå®šä½çš„åŸºç¤é ‚é»åº§æ¨™ (48 bytes)
 
-    // ¤¤¶¡¦³¥¼ª¾¥Î³~ªº padding
+    // ä¸­é–“æœ‰æœªçŸ¥ç”¨é€”çš„ padding
 
-    bool             m_bIsCreated;     // ¦ì²¾ 176: ¼Ğ°O¸ê·½¬O§_¤w«Ø¥ß
+    bool             m_bIsCreated;     // ä½ç§» 176: æ¨™è¨˜è³‡æºæ˜¯å¦å·²å»ºç«‹
 private:
     CDeviceResetManager* g_Device_Reset_Manager;
 };

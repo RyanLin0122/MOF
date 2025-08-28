@@ -1,24 +1,24 @@
 #include "Effect/CBulletBase.h"
 
-// �����ϲ�Ķ�X: 0x0052D700
+// 對應反組譯碼: 0x0052D700
 CBulletBase::CBulletBase()
     : m_pVftable(nullptr),
     m_dwOwnerID(0),
     m_fSpeed(0.0f)
 {
-    // m_vecPos �M m_vecDir �|�Q�w�]��l��
+    // m_vecPos 和 m_vecDir 會被預設初始化
 }
 
-// �����ϲ�Ķ�X: 0x0052D740
+// 對應反組譯碼: 0x0052D740
 CBulletBase::~CBulletBase()
 {
-    // �����O���Ѻc�禡
+    // 基底類別的解構函式
 }
 
-// �����ϲ�Ķ�X: 0x0052D750
+// 對應反組譯碼: 0x0052D750
 bool CBulletBase::Process(float fElapsedTime)
 {
-    // �����O���w�]�欰�O�����򳣤������åB���ä��������C
-    // �l�����O�����мg���禡�ӹ�{�ۤv�����ʩM�ͩR�g���޿�C
+    // 基底類別的預設行為是“什麼都不做”並且“永不結束”。
+    // 衍生類別必須覆寫此函式來實現自己的移動和生命週期邏輯。
     return false;
 }

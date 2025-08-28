@@ -2,42 +2,42 @@
 
 #include "Effect/CEffectBase.h"
 
-// «e¦V«Å§i
+// å‰å‘å®£å‘Š
 class ClientCharacter;
 
 /**
  * @class CEffect_Skill_OtherHeal
- * @brief ¥Nªí¹ï¥L¤H¬I©ñªºªvÀø§Ş¯àªºµøÄ±¯S®Ä¡C
+ * @brief ä»£è¡¨å°ä»–äººæ–½æ”¾çš„æ²»ç™‚æŠ€èƒ½çš„è¦–è¦ºç‰¹æ•ˆã€‚
  *
- * Ä~©Ó¦Û CEffectBase¡A¬O¤@­Ó¸òÀH¨¤¦â¼½©ñªº¤@¦¸©Ê°Êµe¯S®Ä¡A
- * ¨ä¥~Æ[·|®Ú¾Ú§Ş¯àµ¥¯ÅÅÜ¤Æ¡C
+ * ç¹¼æ‰¿è‡ª CEffectBaseï¼Œæ˜¯ä¸€å€‹è·Ÿéš¨è§’è‰²æ’­æ”¾çš„ä¸€æ¬¡æ€§å‹•ç•«ç‰¹æ•ˆï¼Œ
+ * å…¶å¤–è§€æœƒæ ¹æ“šæŠ€èƒ½ç­‰ç´šè®ŠåŒ–ã€‚
  */
 class CEffect_Skill_OtherHeal : public CEffectBase {
 public:
     CEffect_Skill_OtherHeal();
     virtual ~CEffect_Skill_OtherHeal();
 
-    // --- µêÀÀ¨ç¦¡ÂĞ¼g ---
+    // --- è™›æ“¬å‡½å¼è¦†å¯« ---
 
-    /// @brief ³B²z¯S®Äªº¥Í©R¶g´Á¡Aª½±µ¨Ì¿à CCAEffect ªº°Êµe¼½©ñª¬ºA¡C
+    /// @brief è™•ç†ç‰¹æ•ˆçš„ç”Ÿå‘½é€±æœŸï¼Œç›´æ¥ä¾è³´ CCAEffect çš„å‹•ç•«æ’­æ”¾ç‹€æ…‹ã€‚
     virtual bool FrameProcess(float fElapsedTime) override;
 
-    /// @brief ·Ç³ÆÃ¸»s«eªºÅŞ¿è§ó·s¡A¦P¨B¾Ö¦³ªÌªº¦ì¸m¡C
+    /// @brief æº–å‚™ç¹ªè£½å‰çš„é‚è¼¯æ›´æ–°ï¼ŒåŒæ­¥æ“æœ‰è€…çš„ä½ç½®ã€‚
     virtual void Process() override;
 
-    /// @brief Ã¸»s¯S®Ä¡C
+    /// @brief ç¹ªè£½ç‰¹æ•ˆã€‚
     virtual void Draw() override;
 
-    // --- ±M¦³¨ç¦¡ ---
+    // --- å°ˆæœ‰å‡½å¼ ---
 
-    /// @brief ³]©w¯S®Ä¡C
-    /// @param pTarget ±µ¨üªvÀøªº¥Ø¼Ğ¨¤¦â¡C
-    /// @param skillLevel §Ş¯àµ¥¯Å (0-2)¡A¨M©w¯S®Äªº¥~Æ[¡C
+    /// @brief è¨­å®šç‰¹æ•ˆã€‚
+    /// @param pTarget æ¥å—æ²»ç™‚çš„ç›®æ¨™è§’è‰²ã€‚
+    /// @param skillLevel æŠ€èƒ½ç­‰ç´š (0-2)ï¼Œæ±ºå®šç‰¹æ•ˆçš„å¤–è§€ã€‚
     void SetEffect(ClientCharacter* pTarget, unsigned char skillLevel);
 
 protected:
-    // --- ¦¨­ûÅÜ¼Æ ---
+    // --- æˆå“¡è®Šæ•¸ ---
 
-    /// @brief «ü¦V¯S®Äªº¾Ö¦³ªÌ¡]³QªvÀøªº¨¤¦â¡^¡C
-    ClientCharacter* m_pOwnerCharacter; // ¦ì²¾ +132 (0x84)
+    /// @brief æŒ‡å‘ç‰¹æ•ˆçš„æ“æœ‰è€…ï¼ˆè¢«æ²»ç™‚çš„è§’è‰²ï¼‰ã€‚
+    ClientCharacter* m_pOwnerCharacter; // ä½ç§» +132 (0x84)
 };

@@ -5,46 +5,46 @@
 #include "Character/ClientCharacter.h"
 #include "global.h"
 
-// °²³]ªº¥ş°ìÅÜ¼Æ
+// å‡è¨­çš„å…¨åŸŸè®Šæ•¸
 extern GameSystemInfo g_Game_System_Info;
 extern cltMoFC_EffectKindInfo g_clEffectKindInfo;
 
-// ¹ïÀ³¤Ï²ÕÄ¶½X: 0x00537780
+// å°æ‡‰åçµ„è­¯ç¢¼: 0x00537780
 CEffect_MapEffect::CEffect_MapEffect()
     : m_pStateOwner(nullptr), m_wRequiredStateID(0)
 {
 }
 
-// ¹ïÀ³¤Ï²ÕÄ¶½X: 0x005377C0
+// å°æ‡‰åçµ„è­¯ç¢¼: 0x005377C0
 CEffect_MapEffect::~CEffect_MapEffect()
 {
 }
 
-// ¹ïÀ³¤Ï²ÕÄ¶½X: 0x005377D0
+// å°æ‡‰åçµ„è­¯ç¢¼: 0x005377D0
 void CEffect_MapEffect::SetEffect(char* szEffectName, unsigned short requiredStateID, ClientCharacter* pStateOwner, int x, int y)
 {
-    // ³z¹L¦WºÙÀò¨ú¯S®Ä Kind ID
+    // é€éåç¨±ç²å–ç‰¹æ•ˆ Kind ID
     stEffectKindInfo* pKindInfo = CEffectManager::GetInstance()->g_clEffectKindInfo.GetEffectKindInfo(szEffectName);
     if (pKindInfo) {
-        // ©I¥s¥t¤@­Ó¦h¸üª©¥»¨Ó§¹¦¨³]©w
+        // å‘¼å«å¦ä¸€å€‹å¤šè¼‰ç‰ˆæœ¬ä¾†å®Œæˆè¨­å®š
         SetEffect(pKindInfo->usKindID, requiredStateID, pStateOwner, x, y);
     }
 }
 
-// ¹ïÀ³¤Ï²ÕÄ¶½X: 0x00537810
+// å°æ‡‰åçµ„è­¯ç¢¼: 0x00537810
 void CEffect_MapEffect::SetEffect(unsigned short effectKindID, unsigned short requiredStateID, ClientCharacter* pStateOwner, int x, int y)
 {
     stEffectKindInfo* pKindInfo = CEffectManager::GetInstance()->g_clEffectKindInfo.GetEffectKindInfo(effectKindID);
     if (!pKindInfo) return;
 
-    // ºc«ØÀÉ®×¸ô®|¨Ã¸ü¤J¼Æ¾Ú
+    // æ§‹å»ºæª”æ¡ˆè·¯å¾‘ä¸¦è¼‰å…¥æ•¸æ“š
     char szFullPath[256];
     sprintf_s(szFullPath, sizeof(szFullPath), "Effect/%s", pKindInfo->szFileName);
     CEAManager::GetInstance()->GetEAData(effectKindID, szFullPath, &m_ccaEffect);
     m_ccaEffect.SetFrameTime();
-    m_ccaEffect.Play(0, true); // «ùÄò©Ê¯S®ÄÀ³´`Àô¼½©ñ
+    m_ccaEffect.Play(0, true); // æŒçºŒæ€§ç‰¹æ•ˆæ‡‰å¾ªç’°æ’­æ”¾
 
-    // Àx¦sª¬ºA©M¦ì¸m¸ê°T
+    // å„²å­˜ç‹€æ…‹å’Œä½ç½®è³‡è¨Š
     m_wRequiredStateID = requiredStateID;
     m_pStateOwner = pStateOwner;
     m_fCurrentPosX = static_cast<float>(x);
@@ -52,27 +52,27 @@ void CEffect_MapEffect::SetEffect(unsigned short effectKindID, unsigned short re
 }
 
 
-// ¹ïÀ³¤Ï²ÕÄ¶½X: 0x005378B0
+// å°æ‡‰åçµ„è­¯ç¢¼: 0x005378B0
 bool CEffect_MapEffect::FrameProcess(float fElapsedTime)
 {
     if (!m_pStateOwner) {
-        return true; // ¦pªGª¬ºA¾Ö¦³ªÌ¤£¦s¦b¡A«h¯S®Ä¥ß§Yµ²§ô
+        return true; // å¦‚æœç‹€æ…‹æ“æœ‰è€…ä¸å­˜åœ¨ï¼Œå‰‡ç‰¹æ•ˆç«‹å³çµæŸ
     }
 
-    // ÀË¬d¾Ö¦³ªÌªºª¬ºA ID ¬O§_»P­n¨Dªº ID ¤Ç°t
-    // ­ì©l½X: *(_WORD *)(*((_DWORD *)this + 33) + 592) == *((_WORD *)this + 68)
+    // æª¢æŸ¥æ“æœ‰è€…çš„ç‹€æ…‹ ID æ˜¯å¦èˆ‡è¦æ±‚çš„ ID åŒ¹é…
+    // åŸå§‹ç¢¼: *(_WORD *)(*((_DWORD *)this + 33) + 592) == *((_WORD *)this + 68)
     if (m_pStateOwner->GetMapID() == m_wRequiredStateID) {
-        // ª¬ºA¤Ç°t¡A§ó·s°Êµe¨ÃÅı¯S®ÄÄ~Äò¦s¦b
+        // ç‹€æ…‹åŒ¹é…ï¼Œæ›´æ–°å‹•ç•«ä¸¦è®“ç‰¹æ•ˆç¹¼çºŒå­˜åœ¨
         m_ccaEffect.FrameProcess(fElapsedTime);
         return false;
     }
     else {
-        // ª¬ºA¤£¤Ç°t¡A¯S®Äµ²§ô
+        // ç‹€æ…‹ä¸åŒ¹é…ï¼Œç‰¹æ•ˆçµæŸ
         return true;
     }
 }
 
-// ¹ïÀ³¤Ï²ÕÄ¶½X: 0x005378E0
+// å°æ‡‰åçµ„è­¯ç¢¼: 0x005378E0
 void CEffect_MapEffect::Process()
 {
     float screenX = m_fCurrentPosX - static_cast<float>(g_Game_System_Info.ScreenX);
@@ -86,7 +86,7 @@ void CEffect_MapEffect::Process()
     }
 }
 
-// ¹ïÀ³¤Ï²ÕÄ¶½X: 0x00537920
+// å°æ‡‰åçµ„è­¯ç¢¼: 0x00537920
 void CEffect_MapEffect::Draw()
 {
     if (m_bIsVisible) {

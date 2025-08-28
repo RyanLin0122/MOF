@@ -1,54 +1,54 @@
 #include "Effect/CEffect_Skill_Type_Sustain.h"
 #include "Effect/CEAManager.h"
 #include "Character/ClientCharacter.h"
-#include "global.h" // °²³]¥Î©óÀò¨ú¥ş°ìÅÜ¼Æ g_Game_System_Info
+#include "global.h" // å‡è¨­ç”¨æ–¼ç²å–å…¨åŸŸè®Šæ•¸ g_Game_System_Info
 
-// °²³]ªº¥ş°ìÅÜ¼Æ
+// å‡è¨­çš„å…¨åŸŸè®Šæ•¸
 extern GameSystemInfo g_Game_System_Info;
 
-// ¹ïÀ³¤Ï²ÕÄ¶½X: (¦b CEffectManager::AddEffect ¤¤³Q new)
+// å°æ‡‰åçµ„è­¯ç¢¼: (åœ¨ CEffectManager::AddEffect ä¸­è¢« new)
 CEffect_Skill_Type_Sustain::CEffect_Skill_Type_Sustain()
     : m_pOwnerCharacter(nullptr), m_sSustainSkillID(0)
 {
-    // CEffectBase ªº«Øºc¨ç¦¡·|³Q¦Û°Ê©I¥s
+    // CEffectBase çš„å»ºæ§‹å‡½å¼æœƒè¢«è‡ªå‹•å‘¼å«
 }
 
-// ¹ïÀ³¤Ï²ÕÄ¶½X: (¦b CEffectManager::FrameProcess ¤¤³Q delete)
+// å°æ‡‰åçµ„è­¯ç¢¼: (åœ¨ CEffectManager::FrameProcess ä¸­è¢« delete)
 CEffect_Skill_Type_Sustain::~CEffect_Skill_Type_Sustain()
 {
 }
 
-// ¹ïÀ³¤Ï²ÕÄ¶½X: (¦b CEffectManager::AddEffect ¤¤³Q©I¥s)
+// å°æ‡‰åçµ„è­¯ç¢¼: (åœ¨ CEffectManager::AddEffect ä¸­è¢«å‘¼å«)
 void CEffect_Skill_Type_Sustain::SetEffect(ClientCharacter* pCaster, unsigned short effectKindID, char* szFileName, unsigned short sustainSkillID)
 {
-    // Àò¨ú¨Ã³]©w¯S®Ä¼Æ¾Ú
+    // ç²å–ä¸¦è¨­å®šç‰¹æ•ˆæ•¸æ“š
     CEAManager::GetInstance()->GetEAData(effectKindID, szFileName, &m_ccaEffect);
     m_ccaEffect.SetFrameTime();
-    // «ùÄò©Ê¯S®Ä³q±`¬O´`Àô¼½©ñªº
+    // æŒçºŒæ€§ç‰¹æ•ˆé€šå¸¸æ˜¯å¾ªç’°æ’­æ”¾çš„
     m_ccaEffect.Play(0, true);
 
-    // ¸j©w¾Ö¦³ªÌ©M§Ş¯à ID
+    // ç¶å®šæ“æœ‰è€…å’ŒæŠ€èƒ½ ID
     m_pOwnerCharacter = pCaster;
     m_sSustainSkillID = sustainSkillID;
 }
 
-// ¹ïÀ³¤Ï²ÕÄ¶½X: CEffect_Skill_Type_Sustain::FrameProcess
+// å°æ‡‰åçµ„è­¯ç¢¼: CEffect_Skill_Type_Sustain::FrameProcess
 bool CEffect_Skill_Type_Sustain::FrameProcess(float fElapsedTime)
 {
-    // ­º¥ı¡AÅı¤º³¡ªº CCAEffect §ó·s¨ä°Êµe¼v®æ
+    // é¦–å…ˆï¼Œè®“å…§éƒ¨çš„ CCAEffect æ›´æ–°å…¶å‹•ç•«å½±æ ¼
     m_ccaEffect.FrameProcess(fElapsedTime);
 
-    // ÀË¬d¾Ö¦³ªÌ¬O§_¦s¦b¥H¤Î§Ş¯àª¬ºA¬O§_ÁÙ¦b
+    // æª¢æŸ¥æ“æœ‰è€…æ˜¯å¦å­˜åœ¨ä»¥åŠæŠ€èƒ½ç‹€æ…‹æ˜¯å¦é‚„åœ¨
     if (m_pOwnerCharacter && m_pOwnerCharacter->GetSustainSkillState(m_sSustainSkillID)) {
-        // ¦pªG§Ş¯àª¬ºAÁÙ¦b¡A¯S®Ä´NÄ~Äò¦s¦b
+        // å¦‚æœæŠ€èƒ½ç‹€æ…‹é‚„åœ¨ï¼Œç‰¹æ•ˆå°±ç¹¼çºŒå­˜åœ¨
         return false;
     }
 
-    // ¦pªG¾Ö¦³ªÌ¤£¦s¦b©Î§Ş¯àª¬ºA¤w®ø¥¢¡A«h¯S®Äµ²§ô
+    // å¦‚æœæ“æœ‰è€…ä¸å­˜åœ¨æˆ–æŠ€èƒ½ç‹€æ…‹å·²æ¶ˆå¤±ï¼Œå‰‡ç‰¹æ•ˆçµæŸ
     return true;
 }
 
-// ¹ïÀ³¤Ï²ÕÄ¶½X: (Ä~©Ó¦Û CEffect_Skill_Type_Once ªºÅŞ¿è)
+// å°æ‡‰åçµ„è­¯ç¢¼: (ç¹¼æ‰¿è‡ª CEffect_Skill_Type_Once çš„é‚è¼¯)
 void CEffect_Skill_Type_Sustain::Process()
 {
     if (!m_pOwnerCharacter) {
@@ -56,33 +56,33 @@ void CEffect_Skill_Type_Sustain::Process()
         return;
     }
 
-    // --- ÀË¬d¨¤¦â¬O§_³B©ó¤£¥i¨£©Î¯S®íª¬ºA ---
-    // ­ì©l½X: if ( v2[175] || v2[2882] )
-    if (m_pOwnerCharacter->IsHide() || m_pOwnerCharacter->IsTransparent()) { // °²³]ªº¨ç¦¡
+    // --- æª¢æŸ¥è§’è‰²æ˜¯å¦è™•æ–¼ä¸å¯è¦‹æˆ–ç‰¹æ®Šç‹€æ…‹ ---
+    // åŸå§‹ç¢¼: if ( v2[175] || v2[2882] )
+    if (m_pOwnerCharacter->IsHide() || m_pOwnerCharacter->IsTransparent()) { // å‡è¨­çš„å‡½å¼
         m_bIsVisible = FALSE;
         return;
     }
 
-    // ±q¾Ö¦³ªÌÀò¨ú·í«e¦ì¸m
+    // å¾æ“æœ‰è€…ç²å–ç•¶å‰ä½ç½®
     float ownerX = static_cast<float>(m_pOwnerCharacter->GetPosX());
     float ownerY = static_cast<float>(m_pOwnerCharacter->GetPosY());
 
     m_fCurrentPosX = ownerX;
     m_fCurrentPosY = ownerY;
 
-    // ¶i¦æµô°Å§PÂ_
+    // é€²è¡Œè£å‰ªåˆ¤æ–·
     float screenX = m_fCurrentPosX - static_cast<float>(g_Game_System_Info.ScreenX);
     m_bIsVisible = IsCliping(screenX, 0.0f);
 
     if (m_bIsVisible) {
-        // ±N¥@¬É®y¼ĞÂà´«¬°¿Ã¹õ®y¼Ğ«á¶Ç»¼µ¹ CCAEffect
+        // å°‡ä¸–ç•Œåº§æ¨™è½‰æ›ç‚ºè¢å¹•åº§æ¨™å¾Œå‚³éçµ¦ CCAEffect
         m_ccaEffect.SetPosition(screenX, m_fCurrentPosY - static_cast<float>(g_Game_System_Info.ScreenY));
-        m_ccaEffect.SetFlipX(m_pOwnerCharacter->GetActionSide() != 0); // »P¬IªkªÌ¤è¦V¦P¨B
+        m_ccaEffect.SetFlipX(m_pOwnerCharacter->GetActionSide() != 0); // èˆ‡æ–½æ³•è€…æ–¹å‘åŒæ­¥
         m_ccaEffect.Process();
     }
 }
 
-// ¹ïÀ³¤Ï²ÕÄ¶½X: (Ä~©Ó¦Û CEffect_Skill_Type_Once ªºÅŞ¿è)
+// å°æ‡‰åçµ„è­¯ç¢¼: (ç¹¼æ‰¿è‡ª CEffect_Skill_Type_Once çš„é‚è¼¯)
 void CEffect_Skill_Type_Sustain::Draw()
 {
     if (m_bIsVisible) {

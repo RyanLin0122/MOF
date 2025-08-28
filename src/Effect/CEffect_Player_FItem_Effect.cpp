@@ -3,66 +3,66 @@
 #include "Character/ClientCharacter.h"
 #include "global.h"
 
-// ¹ïÀ³¤Ï²ÕÄ¶½X: 0x005316E0
+// å°æ‡‰åçµ„è­¯ç¢¼: 0x005316E0
 CEffect_Player_FItem_Effect::CEffect_Player_FItem_Effect()
     : m_pOwnerCharacter(nullptr)
 {
-    // CEffectBase ªº«Øºc¨ç¦¡·|³Q¦Û°Ê©I¥s
+    // CEffectBase çš„å»ºæ§‹å‡½å¼æœƒè¢«è‡ªå‹•å‘¼å«
 }
 
-// ¹ïÀ³¤Ï²ÕÄ¶½X: 0x00531720
+// å°æ‡‰åçµ„è­¯ç¢¼: 0x00531720
 CEffect_Player_FItem_Effect::~CEffect_Player_FItem_Effect()
 {
 }
 
-// ¹ïÀ³¤Ï²ÕÄ¶½X: 0x00531730
+// å°æ‡‰åçµ„è­¯ç¢¼: 0x00531730
 void CEffect_Player_FItem_Effect::SetEffect(ClientCharacter* pOwner, unsigned short effectKindID, char* szFileName)
 {
     if (!pOwner) return;
 
-    // ºc«ØÀÉ®×¸ô®|¨Ã¸ü¤J¯S®Ä¼Æ¾Ú
+    // æ§‹å»ºæª”æ¡ˆè·¯å¾‘ä¸¦è¼‰å…¥ç‰¹æ•ˆæ•¸æ“š
     char szFullPath[256];
     sprintf_s(szFullPath, sizeof(szFullPath), "Effect/%s", szFileName);
     CEAManager::GetInstance()->GetEAData(effectKindID, szFullPath, &m_ccaEffect);
 
-    // ³]©w¼v®æ®É¶¡¨Ã¼½©ñ°Êµe
+    // è¨­å®šå½±æ ¼æ™‚é–“ä¸¦æ’­æ”¾å‹•ç•«
     m_ccaEffect.SetFrameTime();
-    m_ccaEffect.Play(0, false); // °Êµe¥»¨­¥i¯à¤£´`Àô¡A¥Ñ FrameProcess ±±¨î¨ä«ùÄò©Ê
+    m_ccaEffect.Play(0, false); // å‹•ç•«æœ¬èº«å¯èƒ½ä¸å¾ªç’°ï¼Œç”± FrameProcess æ§åˆ¶å…¶æŒçºŒæ€§
 
-    // ¸j©w¾Ö¦³ªÌ
+    // ç¶å®šæ“æœ‰è€…
     m_pOwnerCharacter = pOwner;
 }
 
-// ¹ïÀ³¤Ï²ÕÄ¶½X: 0x005317B0
+// å°æ‡‰åçµ„è­¯ç¢¼: 0x005317B0
 bool CEffect_Player_FItem_Effect::FrameProcess(float fElapsedTime)
 {
-    // §ó·s¤º³¡°Êµe¼v®æ
+    // æ›´æ–°å…§éƒ¨å‹•ç•«å½±æ ¼
     m_ccaEffect.FrameProcess(fElapsedTime);
 
-    // --- ®Ö¤ß¥Í©R¶g´Á§PÂ_ ---
+    // --- æ ¸å¿ƒç”Ÿå‘½é€±æœŸåˆ¤æ–· ---
     ClientCharacter* pOwner = m_pOwnerCharacter;
     if (!pOwner) {
-        return true; // ¦pªG¾Ö¦³ªÌ«ü¼Ğ¬°ªÅ¡A¯S®Äµ²§ô
+        return true; // å¦‚æœæ“æœ‰è€…æŒ‡æ¨™ç‚ºç©ºï¼Œç‰¹æ•ˆçµæŸ
     }
 
-    // ±ø¥ó¤@: ÀË¬d¨¤¦â¬O§_³B©ó¬Y­Ó³q¥Î¯S®íª¬ºA
-    // ­ì©l½X: if ( *(_DWORD *)(v3 + 11528) ) result = 1;
-    if (pOwner->GetSomeOtherState()) { // °²³] GetSomeOtherState() Åª¨ú¦ì²¾ +11528 ªººX¼Ğ
+    // æ¢ä»¶ä¸€: æª¢æŸ¥è§’è‰²æ˜¯å¦è™•æ–¼æŸå€‹é€šç”¨ç‰¹æ®Šç‹€æ…‹
+    // åŸå§‹ç¢¼: if ( *(_DWORD *)(v3 + 11528) ) result = 1;
+    if (pOwner->GetSomeOtherState()) { // å‡è¨­ GetSomeOtherState() è®€å–ä½ç§» +11528 çš„æ——æ¨™
         return true;
     }
 
-    // ±ø¥ó¤G: ÀË¬dÄ²µo¦¹¯S®Äªº®É¸Ë¬O§_ÁÙ¦b¸Ë³Æ¤¤
-    // ­ì©l½X: result = *(_DWORD *)(v3 + 4376) == 0;
-    // °²³] IsFashionItemActive() Åª¨ú¦ì²¾ +4376 ªººX¼Ğ
+    // æ¢ä»¶äºŒ: æª¢æŸ¥è§¸ç™¼æ­¤ç‰¹æ•ˆçš„æ™‚è£æ˜¯å¦é‚„åœ¨è£å‚™ä¸­
+    // åŸå§‹ç¢¼: result = *(_DWORD *)(v3 + 4376) == 0;
+    // å‡è¨­ IsFashionItemActive() è®€å–ä½ç§» +4376 çš„æ——æ¨™
     if (!pOwner->IsFashionItemActive()) {
         return true;
     }
 
-    // ¦pªG©Ò¦³±ø¥ó³£¤£º¡¨¬¡A¯S®ÄÄ~Äò¦s¦b
+    // å¦‚æœæ‰€æœ‰æ¢ä»¶éƒ½ä¸æ»¿è¶³ï¼Œç‰¹æ•ˆç¹¼çºŒå­˜åœ¨
     return false;
 }
 
-// ¹ïÀ³¤Ï²ÕÄ¶½X: 0x005317F0
+// å°æ‡‰åçµ„è­¯ç¢¼: 0x005317F0
 void CEffect_Player_FItem_Effect::Process()
 {
     if (!m_pOwnerCharacter) {
@@ -70,25 +70,25 @@ void CEffect_Player_FItem_Effect::Process()
         return;
     }
 
-    // ±N¥@¬É®y¼ĞÂà´«¬°¿Ã¹õ®y¼Ğ
+    // å°‡ä¸–ç•Œåº§æ¨™è½‰æ›ç‚ºè¢å¹•åº§æ¨™
     float screenX = static_cast<float>(m_pOwnerCharacter->GetPosX() - g_Game_System_Info.ScreenX);
     float screenY = static_cast<float>(m_pOwnerCharacter->GetPosY() - g_Game_System_Info.ScreenY);
 
-    // ®Ú¾Ú¨¤¦â´Â¦V³]©wÂ½Âà
+    // æ ¹æ“šè§’è‰²æœå‘è¨­å®šç¿»è½‰
     m_bIsFlip = (m_pOwnerCharacter->GetActionSide() != 0);
 
-    // ¶i¦æµô°Å§PÂ_
+    // é€²è¡Œè£å‰ªåˆ¤æ–·
     m_bIsVisible = IsCliping(screenX, 0.0f);
 
     if (m_bIsVisible) {
-        // §ó·s¤º³¡ CCAEffect ªºª¬ºA
+        // æ›´æ–°å…§éƒ¨ CCAEffect çš„ç‹€æ…‹
         m_ccaEffect.SetPosition(screenX, screenY);
         m_ccaEffect.SetFlipX(m_bIsFlip);
         m_ccaEffect.Process();
     }
 }
 
-// ¹ïÀ³¤Ï²ÕÄ¶½X: 0x00531890
+// å°æ‡‰åçµ„è­¯ç¢¼: 0x00531890
 void CEffect_Player_FItem_Effect::Draw()
 {
     if (m_bIsVisible) {

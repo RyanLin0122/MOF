@@ -1,36 +1,36 @@
 #pragma once
 #include <windows.h> // for HRESULT
 
-// «e¦V«Å§i (Forward Declarations)
+// å‰å‘å®£å‘Š (Forward Declarations)
 class ClientCharacter;
 
 /**
  * @class EffectSystemTest
- * @brief ­t³dªì©l¤Æ»PÅX°Ê¾ã­Ó¯S®Ä¨t²Îªº´ú¸ÕÃş§O¡C
+ * @brief è² è²¬åˆå§‹åŒ–èˆ‡é©…å‹•æ•´å€‹ç‰¹æ•ˆç³»çµ±çš„æ¸¬è©¦é¡åˆ¥ã€‚
  *
- * ³o­ÓÃş§O·|¨ú¥N±z main.cpp ¤¤ªº ImageDrawTest¡A
- * ¥Î©ó¼ÒÀÀ¹CÀ¸¥D´`Àô¡A¨Ã«ùÄò²£¥Í¡BºŞ²z©M´è¬V¯S®Ä¡C
+ * é€™å€‹é¡åˆ¥æœƒå–ä»£æ‚¨ main.cpp ä¸­çš„ ImageDrawTestï¼Œ
+ * ç”¨æ–¼æ¨¡æ“¬éŠæˆ²ä¸»å¾ªç’°ï¼Œä¸¦æŒçºŒç”¢ç”Ÿã€ç®¡ç†å’Œæ¸²æŸ“ç‰¹æ•ˆã€‚
  */
 class EffectSystemTest {
 public:
     EffectSystemTest();
     ~EffectSystemTest();
 
-    /// @brief ªì©l¤Æ´ú¸ÕÀô¹Ò¡A«Ø¥ßºŞ²z¾¹»P¼ÒÀÀ¨¤¦â¡C
+    /// @brief åˆå§‹åŒ–æ¸¬è©¦ç’°å¢ƒï¼Œå»ºç«‹ç®¡ç†å™¨èˆ‡æ¨¡æ“¬è§’è‰²ã€‚
     HRESULT Initialize();
 
-    /// @brief ²M²z©Ò¦³¸ê·½¡C
+    /// @brief æ¸…ç†æ‰€æœ‰è³‡æºã€‚
     void Cleanup();
 
-    /// @brief ¨C´VªºÅŞ¿è§ó·s¡C
-    /// @param fElapsedTime ¦Û¤W¤@´V¥H¨Ó¸g¹Lªº®É¶¡(¬í)¡C
+    /// @brief æ¯å¹€çš„é‚è¼¯æ›´æ–°ã€‚
+    /// @param fElapsedTime è‡ªä¸Šä¸€å¹€ä»¥ä¾†ç¶“éçš„æ™‚é–“(ç§’)ã€‚
     void Update(float fElapsedTime);
 
-    /// @brief ´è¬V©Ò¦³¥i¨£ªº¯S®Ä¡C
+    /// @brief æ¸²æŸ“æ‰€æœ‰å¯è¦‹çš„ç‰¹æ•ˆã€‚
     void Render();
 
 private:
-    /// @brief ¤@­Ó»²§U¨ç¦¡¡A¥Î©ó¦b¨¤¦â¦ì¸m²£¥Í·sªº¤U¼A±Ù¯S®Ä¡C
+    /// @brief ä¸€å€‹è¼”åŠ©å‡½å¼ï¼Œç”¨æ–¼åœ¨è§’è‰²ä½ç½®ç”¢ç”Ÿæ–°çš„ä¸‹åŠˆæ–¬ç‰¹æ•ˆã€‚
     void SpawnDownCutEffect();
 
     void SpawnHitNormalEffect();
@@ -60,11 +60,11 @@ private:
     void SpawnMiniGameWizardStringEffect();
 
 
-    // --- ¨p¦³¦¨­û ---
+    // --- ç§æœ‰æˆå“¡ ---
 
-    /// @brief ¼ÒÀÀªº¬IªkªÌ¨¤¦â¡C
+    /// @brief æ¨¡æ“¬çš„æ–½æ³•è€…è§’è‰²ã€‚
     ClientCharacter* m_pCaster;
     ClientCharacter* m_pTarget;
-    /// @brief ¥Î©ó­p®É¡A¥H©T©w¶¡¹j²£¥Í·s¯S®Ä¡C
+    /// @brief ç”¨æ–¼è¨ˆæ™‚ï¼Œä»¥å›ºå®šé–“éš”ç”¢ç”Ÿæ–°ç‰¹æ•ˆã€‚
     float m_fTimeSinceLastEffect;
 };

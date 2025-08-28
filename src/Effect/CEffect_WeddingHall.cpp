@@ -3,67 +3,67 @@
 #include "Character/ClientCharacter.h"
 #include "global.h"
 
-// ¹ïÀ³¤Ï²ÕÄ¶½X: 0x00537E50
+// å°æ‡‰åçµ„è­¯ç¢¼: 0x00537E50
 CEffect_WeddingHall::CEffect_WeddingHall()
     : m_pOwnerPlayer(nullptr)
 {
-    // CEffectBase ªº«Øºc¨ç¦¡·|³Q¦Û°Ê©I¥s
+    // CEffectBase çš„å»ºæ§‹å‡½å¼æœƒè¢«è‡ªå‹•å‘¼å«
 }
 
-// ¹ïÀ³¤Ï²ÕÄ¶½X: 0x00537E90
+// å°æ‡‰åçµ„è­¯ç¢¼: 0x00537E90
 CEffect_WeddingHall::~CEffect_WeddingHall()
 {
 }
 
-// ¹ïÀ³¤Ï²ÕÄ¶½X: 0x00537EA0
+// å°æ‡‰åçµ„è­¯ç¢¼: 0x00537EA0
 void CEffect_WeddingHall::Init()
 {
-    // ¦V CEAManager ½Ğ¨D¯S®Ä¼Æ¾Ú
-    // ¯S®Ä ID: 107, ÀÉ®×¦WºÙ: "Effect/efn_wedding_hall.ea"
+    // å‘ CEAManager è«‹æ±‚ç‰¹æ•ˆæ•¸æ“š
+    // ç‰¹æ•ˆ ID: 107, æª”æ¡ˆåç¨±: "Effect/efn_wedding_hall.ea"
     CEAManager::GetInstance()->GetEAData(107, "Effect/efn_wedding_hall.ea", &m_ccaEffect);
 
-    // ³]©w¼v®æ®É¶¡¨Ã¼½©ñ°Êµe
+    // è¨­å®šå½±æ ¼æ™‚é–“ä¸¦æ’­æ”¾å‹•ç•«
     m_ccaEffect.SetFrameTime();
-    m_ccaEffect.Play(0, true); // ±BÂ§¯S®ÄÀ³´`Àô¼½©ñ
+    m_ccaEffect.Play(0, true); // å©šç¦®ç‰¹æ•ˆæ‡‰å¾ªç’°æ’­æ”¾
 }
 
-// ¹ïÀ³¤Ï²ÕÄ¶½X: 0x00537ED0
+// å°æ‡‰åçµ„è­¯ç¢¼: 0x00537ED0
 void CEffect_WeddingHall::SetEffect(float x, float y, ClientCharacter* pPlayer)
 {
     if (!pPlayer) return;
 
-    // ªì©l¤Æ¯S®Ä¸ê·½
+    // åˆå§‹åŒ–ç‰¹æ•ˆè³‡æº
     Init();
 
-    // Àx¦s¦ì¸m©M¸j©wªºª±®a
+    // å„²å­˜ä½ç½®å’Œç¶å®šçš„ç©å®¶
     m_fCurrentPosX = x;
     m_fCurrentPosY = y;
     m_pOwnerPlayer = pPlayer;
 }
 
 
-// ¹ïÀ³¤Ï²ÕÄ¶½X: 0x00537F00
+// å°æ‡‰åçµ„è­¯ç¢¼: 0x00537F00
 bool CEffect_WeddingHall::FrameProcess(float fElapsedTime)
 {
     if (!m_pOwnerPlayer) {
-        return true; // ¦pªGª¬ºA¾Ö¦³ªÌ¤£¦s¦b¡A«h¯S®Ä¥ß§Yµ²§ô
+        return true; // å¦‚æœç‹€æ…‹æ“æœ‰è€…ä¸å­˜åœ¨ï¼Œå‰‡ç‰¹æ•ˆç«‹å³çµæŸ
     }
 
-    // --- ®Ö¤ß¥Í©R¶g´Á§PÂ_ ---
-    // ÀË¬d¾Ö¦³ªÌªº¦a¹Ï ID ¬O§_¬° 4
-    // ­ì©l½X: if ( *(_WORD *)(*((_DWORD *)this + 33) + 592) == 4 ) ...
-    if (m_pOwnerPlayer->GetMapID() == 4) { // °²³] GetMapID() Åª¨ú¦ì²¾ +592 ªºÄİ©Ê
-        // ª¬ºA¤Ç°t¡A§ó·s°Êµe¨ÃÅı¯S®ÄÄ~Äò¦s¦b
+    // --- æ ¸å¿ƒç”Ÿå‘½é€±æœŸåˆ¤æ–· ---
+    // æª¢æŸ¥æ“æœ‰è€…çš„åœ°åœ– ID æ˜¯å¦ç‚º 4
+    // åŸå§‹ç¢¼: if ( *(_WORD *)(*((_DWORD *)this + 33) + 592) == 4 ) ...
+    if (m_pOwnerPlayer->GetMapID() == 4) { // å‡è¨­ GetMapID() è®€å–ä½ç§» +592 çš„å±¬æ€§
+        // ç‹€æ…‹åŒ¹é…ï¼Œæ›´æ–°å‹•ç•«ä¸¦è®“ç‰¹æ•ˆç¹¼çºŒå­˜åœ¨
         m_ccaEffect.FrameProcess(fElapsedTime);
         return false;
     }
     else {
-        // ª¬ºA¤£¤Ç°t¡A¯S®Äµ²§ô
+        // ç‹€æ…‹ä¸åŒ¹é…ï¼Œç‰¹æ•ˆçµæŸ
         return true;
     }
 }
 
-// ¹ïÀ³¤Ï²ÕÄ¶½X: 0x00537F30
+// å°æ‡‰åçµ„è­¯ç¢¼: 0x00537F30
 void CEffect_WeddingHall::Process()
 {
     float screenX = m_fCurrentPosX - static_cast<float>(g_Game_System_Info.ScreenX);
@@ -77,7 +77,7 @@ void CEffect_WeddingHall::Process()
     }
 }
 
-// ¹ïÀ³¤Ï²ÕÄ¶½X: 0x00537F70
+// å°æ‡‰åçµ„è­¯ç¢¼: 0x00537F70
 void CEffect_WeddingHall::Draw()
 {
     if (m_bIsVisible) {

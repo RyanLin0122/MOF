@@ -9,141 +9,141 @@
 // --- Struct Definitions ---
 
 /**
- * @brief IIO §Ö¨ú­¶­±µ²ºc
- * Àx¦s¹ê»Úªº¸ê®Æ½w½Ä°Ï¥H¤Î¬ÛÃöªº¤¸¼Æ¾Ú¡C
+ * @brief IIO å¿«å–é é¢çµæ§‹
+ * å„²å­˜å¯¦éš›çš„è³‡æ–™ç·©è¡å€ä»¥åŠç›¸é—œçš„å…ƒæ•¸æ“šã€‚
  */
 struct NfsIioCachePage {
-	// ­ì©l C µ{¦¡½X¤¤¡A¦¹Äæ¦ìÀx¦s½w½Ä°Ï«ü¼Ğ¡A¨Ã±N¨ä³Ì§C¦³®Ä¦ì (LSB) ¥Î§@¦P¨BºX¼Ğ¡C
+	// åŸå§‹ C ç¨‹å¼ç¢¼ä¸­ï¼Œæ­¤æ¬„ä½å„²å­˜ç·©è¡å€æŒ‡æ¨™ï¼Œä¸¦å°‡å…¶æœ€ä½æœ‰æ•ˆä½ (LSB) ç”¨ä½œåŒæ­¥æ——æ¨™ã€‚
 	uintptr_t buffer_ptr_and_syncflag_storage;
-	int disk_block_position;        // ¦¹§Ö¨ú­¶­±¹ïÀ³ªººÏºĞ°Ï¶ô¦ì¸m
-	int last_access_time;           // ³Ì«á¦s¨ú¦¹­¶­±ªº®ÉÄÁ­È (¨Ó¦Û nfs_iio_CLOCK)
+	int disk_block_position;        // æ­¤å¿«å–é é¢å°æ‡‰çš„ç£ç¢Ÿå€å¡Šä½ç½®
+	int last_access_time;           // æœ€å¾Œå­˜å–æ­¤é é¢çš„æ™‚é˜å€¼ (ä¾†è‡ª nfs_iio_CLOCK)
 };
 
 /**
- * @brief IIO ³q¹Dªº§Ö¨úºŞ²z¾¹
+ * @brief IIO é€šé“çš„å¿«å–ç®¡ç†å™¨
  */
 struct NfsIioCache {
-	NfsIioCachePage** pages;        // «ü¦V NfsIioCachePage «ü¼Ğªº°}¦C
-	int num_pages_allocated;        // pages °}¦C¤¤¤w¤À°tªºÁ`¼Ñ¼Æ
-	int num_pages_active;           // ¥Ø«e¬¡ÅD/¤w¨Ï¥Îªº§Ö¨ú­¶­±¼Æ¶q
+	NfsIioCachePage** pages;        // æŒ‡å‘ NfsIioCachePage æŒ‡æ¨™çš„é™£åˆ—
+	int num_pages_allocated;        // pages é™£åˆ—ä¸­å·²åˆ†é…çš„ç¸½æ§½æ•¸
+	int num_pages_active;           // ç›®å‰æ´»èº/å·²ä½¿ç”¨çš„å¿«å–é é¢æ•¸é‡
 };
 
 /**
- * @brief IIO ³q¹Dµ²ºc
+ * @brief IIO é€šé“çµæ§‹
  */
 struct NfsIioChannel {
-	int blocks_per_stripe;          // ¦¹³q¹Dªº¨C­Ó "stripe" (±ø±a/°ò¥»³æ¦ì) ¥]§tªº°Ï¶ô¼Æ
-	int current_size_bytes;         // ³q¹D¸ê®Æªº¥Ø«eÅŞ¿è¤j¤p (¦ì¤¸²Õ)
-	int current_seek_position;      // ¦b³q¹D¤ºªº¥Ø«eÅª¼g¦ì¸m
-	NfsIioCache* cache_header;      // «ü¦V¦¹³q¹Dªº§Ö¨úºŞ²z¾¹
+	int blocks_per_stripe;          // æ­¤é€šé“çš„æ¯å€‹ "stripe" (æ¢å¸¶/åŸºæœ¬å–®ä½) åŒ…å«çš„å€å¡Šæ•¸
+	int current_size_bytes;         // é€šé“è³‡æ–™çš„ç›®å‰é‚è¼¯å¤§å° (ä½å…ƒçµ„)
+	int current_seek_position;      // åœ¨é€šé“å…§çš„ç›®å‰è®€å¯«ä½ç½®
+	NfsIioCache* cache_header;      // æŒ‡å‘æ­¤é€šé“çš„å¿«å–ç®¡ç†å™¨
 };
 
 /**
- * @brief IIO ÀÉ®×µ²ºc
+ * @brief IIO æª”æ¡ˆçµæ§‹
  */
 struct NfsIioFile {
-	FILE* file_handle;              // C ¼Ğ·ÇÀÉ®×«ü¼Ğ
-	char* file_name;                // IIO ÀÉ®×ªº¦WºÙ (°ÊºA¤À°t)
-	short num_channels;             // ¦¹ IIO ÀÉ®×¤¤ªº³q¹D¼Æ¶q
-	NfsIioChannel** channels;       // «ü¦V NfsIioChannel «ü¼Ğªº°}¦C
+	FILE* file_handle;              // C æ¨™æº–æª”æ¡ˆæŒ‡æ¨™
+	char* file_name;                // IIO æª”æ¡ˆçš„åç¨± (å‹•æ…‹åˆ†é…)
+	short num_channels;             // æ­¤ IIO æª”æ¡ˆä¸­çš„é€šé“æ•¸é‡
+	NfsIioChannel** channels;       // æŒ‡å‘ NfsIioChannel æŒ‡æ¨™çš„é™£åˆ—
 };
 
 /**
- * @brief ¸ê®Æ§Ö¨úªº¼ĞÀYµ²ºc¡C
- * Àx¦sÃö©ó§Ö¨ú½w½Ä°Ï¥»¨­ªº¤¤¤¶¸ê®Æ¡C
+ * @brief è³‡æ–™å¿«å–çš„æ¨™é ­çµæ§‹ã€‚
+ * å„²å­˜é—œæ–¼å¿«å–ç·©è¡å€æœ¬èº«çš„ä¸­ä»‹è³‡æ–™ã€‚
  */
 struct NfsDataCacheHeader {
-	size_t buffer_capacity;         // §Ö¨ú½w½Ä°Ïªº¥Ø«e®e¶q (¦ì¤¸²Õ)
-	void* buffer;                   // «ü¦V¹ê»Ú§Ö¨ú¸ê®Æªº«ü¼Ğ
-	int cache_window_start_offset;  // ¦¹§Ö¨úµøµ¡¹ïÀ³©óÀÉ®×¤¤ªº°_©l¦ì¤¸²Õ°¾²¾¶q
-	int is_synced_flag;             // ºX¼Ğ¡G1 ªí¥Ü§Ö¨ú»PºÏºĞ¦P¨B (clean)¡A0 ªí¥Ü¤w­×§ï (dirty)
+	size_t buffer_capacity;         // å¿«å–ç·©è¡å€çš„ç›®å‰å®¹é‡ (ä½å…ƒçµ„)
+	void* buffer;                   // æŒ‡å‘å¯¦éš›å¿«å–è³‡æ–™çš„æŒ‡æ¨™
+	int cache_window_start_offset;  // æ­¤å¿«å–è¦–çª—å°æ‡‰æ–¼æª”æ¡ˆä¸­çš„èµ·å§‹ä½å…ƒçµ„åç§»é‡
+	int is_synced_flag;             // æ——æ¨™ï¼š1 è¡¨ç¤ºå¿«å–èˆ‡ç£ç¢ŸåŒæ­¥ (clean)ï¼Œ0 è¡¨ç¤ºå·²ä¿®æ”¹ (dirty)
 };
 
 /**
- * @brief ¸ê®ÆÀÉ®×±±¨î¥N½X¡A¥]§tÀÉ®×«ü¼Ğ©M¬ÛÃöªº§Ö¨ú¡C
- * ¹ïÀ³­ì©l½X¤¤ªº _nfs_data_Data¡C
+ * @brief è³‡æ–™æª”æ¡ˆæ§åˆ¶ä»£ç¢¼ï¼ŒåŒ…å«æª”æ¡ˆæŒ‡æ¨™å’Œç›¸é—œçš„å¿«å–ã€‚
+ * å°æ‡‰åŸå§‹ç¢¼ä¸­çš„ _nfs_data_Dataã€‚
  */
 struct NfsDataHandle {
-	FILE* file_ptr;                 // «ü¦V¤w¶}±ÒÀÉ®×ªº«ü¼Ğ
-	char* file_name;                // ÀÉ®×¦WºÙ (°ÊºA¤À°t)
-	NfsDataCacheHeader* cache;      // «ü¦V¦¹ÀÉ®×¸ê®Æ§Ö¨úªº«ü¼Ğ
+	FILE* file_ptr;                 // æŒ‡å‘å·²é–‹å•Ÿæª”æ¡ˆçš„æŒ‡æ¨™
+	char* file_name;                // æª”æ¡ˆåç¨± (å‹•æ…‹åˆ†é…)
+	NfsDataCacheHeader* cache;      // æŒ‡å‘æ­¤æª”æ¡ˆè³‡æ–™å¿«å–çš„æŒ‡æ¨™
 };
 
-// --- NfsFatHandle µ²ºcÅé©w¸q ---
-struct NfsFatHandle { // ¹ïÀ³­ì©l½Xªº _nfs_fat_FAT
-	NfsIioFile* iio_file;           // «ü¦V IIO ÀÉ®×µ²ºcªº«ü¼Ğ
-	int fat_iio_channel_id;         // ¥Î©óÀx¦s FAT ¸ê®Æªº IIO ³q¹D ID
-	int next_free_search_start_idx; // ¤U¤@­ÓªÅ¶¢ FAT ªí¶µªº°_©l·j´M¯Á¤Ş
-};
-
-/**
- * @brief ¸`ÂIªí (NT) ¤¤ªº¤@­Ó¸`ÂI¡AÀx¦sÀÉ®×/¥Ø¿ıªº¤¸¼Æ¾Ú¡C
- * ¤j¤p¬° 16 ¦ì¤¸²Õ¡C
- */
-struct NfsNode { // ¹ïÀ³ _nfs_nt_Node
-	int ref_count;                  // ¤Ş¥Î­p¼Æ (offset +0)
-	int file_size_bytes;            // ÀÉ®×¤j¤p (¦ì¤¸²Õ) (offset +4)
-	int fat_chain_start_idx;        // ¦b FAT ¤¤ªº°Ï¶ôÃì°_©l¯Á¤Ş (offset +8)
-	int user_flags_or_type;         // ¨Ï¥ÎªÌ©w¸qªººX¼Ğ©ÎÃş«¬µ¥ (offset +12)
+// --- NfsFatHandle çµæ§‹é«”å®šç¾© ---
+struct NfsFatHandle { // å°æ‡‰åŸå§‹ç¢¼çš„ _nfs_fat_FAT
+	NfsIioFile* iio_file;           // æŒ‡å‘ IIO æª”æ¡ˆçµæ§‹çš„æŒ‡æ¨™
+	int fat_iio_channel_id;         // ç”¨æ–¼å„²å­˜ FAT è³‡æ–™çš„ IIO é€šé“ ID
+	int next_free_search_start_idx; // ä¸‹ä¸€å€‹ç©ºé–’ FAT è¡¨é …çš„èµ·å§‹æœå°‹ç´¢å¼•
 };
 
 /**
- * @brief ¸`ÂIªí (NT) ªº±±¨î¥N½X¡C
+ * @brief ç¯€é»è¡¨ (NT) ä¸­çš„ä¸€å€‹ç¯€é»ï¼Œå„²å­˜æª”æ¡ˆ/ç›®éŒ„çš„å…ƒæ•¸æ“šã€‚
+ * å¤§å°ç‚º 16 ä½å…ƒçµ„ã€‚
  */
-struct NfsNtHandle { // ¹ïÀ³ _nfs_nt_NT
-	NfsIioFile* iio_file;                // «ü¦V IIO ÀÉ®×µ²ºcªº«ü¼Ğ
-	int nt_iio_channel_id;               // ¥Î©óÀx¦s NT ¸ê®Æªº IIO ³q¹D ID
-	int next_free_node_search_start_idx; // ¤U¤@­ÓªÅ¶¢ NT ¸`ÂIªº°_©l·j´M¯Á¤Ş
+struct NfsNode { // å°æ‡‰ _nfs_nt_Node
+	int ref_count;                  // å¼•ç”¨è¨ˆæ•¸ (offset +0)
+	int file_size_bytes;            // æª”æ¡ˆå¤§å° (ä½å…ƒçµ„) (offset +4)
+	int fat_chain_start_idx;        // åœ¨ FAT ä¸­çš„å€å¡Šéˆèµ·å§‹ç´¢å¼• (offset +8)
+	int user_flags_or_type;         // ä½¿ç”¨è€…å®šç¾©çš„æ——æ¨™æˆ–é¡å‹ç­‰ (offset +12)
 };
 
 /**
- * @brief Trie ¸`ÂIµ²ºc (¥Î©ó Patricia Trie)¡C
- * ¤j¤p¬° 16 ¦ì¤¸²Õ¡C
+ * @brief ç¯€é»è¡¨ (NT) çš„æ§åˆ¶ä»£ç¢¼ã€‚
  */
-struct NfsTrieNode {				// ¹ïÀ³ _nfs_dt_TrieNode
-	short nt_idx;					// «ü¦V¸`ÂIªí (NT) ªº¯Á¤Ş¡A©Î¨ä¥L¤¸¼Æ¾Ú¡C
-	short b_index;					// ¥Î©ó Patricia Trie ¤ñ¸ûªº¦ì¤¸¯Á¤Ş¡C
-	int k_index;					// ­Y MSB ¬° 1 (§Y < 0): («ü¦V KeyNode ªíªº¯Á¤Ş | 0x80000000)¡C
-	// ­Y MSB ¬° 0 (§Y >= 0): ªí¥Ü¦¹ TrieNode ¬°ªÅ¶¢¡C0 ¬O¨å«¬ªºªÅ¶¢/¤w²M°£­È¡C
-	int left_child_idx;				// ¥ª¤l TrieNode ªº¯Á¤Ş¡C
-	int right_child_idx;			// ¥k¤l TrieNode ªº¯Á¤Ş¡C
+struct NfsNtHandle { // å°æ‡‰ _nfs_nt_NT
+	NfsIioFile* iio_file;                // æŒ‡å‘ IIO æª”æ¡ˆçµæ§‹çš„æŒ‡æ¨™
+	int nt_iio_channel_id;               // ç”¨æ–¼å„²å­˜ NT è³‡æ–™çš„ IIO é€šé“ ID
+	int next_free_node_search_start_idx; // ä¸‹ä¸€å€‹ç©ºé–’ NT ç¯€é»çš„èµ·å§‹æœå°‹ç´¢å¼•
 };
 
 /**
- * @brief Áä¸`ÂIµ²ºc¡A¥Î©óÀx¦sÀÉ¦W (Áä) ªº¤ù¬q¡C
- * ¤j¤p¬° 64 ¦ì¤¸²Õ¡C
+ * @brief Trie ç¯€é»çµæ§‹ (ç”¨æ–¼ Patricia Trie)ã€‚
+ * å¤§å°ç‚º 16 ä½å…ƒçµ„ã€‚
  */
-struct NfsKeyNode {					// ¹ïÀ³ _nfs_dt_KeyNode
-	int next_fragment_idx_flags;	// ­Y MSB ¬° 1 (§Y < 0): («ü¦V¤U¤@­Ó NfsKeyNode ¤ù¬qªº¯Á¤Ş | 0x80000000)¡A
-	// ©Î¶È¬° 0x80000000 ªí¥Ü¦¹¬°³Ì«á¤ù¬q¡C
-	// ­Y MSB ¬° 0 (§Y >= 0): ªí¥Ü¦¹ KeyNode ¬°ªÅ¶¢¡C0 ¬O¨å«¬ªºªÅ¶¢/¤w²M°£­È¡C
-	char key_fragment[60];			// Àx¦sÁä¦Wªº¤@­Ó¤ù¬q¡C
+struct NfsTrieNode {				// å°æ‡‰ _nfs_dt_TrieNode
+	short nt_idx;					// æŒ‡å‘ç¯€é»è¡¨ (NT) çš„ç´¢å¼•ï¼Œæˆ–å…¶ä»–å…ƒæ•¸æ“šã€‚
+	short b_index;					// ç”¨æ–¼ Patricia Trie æ¯”è¼ƒçš„ä½å…ƒç´¢å¼•ã€‚
+	int k_index;					// è‹¥ MSB ç‚º 1 (å³ < 0): (æŒ‡å‘ KeyNode è¡¨çš„ç´¢å¼• | 0x80000000)ã€‚
+	// è‹¥ MSB ç‚º 0 (å³ >= 0): è¡¨ç¤ºæ­¤ TrieNode ç‚ºç©ºé–’ã€‚0 æ˜¯å…¸å‹çš„ç©ºé–’/å·²æ¸…é™¤å€¼ã€‚
+	int left_child_idx;				// å·¦å­ TrieNode çš„ç´¢å¼•ã€‚
+	int right_child_idx;			// å³å­ TrieNode çš„ç´¢å¼•ã€‚
 };
 
 /**
- * @brief ¥Ø¿ıªí (DT) ªº±±¨î¥N½X¡C
+ * @brief éµç¯€é»çµæ§‹ï¼Œç”¨æ–¼å„²å­˜æª”å (éµ) çš„ç‰‡æ®µã€‚
+ * å¤§å°ç‚º 64 ä½å…ƒçµ„ã€‚
  */
-struct NfsDtHandle { // ¹ïÀ³ _nfs_dt_DT
+struct NfsKeyNode {					// å°æ‡‰ _nfs_dt_KeyNode
+	int next_fragment_idx_flags;	// è‹¥ MSB ç‚º 1 (å³ < 0): (æŒ‡å‘ä¸‹ä¸€å€‹ NfsKeyNode ç‰‡æ®µçš„ç´¢å¼• | 0x80000000)ï¼Œ
+	// æˆ–åƒ…ç‚º 0x80000000 è¡¨ç¤ºæ­¤ç‚ºæœ€å¾Œç‰‡æ®µã€‚
+	// è‹¥ MSB ç‚º 0 (å³ >= 0): è¡¨ç¤ºæ­¤ KeyNode ç‚ºç©ºé–’ã€‚0 æ˜¯å…¸å‹çš„ç©ºé–’/å·²æ¸…é™¤å€¼ã€‚
+	char key_fragment[60];			// å„²å­˜éµåçš„ä¸€å€‹ç‰‡æ®µã€‚
+};
+
+/**
+ * @brief ç›®éŒ„è¡¨ (DT) çš„æ§åˆ¶ä»£ç¢¼ã€‚
+ */
+struct NfsDtHandle { // å°æ‡‰ _nfs_dt_DT
 	NfsIioFile* iio_file;
-	int trienode_channel_id;		// Àx¦s NfsTrieNode °}¦Cªº IIO ³q¹D ID¡C
-	int keynode_channel_id;			// Àx¦s NfsKeyNode °}¦Cªº IIO ³q¹D ID¡C
-	int next_free_trienode_idx;		// ¥Î©ó·j´M¤U¤@­ÓªÅ¶¢ TrieNode ªº´£¥Ü¯Á¤Ş¡C
-	int next_free_keynode_idx;		// ¥Î©ó·j´M¤U¤@­ÓªÅ¶¢ KeyNode ªº´£¥Ü¯Á¤Ş¡C
+	int trienode_channel_id;		// å„²å­˜ NfsTrieNode é™£åˆ—çš„ IIO é€šé“ IDã€‚
+	int keynode_channel_id;			// å„²å­˜ NfsKeyNode é™£åˆ—çš„ IIO é€šé“ IDã€‚
+	int next_free_trienode_idx;		// ç”¨æ–¼æœå°‹ä¸‹ä¸€å€‹ç©ºé–’ TrieNode çš„æç¤ºç´¢å¼•ã€‚
+	int next_free_keynode_idx;		// ç”¨æ–¼æœå°‹ä¸‹ä¸€å€‹ç©ºé–’ KeyNode çš„æç¤ºç´¢å¼•ã€‚
 };
 
-// Glob µ²ªGµ²ºcÅé (Ãş¦ü¼Ğ·Çªº glob_t)
+// Glob çµæœçµæ§‹é«” (é¡ä¼¼æ¨™æº–çš„ glob_t)
 struct NfsGlobResults {
-	size_t gl_pathc;				// ¤Ç°t¸ô®|ªº¼Æ¶q
-	char** gl_pathv;				// «ü¦V¤Ç°t¸ô®|¦r¦ê°}¦Cªº«ü¼Ğ
-	size_t gl_offs;					// ¦b gl_pathv ¶}ÀY«O¯dªº¼Ñ¦ì¼Æ¶q (­Y FNM_DOOFFS)
-	// ¤º³¡¨Ï¥Î¡A¥Î©ó°lÂÜ¦^©I¨ç¦¡¤¤¬O§_µo¥Í¿ù»~
+	size_t gl_pathc;				// åŒ¹é…è·¯å¾‘çš„æ•¸é‡
+	char** gl_pathv;				// æŒ‡å‘åŒ¹é…è·¯å¾‘å­—ä¸²é™£åˆ—çš„æŒ‡æ¨™
+	size_t gl_offs;					// åœ¨ gl_pathv é–‹é ­ä¿ç•™çš„æ§½ä½æ•¸é‡ (è‹¥ FNM_DOOFFS)
+	// å…§éƒ¨ä½¿ç”¨ï¼Œç”¨æ–¼è¿½è¹¤å›å‘¼å‡½å¼ä¸­æ˜¯å¦ç™¼ç”ŸéŒ¯èª¤
 	int internal_callback_error_flag;
 };
 
 struct NfsOpenFileHandle {
 	int dt_trienode_idx;
 	int nt_node_idx;
-	int fat_chain_start_idx;		// ÀÉ®×¸ê®ÆÃì¦bFAT¤¤ªº°_©l°Ï¶ô¯Á¤Ş
+	int fat_chain_start_idx;		// æª”æ¡ˆè³‡æ–™éˆåœ¨FATä¸­çš„èµ·å§‹å€å¡Šç´¢å¼•
 	int current_byte_offset;
 	int open_mode_flags;
 	bool in_use;
@@ -163,13 +163,13 @@ struct NfsHandle {
 };
 
 // --- Global Variable Declarations (extern) ---
-// ³o¨ÇÅÜ¼Æ¦b nfs.cpp ¤¤©w¸q¡A¦¹³B«Å§i¬° extern ¥H«K¨ä¥LÀÉ®×¨Ï¥Î
+// é€™äº›è®Šæ•¸åœ¨ nfs.cpp ä¸­å®šç¾©ï¼Œæ­¤è™•å®£å‘Šç‚º extern ä»¥ä¾¿å…¶ä»–æª”æ¡ˆä½¿ç”¨
 extern int nfs_iio_BLOCK_SIZEv;
 extern int nfs_iio_CLOCK;
 extern int nfs_iio_IOMODE;
 extern int nfs_data_IOMODE;
 extern int nfs_errno;
-extern char nfs_glob_key_buffer[4096]; // ¦pªG­n¦b¦h­ÓÀÉ®×¤¤¦@¥Î¡A«hÀ³«Å§i¬° extern
+extern char nfs_glob_key_buffer[4096]; // å¦‚æœè¦åœ¨å¤šå€‹æª”æ¡ˆä¸­å…±ç”¨ï¼Œå‰‡æ‡‰å®£å‘Šç‚º extern
 
 // --- Public Function Prototypes ---
 

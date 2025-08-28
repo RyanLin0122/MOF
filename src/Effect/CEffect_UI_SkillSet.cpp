@@ -2,56 +2,56 @@
 #include "Effect/CEAManager.h"
 #include "global.h"
 
-// ¹ïÀ³¤Ï²ÕÄ¶½X: 0x00532ED0
+// å°æ‡‰åçµ„è­¯ç¢¼: 0x00532ED0
 CEffect_UI_SkillSet::CEffect_UI_SkillSet()
 {
-    // CEffectBase ªº«Øºc¨ç¦¡·|³Q¦Û°Ê©I¥s
+    // CEffectBase çš„å»ºæ§‹å‡½å¼æœƒè¢«è‡ªå‹•å‘¼å«
 
-    // ¦V CEAManager ½Ğ¨D¯S®Ä¼Æ¾Ú
-    // ¯S®Ä ID: 68, ÀÉ®×¦WºÙ: "Effect/efi_skillset.ea"
+    // å‘ CEAManager è«‹æ±‚ç‰¹æ•ˆæ•¸æ“š
+    // ç‰¹æ•ˆ ID: 68, æª”æ¡ˆåç¨±: "Effect/efi_skillset.ea"
     CEAManager::GetInstance()->GetEAData(68, "Effect/efi_skillset.ea", &m_ccaEffect);
 
-    // ³]©w¼v®æ®É¶¡¨Ã¼½©ñ°Êµe
+    // è¨­å®šå½±æ ¼æ™‚é–“ä¸¦æ’­æ”¾å‹•ç•«
     m_ccaEffect.SetFrameTime();
-    m_ccaEffect.Play(0, false); // ¼½©ñ²Ä¤@­Ó°Êµe§Ç¦C¡A¤£´`Àô
+    m_ccaEffect.Play(0, false); // æ’­æ”¾ç¬¬ä¸€å€‹å‹•ç•«åºåˆ—ï¼Œä¸å¾ªç’°
 }
 
-// ¹ïÀ³¤Ï²ÕÄ¶½X: 0x00532F60
+// å°æ‡‰åçµ„è­¯ç¢¼: 0x00532F60
 CEffect_UI_SkillSet::~CEffect_UI_SkillSet()
 {
 }
 
-// ¹ïÀ³¤Ï²ÕÄ¶½X: 0x00532F70
+// å°æ‡‰åçµ„è­¯ç¢¼: 0x00532F70
 void CEffect_UI_SkillSet::SetEffect(float x, float y)
 {
-    // --- ®Ö¤ßÅŞ¿è¡Gª½±µ³]©w CCAEffect ªº¿Ã¹õ®y¼Ğ ---
-    // ­ì©l½X: *((float *)this + 12) = a2;
+    // --- æ ¸å¿ƒé‚è¼¯ï¼šç›´æ¥è¨­å®š CCAEffect çš„è¢å¹•åº§æ¨™ ---
+    // åŸå§‹ç¢¼: *((float *)this + 12) = a2;
     //         *((float *)this + 13) = a3;
     m_ccaEffect.SetPosition(x, y);
 }
 
-// ¹ïÀ³¤Ï²ÕÄ¶½X: 0x00532F90
+// å°æ‡‰åçµ„è­¯ç¢¼: 0x00532F90
 bool CEffect_UI_SkillSet::FrameProcess(float fElapsedTime)
 {
-    // ±N¥Í©R¶g´ÁºŞ²zªº¥ô°È§¹¥ş©e°Uµ¹¤º³¡ªº CCAEffect ª«¥ó¡C
-    // ·í "efi_skillset.ea" °Êµe¼½©ñ§¹²¦®É¡A¦¹¨ç¦¡·|¦^¶Ç true¡C
+    // å°‡ç”Ÿå‘½é€±æœŸç®¡ç†çš„ä»»å‹™å®Œå…¨å§”è¨—çµ¦å…§éƒ¨çš„ CCAEffect ç‰©ä»¶ã€‚
+    // ç•¶ "efi_skillset.ea" å‹•ç•«æ’­æ”¾å®Œç•¢æ™‚ï¼Œæ­¤å‡½å¼æœƒå›å‚³ trueã€‚
     return m_ccaEffect.FrameProcess(fElapsedTime);
 }
 
-// ¹ïÀ³¤Ï²ÕÄ¶½X: 0x00532FA0
+// å°æ‡‰åçµ„è­¯ç¢¼: 0x00532FA0
 void CEffect_UI_SkillSet::Process()
 {
-    // ª½±µ±N³B²z¥ô°È©e°Uµ¹¤º³¡ªº CCAEffect
-    // ¦]¬°®y¼Ğ¤w¦b SetEffect ¤¤³]©w¡AµL»İ¦A¦¸§ó·s
+    // ç›´æ¥å°‡è™•ç†ä»»å‹™å§”è¨—çµ¦å…§éƒ¨çš„ CCAEffect
+    // å› ç‚ºåº§æ¨™å·²åœ¨ SetEffect ä¸­è¨­å®šï¼Œç„¡éœ€å†æ¬¡æ›´æ–°
     m_ccaEffect.Process();
 
-    // UI ¯S®ÄÁ`¬O¥i¨£
+    // UI ç‰¹æ•ˆç¸½æ˜¯å¯è¦‹
     m_bIsVisible = TRUE;
 }
 
-// ¹ïÀ³¤Ï²ÕÄ¶½X: 0x00532FB0
+// å°æ‡‰åçµ„è­¯ç¢¼: 0x00532FB0
 void CEffect_UI_SkillSet::Draw()
 {
-    // ª½±µ±NÃ¸»s¥ô°È©e°Uµ¹¤º³¡ªº CCAEffect ª«¥ó
+    // ç›´æ¥å°‡ç¹ªè£½ä»»å‹™å§”è¨—çµ¦å…§éƒ¨çš„ CCAEffect ç‰©ä»¶
     m_ccaEffect.Draw();
 }

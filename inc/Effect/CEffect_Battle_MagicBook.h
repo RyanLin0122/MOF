@@ -1,43 +1,43 @@
 #pragma once
 
 #include "Effect/CEffectBase.h"
-#include "Effect/CCAEffect.h" // ¬°¤F FrameSkip ªº¨Ï¥Î
+#include "Effect/CCAEffect.h" // ç‚ºäº† FrameSkip çš„ä½¿ç”¨
 #include "Character/ClientCharacter.h"
 #include <d3dx9math.h>
 
 
 /**
  * @class CEffect_Battle_MagicBook
- * @brief ¥Nªí±qÅ]ªk®Ñ¤¤®g¥Xªº§ë®gª«¯S®Ä¡]¨Ò¦p¤õ³¾¡^¡C
+ * @brief ä»£è¡¨å¾é­”æ³•æ›¸ä¸­å°„å‡ºçš„æŠ•å°„ç‰©ç‰¹æ•ˆï¼ˆä¾‹å¦‚ç«é³¥ï¼‰ã€‚
  */
 class CEffect_Battle_MagicBook : public CEffectBase {
 public:
     CEffect_Battle_MagicBook();
     virtual ~CEffect_Battle_MagicBook();
 
-    // --- µêÀÀ¨ç¦¡ÂĞ¼g ---
+    // --- è™›æ“¬å‡½å¼è¦†å¯« ---
     virtual bool FrameProcess(float fElapsedTime) override;
     virtual void Process() override;
     virtual void Draw() override;
 
-    // --- ±M¦³¨ç¦¡ ---
+    // --- å°ˆæœ‰å‡½å¼ ---
 
-    /// @brief ³]©w¯S®Ä (¨¤¦â¹ï¨¤¦â)¡C
+    /// @brief è¨­å®šç‰¹æ•ˆ (è§’è‰²å°è§’è‰²)ã€‚
     void SetEffect(ClientCharacter* pCaster, ClientCharacter* pTarget, bool bFlip, int hitInfoID);
 
-    /// @brief ³]©w¯S®Ä (®y¼Ğ¹ï®y¼Ğ)¡C
+    /// @brief è¨­å®šç‰¹æ•ˆ (åº§æ¨™å°åº§æ¨™)ã€‚
     void SetEffect(D3DXVECTOR2* pStartPos, D3DXVECTOR2* pEndPos, float fFlip, int hitInfoID);
 
 private:
-    // --- ¦¨­ûÅÜ¼Æ (®Ú¾Ú Effectall.c @ 0x0052EBA0 ±ÀÂ_) ---
+    // --- æˆå“¡è®Šæ•¸ (æ ¹æ“š Effectall.c @ 0x0052EBA0 æ¨æ–·) ---
 
-    ClientCharacter* m_pTargetCharacter;  // ¦ì²¾ +140 (0x8C)
-    float   m_fTotalDistance;    // ¦ì²¾ +136 (0x88)
-    float   m_fTraveledDistance; // ¦ì²¾ +132 (0x84)
+    ClientCharacter* m_pTargetCharacter;  // ä½ç§» +140 (0x8C)
+    float   m_fTotalDistance;    // ä½ç§» +136 (0x88)
+    float   m_fTraveledDistance; // ä½ç§» +132 (0x84)
 
-    // ±M¥Î©ó²¾°Ê©M¥Í©R¶g´Áªº FrameSkip ª«¥ó
-    FrameSkip m_MovementFrameSkip; // ¦ì²¾ +144 (0x90)
+    // å°ˆç”¨æ–¼ç§»å‹•å’Œç”Ÿå‘½é€±æœŸçš„ FrameSkip ç‰©ä»¶
+    FrameSkip m_MovementFrameSkip; // ä½ç§» +144 (0x90)
 
-    float   m_fAngle;            // ¦ì²¾ +156 (0x9C)
-    int     m_nHitInfoID;        // ¦ì²¾ +160 (0xA0)
+    float   m_fAngle;            // ä½ç§» +156 (0x9C)
+    int     m_nHitInfoID;        // ä½ç§» +160 (0xA0)
 };

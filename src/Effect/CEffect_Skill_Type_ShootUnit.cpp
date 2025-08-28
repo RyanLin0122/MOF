@@ -5,7 +5,7 @@
 
 extern GameSystemInfo g_Game_System_Info;
 
-// ¹ïÀ³¤Ï²ÕÄ¶½X: CEffect_Battle_BowShoot::CEffect_Battle_BowShoot (µ²ºcÃş¦ü)
+// å°æ‡‰åçµ„è­¯ç¢¼: CEffect_Battle_BowShoot::CEffect_Battle_BowShoot (çµæ§‹é¡ä¼¼)
 CEffect_Skill_Type_ShootUnit::CEffect_Skill_Type_ShootUnit()
     : m_pTargetCharacter(nullptr),
     m_fTotalDistance(0.0f),
@@ -13,14 +13,14 @@ CEffect_Skill_Type_ShootUnit::CEffect_Skill_Type_ShootUnit()
     m_fAngle(0.0f),
     m_nHitInfoID(0)
 {
-    // CEffectBase ªº«Øºc¨ç¦¡·|³Q¦Û°Ê©I¥s
+    // CEffectBase çš„å»ºæ§‹å‡½å¼æœƒè¢«è‡ªå‹•å‘¼å«
     m_fSpeed = 10.0f;
 
-    // --- ÃöÁä­×¥¿ ---
-    // ªì©l¤Æ¥Î©ó²¾°Êªº FrameSkip¡C
-    // ­ì©l½X (0x0052D770 @ CEffect_Battle_BowShoot) ¤¤¡A¦¹­p®É¾¹ªº¨C¼v®æ®É¶¡³Q³]¬° 0x3D088889
-    // ³o­Ó¤Q¤»¶i¦ì­È¹ïÀ³ªº¯BÂI¼Æ¬ù¬° 0.03333f¡A§Y 1.0f / 30.0f¡C
-    // ³oªí¥Üª«²z§ó·sªºÀW²v¬O©T©wªº 30 FPS¡C
+    // --- é—œéµä¿®æ­£ ---
+    // åˆå§‹åŒ–ç”¨æ–¼ç§»å‹•çš„ FrameSkipã€‚
+    // åŸå§‹ç¢¼ (0x0052D770 @ CEffect_Battle_BowShoot) ä¸­ï¼Œæ­¤è¨ˆæ™‚å™¨çš„æ¯å½±æ ¼æ™‚é–“è¢«è¨­ç‚º 0x3D088889
+    // é€™å€‹åå…­é€²ä½å€¼å°æ‡‰çš„æµ®é»æ•¸ç´„ç‚º 0.03333fï¼Œå³ 1.0f / 30.0fã€‚
+    // é€™è¡¨ç¤ºç‰©ç†æ›´æ–°çš„é »ç‡æ˜¯å›ºå®šçš„ 30 FPSã€‚
     m_MovementFrameSkip.m_fTimePerFrame = 1.0f / 30.0f;
 }
 
@@ -30,7 +30,7 @@ CEffect_Skill_Type_ShootUnit::~CEffect_Skill_Type_ShootUnit()
 
 void CEffect_Skill_Type_ShootUnit::SetEffect(ClientCharacter* pCaster, ClientCharacter* pTarget, unsigned short effectKindID, char* szFileName, int hitInfoID)
 {
-    // ... (¦¹¨ç¦¡¤º®e¤£ÅÜ¡A«O«ù­ì¼Ë) ...
+    // ... (æ­¤å‡½å¼å…§å®¹ä¸è®Šï¼Œä¿æŒåŸæ¨£) ...
     if (!pCaster || !pTarget) return;
     CEAManager::GetInstance()->GetEAData(effectKindID, szFileName, &m_ccaEffect);
     m_ccaEffect.SetFrameTime();
@@ -55,52 +55,52 @@ void CEffect_Skill_Type_ShootUnit::SetEffect(ClientCharacter* pCaster, ClientCha
     }
 }
 
-// ¹ïÀ³¤Ï²ÕÄ¶½X: 0x0052DE10 (CEffect_Battle_BowShoot::FrameProcess)
+// å°æ‡‰åçµ„è­¯ç¢¼: 0x0052DE10 (CEffect_Battle_BowShoot::FrameProcess)
 bool CEffect_Skill_Type_ShootUnit::FrameProcess(float fElapsedTime)
 {
-    // ¨BÆJ 1: §ó·s¤º³¡ªºµøÄ±°Êµe (¤õ²y¿U¿N¡B½b¥Ú±ÛÂàµ¥)
+    // æ­¥é©Ÿ 1: æ›´æ–°å…§éƒ¨çš„è¦–è¦ºå‹•ç•« (ç«çƒç‡ƒç‡’ã€ç®­çŸ¢æ—‹è½‰ç­‰)
     m_ccaEffect.FrameProcess(fElapsedTime);
 
-    // ¨BÆJ 2: ¨Ï¥Î±Mªùªº²¾°Ê­p®É¾¹¨Ó­pºâª«²z§ó·s
+    // æ­¥é©Ÿ 2: ä½¿ç”¨å°ˆé–€çš„ç§»å‹•è¨ˆæ™‚å™¨ä¾†è¨ˆç®—ç‰©ç†æ›´æ–°
     int moveFrameCount = 0;
     if (m_MovementFrameSkip.Update(fElapsedTime, moveFrameCount))
     {
-        // ®Ú¾Ú­pºâ¥Xªº¼v®æ¼Æ¨Ó§ó·s¦ì¸m
-        // ³o½T«O¤F§Y¨Ï¹CÀ¸´V²vªi°Ê¡A§ë®gª«ªº­¸¦æ³t«×¤]«O«ù«í©w
+        // æ ¹æ“šè¨ˆç®—å‡ºçš„å½±æ ¼æ•¸ä¾†æ›´æ–°ä½ç½®
+        // é€™ç¢ºä¿äº†å³ä½¿éŠæˆ²å¹€ç‡æ³¢å‹•ï¼ŒæŠ•å°„ç‰©çš„é£›è¡Œé€Ÿåº¦ä¹Ÿä¿æŒæ†å®š
         float moveDistance = m_fSpeed * static_cast<float>(moveFrameCount);
         m_fTraveledDistance += moveDistance;
 
-        // ¨BÆJ 3: ÀË¬d¬O§_¨ì¹F²×ÂI
+        // æ­¥é©Ÿ 3: æª¢æŸ¥æ˜¯å¦åˆ°é”çµ‚é»
         if (m_fTraveledDistance >= m_fTotalDistance) {
-            // ¤w¨ì¹F¡A³qª¾¥Ø¼Ğ¨¤¦â³QÀ»¤¤
+            // å·²åˆ°é”ï¼Œé€šçŸ¥ç›®æ¨™è§’è‰²è¢«æ“Šä¸­
             if (m_pTargetCharacter) {
-                // ­ì©l½X: *(_BYTE *)(32 * m_nHitInfoID + pTarget + 8099) = 16;
-                m_pTargetCharacter->SetHited(m_nHitInfoID, 16); // °²³]ªº¨ç¦¡
+                // åŸå§‹ç¢¼: *(_BYTE *)(32 * m_nHitInfoID + pTarget + 8099) = 16;
+                m_pTargetCharacter->SetHited(m_nHitInfoID, 16); // å‡è¨­çš„å‡½å¼
             }
-            return true; // ªğ¦^ true¡Aªí¥Ü¯S®Ä¥Í©R¶g´Áµ²§ô
+            return true; // è¿”å› trueï¼Œè¡¨ç¤ºç‰¹æ•ˆç”Ÿå‘½é€±æœŸçµæŸ
         }
         else {
-            // ©|¥¼¨ì¹F¡A§ó·s·í«e¥@¬É®y¼Ğ
+            // å°šæœªåˆ°é”ï¼Œæ›´æ–°ç•¶å‰ä¸–ç•Œåº§æ¨™
             m_fCurrentPosX += m_fDirectionX * moveDistance;
             m_fCurrentPosY += m_fDirectionY * moveDistance;
         }
     }
 
-    return false; // ¯S®ÄÄ~Äò¦s¦b
+    return false; // ç‰¹æ•ˆç¹¼çºŒå­˜åœ¨
 }
 
-// ¹ïÀ³¤Ï²ÕÄ¶½X: 0x0052DF10 (CEffect_Battle_BowShoot::Process)
+// å°æ‡‰åçµ„è­¯ç¢¼: 0x0052DF10 (CEffect_Battle_BowShoot::Process)
 void CEffect_Skill_Type_ShootUnit::Process()
 {
-    // ±N¥@¬É®y¼ĞÂà´«¬°¿Ã¹õ®y¼Ğ
+    // å°‡ä¸–ç•Œåº§æ¨™è½‰æ›ç‚ºè¢å¹•åº§æ¨™
     float screenX = m_fCurrentPosX - static_cast<float>(g_Game_System_Info.ScreenX);
     float screenY = m_fCurrentPosY - static_cast<float>(g_Game_System_Info.ScreenY);
 
-    // ¶i¦æµô°Å§PÂ_
+    // é€²è¡Œè£å‰ªåˆ¤æ–·
     m_bIsVisible = IsCliping(screenX, screenY);
 
     if (m_bIsVisible) {
-        // §ó·s¤º³¡ CCAEffect ªºª¬ºA
+        // æ›´æ–°å…§éƒ¨ CCAEffect çš„ç‹€æ…‹
         m_ccaEffect.SetPosition(screenX, screenY);
         m_ccaEffect.SetRotation(m_fAngle);
         m_ccaEffect.SetFlipX(m_bIsFlip);
@@ -108,7 +108,7 @@ void CEffect_Skill_Type_ShootUnit::Process()
     }
 }
 
-// ¹ïÀ³¤Ï²ÕÄ¶½X: 0x0052DF60 (CEffect_Battle_BowShoot::Draw)
+// å°æ‡‰åçµ„è­¯ç¢¼: 0x0052DF60 (CEffect_Battle_BowShoot::Draw)
 void CEffect_Skill_Type_ShootUnit::Draw()
 {
     if (m_bIsVisible) {

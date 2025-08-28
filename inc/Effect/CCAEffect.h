@@ -1,41 +1,41 @@
 #pragma once
 
-#include <d3d9.h> // ¬°¤F D3DRENDERSTATETYPE µ¥©w¸q
+#include <d3d9.h> // ç‚ºäº† D3DRENDERSTATETYPE ç­‰å®šç¾©
 #include "Image/GameImage.h"
 
 // ========================================================================
-// ¥H¤U¬O®Ú¾Ú¥ş§½¤ÀªR±À¾É¥Xªº .ea ÀÉ®×µ²ºc
+// ä»¥ä¸‹æ˜¯æ ¹æ“šå…¨å±€åˆ†ææ¨å°å‡ºçš„ .ea æª”æ¡ˆçµæ§‹
 // ========================================================================
 
 /**
  * @struct VERTEXANIMATIONFRAMEINFO
- * @brief ¥Nªí°Êµe¤¤ªº³æ¤@¼v®æ¡C
+ * @brief ä»£è¡¨å‹•ç•«ä¸­çš„å–®ä¸€å½±æ ¼ã€‚
  *
- * MODIFICATION: µ²ºc¤j¤p³Q­×§ï¬° 120 bytes¡A¥Hºë½T¹ïÀ³ `ea_parser.py` ªº¸ÑªR¡C
- * ²¾°£¤F m_dwUnknown2¡A¨Ã±N m_dwUnknown1 ­«·s©R¦W¥H¼W¥[²M´·«×¡C
- * (¤j¤p: 4 + 4*28 + 4 = 120 bytes)
+ * MODIFICATION: çµæ§‹å¤§å°è¢«ä¿®æ”¹ç‚º 120 bytesï¼Œä»¥ç²¾ç¢ºå°æ‡‰ `ea_parser.py` çš„è§£æã€‚
+ * ç§»é™¤äº† m_dwUnknown2ï¼Œä¸¦å°‡ m_dwUnknown1 é‡æ–°å‘½åä»¥å¢åŠ æ¸…æ™°åº¦ã€‚
+ * (å¤§å°: 4 + 4*28 + 4 = 120 bytes)
  */
 struct VERTEXANIMATIONFRAMEINFO
 {
-    uint32_t   m_dwImageID;   // +0:  ­n¨Ï¥Îªº¹Ï¤ù ID
-    GIVertex   m_Vertices[4]; // +4:  ©w¸q¹Ï¤ù§Îª¬ªº 4 ­Ó³»ÂI (112 bytes)
-    uint32_t   m_pExtraData;  // +116: ¹ïÀ³ python ¸}¥»¤¤ªº 'ptrExtra'
+    uint32_t   m_dwImageID;   // +0:  è¦ä½¿ç”¨çš„åœ–ç‰‡ ID
+    GIVertex   m_Vertices[4]; // +4:  å®šç¾©åœ–ç‰‡å½¢ç‹€çš„ 4 å€‹é ‚é» (112 bytes)
+    uint32_t   m_pExtraData;  // +116: å°æ‡‰ python è…³æœ¬ä¸­çš„ 'ptrExtra'
 };
 
 /**
  * @struct VERTEXANIMATIONLAYERINFO
- * @brief ¥Nªí¤@­Ó°Êµe¹Ï¼h¡A¥]§t¤@²Õ¼v®æ¡C
- * Python ¸}¥»¸ÑªRªº®æ¦¡¥iµø¬°¥u¥]§t¤@­Ó¹Ï¼h¡C
+ * @brief ä»£è¡¨ä¸€å€‹å‹•ç•«åœ–å±¤ï¼ŒåŒ…å«ä¸€çµ„å½±æ ¼ã€‚
+ * Python è…³æœ¬è§£æçš„æ ¼å¼å¯è¦–ç‚ºåªåŒ…å«ä¸€å€‹åœ–å±¤ã€‚
  */
 struct VERTEXANIMATIONLAYERINFO
 {
-    int                           m_nFrameCount; // ¦¹¹Ï¼hªºÁ`¼v®æ¼Æ
-    VERTEXANIMATIONFRAMEINFO* m_pFrames;     // «ü¦V¼v®æ¸ê®Æ°}¦Cªº«ü¼Ğ
+    int                           m_nFrameCount; // æ­¤åœ–å±¤çš„ç¸½å½±æ ¼æ•¸
+    VERTEXANIMATIONFRAMEINFO* m_pFrames;     // æŒ‡å‘å½±æ ¼è³‡æ–™é™£åˆ—çš„æŒ‡æ¨™
 };
 
 /**
  * @struct KEYINFO
- * @brief ©w¸q¤@­Ó°Êµe¤ù¬q (clip)¡A¨Ò¦p "run", "attack"¡C
+ * @brief å®šç¾©ä¸€å€‹å‹•ç•«ç‰‡æ®µ (clip)ï¼Œä¾‹å¦‚ "run", "attack"ã€‚
  */
 struct KEYINFO
 {
@@ -46,26 +46,26 @@ struct KEYINFO
 
 /**
  * @struct EADATALISTINFO
- * @brief .ea ÀÉ®×¦b°O¾ĞÅé¤¤ªº³Ì¤W¼hµ²ºc¡C
+ * @brief .ea æª”æ¡ˆåœ¨è¨˜æ†¶é«”ä¸­çš„æœ€ä¸Šå±¤çµæ§‹ã€‚
  *
- * MODIFICATION: ²¾°£¤F»P `ea_parser.py` ¸ÑªR®æ¦¡¤£²Åªº SIMPLESPRITE ¬ÛÃö¦¨­û¡A
- * ¨Ï¨ä±Mª`©ó°ò©ó GIVertex ªº¼v®æ°Êµe®æ¦¡¡C
+ * MODIFICATION: ç§»é™¤äº†èˆ‡ `ea_parser.py` è§£ææ ¼å¼ä¸ç¬¦çš„ SIMPLESPRITE ç›¸é—œæˆå“¡ï¼Œ
+ * ä½¿å…¶å°ˆæ³¨æ–¼åŸºæ–¼ GIVertex çš„å½±æ ¼å‹•ç•«æ ¼å¼ã€‚
  */
 struct EADATALISTINFO
 {
-    // °Êµe¤ù¬q¸ê°T
+    // å‹•ç•«ç‰‡æ®µè³‡è¨Š
     int m_nAnimationCount;
     KEYINFO* m_pKeyFrames;
 
-    // ¾ãÅé¸ê°T
+    // æ•´é«”è³‡è¨Š
     int m_nTotalFrames;
     int m_nVersion;
 
-    // ¹Ï¼h»P¼v®æ¸ê®Æ
+    // åœ–å±¤èˆ‡å½±æ ¼è³‡æ–™
     int m_nLayerCount;
     VERTEXANIMATIONLAYERINFO* m_pLayers;
 
-    // ´è¬Vª¬ºA (Render States)
+    // æ¸²æŸ“ç‹€æ…‹ (Render States)
     uint8_t m_ucBlendOp;
     uint8_t m_ucSrcBlend;
     uint8_t m_ucDestBlend;
@@ -76,28 +76,28 @@ struct EADATALISTINFO
 
 /**
  * @class FrameSkip
- * @brief ³B²z°ò©ó®É¶¡ªº¼v®æ¸õÅDÅŞ¿è¡A½T«O°Êµe¼½©ñ³t«×Ã­©w¡C
+ * @brief è™•ç†åŸºæ–¼æ™‚é–“çš„å½±æ ¼è·³èºé‚è¼¯ï¼Œç¢ºä¿å‹•ç•«æ’­æ”¾é€Ÿåº¦ç©©å®šã€‚
  */
 class FrameSkip {
 public:
     FrameSkip();
     virtual ~FrameSkip();
 
-    /// @brief ®Ú¾Ú¸g¹Lªº®É¶¡§ó·s¼v®æ­p¼Æ¡C
-    /// @param fElapsedTime ¸g¹Lªº®É¶¡¡]¬í¡^¡C
-    /// @param outFrameCount ¿é¥X°Ñ¼Æ¡Aªğ¦^­pºâ¥Xªº¼v®æ±À¶i¼Æ¡C
-    /// @return ¦pªG¦³¼v®æ±À¶i¡Aªğ¦^ true¡C
+    /// @brief æ ¹æ“šç¶“éçš„æ™‚é–“æ›´æ–°å½±æ ¼è¨ˆæ•¸ã€‚
+    /// @param fElapsedTime ç¶“éçš„æ™‚é–“ï¼ˆç§’ï¼‰ã€‚
+    /// @param outFrameCount è¼¸å‡ºåƒæ•¸ï¼Œè¿”å›è¨ˆç®—å‡ºçš„å½±æ ¼æ¨é€²æ•¸ã€‚
+    /// @return å¦‚æœæœ‰å½±æ ¼æ¨é€²ï¼Œè¿”å› trueã€‚
     bool Update(float fElapsedTime, int& outFrameCount);
 
 public:
-    float m_fAccumulatedTime;  // ²Ö­pªº®É¶¡
-    float m_fTimePerFrame;     // ¨C¼v®æ»İ­nªº®É¶¡
+    float m_fAccumulatedTime;  // ç´¯è¨ˆçš„æ™‚é–“
+    float m_fTimePerFrame;     // æ¯å½±æ ¼éœ€è¦çš„æ™‚é–“
 };
 
 
 /**
  * @class CCAEffect
- * @brief ®Ö¤ßªº¯S®Ä°ÊµeÃş§O¡A­t³d¼½©ñ .ea ÀÉ®×©w¸qªºµøÄ±®ÄªG¡C
+ * @brief æ ¸å¿ƒçš„ç‰¹æ•ˆå‹•ç•«é¡åˆ¥ï¼Œè² è²¬æ’­æ”¾ .ea æª”æ¡ˆå®šç¾©çš„è¦–è¦ºæ•ˆæœã€‚
  */
 class CCAEffect {
 public:
@@ -148,10 +148,10 @@ protected:
 
     FrameSkip       m_FrameSkip;
 
-    // ´è¬Vª¬ºA¿ï¾ÜºX¼Ğ (¥Ñ CEAManager ³]©w)
-    unsigned char   m_ucRenderStateSelector; // ¦ì²¾ +85: 0 ¨Ï¥Î DrawRenderState, 1 ¨Ï¥Î DrawEtcRenderState
+    // æ¸²æŸ“ç‹€æ…‹é¸æ“‡æ——æ¨™ (ç”± CEAManager è¨­å®š)
+    unsigned char   m_ucRenderStateSelector; // ä½ç§» +85: 0 ä½¿ç”¨ DrawRenderState, 1 ä½¿ç”¨ DrawEtcRenderState
 
-    // ¨â­Ó¹w¥ıÀx¦sªº¦¨­û¨ç¦¡«ü¼Ğ
-    void (CCAEffect::* m_pfnDrawRenderState)();    // ¦ì²¾ +88 (­ì©l½X¤¤¬° +22 * 4)
-    void (CCAEffect::* m_pfnDrawEtcRenderState)(); // ¦ì²¾ +92 (­ì©l½X¤¤¬° +23 * 4)
+    // å…©å€‹é å…ˆå„²å­˜çš„æˆå“¡å‡½å¼æŒ‡æ¨™
+    void (CCAEffect::* m_pfnDrawRenderState)();    // ä½ç§» +88 (åŸå§‹ç¢¼ä¸­ç‚º +22 * 4)
+    void (CCAEffect::* m_pfnDrawEtcRenderState)(); // ä½ç§» +92 (åŸå§‹ç¢¼ä¸­ç‚º +23 * 4)
 };

@@ -5,7 +5,7 @@
 #include "global.h"
 #include <cstdlib>
 
-// ¹ïÀ³¤Ï²ÕÄ¶½X: 0x0052F870
+// å°æ‡‰åçµ„è­¯ç¢¼: 0x0052F870
 CEffect_Use_Hit::CEffect_Use_Hit()
 {
     m_pImage = nullptr;
@@ -21,16 +21,16 @@ CEffect_Use_Hit::CEffect_Use_Hit()
     m_dwResourceID = 0;
     m_fFrameCounter = 0.0f;
 
-    // ­ì©l½X: *((_DWORD *)this + 43) = 993738471; (0x3B4CCCC7 -> ~0.03f)
+    // åŸå§‹ç¢¼: *((_DWORD *)this + 43) = 993738471; (0x3B4CCCC7 -> ~0.03f)
     m_FrameSkip.m_fTimePerFrame = 1.0f / 33.0f;
 }
 
-// ¹ïÀ³¤Ï²ÕÄ¶½X: 0x0052F920
+// å°æ‡‰åçµ„è­¯ç¢¼: 0x0052F920
 CEffect_Use_Hit::~CEffect_Use_Hit()
 {
 }
 
-// ¹ïÀ³¤Ï²ÕÄ¶½X: 0x0052F940
+// å°æ‡‰åçµ„è­¯ç¢¼: 0x0052F940
 void CEffect_Use_Hit::SetEffect(float x, float y, unsigned char directionType)
 {
     m_fFrameCounter = 0.0f;
@@ -50,16 +50,16 @@ void CEffect_Use_Hit::SetEffect(float x, float y, unsigned char directionType)
         m_fCurrentPosX = x - 20.0f;
         break;
     default:
-        // ¦b­ì©l½X¤¤¡A¦pªG directionType ¤£¬O 0, 1, 2¡A
-        // m_fCurrentPosX ·|¨Ï¥Î¤@­Ó¥¼ªì©l¤Æªº­È¡AµM«á¦A´î 8¡C
-        // ³o¥i¯à¬O¤@­Ó bug¡A©ÎªÌ¨Ì¿à©ó¯S©wªº©I¥s¶¶§Ç¡C
-        // ¬°¤F¦w¥ş¡A§Ú­Ìµ¹¤@­Ó¹w³]­È¡C
+        // åœ¨åŸå§‹ç¢¼ä¸­ï¼Œå¦‚æœ directionType ä¸æ˜¯ 0, 1, 2ï¼Œ
+        // m_fCurrentPosX æœƒä½¿ç”¨ä¸€å€‹æœªåˆå§‹åŒ–çš„å€¼ï¼Œç„¶å¾Œå†æ¸› 8ã€‚
+        // é€™å¯èƒ½æ˜¯ä¸€å€‹ bugï¼Œæˆ–è€…ä¾è³´æ–¼ç‰¹å®šçš„å‘¼å«é †åºã€‚
+        // ç‚ºäº†å®‰å…¨ï¼Œæˆ‘å€‘çµ¦ä¸€å€‹é è¨­å€¼ã€‚
         m_fCurrentPosX = x - 8.0f;
         break;
     }
 }
 
-// ¹ïÀ³¤Ï²ÕÄ¶½X: 0x0052F9D0
+// å°æ‡‰åçµ„è­¯ç¢¼: 0x0052F9D0
 bool CEffect_Use_Hit::FrameProcess(float fElapsedTime)
 {
     int frameCount = 0;
@@ -68,16 +68,16 @@ bool CEffect_Use_Hit::FrameProcess(float fElapsedTime)
     }
     float fFrameCount = static_cast<float>(frameCount);
 
-    // §ó·s±ÛÂà (¦b­ì©l½X¤¤¡A¦¹¦¨­û³Q¥Î§@ÁY©ñ)
+    // æ›´æ–°æ—‹è½‰ (åœ¨åŸå§‹ç¢¼ä¸­ï¼Œæ­¤æˆå“¡è¢«ç”¨ä½œç¸®æ”¾)
     m_fScale += fFrameCount * 0.5f;
 
-    // §ó·s³z©ú«×
+    // æ›´æ–°é€æ˜åº¦
     m_fAlpha -= fFrameCount * m_fAlpha_Rate * 1.4f;
 
-    // §ó·s¯BÂI¼Æ¼v®æ­p¼Æ¾¹
+    // æ›´æ–°æµ®é»æ•¸å½±æ ¼è¨ˆæ•¸å™¨
     m_fFrameCounter += fFrameCount * m_fScaleX_Rate * 0.04f;
 
-    // ¦pªG­p¼Æ¾¹¶W¹L3¡Aªí¥Ü°Êµe§Ç¦Cµ²§ô¡A¥B¦pªG³z©ú«×¤w«Ü§C«h¾P·´
+    // å¦‚æœè¨ˆæ•¸å™¨è¶…é3ï¼Œè¡¨ç¤ºå‹•ç•«åºåˆ—çµæŸï¼Œä¸”å¦‚æœé€æ˜åº¦å·²å¾ˆä½å‰‡éŠ·æ¯€
     if (m_fFrameCounter >= 3.0f) {
         m_fFrameCounter = 3.0f;
         if (m_fAlpha < 45.0f) {
@@ -85,13 +85,13 @@ bool CEffect_Use_Hit::FrameProcess(float fElapsedTime)
         }
     }
 
-    // §ó·s­nÅã¥Üªº¾ã¼Æ¼v®æ
+    // æ›´æ–°è¦é¡¯ç¤ºçš„æ•´æ•¸å½±æ ¼
     m_cCurrentFrame = static_cast<char>(m_fFrameCounter);
 
     return m_fAlpha < 0.0f;
 }
 
-// ¹ïÀ³¤Ï²ÕÄ¶½X: 0x0052FAF0
+// å°æ‡‰åçµ„è­¯ç¢¼: 0x0052FAF0
 void CEffect_Use_Hit::Process()
 {
     float screenX = m_fCurrentPosX - static_cast<float>(g_Game_System_Info.ScreenX);
@@ -108,7 +108,7 @@ void CEffect_Use_Hit::Process()
 
             float clampedAlpha = (m_fAlpha > 255.0f) ? 255.0f : m_fAlpha;
             m_pImage->SetAlpha(static_cast<unsigned int>(clampedAlpha));
-            // ­ì©l½X±N m_fAlpha ¤]³]©wµ¹¤F Color
+            // åŸå§‹ç¢¼å°‡ m_fAlpha ä¹Ÿè¨­å®šçµ¦äº† Color
             m_pImage->SetColor(static_cast<unsigned int>(clampedAlpha));
             m_pImage->SetScale(static_cast<int>(m_fScale));
 
@@ -117,19 +117,19 @@ void CEffect_Use_Hit::Process()
     }
 }
 
-// ¹ïÀ³¤Ï²ÕÄ¶½X: 0x0052FC40
+// å°æ‡‰åçµ„è­¯ç¢¼: 0x0052FC40
 void CEffect_Use_Hit::Draw()
 {
     if (m_bIsVisible && m_pImage && m_pImage->IsInUse())
     {
-        // ³]©w¥[«G²V¦X¼Ò¦¡
+        // è¨­å®šåŠ äº®æ··åˆæ¨¡å¼
         CDeviceManager::GetInstance()->SetRenderState(D3DRS_BLENDOP, D3DBLENDOP_ADD);
         CDeviceManager::GetInstance()->SetRenderState(D3DRS_SRCBLEND, D3DBLEND_SRCALPHA); // 0xA -> 5
         CDeviceManager::GetInstance()->SetRenderState(D3DRS_DESTBLEND, D3DBLEND_ONE); // 2
 
         m_pImage->Draw();
 
-        // «ì´_¹w³]²V¦X¼Ò¦¡
+        // æ¢å¾©é è¨­æ··åˆæ¨¡å¼
         CDeviceManager::GetInstance()->ResetRenderState();
     }
 }

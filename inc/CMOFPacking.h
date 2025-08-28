@@ -13,22 +13,22 @@
 
 class CMofPacking {
 public:
-    // ¤½¶}ÀRºA¤èªk¡A¥Î©óÀò¨ú°ß¤@ªº¹ê¨Ò«ü¼Ğ
+    // å…¬é–‹éœæ…‹æ–¹æ³•ï¼Œç”¨æ–¼ç²å–å”¯ä¸€çš„å¯¦ä¾‹æŒ‡æ¨™
     static CMofPacking* GetInstance();
 
-    // ¤½¶}ÀRºA¤èªk¡A¥Î©ó¾P·´°ß¤@ªº¹ê¨Ò
+    // å…¬é–‹éœæ…‹æ–¹æ³•ï¼Œç”¨æ–¼éŠ·æ¯€å”¯ä¸€çš„å¯¦ä¾‹
     static void DestroyInstance();
 
-    // §R°£½Æ»s«Øºc¨ç¦¡©M½Æ»s½á­È¹Bºâ¤l
+    // åˆªé™¤è¤‡è£½å»ºæ§‹å‡½å¼å’Œè¤‡è£½è³¦å€¼é‹ç®—å­
     CMofPacking(const CMofPacking&) = delete;
     CMofPacking& operator=(const CMofPacking&) = delete;
     CMofPacking(CMofPacking&&) = delete;
     CMofPacking& operator=(CMofPacking&&) = delete;
 
-    // ¤½¶}¸Ñºc¨ç¦¡¡A¥H«K¥i¥H delete s_pInstance
+    // å…¬é–‹è§£æ§‹å‡½å¼ï¼Œä»¥ä¾¿å¯ä»¥ delete s_pInstance
     ~CMofPacking();
 
-    // --- ­ì¦³ªº¤½¶}¦¨­û¨ç¦¡ ---
+    // --- åŸæœ‰çš„å…¬é–‹æˆå“¡å‡½å¼ ---
     bool Init();
     bool PackFileOpen(const char* packFileName);
     bool PackFileClose();
@@ -44,7 +44,7 @@ public:
     void DeleteSearchData();
     char* ChangeString(char* str);
 
-    // ¦Ò¼{±N¦¹¦¨­û«Ê¸Ë°_¨Ó¡A´£¨Ñ getter/setter ¤èªk
+    // è€ƒæ…®å°‡æ­¤æˆå“¡å°è£èµ·ä¾†ï¼Œæä¾› getter/setter æ–¹æ³•
     char m_backgroundLoadBufferField[0x7A1200];
     
     NfsHandle* m_pNfsHandle;
@@ -55,12 +55,12 @@ public:
     NfsGlobResults m_globResults;
     bool m_isLoadingFlag;
 private:
-    // ¨p¦³«Øºc¨ç¦¡
+    // ç§æœ‰å»ºæ§‹å‡½å¼
     CMofPacking();
 
-    // ¨p¦³ªº»¼°j¤u§@¨ç¦¡
+    // ç§æœ‰çš„éè¿´å·¥ä½œå‡½å¼
     int DataPacking_Recursive(const char* currentDirectory, const char* rootPath);
-    // «ü¦V°ß¤@¹ê¨ÒªºÀRºA«ü¼Ğ
+    // æŒ‡å‘å”¯ä¸€å¯¦ä¾‹çš„éœæ…‹æŒ‡æ¨™
     static CMofPacking* s_pInstance;
 };
 

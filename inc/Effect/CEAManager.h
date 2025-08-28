@@ -1,49 +1,49 @@
 #pragma once
-#include "Effect/CCAEffect.h" // ¥]§t CCAEffect ªº©w¸q
+#include "Effect/CCAEffect.h" // åŒ…å« CCAEffect çš„å®šç¾©
 
 /**
  * @class CEAManager
- * @brief ¯S®Ä°Êµe (.ea) ¼Æ¾ÚªººŞ²z¾¹¡C
- * * ¨Ï¥Î³æ¨Ò¼Ò¦¡¡A§@¬°¤@­Ó¥ş°ìªº§Ö¨ú¨t²Î¡A­t³dÃiº~¦¡¸ü¤J¡B
- * Àx¦s¨Ã´£¨Ñ©Ò¦³¯S®Äªº°Êµe¼Æ¾Ú¡C
+ * @brief ç‰¹æ•ˆå‹•ç•« (.ea) æ•¸æ“šçš„ç®¡ç†å™¨ã€‚
+ * * ä½¿ç”¨å–®ä¾‹æ¨¡å¼ï¼Œä½œç‚ºä¸€å€‹å…¨åŸŸçš„å¿«å–ç³»çµ±ï¼Œè² è²¬æ‡¶æ¼¢å¼è¼‰å…¥ã€
+ * å„²å­˜ä¸¦æä¾›æ‰€æœ‰ç‰¹æ•ˆçš„å‹•ç•«æ•¸æ“šã€‚
  */
 class CEAManager {
 public:
-    /// @brief ¨ú±o°ß¤@ªººŞ²z¾¹¹ê¨Ò¡C
+    /// @brief å–å¾—å”¯ä¸€çš„ç®¡ç†å™¨å¯¦ä¾‹ã€‚
     static CEAManager* GetInstance();
 
-    /// @brief ¸Ñºc¨ç¦¡¡A·|ÄÀ©ñ©Ò¦³¤w¸ü¤Jªº¯S®Ä¼Æ¾Ú¡C
+    /// @brief è§£æ§‹å‡½å¼ï¼Œæœƒé‡‹æ”¾æ‰€æœ‰å·²è¼‰å…¥çš„ç‰¹æ•ˆæ•¸æ“šã€‚
     ~CEAManager();
 
-    /// @brief Àò¨ú«ü©wªº¯S®Ä°Êµe¼Æ¾Ú¡C
-    /// ¦pªG¼Æ¾Ú©|¥¼¸ü¤J¡A¦¹¨ç¦¡·|Ä²µoÀÉ®×Åª¨ú©M¸ÑªR¡C
-    /// @param effectID ¯S®Äªº°ß¤@ ID¡C
-    /// @param szFileName ¯S®ÄªºÀÉ®×¦WºÙ¡C
-    /// @param pEffect ­n±µ¦¬¼Æ¾Úªº CCAEffect ª«¥ó«ü¼Ğ¡C
+    /// @brief ç²å–æŒ‡å®šçš„ç‰¹æ•ˆå‹•ç•«æ•¸æ“šã€‚
+    /// å¦‚æœæ•¸æ“šå°šæœªè¼‰å…¥ï¼Œæ­¤å‡½å¼æœƒè§¸ç™¼æª”æ¡ˆè®€å–å’Œè§£æã€‚
+    /// @param effectID ç‰¹æ•ˆçš„å”¯ä¸€ IDã€‚
+    /// @param szFileName ç‰¹æ•ˆçš„æª”æ¡ˆåç¨±ã€‚
+    /// @param pEffect è¦æ¥æ”¶æ•¸æ“šçš„ CCAEffect ç‰©ä»¶æŒ‡æ¨™ã€‚
     void GetEAData(int effectID, const char* szFileName, CCAEffect* pEffect);
 
-    /// @brief ­«³]ºŞ²z¾¹¡A²MªÅ©Ò¦³¤w¸ü¤Jªº¯S®Ä¼Æ¾Ú¡C
+    /// @brief é‡è¨­ç®¡ç†å™¨ï¼Œæ¸…ç©ºæ‰€æœ‰å·²è¼‰å…¥çš„ç‰¹æ•ˆæ•¸æ“šã€‚
     void Reset();
 
 private:
-    // --- ¨p¦³¨ç¦¡ ---
+    // --- ç§æœ‰å‡½å¼ ---
 
     CEAManager();
     CEAManager(const CEAManager&) = delete;
     CEAManager& operator=(const CEAManager&) = delete;
 
-    /// @brief ±q¿W¥ßÀÉ®×¸ü¤J .ea ¼Æ¾Ú¡C
+    /// @brief å¾ç¨ç«‹æª”æ¡ˆè¼‰å…¥ .ea æ•¸æ“šã€‚
     void LoadEA(int effectID, const char* szFileName);
 
-    /// @brief ±q«Ê¸ËÀÉ (mof.pak) ¸ü¤J .ea ¼Æ¾Ú¡C
+    /// @brief å¾å°è£æª” (mof.pak) è¼‰å…¥ .ea æ•¸æ“šã€‚
     void LoadEAInPack(int effectID, char* szFileName);
 
-    // --- ¨p¦³¦¨­û ---
+    // --- ç§æœ‰æˆå“¡ ---
     static CEAManager* s_pInstance;
 
-    // µêÀÀ¨ç¦¡ªí«ü¼Ğ (¥Ñ½sÄ¶¾¹ºŞ²z)
-    // void* m_pVftable; // ¦ì²¾ +0
+    // è™›æ“¬å‡½å¼è¡¨æŒ‡æ¨™ (ç”±ç·¨è­¯å™¨ç®¡ç†)
+    // void* m_pVftable; // ä½ç§» +0
 
-    // «ü¼Ğ°}¦C¡A§@¬°¯S®Ä¼Æ¾Úªº§Ö¨ú¡C
-    EADATALISTINFO* m_pEaData[65535]; // ¦ì²¾ +4
+    // æŒ‡æ¨™é™£åˆ—ï¼Œä½œç‚ºç‰¹æ•ˆæ•¸æ“šçš„å¿«å–ã€‚
+    EADATALISTINFO* m_pEaData[65535]; // ä½ç§» +4
 };

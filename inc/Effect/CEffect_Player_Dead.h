@@ -2,44 +2,44 @@
 
 #include "Effect/CEffectBase.h"
 
-// «e¦V«Å§i
+// å‰å‘å®£å‘Š
 class ClientCharacter;
 
 /**
  * @class CEffect_Player_Dead
- * @brief ¥Nªíª±®a¨¤¦â¦º¤`®É¥X²{ªºÆF»î¯S®Ä¡C
+ * @brief ä»£è¡¨ç©å®¶è§’è‰²æ­»äº¡æ™‚å‡ºç¾çš„éˆé­‚ç‰¹æ•ˆã€‚
  *
- * Ä~©Ó¦Û CEffectBase¡A¬O¤@­Ó¦b©T©w®y¼Ğ¼½©ñªº«ùÄò©Ê¯S®Ä¡C
- * ¨ä¥Í©R¶g´Á¥Ñª±®a¬O§_´_¬¡©Î¯S©w­p®É¾¹¨M©w¡C
+ * ç¹¼æ‰¿è‡ª CEffectBaseï¼Œæ˜¯ä¸€å€‹åœ¨å›ºå®šåº§æ¨™æ’­æ”¾çš„æŒçºŒæ€§ç‰¹æ•ˆã€‚
+ * å…¶ç”Ÿå‘½é€±æœŸç”±ç©å®¶æ˜¯å¦å¾©æ´»æˆ–ç‰¹å®šè¨ˆæ™‚å™¨æ±ºå®šã€‚
  */
 class CEffect_Player_Dead : public CEffectBase {
 public:
     CEffect_Player_Dead();
     virtual ~CEffect_Player_Dead();
 
-    // --- µêÀÀ¨ç¦¡ÂĞ¼g ---
+    // --- è™›æ“¬å‡½å¼è¦†å¯« ---
 
-    /// @brief ®Ú¾Úª±®a´_¬¡ª¬ºA©Î­p®É¾¹¨Ó§PÂ_¬O§_À³¸Óµ²§ô¯S®Ä¡C
+    /// @brief æ ¹æ“šç©å®¶å¾©æ´»ç‹€æ…‹æˆ–è¨ˆæ™‚å™¨ä¾†åˆ¤æ–·æ˜¯å¦æ‡‰è©²çµæŸç‰¹æ•ˆã€‚
     virtual bool FrameProcess(float fElapsedTime) override;
 
-    /// @brief ·Ç³ÆÃ¸»s«eªºÅŞ¿è§ó·s¡A¨Ï¥Î©T©wªºªì©l¦ì¸m¡C
+    /// @brief æº–å‚™ç¹ªè£½å‰çš„é‚è¼¯æ›´æ–°ï¼Œä½¿ç”¨å›ºå®šçš„åˆå§‹ä½ç½®ã€‚
     virtual void Process() override;
 
-    /// @brief Ã¸»s¯S®Ä¡C
+    /// @brief ç¹ªè£½ç‰¹æ•ˆã€‚
     virtual void Draw() override;
 
-    // --- ±M¦³¨ç¦¡ ---
+    // --- å°ˆæœ‰å‡½å¼ ---
 
-    /// @brief ³]©w¯S®Ä¡C
-    /// @param pDeadChar ¦º¤`ªº¨¤¦âª«¥ó¡C
-    /// @param x ¨¤¦â¦º¤`®Éªº X ®y¼Ğ¡C
-    /// @param y ¨¤¦â¦º¤`®Éªº Y ®y¼Ğ¡C
-    /// @param isPkMode ¬O§_¬° PK ¼Ò¦¡¡]¼vÅT¶W®ÉÅŞ¿è¡^¡C
+    /// @brief è¨­å®šç‰¹æ•ˆã€‚
+    /// @param pDeadChar æ­»äº¡çš„è§’è‰²ç‰©ä»¶ã€‚
+    /// @param x è§’è‰²æ­»äº¡æ™‚çš„ X åº§æ¨™ã€‚
+    /// @param y è§’è‰²æ­»äº¡æ™‚çš„ Y åº§æ¨™ã€‚
+    /// @param isPkMode æ˜¯å¦ç‚º PK æ¨¡å¼ï¼ˆå½±éŸ¿è¶…æ™‚é‚è¼¯ï¼‰ã€‚
     void SetEffect(ClientCharacter* pDeadChar, float x, float y, int isPkMode);
 
 private:
-    // --- ¦¨­ûÅÜ¼Æ (®Ú¾Ú Effectall.c @ 0x005313A0 ±ÀÂ_) ---
-    ClientCharacter* m_pOwnerCharacter; // ¦ì²¾ +132 (0x84): «ü¦V¦º¤`ªº¨¤¦â
-    unsigned int     m_dwStartTime;     // ¦ì²¾ +136 (0x88): ¯S®Ä³Ğ«Ø®Éªº®É¶¡ÂW
-    int              m_bIsPK_Mode;      // ¦ì²¾ +140 (0x8C): ¬O§_¬° PK ¼Ò¦¡
+    // --- æˆå“¡è®Šæ•¸ (æ ¹æ“š Effectall.c @ 0x005313A0 æ¨æ–·) ---
+    ClientCharacter* m_pOwnerCharacter; // ä½ç§» +132 (0x84): æŒ‡å‘æ­»äº¡çš„è§’è‰²
+    unsigned int     m_dwStartTime;     // ä½ç§» +136 (0x88): ç‰¹æ•ˆå‰µå»ºæ™‚çš„æ™‚é–“æˆ³
+    int              m_bIsPK_Mode;      // ä½ç§» +140 (0x8C): æ˜¯å¦ç‚º PK æ¨¡å¼
 };

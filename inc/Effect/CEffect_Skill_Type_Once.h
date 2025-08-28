@@ -5,40 +5,40 @@
 
 /**
  * @class CEffect_Skill_Type_Once
- * @brief ¥Nªí¦b¬IªkªÌ¦ì¸m¼½©ñ¤@¦¸ªº§Ş¯à¯S®Ä¡C
+ * @brief ä»£è¡¨åœ¨æ–½æ³•è€…ä½ç½®æ’­æ”¾ä¸€æ¬¡çš„æŠ€èƒ½ç‰¹æ•ˆã€‚
  *
- * Ä~©Ó¦Û CEffectBase¡A¥Î©ó¹ê²{¨Ò¦p buff ±Ò¥ÎÀş¶¡¡B­ì¦a¬Iªkµ¥
- * ¤£»İ­n°lÂÜ¥Ø¼Ğ©Î­¸¦æªºµøÄ±®ÄªG¡C
- * ¨ä¥Í©R¶g´Á¥Ñ¯S®Ä°Êµe¥»¨­ (.ea ÀÉ®×) ªºªø«×¨M©w¡C
+ * ç¹¼æ‰¿è‡ª CEffectBaseï¼Œç”¨æ–¼å¯¦ç¾ä¾‹å¦‚ buff å•Ÿç”¨ç¬é–“ã€åŸåœ°æ–½æ³•ç­‰
+ * ä¸éœ€è¦è¿½è¹¤ç›®æ¨™æˆ–é£›è¡Œçš„è¦–è¦ºæ•ˆæœã€‚
+ * å…¶ç”Ÿå‘½é€±æœŸç”±ç‰¹æ•ˆå‹•ç•«æœ¬èº« (.ea æª”æ¡ˆ) çš„é•·åº¦æ±ºå®šã€‚
  */
 class CEffect_Skill_Type_Once : public CEffectBase {
 public:
     CEffect_Skill_Type_Once();
     virtual ~CEffect_Skill_Type_Once();
 
-    // --- µêÀÀ¨ç¦¡ÂĞ¼g ---
+    // --- è™›æ“¬å‡½å¼è¦†å¯« ---
 
-    /// @brief ³B²z¯S®Äªº¥Í©R¶g´Á¡Aª½±µ¨Ì¿à CCAEffect ªº°Êµe¼½©ñª¬ºA¡C
+    /// @brief è™•ç†ç‰¹æ•ˆçš„ç”Ÿå‘½é€±æœŸï¼Œç›´æ¥ä¾è³´ CCAEffect çš„å‹•ç•«æ’­æ”¾ç‹€æ…‹ã€‚
     virtual bool FrameProcess(float fElapsedTime) override;
 
-    /// @brief ·Ç³ÆÃ¸»s«eªºÅŞ¿è§ó·s¡A¥D­n¤u§@¬O¦P¨B¾Ö¦³ªÌªº¦ì¸m¡C
+    /// @brief æº–å‚™ç¹ªè£½å‰çš„é‚è¼¯æ›´æ–°ï¼Œä¸»è¦å·¥ä½œæ˜¯åŒæ­¥æ“æœ‰è€…çš„ä½ç½®ã€‚
     virtual void Process() override;
 
-    /// @brief Ã¸»s¯S®Ä¡C
+    /// @brief ç¹ªè£½ç‰¹æ•ˆã€‚
     virtual void Draw() override;
 
-    // --- ±M¦³¨ç¦¡ ---
+    // --- å°ˆæœ‰å‡½å¼ ---
 
-    /// @brief ³]©w¯S®Ä¡C
-    /// @param pCaster ¬IªkªÌ¨¤¦â¡A¯S®Ä±N¸òÀH¦¹¨¤¦âªº¦ì¸m¡C
-    /// @param effectKindID ¯S®ÄªººØÃş ID¡C
-    /// @param szFileName ¯S®Ä¸ê·½ (.ea) ªºÀÉ®×¦WºÙ¡C
+    /// @brief è¨­å®šç‰¹æ•ˆã€‚
+    /// @param pCaster æ–½æ³•è€…è§’è‰²ï¼Œç‰¹æ•ˆå°‡è·Ÿéš¨æ­¤è§’è‰²çš„ä½ç½®ã€‚
+    /// @param effectKindID ç‰¹æ•ˆçš„ç¨®é¡ IDã€‚
+    /// @param szFileName ç‰¹æ•ˆè³‡æº (.ea) çš„æª”æ¡ˆåç¨±ã€‚
     void SetEffect(ClientCharacter* pCaster, unsigned short effectKindID, char* szFileName);
 
 protected:
-    // --- ¦¨­ûÅÜ¼Æ ---
+    // --- æˆå“¡è®Šæ•¸ ---
 
-    /// @brief «ü¦V¬IªkªÌ©Î¯S®Äªº¾Ö¦³ªÌ¡C
-    /// ¯S®Äªº¦ì¸m·|®Ú¾Ú¦¹¨¤¦âªº¦ì¸m°ÊºA§ó·s¡C
-    ClientCharacter* m_pOwnerCharacter; // ¦ì²¾ +132 (0x84)
+    /// @brief æŒ‡å‘æ–½æ³•è€…æˆ–ç‰¹æ•ˆçš„æ“æœ‰è€…ã€‚
+    /// ç‰¹æ•ˆçš„ä½ç½®æœƒæ ¹æ“šæ­¤è§’è‰²çš„ä½ç½®å‹•æ…‹æ›´æ–°ã€‚
+    ClientCharacter* m_pOwnerCharacter; // ä½ç§» +132 (0x84)
 };

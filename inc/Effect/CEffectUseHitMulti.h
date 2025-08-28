@@ -1,63 +1,63 @@
 #pragma once
 
 #include "Effect/CEffectBase.h"
-#include "Effect/CCAEffect.h" // ¬°¤FFrameSkip ªº¨Ï¥Î
+#include "Effect/CCAEffect.h" // ç‚ºäº†FrameSkip çš„ä½¿ç”¨
 
-// «e¦V«Å§i
+// å‰å‘å®£å‘Š
 class GameImage;
 
 struct Particle {
-    GameImage* pImage;         // ¦ì²¾ +0: «ü¦V¦¹²É¤l¹ïÀ³ªº GameImage
-    float       fAlpha;         // ¦ì²¾ +4: ·í«e³z©ú«×/¥Í©R¶g´Á
-    float       fScale;         // ¦ì²¾ +8: ·í«eÁY©ñ/ÃC¦â­È
-    char        cFrameIndex;    // ¦ì²¾ +12: ²É¤lªº°Êµe¼v®æ
-    char        ucOwnerDirection; // ¦ì²¾ +13: ³Ğ«Ø®É¾Ö¦³ªÌªº¤è¦V
-    char        padding[2];     // ¦ì²¾ +14
-    float       fPosX;          // ¦ì²¾ +16
-    float       fPosY;          // ¦ì²¾ +20
-    float       fAngle;         // ¦ì²¾ +28: ±ÛÂà¨¤«×
-    float       fVelX;          // ¦ì²¾ +32: X ¶b³t«×/¤è¦V
-    float       fVelY;          // ¦ì²¾ +36: Y ¶b³t«×/¤è¦V
-    float       fRotation_Unused; // ¦ì²¾ +40 (­ì©l½X v13[9])
-    float       fSpeed;         // ¦ì²¾ +48: ³t«×«Y¼Æ
-    bool        bIsActive;      // ¦ì²¾ +52
-    bool        bIsVisible;     // ¦ì²¾ +53
+    GameImage* pImage;         // ä½ç§» +0: æŒ‡å‘æ­¤ç²’å­å°æ‡‰çš„ GameImage
+    float       fAlpha;         // ä½ç§» +4: ç•¶å‰é€æ˜åº¦/ç”Ÿå‘½é€±æœŸ
+    float       fScale;         // ä½ç§» +8: ç•¶å‰ç¸®æ”¾/é¡è‰²å€¼
+    char        cFrameIndex;    // ä½ç§» +12: ç²’å­çš„å‹•ç•«å½±æ ¼
+    char        ucOwnerDirection; // ä½ç§» +13: å‰µå»ºæ™‚æ“æœ‰è€…çš„æ–¹å‘
+    char        padding[2];     // ä½ç§» +14
+    float       fPosX;          // ä½ç§» +16
+    float       fPosY;          // ä½ç§» +20
+    float       fAngle;         // ä½ç§» +28: æ—‹è½‰è§’åº¦
+    float       fVelX;          // ä½ç§» +32: X è»¸é€Ÿåº¦/æ–¹å‘
+    float       fVelY;          // ä½ç§» +36: Y è»¸é€Ÿåº¦/æ–¹å‘
+    float       fRotation_Unused; // ä½ç§» +40 (åŸå§‹ç¢¼ v13[9])
+    float       fSpeed;         // ä½ç§» +48: é€Ÿåº¦ä¿‚æ•¸
+    bool        bIsActive;      // ä½ç§» +52
+    bool        bIsVisible;     // ä½ç§» +53
     char        padding2[10];
 };
 
 /**
  * @class CEffectUseHitMulti
- * @brief ¤@­Ó°ò©ó²É¤l¨t²Îªº½Æ¦X¯S®Ä¡A¥Î©ó²£¥ÍÃz¬µ¡B½ÄÀ»ªiµ¥¦h²É¤l®ÄªG¡C
+ * @brief ä¸€å€‹åŸºæ–¼ç²’å­ç³»çµ±çš„è¤‡åˆç‰¹æ•ˆï¼Œç”¨æ–¼ç”¢ç”Ÿçˆ†ç‚¸ã€è¡æ“Šæ³¢ç­‰å¤šç²’å­æ•ˆæœã€‚
  */
 class CEffectUseHitMulti : public CEffectBase {
 public:
     CEffectUseHitMulti();
     virtual ~CEffectUseHitMulti();
 
-    // --- µêÀÀ¨ç¦¡ÂĞ¼g ---
+    // --- è™›æ“¬å‡½å¼è¦†å¯« ---
     virtual bool FrameProcess(float fElapsedTime) override;
     virtual void Process() override;
     virtual void Draw() override;
 
-    // --- ±M¦³¨ç¦¡ ---
-    /// @brief ³]©w¨Ãªì©l¤Æ²É¤l¨t²Î¯S®Ä¡C
-    /// @param x ¯S®Ä¤¤¤ßÂI X ®y¼Ğ¡C
-    /// @param y ¯S®Ä¤¤¤ßÂI Y ®y¼Ğ¡C
-    /// @param ucOwnerDirection ¾Ö¦³ªÌªº¤è¦V (0: ¥ª, 1: ¥k)¡C
-    /// @param effectType ¯S®ÄªºÃş«¬ (1-4)¡A¨M©w¤F²É¤lªº¦æ¬°©M¥~Æ[¡C
+    // --- å°ˆæœ‰å‡½å¼ ---
+    /// @brief è¨­å®šä¸¦åˆå§‹åŒ–ç²’å­ç³»çµ±ç‰¹æ•ˆã€‚
+    /// @param x ç‰¹æ•ˆä¸­å¿ƒé» X åº§æ¨™ã€‚
+    /// @param y ç‰¹æ•ˆä¸­å¿ƒé» Y åº§æ¨™ã€‚
+    /// @param ucOwnerDirection æ“æœ‰è€…çš„æ–¹å‘ (0: å·¦, 1: å³)ã€‚
+    /// @param effectType ç‰¹æ•ˆçš„é¡å‹ (1-4)ï¼Œæ±ºå®šäº†ç²’å­çš„è¡Œç‚ºå’Œå¤–è§€ã€‚
     void SetEffect2(float x, float y, unsigned char ucOwnerDirection, int effectType);
 
 private:
     static const int MAX_PARTICLES = 15;
 
-    // --- ¦¨­ûÅÜ¼Æ (®Ú¾Ú Effectall.c @ 0x0052FCD0 ±ÀÂ_) ---
-    Particle m_Particles[MAX_PARTICLES]; // ¦ì²¾ +132 (0x84), 15 * 64 = 960 bytes
+    // --- æˆå“¡è®Šæ•¸ (æ ¹æ“š Effectall.c @ 0x0052FCD0 æ¨æ–·) ---
+    Particle m_Particles[MAX_PARTICLES]; // ä½ç§» +132 (0x84), 15 * 64 = 960 bytes
 
-    unsigned int m_dwResourceID; // ¦ì²¾ +1092 (0x444), ¯S®Ä¨Ï¥Îªº GameImage ¸ê·½ ID
-    unsigned int m_uParticleCount; // ¦ì²¾ +1096 (0x448), ¦¹¯S®Ä¹ê»Ú²£¥Íªº²É¤l¼Æ¶q
-    int          m_nEffectType;    // ¦ì²¾ +1100 (0x44C), Àx¦s SetEffect2 ¶Ç¤JªºÃş«¬
+    unsigned int m_dwResourceID; // ä½ç§» +1092 (0x444), ç‰¹æ•ˆä½¿ç”¨çš„ GameImage è³‡æº ID
+    unsigned int m_uParticleCount; // ä½ç§» +1096 (0x448), æ­¤ç‰¹æ•ˆå¯¦éš›ç”¢ç”Ÿçš„ç²’å­æ•¸é‡
+    int          m_nEffectType;    // ä½ç§» +1100 (0x44C), å„²å­˜ SetEffect2 å‚³å…¥çš„é¡å‹
 
-    FrameSkip    m_FrameSkip;      // ¦ì²¾ +1104 (0x450)
+    FrameSkip    m_FrameSkip;      // ä½ç§» +1104 (0x450)
 
-    bool         m_bUseAdditiveBlend; // ¦ì²¾ +1116 (0x45C), ¥Î©ó¨M©w Draw ®Éªº²V¦X¼Ò¦¡
+    bool         m_bUseAdditiveBlend; // ä½ç§» +1116 (0x45C), ç”¨æ–¼æ±ºå®š Draw æ™‚çš„æ··åˆæ¨¡å¼
 };

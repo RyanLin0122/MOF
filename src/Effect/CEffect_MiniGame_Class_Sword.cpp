@@ -2,63 +2,63 @@
 #include "Effect/CEAManager.h"
 #include "global.h" 
 
-// ¹ïÀ³¤Ï²ÕÄ¶½X: 0x00537F80
+// å°æ‡‰åçµ„è­¯ç¢¼: 0x00537F80
 CEffect_MiniGame_Class_Sword::CEffect_MiniGame_Class_Sword()
 {
-    // CEffectBase ªº«Øºc¨ç¦¡·|³Q¦Û°Ê©I¥s
+    // CEffectBase çš„å»ºæ§‹å‡½å¼æœƒè¢«è‡ªå‹•å‘¼å«
 
-    // ¦V CEAManager ½Ğ¨D¯S®Ä¼Æ¾Ú
-    // ¯S®Ä ID: 113, ÀÉ®×¦WºÙ: "Effect/efn_MiniGame_Class_Sword.ea"
+    // å‘ CEAManager è«‹æ±‚ç‰¹æ•ˆæ•¸æ“š
+    // ç‰¹æ•ˆ ID: 113, æª”æ¡ˆåç¨±: "Effect/efn_MiniGame_Class_Sword.ea"
     CEAManager::GetInstance()->GetEAData(113, "Effect/efn_MiniGame_Class_Sword.ea", &m_ccaEffect);
 
-    // ³]©w¼v®æ®É¶¡¨Ã¼½©ñ°Êµe
+    // è¨­å®šå½±æ ¼æ™‚é–“ä¸¦æ’­æ”¾å‹•ç•«
     m_ccaEffect.SetFrameTime();
-    m_ccaEffect.Play(0, false); // ¼½©ñ²Ä¤@­Ó°Êµe§Ç¦C¡A¤£´`Àô
+    m_ccaEffect.Play(0, false); // æ’­æ”¾ç¬¬ä¸€å€‹å‹•ç•«åºåˆ—ï¼Œä¸å¾ªç’°
 }
 
-// ¹ïÀ³¤Ï²ÕÄ¶½X: 0x00538010
+// å°æ‡‰åçµ„è­¯ç¢¼: 0x00538010
 CEffect_MiniGame_Class_Sword::~CEffect_MiniGame_Class_Sword()
 {
 }
 
-// ¹ïÀ³¤Ï²ÕÄ¶½X: 0x00538020
+// å°æ‡‰åçµ„è­¯ç¢¼: 0x00538020
 void CEffect_MiniGame_Class_Sword::SetEffect(float x, float y)
 {
-    // ³]©w¯S®Äªºªì©l¥@¬É®y¼Ğ
-    // ­ì©l½X: *((float *)this + 2) = a2; *((float *)this + 3) = a3;
+    // è¨­å®šç‰¹æ•ˆçš„åˆå§‹ä¸–ç•Œåº§æ¨™
+    // åŸå§‹ç¢¼: *((float *)this + 2) = a2; *((float *)this + 3) = a3;
     m_fCurrentPosX = x;
     m_fCurrentPosY = y;
 }
 
-// ¹ïÀ³¤Ï²ÕÄ¶½X: 0x00538040
+// å°æ‡‰åçµ„è­¯ç¢¼: 0x00538040
 bool CEffect_MiniGame_Class_Sword::FrameProcess(float fElapsedTime)
 {
-    // ±N¥Í©R¶g´ÁºŞ²zªº¥ô°È§¹¥ş©e°Uµ¹¤º³¡ªº CCAEffect ª«¥ó¡C
-    // ·í "efn_MiniGame_Class_Sword.ea" °Êµe¼½©ñ§¹²¦®É¡A¦¹¨ç¦¡·|¦^¶Ç true¡C
+    // å°‡ç”Ÿå‘½é€±æœŸç®¡ç†çš„ä»»å‹™å®Œå…¨å§”è¨—çµ¦å…§éƒ¨çš„ CCAEffect ç‰©ä»¶ã€‚
+    // ç•¶ "efn_MiniGame_Class_Sword.ea" å‹•ç•«æ’­æ”¾å®Œç•¢æ™‚ï¼Œæ­¤å‡½å¼æœƒå›å‚³ trueã€‚
     return m_ccaEffect.FrameProcess(fElapsedTime);
 }
 
-// ¹ïÀ³¤Ï²ÕÄ¶½X: 0x00538050
+// å°æ‡‰åçµ„è­¯ç¢¼: 0x00538050
 void CEffect_MiniGame_Class_Sword::Process()
 {
-    // --- ®Ö¤ßÅŞ¿è¡Gª½±µ±N¥@¬É®y¼Ğ§@¬°¿Ã¹õ®y¼Ğ ---
-    // ³o»P¨ä¥L¯S®Ä¤£¦P¡A¥¦¤£´î¥hÄá¼v¾÷®y¼Ğ (g_Game_System_Info.ScreenX/Y)
-    // ­ì©l½X: *((float *)this + 12) = *((float *)this + 2);
+    // --- æ ¸å¿ƒé‚è¼¯ï¼šç›´æ¥å°‡ä¸–ç•Œåº§æ¨™ä½œç‚ºè¢å¹•åº§æ¨™ ---
+    // é€™èˆ‡å…¶ä»–ç‰¹æ•ˆä¸åŒï¼Œå®ƒä¸æ¸›å»æ”å½±æ©Ÿåº§æ¨™ (g_Game_System_Info.ScreenX/Y)
+    // åŸå§‹ç¢¼: *((float *)this + 12) = *((float *)this + 2);
     //         *((float *)this + 13) = *((float *)this + 3);
     float screenX = m_fCurrentPosX;
     float screenY = m_fCurrentPosY;
 
-    // §ó·s¤º³¡ CCAEffect ªºª¬ºA
+    // æ›´æ–°å…§éƒ¨ CCAEffect çš„ç‹€æ…‹
     m_ccaEffect.SetPosition(screenX, screenY);
     m_ccaEffect.Process();
 
-    // ¦]¬°¬O UI ¯S®Ä¡AÁ`¬O¦b¥iµø½d³ò¤º¡A¤£»İ­nµô°Å
+    // å› ç‚ºæ˜¯ UI ç‰¹æ•ˆï¼Œç¸½æ˜¯åœ¨å¯è¦–ç¯„åœå…§ï¼Œä¸éœ€è¦è£å‰ª
     m_bIsVisible = TRUE;
 }
 
-// ¹ïÀ³¤Ï²ÕÄ¶½X: 0x00538070
+// å°æ‡‰åçµ„è­¯ç¢¼: 0x00538070
 void CEffect_MiniGame_Class_Sword::Draw()
 {
-    // ª½±µ±NÃ¸»s¥ô°È©e°Uµ¹¤º³¡ªº CCAEffect ª«¥ó
+    // ç›´æ¥å°‡ç¹ªè£½ä»»å‹™å§”è¨—çµ¦å…§éƒ¨çš„ CCAEffect ç‰©ä»¶
     m_ccaEffect.Draw();
 }

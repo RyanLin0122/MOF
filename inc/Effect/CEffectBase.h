@@ -1,71 +1,71 @@
 #pragma once
 
-#include "Effect/CCAEffect.h" // CEffectBase �]�t�@�� CCAEffect ����ӳB�z��V
+#include "Effect/CCAEffect.h" // CEffectBase 包含一個 CCAEffect 物件來處理渲染
 
 /**
  * @class CEffectBase
- * @brief �Ҧ��C���S�Ī���H�����O�C
+ * @brief 所有遊戲特效的抽象基底類別。
  *
- * �o�����O���ѤF�@�ӲΤ@�������Ӻ޲z�S�Ī��ͩR�g���]FrameProcess�^�B
- * �޿��s�]Process�^�Mø�s�]Draw�^�C������������ø�s�A�ӬO�]�t�@��
- * CCAEffect ����ӳB�z�Ҧ��P�ʵe�M��V���������h�u�@�C
- * �C�Ө��骺�S�ġ]�p���y�B�v���������^�������~�Ӧ۳o�����O�C
+ * 這個類別提供了一個統一的介面來管理特效的生命週期（FrameProcess）、
+ * 邏輯更新（Process）和繪製（Draw）。它本身不直接繪製，而是包含一個
+ * CCAEffect 物件來處理所有與動畫和渲染相關的底層工作。
+ * 每個具體的特效（如火球、治療光環等）都應該繼承自這個類別。
  */
 class CEffectBase {
 public:
-    /// @brief �غc�禡�A��l�ư�¦�ݩʡC
+    /// @brief 建構函式，初始化基礎屬性。
     CEffectBase();
 
-    /// @brief �����Ѻc�禡�A�T�O�l�����O��Q���T�P���C
+    /// @brief 虛擬解構函式，確保衍生類別能被正確銷毀。
     virtual ~CEffectBase();
 
-    // --- �֤ߵ����禡 (�ѭl�����O��@) ---
+    // --- 核心虛擬函式 (由衍生類別實作) ---
 
     /**
-     * @brief �B�z�S�Ī��C�v���s�A�D�n�t�d��s��ͩR�g���C
-     * @param fElapsedTime �ۤW�@�v��H�Ӹg�L���ɶ��]���^�C
-     * @return �p�G�S�����ӳQ�P���A�h�^�� true�F�_�h�^�� false�C
+     * @brief 處理特效的每影格更新，主要負責更新其生命週期。
+     * @param fElapsedTime 自上一影格以來經過的時間（秒）。
+     * @return 如果特效應該被銷毀，則回傳 true；否則回傳 false。
      */
     virtual bool FrameProcess(float fElapsedTime);
 
     /**
-     * @brief �ǳ�ø�s�e���޿��s�C
-     * �q�`�b�o�̭p��S�Ī���m�B�i���ʡA�ç�s CCAEffect �����A�C
+     * @brief 準備繪製前的邏輯更新。
+     * 通常在這裡計算特效的位置、可見性，並更新 CCAEffect 的狀態。
      */
-    virtual void Process() = 0; // �µ����禡�A�j��l�����O��@
+    virtual void Process() = 0; // 純虛擬函式，強制衍生類別實作
 
     /**
-     * @brief ø�s�S�ġC
-     * �q�`�u�O�I�s���� m_ccaEffect �� Draw �禡�C
+     * @brief 繪製特效。
+     * 通常只是呼叫內部 m_ccaEffect 的 Draw 函式。
      */
-    virtual void Draw() = 0; // �µ����禡�A�j��l�����O��@
+    virtual void Draw() = 0; // 純虛擬函式，強制衍生類別實作
 
 
 protected:
     /**
-     * @brief �ˬd�S�ĬO�_�b�i���d�򤺡]²�������ŧP�_�^�C
-     * @param x �S�Ī� X �y�СC
-     * @param y �S�Ī� Y �y�СC
-     * @return �p�G�b�i���d�򤺡A��^ TRUE�F�_�h��^ FALSE�C
+     * @brief 檢查特效是否在可視範圍內（簡易的裁剪判斷）。
+     * @param x 特效的 X 座標。
+     * @param y 特效的 Y 座標。
+     * @return 如果在可視範圍內，返回 TRUE；否則返回 FALSE。
      */
     bool IsCliping(float x, float y);
 
 protected:
 
-    void* m_pOwner;      // �첾 +4:  ���V�֦��̪��󪺫��С]�Ҧp�I�k�̡^
+    void* m_pOwner;      // 位移 +4:  指向擁有者物件的指標（例如施法者）
 
-    // ��m�P��V
-    float           m_fCurrentPosX; // �첾 +8:  �S�ķ��e�� X �y��
-    float           m_fCurrentPosY; // �첾 +12: �S�ķ��e�� Y �y��
-    float           m_fDirectionX;  // �첾 +16: X ��V�V�q/�t��
-    float           m_fDirectionY;  // �첾 +20: Y ��V�V�q/�t��
-    float           m_fSpeed;       // �첾 +24: ���ʳt��
+    // 位置與方向
+    float           m_fCurrentPosX; // 位移 +8:  特效當前的 X 座標
+    float           m_fCurrentPosY; // 位移 +12: 特效當前的 Y 座標
+    float           m_fDirectionX;  // 位移 +16: X 方向向量/速度
+    float           m_fDirectionY;  // 位移 +20: Y 方向向量/速度
+    float           m_fSpeed;       // 位移 +24: 移動速度
 
-    bool            m_bIsFlip;     // �첾 +28: �O�_����½��
+    bool            m_bIsFlip;     // 位移 +28: 是否水平翻轉
 
-    // ø�s����
-    bool            m_bIsVisible;  // �첾 +32: �ھڵ��ŧP�_�A�S�ĬO�_�i��
+    // 繪製相關
+    bool            m_bIsVisible;  // 位移 +32: 根據裁剪判斷，特效是否可見
 
-    // �֤ߴ�V����
-    CCAEffect       m_ccaEffect;   // �첾 +36: ��ڭt�d�ʵe����Mø�s������
+    // 核心渲染物件
+    CCAEffect       m_ccaEffect;   // 位移 +36: 實際負責動畫播放和繪製的物件
 };

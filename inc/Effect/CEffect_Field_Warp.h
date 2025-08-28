@@ -2,36 +2,36 @@
 
 #include "Effect/CEffectBase.h"
 
-// «e¦V«Å§i
+// å‰å‘å®£å‘Š
 class ClientCharacter;
 
 /**
  * @class CEffect_Field_Warp
- * @brief ­t³dÅã¥Ü¶Ç°eªù©Î¶Ç°eªk°}ªºµøÄ±¯S®Ä¡C
+ * @brief è² è²¬é¡¯ç¤ºå‚³é€é–€æˆ–å‚³é€æ³•é™£çš„è¦–è¦ºç‰¹æ•ˆã€‚
  *
- * Ä~©Ó¦Û CEffectBase¡A¥i¥H®Ú¾Ú¶Ç¤JªºÃş«¬Åã¥Ü¤£¦P¥~Æ[¡A
- * ¨Ã¥B¥i¥H¿ï¾Ü¸òÀH¨¤¦â©Î°±¯d¦b©T©w¦ì¸m¡C
+ * ç¹¼æ‰¿è‡ª CEffectBaseï¼Œå¯ä»¥æ ¹æ“šå‚³å…¥çš„é¡å‹é¡¯ç¤ºä¸åŒå¤–è§€ï¼Œ
+ * ä¸¦ä¸”å¯ä»¥é¸æ“‡è·Ÿéš¨è§’è‰²æˆ–åœç•™åœ¨å›ºå®šä½ç½®ã€‚
  */
 class CEffect_Field_Warp : public CEffectBase {
 public:
-    // ÁöµM­ì©l½X¥¼´£¨Ñ¡A¦ı¬°¤F§¹¾ã©Ê¦Ó²K¥[
+    // é›–ç„¶åŸå§‹ç¢¼æœªæä¾›ï¼Œä½†ç‚ºäº†å®Œæ•´æ€§è€Œæ·»åŠ 
     CEffect_Field_Warp();
     virtual ~CEffect_Field_Warp();
 
-    // --- µêÀÀ¨ç¦¡ÂĞ¼g ---
+    // --- è™›æ“¬å‡½å¼è¦†å¯« ---
     virtual bool FrameProcess(float fElapsedTime) override;
     virtual void Process() override;
     virtual void Draw() override;
 
-    // --- ±M¦³¨ç¦¡ ---
-    /// @brief ³]©w¶Ç°eªù¯S®Ä¡C
-    /// @param warpType ¯S®ÄªºÃş«¬¡A¨M©w¤F¨ä¥~Æ[¡C
-    /// @param x ªì©l X ®y¼Ğ (¦pªG pOwner ¬°ªÅ¡A«h¬°©T©w®y¼Ğ)¡C
-    /// @param y ªì©l Y ®y¼Ğ (¦pªG pOwner ¬°ªÅ¡A«h¬°©T©w®y¼Ğ)¡C
-    /// @param pOwner ­n¸òÀHªº¨¤¦âª«¥ó«ü¼Ğ¡A¥i¬° nullptr¡C
+    // --- å°ˆæœ‰å‡½å¼ ---
+    /// @brief è¨­å®šå‚³é€é–€ç‰¹æ•ˆã€‚
+    /// @param warpType ç‰¹æ•ˆçš„é¡å‹ï¼Œæ±ºå®šäº†å…¶å¤–è§€ã€‚
+    /// @param x åˆå§‹ X åº§æ¨™ (å¦‚æœ pOwner ç‚ºç©ºï¼Œå‰‡ç‚ºå›ºå®šåº§æ¨™)ã€‚
+    /// @param y åˆå§‹ Y åº§æ¨™ (å¦‚æœ pOwner ç‚ºç©ºï¼Œå‰‡ç‚ºå›ºå®šåº§æ¨™)ã€‚
+    /// @param pOwner è¦è·Ÿéš¨çš„è§’è‰²ç‰©ä»¶æŒ‡æ¨™ï¼Œå¯ç‚º nullptrã€‚
     void SetEffect(unsigned short warpType, float x, float y, ClientCharacter* pOwner);
 
 private:
-    // --- ¦¨­ûÅÜ¼Æ ---
-    ClientCharacter* m_pOwnerCharacter; // ¦ì²¾ +132 (0x84): ­n¸òÀHªº¨¤¦â
+    // --- æˆå“¡è®Šæ•¸ ---
+    ClientCharacter* m_pOwnerCharacter; // ä½ç§» +132 (0x84): è¦è·Ÿéš¨çš„è§’è‰²
 };

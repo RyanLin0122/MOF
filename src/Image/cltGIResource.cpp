@@ -2,28 +2,28 @@
 #include "Image/CDeviceResetManager.h"
 #include "CMOFPacking.h"
 #include <windows.h>
-#include <cstdio> // ¨Ï¥Î sprintf, wsprintfA
+#include <cstdio> // ä½¿ç”¨ sprintf, wsprintfA
 
 extern unsigned char NationCode;
 
 
 cltGIResource::cltGIResource() : cltBaseResource() {
-    // °ò©³Ãþ§O«Øºc¨ç¦¡¤w³Q©I¥s
-    // ²M²z­l¥ÍÃþ§Oªº¦¨­û
+    // åŸºåº•é¡žåˆ¥å»ºæ§‹å‡½å¼å·²è¢«å‘¼å«
+    // æ¸…ç†è¡ç”Ÿé¡žåˆ¥çš„æˆå“¡
     memset(m_szBasePath, 0, sizeof(m_szBasePath));
     memset(m_szNationPath, 0, sizeof(m_szNationPath));
-    m_bFirstLoad = 1; // ªì©l¤ÆºX¼Ð
+    m_bFirstLoad = 1; // åˆå§‹åŒ–æ——æ¨™
 }
 
 cltGIResource::~cltGIResource() {
 }
 
 void cltGIResource::Initialize(const char* basePath, unsigned int timeout) {
-    // ©I¥s°ò©³Ãþ§OªºInitialize¨Ó³]©w®e¶q©M¶W®É
-    cltBaseResource::Initialize(2000, timeout); // ®e¶q2000¬Oµw½s½X¦b­ì©l½X¤¤ªº
-    // ½Æ»s°òÂ¦¸ô®|
+    // å‘¼å«åŸºåº•é¡žåˆ¥çš„Initializeä¾†è¨­å®šå®¹é‡å’Œè¶…æ™‚
+    cltBaseResource::Initialize(2000, timeout); // å®¹é‡2000æ˜¯ç¡¬ç·¨ç¢¼åœ¨åŽŸå§‹ç¢¼ä¸­çš„
+    // è¤‡è£½åŸºç¤Žè·¯å¾‘
     strcpy_s(m_szBasePath, sizeof(m_szBasePath), basePath);
-    m_bFirstLoad = 1; // ­«³]ºX¼Ð
+    m_bFirstLoad = 1; // é‡è¨­æ——æ¨™
 }
 
 void* cltGIResource::LoadResourceInPack(unsigned int id, int a3, unsigned char a4) {
@@ -33,26 +33,26 @@ void* cltGIResource::LoadResourceInPack(unsigned int id, int a3, unsigned char a
 
     CMofPacking* pPacker = CMofPacking::GetInstance();
     if (!pPacker || !pPacker->m_pNfsHandle) {
-        return nullptr; // ¦pªG«Ê¸ËÀÉ¥¼¶}±Ò¡Aª½±µªð¦^
+        return nullptr; // å¦‚æžœå°è£æª”æœªé–‹å•Ÿï¼Œç›´æŽ¥è¿”å›ž
     }
 
-    // 1. ¦b°òÂ¦¸ô®|¤¤´M§ä
+    // 1. åœ¨åŸºç¤Žè·¯å¾‘ä¸­å°‹æ‰¾
     wsprintfA(searchString, "%s/%08X*.*", m_szBasePath, id);
     
     char* changedStr = pPacker->ChangeString(searchString);
     pResults = pPacker->SearchString(changedStr);
 
     if (pResults) {
-        // §ä¨ì¤F¡A±q·j´Mµ²ªG¤¤¨ú±o³Ì²×¸ô®|
-        // ­ì©l½Xªº **((const char ***)searchResult + 1) µ²ºc¸û½ÆÂø¡A¦¹³BÂ²¤Æ¨ä·N¹Ï
+        // æ‰¾åˆ°äº†ï¼Œå¾žæœå°‹çµæžœä¸­å–å¾—æœ€çµ‚è·¯å¾‘
+        // åŽŸå§‹ç¢¼çš„ **((const char ***)searchResult + 1) çµæ§‹è¼ƒè¤‡é›œï¼Œæ­¤è™•ç°¡åŒ–å…¶æ„åœ–
         strcpy_s(finalPath, sizeof(finalPath), pResults->gl_pathv[0]);
         pPacker->DeleteSearchData();
         return CDeviceResetManager::GetInstance()->CreateImageResource(finalPath, 0, a4, a3);
     }
 
-    // 2. ¦pªG§ä¤£¨ì¡A¹Á¸Õ¦b°ê®a/¦a°Ï¯S©w¸ô®|¤¤´M§ä
+    // 2. å¦‚æžœæ‰¾ä¸åˆ°ï¼Œå˜—è©¦åœ¨åœ‹å®¶/åœ°å€ç‰¹å®šè·¯å¾‘ä¸­å°‹æ‰¾
     if (m_bFirstLoad) {
-        m_bFirstLoad = 0; // ½T«O¥u³]©w¤@¦¸
+        m_bFirstLoad = 0; // ç¢ºä¿åªè¨­å®šä¸€æ¬¡
         switch (NationCode) {
         case 1: strcpy_s(m_szNationPath, "Nation_kor"); break;
         case 2: strcpy_s(m_szNationPath, "Nation_jp"); break;
@@ -74,7 +74,7 @@ void* cltGIResource::LoadResourceInPack(unsigned int id, int a3, unsigned char a
         }
     }
 
-    // ­ì©l½X¤¤¦³¹ï·j´Mµ²ªG¼Æ¶q>1©M§ä¤£¨ìªº¿ù»~¼uµ¡¡A¦¹³B¬Ù²¤¥H«O«ùÂ²¼ä
+    // åŽŸå§‹ç¢¼ä¸­æœ‰å°æœå°‹çµæžœæ•¸é‡>1å’Œæ‰¾ä¸åˆ°çš„éŒ¯èª¤å½ˆçª—ï¼Œæ­¤è™•çœç•¥ä»¥ä¿æŒç°¡æ½”
     char errorMsg[1024];
     sprintf_s(errorMsg, "Cannot find Resource %08X in Packfile.", id);
     MessageBoxA(nullptr, errorMsg, "ERROR", MB_OK);
@@ -87,20 +87,20 @@ void* cltGIResource::LoadResource(unsigned int id, int a3, unsigned char a4) {
     char finalPath[1024];
     WIN32_FIND_DATAA findFileData;
 
-    // 1. ¦b°òÂ¦¸ô®|¤¤´M§ä
+    // 1. åœ¨åŸºç¤Žè·¯å¾‘ä¸­å°‹æ‰¾
     wsprintfA(searchPath, "%s/%08X*.*", m_szBasePath, id);
     HANDLE hFind = FindFirstFileA(searchPath, &findFileData);
 
     if (hFind != INVALID_HANDLE_VALUE) {
-        // §ä¨ì¤F¡A²Õ¦X³Ì²×¸ô®|
+        // æ‰¾åˆ°äº†ï¼Œçµ„åˆæœ€çµ‚è·¯å¾‘
         wsprintfA(finalPath, "%s/%s", m_szBasePath, findFileData.cFileName);
         FindClose(hFind);
         return CDeviceResetManager::GetInstance()->CreateImageResource(finalPath, 0, a4, a3);
     }
 
-    // 2. ¦pªG§ä¤£¨ì¡A¹Á¸Õ¦b°ê®a/¦a°Ï¯S©w¸ô®|¤¤´M§ä
+    // 2. å¦‚æžœæ‰¾ä¸åˆ°ï¼Œå˜—è©¦åœ¨åœ‹å®¶/åœ°å€ç‰¹å®šè·¯å¾‘ä¸­å°‹æ‰¾
     if (m_bFirstLoad) {
-        m_bFirstLoad = 0; // ½T«O¥u³]©w¤@¦¸
+        m_bFirstLoad = 0; // ç¢ºä¿åªè¨­å®šä¸€æ¬¡
         switch (NationCode) {
         case 1: strcpy_s(m_szNationPath, "Nation_kor"); break;
         case 2: strcpy_s(m_szNationPath, "Nation_jp"); break;
@@ -121,7 +121,7 @@ void* cltGIResource::LoadResource(unsigned int id, int a3, unsigned char a4) {
         }
     }
 
-    // ¦pªG³£§ä¤£¨ì¡Aªð¦^¥¢±Ñ
+    // å¦‚æžœéƒ½æ‰¾ä¸åˆ°ï¼Œè¿”å›žå¤±æ•—
     char szErrorMsg[256];
     sprintf_s(szErrorMsg, sizeof(szErrorMsg), "GI file %08X not found.", id);
     MessageBoxA(NULL, szErrorMsg, "LoadResource Error", MB_OK);
@@ -130,7 +130,7 @@ void* cltGIResource::LoadResource(unsigned int id, int a3, unsigned char a4) {
 
 void cltGIResource::FreeResource(void* pResourceData) {
     if (pResourceData) {
-        // ±N¸ê·½«ü¼ÐÂà¥æµ¹Device_Reset_Manager¶i¦æ§R°£
+        // å°‡è³‡æºæŒ‡æ¨™è½‰äº¤çµ¦Device_Reset_Manageré€²è¡Œåˆªé™¤
         CDeviceResetManager::GetInstance()->DeleteImageResource(static_cast<ImageResourceListData*>(pResourceData));
     }
 }

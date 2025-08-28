@@ -6,7 +6,7 @@
 #include <cstdlib>
 #include <cmath>
 
-// ¹ïÀ³¤Ï²ÕÄ¶½X: 0x005329C0
+// å°æ‡‰åçµ„è­¯ç¢¼: 0x005329C0
 CEffect_UI_HP_MP_Number::CEffect_UI_HP_MP_Number()
 {
     m_pNumberImages = nullptr;
@@ -23,23 +23,23 @@ CEffect_UI_HP_MP_Number::CEffect_UI_HP_MP_Number()
     m_FrameSkip.m_fTimePerFrame = 1.0f / 60.0f;
 }
 
-// ¹ïÀ³¤Ï²ÕÄ¶½X: 0x00532A60
+// å°æ‡‰åçµ„è­¯ç¢¼: 0x00532A60
 CEffect_UI_HP_MP_Number::~CEffect_UI_HP_MP_Number()
 {
     delete[] m_pNumberImages;
 }
 
-// ¹ïÀ³¤Ï²ÕÄ¶½X: 0x00532AA0
+// å°æ‡‰åçµ„è­¯ç¢¼: 0x00532AA0
 void CEffect_UI_HP_MP_Number::SetEffect(int value, float x, float y, int type)
 {
     char first_digit_frame, plus_frame, minus_frame;
 
-    if (type == 1) { // MP (ÂÅ¦â¼Æ¦r)
+    if (type == 1) { // MP (è—è‰²æ•¸å­—)
         first_digit_frame = 48;
         plus_frame = 58;
         minus_frame = 59;
     }
-    else { // ¹w³]¬° HP (ºñ¦â¼Æ¦r)
+    else { // é è¨­ç‚º HP (ç¶ è‰²æ•¸å­—)
         first_digit_frame = 36;
         plus_frame = 46;
         minus_frame = 47;
@@ -64,7 +64,7 @@ void CEffect_UI_HP_MP_Number::SetEffect(int value, float x, float y, int type)
     m_fInitialPosX = x;
     m_fCurrentPosY = y;
 
-    // ¹w¥ı­pºâÁ`¼e«×¥H¶i¦æ©~¤¤
+    // é å…ˆè¨ˆç®—ç¸½å¯¬åº¦ä»¥é€²è¡Œå±…ä¸­
     GameImage* pTempImage = cltImageManager::GetInstance()->GetGameImage(7, 0xB0005A4u, 0, 1);
     if (pTempImage) {
         for (int i = 0; i < m_cDigitCount; ++i) {
@@ -75,10 +75,10 @@ void CEffect_UI_HP_MP_Number::SetEffect(int value, float x, float y, int type)
         }
         cltImageManager::GetInstance()->ReleaseGameImage(pTempImage);
     }
-    m_fTotalWidth *= 0.5f; // ¨ú¥b¼e
+    m_fTotalWidth *= 0.5f; // å–åŠå¯¬
 }
 
-// ¹ïÀ³¤Ï²ÕÄ¶½X: 0x00532C20
+// å°æ‡‰åçµ„è­¯ç¢¼: 0x00532C20
 bool CEffect_UI_HP_MP_Number::FrameProcess(float fElapsedTime)
 {
     int frameCount = 0;
@@ -87,7 +87,7 @@ bool CEffect_UI_HP_MP_Number::FrameProcess(float fElapsedTime)
     }
     float fFrameCount = static_cast<float>(frameCount);
 
-    if (m_ucState == 0) { // ¶¥¬q 0: ²H¤J»P°±¯d
+    if (m_ucState == 0) { // éšæ®µ 0: æ·¡å…¥èˆ‡åœç•™
         m_fAlpha -= fFrameCount * 4.0f;
         if (m_fAlpha < 220.0f) {
             m_fAlpha = 220.0f;
@@ -95,7 +95,7 @@ bool CEffect_UI_HP_MP_Number::FrameProcess(float fElapsedTime)
         }
         m_fCurrentPosY -= fFrameCount * 0.8f;
     }
-    else if (m_ucState == 1) { // ¶¥¬q 1: ²H¥X»P¤Wº}
+    else if (m_ucState == 1) { // éšæ®µ 1: æ·¡å‡ºèˆ‡ä¸Šæ¼‚
         m_fAlpha -= fFrameCount * 5.0f;
         m_fCurrentPosY -= fFrameCount * 1.5f;
     }
@@ -103,15 +103,15 @@ bool CEffect_UI_HP_MP_Number::FrameProcess(float fElapsedTime)
     return m_fAlpha < 0.0f;
 }
 
-// ¹ïÀ³¤Ï²ÕÄ¶½X: 0x00532D30
+// å°æ‡‰åçµ„è­¯ç¢¼: 0x00532D30
 void CEffect_UI_HP_MP_Number::Process()
 {
-    // ¦¹¯S®Ä¬° UI ¼h¯Å¡A¤£¦Ò¼{Äá¼v¾÷®y¼Ğ
+    // æ­¤ç‰¹æ•ˆç‚º UI å±¤ç´šï¼Œä¸è€ƒæ…®æ”å½±æ©Ÿåº§æ¨™
     m_bIsVisible = TRUE;
 
     float currentX = m_fInitialPosX - m_fTotalWidth;
 
-    // ±q«á©¹«e³B²z¼Æ¦r (±q­Ó¦ì¼Æ¶}©l)
+    // å¾å¾Œå¾€å‰è™•ç†æ•¸å­— (å¾å€‹ä½æ•¸é–‹å§‹)
     for (int i = 0; i < m_cDigitCount; ++i) {
         m_pNumberImages[i] = cltImageManager::GetInstance()->GetGameImage(7, 0xB0005A4u, 0, 1);
         if (m_pNumberImages[i]) {
@@ -124,19 +124,19 @@ void CEffect_UI_HP_MP_Number::Process()
 
             RECT rect;
             m_pNumberImages[i]->GetBlockRect(&rect);
-            currentX += static_cast<float>(rect.right - rect.left - 6); // ­ì©l½X¦³ -6 ªº¶¡¶Z½Õ¾ã
+            currentX += static_cast<float>(rect.right - rect.left - 6); // åŸå§‹ç¢¼æœ‰ -6 çš„é–“è·èª¿æ•´
         }
     }
 }
 
-// ¹ïÀ³¤Ï²ÕÄ¶½X: 0x00532E60
+// å°æ‡‰åçµ„è­¯ç¢¼: 0x00532E60
 void CEffect_UI_HP_MP_Number::Draw()
 {
     if (!m_pNumberImages) return;
 
     CDeviceManager::GetInstance()->ResetRenderState();
 
-    // ±q«á©¹«eÃ¸»s (¥ıµeªº¦b¤U¼h¡A§Y­Ó¦ì¼Æ)
+    // å¾å¾Œå¾€å‰ç¹ªè£½ (å…ˆç•«çš„åœ¨ä¸‹å±¤ï¼Œå³å€‹ä½æ•¸)
     for (int i = 0; i < m_cDigitCount; ++i) {
         if (m_pNumberImages[i] && m_pNumberImages[i]->IsInUse()) {
             m_pNumberImages[i]->Draw();

@@ -1,47 +1,47 @@
 #pragma once
 
 #include "Effect/CEffectBase.h"
-#include "Effect/CCAEffect.h" // ¬°¤F FrameSkip ªº¨Ï¥Î
+#include "Effect/CCAEffect.h" // ç‚ºäº† FrameSkip çš„ä½¿ç”¨
 
-// «e¦V«Å§i
+// å‰å‘å®£å‘Š
 class GameImage;
 
 /**
  * @class CEffect_Field_Miss
- * @brief ¦bµe­±¤WÅã¥Ü "MISS" ¦r¼Ëªºµ{§Ç¤Æ°Êµe¯S®Ä¡A±a¦³ÀH¾÷º}²¾®ÄªG¡C
+ * @brief åœ¨ç•«é¢ä¸Šé¡¯ç¤º "MISS" å­—æ¨£çš„ç¨‹åºåŒ–å‹•ç•«ç‰¹æ•ˆï¼Œå¸¶æœ‰éš¨æ©Ÿæ¼‚ç§»æ•ˆæœã€‚
  */
 class CEffect_Field_Miss : public CEffectBase {
 public:
     CEffect_Field_Miss();
     virtual ~CEffect_Field_Miss();
 
-    // --- µêÀÀ¨ç¦¡ÂĞ¼g ---
+    // --- è™›æ“¬å‡½å¼è¦†å¯« ---
     virtual bool FrameProcess(float fElapsedTime) override;
     virtual void Process() override;
     virtual void Draw() override;
 
-    // --- ±M¦³¨ç¦¡ ---
-    /// @brief ³]©w¯S®Äªºªì©l¦ì¸m¡C
+    // --- å°ˆæœ‰å‡½å¼ ---
+    /// @brief è¨­å®šç‰¹æ•ˆçš„åˆå§‹ä½ç½®ã€‚
     void SetEffect(float x, float y);
 
 private:
-    // --- ¦¨­ûÅÜ¼Æ (®Ú¾Ú Effectall.c @ 0x00537A40 ±ÀÂ_) ---
-    GameImage* m_pMissImage;        // ¦ì²¾ +132 (0x84): «ü¦V "MISS" ¦r¼Ëªº GameImage
+    // --- æˆå“¡è®Šæ•¸ (æ ¹æ“š Effectall.c @ 0x00537A40 æ¨æ–·) ---
+    GameImage* m_pMissImage;        // ä½ç§» +132 (0x84): æŒ‡å‘ "MISS" å­—æ¨£çš„ GameImage
 
-    // °Êµeª¬ºA
-    float   m_fAlpha;            // ¦ì²¾ +136 (0x88)
-    float   m_fScale;            // ¦ì²¾ +140 (0x8C)
-    float   m_fRotation;         // ¦ì²¾ +144 (0x90)
-    char    m_cInitialFrame;     // ¦ì²¾ +152 (0x98)
+    // å‹•ç•«ç‹€æ…‹
+    float   m_fAlpha;            // ä½ç§» +136 (0x88)
+    float   m_fScale;            // ä½ç§» +140 (0x8C)
+    float   m_fRotation;         // ä½ç§» +144 (0x90)
+    char    m_cInitialFrame;     // ä½ç§» +152 (0x98)
 
-    // ¦ì¸m»Pª«²z
-    float   m_fCurrentPosX;      // ¦ì²¾ +156 (0x9C)
-    float   m_fCurrentPosY;      // ¦ì²¾ +160 (0xA0)
-    float   m_fVelX;             // ¦ì²¾ +188 (0xBC): X ¶b³t«×/¤è¦V
-    float   m_fVelY;             // ¦ì²¾ +192 (0xC0): Y ¶b³t«×/¤è¦V
-    float   m_fSpeedFactor;      // ¦ì²¾ +196 (0xC4): ³t«×«Y¼Æ
+    // ä½ç½®èˆ‡ç‰©ç†
+    float   m_fCurrentPosX;      // ä½ç§» +156 (0x9C)
+    float   m_fCurrentPosY;      // ä½ç§» +160 (0xA0)
+    float   m_fVelX;             // ä½ç§» +188 (0xBC): X è»¸é€Ÿåº¦/æ–¹å‘
+    float   m_fVelY;             // ä½ç§» +192 (0xC0): Y è»¸é€Ÿåº¦/æ–¹å‘
+    float   m_fSpeedFactor;      // ä½ç§» +196 (0xC4): é€Ÿåº¦ä¿‚æ•¸
 
-    FrameSkip m_FrameSkip;       // ¦ì²¾ +164 (0xA4)
+    FrameSkip m_FrameSkip;       // ä½ç§» +164 (0xA4)
 
-    unsigned int m_dwResourceID; // ¦ì²¾ +176 (0xB0)
+    unsigned int m_dwResourceID; // ä½ç§» +176 (0xB0)
 };

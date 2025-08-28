@@ -10,7 +10,7 @@
 #include <windows.h>
 #include <cassert>
 
-// »²§U¨ç¦¡¡G±N¦ì¤¸²Õ¦V¶q¥H¤Q¤»¶i¦ì®æ¦¡¦L¥X
+// è¼”åŠ©å‡½å¼ï¼šå°‡ä½å…ƒçµ„å‘é‡ä»¥åå…­é€²ä½æ ¼å¼å°å‡º
 void print_bytes(const std::string& title, const std::vector<unsigned char>& bytes) {
     std::cout << title << " (" << bytes.size() << " bytes):" << std::endl;
     for (size_t i = 0; i < bytes.size(); ++i) {
@@ -22,7 +22,7 @@ void print_bytes(const std::string& title, const std::vector<unsigned char>& byt
     std::cout << std::dec << std::endl << "----------------------------------------" << std::endl;
 }
 
-// »²§U¨ç¦¡¡G±q Temp.dat Åª¨úÀ£ÁYµ²ªG
+// è¼”åŠ©å‡½å¼ï¼šå¾ Temp.dat è®€å–å£“ç¸®çµæœ
 std::vector<unsigned char> read_temp_file() {
     std::ifstream file("Temp.dat", std::ios::binary | std::ios::ate);
     if (!file.is_open()) {
@@ -38,7 +38,7 @@ std::vector<unsigned char> read_temp_file() {
     return {};
 }
 
-// ³q¥Î´ú¸Õ°õ¦æ¾¹
+// é€šç”¨æ¸¬è©¦åŸ·è¡Œå™¨
 bool run_test(const std::string& test_name,
     unsigned char unit_size,
 
@@ -47,8 +47,8 @@ bool run_test(const std::string& test_name,
     std::cout << "===== Running Test: " << test_name << " (Unit Size: " << (int)unit_size << ") =====" << std::endl;
     print_bytes("Input", input);
 
-    // --- ´ú¸ÕÀ£ÁY ---
-    // ª`·N¡G³B²z¤£¦w¥şªº FILE* -> size_t Âà«¬
+    // --- æ¸¬è©¦å£“ç¸® ---
+    // æ³¨æ„ï¼šè™•ç†ä¸å®‰å…¨çš„ FILE* -> size_t è½‰å‹
     FILE* result_ptr = run_length_comp(const_cast<unsigned char*>(input.data()), input.size(), unit_size);
     size_t compressed_size = reinterpret_cast<uintptr_t>(result_ptr);
 
@@ -68,17 +68,17 @@ bool run_test(const std::string& test_name,
     }
     std::cout << "[PASS] Compression" << std::endl;
 
-    // --- ´ú¸Õ¸ÑÀ£ÁY ---
-    std::vector<unsigned char> decompressed_output(input.size() * 2 + 1024); // ¤À°t¨¬°÷¤jªºªÅ¶¡
+    // --- æ¸¬è©¦è§£å£“ç¸® ---
+    std::vector<unsigned char> decompressed_output(input.size() * 2 + 1024); // åˆ†é…è¶³å¤ å¤§çš„ç©ºé–“
     run_length_decomp(actual_compressed.data(), actual_compressed.size(), decompressed_output.data(), decompressed_output.size(), unit_size);
 
-    // ®Ú¾Ú­ì©l¿é¤J¤j¤p½Õ¾ã¸ÑÀ£ÁY«á¦V¶qªº¤j¤p
+    // æ ¹æ“šåŸå§‹è¼¸å…¥å¤§å°èª¿æ•´è§£å£“ç¸®å¾Œå‘é‡çš„å¤§å°
     size_t effective_input_size = (input.size() / unit_size) * unit_size;
 
-    // ®Ú¾Ú¦³®Äªø«×¡A«Ø¥ß¤@­Ó¹w´Áªº¸ÑÀ£ÁYµ²ªG
+    // æ ¹æ“šæœ‰æ•ˆé•·åº¦ï¼Œå»ºç«‹ä¸€å€‹é æœŸçš„è§£å£“ç¸®çµæœ
     std::vector<unsigned char> expected_decompressed(input.begin(), input.begin() + effective_input_size);
 
-    // ½Õ¾ã¹ê»Ú¸ÑÀ£ÁY¿é¥Xªº¤Ø¤o¡A¥H¤Ç°t¦³®Äªø«×
+    // èª¿æ•´å¯¦éš›è§£å£“ç¸®è¼¸å‡ºçš„å°ºå¯¸ï¼Œä»¥åŒ¹é…æœ‰æ•ˆé•·åº¦
     decompressed_output.resize(effective_input_size);
 
     print_bytes("Expected Decompressed", expected_decompressed);
@@ -102,49 +102,49 @@ int run_comp_test() {
     // ===               BYTE (unit_size = 1)              ===
     // =======================================================
 
-    // ´ú¸Õ 1: °ò¥» RLE §Ç¦C
+    // æ¸¬è©¦ 1: åŸºæœ¬ RLE åºåˆ—
     if (run_test("BYTE: Basic Run", 1,
         { 'A', 'B', 'C', 'C', 'C', 'C', 'D' },
         { 'A', 'B', 0xB4, 'C', 4, 'D' })) {
         passed++;
     } total++;
 
-    // ´ú¸Õ 2: µL­«½Æ¡AµLÀ£ÁY
+    // æ¸¬è©¦ 2: ç„¡é‡è¤‡ï¼Œç„¡å£“ç¸®
     if (run_test("BYTE: No Run", 1,
         { 'A', 'B', 'C', 'D', 'E', 'F' },
         { 'A', 'B', 'C', 'D', 'E', 'F' })) {
         passed++;
     } total++;
 
-    // ´ú¸Õ 3: ³B²z¼Ğ°O¦r¤¸ 0xB4
+    // æ¸¬è©¦ 3: è™•ç†æ¨™è¨˜å­—å…ƒ 0xB4
     if (run_test("BYTE: Contains Marker", 1,
         { 'X', 'Y', 0xB4, 'Z' },
         { 'X', 'Y', 0xB4, 0xB4, 'Z' })) {
         passed++;
     } total++;
 
-    // ´ú¸Õ 4: ³sÄòªº¼Ğ°O¦r¤¸
+    // æ¸¬è©¦ 4: é€£çºŒçš„æ¨™è¨˜å­—å…ƒ
     if (run_test("BYTE: Run of Markers", 1,
         { 0xB4, 0xB4, 0xB4 },
         { 0xB4, 0xB4, 0xB4, 0xB4, 0xB4, 0xB4 })) {
         passed++;
     } total++;
 
-    // ´ú¸Õ 5: ªÅ¿é¤J
+    // æ¸¬è©¦ 5: ç©ºè¼¸å…¥
     if (run_test("BYTE: Empty Input", 1,
         {},
         {})) {
         passed++;
     } total++;
 
-    // ´ú¸Õ 6: µ²§À RLE
+    // æ¸¬è©¦ 6: çµå°¾ RLE
     if (run_test("BYTE: Run at End", 1,
         { 'A', 'B', 'C', 'C', 'C' },
         { 'A', 'B', 0xB4, 'C', 3 })) {
         passed++;
     } total++;
 
-    // ´ú¸Õ 7: ­p¼Æ¾¹¶W¹L 254
+    // æ¸¬è©¦ 7: è¨ˆæ•¸å™¨è¶…é 254
     std::vector<unsigned char> long_run(256, 'A');
     std::vector<unsigned char> long_run_compressed = { 0xB4, 'A', 254, 'A', 'A' };
     if (run_test("BYTE: Count > 254", 1, long_run, long_run_compressed)) { passed++; } total++;
@@ -154,54 +154,54 @@ int run_comp_test() {
     // ===               WORD (unit_size = 2)              ===
     // =======================================================
 
-    // ´ú¸Õ 8: °ò¥» WORD RLE
+    // æ¸¬è©¦ 8: åŸºæœ¬ WORD RLE
     if (run_test("WORD: Basic Run", 2,
         { 0x01, 0x02, 0x03, 0x04, 0x03, 0x04, 0x03, 0x04, 0x05, 0x06 },
         { 0x01, 0x02, 0xB4, 0xB4, 0x03, 0x04, 0x03, 0x00, 0x05, 0x06 })) {
         passed++;
     } total++;
-    // 0x0304 ¥X²{ 3 ¦¸¡C À£ÁY«á¬° marker(B4B4), value(0304), count(0003) -> ¤pºİ§Ç
+    // 0x0304 å‡ºç¾ 3 æ¬¡ã€‚ å£“ç¸®å¾Œç‚º marker(B4B4), value(0304), count(0003) -> å°ç«¯åº
 
-// ´ú¸Õ 9: ³B²z WORD ¼Ğ°O 0xB4B4
+// æ¸¬è©¦ 9: è™•ç† WORD æ¨™è¨˜ 0xB4B4
     if (run_test("WORD: Contains Marker", 2,
         { 0x11, 0x22, 0xB4, 0xB4, 0x33, 0x44 },
         { 0x11, 0x22, 0xB4, 0xB4, 0xB4, 0xB4, 0x33, 0x44 })) {
         passed++;
     } total++;
 
-    // ´ú¸Õ 10: ¿é¤Jªø«×¬°©_¼Æ (©¿²¤³Ì«á¤@­Ó byte)
+    // æ¸¬è©¦ 10: è¼¸å…¥é•·åº¦ç‚ºå¥‡æ•¸ (å¿½ç•¥æœ€å¾Œä¸€å€‹ byte)
     if (run_test("WORD: Odd Length Input", 2,
         { 'A', 'B', 'C', 'D', 'E' },
         { 'A', 'B', 'C', 'D' })) {
         passed++;
-    } total++; // 'E' ³Q©¿²¤
+    } total++; // 'E' è¢«å¿½ç•¥
 
 
     // =======================================================
     // ===              DWORD (unit_size = 4)              ===
     // =======================================================
 
-    // ´ú¸Õ 11: °ò¥» DWORD RLE
+    // æ¸¬è©¦ 11: åŸºæœ¬ DWORD RLE
     if (run_test("DWORD: Basic Run", 4,
         { 0x01, 0x02, 0x03, 0x04, 0x01, 0x02, 0x03, 0x04, 0x01, 0x02, 0x03, 0x04, 0x05, 0x06, 0x07, 0x08 },
         { 0xB4, 0xB4, 0xB4, 0xB4, 0x01, 0x02, 0x03, 0x04, 0x03, 0x00, 0x00, 0x00, 0x05, 0x06, 0x07, 0x08 })) {
         passed++;
     } total++;
-    // 0x04030201 ¥X²{ 3 ¦¸¡C À£ÁY«á¬° marker, value, count(3) -> ¤pºİ§Ç
+    // 0x04030201 å‡ºç¾ 3 æ¬¡ã€‚ å£“ç¸®å¾Œç‚º marker, value, count(3) -> å°ç«¯åº
 
-// ´ú¸Õ 12: ³B²z DWORD ¼Ğ°O 0xB4B4B4B4
+// æ¸¬è©¦ 12: è™•ç† DWORD æ¨™è¨˜ 0xB4B4B4B4
     if (run_test("DWORD: Contains Marker", 4,
         { 0x11, 0x22, 0x33, 0x44, 0xB4, 0xB4, 0xB4, 0xB4, 0x55, 0x66, 0x77, 0x88 },
         { 0x11, 0x22, 0x33, 0x44, 0xB4, 0xB4, 0xB4, 0xB4, 0xB4, 0xB4, 0xB4, 0xB4, 0x55, 0x66, 0x77, 0x88 })) {
         passed++;
     } total++;
 
-    // ´ú¸Õ 13: ¿é¤Jªø«×¤£¬° 4 ªº­¿¼Æ
+    // æ¸¬è©¦ 13: è¼¸å…¥é•·åº¦ä¸ç‚º 4 çš„å€æ•¸
     if (run_test("DWORD: Non-4-byte aligned", 4,
         { 0x01, 0x02, 0x03, 0x04, 0x05, 0x06, 0x07, 0x08, 0x09, 0x0A },
         { 0x01, 0x02, 0x03, 0x04, 0x05, 0x06, 0x07, 0x08 })) {
         passed++;
-    } total++; // ³Ì«á¨â­Ó byte ³Q©¿²¤
+    } total++; // æœ€å¾Œå…©å€‹ byte è¢«å¿½ç•¥
 
 
     // --- Final Report ---

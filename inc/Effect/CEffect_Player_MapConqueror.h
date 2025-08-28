@@ -2,39 +2,39 @@
 
 #include "Effect/CEffectBase.h"
 
-// «e¦V«Å§i
+// å‰å‘å®£å‘Š
 class ClientCharacter;
 
 /**
  * @class CEffect_Player_MapConqueror
- * @brief ¥Nªíª±®a§@¬°¦a¹Ï¦û»âªÌªº«ùÄò©Ê¥úÀô¯S®Ä¡C
+ * @brief ä»£è¡¨ç©å®¶ä½œç‚ºåœ°åœ–ä½”é ˜è€…çš„æŒçºŒæ€§å…‰ç’°ç‰¹æ•ˆã€‚
  *
- * Ä~©Ó¦Û CEffectBase¡A¬O¤@­Ó¸òÀH¨¤¦â¼½©ñªº°Êµe¯S®Ä¡A
- * ¨ä¥Í©R¶g´Á¥Ñ¨¤¦â¬O§_¤´¬°¦a¹Ï¦û»âªÌ°ÊºA±±¨î¡C
+ * ç¹¼æ‰¿è‡ª CEffectBaseï¼Œæ˜¯ä¸€å€‹è·Ÿéš¨è§’è‰²æ’­æ”¾çš„å‹•ç•«ç‰¹æ•ˆï¼Œ
+ * å…¶ç”Ÿå‘½é€±æœŸç”±è§’è‰²æ˜¯å¦ä»ç‚ºåœ°åœ–ä½”é ˜è€…å‹•æ…‹æ§åˆ¶ã€‚
  */
 class CEffect_Player_MapConqueror : public CEffectBase {
 public:
     CEffect_Player_MapConqueror();
     virtual ~CEffect_Player_MapConqueror();
 
-    // --- µêÀÀ¨ç¦¡ÂĞ¼g ---
+    // --- è™›æ“¬å‡½å¼è¦†å¯« ---
 
-    /// @brief ®Ú¾Ú¨¤¦â¬O§_¤´¬°¦a¹Ï¦û»âªÌ¨Ó¨M©w¬O§_´£«e²×¤î¯S®Ä¡C
+    /// @brief æ ¹æ“šè§’è‰²æ˜¯å¦ä»ç‚ºåœ°åœ–ä½”é ˜è€…ä¾†æ±ºå®šæ˜¯å¦æå‰çµ‚æ­¢ç‰¹æ•ˆã€‚
     virtual bool FrameProcess(float fElapsedTime) override;
 
-    /// @brief ·Ç³ÆÃ¸»s«eªºÅŞ¿è§ó·s¡A¦P¨B¾Ö¦³ªÌªº¦ì¸m¡C
+    /// @brief æº–å‚™ç¹ªè£½å‰çš„é‚è¼¯æ›´æ–°ï¼ŒåŒæ­¥æ“æœ‰è€…çš„ä½ç½®ã€‚
     virtual void Process() override;
 
-    /// @brief Ã¸»s¯S®Ä¡C
+    /// @brief ç¹ªè£½ç‰¹æ•ˆã€‚
     virtual void Draw() override;
 
-    // --- ±M¦³¨ç¦¡ ---
+    // --- å°ˆæœ‰å‡½å¼ ---
 
-    /// @brief ³]©w¯S®Ä¡C
-    /// @param pOwner ­nªş¥[¯S®Äªº¨¤¦â¡C
+    /// @brief è¨­å®šç‰¹æ•ˆã€‚
+    /// @param pOwner è¦é™„åŠ ç‰¹æ•ˆçš„è§’è‰²ã€‚
     void SetEffect(ClientCharacter* pOwner);
 
 protected:
-    // --- ¦¨­ûÅÜ¼Æ ---
-    ClientCharacter* m_pOwnerCharacter; // ¦ì²¾ +132 (0x84)
+    // --- æˆå“¡è®Šæ•¸ ---
+    ClientCharacter* m_pOwnerCharacter; // ä½ç§» +132 (0x84)
 };

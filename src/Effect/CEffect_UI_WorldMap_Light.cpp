@@ -2,66 +2,66 @@
 #include "Effect/CEAManager.h"
 #include "global.h"
 
-// ¹ïÀ³¤Ï²ÕÄ¶½X: 0x00532FC0
+// å°æ‡‰åçµ„è­¯ç¢¼: 0x00532FC0
 CEffect_UI_WorldMap_Light::CEffect_UI_WorldMap_Light()
     : m_bIsFinished(false), m_nDisableFlag(0)
 {
-    // CEffectBase ªº«Øºc¨ç¦¡·|³Q¦Û°Ê©I¥s
+    // CEffectBase çš„å»ºæ§‹å‡½å¼æœƒè¢«è‡ªå‹•å‘¼å«
 
-    // ¦V CEAManager ½Ğ¨D¯S®Ä¼Æ¾Ú
-    // ¯S®Ä ID: 69, ÀÉ®×¦WºÙ: "Effect/map_face01.ea"
+    // å‘ CEAManager è«‹æ±‚ç‰¹æ•ˆæ•¸æ“š
+    // ç‰¹æ•ˆ ID: 69, æª”æ¡ˆåç¨±: "Effect/map_face01.ea"
     CEAManager::GetInstance()->GetEAData(69, "Effect/map_face01.ea", &m_ccaEffect);
 
-    // ³]©w¼v®æ®É¶¡¨Ã´`Àô¼½©ñ°Êµe
+    // è¨­å®šå½±æ ¼æ™‚é–“ä¸¦å¾ªç’°æ’­æ”¾å‹•ç•«
     m_ccaEffect.SetFrameTime();
-    m_ccaEffect.Play(0, true); // Play(..., 0, 1) -> ´`Àô¼½©ñ
+    m_ccaEffect.Play(0, true); // Play(..., 0, 1) -> å¾ªç’°æ’­æ”¾
 }
 
-// ¹ïÀ³¤Ï²ÕÄ¶½X: 0x00533060
+// å°æ‡‰åçµ„è­¯ç¢¼: 0x00533060
 CEffect_UI_WorldMap_Light::~CEffect_UI_WorldMap_Light()
 {
 }
 
-// ¹ïÀ³¤Ï²ÕÄ¶½X: 0x00533070
+// å°æ‡‰åçµ„è­¯ç¢¼: 0x00533070
 void CEffect_UI_WorldMap_Light::SetEffect(float x, float y)
 {
-    // --- ®Ö¤ßÅŞ¿è¡Gª½±µ³]©w CCAEffect ªº¿Ã¹õ®y¼Ğ ---
-    // ­ì©l½X: *((float *)this + 12) = a2;
+    // --- æ ¸å¿ƒé‚è¼¯ï¼šç›´æ¥è¨­å®š CCAEffect çš„è¢å¹•åº§æ¨™ ---
+    // åŸå§‹ç¢¼: *((float *)this + 12) = a2;
     //         *((float *)this + 13) = a3;
     m_ccaEffect.SetPosition(x, y);
 }
 
-// ¹ïÀ³¤Ï²ÕÄ¶½X: 0x00533090
+// å°æ‡‰åçµ„è­¯ç¢¼: 0x00533090
 bool CEffect_UI_WorldMap_Light::FrameProcess(float fElapsedTime)
 {
-    // §ó·s¤º³¡°Êµeªº¼v®æ
+    // æ›´æ–°å…§éƒ¨å‹•ç•«çš„å½±æ ¼
     m_ccaEffect.FrameProcess(fElapsedTime);
 
-    // ªğ¦^¥Í©R¶g´ÁºX¼Ğ¡A¥Ñ¥~³¡ÅŞ¿è¨M©w¦ó®Éµ²§ô
+    // è¿”å›ç”Ÿå‘½é€±æœŸæ——æ¨™ï¼Œç”±å¤–éƒ¨é‚è¼¯æ±ºå®šä½•æ™‚çµæŸ
     return m_bIsFinished;
 }
 
-// ¹ïÀ³¤Ï²ÕÄ¶½X: 0x005330B0
+// å°æ‡‰åçµ„è­¯ç¢¼: 0x005330B0
 void CEffect_UI_WorldMap_Light::Process()
 {
-    // ª½±µ±N³B²z¥ô°È©e°Uµ¹¤º³¡ªº CCAEffect
-    // ¦]¬°®y¼Ğ¤w¦b SetEffect ¤¤³]©w¡AµL»İ¦A¦¸§ó·s
+    // ç›´æ¥å°‡è™•ç†ä»»å‹™å§”è¨—çµ¦å…§éƒ¨çš„ CCAEffect
+    // å› ç‚ºåº§æ¨™å·²åœ¨ SetEffect ä¸­è¨­å®šï¼Œç„¡éœ€å†æ¬¡æ›´æ–°
     m_ccaEffect.Process();
 
-    // UI ¯S®ÄÁ`¬O¥i¨£
+    // UI ç‰¹æ•ˆç¸½æ˜¯å¯è¦‹
     m_bIsVisible = TRUE;
 }
 
-// ¹ïÀ³¤Ï²ÕÄ¶½X: 0x005330C0
+// å°æ‡‰åçµ„è­¯ç¢¼: 0x005330C0
 void CEffect_UI_WorldMap_Light::Draw()
 {
-    // ª½±µ±NÃ¸»s¥ô°È©e°Uµ¹¤º³¡ªº CCAEffect ª«¥ó
+    // ç›´æ¥å°‡ç¹ªè£½ä»»å‹™å§”è¨—çµ¦å…§éƒ¨çš„ CCAEffect ç‰©ä»¶
     m_ccaEffect.Draw();
 }
 
-// ¹ïÀ³¤Ï²ÕÄ¶½X: 0x005330D0
+// å°æ‡‰åçµ„è­¯ç¢¼: 0x005330D0
 void CEffect_UI_WorldMap_Light::SetDisable(int disableFlag)
 {
-    // ³]©w¤@­Ó¥¼ª¾ªººX¼Ğ¡A¨ä¥Î³~¦b´£¨Ñªºµ{¦¡½X¤¤¥¼³Q´¦¥Ü
+    // è¨­å®šä¸€å€‹æœªçŸ¥çš„æ——æ¨™ï¼Œå…¶ç”¨é€”åœ¨æä¾›çš„ç¨‹å¼ç¢¼ä¸­æœªè¢«æ­ç¤º
     m_nDisableFlag = disableFlag;
 }

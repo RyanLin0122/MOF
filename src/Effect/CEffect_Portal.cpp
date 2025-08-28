@@ -1,72 +1,72 @@
 #include "Effect/CEffect_Portal.h"
 #include "Effect/CEAManager.h"
 #include "Effect/CEffectmanager.h"
-#include "Effect/cltMoFC_EffectKindInfo.h" // »İ­n¯S®ÄºØÃş¸ê°TºŞ²z¾¹
+#include "Effect/cltMoFC_EffectKindInfo.h" // éœ€è¦ç‰¹æ•ˆç¨®é¡è³‡è¨Šç®¡ç†å™¨
 #include "global.h"
 
 CEffect_Portal::CEffect_Portal()
     : m_bIsFinished(false)
 {
-    // CEffectBase ªº«Øºc¨ç¦¡·|³Q¦Û°Ê©I¥s
+    // CEffectBase çš„å»ºæ§‹å‡½å¼æœƒè¢«è‡ªå‹•å‘¼å«
 }
 
 CEffect_Portal::~CEffect_Portal()
 {
 }
 
-// ¹ïÀ³¤Ï²ÕÄ¶½X: 0x00537930
+// å°æ‡‰åçµ„è­¯ç¢¼: 0x00537930
 void CEffect_Portal::SetEffect(char* szEffectName, float x, float y)
 {
-    // ¨BÆJ 1: ®Ú¾Ú¦WºÙ¬d§ä¯S®Ä¸ê°T
+    // æ­¥é©Ÿ 1: æ ¹æ“šåç¨±æŸ¥æ‰¾ç‰¹æ•ˆè³‡è¨Š
     stEffectKindInfo* pKindInfo = CEffectManager::GetInstance()->g_clEffectKindInfo.GetEffectKindInfo(szEffectName);
     if (!pKindInfo) {
-        m_bIsFinished = true; // ¦pªG§ä¤£¨ì¸ê·½¡Aª½±µ¼Ğ°O¬°µ²§ô
+        m_bIsFinished = true; // å¦‚æœæ‰¾ä¸åˆ°è³‡æºï¼Œç›´æ¥æ¨™è¨˜ç‚ºçµæŸ
         return;
     }
 
-    // ¨BÆJ 2: ºc«Ø§¹¾ãªºÀÉ®×¸ô®|
+    // æ­¥é©Ÿ 2: æ§‹å»ºå®Œæ•´çš„æª”æ¡ˆè·¯å¾‘
     char szFullPath[256];
     sprintf_s(szFullPath, sizeof(szFullPath), "Effect/%s", pKindInfo->szFileName);
 
-    // ¨BÆJ 3: ¸ü¤J¯S®Ä¼Æ¾Ú¨Ã¶}©l¼½©ñ
+    // æ­¥é©Ÿ 3: è¼‰å…¥ç‰¹æ•ˆæ•¸æ“šä¸¦é–‹å§‹æ’­æ”¾
     CEAManager::GetInstance()->GetEAData(pKindInfo->usKindID, szFullPath, &m_ccaEffect);
     m_ccaEffect.SetFrameTime();
-    m_ccaEffect.Play(0, true); // ¶Ç°eªù³q±`¬O´`Àô¼½©ñªº
+    m_ccaEffect.Play(0, true); // å‚³é€é–€é€šå¸¸æ˜¯å¾ªç’°æ’­æ”¾çš„
 
-    // ¨BÆJ 4: ³]©w¯S®Ä¦ì¸m©Mªì©lª¬ºA
+    // æ­¥é©Ÿ 4: è¨­å®šç‰¹æ•ˆä½ç½®å’Œåˆå§‹ç‹€æ…‹
     m_fCurrentPosX = x;
     m_fCurrentPosY = y;
     m_bIsFinished = false;
 }
 
-// ¹ïÀ³¤Ï²ÕÄ¶½X: 0x005379D0
+// å°æ‡‰åçµ„è­¯ç¢¼: 0x005379D0
 bool CEffect_Portal::FrameProcess(float fElapsedTime)
 {
-    // §ó·s¤º³¡°Êµeªº¼v®æ
+    // æ›´æ–°å…§éƒ¨å‹•ç•«çš„å½±æ ¼
     m_ccaEffect.FrameProcess(fElapsedTime);
 
-    // ªğ¦^¥Í©R¶g´ÁºX¼Ğ¡A¥Ñ¥~³¡ÅŞ¿è¨M©w¦ó®Éµ²§ô
+    // è¿”å›ç”Ÿå‘½é€±æœŸæ——æ¨™ï¼Œç”±å¤–éƒ¨é‚è¼¯æ±ºå®šä½•æ™‚çµæŸ
     return m_bIsFinished;
 }
 
-// ¹ïÀ³¤Ï²ÕÄ¶½X: 0x005379F0
+// å°æ‡‰åçµ„è­¯ç¢¼: 0x005379F0
 void CEffect_Portal::Process()
 {
-    // ±N¥@¬É®y¼ĞÂà´«¬°¿Ã¹õ®y¼Ğ
+    // å°‡ä¸–ç•Œåº§æ¨™è½‰æ›ç‚ºè¢å¹•åº§æ¨™
     float screenX = m_fCurrentPosX - static_cast<float>(g_Game_System_Info.ScreenX);
     float screenY = m_fCurrentPosY - static_cast<float>(g_Game_System_Info.ScreenY);
 
-    // ¶i¦æµô°Å§PÂ_
+    // é€²è¡Œè£å‰ªåˆ¤æ–·
     m_bIsVisible = IsCliping(screenX, 0.0f);
 
     if (m_bIsVisible) {
-        // §ó·s¤º³¡ CCAEffect ªºª¬ºA
+        // æ›´æ–°å…§éƒ¨ CCAEffect çš„ç‹€æ…‹
         m_ccaEffect.SetPosition(screenX, screenY);
         m_ccaEffect.Process();
     }
 }
 
-// ¹ïÀ³¤Ï²ÕÄ¶½X: 0x00537A30
+// å°æ‡‰åçµ„è­¯ç¢¼: 0x00537A30
 void CEffect_Portal::Draw()
 {
     if (m_bIsVisible) {

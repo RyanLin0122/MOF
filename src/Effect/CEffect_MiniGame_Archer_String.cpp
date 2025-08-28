@@ -4,7 +4,7 @@
 #include "Image/CDeviceManager.h"
 #include "global.h"
 
-// ¹ïÀ³¤Ï²ÕÄ¶½X: 0x005384D0
+// å°æ‡‰åçµ„è­¯ç¢¼: 0x005384D0
 CEffect_MiniGame_Archer_String::CEffect_MiniGame_Archer_String()
 {
     m_pImage = nullptr;
@@ -19,12 +19,12 @@ CEffect_MiniGame_Archer_String::CEffect_MiniGame_Archer_String()
     m_FrameSkip.m_fTimePerFrame = 1.0f / 60.0f;
 }
 
-// ¹ïÀ³¤Ï²ÕÄ¶½X: 0x00538560
+// å°æ‡‰åçµ„è­¯ç¢¼: 0x00538560
 CEffect_MiniGame_Archer_String::~CEffect_MiniGame_Archer_String()
 {
 }
 
-// ¹ïÀ³¤Ï²ÕÄ¶½X: 0x00538580
+// å°æ‡‰åçµ„è­¯ç¢¼: 0x00538580
 void CEffect_MiniGame_Archer_String::SetEffect(char cFrameIndex, float x, float y)
 {
     m_cFrameIndex = cFrameIndex;
@@ -32,7 +32,7 @@ void CEffect_MiniGame_Archer_String::SetEffect(char cFrameIndex, float x, float 
     m_fCurrentPosY = y;
 }
 
-// ¹ïÀ³¤Ï²ÕÄ¶½X: 0x005385B0
+// å°æ‡‰åçµ„è­¯ç¢¼: 0x005385B0
 bool CEffect_MiniGame_Archer_String::FrameProcess(float fElapsedTime)
 {
     int frameCount = 0;
@@ -41,21 +41,21 @@ bool CEffect_MiniGame_Archer_String::FrameProcess(float fElapsedTime)
     }
     float fFrameCount = static_cast<float>(frameCount);
 
-    if (m_ucState == 0) { // ¶¥¬q 0: ©ñ¤j
+    if (m_ucState == 0) { // éšæ®µ 0: æ”¾å¤§
         m_fScale += fFrameCount * 5.0f;
         if (m_fScale >= 110.0f) {
             m_fScale = 110.0f;
             m_ucState = 1;
         }
     }
-    else if (m_ucState == 1) { // ¶¥¬q 1: ÁY¤p
+    else if (m_ucState == 1) { // éšæ®µ 1: ç¸®å°
         m_fScale -= fFrameCount;
         if (m_fScale <= 100.0f) {
             m_fScale = 100.0f;
             m_ucState = 2;
         }
     }
-    else if (m_ucState == 2) { // ¶¥¬q 2: ²H¥X¤Wº}
+    else if (m_ucState == 2) { // éšæ®µ 2: æ·¡å‡ºä¸Šæ¼‚
         m_fAlpha -= fFrameCount * 5.0f;
         m_fCurrentPosY -= fFrameCount;
     }
@@ -63,16 +63,16 @@ bool CEffect_MiniGame_Archer_String::FrameProcess(float fElapsedTime)
     return m_fAlpha < 0.0f;
 }
 
-// ¹ïÀ³¤Ï²ÕÄ¶½X: 0x005386E0
+// å°æ‡‰åçµ„è­¯ç¢¼: 0x005386E0
 void CEffect_MiniGame_Archer_String::Process()
 {
-    // ¦¹¯S®Ä¤£¦Ò¼{Äá¼v¾÷®y¼Ğ¡Aª½±µ¦b UI ¼hÃ¸»s
+    // æ­¤ç‰¹æ•ˆä¸è€ƒæ…®æ”å½±æ©Ÿåº§æ¨™ï¼Œç›´æ¥åœ¨ UI å±¤ç¹ªè£½
 
-    // Àò¨ú GameImage¡A¸ê·½ ID: 0x1000009Cu
+    // ç²å– GameImageï¼Œè³‡æº ID: 0x1000009Cu
     m_pImage = cltImageManager::GetInstance()->GetGameImage(7, 0x1000009Cu, 0, 1);
 
     if (m_pImage) {
-        // ®Ú¾Ú¤å¦r¹Ï¤ùªº¼e«×¶i¦æ©~¤¤¹ï»ô
+        // æ ¹æ“šæ–‡å­—åœ–ç‰‡çš„å¯¬åº¦é€²è¡Œå±…ä¸­å°é½Š
         RECT rect;
         m_pImage->SetBlockID(m_cFrameIndex);
         m_pImage->GetBlockRect(&rect);
@@ -88,7 +88,7 @@ void CEffect_MiniGame_Archer_String::Process()
     }
 }
 
-// ¹ïÀ³¤Ï²ÕÄ¶½X: 0x005387C0
+// å°æ‡‰åçµ„è­¯ç¢¼: 0x005387C0
 void CEffect_MiniGame_Archer_String::Draw()
 {
     if (m_pImage && m_pImage->IsInUse())

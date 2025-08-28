@@ -6,10 +6,10 @@
 #include <cstdlib>
 #include <cmath>
 
-// °²³]ªº¥ş°ìÅÜ¼Æ
+// å‡è¨­çš„å…¨åŸŸè®Šæ•¸
 extern GameSystemInfo g_Game_System_Info;
 
-// ¹ïÀ³¤Ï²ÕÄ¶½X: 0x005344C0
+// å°æ‡‰åçµ„è­¯ç¢¼: 0x005344C0
 CEffect_Field_CriticalNumber::CEffect_Field_CriticalNumber()
 {
     m_pNumberImages = nullptr;
@@ -32,25 +32,25 @@ CEffect_Field_CriticalNumber::CEffect_Field_CriticalNumber()
     m_FrameSkip.m_fTimePerFrame = 1.0f / 60.0f;
 }
 
-// ¹ïÀ³¤Ï²ÕÄ¶½X: 0x00534580
+// å°æ‡‰åçµ„è­¯ç¢¼: 0x00534580
 CEffect_Field_CriticalNumber::~CEffect_Field_CriticalNumber()
 {
     delete[] m_pNumberImages;
 }
 
-// ¹ïÀ³¤Ï²ÕÄ¶½X: 0x005345C0
+// å°æ‡‰åçµ„è­¯ç¢¼: 0x005345C0
 void CEffect_Field_CriticalNumber::SetEffect(int damageValue, float x, float y, int type)
 {
     char first_digit_frame, plus_frame, minus_frame;
 
-    // ®Ú¾ÚÃş«¬¨M©w¨Ï¥Îªº¼Æ¦r¹Ï¼Ë
-    if (type == 0) { // ª±®a¹ï©Çª« (¶À¦â¼Æ¦r)
+    // æ ¹æ“šé¡å‹æ±ºå®šä½¿ç”¨çš„æ•¸å­—åœ–æ¨£
+    if (type == 0) { // ç©å®¶å°æ€ªç‰© (é»ƒè‰²æ•¸å­—)
         first_digit_frame = 24;
         minus_frame = 35;
         plus_frame = 34;
         m_usTextImageFrame = 60; // "CRITICAL!"
     }
-    else { // ©Çª«¹ïª±®a (¬õ¦â¼Æ¦r)
+    else { // æ€ªç‰©å°ç©å®¶ (ç´…è‰²æ•¸å­—)
         first_digit_frame = 64;
         minus_frame = 75;
         plus_frame = 74;
@@ -59,7 +59,7 @@ void CEffect_Field_CriticalNumber::SetEffect(int damageValue, float x, float y, 
 
     int absValue = abs(damageValue);
 
-    // --- ±N¼Æ¦r©î¸Ñ¬°¼v®æ ID ---
+    // --- å°‡æ•¸å­—æ‹†è§£ç‚ºå½±æ ¼ ID ---
     if (absValue == 0) {
         m_ucDigitFrames[m_cDigitCount++] = first_digit_frame;
     }
@@ -71,7 +71,7 @@ void CEffect_Field_CriticalNumber::SetEffect(int damageValue, float x, float y, 
         }
     }
 
-    // ¥[¤J¥¿­t¸¹
+    // åŠ å…¥æ­£è² è™Ÿ
     m_ucDigitFrames[m_cDigitCount++] = (damageValue >= 0) ? plus_frame : minus_frame;
 
     m_pNumberImages = new (std::nothrow) GameImage * [m_cDigitCount];
@@ -79,7 +79,7 @@ void CEffect_Field_CriticalNumber::SetEffect(int damageValue, float x, float y, 
     m_fInitialPosX = x;
     m_fCurrentPosY = y;
 
-    // ¹w¥ı­pºâÁ`¼e«×¥H¶i¦æ©~¤¤
+    // é å…ˆè¨ˆç®—ç¸½å¯¬åº¦ä»¥é€²è¡Œå±…ä¸­
     GameImage* pTempImage = cltImageManager::GetInstance()->GetGameImage(7, 0xB0005A4u, 0, 1);
     if (pTempImage) {
         for (int i = 0; i < m_cDigitCount; ++i) {
@@ -90,10 +90,10 @@ void CEffect_Field_CriticalNumber::SetEffect(int damageValue, float x, float y, 
         }
         cltImageManager::GetInstance()->ReleaseGameImage(pTempImage);
     }
-    m_fTotalWidth *= 0.5f; // ¨ú¥b¼e
+    m_fTotalWidth *= 0.5f; // å–åŠå¯¬
 }
 
-// ¹ïÀ³¤Ï²ÕÄ¶½X: 0x00534750
+// å°æ‡‰åçµ„è­¯ç¢¼: 0x00534750
 bool CEffect_Field_CriticalNumber::FrameProcess(float fElapsedTime)
 {
     int frameCount = 0;
@@ -103,21 +103,21 @@ bool CEffect_Field_CriticalNumber::FrameProcess(float fElapsedTime)
 
     float fFrameCount = static_cast<float>(frameCount);
 
-    if (m_ucState == 0) { // ¶¥¬q 0: ©ñ¤j
+    if (m_ucState == 0) { // éšæ®µ 0: æ”¾å¤§
         m_fScale += fFrameCount * 40.0f;
         if (m_fScale >= 300.0f) {
             m_fScale = 300.0f;
             m_ucState = 1;
         }
     }
-    else if (m_ucState == 1) { // ¶¥¬q 1: ÁY¤p
+    else if (m_ucState == 1) { // éšæ®µ 1: ç¸®å°
         m_fScale -= fFrameCount * 10.0f;
         if (m_fScale <= 80.0f) {
             m_fScale = 80.0f;
             m_ucState = 2;
         }
     }
-    else if (m_ucState == 2) { // ¶¥¬q 2: ²H¥X¤Wº}
+    else if (m_ucState == 2) { // éšæ®µ 2: æ·¡å‡ºä¸Šæ¼‚
         m_fAlpha -= fFrameCount * 5.0f;
         m_fCurrentPosY -= fFrameCount * 1.5f;
     }
@@ -125,7 +125,7 @@ bool CEffect_Field_CriticalNumber::FrameProcess(float fElapsedTime)
     return m_fAlpha < 0.0f;
 }
 
-// ¹ïÀ³¤Ï²ÕÄ¶½X: 0x00534940
+// å°æ‡‰åçµ„è­¯ç¢¼: 0x00534940
 void CEffect_Field_CriticalNumber::Process()
 {
     float screenX = m_fInitialPosX - static_cast<float>(g_Game_System_Info.ScreenX);
@@ -135,7 +135,7 @@ void CEffect_Field_CriticalNumber::Process()
         float screenY = m_fCurrentPosY - static_cast<float>(g_Game_System_Info.ScreenY);
         float currentX = screenX - m_fTotalWidth;
 
-        // ³B²z¼Æ¦r
+        // è™•ç†æ•¸å­—
         for (int i = 0; i < m_cDigitCount; ++i) {
             m_pNumberImages[i] = cltImageManager::GetInstance()->GetGameImage(7, 0xB0005A4u, 0, 1);
             if (m_pNumberImages[i]) {
@@ -150,16 +150,16 @@ void CEffect_Field_CriticalNumber::Process()
             }
         }
 
-        // ³B²z­I´º°{¥ú
+        // è™•ç†èƒŒæ™¯é–ƒå…‰
         m_pFlashImage = cltImageManager::GetInstance()->GetGameImage(7, 0xB0005A4u, 0, 1);
         if (m_pFlashImage) {
-            m_pFlashImage->SetBlockID(63); // °{¥ú¼v®æ
+            m_pFlashImage->SetBlockID(63); // é–ƒå…‰å½±æ ¼
             m_pFlashImage->SetPosition(screenX, screenY - 25.0f);
-            m_pFlashImage->SetAlpha(static_cast<unsigned int>(m_fAlpha * 0.5f)); // ¥b³z©ú
+            m_pFlashImage->SetAlpha(static_cast<unsigned int>(m_fAlpha * 0.5f)); // åŠé€æ˜
             m_pFlashImage->SetScale(static_cast<int>(m_fScale));
         }
 
-        // ³B²z«e´º¤å¦r
+        // è™•ç†å‰æ™¯æ–‡å­—
         m_pTextImage = cltImageManager::GetInstance()->GetGameImage(7, 0xB0005A4u, 0, 1);
         if (m_pTextImage) {
             m_pTextImage->SetBlockID(m_usTextImageFrame);
@@ -170,7 +170,7 @@ void CEffect_Field_CriticalNumber::Process()
     }
 }
 
-// ¹ïÀ³¤Ï²ÕÄ¶½X: 0x00534C00
+// å°æ‡‰åçµ„è­¯ç¢¼: 0x00534C00
 void CEffect_Field_CriticalNumber::Draw()
 {
     if (!m_bIsVisible) return;
@@ -181,7 +181,7 @@ void CEffect_Field_CriticalNumber::Draw()
     if (m_pTextImage && m_pTextImage->IsInUse()) m_pTextImage->Draw();
 
     if (m_pNumberImages) {
-        // ±q«á©¹«eµe (­Ó¦ì¼Æ¥ıµe)
+        // å¾å¾Œå¾€å‰ç•« (å€‹ä½æ•¸å…ˆç•«)
         for (int i = 0; i < m_cDigitCount; ++i) {
             if (m_pNumberImages[i] && m_pNumberImages[i]->IsInUse()) {
                 m_pNumberImages[i]->Draw();
