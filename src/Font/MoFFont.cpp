@@ -367,6 +367,7 @@ void MoFFont::SetBlendType(unsigned char blendType) {
 
 // 對應反編譯碼: 0x0051C880
 void MoFFont::SetTextLineA(int x, int y, DWORD color, const char* text, char alignment, int clipLeft, int clipRight) {
+    CDeviceManager::GetInstance()->SetRenderState(D3DRS_ALPHABLENDENABLE, TRUE);
     if (color == 0xFFFFFFFF) { // 純白，不透明
         CDeviceManager::GetInstance()->SetRenderState(D3DRS_SRCBLEND, D3DBLEND_ONE); // 2
         CDeviceManager::GetInstance()->SetRenderState(D3DRS_DESTBLEND, D3DBLEND_ONE); // 2
@@ -389,20 +390,42 @@ void MoFFont::SetTextLineA(int x, int y, DWORD color, const char* text, char ali
     // 恢復預設混合模式
     CDeviceManager::GetInstance()->SetRenderState(D3DRS_SRCBLEND, D3DBLEND_SRCALPHA);
     CDeviceManager::GetInstance()->SetRenderState(D3DRS_DESTBLEND, D3DBLEND_INVSRCALPHA);
+    CDeviceManager::GetInstance()->SetRenderState(D3DRS_ALPHABLENDENABLE, FALSE);
 }
 
 // 對應反編譯碼: 0x0051D000
 void MoFFont::SetTextLineShadow(int x, int y, DWORD shadowColor, const char* text, char alignment) {
-    // 八個方向繪製陰影
-    SetTextLineA(x - 1, y, shadowColor, text, alignment, -1, -1);
-    SetTextLineA(x - 1, y - 1, shadowColor, text, alignment, -1, -1);
-    SetTextLineA(x, y - 1, shadowColor, text, alignment, -1, -1);
-    SetTextLineA(x + 1, y - 1, shadowColor, text, alignment, -1, -1);
-    SetTextLineA(x + 1, y, shadowColor, text, alignment, -1, -1);
-    SetTextLineA(x + 1, y + 1, shadowColor, text, alignment, -1, -1);
-    SetTextLineA(x, y + 1, shadowColor, text, alignment, -1, -1);
-    SetTextLineA(x - 1, y + 1, shadowColor, text, alignment, -1, -1);
+    if (g_bRenderStateLocked) return;
+
+    // 存舊狀態（含是否開啟AlphaBlend）
+    DWORD oldAlphaEnable, oldSrc, oldDst;
+    Device->GetRenderState(D3DRS_ALPHABLENDENABLE, &oldAlphaEnable);
+    Device->GetRenderState(D3DRS_SRCBLEND, &oldSrc);
+    Device->GetRenderState(D3DRS_DESTBLEND, &oldDst);
+
+    CDeviceManager::GetInstance()->SetRenderState(D3DRS_ALPHABLENDENABLE, TRUE);
+    // 暗化：Dst = Dst * (1 - SrcColor) + Src * 0
+    CDeviceManager::GetInstance()->SetRenderState(D3DRS_SRCBLEND, D3DBLEND_ZERO);
+    CDeviceManager::GetInstance()->SetRenderState(D3DRS_DESTBLEND, D3DBLEND_INVSRCCOLOR);
+
+    static const POINT off[8] = { {-2,0},{-2,-2},{0,-2},{2,-2},{2,0},{2,2},{0,2},{-2,2} };
+    // 用白色當「遮罩強度」；shadowColor 的 RGB 不影響暗化強度
+    for (auto& o : off) {
+        SetTextLine(x + o.x, y + o.y, 0xFFFFFFFF, text, alignment, -1, -1);
+    }
+
+    // 還想帶一點顏色調性（例如稍微帶灰）可以再補一層半透明黑：
+    // CDeviceManager::GetInstance()->SetRenderState(D3DRS_SRCBLEND,  D3DBLEND_SRCALPHA);
+    // CDeviceManager::GetInstance()->SetRenderState(D3DRS_DESTBLEND, D3DBLEND_INVSRCALPHA);
+    // for (auto& o : off) SetTextLine(x + o.x, y + o.y, shadowColor | 0x80000000, text, alignment, -1, -1);
+
+    // 還原狀態
+    CDeviceManager::GetInstance()->SetRenderState(D3DRS_SRCBLEND, oldSrc);
+    CDeviceManager::GetInstance()->SetRenderState(D3DRS_DESTBLEND, oldDst);
+    CDeviceManager::GetInstance()->SetRenderState(D3DRS_ALPHABLENDENABLE, oldAlphaEnable);
 }
+
+
 
 // 對應反編譯碼: 0x0051C9A0
 void MoFFont::SetTextBox(RECT* pRect, DWORD color, const char* text, int lineSpacing, char alignment, int unknownFlag) {
@@ -759,6 +782,10 @@ void MoFFont::DrawSegments(int x, int y, DWORD color, int align, int clipL, int 
         CDeviceManager::GetInstance()->SetTexture(0, seg->m_pFTInfo->m_pTexture);
         CDeviceManager::GetInstance()->SetFVF(GIVertex::FVF);
         CDeviceManager::GetInstance()->SetStreamSource(0, m_pVertexBuffer, 0, sizeof(GIVertex));
+
+        //CDeviceManager::GetInstance()->SetTextureStageState(0, D3DTSS_COLOROP, D3DTOP_MODULATE);
+        //CDeviceManager::GetInstance()->SetTextureStageState(0, D3DTSS_COLORARG1, D3DTA_TEXTURE);
+        //CDeviceManager::GetInstance()->SetTextureStageState(0, D3DTSS_COLORARG2, D3DTA_DIFFUSE);
 
         // 5) 繪製：四點 TRIANGLESTRIP -> 2 個三角形
         Device->DrawPrimitive(D3DPT_TRIANGLESTRIP, 0, 2);

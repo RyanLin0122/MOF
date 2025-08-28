@@ -43,7 +43,7 @@ HRESULT FontSystemTest::Initialize() {
     printf("  字型資訊 FontInfo.dat 載入成功。\n");
 
     // 4. 建立預設要使用的字型
-    if (!m_pFont->CreateMoFFont(g_pd3dDevice, "CharacterName")) {
+    if (!m_pFont->CreateMoFFont(g_pd3dDevice, "Notice")) {
         MessageBoxA(NULL, "MoFFont::CreateMoFFont 失敗!", "錯誤", MB_OK | MB_ICONERROR);
         return E_FAIL;
     }
@@ -74,7 +74,7 @@ void FontSystemTest::Render() {
     if (!m_pFont) return;
 
     // --- 測試案例 ---
-    m_pFont->SetBlendType(2);
+    m_pFont->SetBlendType(1);
     // 1. 基本單行文字 (使用預設字型 CharacterName)
     m_pFont->SetTextLine(50, 50, 0xFFFFFFFF, "Hello, MoFFont! This is the 'CharacterName' font (Tahoma 16).");
 
@@ -83,12 +83,12 @@ void FontSystemTest::Render() {
     m_pFont->SetTextLine(1230, 90, 0xFFFF0000, "Right Aligned", 2); // alignment=2 (右)
 
     // 3. 更換字型並繪製帶陰影的標題
-    m_pFont->SetFont("AbilityText");
-    m_pFont->SetTextLineShadow(50, 150, 0xFF303030, "中文可以嗎This is a Title with Shadow", 0);
-    m_pFont->SetTextLine(50, 180, 0xFFFFFF00, "This is a Title with Shadow", 0);
+    m_pFont->SetFont("CircleName");
+    m_pFont->SetTextLineShadow(50, 150, 0xFF303030, "This is a Title with Shadow", 0);
+    m_pFont->SetTextLineA(50, 150, 0xFFFFFF00, "This is a Title with Shadow", 0);
 
     // 4. TextBox 自動換行測試
-    m_pFont->SetFont("CharacterName");
+    m_pFont->SetFont("Notice");
     RECT textBox = { 50, 220, 550, 400 }; // left, top, right, bottom
 
     // 修正：使用字串拼接，確保所有字串在同一行或使用括號
@@ -109,5 +109,5 @@ void FontSystemTest::Render() {
     const char* chineseWelcome = "中文測試: 歡迎來到奇幻世界";
     const char* japaneseWelcome = "日本語テスト：ファンタジーの世界へようこそ";
     m_pFont->SetTextLine(50, 500, 0xFFFFFFAA, chineseWelcome);
-    m_pFont->SetTextLine(50, 530, 0xFFAAFFAA, japaneseWelcome);
+    m_pFont->SetTextLineA(50, 530, 0xFFAAFFAA, japaneseWelcome);
 }
