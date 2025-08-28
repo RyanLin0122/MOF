@@ -425,17 +425,20 @@ int APIENTRY  wWinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPWSTR lpCm
 			}
 			else
 			{
-				if (G_CURRENT_TEST == TEST_EFFECT)
+				// 累計 Frame 間隔
+				DWORD currentTime = timeGetTime();
+				float fElapsedTime = (currentTime - lastTime) / 1000.0f;
+				lastTime = currentTime;
+				// 執行 Update
+				if (G_CURRENT_TEST == TEST_EFFECT && g_pEffectTest)
 				{
-					DWORD currentTime = timeGetTime();
-					float fElapsedTime = (currentTime - lastTime) / 1000.0f;
-					lastTime = currentTime;
-
-					if (g_pEffectTest)
-					{
-						g_pEffectTest->Update(fElapsedTime);
-					}
+					g_pEffectTest->Update(fElapsedTime);
 				}
+				if (G_CURRENT_TEST == TEST_FONT && g_pFontTest)
+				{
+					g_pFontTest->Update(fElapsedTime);
+				}
+				// 執行 Render
 				Render();
 			}
 		}

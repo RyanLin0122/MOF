@@ -47,7 +47,7 @@ HRESULT FontSystemTest::Initialize() {
         MessageBoxA(NULL, "MoFFont::CreateMoFFont 失敗!", "錯誤", MB_OK | MB_ICONERROR);
         return E_FAIL;
     }
-    printf("  預設字型 'CharacterName' 建立成功。\n");
+    printf("  預設字型 建立成功。\n");
 
     // 5. 測試 GetTextLength
     printf("--- [Font Test] 測試文字測量 ---\n");
@@ -55,10 +55,6 @@ HRESULT FontSystemTest::Initialize() {
     m_pFont->GetTextLength(&width, &height, "BossMonsterName", "Measure This Text!");
     printf("  'Measure This Text!' (Title 字型) -> 寬度: %d, 高度: %d\n", width, height);
 
-    // 方法1：使用 UTF-8 編碼 (推薦)
-    //const char* chineseText = u8"這是一段中文測試";
-    //m_pFont->GetTextLength(&width, &height, "Normal", chineseText);
-    //printf("  '這是一段中文測試' (Normal 字型) -> 寬度: %d, 高度: %d\n", width, height);
     printf("--- [Font Test] 初始化完成 ---\n");
     return S_OK;
 }

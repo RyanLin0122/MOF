@@ -231,12 +231,6 @@ bool MoFFont::InitFontInfo(const char* fileName) {
                 strncpy_s(m_szNationCode, nation, _TRUNCATE);
                 nationSet = true;
             }
-            printf("[DEBUG InitFontInfo] Parsed Index %d: KeyName='%s', FaceName='%s', Height=%d, Weight=%d\n",
-                idx,
-                m_pFontInfoArray[idx].szKeyName,
-                m_pFontInfoArray[idx].wszFaceName,
-                m_pFontInfoArray[idx].nHeight,
-                m_pFontInfoArray[idx].nWeight);
             ++idx;
         }
 
@@ -459,7 +453,7 @@ void MoFFont::SetTextBox(RECT* pRect, DWORD color, const char* text, int lineSpa
             // 手動換行
             strncpy_s(lineBuffer, &text[lineStartIdx], currentIdx - lineStartIdx);
             lineBuffer[currentIdx - lineStartIdx] = '\0';
-            SetTextLine(currentX, currentY, color, lineBuffer, alignment);
+            SetTextLineA(currentX, currentY, color, lineBuffer, alignment);
 
             currentY += m_nFontHeight + lineSpacing;
             currentIdx++;
@@ -479,7 +473,7 @@ void MoFFont::SetTextBox(RECT* pRect, DWORD color, const char* text, int lineSpa
 
             strncpy_s(lineBuffer, &text[lineStartIdx], breakIdx - lineStartIdx);
             lineBuffer[breakIdx - lineStartIdx] = '\0';
-            SetTextLine(currentX, currentY, color, lineBuffer, alignment);
+            SetTextLineA(currentX, currentY, color, lineBuffer, alignment);
 
             currentY += m_nFontHeight + lineSpacing;
             currentIdx = (lastSpaceIdx != -1) ? breakIdx + 1 : breakIdx;
@@ -500,7 +494,7 @@ void MoFFont::SetTextBox(RECT* pRect, DWORD color, const char* text, int lineSpa
     if (lineStartIdx < currentIdx) {
         strncpy_s(lineBuffer, &text[lineStartIdx], currentIdx - lineStartIdx);
         lineBuffer[currentIdx - lineStartIdx] = '\0';
-        SetTextLine(currentX, currentY, color, lineBuffer, alignment);
+        SetTextLineA(currentX, currentY, color, lineBuffer, alignment);
     }
 
     SelectObject(hdc, oldFont);
@@ -695,17 +689,21 @@ static inline void BlitGlyphToAtlas(HDC hdc, int atlasX, int atlasY, const char*
 void MoFFont::DrawSegments(int x, int y, DWORD color, int align, int clipL, int clipR, TILInfo* pLine,
     /* 你的渲染資源 */ void* pDevice, void* pVB) {
     // 計算對齊位移：Left/Center/Right
-    printf("              - DrawSegments: Called. Preparing to render %d segments.\n", pLine->m_LineMgr.m_nCount);
     int totalWidth = pLine->m_nTextWidth;
     float xOffset = 0.0f;
     if (align == 1)      xOffset = float(-totalWidth / 2);
     else if (align == 2) xOffset = float(-totalWidth);
 
+    CDeviceManager::GetInstance()->SetSamplerState(0, D3DSAMP_MAGFILTER, D3DTEXF_POINT);
+    CDeviceManager::GetInstance()->SetSamplerState(0, D3DSAMP_MINFILTER, D3DTEXF_POINT);
+    CDeviceManager::GetInstance()->SetSamplerState(0, D3DSAMP_MIPFILTER, D3DTEXF_NONE);
+    CDeviceManager::GetInstance()->SetSamplerState(0, D3DSAMP_ADDRESSU, D3DTADDRESS_CLAMP);
+    CDeviceManager::GetInstance()->SetSamplerState(0, D3DSAMP_ADDRESSV, D3DTADDRESS_CLAMP);
+
     // 走訪每個 TLILInfo 片段，套用裁切並畫
     int segment_index = 0;
     for (TLILInfo* seg = pLine->m_LineMgr.m_pHead; seg; seg = seg->m_pNext) {
         if (!seg->m_pFTInfo || !seg->m_pFTInfo->m_pTexture) continue;
-        printf("                  - Drawing segment %d: Screen Pos(%.1f, %.1f), Width=%.1f\n", segment_index++, (x + xOffset + seg->m_fPosX), (y + seg->m_fPosY), seg->m_fWidth);
         // 片段螢幕座標（左上）
         float sx = x + xOffset + seg->m_fPosX;
         float sy = y + seg->m_fPosY;
@@ -713,7 +711,11 @@ void MoFFont::DrawSegments(int x, int y, DWORD color, int align, int clipL, int 
 
         float u1 = seg->m_fTexU1, v1 = seg->m_fTexV1;
         float u2 = seg->m_fTexU2, v2 = seg->m_fTexV2;
+        const float du = 0.5f / ATLAS_W;
+        const float dv = 0.5f / ATLAS_H;
 
+        u1 += du; v1 += dv;
+        u2 -= du; v2 -= dv;
         // --- 裁切（只有 clipL/clipR 都有效才啟用，依 Font.txt） ---
         if (clipL != -1 && clipR != -1) {
             // 左裁切
@@ -740,10 +742,10 @@ void MoFFont::DrawSegments(int x, int y, DWORD color, int align, int clipL, int 
         }
 
         // 1) 計算四個頂點的座標與 UV（此時 sx/sy/sw、u1/v1/u2/v2 已含對齊與裁切修正）
-        float left = sx;
-        float top = sy;
-        float right = sx + sw;
-        float bottom = sy + m_nFontHeight;
+        float left = sx - 0.5f;
+        float top = sy - 0.5f;
+        float right = sx + sw - 0.5f;
+        float bottom = sy + m_nFontHeight - 0.5f;
 
         // 2) 填入 4 個 GIVertex（順序採 TRIANGLESTRIP：LT, RT, LB, RB）
         m_QuadVertices[0].position_x = left;
@@ -789,10 +791,6 @@ void MoFFont::DrawSegments(int x, int y, DWORD color, int align, int clipL, int 
         CDeviceManager::GetInstance()->SetFVF(GIVertex::FVF);
         CDeviceManager::GetInstance()->SetStreamSource(0, m_pVertexBuffer, 0, sizeof(GIVertex));
 
-        //CDeviceManager::GetInstance()->SetTextureStageState(0, D3DTSS_COLOROP, D3DTOP_MODULATE);
-        //CDeviceManager::GetInstance()->SetTextureStageState(0, D3DTSS_COLORARG1, D3DTA_TEXTURE);
-        //CDeviceManager::GetInstance()->SetTextureStageState(0, D3DTSS_COLORARG2, D3DTA_DIFFUSE);
-
         // 5) 繪製：四點 TRIANGLESTRIP -> 2 個三角形
         Device->DrawPrimitive(D3DPT_TRIANGLESTRIP, 0, 2);
     }
@@ -817,9 +815,6 @@ void MoFFont::SetTextLine(int x, int y, DWORD color, const char* text, char alig
     MultiByteToWideChar(CP_UTF8, 0, text, -1, wideText, wideLen);
 
     // --- 步驟 2: 使用 Unicode 字串進行快取查找 ---
-    wprintf(L"\n[MOFFONT DEBUG] SetTextLine START for text: \"%s\"\n", wideText);
-    wprintf(L"              - Current Font: FaceName=%s, Height=%d\n", m_wszFaceName, m_nFontHeight);
-
     TILInfo* pCached = nullptr;
     for (TILInfo* it = m_TextCacheMgr.m_pHead; it; it = it->m_pNext) {
         if (it->m_pwszString &&
@@ -836,7 +831,6 @@ void MoFFont::SetTextLine(int x, int y, DWORD color, const char* text, char alig
 
     if (pCached) {
         // 快取命中：直接使用已有的幾何資料進行繪製
-        wprintf(L"              - Cache Status: HIT\n");
         pCached->m_wRefCnt++;
         pCached->m_bIsUsedThisFrame = 1;
         for (TLILInfo* seg = pCached->m_LineMgr.m_pHead; seg; seg = seg->m_pNext) {
@@ -852,8 +846,6 @@ void MoFFont::SetTextLine(int x, int y, DWORD color, const char* text, char alig
     }
 
     // 快取未命中：需要產生新的字元圖集並建立快取
-    wprintf(L"              - Cache Status: MISS. Creating new atlas...\n");
-
     FTInfo* pPage = CMoFFontTextureManager::GetInstance()->GetFontTexture();
     if (!pPage || !pPage->m_pSurface) {
         delete[] wideText;
@@ -902,7 +894,6 @@ void MoFFont::SetTextLine(int x, int y, DWORD color, const char* text, char alig
     seg->m_fPosY = 0.0f;
     seg->m_fWidth = 0.0f;
 
-    wprintf(L"              - GDI Loop: Starting character placement onto texture atlas.\n");
     SIZE tm = { 0, 0 };
     int i = 0;
     while (wideText[i] != L'\0') {

@@ -107,3 +107,7 @@ HRESULT CDeviceManager::SetTextureStageState(unsigned int stage, D3DTEXTURESTAGE
     // 直接呼叫 Direct3D 裝置的 SetTextureStageState 方法
     return Device->SetTextureStageState(stage, type, value);
 }
+
+HRESULT CDeviceManager::SetSamplerState(unsigned int stage, D3DSAMPLERSTATETYPE type, unsigned int value) {
+    return Device->SetSamplerState(stage, type, value);
+}

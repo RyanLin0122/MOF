@@ -73,6 +73,8 @@ public:
     // value: 要設定的紋理 Stage 狀態值
     HRESULT SetTextureStageState(unsigned int stage, D3DTEXTURESTAGESTATETYPE type, unsigned int value);
 
+
+    HRESULT SetSamplerState(unsigned int stage, D3DSAMPLERSTATETYPE type, unsigned int value);
 private:
     CDeviceManager();
     static CDeviceManager* s_pInstance;
