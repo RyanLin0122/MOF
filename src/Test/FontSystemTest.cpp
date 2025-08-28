@@ -47,7 +47,7 @@ HRESULT FontSystemTest::Initialize() {
         MessageBoxA(NULL, "MoFFont::CreateMoFFont 失敗!", "錯誤", MB_OK | MB_ICONERROR);
         return E_FAIL;
     }
-    printf("  預設字型 'Normal' 建立成功。\n");
+    printf("  預設字型 'CharacterName' 建立成功。\n");
 
     // 5. 測試 GetTextLength
     printf("--- [Font Test] 測試文字測量 ---\n");
@@ -74,18 +74,18 @@ void FontSystemTest::Render() {
     if (!m_pFont) return;
 
     // --- 測試案例 ---
-
-    // 1. 基本單行文字 (使用預設字型 Normal)
-    m_pFont->SetTextLine(50, 50, 0xFFFFFFFF, "Hello, MoFFont! This is the 'Normal' font (Tahoma 16).");
+    m_pFont->SetBlendType(2);
+    // 1. 基本單行文字 (使用預設字型 CharacterName)
+    m_pFont->SetTextLine(50, 50, 0xFFFFFFFF, "Hello, MoFFont! This is the 'CharacterName' font (Tahoma 16).");
 
     // 2. 文字對齊
     m_pFont->SetTextLine(640, 90, 0xFF00FF00, "Centered Text", 1); // alignment=1 (中)
     m_pFont->SetTextLine(1230, 90, 0xFFFF0000, "Right Aligned", 2); // alignment=2 (右)
 
     // 3. 更換字型並繪製帶陰影的標題
-    //m_pFont->SetFont("Notice");
-    m_pFont->SetTextLineShadow(50, 150, 0xFF303030, "This is a Title with Shadow", 0);
-    m_pFont->SetTextLine(50, 150, 0xFFFFFF00, "This is a Title with Shadow", 0);
+    m_pFont->SetFont("AbilityText");
+    m_pFont->SetTextLineShadow(50, 150, 0xFF303030, "中文可以嗎This is a Title with Shadow", 0);
+    m_pFont->SetTextLine(50, 180, 0xFFFFFF00, "This is a Title with Shadow", 0);
 
     // 4. TextBox 自動換行測試
     m_pFont->SetFont("CharacterName");

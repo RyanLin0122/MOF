@@ -883,7 +883,8 @@ void MoFFont::SetTextLine(int x, int y, DWORD color, const char* text, char alig
         if (penX + cw > ATLAS_W) {
             seg->m_fTexU2 = U(penX);
             seg->m_fTexV2 = V(penY + lineH);
-            seg->m_fWidth = float(penX - int(U(penX) == seg->m_fTexU1 ? penX : seg->m_fPosX)); // 簡易寬度計算
+            seg->m_fWidth = float(usedW - seg->m_fPosX);
+            if (seg->m_fWidth < 0.0f) seg->m_fWidth = 0.0f;
 
             penX = 0;
             penY += lineH;
