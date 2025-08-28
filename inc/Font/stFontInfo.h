@@ -9,7 +9,8 @@
  */
 struct stFontInfo {
     char szKeyName[128];      // 用於查找的鍵名，例如 "Normal"
-    char szFaceName[128];     // 字型名稱，例如 "Tahoma"
+    //char szFaceName[128];     // 字型名稱，例如 "Tahoma"
+    wchar_t wszFaceName[128];   // 字型名稱，例如 L"Gulim"
     int  nHeight;             // 字型高度
     int  nWeight;             // 字型粗細 (e.g., 400 for FW_NORMAL)
 };

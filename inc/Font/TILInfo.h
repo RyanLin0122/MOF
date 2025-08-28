@@ -19,7 +19,7 @@ public:
     TILInfo* m_pNext;                       // 指向後一個節點 (位移: +4)
 
     // --- 字串與字型屬性 ---
-    char* m_pszString;                      // 動態分配的字串內容 (位移: +8)
+    wchar_t* m_pwszString;                  // 動態分配的字串內容 (位移: +8)
     char  m_szFaceName[32];                 // 渲染時使用的字型名稱 (位移: +12)
     int   m_nFontWeight;                    // 字型粗細 (位移: +44)
 

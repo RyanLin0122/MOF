@@ -58,7 +58,7 @@ MoFFont::MoFFont()
     }
 
     // 2) 其他字串欄位清空
-    m_szFaceName[0] = '\0';
+    m_wszFaceName[0] = '\0';
     m_szNationCode[0] = '\0';
 
     // 3) STL 結構（如 m_FontCacheMap、m_TextCacheMgr）依 C++ 預設建構
@@ -130,7 +130,7 @@ void MoFFont::ResetFont() {
     // ...重設所有狀態變數...
     m_nFontHeight = 0;
     m_nFontWeight = 0;
-    m_szFaceName[0] = '\0';
+    m_wszFaceName[0] = '\0';
     m_bShadowFlag = false;
 }
 
@@ -208,8 +208,18 @@ bool MoFFont::InitFontInfo(const char* fileName) {
             if (tok) m_pFontInfoArray[idx].nHeight = atoi(tok);
 
             tok = strtok_s(nullptr, "\t\r\n", &context); // token3: Font -> FaceName
-            if (tok) strncpy_s(m_pFontInfoArray[idx].szFaceName, tok, _TRUNCATE);
-
+            if (tok) {
+                // tok 現在包含的是韓文的位元組序列 (CP949)
+                // 我們要將它轉換為 Unicode (UTF-16) 並存入 wszFaceName
+                MultiByteToWideChar(
+                    949,       // 來源字串的編碼頁 (949 代表韓文)
+                    0,         // 預設旗標
+                    tok,       // 來源 char* 字串
+                    -1,        // -1 表示來源字串以 null 結尾
+                    m_pFontInfoArray[idx].wszFaceName, // 目標 wchar_t 緩衝區
+                    128        // 緩衝區大小
+                );
+            }
             tok = strtok_s(nullptr, "\t\r\n", &context); // token4: Thick -> Weight
             if (tok) m_pFontInfoArray[idx].nWeight = atoi(tok);
 
@@ -221,7 +231,12 @@ bool MoFFont::InitFontInfo(const char* fileName) {
                 strncpy_s(m_szNationCode, nation, _TRUNCATE);
                 nationSet = true;
             }
-
+            printf("[DEBUG InitFontInfo] Parsed Index %d: KeyName='%s', FaceName='%s', Height=%d, Weight=%d\n",
+                idx,
+                m_pFontInfoArray[idx].szKeyName,
+                m_pFontInfoArray[idx].wszFaceName,
+                m_pFontInfoArray[idx].nHeight,
+                m_pFontInfoArray[idx].nWeight);
             ++idx;
         }
 
@@ -269,7 +284,7 @@ stFontInfo* MoFFont::GetFontInfo(const char* keyName) {
 }
 
 // 對應反編譯碼: 0x0051BA00
-bool MoFFont::CreateMoFFont(IDirect3DDevice9* pDevice, int height, int width, const char* faceName, int weight) {
+bool MoFFont::CreateMoFFont(IDirect3DDevice9* pDevice, int height, int width, const wchar_t* faceName, int weight) {
     m_pDevice = pDevice;
     if (!m_pDevice) return false;
 
@@ -292,7 +307,7 @@ bool MoFFont::CreateMoFFont(IDirect3DDevice9* pDevice, int height, int width, co
 bool MoFFont::CreateMoFFont(IDirect3DDevice9* pDevice, const char* fontKey) {
     stFontInfo* pInfo = GetFontInfo(fontKey);
     if (pInfo) {
-        return CreateMoFFont(pDevice, pInfo->nHeight, 0, pInfo->szFaceName, pInfo->nWeight);
+        return CreateMoFFont(pDevice, pInfo->nHeight, 0, pInfo->wszFaceName, pInfo->nWeight);
     }
     return false;
 }
@@ -301,20 +316,23 @@ bool MoFFont::CreateMoFFont(IDirect3DDevice9* pDevice, const char* fontKey) {
 void MoFFont::SetFont(const char* fontKey) {
     stFontInfo* pInfo = GetFontInfo(fontKey);
     if (pInfo) {
-        SetFont(pInfo->nHeight, pInfo->szFaceName, pInfo->nWeight);
+        SetFont(pInfo->nHeight, pInfo->wszFaceName, pInfo->nWeight);
     }
 }
 
 // 對應反編譯碼: 0x0051BBF0
-void MoFFont::SetFont(int height, const char* faceName, int weight) {
+void MoFFont::SetFont(int height, const wchar_t* faceName, int weight) {
     // 檢查字型屬性是否與當前完全相同，若是則無需更換
-    if (m_nFontHeight == height && m_nFontWeight == weight && _stricmp(m_szFaceName, faceName) == 0) {
+    if (m_nFontHeight == height && m_nFontWeight == weight && _wcsicmp(m_wszFaceName, faceName) == 0) {
         return;
     }
 
+    // [DEBUG] 在此處加入 debug code
+    wprintf(L"[MOFFONT DEBUG] Font changed to: FaceName=%s, Height=%d, Weight=%d\n", faceName, height, weight);
+
     m_nFontHeight = height;
     m_nFontWeight = weight;
-    strncpy_s(m_szFaceName, faceName, sizeof(m_szFaceName) - 1);
+    wcsncpy_s(m_wszFaceName, faceName, _TRUNCATE);
 
     // 從快取或 GDI 取得 HFONT 控制代碼
     m_hFont = GetCachedOrCreateFont(height, 0, faceName, weight);
@@ -481,7 +499,7 @@ void MoFFont::SetTextBoxA(RECT* pRect, DWORD color, const char* text, int lineSp
 void MoFFont::GetTextLength(int* pWidth, int* pHeight, const char* fontKey, const char* text) {
     stFontInfo* pInfo = GetFontInfo(fontKey);
     if (pInfo) {
-        GetTextLength(pWidth, pHeight, pInfo->nHeight, pInfo->szFaceName, text, pInfo->nWeight);
+        GetTextLength(pWidth, pHeight, pInfo->nHeight, pInfo->wszFaceName, text, pInfo->nWeight);
     }
     else {
         if (pWidth) *pWidth = 0;
@@ -490,7 +508,7 @@ void MoFFont::GetTextLength(int* pWidth, int* pHeight, const char* fontKey, cons
 }
 
 // 對應反編譯碼: 0x0051D100
-void MoFFont::GetTextLength(int* pWidth, int* pHeight, int height, const char* faceName, const char* text, int weight) {
+void MoFFont::GetTextLength(int* pWidth, int* pHeight, int height, const wchar_t* faceName, const char* text, int weight) {
     HFONT hFont = GetCachedOrCreateFont(height, 0, faceName, weight);
 
     HDC hdc = GetWindowDC(NULL);
@@ -573,7 +591,7 @@ static unsigned int GenerateFontHash(const char* str) {
  *
  * 對應反編譯碼: 邏輯分散在 0x0051BA00 (CreateMoFFont) 和 0x0051BBF0 (SetFont) 中。
  */
-HFONT MoFFont::GetCachedOrCreateFont(int height, int width, const char* faceName, int weight) {
+HFONT MoFFont::GetCachedOrCreateFont(int height, int width, const wchar_t* faceName, int weight) {
     // 1. 根據字型屬性組合出一個唯一的字串作為 Key。
     char keyBuffer[256];
     sprintf_s(keyBuffer, sizeof(keyBuffer), "%d_%d_%s_%d", height, width, faceName, weight);
@@ -590,7 +608,7 @@ HFONT MoFFont::GetCachedOrCreateFont(int height, int width, const char* faceName
     }
     else {
         // 4b. 快取未命中：呼叫 GDI 創建新的 HFONT。
-        HFONT hNewFont = CreateFontA(
+        HFONT hNewFont = CreateFontW(
             height,          // nHeight
             width,           // nWidth
             0,               // nEscapement
@@ -648,15 +666,17 @@ static inline void BlitGlyphToAtlas(HDC hdc, int atlasX, int atlasY, const char*
 void MoFFont::DrawSegments(int x, int y, DWORD color, int align, int clipL, int clipR, TILInfo* pLine,
     /* 你的渲染資源 */ void* pDevice, void* pVB) {
     // 計算對齊位移：Left/Center/Right
+    printf("              - DrawSegments: Called. Preparing to render %d segments.\n", pLine->m_LineMgr.m_nCount);
     int totalWidth = pLine->m_nTextWidth;
     float xOffset = 0.0f;
     if (align == 1)      xOffset = float(-totalWidth / 2);
     else if (align == 2) xOffset = float(-totalWidth);
 
     // 走訪每個 TLILInfo 片段，套用裁切並畫
+    int segment_index = 0;
     for (TLILInfo* seg = pLine->m_LineMgr.m_pHead; seg; seg = seg->m_pNext) {
         if (!seg->m_pFTInfo || !seg->m_pFTInfo->m_pTexture) continue;
-
+        printf("                  - Drawing segment %d: Screen Pos(%.1f, %.1f), Width=%.1f\n", segment_index++, (x + xOffset + seg->m_fPosX), (y + seg->m_fPosY), seg->m_fWidth);
         // 片段螢幕座標（左上）
         float sx = x + xOffset + seg->m_fPosX;
         float sy = y + seg->m_fPosY;
@@ -745,25 +765,45 @@ void MoFFont::DrawSegments(int x, int y, DWORD color, int align, int clipL, int 
     }
 }
 
+// 檔案: MoFFont.cpp
+// 貼到此檔案中，取代舊的 SetTextLine 函式
+
 void MoFFont::SetTextLine(int x, int y, DWORD color, const char* text, char alignment, int clipLeft, int clipRight)
 {
-    if (!text || text[0] == '\0') return;
+    if (!text || text[0] == '\0') {
+        return;
+    }
 
-    // ---------- 1) 快取命中路徑：相同字串 + 同字型屬性 (Face/Height/Weight) ----------
+    // --- 步驟 1: 將傳入的 UTF-8 char* 字串轉換為 Unicode wchar_t* ---
+    // 這個 wideText 是我們在函式內部真正使用的字串
+    int wideLen = MultiByteToWideChar(CP_UTF8, 0, text, -1, NULL, 0);
+    if (wideLen == 0) {
+        return; // 轉換失敗
+    }
+    wchar_t* wideText = new wchar_t[wideLen];
+    MultiByteToWideChar(CP_UTF8, 0, text, -1, wideText, wideLen);
+
+    // --- 步驟 2: 使用 Unicode 字串進行快取查找 ---
+    wprintf(L"\n[MOFFONT DEBUG] SetTextLine START for text: \"%s\"\n", wideText);
+    wprintf(L"              - Current Font: FaceName=%s, Height=%d\n", m_wszFaceName, m_nFontHeight);
+
     TILInfo* pCached = nullptr;
     for (TILInfo* it = m_TextCacheMgr.m_pHead; it; it = it->m_pNext) {
-        if (!it->m_pszString) continue;
-        if (_strcmpi(it->m_pszString, text) == 0 &&
-            std::strcmp(it->m_szFaceName, m_szFaceName) == 0 &&          // m_szFaceName 需是 MoFFont 當前 face name
+        if (it->m_pwszString &&
             it->m_nFontHeight == m_nFontHeight &&
-            it->m_nFontWeight == m_nFontWeight) {
+            it->m_nFontWeight == m_nFontWeight &&
+            _wcsicmp(it->m_pwszString, wideText) == 0)
+        {
             pCached = it;
             break;
         }
     }
 
+    // --- 步驟 3: 處理快取命中或未命中的情況 ---
+
     if (pCached) {
-        // 命中：提升 TILInfo 引用、標記本幀使用，並把其所有片段的 FTInfo 引用 +1（規格行為）
+        // 快取命中：直接使用已有的幾何資料進行繪製
+        wprintf(L"              - Cache Status: HIT\n");
         pCached->m_wRefCnt++;
         pCached->m_bIsUsedThisFrame = 1;
         for (TLILInfo* seg = pCached->m_LineMgr.m_pHead; seg; seg = seg->m_pNext) {
@@ -771,186 +811,130 @@ void MoFFont::SetTextLine(int x, int y, DWORD color, const char* text, char alig
                 seg->m_pFTInfo->m_wRefCnt++;
             }
         }
+        DrawSegments(x, y, color, AlignCode(alignment), clipLeft, clipRight, pCached, nullptr, nullptr);
 
-        // 直接依照規格進行對齊 / 裁切 / 繪製
-        DrawSegments(x, y, color, AlignCode(alignment), clipLeft, clipRight, pCached, /*pDevice*/nullptr, /*pVB*/nullptr);
+        // 【重要】釋放臨時分配的 wideText 記憶體
+        delete[] wideText;
         return;
     }
 
-    // ---------- 2) 快取未命中：建立新的 TILInfo，逐字排版並寫入圖集 ----------
-    // 2.1 取第一頁 FTInfo 與 HDC
+    // 快取未命中：需要產生新的字元圖集並建立快取
+    wprintf(L"              - Cache Status: MISS. Creating new atlas...\n");
+
     FTInfo* pPage = CMoFFontTextureManager::GetInstance()->GetFontTexture();
-    if (!pPage || !pPage->m_pSurface) return;
+    if (!pPage || !pPage->m_pSurface) {
+        delete[] wideText;
+        return;
+    }
 
     HDC hdc = nullptr;
     pPage->m_pSurface->GetDC(&hdc);
-    if (!hdc) return;
+    if (!hdc) {
+        delete[] wideText;
+        return;
+    }
 
-    // Select 當前 HFONT，設定前景/背景（規格：BkMode/顏色）
-    HGDIOBJ hOldFont = ::SelectObject(hdc, m_hFont);
+    // 選擇 Unicode 字型到 DC
+    ::SelectObject(hdc, m_hFont);
     ::SetBkMode(hdc, TRANSPARENT);
-    ::SetTextColor(hdc, RGB(255, 255, 255)); // 實際顏色不重要，渲染時用貼圖 + color
+    ::SetTextColor(hdc, RGB(255, 255, 255));
 
-    // 2.2 配置一個新的 TILInfo 進快取
+    // 建立新的快取項目
     TILInfo* pLine = m_TextCacheMgr.Add();
     pLine->m_bIsUsedThisFrame = 1;
     pLine->m_wRefCnt = 1;
-    // 複製字串與字型屬性
-    {
-        size_t n = std::strlen(text);
-        pLine->m_pszString = new char[n + 1];
-        std::memcpy(pLine->m_pszString, text, n + 1);
-        std::strcpy(pLine->m_szFaceName, m_szFaceName);
-        pLine->m_nFontHeight = m_nFontHeight;
-        pLine->m_nFontWeight = m_nFontWeight;
-    }
 
-    // 2.3 圖集排版狀態
-    int penX = 0;                // 本行在圖集的 X 游標
-    int penY = m_nAtlasY;        // 當前圖集 Y 起點（this->m_nAtlasY），初始 0
-    int lineH = m_nFontHeight;   // 規格：以字高為行高，必要時更新本行最大高度
-    int usedW = 0;               // 此字串渲染總寬（用於對齊）
-    int totalLines = 1;          // 本字串行數
+    // 將 wideText 複製一份儲存到快取結構中
+    size_t n = wcslen(wideText);
+    pLine->m_pwszString = new wchar_t[n + 1];
+    wcscpy_s(pLine->m_pwszString, n + 1, wideText);
+    pLine->m_nFontHeight = m_nFontHeight;
+    pLine->m_nFontWeight = m_nFontWeight;
 
-    TLILInfo* seg = pLine->m_LineMgr.Add(); // 建立第一個片段
-    seg->m_pFTInfo = pPage;                 // 初始綁定本頁
-    pPage->m_wRefCnt++;                     // 片段引用紋理頁（規格）
+    // 圖集排版狀態
+    int penX = 0;
+    int penY = m_nAtlasY;
+    int lineH = m_nFontHeight;
+    int usedW = 0;
 
-    // 片段的 UV 起點綁現在的 penX/penY
+    TLILInfo* seg = pLine->m_LineMgr.Add();
+    seg->m_pFTInfo = pPage;
+    pPage->m_wRefCnt++;
+
     seg->m_fTexU1 = U(penX);
     seg->m_fTexV1 = V(penY);
     seg->m_fTexU2 = seg->m_fTexU1;
     seg->m_fTexV2 = seg->m_fTexV1;
-    seg->m_fPosX = 0.0f;          // 從螢幕起點（尚未加上對齊/呼叫座標）開始
-    seg->m_fPosY = float((totalLines - 1) * lineH);
+    seg->m_fPosX = 0.0f;
+    seg->m_fPosY = 0.0f;
     seg->m_fWidth = 0.0f;
 
-    // 2.4 逐字量測與寫入（DBCS 支援）
+    wprintf(L"              - GDI Loop: Starting character placement onto texture atlas.\n");
     SIZE tm = { 0, 0 };
     int i = 0;
-    const int N = int(std::strlen(text));
-    while (i < N) {
-        int cbytes = CharBytesDBCS((unsigned char)text[i]);
-        if (i + cbytes > N) cbytes = 1; // 防呆
-        // 強制換行（若規格支援 '\n'）
-        if (text[i] == '\n') {
-            // 結束本片段，換行
-            seg->m_fTexU2 = U(penX);
-            seg->m_fTexV2 = V(penY + lineH);
-            seg->m_fWidth = float(penX - int(seg->m_fPosX));
+    while (wideText[i] != L'\0') {
+        const int charCount = 1;
 
-            // 開新片段
-            seg = pLine->m_LineMgr.Add();
-            // 換行：X 歸零、Y 前進、更新行數
-            penX = 0;
-            penY += lineH;
-            totalLines++;
+        // 使用 GetTextExtentPoint32W 測量 Unicode 字元寬度
+        ::GetTextExtentPoint32W(hdc, &wideText[i], charCount, &tm);
+        int cw = tm.cx;
 
-            // 若超頁（Y + lineH > 128）→ 換頁
-            if (penY + lineH > ATLAS_H) {
-                pPage->m_pSurface->ReleaseDC(hdc);
-                hdc = nullptr;
-
-                pPage = CMoFFontTextureManager::GetInstance()->GetFontTexture();
-                if (!pPage || !pPage->m_pSurface) return;
-                pPage->m_pSurface->GetDC(&hdc);
-                if (!hdc) return;
-                ::SelectObject(hdc, m_hFont);
-                ::SetBkMode(hdc, TRANSPARENT);
-                ::SetTextColor(hdc, RGB(255, 255, 255));
-
-                // 新頁：筆 Y 從 0 開始
-                penY = 0;
-            }
-
-            // 新片段綁定新位置/頁
-            seg->m_pFTInfo = pPage;
-            pPage->m_wRefCnt++;
-            seg->m_fTexU1 = U(penX);
-            seg->m_fTexV1 = V(penY);
-            seg->m_fTexU2 = seg->m_fTexU1;
-            seg->m_fTexV2 = seg->m_fTexV1;
-            seg->m_fPosX = 0.0f;
-            seg->m_fPosY = float((totalLines - 1) * lineH);
-            seg->m_fWidth = 0.0f;
-
-            ++i;
-            continue;
-        }
-
-        // 量測
-        ::GetTextExtentPoint32A(hdc, &text[i], cbytes, &tm);
-        int cw = tm.cx; // 字寬
-        // 是否需要換行（X + cw >= 128）
+        // 檢查是否需要換行 (超出圖集寬度)
         if (penX + cw > ATLAS_W) {
-            // 結束當前片段，更新 UV2 與寬度
             seg->m_fTexU2 = U(penX);
             seg->m_fTexV2 = V(penY + lineH);
-            seg->m_fWidth = float(penX - int(seg->m_fPosX));
+            seg->m_fWidth = float(penX - int(U(penX) == seg->m_fTexU1 ? penX : seg->m_fPosX)); // 簡易寬度計算
 
-            // 換行
             penX = 0;
             penY += lineH;
-            totalLines++;
 
-            // 超頁則換頁
+            // 檢查是否需要換頁 (超出圖集高度)
             if (penY + lineH > ATLAS_H) {
                 pPage->m_pSurface->ReleaseDC(hdc);
-                hdc = nullptr;
-
                 pPage = CMoFFontTextureManager::GetInstance()->GetFontTexture();
-                if (!pPage || !pPage->m_pSurface) return;
                 pPage->m_pSurface->GetDC(&hdc);
-                if (!hdc) return;
                 ::SelectObject(hdc, m_hFont);
                 ::SetBkMode(hdc, TRANSPARENT);
                 ::SetTextColor(hdc, RGB(255, 255, 255));
-
                 penY = 0;
             }
 
-            // 新片段綁定
+            // 建立新的片段
             seg = pLine->m_LineMgr.Add();
             seg->m_pFTInfo = pPage;
             pPage->m_wRefCnt++;
             seg->m_fTexU1 = U(penX);
             seg->m_fTexV1 = V(penY);
-            seg->m_fTexU2 = seg->m_fTexU1;
-            seg->m_fTexV2 = seg->m_fTexV1;
-            seg->m_fPosX = float(usedW);        // 螢幕 X 起點接續（用於對齊）
-            seg->m_fPosY = float((totalLines - 1) * lineH);
-            seg->m_fWidth = 0.0f;
+            seg->m_fPosX = (float)usedW;
+            seg->m_fPosY = 0.0f; // 假設單行文字，多行 TextBox 需調整
         }
 
-        // 把字畫進圖集（在 penX, penY）
-        BlitGlyphToAtlas(hdc, penX, penY, &text[i], cbytes);
+        // 使用 TextOutW 將 Unicode 字元繪製到圖集
+        ::TextOutW(hdc, penX, penY, &wideText[i], charCount);
 
-        // 前進 atlas X 與總寬
         penX += cw;
         usedW += cw;
 
-        // 片段暫存 U2
         seg->m_fTexU2 = U(penX);
         seg->m_fTexV2 = V(penY + lineH);
 
-        i += cbytes;
+        i++;
     }
 
-    // 結尾：補上最後片段寬度
-    seg->m_fWidth = float(penX - int(seg->m_fPosX));
+    // 更新最後一個片段的寬度
+    seg->m_fWidth = float(usedW - seg->m_fPosX);
 
-    // 釋放 DC
-    if (hdc) {
-        pPage->m_pSurface->ReleaseDC(hdc);
-        hdc = nullptr;
-    }
+    pPage->m_pSurface->ReleaseDC(hdc);
 
-    // 更新 TILInfo 的總寬與字高（供對齊/裁切）
+    // 更新快取項的總寬度
     pLine->m_nTextWidth = usedW;
     pLine->m_nFontHeight = lineH;
 
-    // ---------- 3) 對齊 / 裁切 / 繪製 ----------
-    DrawSegments(x, y, color, AlignCode(alignment), clipLeft, clipRight, pLine, /*pDevice*/nullptr, /*pVB*/nullptr);
+    // 根據新建立的幾何資料進行繪製
+    DrawSegments(x, y, color, AlignCode(alignment), clipLeft, clipRight, pLine, nullptr, nullptr);
+
+    // 【重要】釋放臨時分配的 wideText 記憶體
+    delete[] wideText;
 }
 
 // 對應反編譯碼: 0x0051CFA0

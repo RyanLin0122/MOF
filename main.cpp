@@ -1,6 +1,4 @@
-﻿#define UNICODE
-#define _UNICODE
-#include <iostream>
+﻿#include <iostream>
 #include <stdio.h>     // 用於 printf
 #include <windows.h>   // 用於 HWND, GetConsoleWindow, Sleep
 #include <conio.h>     // 用於 _kbhit, _getch (檢查鍵盤輸入)

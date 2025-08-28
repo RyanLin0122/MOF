@@ -29,9 +29,9 @@ public:
     // --- 初始化與設定 ---
     bool InitFontInfo(const char* fileName);
     bool CreateMoFFont(IDirect3DDevice9* pDevice, const char* fontKey);
-    bool CreateMoFFont(IDirect3DDevice9* pDevice, int height, int width, const char* faceName, int weight);
+    bool CreateMoFFont(IDirect3DDevice9* pDevice, int height, int width, const wchar_t* faceName, int weight);
     void SetFont(const char* fontKey);
-    void SetFont(int height, const char* faceName, int weight);
+    void SetFont(int height, const wchar_t* faceName, int weight);
     void ResetFont();
 
     // --- 渲染 API ---
@@ -44,14 +44,14 @@ public:
 
     // --- 資訊查詢 ---
     void GetTextLength(int* pWidth, int* pHeight, const char* fontKey, const char* text);
-    void GetTextLength(int* pWidth, int* pHeight, int height, const char* faceName, const char* text, int weight);
+    void GetTextLength(int* pWidth, int* pHeight, int height, const wchar_t* faceName, const char* text, int weight);
     int GetCharByteByLine(unsigned short lineWidth, const char* text, unsigned char* lineBreakBytes, int maxLines);
     stFontInfo* GetFontInfo(const char* keyName);
     int GetNationCode();
 
 private:
     // --- 內部輔助函式 ---
-    HFONT GetCachedOrCreateFont(int height, int width, const char* faceName, int weight);
+    HFONT GetCachedOrCreateFont(int height, int width, const wchar_t* faceName, int weight);
     bool IsAnsiCharSet();
 
     // --- 小工具：確保/釋放 Quad VB ---
@@ -78,7 +78,7 @@ private:
     std::map<unsigned int, HFONT> m_FontCacheMap;   // +128
 
     // 當前字型屬性
-    char                     m_szFaceName[32];      // +144 (根據 strcpy 推斷)
+    wchar_t                  m_wszFaceName[32];      // +144 (根據 strcpy 推斷)
     int                      m_nFontHeight;         // +316
     int                      m_nFontWeight;         // +320
 

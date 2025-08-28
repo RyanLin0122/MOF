@@ -83,7 +83,7 @@ void FontSystemTest::Render() {
     m_pFont->SetTextLine(1230, 90, 0xFFFF0000, "Right Aligned", 2); // alignment=2 (右)
 
     // 3. 更換字型並繪製帶陰影的標題
-    m_pFont->SetFont("Notice");
+    //m_pFont->SetFont("Notice");
     m_pFont->SetTextLineShadow(50, 150, 0xFF303030, "This is a Title with Shadow", 0);
     m_pFont->SetTextLine(50, 150, 0xFFFFFF00, "This is a Title with Shadow", 0);
 
@@ -99,15 +99,15 @@ void FontSystemTest::Render() {
     m_pFont->SetTextBox(&textBox, 0xFF00FFFF, longText, 5, 0); // 5px 行距
 
     // 5. 測試快取: 多次繪製相同文字
-    m_pFont->SetFont("Small");
+    //m_pFont->SetFont("Small");
     m_pFont->SetTextLine(50, 420, 0xFFDDDDDD, "This line is drawn twice to test the cache system. (1st time)");
     m_pFont->SetTextLine(50, 420, 0xFFDDDDDD, "This line is drawn twice to test the cache system. (2nd time)");
     m_pFont->SetTextLine(50, 440, 0xFFAAAAAA, "This is another string to ensure a new cache entry is created.");
 
     // 6. 測試多國語言文字 (DBCS)
-    m_pFont->SetFont("Normal");
-    const char* chineseWelcome = u8"中文測試: 歡迎來到奇幻世界";
-    //const char* japaneseWelcome = u8"日本語テスト：ファンタジーの世界へようこそ";
+    //m_pFont->SetFont("Normal");
+    const char* chineseWelcome = "中文測試: 歡迎來到奇幻世界";
+    const char* japaneseWelcome = "日本語テスト：ファンタジーの世界へようこそ";
     m_pFont->SetTextLine(50, 500, 0xFFFFFFAA, chineseWelcome);
-    //m_pFont->SetTextLine(50, 530, 0xFFAAFFAA, japaneseWelcome);
+    m_pFont->SetTextLine(50, 530, 0xFFAAFFAA, japaneseWelcome);
 }

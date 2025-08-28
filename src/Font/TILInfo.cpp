@@ -9,7 +9,7 @@
 TILInfo::TILInfo() {
     m_pPrev = nullptr;
     m_pNext = nullptr;
-    m_pszString = nullptr;
+    m_pwszString = nullptr;
     m_szFaceName[0] = '\0';
     m_nFontWeight = 0;
     m_nFontHeight = 0;
@@ -31,9 +31,9 @@ TILInfo::TILInfo() {
  */
 TILInfo::~TILInfo() {
     // 1. 釋放動態分配的字串記憶體
-    if (m_pszString) {
-        delete[] m_pszString;
-        m_pszString = nullptr;
+    if (m_pwszString) {
+        delete[] m_pwszString;
+        m_pwszString = nullptr;
     }
 
     // 2. 清空其包含的 TextLineInfoListMgr 中的所有 TLILInfo 節點
