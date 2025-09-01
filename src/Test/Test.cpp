@@ -4,6 +4,7 @@
 ImageDrawTest* g_pDrawTest = nullptr;
 EffectSystemTest* g_pEffectTest = nullptr;
 FontSystemTest* g_pFontTest = nullptr;
+UIBasicTest* g_pUITest = nullptr;
 
 void ogg_play_test() {
 	// --- 測試參數設定 ---
@@ -268,7 +269,15 @@ int InitTest() {
 			return -1;
 		}
 		break;
+	case UI_BASIC: // <--- 新增這個 case
+		g_pUITest = new UIBasicTest();
+		if (FAILED(g_pUITest->Initialize())) {
+			//MessageBox(g_hWnd, L"UIBasicTest 初始化失敗", L"錯誤", MB_OK | MB_ICONERROR);
+			return -1;
+		}
+		break;
 	}
+	return 0;
 }
 
 void UpdateTest(float fElapsedTime) {
@@ -279,6 +288,10 @@ void UpdateTest(float fElapsedTime) {
 	if (G_CURRENT_TEST == TEST_FONT && g_pFontTest)
 	{
 		g_pFontTest->Update(fElapsedTime);
+	}
+	if (G_CURRENT_TEST == UI_BASIC && g_pUITest)
+	{
+		g_pUITest->Update(fElapsedTime);
 	}
 }
 
@@ -292,13 +305,19 @@ void Render_Test() {
 	else if (G_CURRENT_TEST == TEST_EFFECT) {
 		if (g_pEffectTest)
 		{
-			g_pEffectTest->Render(); // 呼叫新類別的 Render
+			g_pEffectTest->Render();
 		}
 	}
 	else if (G_CURRENT_TEST == TEST_FONT) {
 		if (g_pFontTest)
 		{
 			g_pFontTest->Render();
+		}
+	}
+	else if (G_CURRENT_TEST == UI_BASIC) {
+		if (g_pUITest)
+		{
+			g_pUITest->Render();
 		}
 	}
 }
@@ -313,5 +332,15 @@ void CleanupTest() {
 	{
 		delete g_pEffectTest;
 		g_pEffectTest = nullptr;
+	}
+	if (g_pFontTest)
+	{
+		delete g_pFontTest;
+		g_pFontTest = nullptr;
+	}
+	if (g_pUITest)
+	{
+		delete g_pUITest;
+		g_pUITest = nullptr;
 	}
 }

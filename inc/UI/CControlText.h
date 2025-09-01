@@ -21,6 +21,7 @@ public:
     // ---- 文字 ----
     void SetText(const char* text);
     void SetText(int stringId);
+    void SetTextFmtW(const wchar_t* fmt, ...);
     void SetParsedText(int stringId);
     void SetTextItoa(int value);
     void SetTextMoney(unsigned int value);
@@ -75,6 +76,11 @@ public:
 
     // 與基底同名，加入本類別自清理
     void ClearData();
+
+    // UTF-8 / Wide / EUC-KR 輸入接口
+    void SetTextUtf8(const char* u8);
+    void SetTextW(const wchar_t* ws);
+    void SetTextKR(const char* eucKR);
 
 private:
     void EnsureDefaultFontFace();

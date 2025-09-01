@@ -5,6 +5,7 @@
 #include <iostream>
 #include <io.h>
 #include <fcntl.h>
+#include "global.h"
 
 FontSystemTest::FontSystemTest() : m_pFont(nullptr) {
 }
@@ -21,10 +22,6 @@ FontSystemTest::~FontSystemTest() {
 
 HRESULT FontSystemTest::Initialize() {
     printf("--- [Font Test] 開始初始化 ---\n");
-
-    // 1. 初始化字型紋理管理器
-    CMoFFontTextureManager::GetInstance()->InitCMoFFontTextureManager(g_pd3dDevice);
-    printf("  CMoFFontTextureManager 初始化完畢。\n");
 
     // 3. 建立 MoFFont 實體並初始化
     m_pFont = new MoFFont();
@@ -53,6 +50,29 @@ HRESULT FontSystemTest::Initialize() {
     return S_OK;
 }
 
+static std::wstring KR_to_wide(const char* bytes) {
+    if (!bytes) return L"";
+    const UINT cps[] = { 51949, 949 };
+    for (UINT cp : cps) {
+        int n = MultiByteToWideChar(cp, MB_ERR_INVALID_CHARS, bytes, -1, nullptr, 0);
+        if (n > 0) {
+            std::wstring w(n, L'\0');
+            MultiByteToWideChar(cp, 0, bytes, -1, &w[0], n);
+            if (!w.empty() && w.back() == L'\0') w.pop_back();
+            return w;
+        }
+    }
+    return std::wstring(bytes, bytes + std::strlen(bytes)); // ASCII 後援
+}
+
+static std::string wide_to_utf8(const std::wstring& w) {
+    if (w.empty()) return {};
+    int n = WideCharToMultiByte(CP_UTF8, 0, w.c_str(), (int)w.size(), nullptr, 0, nullptr, nullptr);
+    std::string s(n, '\0');
+    WideCharToMultiByte(CP_UTF8, 0, w.c_str(), (int)w.size(), &s[0], n, nullptr, nullptr);
+    return s;
+}
+
 void FontSystemTest::Update(float fElapsedTime) {
     if (m_pFont) {
         // 每幀呼叫資源管理器，模擬遊戲循環中的快取清理
@@ -71,6 +91,9 @@ void FontSystemTest::Render() {
     // 2. 文字對齊
     m_pFont->SetTextLine(640, 90, 0xFF00FF00, "Centered Text", 1); // alignment=1 (中)
     m_pFont->SetTextLine(1230, 90, 0xFFFF0000, "Right Aligned", 2); // alignment=2 (右)
+    auto str = g_DCTTextManager.GetText(4751);
+
+    m_pFont->SetTextLine(1230, 90, 0xFFFF0000, wide_to_utf8(KR_to_wide(str)).c_str(), 2); // alignment=2 (右)
 
     // 3. 更換字型並繪製帶陰影的標題
     m_pFont->SetTextLineShadow(50, 150, 0xFF303030, "This is a Title with Shadow", 0);

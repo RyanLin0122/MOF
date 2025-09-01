@@ -1,5 +1,8 @@
 #include "Text/DCTTextManager.h"
 #include <algorithm>
+#include <iostream>
+#include <io.h>
+#include <fcntl.h>
 
 // 静态成员定义
 char DCTTextManager::temp_string_buffer[10240];
@@ -230,6 +233,7 @@ bool DCTTextManager::IsDigit(const char* str) {
     
     return true;
 }
+
 
 /*
 使用示例：

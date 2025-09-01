@@ -104,9 +104,70 @@ void CreateDebugConsole()
 }
 
 void Setup() {
+	g_DCTTextManager.Initialize((char*)"MoFTexts.txt");
+	CMoFFontTextureManager::GetInstance()->InitCMoFFontTextureManager(g_pd3dDevice);
+	printf("  CMoFFontTextureManager 初始化完畢。\n");
 	g_MoFFont.InitFontInfo("MofData/FontInfo.dat");
 	g_MoFFont.CreateMoFFont(g_pd3dDevice, "CharacterName");
 	// To Do
+}
+
+// EUC-KR(51949) 或 UHC(949) → UTF-16
+static std::wstring KR_to_wide(const char* bytes) {
+	if (!bytes) return L"";
+	const UINT cps[] = { 51949, 949 }; // EUC-KR, CP949
+	for (UINT cp : cps) {
+		int n = MultiByteToWideChar(cp, MB_ERR_INVALID_CHARS, bytes, -1, nullptr, 0);
+		if (n > 0) {
+			std::wstring w(n, L'\0');
+			MultiByteToWideChar(cp, 0, bytes, -1, &w[0], n);
+			if (!w.empty() && w.back() == L'\0') w.pop_back();
+			return w;
+		}
+	}
+	// 都失敗：當成 ASCII
+	return std::wstring(bytes, bytes + strlen(bytes));
+}
+
+static std::string wide_to_utf8(const std::wstring& w) {
+	if (w.empty()) return {};
+	int n = WideCharToMultiByte(CP_UTF8, 0, w.c_str(), (int)w.size(), nullptr, 0, nullptr, nullptr);
+	std::string s(n, '\0');
+	WideCharToMultiByte(CP_UTF8, 0, w.c_str(), (int)w.size(), &s[0], n, nullptr, nullptr);
+	return s;
+}
+
+void kr_printf(const char* euckr) {
+	std::wstring w = KR_to_wide(euckr);
+
+	// 1) 若在偵錯中，也丟到 Output 視窗（可選）
+	if (IsDebuggerPresent()) {
+		OutputDebugStringW(w.c_str());
+		OutputDebugStringW(L"\r\n");
+	}
+
+	// 2) 判斷 stdout 是否真的是 Console
+	HANDLE hOut = GetStdHandle(STD_OUTPUT_HANDLE);
+	DWORD ft = GetFileType(hOut);
+
+	if (ft == FILE_TYPE_CHAR) {
+		// 可能是 Console 或 pseudo console
+		DWORD mode;
+		if (GetConsoleMode(hOut, &mode)) {
+			// 是 Console：直接寫寬字元（不動碼頁、不動 _setmode）
+			DWORD written = 0;
+			WriteConsoleW(hOut, w.c_str(), (DWORD)w.size(), &written, nullptr);
+			// 補換行
+			WriteConsoleW(hOut, L"\r\n", 2, &written, nullptr);
+			return;
+		}
+	}
+
+	// 3) 若被重導到檔案/管線：輸出 UTF-8 位元組
+	std::string u8 = wide_to_utf8(w);
+	fwrite(u8.data(), 1, u8.size(), stdout);
+	fwrite("\n", 1, 1, stdout);
+	fflush(stdout);
 }
 
 //-----------------------------------------------------------------------------
@@ -118,17 +179,9 @@ int APIENTRY  wWinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPWSTR lpCm
 	CreateDebugConsole();
 	CMofPacking::GetInstance()->PackFileOpen("mof");
 	g_clTextFileManager.Initialize((char*)("MoFData/Mof.dat"));
-	switch (CURRENT_MODE)
-	{
-	case PACK_MODE:
-		create_vfs_archive();
-		break;
-	case TEST_MODE:
-		Run_Test();
-	default:
-		Setup();
-		break;
-	}
+
+
+	kr_printf(g_DCTTextManager.GetText(4750));
 
 	WNDCLASSEXW wc{ sizeof(WNDCLASSEXW) };
 	wc.lpfnWndProc = WndProc;
@@ -144,6 +197,19 @@ int APIENTRY  wWinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPWSTR lpCm
 
 	if (SUCCEEDED(InitD3D(g_hWnd)))
 	{
+		switch (CURRENT_MODE)
+		{
+		case PACK_MODE:
+			create_vfs_archive();
+			break;
+		case TEST_MODE:
+			Setup();
+			Run_Test();
+			break;
+		default:
+			Setup();
+			break;
+		}
 		cltImageManager::GetInstance()->Initialize();
 
 		// 初始化測試物件

@@ -11,6 +11,7 @@
 #include "Test/ImageDrawTest.h"
 #include "Test/EffectSystemTest.h"
 #include "Test/FontSystemTest.h"
+#include "Test/UI_Basic_Test.h"
 #include "FileSystem/CMOFPacking.h"
 #include "Sound/COgg.h"
 #include "Text/cltTextFileManager.h"

@@ -11,4 +11,4 @@ enum TestMode {
 #define PACK_MODE   (2)
 
 // 設定要執行的測試
-const TestMode G_CURRENT_TEST = TEST_FONT;
+const TestMode G_CURRENT_TEST = UI_BASIC;

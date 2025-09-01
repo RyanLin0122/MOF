@@ -265,6 +265,7 @@
     <ClCompile Include="src\Test\ImageTest.cpp" />
     <ClCompile Include="src\Test\nfs_test.cpp" />
     <ClCompile Include="src\Test\Test.cpp" />
+    <ClCompile Include="src\Test\UI_Basic_Test.cpp" />
     <ClCompile Include="src\Text\DCTIMM.cpp" />
     <ClCompile Include="src\Text\DCTIMMList.cpp" />
     <ClCompile Include="src\Text\Huffman.cpp" />
@@ -290,6 +291,7 @@
   <ItemGroup>
     <ClInclude Include="inc\Character\ClientCharacter.h" />
     <ClInclude Include="inc\Character\ClientCharacterManager.h" />
+    <ClInclude Include="inc\conf.h" />
     <ClInclude Include="inc\Effect\CBulletArrow.h" />
     <ClInclude Include="inc\Effect\CBulletBase.h" />
     <ClInclude Include="inc\Effect\CCAEffect.h" />
@@ -409,6 +411,7 @@
     <ClInclude Include="inc\Test\ImageTest.h" />
     <ClInclude Include="inc\Test\nfs_test.h" />
     <ClInclude Include="inc\Test\Test.h" />
+    <ClInclude Include="inc\Test\UI_Basic_Test.h" />
     <ClInclude Include="inc\Text\DCTIMM.h" />
     <ClInclude Include="inc\Text\DCTIMMList.h" />
     <ClInclude Include="inc\Text\Huffman.h" />

@@ -6,6 +6,8 @@
 #include "Image/ImageResourceListDataMgr.h"// 包含 ImageResource 管理器
 #include "Image/TextureListDataMgr.h"      // 包含之前還原的 Texture 管理器
 
+struct VertexBufferData;
+
 /**
  * @class CDeviceResetManager
  * @brief 集中管理D3D資源，並處理裝置遺失(Lost)與重設(Reset)的核心邏輯。
@@ -61,6 +63,10 @@ public:
     /// @param hresult 來自 Present() 或其他 D3D 呼叫的返回碼。
     /// @return 如果裝置狀態正常或已成功重設，返回 true。
     bool ResetToDevice(long hresult);
+
+    IDirect3DVertexBuffer9* GetVertexBuffer(const VertexBufferData* h) const;
+    bool UpdateVertexBuffer(const VertexBufferData* h, const void* src, size_t bytes, DWORD lockFlags = 0) const;
+    bool IsDeviceReady() const;
 
 private:
     /// @brief 私有建構函式，防止外部直接建立。
