@@ -1,4 +1,4 @@
-<?xml version="1.0" encoding="utf-8"?>
+<?xml version='1.0' encoding='utf-8'?>
 <Project xmlns="http://schemas.microsoft.com/developer/msbuild/2003" ToolsVersion="4.0">
   <ItemGroup>
     <Filter Include="來源檔案">
@@ -426,7 +426,7 @@
     <ClCompile Include="src\Test\FontSystemTest.cpp">
       <Filter>來源檔案</Filter>
     </ClCompile>
-  </ItemGroup>
+  <ClCompile Include="src\UI\CEditBoxBackgroundImage.cpp"><Filter>Source Files</Filter></ClCompile></ItemGroup>
   <ItemGroup>
     <ClInclude Include="inc\nfs.h">
       <Filter>標頭檔</Filter>
@@ -845,7 +845,7 @@
     <ClInclude Include="inc\Test\FontSystemTest.h">
       <Filter>標頭檔</Filter>
     </ClInclude>
-  </ItemGroup>
+  <ClInclude Include="inc\UI\CEditBoxBackgroundImage.h"><Filter>Header Files</Filter></ClInclude></ItemGroup>
   <ItemGroup>
     <Library Include="lib\fmod64vc.lib" />
   </ItemGroup>

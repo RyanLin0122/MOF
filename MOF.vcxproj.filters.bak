@@ -1,4 +1,4 @@
-<?xml version='1.0' encoding='utf-8'?>
+<?xml version="1.0" encoding="utf-8"?>
 <Project xmlns="http://schemas.microsoft.com/developer/msbuild/2003" ToolsVersion="4.0">
   <ItemGroup>
     <Filter Include="來源檔案">
@@ -420,6 +420,12 @@
     <ClCompile Include="src\Text\cltTextFileManager.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
+    <ClCompile Include="src\Text\DCTTextManager.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="src\Test\FontSystemTest.cpp">
+      <Filter>來源檔案</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="inc\nfs.h">
@@ -832,6 +838,12 @@
     </ClInclude>
     <ClInclude Include="inc\Text\cltTextFileManager.h">
       <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="inc\Text\DCTTextManager.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="inc\Test\FontSystemTest.h">
+      <Filter>標頭檔</Filter>
     </ClInclude>
   </ItemGroup>
   <ItemGroup>

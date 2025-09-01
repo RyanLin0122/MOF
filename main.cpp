@@ -19,7 +19,7 @@
 #include "Test/EffectSystemTest.h"
 #include "Test/FontSystemTest.h"
 
-HWND                    g_hWnd = NULL;
+
 LPDIRECT3D9             g_pD3D = NULL;
 LPDIRECT3DDEVICE9       g_pd3dDevice = NULL;
 D3DPRESENT_PARAMETERS   g_d3dpp;
@@ -347,6 +347,12 @@ void CreateDebugConsole()
 		std::wcerr.clear();
 		std::cin.clear();
 		std::wcin.clear();
+		// 設定控制台支援UTF-8顯示
+		SetConsoleOutputCP(CP_UTF8);
+		SetConsoleCP(CP_UTF8);
+
+		// 或者使用寬字符模式 (二選一)
+		// _setmode(_fileno(stdout), _O_U16TEXT);
 	}
 #endif
 }

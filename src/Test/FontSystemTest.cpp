@@ -7,12 +7,6 @@
 #include <fcntl.h>
 
 FontSystemTest::FontSystemTest() : m_pFont(nullptr) {
-    // 設定控制台支援UTF-8顯示
-    SetConsoleOutputCP(CP_UTF8);
-    SetConsoleCP(CP_UTF8);
-
-    // 或者使用寬字符模式 (二選一)
-    // _setmode(_fileno(stdout), _O_U16TEXT);
 }
 
 FontSystemTest::~FontSystemTest() {

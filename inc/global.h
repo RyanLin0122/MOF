@@ -4,6 +4,7 @@
 #include <conio.h>     // 用於 _kbhit, _getch (檢查鍵盤輸入)
 #include <d3d9.h>
 #include "Text/cltTextFileManager.h"
+#include "Font/MoFFont.h"
 
 //-----------------------------------------------------------------------------
 // 全域變數
@@ -11,6 +12,7 @@
 // --- 全域變數定義 ---
 extern int IsInMemory;
 extern bool IsDialogBoxMode;
+extern HWND             g_hWnd;
 
 struct GameSystemInfo {
     int ScreenWidth;
@@ -18,6 +20,7 @@ struct GameSystemInfo {
     float ScreenX;
 	float ScreenY;
 };
+
 
 extern GameSystemInfo g_Game_System_Info;
 
@@ -27,3 +30,5 @@ extern unsigned char NationCode;
 extern bool g_bRenderStateLocked;
 
 extern cltTextFileManager g_clTextFileManager;
+
+extern MoFFont g_MoFFont;
