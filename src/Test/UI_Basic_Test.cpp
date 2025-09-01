@@ -18,8 +18,8 @@ UIBasicTest::~UIBasicTest()
 
 void UIBasicTest::Cleanup()
 {
-    // ¨Ì§Ç¦w¥ş¦a§R°£©Ò¦³ UI ª«¥ó
-    // ¥Ñ©ó¤÷¤lÃö«Y¶È¬OÅŞ¿èÃìµ²¡A°O¾ĞÅé»İ­n¤â°ÊºŞ²z
+    // ä¾åºå®‰å…¨åœ°åˆªé™¤æ‰€æœ‰ UI ç‰©ä»¶
+    // ç”±æ–¼çˆ¶å­é—œä¿‚åƒ…æ˜¯é‚è¼¯éˆçµï¼Œè¨˜æ†¶é«”éœ€è¦æ‰‹å‹•ç®¡ç†
     if (m_pStatusText)  delete m_pStatusText;
     if (m_pTestControl2) delete m_pTestControl2;
     if (m_pTestControl1) delete m_pTestControl1;
@@ -33,28 +33,28 @@ void UIBasicTest::Cleanup()
 
 HRESULT UIBasicTest::Initialize()
 {
-    // --- ´ú¸Õ¥Ø¼Ğ ---
-    // 1. CControlBase::Create(): «Ø¥ß±±¨î¶µ¨Ã³]©w¤÷¤lÃö«Y¡C
-    // 2. CControlBase::SetPos() / SetAbsPos(): ÅçÃÒ¬Û¹ï»Pµ´¹ï®y¼Ğ¡C
-    // 3. CControlBase::GetAbsX/Y(): ÅçÃÒµ´¹ï®y¼Ğªº­pºâ¡C
-    // 4. ¶¥¼hµ²ºc¡G¤÷ª«¥ó²¾°Ê®É¡A¤lª«¥óÀ³¸òµÛ²¾°Ê¡C
+    // --- æ¸¬è©¦ç›®æ¨™ ---
+    // 1. CControlBase::Create(): å»ºç«‹æ§åˆ¶é …ä¸¦è¨­å®šçˆ¶å­é—œä¿‚ã€‚
+    // 2. CControlBase::SetPos() / SetAbsPos(): é©—è­‰ç›¸å°èˆ‡çµ•å°åº§æ¨™ã€‚
+    // 3. CControlBase::GetAbsX/Y(): é©—è­‰çµ•å°åº§æ¨™çš„è¨ˆç®—ã€‚
+    // 4. éšå±¤çµæ§‹ï¼šçˆ¶ç‰©ä»¶ç§»å‹•æ™‚ï¼Œå­ç‰©ä»¶æ‡‰è·Ÿè‘—ç§»å‹•ã€‚
 
-    // 1. «Ø¥ß¤@­Ó¥b³z©úªº®Ú®e¾¹ (¦Ç¦â)¡A¤è«KÆ[¹î¨ä½d³ò
+    // 1. å»ºç«‹ä¸€å€‹åŠé€æ˜çš„æ ¹å®¹å™¨ (ç°è‰²)ï¼Œæ–¹ä¾¿è§€å¯Ÿå…¶ç¯„åœ
     m_pRootControl = new CControlAlphaBox();
     m_pRootControl->Create(300, 100, 400, 300, 0.5f, 0.5f, 0.5f, 0.5f, nullptr);
 
-    // 2. «Ø¥ß´ú¸Õ±±¨î¶µ1 (¬õ¦â)¡A±¾¦b Root©³¤U¡C®y¼Ğ (50, 50) ¬O¬Û¹ï©ó Root ªº¡C
+    // 2. å»ºç«‹æ¸¬è©¦æ§åˆ¶é …1 (ç´…è‰²)ï¼Œæ›åœ¨ Rootåº•ä¸‹ã€‚åº§æ¨™ (50, 50) æ˜¯ç›¸å°æ–¼ Root çš„ã€‚
     m_pTestControl1 = new CControlAlphaBox();
     m_pTestControl1->Create(50, 50, 200, 80, 1.0f, 0.0f, 0.0f, 1.0f, m_pRootControl);
 
-    // 3. «Ø¥ß´ú¸Õ±±¨î¶µ2 (ÂÅ¦â)¡A±¾¦b TestControl1 ©³¤U¡C®y¼Ğ (20, 20) ¬O¬Û¹ï©ó TestControl1 ªº¡C
+    // 3. å»ºç«‹æ¸¬è©¦æ§åˆ¶é …2 (è—è‰²)ï¼Œæ›åœ¨ TestControl1 åº•ä¸‹ã€‚åº§æ¨™ (20, 20) æ˜¯ç›¸å°æ–¼ TestControl1 çš„ã€‚
     m_pTestControl2 = new CControlAlphaBox();
     m_pTestControl2->Create(20, 20, 100, 40, 0.0f, 0.0f, 1.0f, 1.0f, m_pTestControl1);
 
-    // 4. «Ø¥ß¤@­Ó¤å¦r±±¨î¶µ¡A¥Î©óÅã¥Üª¬ºA¸ê°T
+    // 4. å»ºç«‹ä¸€å€‹æ–‡å­—æ§åˆ¶é …ï¼Œç”¨æ–¼é¡¯ç¤ºç‹€æ…‹è³‡è¨Š
     m_pStatusText = new CControlText();
-    m_pStatusText->Create(10, 10, nullptr); // ±¾¦b®Ú©³¤U (nullptr)
-    m_pStatusText->SetTextColor(0xFFFFFFFF); // ¥Õ¦â
+    m_pStatusText->Create(10, 10, nullptr); // æ›åœ¨æ ¹åº•ä¸‹ (nullptr)
+    m_pStatusText->SetTextColor(0xFFFFFFFF); // ç™½è‰²
     m_pStatusText->SetFontHeight(16);
 
     printf("[DBG] root first child = %p\n", m_pRootControl->GetFirstChild());
@@ -68,40 +68,41 @@ void UIBasicTest::Update(float fElapsedTime)
 {
     m_fTotalTime += fElapsedTime;
 
-    // --- ´ú¸Õ¥Ø¼Ğ ---
-    // 1. °ÊºA­×§ï®y¼Ğ¡GÅçÃÒ SetX/SetY ©M SetAbsX/SetAbsY¡C
-    // 2. °ÊºAÅãÁô¡GÅçÃÒ Show() / Hide()¡C
-    // 3. ª¬ºA¦^Åª¡G¨Ï¥Î GetAbsX/Y Åª¨ú®y¼Ğ¨ÃÅã¥Ü¡A½T»{¨ä¥¿½T©Ê¡C
+    // --- æ¸¬è©¦ç›®æ¨™ ---
+    // 1. å‹•æ…‹ä¿®æ”¹åº§æ¨™ï¼šé©—è­‰ SetX/SetY å’Œ SetAbsX/SetAbsYã€‚
+    // 2. å‹•æ…‹é¡¯éš±ï¼šé©—è­‰ Show() / Hide()ã€‚
+    // 3. ç‹€æ…‹å›è®€ï¼šä½¿ç”¨ GetAbsX/Y è®€å–åº§æ¨™ä¸¦é¡¯ç¤ºï¼Œç¢ºèªå…¶æ­£ç¢ºæ€§ã€‚
 
-    // Åı¬õ¦â¤è¶ô (m_pTestControl1) ¤ô¥­¨Ó¦^²¾°Ê¡A´ú¸Õ SetX()
-    // ¥Ñ©óÂÅ¦â¤è¶ô¬O¥¦ªº¤lª«¥ó¡AÀ³¸Ó·|¸òµÛ¤@°_°Ê
+    // è®“ç´…è‰²æ–¹å¡Š (m_pTestControl1) æ°´å¹³ä¾†å›ç§»å‹•ï¼Œæ¸¬è©¦ SetX()
+    // ç”±æ–¼è—è‰²æ–¹å¡Šæ˜¯å®ƒçš„å­ç‰©ä»¶ï¼Œæ‡‰è©²æœƒè·Ÿè‘—ä¸€èµ·å‹•
     float newRelativeX = 50.0f + sin(m_fTotalTime) * 40.0f;
     m_pTestControl1->SetX(static_cast<int>(newRelativeX));
 
-    // ÅıÂÅ¦â¤è¶ô (m_pTestControl2) ¨C 2 ¬í°{Ã{¤@¦¸¡A´ú¸Õ SetVisible()
+    // è®“è—è‰²æ–¹å¡Š (m_pTestControl2) æ¯ 2 ç§’é–ƒçˆä¸€æ¬¡ï¼Œæ¸¬è©¦ SetVisible()
     bool isVisible = static_cast<int>(m_fTotalTime) % 2 == 0;
     m_pTestControl2->SetVisible(isVisible);
 
-    m_pStatusText->SetText(4751);
-    // §ó·sª¬ºA¤å¦r¡AÅã¥Ü¦U±±¨î¶µªºµ´¹ï®y¼Ğ
-    /*
+    //m_pStatusText->SetText(4751);
+    // æ›´æ–°ç‹€æ…‹æ–‡å­—ï¼Œé¡¯ç¤ºå„æ§åˆ¶é …çš„çµ•å°åº§æ¨™
+    //m_pStatusText->SetTextW(L"ç´…è‰²æ–¹å¡Š(Control1) X åº§æ¨™æ­£åœ¨ä»¥ sin() è®ŠåŒ–");
+    
     m_pStatusText->SetTextFmtW(
-        L"CControlBase ´ú¸Õ:\n"
-        L" - ¬õ¦â¤è¶ô (Control1) X ®y¼Ğ¥¿¦b¥H sin() ÅÜ¤Æ¡C\n"
-        L" - ÂÅ¦â¤è¶ô (Control2) ¬O¬õ¦â¤è¶ôªº¤l¶µ¡AÀ³¸òÀH²¾°Ê¡A¥B¨C¬í°{Ã{¡C\n\n"
-        L"§Y®É®y¼Ğ:\n"
+        L"CControlBase æ¸¬è©¦:\n"
+        L" - ç´…è‰²æ–¹å¡Š (Control1) X åº§æ¨™æ­£åœ¨ä»¥ sin() è®ŠåŒ–ã€‚\n"
+        L" - è—è‰²æ–¹å¡Š (Control2) æ˜¯ç´…è‰²æ–¹å¡Šçš„å­é …ï¼Œæ‡‰è·Ÿéš¨ç§»å‹•ï¼Œä¸”æ¯ç§’é–ƒçˆã€‚\n\n"
+        L"å³æ™‚åº§æ¨™:\n"
         L" - Root Abs: (%d, %d)\n"
         L" - Control1 Abs: (%d, %d)\n"
         L" - Control2 Abs: (%d, %d)",
         m_pRootControl->GetAbsX(), m_pRootControl->GetAbsY(),
         m_pTestControl1->GetAbsX(), m_pTestControl1->GetAbsY(),
         m_pTestControl2->GetAbsX(), m_pTestControl2->GetAbsY()
-    );*/
-    // ¥Ñ©ó¤å¦r¬O¦h¦æ¡A»İ­nµ¹©w¤@­ÓÃ¸»s¼e«×
+    );
+    // ç”±æ–¼æ–‡å­—æ˜¯å¤šè¡Œï¼Œéœ€è¦çµ¦å®šä¸€å€‹ç¹ªè£½å¯¬åº¦
     m_pStatusText->SetSize(600, 200);
 
-    // °õ¦æ©Ò¦³±±¨î¶µªºÃ¸»s·Ç³Æ
-    // ±q®Ú¸`ÂI©I¥s¡A·|»¼°j§ó·s©Ò¦³¤lª«¥ó
+    // åŸ·è¡Œæ‰€æœ‰æ§åˆ¶é …çš„ç¹ªè£½æº–å‚™
+    // å¾æ ¹ç¯€é»å‘¼å«ï¼Œæœƒéè¿´æ›´æ–°æ‰€æœ‰å­ç‰©ä»¶
     m_pRootControl->PrepareDrawing();
     m_pStatusText->PrepareDrawing();
 }
@@ -110,10 +111,10 @@ void UIBasicTest::Render()
 {
     if (!m_pRootControl) return;
 
-    // Ã¸»s UI ¾ğ
+    // ç¹ªè£½ UI æ¨¹
     m_pRootControl->Draw();
 
-    // Ã¸»sª¬ºA¤å¦r
+    // ç¹ªè£½ç‹€æ…‹æ–‡å­—
     if (m_pStatusText) {
         m_pStatusText->Draw();
     }
