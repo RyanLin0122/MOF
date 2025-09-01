@@ -16,6 +16,8 @@ extern bool g_bRenderStateLocked = false;
 
 extern cltTextFileManager g_clTextFileManager = *(new cltTextFileManager());
 
+extern DCTTextManager g_DCTTextManager = *(new DCTTextManager());
+
 extern MoFFont g_MoFFont = *(new MoFFont());
 
 extern HWND             g_hWnd = NULL;

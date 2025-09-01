@@ -18,10 +18,10 @@ DCTIMMList::DCTIMMList()
 }
 
 DCTIMMList::~DCTIMMList() {
-    // ¤Ï½sÄ¶¡G±q 12 ¨ì 168(§t) ¨C 4bytes ÀË¬d¨ÃÄÀ©ñ¡A¦@ 40 ­Ó
+    // åç·¨è­¯ï¼šå¾ 12 åˆ° 168(å«) æ¯ 4bytes æª¢æŸ¥ä¸¦é‡‹æ”¾ï¼Œå…± 40 å€‹
     for (int i = 0; i < 40; ++i) {
         if (m_items[i]) {
-            delete m_items[i];     // µ¥»ù©ó©I¥s DCTIMM::~DCTIMM + operator delete
+            delete m_items[i];     // ç­‰åƒ¹æ–¼å‘¼å« DCTIMM::~DCTIMM + operator delete
             m_items[i] = nullptr;
             if (m_count > 0) --m_count;
         }
@@ -38,7 +38,7 @@ void DCTIMMList::Create(int capacity) {
 
 void DCTIMMList::SetAlphaDigit(int index, int flag) {
     if (index < m_capacity && m_items[index]) {
-        // ¤Ï½sÄ¶¡G*(DWORD*)(dctimm + 392) = a3;  (392/4 = +98)
+        // åç·¨è­¯ï¼š*(DWORD*)(dctimm + 392) = a3;  (392/4 = +98)
         *reinterpret_cast<int*>(reinterpret_cast<char*>(m_items[index]) + 392) = flag;
     }
 }
@@ -46,16 +46,16 @@ void DCTIMMList::SetAlphaDigit(int index, int flag) {
 void DCTIMMList::SetIMMInfo(int index, unsigned int a3, unsigned short a4,
     int a5, RECT* a6, char a7, int a8, int a9) {
     if (index < m_capacity) {
-        auto* p = new DCTIMM();                  // µ¥»ù operator new(0x18C)+ctor
+        auto* p = new DCTIMM();                  // ç­‰åƒ¹ operator new(0x18C)+ctor
         m_items[index] = p;
         ++m_count;
         m_used[index] = 1;                       // +a2+43 = 1
         p->Init(0 /*unused*/, a4 /*maxlen*/, a5 /*mode*/,
-            a6, a7, a8, a9);                 // ª`·N¡G¦¹Ã±³¹¨Ì§A²{¦³ DCTIMM ©w¸q
-        // ¤Ï½sÄ¶­ì«¬¡GInit(this,a3,a4,a5,a6,a7,a8,a9)
-        // ­Y§A DCTIMM::Init Ã±³¹»P³o¸Ì¤£¦P¡A½Ğ¨Ì§Aªºª©¥»¹ï»ô°Ñ¼Æ¶¶§Ç¡C
-        // ¡]§Úªu¥Î§A¥Ø«e DCTIMM ªºÁÙ­ì»¡©ú¡^
-        (void)a3; // «O¯d¥¼¥Î¡A¶È¬°¹ï»ô¤Ï½sÄ¶¤¶­±
+            a6, a7, a8, a9);                 // æ³¨æ„ï¼šæ­¤ç°½ç« ä¾ä½ ç¾æœ‰ DCTIMM å®šç¾©
+        // åç·¨è­¯åŸå‹ï¼šInit(this,a3,a4,a5,a6,a7,a8,a9)
+        // è‹¥ä½  DCTIMM::Init ç°½ç« èˆ‡é€™è£¡ä¸åŒï¼Œè«‹ä¾ä½ çš„ç‰ˆæœ¬å°é½Šåƒæ•¸é †åºã€‚
+        // ï¼ˆæˆ‘æ²¿ç”¨ä½ ç›®å‰ DCTIMM çš„é‚„åŸèªªæ˜ï¼‰
+        (void)a3; // ä¿ç•™æœªç”¨ï¼Œåƒ…ç‚ºå°é½Šåç·¨è­¯ä»‹é¢
     }
 }
 
@@ -88,7 +88,7 @@ void DCTIMMList::SetIMMText(int index, char* text) {
 
 void DCTIMMList::SetAutoDelete(int index, int flag) {
     if (index < m_capacity && m_items[index]) {
-        // *(DWORD*)(dctimm + 308) = flag; (308/4 = +77) ¡÷ m_bShouldClearBuffer
+        // *(DWORD*)(dctimm + 308) = flag; (308/4 = +77) â†’ m_bShouldClearBuffer
         *reinterpret_cast<int*>(reinterpret_cast<char*>(m_items[index]) + 308) = flag;
     }
 }
@@ -100,14 +100,14 @@ void DCTIMMList::SetActive(int index, int active, HWND hwnd_for_dctimm) {
     if (!m_items[index]) return;
 
     if (active) {
-        // ±Ò¥Î¡G±¾¦^­ì¥»ªº IME context¡A¨Ã«ì´_¤§«eÀx¦sªº Conversion/Sentence
+        // å•Ÿç”¨ï¼šæ›å›åŸæœ¬çš„ IME contextï¼Œä¸¦æ¢å¾©ä¹‹å‰å„²å­˜çš„ Conversion/Sentence
         ImmAssociateContext(hWnd, m_savedImc);
         HIMC h = ImmGetContext(hWnd);
         ImmSetConversionStatus(h, m_savedConv, m_savedSentence);
         ImmReleaseContext(hWnd, h);
     }
     else {
-        // °±¥Î¡GÅª¨ú¥Ø«e Conversion/Sentence¡A²Ä¤@¦¸ÄÀ©ñ§â sentence ³]¬° 8¡A¸Ñ°£ IME
+        // åœç”¨ï¼šè®€å–ç›®å‰ Conversion/Sentenceï¼Œç¬¬ä¸€æ¬¡é‡‹æ”¾æŠŠ sentence è¨­ç‚º 8ï¼Œè§£é™¤ IME
         HIMC h = ImmGetContext(hWnd);
         ImmGetConversionStatus(h, &m_savedConv, &m_savedSentence);
         if (m_firstReleaseFlag) {
@@ -208,7 +208,7 @@ int DCTIMMList::GetCandidate() const {
 
 int DCTIMMList::GetEditPosition(int index) const {
     if (index < m_capacity && m_items[index])
-        return m_items[index]->GetEditPosition(); // µ¥»ù *(_DWORD*)(dctimm + 232)
+        return m_items[index]->GetEditPosition(); // ç­‰åƒ¹ *(_DWORD*)(dctimm + 232)
     return -1;
 }
 
@@ -225,14 +225,14 @@ void DCTIMMList::SetTextSize(int index, int new_max_len, int new_mode) {
 
 void DCTIMMList::SetEditKey(int index, unsigned int uMsg, unsigned int wParam) {
     if (index < m_capacity && m_items[index]) {
-        // ¤Ï½sÄ¶©I¥s GetText(v4, 0, a3, TestChar, 0)
-        // ¥Ñ©ó GetText «D¤½¶}¡A§ï¥Î Poll(0, a3, TestChar, 0) µ¥»ù
+        // åç·¨è­¯å‘¼å« GetText(v4, 0, a3, TestChar, 0)
+        // ç”±æ–¼ GetText éå…¬é–‹ï¼Œæ”¹ç”¨ Poll(0, a3, TestChar, 0) ç­‰åƒ¹
         (void)m_items[index]->Poll(nullptr, uMsg, wParam, 0);
     }
 }
 
 int DCTIMMList::GetUsableIMEIndex() const {
-    // ±q m_used[0] °_±½´y²Ä¤@­Ó¬° 0 ªº¦ì¸m¡Fº¡ 40 ¦^¶Ç -1
+    // å¾ m_used[0] èµ·æƒæç¬¬ä¸€å€‹ç‚º 0 çš„ä½ç½®ï¼›æ»¿ 40 å›å‚³ -1
     for (int i = 0; i < 40; ++i) {
         if (m_used[i] == 0) return i;
     }
@@ -293,8 +293,8 @@ char* DCTIMMList::GetCompositionString(int index) const {
 
 int DCTIMMList::GetCharSet(int index) const {
     if (index < m_capacity && m_items[index]) {
-        // ¤Ï½sÄ¶¡GDCTIMM::GetCharsetFromLang(dctimm, *(WORD*)(dctimm + 169*2))
-        // ³o¸Ì¤£ª½±µ©I¥s DCTIMM ¨p¦³¤èªk¡A§ï¥Îµ¥»ùªºÀRºA¤èªk¡C
+        // åç·¨è­¯ï¼šDCTIMM::GetCharsetFromLang(dctimm, *(WORD*)(dctimm + 169*2))
+        // é€™è£¡ä¸ç›´æ¥å‘¼å« DCTIMM ç§æœ‰æ–¹æ³•ï¼Œæ”¹ç”¨ç­‰åƒ¹çš„éœæ…‹æ–¹æ³•ã€‚
         unsigned short lang = *reinterpret_cast<unsigned short*>(
             reinterpret_cast<char*>(m_items[index]) + (169 * 2));
         return _GetCharsetFromLang(lang);
@@ -310,21 +310,21 @@ int DCTIMMList::GetComCursorPos(int index) const {
     return 0;
 }
 
-// === µ¥»ùÅŞ¿è¡G¨ú¦Û§A²{¦³ DCTIMM ªº¹ïÀ³¹ê§@ ===
+// === ç­‰åƒ¹é‚è¼¯ï¼šå–è‡ªä½ ç¾æœ‰ DCTIMM çš„å°æ‡‰å¯¦ä½œ ===
 int DCTIMMList::_GetCharsetFromLang(unsigned short a2) {
     switch (a2 & 0x03FF) {
     case 1:   return 178;
     case 2: case 0x19: case 0x22: case 0x23: return 204;
     case 4:
-        if (a2 >> 10 == 1) return 136; // Ác¤¤
-        else if (a2 >> 10 == 2) return 134; // Â²¤¤
+        if (a2 >> 10 == 1) return 136; // ç¹ä¸­
+        else if (a2 >> 10 == 2) return 134; // ç°¡ä¸­
         else return 0;
     case 5: case 0xE: case 0x15: case 0x18: case 0x1A: case 0x1B: case 0x24: case 0x2F:
         return 238;
     case 8:   return 161;
     case 0xD: return 177;
     case 0x11: return 128; // Shift-JIS
-    case 0x12: return 129; // Áú¤å
+    case 0x12: return 129; // éŸ“æ–‡
     case 0x1E: return 222;
     case 0x1F: return 162;
     case 0x25: case 0x26: case 0x27: return 186;

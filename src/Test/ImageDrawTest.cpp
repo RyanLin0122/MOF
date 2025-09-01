@@ -2,7 +2,7 @@
 #include "Image/cltImageManager.h"
 #include "Image/ResourceMgr.h"
 #include "Image/GameImage.h"
-#include "CMOFPacking.h"
+#include "FileSystem/CMOFPacking.h"
 #include <stdio.h>
 
 ImageDrawTest::ImageDrawTest()

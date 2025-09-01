@@ -18,7 +18,7 @@ CMoveIcon::CMoveIcon()
     // 等價 *((DWORD*)this + 217) = 1; 讓文字以中心為原點
     m_Text.SetCenterOrigin(true);
     // 等價 *((DWORD*)this + 218) = -5418489; 文字主色
-    m_Text.SetMainColor(0xFFACACC7u); // -5418489 (若使用帶號整數，可直接寫 -5418489)
+    //m_Text.SetMainColor(0xFFACACC7u); // -5418489 (若使用帶號整數，可直接寫 -5418489)
 
     // 其它欄位在成員宣告處已有預設值：m_bAutoTerminate=1, m_bStarted=0, m_setCount=0
     InitData();

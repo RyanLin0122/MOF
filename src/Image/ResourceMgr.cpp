@@ -1,6 +1,6 @@
 #include "Image/ResourceMgr.h"
 #include <windows.h> // For FindFirstFileA, MessageBoxA
-#include "CMOFPacking.h"
+#include "FileSystem/CMOFPacking.h"
 
 
 ResourceMgr* ResourceMgr::s_pInstance = nullptr;

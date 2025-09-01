@@ -1,5 +1,5 @@
-#include "cm_packing_integration_test.h"
-#include "CMofPacking.h"
+#include "Test/cm_packing_integration_test.h"
+#include "FileSystem/CMofPacking.h"
 
 // 為了方便，我們可以在測試程式中存取 CMofPacking 的私有成員以進行驗證
 // 透過定義一個 friend class 或暫時將成員設為 public。

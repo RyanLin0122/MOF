@@ -4,8 +4,8 @@
 #include <iostream>
 #include <fstream>
 #include <vector>
-#include <nfs.h>
-#include <nfs_test.h>
+#include <FileSystem/nfs.h>
+#include <Test/nfs_test.h>
 #include <fmod/fmod.h>
 
 // 簡單的測試結果記錄
@@ -7914,7 +7914,7 @@ void run_nfs_system_level_tests() {
     std::cout << "--- NFS System-Level API Tests Finished ---\n" << std::endl;
 }
 
-void run_all_tests() {
+void run_all_nfs_tests() {
 	// --- 單元測試 ---
 	RUN_TEST(test_bit_operations);
     
@@ -8135,7 +8135,7 @@ void run_all_tests() {
 }
 
 
-int print_test_result() {
+int print_nfs_test_result() {
 	std::cout << "========================================" << std::endl;
 	std::cout << "All tests completed." << std::endl;
 	std::cout << "Tests Passed: " << tests_passed << std::endl;

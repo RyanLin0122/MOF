@@ -10,71 +10,71 @@
 
 
 /**
- * DCTIMMList¡GºŞ²z¦h­Ó DCTIMM ªº®e¾¹
- * - ³Ì¦h 40 ­Ó¶µ¥Ø¡]¹ïÀ³¤Ï½sÄ¶¸Ìªº 12 ~ 168 »P 172 ~ 172+0xA0¡^
- * - ¤º³¡«O¦s IME Context »PÂà´«ª¬ºA¡A¨Ã¦b±Ò¥Î/°±¥Î®É¤Á´«
+ * DCTIMMListï¼šç®¡ç†å¤šå€‹ DCTIMM çš„å®¹å™¨
+ * - æœ€å¤š 40 å€‹é …ç›®ï¼ˆå°æ‡‰åç·¨è­¯è£¡çš„ 12 ~ 168 èˆ‡ 172 ~ 172+0xA0ï¼‰
+ * - å…§éƒ¨ä¿å­˜ IME Context èˆ‡è½‰æ›ç‹€æ…‹ï¼Œä¸¦åœ¨å•Ÿç”¨/åœç”¨æ™‚åˆ‡æ›
  */
 class DCTIMMList {
 public:
     DCTIMMList();
     ~DCTIMMList();
 
-    // «Ø¥ß®e¾¹®e¶q¡Bªì©l¤Æ IME ¬ÛÃöª¬ºA
+    // å»ºç«‹å®¹å™¨å®¹é‡ã€åˆå§‹åŒ– IME ç›¸é—œç‹€æ…‹
     void Create(int capacity);
 
-    // ¨Ì¤Ï½sÄ¶¦æ¬°¡G³]©w DCTIMM ªº +98¡]¦b§Ú­Ìªº DCTIMM ¹ïÀ³ m_bIsPassword¡^
-    // ¦WºÙªu¥Î¤Ï½sÄ¶²M³æ SetAlphaDigit()
+    // ä¾åç·¨è­¯è¡Œç‚ºï¼šè¨­å®š DCTIMM çš„ +98ï¼ˆåœ¨æˆ‘å€‘çš„ DCTIMM å°æ‡‰ m_bIsPasswordï¼‰
+    // åç¨±æ²¿ç”¨åç·¨è­¯æ¸…å–® SetAlphaDigit()
     void SetAlphaDigit(int index, int flag);
 
-    // «Ø¥ß¤@­Ó DCTIMM ¨Ãªì©l¤Æ
+    // å»ºç«‹ä¸€å€‹ DCTIMM ä¸¦åˆå§‹åŒ–
     void SetIMMInfo(int index, unsigned int a3, unsigned short a4,
         int a5, RECT* a6, char a7, int a8, int a9);
 
-    // §R°£¤@­Ó DCTIMM
+    // åˆªé™¤ä¸€å€‹ DCTIMM
     void DeleteIMMInfo(int index);
 
-    // ¨Æ¥ó§ë»¼¡G­Y DCTIMM::Poll ¥i¥Î¡A¦æ¬°µ¥»ù©ó¤Ï½sÄ¶¤¤ªº DCTIMM::Poll
+    // äº‹ä»¶æŠ•éï¼šè‹¥ DCTIMM::Poll å¯ç”¨ï¼Œè¡Œç‚ºç­‰åƒ¹æ–¼åç·¨è­¯ä¸­çš„ DCTIMM::Poll
     int  GetText(HWND hwnd, unsigned int uMsg, unsigned int wParam, int lParam);
 
-    // ¤å¦r I/O
+    // æ–‡å­— I/O
     void GetIMMText(int index, LPSTR out, int out_size);
     void SetIMMText(int index, char* text);
 
-    // ¤Ï½sÄ¶¤¤ªº SetAutoDelete¡G¹ê»Ú¼g¤J DCTIMM +77¡]¹ï»ô m_bShouldClearBuffer¡^
+    // åç·¨è­¯ä¸­çš„ SetAutoDeleteï¼šå¯¦éš›å¯«å…¥ DCTIMM +77ï¼ˆå°é½Š m_bShouldClearBufferï¼‰
     void SetAutoDelete(int index, int flag);
 
-    // ±Ò/°±¥Î + ¤Á´« IME ª¬ºA
+    // å•Ÿ/åœç”¨ + åˆ‡æ› IME ç‹€æ…‹
     void SetActive(int index, int active, HWND hwnd_for_dctimm);
 
-    // °İ¬O§_±Ò¥Î
+    // å•æ˜¯å¦å•Ÿç”¨
     int  IsActive(int index) const;
-    int  IsActive() const; // °w¹ï¥Ø«e index
+    int  IsActive() const; // é‡å°ç›®å‰ index
 
-    // ¨ú±o Native
+    // å–å¾— Native
     HWND GetNative(int index, HWND h) const;
     HWND GetNative(HWND h) const;
 
-    // ¦ì¸m¡B¿ï¨ú¡Bª½½u©³½u
+    // ä½ç½®ã€é¸å–ã€ç›´ç·šåº•ç·š
     RECT GetRect(int index) const;
     unsigned int GetSelectedBlockLen(int index) const;
     void SetRect(int index, RECT rc);
     int  IsComposition(int index) const;
     int  IsComposition() const;
 
-    void ResetBegineComposition(); // ¹ï»ô¡G§â DCTIMM +80 ²M 0
-    int  GetBegineComposition() const; // Åª DCTIMM +80
-    int  GetCandidate() const;         // Åª DCTIMM +81
+    void ResetBegineComposition(); // å°é½Šï¼šæŠŠ DCTIMM +80 æ¸… 0
+    int  GetBegineComposition() const; // è®€ DCTIMM +80
+    int  GetCandidate() const;         // è®€ DCTIMM +81
 
     int  GetEditPosition(int index) const;
     int  SetEditPosition(int index, int pos);
 
     void SetTextSize(int index, int new_max_len, int new_mode);
 
-    // ¤Ï½sÄ¶¥Î GetText(v4, 0, a3, TestChar, 0)¡G
-    // ³o¸Ì¥Î Poll(0, a3, TestChar, 0) µ¥»ù´À¥N¡]¦]¬° GetText «D¤½¶}¡^
+    // åç·¨è­¯ç”¨ GetText(v4, 0, a3, TestChar, 0)ï¼š
+    // é€™è£¡ç”¨ Poll(0, a3, TestChar, 0) ç­‰åƒ¹æ›¿ä»£ï¼ˆå› ç‚º GetText éå…¬é–‹ï¼‰
     void SetEditKey(int index, unsigned int uMsg, unsigned int wParam);
 
-    // ¨ú±o²Ä¤@­Ó¥i¥Îªº IME Index¡]¹ï·Ó memset °Ï¬q¡^
+    // å–å¾—ç¬¬ä¸€å€‹å¯ç”¨çš„ IME Indexï¼ˆå°ç…§ memset å€æ®µï¼‰
     int  GetUsableIMEIndex() const;
 
     void SkipComposition(int index);
@@ -87,20 +87,20 @@ public:
     void ClearBlockPos(int index);
     void GetUnderLine(int index, int* start, int* end);
 
-    // ¦^¶Ç²Õ¦r¼È¦s¡]this+4¡^
+    // å›å‚³çµ„å­—æš«å­˜ï¼ˆthis+4ï¼‰
     char* GetCompositionString(int index) const;
 
-    // ¨ú¦r¤¸¶°¡]ªu¥Î¤Ï½sÄ¶©I¥s¡A¦ı¤£ª½±µ¨Ì¿à DCTIMM ¨p¦³¤èªk¡A§ï¥Îµ¥»ùÅŞ¿è¡^
+    // å–å­—å…ƒé›†ï¼ˆæ²¿ç”¨åç·¨è­¯å‘¼å«ï¼Œä½†ä¸ç›´æ¥ä¾è³´ DCTIMM ç§æœ‰æ–¹æ³•ï¼Œæ”¹ç”¨ç­‰åƒ¹é‚è¼¯ï¼‰
     int  GetCharSet(int index) const;
 
-    // ¨ú²Õ¦r´å¼Ğ¦ì¸m¡]DCTIMM +85¡F¤Ï½sÄ¶Åª +340¡^
+    // å–çµ„å­—æ¸¸æ¨™ä½ç½®ï¼ˆDCTIMM +85ï¼›åç·¨è­¯è®€ +340ï¼‰
     int  GetComCursorPos(int index) const;
 
-    // ¥Ø«e¨Ï¥Î¤¤ªº index
+    // ç›®å‰ä½¿ç”¨ä¸­çš„ index
     inline int CurrentIndex() const { return m_currentIndex; }
 
 private:
-    // === ¤u¨ã¡Gµ¥»ù DCTIMM::GetCharsetFromLang »P DCTIMM::GetCodePageFromCharset ===
+    // === å·¥å…·ï¼šç­‰åƒ¹ DCTIMM::GetCharsetFromLang èˆ‡ DCTIMM::GetCodePageFromCharset ===
     static int  _GetCharsetFromLang(unsigned short lang_id);
     static int  _GetCodePageFromCharset(int cs);
 
@@ -109,10 +109,10 @@ private:
     int      m_currentIndex;          // +1
     int      m_capacity;              // +2
     DCTIMM* m_items[40];             // +3 .. +42
-    int      m_used[40];              // +43 .. +82¡]0/1¡^
+    int      m_used[40];              // +43 .. +82ï¼ˆ0/1ï¼‰
     HIMC     m_savedImc;              // +83
     DWORD    m_savedConv;             // +84
     DWORD    m_savedSentence;         // +85
-    int      m_firstReleaseFlag;      // +86¡]«Øºc®É=1¡A²Ä¤@¦¸ÄÀ©ñ®É§â sentence ³] 8¡^
+    int      m_firstReleaseFlag;      // +86ï¼ˆå»ºæ§‹æ™‚=1ï¼Œç¬¬ä¸€æ¬¡é‡‹æ”¾æ™‚æŠŠ sentence è¨­ 8ï¼‰
     HWND hWnd;
 };

@@ -4,9 +4,6 @@
 #include <cstdlib>
 #include "global.h"
 
-// 假設的全域變數，用於模擬原始環境
-extern MoFFont g_MoFFont;
-
 DCTIMM::DCTIMM() {
     // 只清空主文字指標，其他欄位維持未定（交由 Init() 設定）
     m_pTextBuffer = nullptr;

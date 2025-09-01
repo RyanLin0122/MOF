@@ -1,6 +1,6 @@
 #include "Image/cltGIResource.h"
 #include "Image/CDeviceResetManager.h"
-#include "CMOFPacking.h"
+#include "FileSystem/CMOFPacking.h"
 #include <windows.h>
 #include <cstdio> // 使用 sprintf, wsprintfA
 

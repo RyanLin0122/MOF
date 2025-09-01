@@ -151,8 +151,6 @@
     <ClCompile Include="main.cpp" />
     <ClCompile Include="src\Character\ClientCharacter.cpp" />
     <ClCompile Include="src\Character\ClientCharacterManager.cpp" />
-    <ClCompile Include="src\CMOFPacking.cpp" />
-    <ClCompile Include="src\cm_packing_integration_test.cpp" />
     <ClCompile Include="src\Effect\CBulletArrow.cpp" />
     <ClCompile Include="src\Effect\CBulletBase.cpp" />
     <ClCompile Include="src\Effect\CCAEffect.cpp" />
@@ -238,6 +236,8 @@
     <ClCompile Include="src\Effect\CEffect_Use_Hit.cpp" />
     <ClCompile Include="src\Effect\CEffect_WeddingHall.cpp" />
     <ClCompile Include="src\Effect\cltMoFC_EffectKindInfo.cpp" />
+    <ClCompile Include="src\FileSystem\CMOFPacking.cpp" />
+    <ClCompile Include="src\FileSystem\nfs.cpp" />
     <ClCompile Include="src\global.cpp" />
     <ClCompile Include="src\Image\BackgroundImage.cpp" />
     <ClCompile Include="src\Image\CDeviceManager.cpp" />
@@ -255,15 +255,16 @@
     <ClCompile Include="src\Image\ResourceMgr.cpp" />
     <ClCompile Include="src\Image\TextureListDataMgr.cpp" />
     <ClCompile Include="src\Image\VertexBufferDataMgr.cpp" />
-    <ClCompile Include="src\nfs.cpp" />
-    <ClCompile Include="src\nfs_test.cpp" />
     <ClCompile Include="src\Pet\cltPetObject.cpp" />
     <ClCompile Include="src\Sound\COgg.cpp" />
+    <ClCompile Include="src\Test\cm_packing_integration_test.cpp" />
     <ClCompile Include="src\Test\CompTest.cpp" />
     <ClCompile Include="src\Test\EffectSystemTest.cpp" />
     <ClCompile Include="src\Test\FontSystemTest.cpp" />
     <ClCompile Include="src\Test\ImageDrawTest.cpp" />
     <ClCompile Include="src\Test\ImageTest.cpp" />
+    <ClCompile Include="src\Test\nfs_test.cpp" />
+    <ClCompile Include="src\Test\Test.cpp" />
     <ClCompile Include="src\Text\DCTIMM.cpp" />
     <ClCompile Include="src\Text\DCTIMMList.cpp" />
     <ClCompile Include="src\Text\Huffman.cpp" />
@@ -289,8 +290,6 @@
   <ItemGroup>
     <ClInclude Include="inc\Character\ClientCharacter.h" />
     <ClInclude Include="inc\Character\ClientCharacterManager.h" />
-    <ClInclude Include="inc\CMOFPacking.h" />
-    <ClInclude Include="inc\cm_packing_integration_test.h" />
     <ClInclude Include="inc\Effect\CBulletArrow.h" />
     <ClInclude Include="inc\Effect\CBulletBase.h" />
     <ClInclude Include="inc\Effect\CCAEffect.h" />
@@ -376,6 +375,8 @@
     <ClInclude Include="inc\Effect\CEffect_Use_Hit.h" />
     <ClInclude Include="inc\Effect\CEffect_WeddingHall.h" />
     <ClInclude Include="inc\Effect\cltMoFC_EffectKindInfo.h" />
+    <ClInclude Include="inc\FileSystem\CMOFPacking.h" />
+    <ClInclude Include="inc\FileSystem\nfs.h" />
     <ClInclude Include="inc\fmod\fmod.h" />
     <ClInclude Include="inc\fmod\fmoddyn.h" />
     <ClInclude Include="inc\fmod\fmod_errors.h" />
@@ -398,15 +399,16 @@
     <ClInclude Include="inc\Image\ResourceMgr.h" />
     <ClInclude Include="inc\Image\TextureListDataMgr.h" />
     <ClInclude Include="inc\Image\VertexBufferDataMgr.h" />
-    <ClInclude Include="inc\nfs.h" />
-    <ClInclude Include="inc\nfs_test.h" />
     <ClInclude Include="inc\Pet\cltPetObject.h" />
     <ClInclude Include="inc\Sound\COgg.h" />
+    <ClInclude Include="inc\Test\cm_packing_integration_test.h" />
     <ClInclude Include="inc\Test\CompTest.h" />
     <ClInclude Include="inc\Test\EffectSystemTest.h" />
     <ClInclude Include="inc\Test\FontSystemTest.h" />
     <ClInclude Include="inc\Test\ImageDrawTest.h" />
     <ClInclude Include="inc\Test\ImageTest.h" />
+    <ClInclude Include="inc\Test\nfs_test.h" />
+    <ClInclude Include="inc\Test\Test.h" />
     <ClInclude Include="inc\Text\DCTIMM.h" />
     <ClInclude Include="inc\Text\DCTIMMList.h" />
     <ClInclude Include="inc\Text\Huffman.h" />

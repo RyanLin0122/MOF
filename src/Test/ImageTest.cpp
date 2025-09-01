@@ -7,7 +7,7 @@
 #include "Image/BackgroundImage.h"
 #include "Image/GameImage.h"
 #include "Image/cltImageManager.h"
-#include "CMOFPacking.h" // For integration test
+#include "FileSystem/CMOFPacking.h" // For integration test
 #include <fstream>
 #include <windows.h> // For Sleep
 

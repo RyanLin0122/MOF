@@ -1,106 +1,106 @@
 #pragma once
 
-#include <cstdint>
-#include <cstring>
 #include <string>
+#include <cstdint>
+#include <windows.h>
+
 #include "UI/CControlBase.h"
+#include "Font/MoFFont.h"
+#include "Text/DCTTextManager.h"
+#include "global.h"
 
-// ===== 對齊你提供的基準：外部系統與函式 =====
-struct stFontInfo;       // 只前向宣告，實際由字型系統提供
-class  MoFFont;
-class  DCTTextManager;
+// 前置宣告
+struct stFontInfo;
 
-// ===== 無 windef.h：自訂 Rect 與工具，語義等同 Win32 PtInRect（右/下開區間）=====
-struct RectI__ { int left, top, right, bottom; };
-inline void SetRect__(RectI__* r, int L, int T, int R, int B) { r->left = L; r->top = T; r->right = R; r->bottom = B; }
-inline bool PtInRectOpen__(const RectI__* r, int x, int y) {
-    return (x >= r->left) && (x < r->right) && (y >= r->top) && (y < r->bottom);
-}
-
-// ====== CControlText ====================================================
 class CControlText : public CControlBase
 {
 public:
     CControlText();
     virtual ~CControlText();
 
-    // 建立
-    virtual void Create(CControlBase* pParent) override;
-    virtual void Create(int x, int y, CControlBase* pParent) override;
-    virtual void Create(int x, int y, uint16_t w, uint16_t h, CControlBase* pParent) override;
-
-    // 反編譯對應 API
-    void ClearData();                    // 覆寫，清除本物件的文字資料
-    void SetText(const char* s);         // SetText(char*)
-    void SetText(int stringId);          // SetText(int)
-    void SetParsedText(int stringId);    // SetParsedText(int)
-    void ClearText();                    // 清成空字串
-    void SetTextItoa(int value);         // 整數轉字串（十進位）
+    // ---- 文字 ----
+    void SetText(const char* text);
+    void SetText(int stringId);
+    void SetParsedText(int stringId);
+    void SetTextItoa(int value);
     void SetTextMoney(unsigned int value);
-    void SetTextMoney(int fmtId, unsigned int value);
-    void SetParsedTextMoney(int fmtId, unsigned int value);
+    void SetTextMoney(int textIdFmt, unsigned int value);
+    void SetParsedTextMoney(int textIdFmt, unsigned int value);
 
-    void SetFontHeight(int h);           // [34]
-    void SetFontWeight(int w);           // [35]
-    void SetControlSetFont(const char* fontName); // 由 MoFFont::GetFontInfo 設定高度/粗細/字型名
+    const char* GetText() const { return m_Text.c_str(); }
+    void ClearText();
 
-    void SetMultiLineSpace(int px);      // [40]
-    void SetMultiLineSize(uint16_t w, int h/*存入 WORD*/); // [16],[17]
+    // ---- 外觀設定 ----
+    void SetFontHeight(int h);
+    void SetFontWeight(int w);
+    void SetControlSetFont(const char* fontKey);
+    int  GetFontHeight() const { return m_FontHeight; }
+    const char* GetFontFace();
 
-    // 繪製 / 命中
+    void SetMultiLineSpace(int space);
+    int  GetMultiLineSpace() const { return m_LineSpacing; }
+
+    // 預設的多行寬/高（若本身寬高為 0 時使用）
+    void SetMultiLineSize(uint16_t width, int height/*保留*/);
+
+    // 計算多行包框之高度（以目前字型與行距推估）
+    int  GetCalcedTextBoxHeight(uint16_t width /*0=使用預設寬*/);
+
+    // want space first byte（仍保留與原始行為一致的旗標）
+    void SetWantSpaceFirstByte(int v) { m_WantSpaceFirstByte = v; }
+
+    // 是否有字串內容
+    BOOL IsStringData() const { return !m_Text.empty(); }
+
+    // 依寬度取得每行字元數（byte），回傳行數
+    int  GetCharByteByLine(unsigned char* lineBreakBytes, int maxLines);
+
+    // 取得多行數量（快取版）
+    unsigned char GetMultiTextLineCount(uint16_t width /*0=使用預設寬*/);
+
+    // 位置輔助
+    void SetTextPosToParentCenter();
+
+    // ---- 繪製 ----
     virtual void Draw() override;
-    bool PtInCtrl(stPoint pt);
 
-    // 量測與資訊
-    void GetTextLength(int& outW, int& outH); // 回傳像素寬高（走 MoFFont::GetTextLength）
-    int  GetCalcedTextBoxHeight(uint16_t width /*0 表示取 m_multiWidth*/);
+    // 顏色設定
+    void SetTextColor(DWORD c) { m_TextColor = c; }
+    void SetShadowColor(DWORD c) { m_ShadowColor = c; }
+    void SetOutlineColor(DWORD c) { m_OutlineColor = c; }
+    void SetAlignment(char a) { m_Alignment = a; }
 
-    int  GetFontHeight() const { return m_fontHeight; } // 對應 0x4255C0
-    const char* GetFontFace() const { return m_fontFace.c_str(); } // 0x4255D0
+    // 命中測試（覆蓋成以文字尺寸為準）
+    BOOL PtInCtrl(int x, int y);
 
-    int  GetCharByteByLine(uint8_t* outBytesPerLine, int maxLines);
-    int  GetMultiLineSpace() const { return m_lineSpace; } // 0x425620
-    void SetWantSpaceFirstByte(int v) { m_wantSpaceFirstByte = v; } // 0x425630
-    bool IsStringData() const { return m_isStringData; } // 0x425640
-
-    uint8_t GetMultiTextLineCount(uint16_t width /*0=取 m_multiWidth*/); // 0x425650
-
-    void SetTextPosToParentCenter(); // 0x4255A0
-
-    // 顏色：主色 / 外框(描邊) / 陰影（對應 [37][38][39]）
-    void SetMainColor(uint32_t argb) { m_colorMain = argb; }
-    void SetEdgeColor(uint32_t argb) { m_colorEdge = argb; }
-    void SetShadowColor(uint32_t argb) { m_colorShadow = argb; }
-
-    // 其他 flag
-    void SetDrawFlag(uint8_t f) { m_drawFlag = f; } // 對應 *((_BYTE*)this + 144)
+    // 與基底同名，加入本類別自清理
+    void ClearData();
 
 private:
-    // 任何會影響版面/行數的變更，都要把 m_needRecalcLineCount = 1
-    void MarkLayoutDirty();
+    void EnsureDefaultFontFace();
+    void SyncWideFace();
 
 private:
-    // 對齊基準成員語意（不逐位對齊，但行為一致）
-    std::string m_text;                // [31..33] 反編譯中的 std::string
-    bool        m_isStringData{ false }; // [32] 是否有有效字串（反編譯在多處用來 gate）
+    std::string m_Text;                 // 文字
 
-    uint8_t     m_cachedLineCount{ 1 };  // [168] 緩存行數
-    int         m_needRecalcLineCount{ 1 }; // [43] 是否需重算行數
+    int   m_FontHeight{ 12 };          // 字高
+    int   m_FontWeight{ 400 };         // 粗細
+    DWORD m_TextColor{ 0xFF600A09 };  // 主要字色（對應 -10483191）
+    DWORD m_ShadowColor{ 0 };           // 陰影色（多行：以 +1,+1 偏移繪製）
+    DWORD m_OutlineColor{ 0 };           // 外框色（多行：八方向一圈）
 
-    int         m_fontHeight{ 12 };      // [34]
-    int         m_fontWeight{ 400 };     // [35]
-    std::string m_fontFace;            // [176..] 長度 0x100，這裡用 std::string
+    int   m_LineSpacing{ 5 };           // 多行行距
+    int   m_WantSpaceFirstByte{ 0 };     // 仍保留給 SetTextBoxA 的 unknownFlag
+    char  m_Alignment{ 0 };           // 對齊方式（沿用 MoFFont 的定義）
 
-    uint32_t    m_colorMain{ 0xFF5F5F59 }; // [37] -10483191 (對應 0xFF5F5F59)
-    uint32_t    m_colorEdge{ 0 };        // [38]
-    uint32_t    m_colorShadow{ 0 };      // [39]
+    uint16_t m_DefaultMultiWidth{ 0 };  // 預設多行寬（寬為 0 時使用）
+    uint16_t m_DefaultMultiHeight{ 0 };  // 未使用，為還原對齊
 
-    int         m_lineSpace{ 5 };        // [40]
-    int         m_wantSpaceFirstByte{ 0 }; // [41]
+    // 字型名稱（保留 ANSI 與寬字元兩份，便於與 MoFFont 介面相容）
+    char    m_FontFaceA[256]{ 0 };
+    wchar_t m_FontFaceW[128]{ 0 };
 
-    uint16_t    m_multiWidth{ 0 };       // [16] 多行計算寬（0 表示未設）
-    uint16_t    m_multiCellH{ 0 };       // [17] 反編譯存成 WORD，這裡按 WORD 存
-
-    uint8_t     m_drawFlag{ 0 };         // [144] 傳給 MoFFont 的旗標
-    bool        m_centeredYMinus5{ false }; // [36] 在置中後是否做 y-5 的調整（記錄狀態，方便除錯）
+    // 行數快取
+    mutable bool         m_LineCountDirty{ true };
+    mutable unsigned char m_CachedLineCount{ 1 };
 };
