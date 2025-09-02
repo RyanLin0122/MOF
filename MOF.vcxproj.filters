@@ -1,4 +1,4 @@
-<?xml version='1.0' encoding='utf-8'?>
+<?xml version="1.0" encoding="utf-8"?>
 <Project xmlns="http://schemas.microsoft.com/developer/msbuild/2003" ToolsVersion="4.0">
   <ItemGroup>
     <Filter Include="來源檔案">
@@ -27,20 +27,8 @@
     <ClCompile Include="main.cpp">
       <Filter>來源檔案</Filter>
     </ClCompile>
-    <ClCompile Include="src\nfs.cpp">
-      <Filter>來源檔案</Filter>
-    </ClCompile>
-    <ClCompile Include="src\nfs_test.cpp">
-      <Filter>來源檔案</Filter>
-    </ClCompile>
-    <ClCompile Include="src\CMOFPacking.cpp">
-      <Filter>來源檔案</Filter>
-    </ClCompile>
     <ClCompile Include="src\Sound\COgg.cpp">
       <Filter>來源檔案\Sound</Filter>
-    </ClCompile>
-    <ClCompile Include="src\cm_packing_integration_test.cpp">
-      <Filter>來源檔案</Filter>
     </ClCompile>
     <ClCompile Include="src\Image\Comp.cpp">
       <Filter>來源檔案</Filter>
@@ -426,17 +414,83 @@
     <ClCompile Include="src\Test\FontSystemTest.cpp">
       <Filter>來源檔案</Filter>
     </ClCompile>
-  <ClCompile Include="src\UI\CEditBoxBackgroundImage.cpp"><Filter>Source Files</Filter></ClCompile></ItemGroup>
+    <ClCompile Include="src\UI\CEditBoxBackgroundImage.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="src\FileSystem\CMOFPacking.cpp">
+      <Filter>來源檔案</Filter>
+    </ClCompile>
+    <ClCompile Include="src\FileSystem\nfs.cpp">
+      <Filter>來源檔案</Filter>
+    </ClCompile>
+    <ClCompile Include="src\Test\cm_packing_integration_test.cpp">
+      <Filter>來源檔案</Filter>
+    </ClCompile>
+    <ClCompile Include="src\Test\nfs_test.cpp">
+      <Filter>來源檔案</Filter>
+    </ClCompile>
+    <ClCompile Include="src\Test\Test.cpp">
+      <Filter>來源檔案</Filter>
+    </ClCompile>
+    <ClCompile Include="src\Test\UI_Basic_Test.cpp">
+      <Filter>來源檔案</Filter>
+    </ClCompile>
+    <ClCompile Include="src\Text\DCTIMM.cpp">
+      <Filter>來源檔案</Filter>
+    </ClCompile>
+    <ClCompile Include="src\Text\DCTIMMList.cpp">
+      <Filter>來源檔案</Filter>
+    </ClCompile>
+    <ClCompile Include="src\UI\CControlEditBox.cpp">
+      <Filter>來源檔案</Filter>
+    </ClCompile>
+    <ClCompile Include="src\UI\CControlImageTriple.cpp">
+      <Filter>來源檔案</Filter>
+    </ClCompile>
+    <ClCompile Include="src\UI\CControlMyItem.cpp">
+      <Filter>來源檔案</Filter>
+    </ClCompile>
+    <ClCompile Include="src\UI\CControlBoxBase.cpp">
+      <Filter>來源檔案</Filter>
+    </ClCompile>
+    <ClCompile Include="src\UI\CControlCount.cpp">
+      <Filter>來源檔案</Filter>
+    </ClCompile>
+    <ClCompile Include="src\UI\CControlButton.cpp">
+      <Filter>來源檔案</Filter>
+    </ClCompile>
+    <ClCompile Include="src\UI\CControlCountBar.cpp">
+      <Filter>來源檔案</Filter>
+    </ClCompile>
+    <ClCompile Include="src\UI\CControlCountScrollButton.cpp">
+      <Filter>來源檔案</Filter>
+    </ClCompile>
+    <ClCompile Include="src\UI\CControlBoxBuyPetFeed.cpp">
+      <Filter>來源檔案</Filter>
+    </ClCompile>
+    <ClCompile Include="src\UI\CControlBoxAbility.cpp">
+      <Filter>來源檔案</Filter>
+    </ClCompile>
+    <ClCompile Include="src\UI\CControlBoxBuySkill.cpp">
+      <Filter>來源檔案</Filter>
+    </ClCompile>
+    <ClCompile Include="src\UI\CControlBoxEquip.cpp">
+      <Filter>來源檔案</Filter>
+    </ClCompile>
+    <ClCompile Include="src\UI\CControlNumberBox.cpp">
+      <Filter>來源檔案</Filter>
+    </ClCompile>
+    <ClCompile Include="src\UI\CControlNumberImage.cpp">
+      <Filter>來源檔案</Filter>
+    </ClCompile>
+    <ClCompile Include="src\UI\CControlPageScroll.cpp">
+      <Filter>來源檔案</Filter>
+    </ClCompile>
+    <ClCompile Include="src\UI\CControlBoxInvenItem.cpp">
+      <Filter>來源檔案</Filter>
+    </ClCompile>
+  </ItemGroup>
   <ItemGroup>
-    <ClInclude Include="inc\nfs.h">
-      <Filter>標頭檔</Filter>
-    </ClInclude>
-    <ClInclude Include="inc\nfs_test.h">
-      <Filter>標頭檔</Filter>
-    </ClInclude>
-    <ClInclude Include="inc\CMOFPacking.h">
-      <Filter>標頭檔</Filter>
-    </ClInclude>
     <ClInclude Include="inc\Sound\COgg.h">
       <Filter>標頭檔\Sound</Filter>
     </ClInclude>
@@ -451,9 +505,6 @@
     </ClInclude>
     <ClInclude Include="inc\fmod\wincompat.h">
       <Filter>標頭檔\fmod</Filter>
-    </ClInclude>
-    <ClInclude Include="inc\cm_packing_integration_test.h">
-      <Filter>標頭檔</Filter>
     </ClInclude>
     <ClInclude Include="inc\Image\Comp.h">
       <Filter>標頭檔</Filter>
@@ -845,7 +896,85 @@
     <ClInclude Include="inc\Test\FontSystemTest.h">
       <Filter>標頭檔</Filter>
     </ClInclude>
-  <ClInclude Include="inc\UI\CEditBoxBackgroundImage.h"><Filter>Header Files</Filter></ClInclude></ItemGroup>
+    <ClInclude Include="inc\UI\CEditBoxBackgroundImage.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="inc\conf.h">
+      <Filter>標頭檔</Filter>
+    </ClInclude>
+    <ClInclude Include="inc\FileSystem\CMOFPacking.h">
+      <Filter>標頭檔</Filter>
+    </ClInclude>
+    <ClInclude Include="inc\FileSystem\nfs.h">
+      <Filter>標頭檔</Filter>
+    </ClInclude>
+    <ClInclude Include="inc\Test\cm_packing_integration_test.h">
+      <Filter>標頭檔</Filter>
+    </ClInclude>
+    <ClInclude Include="inc\Test\nfs_test.h">
+      <Filter>標頭檔</Filter>
+    </ClInclude>
+    <ClInclude Include="inc\Test\Test.h">
+      <Filter>標頭檔</Filter>
+    </ClInclude>
+    <ClInclude Include="inc\Test\UI_Basic_Test.h">
+      <Filter>標頭檔</Filter>
+    </ClInclude>
+    <ClInclude Include="inc\Text\DCTIMM.h">
+      <Filter>標頭檔</Filter>
+    </ClInclude>
+    <ClInclude Include="inc\Text\DCTIMMList.h">
+      <Filter>標頭檔</Filter>
+    </ClInclude>
+    <ClInclude Include="inc\UI\CControlEditBox.h">
+      <Filter>標頭檔</Filter>
+    </ClInclude>
+    <ClInclude Include="inc\UI\CControlImageTriple.h">
+      <Filter>標頭檔</Filter>
+    </ClInclude>
+    <ClInclude Include="inc\UI\CControlMyItem.h">
+      <Filter>標頭檔</Filter>
+    </ClInclude>
+    <ClInclude Include="inc\UI\CControlBoxBase.h">
+      <Filter>標頭檔</Filter>
+    </ClInclude>
+    <ClInclude Include="inc\UI\CControlCount.h">
+      <Filter>標頭檔</Filter>
+    </ClInclude>
+    <ClInclude Include="inc\UI\CControlCountBar.h">
+      <Filter>標頭檔</Filter>
+    </ClInclude>
+    <ClInclude Include="inc\UI\CControlButton.h">
+      <Filter>標頭檔</Filter>
+    </ClInclude>
+    <ClInclude Include="inc\UI\CControlCountScrollButton.h">
+      <Filter>標頭檔</Filter>
+    </ClInclude>
+    <ClInclude Include="inc\UI\CControlBoxBuyPetFeed.h">
+      <Filter>標頭檔</Filter>
+    </ClInclude>
+    <ClInclude Include="inc\UI\CControlBoxAbility.h">
+      <Filter>標頭檔</Filter>
+    </ClInclude>
+    <ClInclude Include="inc\UI\CControlBoxBuySkill.h">
+      <Filter>標頭檔</Filter>
+    </ClInclude>
+    <ClInclude Include="inc\UI\CControlBoxEquip.h">
+      <Filter>標頭檔</Filter>
+    </ClInclude>
+    <ClInclude Include="inc\UI\CControlNumberBox.h">
+      <Filter>標頭檔</Filter>
+    </ClInclude>
+    <ClInclude Include="inc\UI\CControlNumberImage.h">
+      <Filter>標頭檔</Filter>
+    </ClInclude>
+    <ClInclude Include="inc\UI\CControlPageScroll.h">
+      <Filter>標頭檔</Filter>
+    </ClInclude>
+    <ClInclude Include="inc\UI\CControlBoxInvenItem.h">
+      <Filter>標頭檔</Filter>
+    </ClInclude>
+  </ItemGroup>
   <ItemGroup>
     <Library Include="lib\fmod64vc.lib" />
   </ItemGroup>

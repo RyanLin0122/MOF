@@ -109,6 +109,7 @@ void Setup() {
 	printf("  CMoFFontTextureManager 初始化完畢。\n");
 	g_MoFFont.InitFontInfo("MofData/FontInfo.dat");
 	g_MoFFont.CreateMoFFont(g_pd3dDevice, "CharacterName");
+	g_IMMList.Create(40);
 	// To Do
 }
 

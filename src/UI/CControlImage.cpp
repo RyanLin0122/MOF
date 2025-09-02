@@ -142,6 +142,22 @@ bool CControlImage::SetImageSize()
     return (w | h) != 0;
 }
 
+void CControlImage::SetShadeMode(int enable)
+{
+    // [41] = enable
+    m_bFadeIn = enable;
+
+    if (enable) {
+        // 開啟淡入：從 0 透明度開始（[39]）
+        m_fadeCurA = 0;
+    }
+    else {
+        // 關閉淡入：直接滿透明度，並同步一般 alpha（[39] 與 [34]）
+        m_fadeCurA = 255;
+        m_nAlpha = 255;
+    }
+}
+
 // ======================================================================
 // 準備繪製（對齊基準行為）
 // - 取一個 GameImage*（池中物件）

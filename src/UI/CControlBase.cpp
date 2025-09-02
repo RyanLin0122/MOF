@@ -347,3 +347,110 @@ void CControlBase::ClearData()
     for (CControlBase* c = m_pFirstChild; c; c = c->m_pNext)
         c->ClearData();
 }
+
+// ------------------------------
+// FindClickedChild
+// ------------------------------
+CControlBase* CControlBase::FindClickedChild(stPoint pt)
+{
+    CControlBase* node = this;
+
+    while (true)
+    {
+        // 走訪 node 的子鏈（由 first → next）
+        CControlBase* i = node->GetFirstChild();
+        for (; i; i = i->m_pNext)
+        {
+            if (i->m_bIsVisible && i->IsActive() && i->PtInCtrl(stPoint{ pt.x, pt.y }))
+                break;
+        }
+
+        // 沒找到，回傳目前節點（反編譯：return this）
+        if (!i)
+            return node;
+
+        // 若不把鍵盤事件傳回父層，且 i 有子結點，往下繼續找
+        if (!i->m_bPassKeyInputToParent && i->m_pFirstChild)
+        {
+            node = i;
+            continue;
+        }
+
+        // 否則回傳 i（反編譯：return i）
+        return i;
+    }
+}
+
+// ------------------------------
+// FindScrollBarCtrlChild
+// ------------------------------
+CControlBase* CControlBase::FindScrollBarCtrlChild(int /*a2*/, int /*a3*/)
+{
+    for (CControlBase* c = m_pFirstChild; c; c = c->m_pNext)
+    {
+        if (c->m_bIsVisible && c->IsActive())
+        {
+            // 反編譯：if (result[29] == 100) return result;
+            if (c->m_nClassId == 100)
+                return c;
+
+            // 若有子，遞迴找
+            if (c->m_pFirstChild)
+            {
+                if (CControlBase* hit = c->FindScrollBarCtrlChild(0, 0))
+                    return hit;
+            }
+        }
+    }
+    return nullptr;
+}
+
+// ------------------------------
+// ToolTip：Kind/Type 版本
+// 反編譯：stToolTipData::SetKindType(this+18, a3, a2, a4, a5, a6, a7, a8);
+// ------------------------------
+void CControlBase::SetToolTipData(int16_t a2, int a3, int a4, int a5, char a6, int16_t a7, int a8)
+{
+    m_ToolTip.SetKindType(a3, a2, a4, a5, a6, a7, a8);
+}
+
+// ------------------------------
+// ToolTip：字串版本
+// 反編譯：stToolTipData::SetStringType((this+72), a2, a3);
+// ------------------------------
+void CControlBase::SetToolTipDataString(char* a2, int a3)
+{
+    m_ToolTip.SetStringType(a2, a3);
+}
+
+// ------------------------------
+// ToolTip：描述版本（kind = 17）
+// 反編譯：*((DWORD*)this + 18) = 17; *((WORD*)this + 40) = a2;
+// 這裡以 SetKindType 形式表達，避免直接觸碰欄位名稱。
+// ------------------------------
+void CControlBase::SetToolTipDataDesc(uint16_t a2)
+{
+    // kind=17，僅帶入 desc id，其餘參數填 0
+    (void)m_ToolTip.SetKindType(/*kind*/17, /*id*/(int16_t)a2,
+        /*a4*/0, /*a5*/0, /*a6*/0,
+        /*a7*/0, /*a8*/0);
+}
+
+// ------------------------------
+// Active 狀態
+// 反編譯：Active()   => *((DWORD*)this + 11) = 1;
+//        NoneActive()=> *((DWORD*)this + 11) = 0;
+//        IsActive() => 回傳上述值
+// ------------------------------
+void CControlBase::Active()
+{
+    m_bActive = true;
+}
+void CControlBase::NoneActive()
+{
+    m_bActive = false;
+}
+int CControlBase::IsActive() const
+{
+    return m_bActive ? 1 : 0;
+}

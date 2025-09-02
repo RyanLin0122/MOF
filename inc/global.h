@@ -7,6 +7,7 @@
 #include "Text/cltTextFileManager.h"
 #include "Text/DCTTextManager.h"
 #include "Font/MoFFont.h"
+#include "Text/DCTIMMList.h"
 
 //-----------------------------------------------------------------------------
 // 全域變數
@@ -14,6 +15,7 @@
 // --- 全域變數定義 ---
 extern int IsInMemory;
 extern bool IsDialogBoxMode;
+extern int g_LButtonUp;
 extern HWND             g_hWnd;
 
 struct GameSystemInfo {
@@ -36,3 +38,10 @@ extern cltTextFileManager g_clTextFileManager;
 extern DCTTextManager g_DCTTextManager;
 
 extern MoFFont g_MoFFont;
+
+extern DCTIMMList g_IMMList;
+
+extern short kGlyphIndexByStyleChar[]; //word_6C6B6C
+extern int   kDotGlyphIndexByStyle[]; //dword_6C6C54
+extern int   kAdvanceByStyle[]; //dword_6C6C58
+extern int   kAtlasIdByStyle[]; //dword_6C6C5C

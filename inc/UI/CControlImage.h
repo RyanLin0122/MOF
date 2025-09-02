@@ -49,6 +49,10 @@ public:
     // 從頂端輸出比例（基準 [152]）
     void SetOutputImagePercentFromTop(uint8_t v) { m_outputPercentFromTop = v; }
 
+    // 0 = 關閉陰影/淡入（直接使用 m_nAlpha）
+    // 1 = 開啟陰影/淡入（用 m_fadeCurA 從 0 開始）
+    void SetShadeMode(int enable);
+
     // ---- 繪製流程 ----
     virtual void PrepareDrawing() override;
     virtual void Draw() override;

@@ -57,6 +57,8 @@ public:
     void     SetSize(uint16_t w, uint16_t h) { m_usWidth = w; m_usHeight = h; }
     uint16_t GetWidth()  const { return m_usWidth; }
     uint16_t GetHeight() const { return m_usHeight; }
+    void SetWidth(uint16_t w) { m_usWidth = w; }
+    void SetHeight(uint16_t h) { m_usHeight = h; }
 
     void MoveWindow(int dx, int dy);
     void SetChildPosMove(int dx, int dy);
@@ -85,11 +87,30 @@ public:
     float GetScaleX() const { return m_fScaleX; }
     float GetScaleY() const { return m_fScaleY; }
 
+    // 由滑鼠座標找被點擊的子控件（找不到則回傳自己）
+    CControlBase* FindClickedChild(stPoint pt);
+
+    // 尋找子樹中的 ScrollBar 控件（classId == 100），找不到回傳 nullptr
+    CControlBase* FindScrollBarCtrlChild(int a2, int a3);
+
+    // Active 狀態
+    void Active();
+    void NoneActive();
+    int  IsActive() const;
+
     // ---- ToolTip ----
     void InitLogIn();
     void ClearData();
     void EnableToolTip(bool enable) { m_bToolTipEnabled = enable; }
     bool IsToolTipEnabled() const { return m_bToolTipEnabled; }
+    // ToolTip：Kind/Type 版本（對應 SetKindType）
+    void SetToolTipData(int16_t a2, int a3, int a4, int a5, char a6, int16_t a7, int a8);
+
+    // ToolTip：字串版本
+    void SetToolTipDataString(char* a2, int a3);
+
+    // ToolTip：描述版本（kind=17, descId=a2）
+    void SetToolTipDataDesc(uint16_t a2);
 
 protected:
     virtual void OnPrepareDrawing() {}
@@ -119,4 +140,7 @@ protected:
 
     // ToolTip
     stToolTipData m_ToolTip;
+
+    bool m_bActive{ false };   // 對應 *((DWORD*)this+11)
+    int  m_nClassId{ 0 };      // 用於 FindScrollBarCtrlChild 比對（100=scrollbar）
 };
