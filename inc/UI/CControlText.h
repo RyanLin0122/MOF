@@ -21,6 +21,7 @@ public:
     // ---- 文字 ----
     void SetText(const char* text);
     void SetText(int stringId);
+    void SetText(int stringId, int number);
     void SetTextFmtW(const wchar_t* fmt, ...);
     void SetParsedText(int stringId);
     void SetTextItoa(int value);

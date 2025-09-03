@@ -1,6 +1,7 @@
 #include <cstdio>
 #include <cstring>
 #include <algorithm>
+#include <stdio.h>
 #include "UI/CControlText.h"
 
 // ---- 小工具：將數字轉為含逗號字串 ----
@@ -136,6 +137,23 @@ void CControlText::SetText(const char* u8) {
 // 文字表（EUC-KR）→ UTF-8
 void CControlText::SetText(int stringId) {
 	if (stringId >= 0) SetTextKR(g_DCTTextManager.GetText(stringId));
+}
+
+void CControlText::SetText(int stringId, int number) {
+	if (stringId >= 0) {
+		// 取得原始字串
+		const char* originalText = g_DCTTextManager.GetText(stringId);
+
+		// 定義一個緩衝區來存放格式化後的字串
+		char buffer[256]; // 根據需要調整大小
+
+		// 使用 _sprintf 將原始字串和數字格式化到緩衝區
+		// 假設你想要在原始字串後面加上數字
+		sprintf(buffer, "%s %d", originalText, number);
+
+		// 將格式化後的字串傳入 SetTextKR
+		SetTextKR(buffer);
+	}
 }
 
 // 若有解析版

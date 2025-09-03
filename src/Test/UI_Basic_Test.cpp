@@ -83,6 +83,7 @@ void UIBasicTest::Update(float fElapsedTime)
     m_pTestControl2->SetVisible(isVisible);
 
     //m_pStatusText->SetText(4751);
+    //m_pStatusText->SetText(3145, 10);
     // 更新狀態文字，顯示各控制項的絕對座標
     //m_pStatusText->SetTextW(L"紅色方塊(Control1) X 座標正在以 sin() 變化");
     
@@ -98,6 +99,7 @@ void UIBasicTest::Update(float fElapsedTime)
         m_pTestControl1->GetAbsX(), m_pTestControl1->GetAbsY(),
         m_pTestControl2->GetAbsX(), m_pTestControl2->GetAbsY()
     );
+    
     // 由於文字是多行，需要給定一個繪製寬度
     m_pStatusText->SetSize(600, 200);
 
