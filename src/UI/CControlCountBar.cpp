@@ -67,13 +67,13 @@ void CControlCountBar::ChildKeyInputProcess(int msg, CControlBase* child, int a4
 {
     if (child == &m_btnLeft && msg == 3) {
         ArrowPosLeft(1);
-        // g_LButtonUp = 1;
+        g_LButtonUp = 1;
     }
     else {
         if (child == &m_btnRight && msg == 3) {
             ArrowPosRight(1);
         }
-        // g_LButtonUp = 1;
+        g_LButtonUp = 1;
     }
 }
 

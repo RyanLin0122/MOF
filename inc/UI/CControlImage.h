@@ -62,6 +62,7 @@ public:
     virtual int* ControlKeyInputProcess(int msg, int key, int x, int y, int a6, int a7) override;
 
     unsigned short m_usBlockID = 0xFFFF;   // [64]，-1 表示未指定
+    int           m_nGIID = 0;        // [31]
     int           m_fadeCurA = 0;        // [39] 目前淡入 alpha（0~255）
 private:
     static inline uint8_t ToByte01(float v)
@@ -74,8 +75,6 @@ private:
 private:
     // ---- 對齊基準的內部狀態 ----
     int           m_nGIGroup = 5;        // [30]，預設群組 5
-    int           m_nGIID = 0;        // [31]
-    
 
     GameImage* m_pGameImage = nullptr;  // [33]（由 PrepareDrawing 填）
     int           m_bPrepared = 0;        // [37] 是否可繪

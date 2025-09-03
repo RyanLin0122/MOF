@@ -57,6 +57,10 @@ public:
     // 依寬度取得每行字元數（byte），回傳行數
     int  GetCharByteByLine(unsigned char* lineBreakBytes, int maxLines);
 
+    // 像素寬度（單行排版時的文字寬）。建議新程式都用這個。
+    void GetTextPixelSize(int* pWidth, int* pHeight) const;
+    void GetTextPixelSize(int* pWidth, int* pHeight, const char* text) const;
+
     // 取得多行數量（快取版）
     unsigned char GetMultiTextLineCount(uint16_t width /*0=使用預設寬*/);
 
@@ -83,6 +87,8 @@ public:
     void SetTextW(const wchar_t* ws);
     void SetTextKR(const char* eucKR);
 
+    DWORD m_TextColor{ 0xFF600A09 };  // 主要字色（對應 -10483191）
+    char  m_Alignment{ 0 };           // 對齊方式（沿用 MoFFont 的定義）
 private:
     void EnsureDefaultFontFace();
     void SyncWideFace();
@@ -92,13 +98,11 @@ private:
 
     int   m_FontHeight{ 12 };          // 字高
     int   m_FontWeight{ 400 };         // 粗細
-    DWORD m_TextColor{ 0xFF600A09 };  // 主要字色（對應 -10483191）
     DWORD m_ShadowColor{ 0 };           // 陰影色（多行：以 +1,+1 偏移繪製）
     DWORD m_OutlineColor{ 0 };           // 外框色（多行：八方向一圈）
 
     int   m_LineSpacing{ 5 };           // 多行行距
     int   m_WantSpaceFirstByte{ 0 };     // 仍保留給 SetTextBoxA 的 unknownFlag
-    char  m_Alignment{ 0 };           // 對齊方式（沿用 MoFFont 的定義）
 
     uint16_t m_DefaultMultiWidth{ 0 };  // 預設多行寬（寬為 0 時使用）
     uint16_t m_DefaultMultiHeight{ 0 };  // 未使用，為還原對齊

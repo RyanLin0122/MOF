@@ -232,6 +232,34 @@ int CControlText::GetCalcedTextBoxHeight(uint16_t width)
 	return (m_FontHeight + m_LineSpacing) * static_cast<int>(lines);
 }
 
+void CControlText::GetTextPixelSize(int* pWidth, int* pHeight) const
+{
+	if (pWidth)  *pWidth = 0;
+	if (pHeight) *pHeight = 0;
+	if (m_Text.empty()) return;
+
+	// 確保有預設字型名稱（內部會同步寬字元 face）
+	const_cast<CControlText*>(this)->EnsureDefaultFontFace();
+
+	g_MoFFont.GetTextLength(pWidth, pHeight,
+		m_FontHeight, m_FontFaceW,
+		m_Text.c_str(), m_FontWeight);
+}
+
+void CControlText::GetTextPixelSize(int* pWidth, int* pHeight, const char *text) const
+{
+	if (pWidth)  *pWidth = 0;
+	if (pHeight) *pHeight = 0;
+	if (m_Text.empty()) return;
+
+	// 確保有預設字型名稱（內部會同步寬字元 face）
+	const_cast<CControlText*>(this)->EnsureDefaultFontFace();
+
+	g_MoFFont.GetTextLength(pWidth, pHeight,
+		m_FontHeight, m_FontFaceW,
+		text, m_FontWeight);
+}
+
 void CControlText::SetTextItoa(int value)
 {
 	char buf[256];

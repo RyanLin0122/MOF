@@ -3,6 +3,7 @@
 #include "UI/CControlBase.h"
 #include "UI/CControlButton.h"
 #include "UI/CControlImage.h"
+#include "global.h"
 
 /**
  * @brief 可拖曳的三段式數值條，含左右箭頭按鈕與可點選/拖曳的軌道區域。
