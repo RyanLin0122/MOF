@@ -2,7 +2,7 @@
 #include "Effect/CEffectBase.h"
 #include "Effect/CEffect_OverMind_Screen.h"
 #include "Effect/CEffect_Skill_Type_Once.h" // 雖然在提供的程式碼中未見其用途，但依據建構函式還原
-#include "Effect/cltMoFC_EffectKindInfo.h"
+#include "Info/cltMoFC_EffectKindInfo.h"
 
 /**
  * @struct EffectInfo

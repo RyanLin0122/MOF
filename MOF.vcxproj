@@ -235,7 +235,6 @@
     <ClCompile Include="src\Effect\CEffect_UI_WorldMap_Light.cpp" />
     <ClCompile Include="src\Effect\CEffect_Use_Hit.cpp" />
     <ClCompile Include="src\Effect\CEffect_WeddingHall.cpp" />
-    <ClCompile Include="src\Effect\cltMoFC_EffectKindInfo.cpp" />
     <ClCompile Include="src\FileSystem\CMOFPacking.cpp" />
     <ClCompile Include="src\FileSystem\nfs.cpp" />
     <ClCompile Include="src\global.cpp" />
@@ -272,6 +271,7 @@
     <ClCompile Include="src\Info\cltMapAreaKindInfo.cpp" />
     <ClCompile Include="src\Info\cltMapInfo.cpp" />
     <ClCompile Include="src\Info\cltMineKindInfo.cpp" />
+    <ClCompile Include="src\Info\cltMoFC_EffectKindInfo.cpp" />
     <ClCompile Include="src\Info\cltMonsterToleranceKindInfo.cpp" />
     <ClCompile Include="src\Info\cltMyItemKindInfo.cpp" />
     <ClCompile Include="src\Info\cltNPCInfo.cpp" />
@@ -438,7 +438,6 @@
     <ClInclude Include="inc\Effect\CEffect_UI_WorldMap_Light.h" />
     <ClInclude Include="inc\Effect\CEffect_Use_Hit.h" />
     <ClInclude Include="inc\Effect\CEffect_WeddingHall.h" />
-    <ClInclude Include="inc\Effect\cltMoFC_EffectKindInfo.h" />
     <ClInclude Include="inc\FileSystem\CMOFPacking.h" />
     <ClInclude Include="inc\FileSystem\nfs.h" />
     <ClInclude Include="inc\fmod\fmod.h" />
@@ -480,6 +479,7 @@
     <ClInclude Include="inc\Info\cltMapAreaKindInfo.h" />
     <ClInclude Include="inc\Info\cltMapInfo.h" />
     <ClInclude Include="inc\Info\cltMineKindInfo.h" />
+    <ClInclude Include="inc\Info\cltMoFC_EffectKindInfo.h" />
     <ClInclude Include="inc\Info\cltMonsterToleranceKindInfo.h" />
     <ClInclude Include="inc\Info\cltMyItemKindInfo.h" />
     <ClInclude Include="inc\Info\cltNPCInfo.h" />

@@ -99,9 +99,6 @@
     <ClCompile Include="src\Effect\CEffectManager.cpp">
       <Filter>來源檔案</Filter>
     </ClCompile>
-    <ClCompile Include="src\Effect\cltMoFC_EffectKindInfo.cpp">
-      <Filter>來源檔案</Filter>
-    </ClCompile>
     <ClCompile Include="src\Effect\CEAManager.cpp">
       <Filter>來源檔案</Filter>
     </ClCompile>
@@ -627,6 +624,9 @@
     <ClCompile Include="src\Other\cltAttackAtb.cpp">
       <Filter>來源檔案</Filter>
     </ClCompile>
+    <ClCompile Include="src\Info\cltMoFC_EffectKindInfo.cpp">
+      <Filter>來源檔案</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="inc\Sound\COgg.h">
@@ -711,9 +711,6 @@
       <Filter>標頭檔</Filter>
     </ClInclude>
     <ClInclude Include="inc\Effect\CEffectManager.h">
-      <Filter>標頭檔</Filter>
-    </ClInclude>
-    <ClInclude Include="inc\Effect\cltMoFC_EffectKindInfo.h">
       <Filter>標頭檔</Filter>
     </ClInclude>
     <ClInclude Include="inc\Effect\CEAManager.h">
@@ -1248,6 +1245,9 @@
       <Filter>標頭檔</Filter>
     </ClInclude>
     <ClInclude Include="inc\Other\cltAttackAtb.h">
+      <Filter>標頭檔</Filter>
+    </ClInclude>
+    <ClInclude Include="inc\Info\cltMoFC_EffectKindInfo.h">
       <Filter>標頭檔</Filter>
     </ClInclude>
   </ItemGroup>

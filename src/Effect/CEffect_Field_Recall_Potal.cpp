@@ -1,6 +1,6 @@
 #include "Effect/CEffect_Field_Recall_Potal.h"
 #include "Effect/CEAManager.h"
-#include "Effect/cltMoFC_EffectKindInfo.h" // 需要特效種類資訊管理器
+#include "Info/cltMoFC_EffectKindInfo.h" // 需要特效種類資訊管理器
 #include "Effect/CEffectManager.h"
 #include "global.h"
 
@@ -26,10 +26,10 @@ void CEffect_Field_Recall_Potal::SetEffect(char* szEffectName, float x, float y)
 
     // 步驟 2: 構建完整的檔案路徑
     char szFullPath[256];
-    sprintf_s(szFullPath, sizeof(szFullPath), "Effect/%s", pKindInfo->szFileName);
+    sprintf_s(szFullPath, sizeof(szFullPath), "Effect/%s", pKindInfo->eaFile);
 
     // 步驟 3: 載入特效數據並開始播放
-    CEAManager::GetInstance()->GetEAData(pKindInfo->usKindID, szFullPath, &m_ccaEffect);
+    CEAManager::GetInstance()->GetEAData(pKindInfo->kindCode, szFullPath, &m_ccaEffect);
     m_ccaEffect.SetFrameTime();
     m_ccaEffect.Play(0, false); // 播放第一個動畫序列，不循環
 

@@ -1,7 +1,7 @@
 #include "Effect/CEffect_MapEffect.h"
 #include "Effect/CEAManager.h"
 #include "Effect/CEffectManager.h"
-#include "Effect/cltMoFC_EffectKindInfo.h"
+#include "Info/cltMoFC_EffectKindInfo.h"
 #include "Character/ClientCharacter.h"
 #include "global.h"
 
@@ -27,7 +27,7 @@ void CEffect_MapEffect::SetEffect(char* szEffectName, unsigned short requiredSta
     stEffectKindInfo* pKindInfo = CEffectManager::GetInstance()->g_clEffectKindInfo.GetEffectKindInfo(szEffectName);
     if (pKindInfo) {
         // 呼叫另一個多載版本來完成設定
-        SetEffect(pKindInfo->usKindID, requiredStateID, pStateOwner, x, y);
+        SetEffect(pKindInfo->kindCode, requiredStateID, pStateOwner, x, y);
     }
 }
 
@@ -39,7 +39,7 @@ void CEffect_MapEffect::SetEffect(unsigned short effectKindID, unsigned short re
 
     // 構建檔案路徑並載入數據
     char szFullPath[256];
-    sprintf_s(szFullPath, sizeof(szFullPath), "Effect/%s", pKindInfo->szFileName);
+    sprintf_s(szFullPath, sizeof(szFullPath), "Effect/%s", pKindInfo->eaFile);
     CEAManager::GetInstance()->GetEAData(effectKindID, szFullPath, &m_ccaEffect);
     m_ccaEffect.SetFrameTime();
     m_ccaEffect.Play(0, true); // 持續性特效應循環播放

@@ -1,7 +1,7 @@
 #include "Effect/CEffect_Portal.h"
 #include "Effect/CEAManager.h"
 #include "Effect/CEffectmanager.h"
-#include "Effect/cltMoFC_EffectKindInfo.h" // 需要特效種類資訊管理器
+#include "Info/cltMoFC_EffectKindInfo.h" // 需要特效種類資訊管理器
 #include "global.h"
 
 CEffect_Portal::CEffect_Portal()
@@ -26,10 +26,10 @@ void CEffect_Portal::SetEffect(char* szEffectName, float x, float y)
 
     // 步驟 2: 構建完整的檔案路徑
     char szFullPath[256];
-    sprintf_s(szFullPath, sizeof(szFullPath), "Effect/%s", pKindInfo->szFileName);
+    sprintf_s(szFullPath, sizeof(szFullPath), "Effect/%s", pKindInfo->eaFile);
 
     // 步驟 3: 載入特效數據並開始播放
-    CEAManager::GetInstance()->GetEAData(pKindInfo->usKindID, szFullPath, &m_ccaEffect);
+    CEAManager::GetInstance()->GetEAData(pKindInfo->kindCode, szFullPath, &m_ccaEffect);
     m_ccaEffect.SetFrameTime();
     m_ccaEffect.Play(0, true); // 傳送門通常是循環播放的
 

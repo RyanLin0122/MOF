@@ -1,7 +1,7 @@
 #include "Test/EffectSystemTest.h"
 #include "Effect/CEffectManager.h"
 #include "Effect/CEAManager.h"
-#include "Effect/cltMoFC_EffectKindInfo.h"
+#include "Info/cltMoFC_EffectKindInfo.h"
 #include "Effect/CEffect_Battle_DownCut.h"
 #include "Effect/CEffect_Battle_Hit_Normal.h"
 #include "Effect/CEffect_Battle_UpperCut.h"

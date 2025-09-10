@@ -1,5 +1,5 @@
 #include "Effect/CEffectManager.h"
-#include "Effect/cltMoFC_EffectKindInfo.h" // 假設的特效資訊管理器
+#include "Info/cltMoFC_EffectKindInfo.h" // 假設的特效資訊管理器
 #include "Character/ClientCharacter.h"       // 角色類別
 #include "Image/CDeviceManager.h"        // 為了重設渲染狀態
 #include <new>
@@ -69,30 +69,30 @@ CEffectBase* CEffectManager::AddEffect(unsigned short effectKindID, ClientCharac
     if (!pKindInfo) return nullptr;
 
     // 如果特效檔案名是 "0"，且不是特殊類型5，則不創建
-    if (strcmp(pKindInfo->szFileName, "0") == 0 && pKindInfo->ucType != 5) {
+    if (strcmp(pKindInfo->eaFile, "0") == 0 && pKindInfo->skillType != 5) {
         return nullptr;
     }
 
     CEffectBase* pNewEffect = nullptr;
 
     // 根據特效種類(Type)，創建對應的特效物件
-    switch (pKindInfo->ucType)
+    switch (pKindInfo->skillType)
     {
     case 1: // 一次性施法者特效
         pNewEffect = new CEffect_Skill_Type_Once();
-        static_cast<CEffect_Skill_Type_Once*>(pNewEffect)->SetEffect(pCaster, effectKindID, pKindInfo->szFileName);
+        static_cast<CEffect_Skill_Type_Once*>(pNewEffect)->SetEffect(pCaster, effectKindID, pKindInfo->eaFile);
         break;
     case 2: // 指向性特效
         pNewEffect = new CEffect_Skill_Type_Directed();
-        static_cast<CEffect_Skill_Type_Directed*>(pNewEffect)->SetEffect(pCaster, pTarget, effectKindID, pKindInfo->szFileName, a8);
+        static_cast<CEffect_Skill_Type_Directed*>(pNewEffect)->SetEffect(pCaster, pTarget, effectKindID, pKindInfo->eaFile, a8);
         break;
     case 3: // 持續性特效
         pNewEffect = new CEffect_Skill_Type_Sustain();
-        static_cast<CEffect_Skill_Type_Sustain*>(pNewEffect)->SetEffect(pCaster, effectKindID, pKindInfo->szFileName, a7);
+        static_cast<CEffect_Skill_Type_Sustain*>(pNewEffect)->SetEffect(pCaster, effectKindID, pKindInfo->eaFile, a7);
         break;
     case 4: // 投射物特效
         pNewEffect = new CEffect_Skill_Type_ShootUnit();
-        static_cast<CEffect_Skill_Type_ShootUnit*>(pNewEffect)->SetEffect(pCaster, pTarget, effectKindID, pKindInfo->szFileName, a5);
+        static_cast<CEffect_Skill_Type_ShootUnit*>(pNewEffect)->SetEffect(pCaster, pTarget, effectKindID, pKindInfo->eaFile, a5);
         break;
     case 5: // 特殊：槍手射擊
         pNewEffect = new CEffect_Battle_GunShoot();
@@ -103,7 +103,7 @@ CEffectBase* CEffectManager::AddEffect(unsigned short effectKindID, ClientCharac
         break;
     case 6: // 物品使用特效
         pNewEffect = new CEffect_Item_Type_Once();
-        static_cast<CEffect_Item_Type_Once*>(pNewEffect)->SetEffect(pCaster, effectKindID, pKindInfo->szFileName);
+        static_cast<CEffect_Item_Type_Once*>(pNewEffect)->SetEffect(pCaster, effectKindID, pKindInfo->eaFile);
         break;
     default:
         // 其他類型不處理
