@@ -280,7 +280,10 @@
     <ClCompile Include="src\Info\cltPKRankKindInfo.cpp" />
     <ClCompile Include="src\Info\cltQuestionKindInfo.cpp" />
     <ClCompile Include="src\Info\cltQuestKindInfo.cpp" />
+    <ClCompile Include="src\Info\cltSkillKindInfo.cpp" />
+    <ClCompile Include="src\Info\cltTitleKindInfo.cpp" />
     <ClCompile Include="src\Info\cltWeddingHallKindInfo.cpp" />
+    <ClCompile Include="src\Other\cltAttackAtb.cpp" />
     <ClCompile Include="src\Pet\cltPetObject.cpp" />
     <ClCompile Include="src\Sound\COgg.cpp" />
     <ClCompile Include="src\System\cltBasicAppearSystem.cpp" />
@@ -485,7 +488,10 @@
     <ClInclude Include="inc\Info\cltPKRankKindInfo.h" />
     <ClInclude Include="inc\Info\cltQuestionKindInfo.h" />
     <ClInclude Include="inc\Info\cltQuestKindInfo.h" />
+    <ClInclude Include="inc\Info\cltSkillKindInfo.h" />
+    <ClInclude Include="inc\Info\cltTitleKindInfo.h" />
     <ClInclude Include="inc\Info\cltWeddingHallKindInfo.h" />
+    <ClInclude Include="inc\Other\cltAttackAtb.h" />
     <ClInclude Include="inc\Pet\cltPetObject.h" />
     <ClInclude Include="inc\Sound\COgg.h" />
     <ClInclude Include="inc\System\cltBasicAppearSystem.h" />
