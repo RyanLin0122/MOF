@@ -282,6 +282,7 @@
     <ClCompile Include="src\Info\cltQuestKindInfo.cpp" />
     <ClCompile Include="src\Info\cltSkillKindInfo.cpp" />
     <ClCompile Include="src\Info\cltTitleKindInfo.cpp" />
+    <ClCompile Include="src\Info\cltTransformKindInfo.cpp" />
     <ClCompile Include="src\Info\cltWeddingHallKindInfo.cpp" />
     <ClCompile Include="src\Other\cltAttackAtb.cpp" />
     <ClCompile Include="src\Pet\cltPetObject.cpp" />
@@ -490,6 +491,7 @@
     <ClInclude Include="inc\Info\cltQuestKindInfo.h" />
     <ClInclude Include="inc\Info\cltSkillKindInfo.h" />
     <ClInclude Include="inc\Info\cltTitleKindInfo.h" />
+    <ClInclude Include="inc\Info\cltTransformKindInfo.h" />
     <ClInclude Include="inc\Info\cltWeddingHallKindInfo.h" />
     <ClInclude Include="inc\Other\cltAttackAtb.h" />
     <ClInclude Include="inc\Pet\cltPetObject.h" />
