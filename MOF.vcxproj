@@ -281,6 +281,7 @@
     <ClCompile Include="src\Info\cltMonsterToleranceKindInfo.cpp" />
     <ClCompile Include="src\Info\cltMyItemKindInfo.cpp" />
     <ClCompile Include="src\Info\cltNPCInfo.cpp" />
+    <ClCompile Include="src\Info\cltPandoraKindInfo.cpp" />
     <ClCompile Include="src\Info\cltPetAniInfo.cpp" />
     <ClCompile Include="src\Info\cltPetKindInfo.cpp" />
     <ClCompile Include="src\Info\cltPetSkillKindInfo.cpp" />
@@ -290,6 +291,7 @@
     <ClCompile Include="src\Info\cltQuestKindInfo.cpp" />
     <ClCompile Include="src\Info\cltResurrectInfo.cpp" />
     <ClCompile Include="src\Info\cltSkillKindInfo.cpp" />
+    <ClCompile Include="src\Info\cltSpecialtyKindInfo.cpp" />
     <ClCompile Include="src\Info\cltTitleKindInfo.cpp" />
     <ClCompile Include="src\Info\cltTransformKindInfo.cpp" />
     <ClCompile Include="src\Info\cltWeddingHallKindInfo.cpp" />
@@ -499,6 +501,7 @@
     <ClInclude Include="inc\Info\cltMonsterToleranceKindInfo.h" />
     <ClInclude Include="inc\Info\cltMyItemKindInfo.h" />
     <ClInclude Include="inc\Info\cltNPCInfo.h" />
+    <ClInclude Include="inc\Info\cltPandoraKindInfo.h" />
     <ClInclude Include="inc\Info\cltPetAniInfo.h" />
     <ClInclude Include="inc\Info\cltPetKindInfo.h" />
     <ClInclude Include="inc\Info\cltPetSkillKindInfo.h" />
@@ -508,6 +511,7 @@
     <ClInclude Include="inc\Info\cltQuestKindInfo.h" />
     <ClInclude Include="inc\Info\cltResurrectInfo.h" />
     <ClInclude Include="inc\Info\cltSkillKindInfo.h" />
+    <ClInclude Include="inc\Info\cltSpecialtyKindInfo.h" />
     <ClInclude Include="inc\Info\cltTitleKindInfo.h" />
     <ClInclude Include="inc\Info\cltTransformKindInfo.h" />
     <ClInclude Include="inc\Info\cltWeddingHallKindInfo.h" />

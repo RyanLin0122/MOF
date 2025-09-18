@@ -657,6 +657,12 @@
     <ClCompile Include="src\Info\cltPortalInfo.cpp">
       <Filter>來源檔案</Filter>
     </ClCompile>
+    <ClCompile Include="src\Info\cltSpecialtyKindInfo.cpp">
+      <Filter>來源檔案</Filter>
+    </ClCompile>
+    <ClCompile Include="src\Info\cltPandoraKindInfo.cpp">
+      <Filter>來源檔案</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="inc\Sound\COgg.h">
@@ -1308,6 +1314,12 @@
       <Filter>標頭檔</Filter>
     </ClInclude>
     <ClInclude Include="inc\Info\cltPortalInfo.h">
+      <Filter>標頭檔</Filter>
+    </ClInclude>
+    <ClInclude Include="inc\Info\cltSpecialtyKindInfo.h">
+      <Filter>標頭檔</Filter>
+    </ClInclude>
+    <ClInclude Include="inc\Info\cltPandoraKindInfo.h">
       <Filter>標頭檔</Filter>
     </ClInclude>
   </ItemGroup>

@@ -2,9 +2,7 @@
 #include <cstdint>
 #include <cstdio>
 #include "global.h"
-
-// 其他模組（僅需前置宣告）
-class cltPetSkillKindInfo { public: static uint16_t TranslateKindCode(char* s); };
+#include "Info/cltPetSkillKindInfo.h"
 
 // 內部小工具：判斷字串是否為十進位數字
 static inline bool IsDigitStr(const char* s) {

@@ -14,6 +14,7 @@
 #include "Info/cltPetKindInfo.h"
 #include "Info/cltMyItemKindInfo.h"
 #include "Info/cltCoupleRingKindInfo.h"
+#include "Info/cltClassKindInfo.h"
 #include "Other/cltAttackAtb.h"
 #include "global.h"
 
@@ -143,7 +144,6 @@ enum EInstantEffectType {
     INSTANT_EFFECT_SPECIAL = 3,
 };
 
-
 #pragma pack(push, 1)
 // Main structure for item data, size 0x128 (296 bytes).
 struct stItemKindInfo {
@@ -172,7 +172,6 @@ struct stItemKindInfo {
     int m_bHomepageView;                 // 68 首頁視圖
     int m_bCanSealItem;                  // 72 已密封
     char _padding_76[4];
-
     // Part 2: Overlapping data for different item types.
     union {
         // --- For INSTANT items --- (from item_instant.txt)
@@ -195,7 +194,7 @@ struct stItemKindInfo {
             unsigned short m_wAddAccuracy;        // 112 命中增加
             unsigned short m_wAddEvasion;         // 114 閃避增加
             unsigned short m_wAddCritical;        // 116 暴擊幾率增加    
-                    
+
             unsigned short m_wAddHit_Beast;       // 118 野獸類型攻擊力加成 (%)
             unsigned short m_wAddHit_Monster;     // 120 怪物類型攻擊力加成 (%)
             unsigned short m_wAddHit_Undead;      // 122 亡靈類型攻擊力加成 (%)
@@ -264,96 +263,106 @@ struct stItemKindInfo {
 
         // --- For HUNT and FASHION items --- (from item_hunt.txt / item_fashion.txt)
         struct {
-            unsigned int m_dwEquipAtb;            // 0x50 장착 위치
+            unsigned int m_dwEquipAtb;            // 80 裝備位置
             // Hunt / Fashion Overlap
             union {
                 // Hunt
                 struct {
-                    unsigned short m_wWeaponType; // 0x54 무기 타입
-                    unsigned short m_wMinAttack;  // 0x56 최소 공격력
-                    unsigned short m_wMaxAttack;  // 0x58 최대 공격력
-                    unsigned char m_byAttackSpeed;// 0x5A 공격 속도
+                    unsigned short m_wWeaponType;       // 84 武器類型
+                    unsigned short m_wMinAttack;        // 86 最小攻擊力
+                    unsigned short m_wMaxAttack;        // 88 最大攻擊力
+                    unsigned char m_byAttackSpeed;      // 90 攻擊速度
                     char _padding_91[1];
-                    int m_bIsMultiTarget;         // 0x5C 발사 물체
-                    unsigned short m_wRange;      // 0x60 사정 거리
-                    unsigned short m_wNeedStr;    // 0x62 힘 요구치
-                    unsigned short m_wNeedDex;    // 0x64 민첩 요구치
-                    unsigned short m_wNeedInt;    // 0x66 지능 요구치
-                    unsigned short m_wNeedCon;    // 0x68 건강 요구치
-                    char m_szEquipableClass[16];  // 0x6A 장착가능 클래스
-                    unsigned char m_byLevel;      // 0x78 레벨 제한
-                    char _padding_121[3];
-                    unsigned short m_wAddStr;     // 0x7C 힘 보너스
-                    unsigned short m_wAddDex;     // 0x7E 민첩 보너스
-                    unsigned short m_wAddInt;     // 0x80 지능 보너스
-                    unsigned short m_wAddCon;     // 0x82 건강 보너스
-                    int m_dwAddHP;                // 0x84 HP 보너스
-                    unsigned short m_wAddMP;      // 0x88 MP 보너스
-                    int m_dwAddMaxHP_Percent;     // 0x8A 최대 HP 증가(%)
-                    unsigned short m_wAddMaxMP_Percent; // 0x8E 최대 MP 증가(%)
-                    unsigned short m_wAddHPRegen; // 0x90 HP 회복량 증가
-                    unsigned short m_wAddMPRegen; // 0x92 MP 회복량 증가
-                    unsigned short m_wAddAttack;  // 0x94 공격력 증가
-                    unsigned short m_wAddDefence; // 0x96 회피력 증가
-                    unsigned short m_wAddCritical;// 0x98 크리티컬 확률 증가
-                    unsigned short m_wAddHit_Boss;// 0x9A 보스몹 추가 공격력(%)
-                    unsigned short m_wAddHit_Normal;// 0x9C 일반몹 추가 공격력(%)
-                    unsigned short m_wAddHit_Player; // 0x9E 플레이어 추가 공격력(%)
-                    unsigned short m_wAddDef_Boss;   // 0xA0 보스몹 추가 방어력(%)
-                    unsigned short m_wAddDef_Normal; // 0xA2 일반몹 추가 방어력(%)
-                    unsigned short m_wAddDef_Player; // 0xA4 플레이어 추가 방어력(%)
-                    unsigned char m_byEffectType;    // 0xA6 이펙트 종류
-                    char _padding_167[1];
-                    unsigned int m_dwEffectResID;    // 0xA8 이펙트 리소스 번호
-                    unsigned int m_dwEffectAniSpeed; // 0xAC 애니속도
-                    unsigned char m_byAttackAniType; // 0xB0 공격 애니
-                    char m_szProjectileName[11];     // 0xB1 발사체 이름
-                    char _padding_188[2];
-                    unsigned short m_wBulletX;       // 0xBE 탄알시작x
-                    unsigned short m_wBulletY;       // 0xC0 탄알시작y
-                    unsigned short m_wAttackAreaX;   // 0xC2 공격범위x
-                    unsigned short m_wAttackAreaY;   // 0xC4 공격범위y
-                    unsigned char m_byEffectLevel;   // 0xC6 이펙트 단계
-                    char _padding_199[1];
-                    unsigned short m_wUpgradedItemKind; // 0xC8 업그레이드 아이템
-                    unsigned char m_byRareType;      // 0xCA 레어 구분
-                    char _padding_203[1];
-                    unsigned int m_dwAttackAtb;      // 0xCC 공격 속성
-                    unsigned int m_dwEquipableClassAtb1; // 0xD0 장착가능 클래스 속성1
-                    unsigned int m_dwEquipableClassAtb2; // 0xD4 장착가능 클래스 속성2
+                    int m_dwAttackType;                 // 92 攻擊方式
+                    unsigned short m_wRange;            // 96 投射物
+                    unsigned short m_wDef;              // 98 防禦力
+                    unsigned short m_wNeedStr;          // 100 力量要求
+                    unsigned short m_wNeedSta;          // 102 體力要求
+                    unsigned short m_wNeedDex;          // 104 敏捷要求
+                    unsigned short m_wNeedInt;          // 106 智力要求
+                    char m_szEquipableClass[12];        // ??? 職業要求
+                    unsigned char m_byLevel;            // 120 等級要求
+                    char _padding_121[1];
+                    unsigned short m_wAddStr;           // 122 攻擊力提升
+                    unsigned short m_wAddSta;           // 124 體力提升
+                    unsigned short m_wAddDex;           // 126 敏捷提升
+                    unsigned short m_wAddInt;           // 128 智力提升
+                    char _padding_130[2];
+                    int m_dwAddAtt;                     // 132 普通攻擊力提升 (100%)
+                    unsigned short m_wAddSkillAtt;      // 136 技能攻擊力提升 (100%)
+                    char _padding_138[2];
+                    int m_dwAddDefence;                 // 140 防禦力提升 (100%)
+                    unsigned short m_wAddMaxHP_Percent; // 144 生命值提升 (100%)
+                    unsigned short m_wAddMaxMP_Percent; // 146 魔法值提升 (100%)
+                    unsigned short m_wAddHPRegen;       // 148 生命值恢復提升
+                    unsigned short m_wAddMPRegen;       // 150 魔法值恢復提升
+                    unsigned short m_wAddAccuracy;      // 152 命中率增加
+                    unsigned short m_wAddEvasion;       // 154 閃避增加
+                    unsigned short m_wAddCritical;      // 156 暴擊幾率增加
+
+                    unsigned short m_wAddHit_Beast;     // 158 野獸類型額外攻擊力 (100%)
+                    unsigned short m_wAddHit_Monster;   // 160 普通怪物額外攻擊力 (100%)
+                    unsigned short m_wAddHit_Undead;    // 162 亡靈類型額外攻擊力 (100%)
+                    unsigned short m_wAddHit_Demon;     // 164 惡魔類型額外攻擊力 (100%)
+                    unsigned short m_wAddDef_Beast;     // 166 野獸型額外防禦力
+                    unsigned short m_wAddDef_Monster;   // 168 普通怪物額外防禦力
+                    unsigned short m_wAddDef_Undead;    // 170 亡靈類型額外防禦力
+                    unsigned short m_wAddDef_Demon;     // 172 惡魔類型額外防禦力
+
+                    unsigned short m_wMagicResist;      // 174 魔法抗性
+                    unsigned char m_byAttribute;        // 176 屬性
+                    char _padding_177[3];
+                    unsigned int m_dwEnchantAttribute;  // 180 附魔屬性
+
+                    unsigned int m_dwAttSpeed;          // 184 攻擊速度
+                    unsigned char m_byAniSpeed;         // 188 動畫速度
+                    char m_szSoundName[17];             // 189 攻擊音效
+                    unsigned short m_wSearchRangeX;     // 206 搜尋範圍 x
+                    unsigned short m_wSearchRangeY;     // 208 搜尋範圍 y
+                    unsigned short m_wAttackAreaX;      // 210 攻擊範圍 x
+                    unsigned short m_wAttackAreaY;      // 212 攻擊範圍 y
+                    unsigned char m_byEnchantLevel;     // 214 附魔等級
+                    char _padding_215[1];
+                    unsigned short m_wItemEffect;       // 216 物品效果
+                    unsigned char m_byRareType;         // 218 稀有度分類
+                    char _padding_219[1];
+                    unsigned int m_dwAttackAtb;         // 220 武器屬性
+                    char _padding_224[72];
                 } Hunt;
 
                 // Fashion
                 struct {
-                    unsigned char m_byGender;       // 0x54 장착 성별
+                    unsigned char m_byGender;           // 84 限定性別
                     char _padding_85[3];
-                    unsigned int m_dwUsePeriod;     // 0x58 사용 기간
-                    unsigned short m_wFashionScore; // 0x5C 패션치 상승치(%)
+                    unsigned int m_dwUsePeriod;         // 88 使用期限
+                    unsigned short m_wAddExpPercent;    // 92 經驗值加成(%)
                     char _padding_94[2];
-                    unsigned short m_wAddHPRegen;   // 0x60 HP 회복량 증가
-                    unsigned short m_wAddMPRegen;   // 0x62 MP 회복량 증가
-                    unsigned short m_wAddProperty;  // 0x64 속성효과
-                    unsigned int m_dwEffectResID;   // 0x68 이펙트리소스
-                    unsigned int m_dwEffectLevel;   // 0x6C 이펙트레벨
-                    unsigned char m_byEffectAttachType; // 0x70 이펙트붙는타입
+                    unsigned short m_wAddFame;          // 96 名聲增加
+                    unsigned short m_wAddHPRegen;       // 98 HP 回復量增加
+                    unsigned short m_wAddMPRegen;       // 100 MP 回復量增加
+                    char _padding_102[2];
+                    unsigned int m_dwCloakEffect;       // 104 披風效果
+                    unsigned int m_dwCloakEffectOrder;  // 108 披風效果順序
+                    unsigned char m_byCloakEffectCount; // 112 披風效果數量
                     char _padding_113[1];
-                    unsigned short m_wEffectSubItem; // 0x72 이펙트용 서브아이템
-                    int m_dwAddHit_Land;             // 0x74 공격력 증가-지상몹
-                    int m_dwAddHit_Water;            // 0x78 공격력 증가-수중몹
-                    int m_dwAddDef_Magic;            // 0x7C 방어력 증가- 마법몹
-                    int m_dwAddEva_Fly;              // 0x80 회피력 증가-비행몹
-                    int m_dwAddHP;                   // 0x84 체력상승
-                    int m_dwAddStr;                  // 0x88 힘상승
-                    int m_dwAddDex;                  // 0x8C 민첩상승
-                    int m_dwAddInt;                  // 0x90 지능상승
-                    unsigned short m_wFashionHPBonus; // 0x94 패션템 HP보너스치 설정(비율)
-                    unsigned short m_wNameTagKind;    // 0x96 NameTagKind
-                    unsigned short m_wChatBallonKind; // 0x98 ChatBallonKind
-                    unsigned short m_wCarKindInfo;    // 0x9A carkindinfo
+                    unsigned short m_wCapeEffectVisual; // 114 披風效果特效
+
+                    int m_dwDamagePercent;              // 116 攻擊力提升 - 百分率
+                    int m_dwDefPercent;                 // 120 防禦力提升 - 百分率
+                    int m_dwAccuracyThousand;           // 124 命中率提升 - 千分率
+                    int m_dwEvasionThousand;            // 128 迴避率提升 - 千分率
+                    int m_dwAddStr;                     // 132 攻擊增加
+                    int m_dwAddDex;                     // 136 敏捷增加
+                    int m_dwAddInt;                     // 140 智力增加
+                    int m_dwAddSta;                     // 144 體力增加
+                    unsigned short m_wFashionHpBarOffset; // 148 時裝與 HP 條顯示間距（像素）
+                    unsigned short m_wNameTagKind;      // 150 名牌種類
+                    unsigned short m_wChatBallonKind;   // 152 聊天氣泡種類
+                    unsigned short m_wCarKindInfo;      // 154 車輛種類
+                    char _padding_156[140];
                 } Fashion;
             };
         } Equip;
-
         // --- For TRAINING cards --- (from TrainningCardInfo.txt)
         struct {
             unsigned char m_byMultiplier; // Offset: 80 倍率
@@ -361,31 +370,20 @@ struct stItemKindInfo {
             struct {
                 unsigned int m_dwResID;     // Offset: 84, 92, 100, 108, 116, 124, 132, 140
                 unsigned short m_wBlockNum; // Offset: 88, 96, 104, 112, 120, 128, 136, 144
-                char _pad[2]; 
+                char _pad[2];
             } m_Skill[8]; // (8 * 8 bytes) 順序: 劍術1, 劍術2, 弓箭1, 弓箭2, 魔法1, 魔法2, 神學1, 神學2
+            char _padding_148[148];
         } Training;
 
         // --- For QUIZ items --- (from koreatext.txt)
         struct {
             unsigned short m_wHangleID;      // 80 인덱스 索引
             unsigned char m_bySyllableType;  // 82 자모구분 字母區分
+            char _padding_83[213];
         } Quiz;
     };
-    /* 0x112 */ char           unknown_padding[2];      // offset 274, 2 bytes padding
-
-    /* 0x114 */ unsigned int   m_dwMyItemPeriod;        // offset 276
-    /* 0x118 */ unsigned short m_wCoupleRingKindCode;   // offset 280
-    /* 0x11A */ unsigned short m_wPartnerItemKindCode;  // offset 282
-    /* 0x11C */ unsigned int   m_dwEmotionListID;       // offset 284
-
-    /* 0x120 */ char           m_cGradeClassification;  // offset 288
-    /* 0x121 */ char           m_cGemSocketCount;       // offset 289
-    /* 0x122 */ char           m_cRandomOptionCount;    // offset 290
-
-    /* 0x123 */ char           end_padding[6];          // offset 291, 補齊到 296 bytes
 };
 #pragma pack(pop)
-
 static_assert(sizeof(stItemKindInfo) == 296, "stItemKindInfo size must be 296 bytes"); //273
 
 

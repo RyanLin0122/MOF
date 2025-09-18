@@ -356,7 +356,10 @@ bool cltItemKindInfo::LoadInstantItem(const char* filename) {
 		PARSE_INT(Instant.m_SkillSpecInitialize); // 技能專精重置
 		PARSE_INT(Instant.m_SkillCircleInitialize); // 技能循環重置
 
-		PARSE_INT(Instant.m_dwPandora);         // 潘朵拉
+		token = strtok(nullptr, delimiter);     // 所需專精
+		if (!token) goto next_line;
+		info->Instant.m_dwPandora = cltPandoraKindInfo::TranslateKindCode(token);   // 潘朵拉
+       
 		PARSE_INT(Instant.m_dwShout);           // 呼喊
 		PARSE_INT(Instant.m_bMessage);          // 訊息
 
@@ -477,7 +480,7 @@ bool cltItemKindInfo::LoadHuntItem(const char* filename) {
 	if (!file) return false;
 
 	char buffer[1024];
-	char classBuffer[1024];
+	char classBuffer[1024] = { 0 };
 
 	for (int i = 0; i < 3; ++i) if (!fgets(buffer, sizeof(buffer), file)) { g_clTextFileManager.fclose(file); return true; }
 
@@ -486,18 +489,19 @@ bool cltItemKindInfo::LoadHuntItem(const char* filename) {
 		char* token = strtok(buffer, delimiter);
 		if (!token) continue;
 
-		unsigned short kind = TranslateKindCode(token);
-		stItemKindInfo* info = GetItemKindInfoByIndex(kind);
+		unsigned short Index = TranslateKindCode(token);
+		stItemKindInfo* info = GetItemKindInfoByIndex(Index);
 		if (!info) continue;
 
-		SKIP_TOKEN(); // 아이템 이름
-
-		token = strtok(nullptr, delimiter); // 장착 위치
+		SKIP_TOKEN(); // 名稱跳過
+		
+		token = strtok(nullptr, delimiter); // 裝備位置
 		if (!token) continue;
 		info->Equip.m_dwEquipAtb = GetEquipAtb(token);
-
-		token = strtok(nullptr, delimiter); // 무기 타입
+		
+		token = strtok(nullptr, delimiter); // 武器類型
 		if (!token) continue;
+		
 		if (!_stricmp(token, "LONG_SWORD"))    info->Equip.Hunt.m_wWeaponType = 1;
 		else if (!_stricmp(token, "SHORT_SWORD"))   info->Equip.Hunt.m_wWeaponType = 2;
 		else if (!_stricmp(token, "HAMMER"))        info->Equip.Hunt.m_wWeaponType = 3;
@@ -512,77 +516,84 @@ bool cltItemKindInfo::LoadHuntItem(const char* filename) {
 		else if (!_stricmp(token, "SPELLBOOK"))     info->Equip.Hunt.m_wWeaponType = 12;
 		else if (!_stricmp(token, "HOLYCROSS"))     info->Equip.Hunt.m_wWeaponType = 13;
 		else if (!_stricmp(token, "SHIELD"))        info->Equip.Hunt.m_wWeaponType = 14;
+		
 		else info->Equip.Hunt.m_wWeaponType = 0;
+		
+		SKIP_TOKEN(); // 角色可見度 跳過
 
-		SKIP_TOKEN(); // 캐릭터 표시 여부
-
-		PARSE_INT(Equip.Hunt.m_wMinAttack);
-		PARSE_INT(Equip.Hunt.m_wMaxAttack);
-		PARSE_INT(Equip.Hunt.m_byAttackSpeed);
-
-		token = strtok(nullptr, delimiter); // 발사 물체
+		PARSE_INT(Equip.Hunt.m_wMinAttack);		// 最小攻擊力
+		PARSE_INT(Equip.Hunt.m_wMaxAttack);		// 最大攻擊力
+		PARSE_INT(Equip.Hunt.m_byAttackSpeed);	// 攻擊速度
+		
+		token = strtok(nullptr, delimiter);		// 攻擊方式
 		if (!token) continue;
-		info->Equip.Hunt.m_bIsMultiTarget = GetAttackType(token);
+		info->Equip.Hunt.m_dwAttackType = GetAttackType(token);
 
-		PARSE_INT(Equip.Hunt.m_wRange);
-		PARSE_INT(Equip.Hunt.m_wNeedStr);
-		PARSE_INT(Equip.Hunt.m_wNeedDex);
-		PARSE_INT(Equip.Hunt.m_wNeedInt);
-		PARSE_INT(Equip.Hunt.m_wNeedCon);
+		PARSE_INT(Equip.Hunt.m_wRange);			// 投射物
+		PARSE_INT(Equip.Hunt.m_wDef);			// 防禦力
+		PARSE_INT(Equip.Hunt.m_wNeedStr);		// 力量要求
+		PARSE_INT(Equip.Hunt.m_wNeedSta);		// 體力要求
+		PARSE_INT(Equip.Hunt.m_wNeedDex);		// 敏捷要求
+		PARSE_INT(Equip.Hunt.m_wNeedInt);		// 智力要求
 
-		token = strtok(nullptr, delimiter); // 장착가능 클래스
+		token = strtok(nullptr, delimiter);       // 職業要求
 		if (!token) continue;
 		strncpy(classBuffer, token, sizeof(classBuffer) - 1);
+		classBuffer[sizeof(classBuffer) - 1] = '\0'; // 確保字串結尾
 
-		PARSE_INT(Equip.Hunt.m_byLevel);
-		PARSE_INT(Equip.Hunt.m_wAddStr);
-		PARSE_INT(Equip.Hunt.m_wAddDex);
-		PARSE_INT(Equip.Hunt.m_wAddInt);
-		PARSE_INT(Equip.Hunt.m_wAddCon);
-		PARSE_INT(Equip.Hunt.m_dwAddHP);
-		PARSE_INT(Equip.Hunt.m_wAddMP);
-		PARSE_INT(Equip.Hunt.m_dwAddMaxHP_Percent);
-		PARSE_INT(Equip.Hunt.m_wAddMaxMP_Percent);
-		PARSE_INT(Equip.Hunt.m_wAddHPRegen);
-		PARSE_INT(Equip.Hunt.m_wAddMPRegen);
-		PARSE_INT(Equip.Hunt.m_wAddAttack);
-		PARSE_INT(Equip.Hunt.m_wAddDefence);
-		PARSE_INT(Equip.Hunt.m_wAddCritical);
-		PARSE_INT(Equip.Hunt.m_wAddHit_Boss);
-		PARSE_INT(Equip.Hunt.m_wAddHit_Normal);
-		PARSE_INT(Equip.Hunt.m_wAddHit_Player);
-		PARSE_INT(Equip.Hunt.m_wAddDef_Boss);
-		PARSE_INT(Equip.Hunt.m_wAddDef_Normal);
-		PARSE_INT(Equip.Hunt.m_wAddDef_Player);
-		PARSE_INT(Equip.Hunt.m_byEffectType);
-		PARSE_INT(Equip.Hunt.m_dwEffectResID);
-		PARSE_INT(Equip.Hunt.m_dwEffectAniSpeed);
-		PARSE_INT(Equip.Hunt.m_byAttackAniType);
-		PARSE_STR(Equip.Hunt.m_szProjectileName);
-		PARSE_INT(Equip.Hunt.m_wBulletX);
-		PARSE_INT(Equip.Hunt.m_wBulletY);
-		PARSE_INT(Equip.Hunt.m_wAttackAreaX);
-		PARSE_INT(Equip.Hunt.m_wAttackAreaY);
-		PARSE_INT(Equip.Hunt.m_byEffectLevel);
+		PARSE_INT(Equip.Hunt.m_byLevel);		// 等級要求
+		PARSE_INT(Equip.Hunt.m_wAddStr);		// 攻擊力提升
+		PARSE_INT(Equip.Hunt.m_wAddSta);		// 體力提升
+		PARSE_INT(Equip.Hunt.m_wAddDex);		// 敏捷提升
+		PARSE_INT(Equip.Hunt.m_wAddInt);		// 智力提升
+		PARSE_INT(Equip.Hunt.m_dwAddAtt);		// 普通攻擊力提升 (100%)
+		PARSE_INT(Equip.Hunt.m_wAddSkillAtt);	// 技能攻擊力提升 (100%)
+		PARSE_INT(Equip.Hunt.m_dwAddDefence);	// 防禦力提升 (100%)
+		PARSE_INT(Equip.Hunt.m_wAddMaxHP_Percent); // 生命值提升 (100%)
+		PARSE_INT(Equip.Hunt.m_wAddMaxMP_Percent);	// 魔法值提升 (100%)
+		PARSE_INT(Equip.Hunt.m_wAddHPRegen);	// 生命值恢復提升
+		PARSE_INT(Equip.Hunt.m_wAddMPRegen);	// 魔法值恢復提升
+		PARSE_INT(Equip.Hunt.m_wAddAccuracy);	// 命中率增加
+		PARSE_INT(Equip.Hunt.m_wAddEvasion);	// 閃避增加
+		PARSE_INT(Equip.Hunt.m_wAddCritical);	// 暴擊幾率增加
+		
+		PARSE_INT(Equip.Hunt.m_wAddHit_Beast);	// 野獸類型額外攻擊力 (100%)
+		PARSE_INT(Equip.Hunt.m_wAddHit_Monster);// 普通怪物額外攻擊力 (100%)
+		PARSE_INT(Equip.Hunt.m_wAddHit_Undead); // 亡靈類型額外攻擊力 (100%)
+		PARSE_INT(Equip.Hunt.m_wAddHit_Demon);  // 惡魔類型額外攻擊力 (100%)
+		PARSE_INT(Equip.Hunt.m_wAddDef_Beast);  // 野獸型額外防禦力
+		PARSE_INT(Equip.Hunt.m_wAddDef_Monster);// 普通怪物額外防禦力
+		PARSE_INT(Equip.Hunt.m_wAddDef_Undead); // 亡靈類型額外防禦力
+		PARSE_INT(Equip.Hunt.m_wAddDef_Demon);  // 惡魔類型額外防禦力
 
-		token = strtok(nullptr, delimiter); // 업그레이드 아이템
+		PARSE_INT(Equip.Hunt.m_wMagicResist);	// 魔法抗性
+		PARSE_INT(Equip.Hunt.m_byAttribute);	// 屬性
+		PARSE_INT(Equip.Hunt.m_dwEnchantAttribute); // 附魔屬性
+		PARSE_INT(Equip.Hunt.m_dwAttSpeed);		// 攻擊速度
+		PARSE_INT(Equip.Hunt.m_byAniSpeed);		// 動畫速度
+		PARSE_STR(Equip.Hunt.m_szSoundName);	// 攻擊音效 To Do
+
+		PARSE_INT(Equip.Hunt.m_wSearchRangeX);	// 搜尋範圍 x
+		PARSE_INT(Equip.Hunt.m_wSearchRangeY);	// 搜尋範圍 y
+		PARSE_INT(Equip.Hunt.m_wAttackAreaX);	// 攻擊範圍 x
+		PARSE_INT(Equip.Hunt.m_wAttackAreaY);	// 攻擊範圍 y
+		PARSE_INT(Equip.Hunt.m_byEnchantLevel);	// 附魔等級
+		
+		token = strtok(nullptr, delimiter);		// 物品效果
 		if (!token) continue;
-		info->Equip.Hunt.m_wUpgradedItemKind = cltItemKindInfo::TranslateKindCode(token);
-
-		PARSE_INT(Equip.Hunt.m_byRareType);
-
-		token = strtok(nullptr, delimiter); // 공격 속성
+		info->Equip.Hunt.m_wItemEffect = cltItemKindInfo::TranslateKindCode(token);
+		
+		PARSE_INT(Equip.Hunt.m_byRareType);		// 稀有度分類
+		
+		token = strtok(nullptr, delimiter);		// 武器屬性
 		if (!token) continue;
 		info->Equip.Hunt.m_dwAttackAtb = cltAttackAtb::GetAttackAtb(token);
-
+		
 		// 將 classBuffer 解析為位元遮罩
-		info->Equip.Hunt.m_dwEquipableClassAtb1 = GetEquipableClassAtb(classBuffer);
-		// m_dwEquipableClassAtb2 in original code is likely for 64-bit mask, not used here.
-		info->Equip.Hunt.m_dwEquipableClassAtb2 = 0;
-
-
-	next_line:;
+		int equipableClassBitmask = GetEquipableClassAtb(classBuffer);
+		*(reinterpret_cast<int*>(info->Equip.Hunt.m_szEquipableClass)) = equipableClassBitmask;
 	}
+next_line:;
 }
 
 bool cltItemKindInfo::LoadFashionItem(const char* filename) {
@@ -602,38 +613,38 @@ bool cltItemKindInfo::LoadFashionItem(const char* filename) {
 		stItemKindInfo* info = GetItemKindInfoByIndex(kind);
 		if (!info) continue;
 
-		SKIP_TOKEN(); // 아이템 이름
+		SKIP_TOKEN(); // 아이템 이름 物品名稱
 
-		token = strtok(nullptr, delimiter); // 장착 위치
+		token = strtok(nullptr, delimiter); // 裝備位置
 		if (!token) continue;
 		info->Equip.m_dwEquipAtb = GetEquipAtb(token);
 
-		token = strtok(nullptr, delimiter); // 장착 성별
+		token = strtok(nullptr, delimiter); // 限定性別
 		if (!token) continue;
 		info->Equip.Fashion.m_byGender = (toupper(*token) == 'M' || toupper(*token) == 'F') ? *token : 0;
 
 		PARSE_INT(Equip.Fashion.m_dwUsePeriod);
-		PARSE_INT(Equip.Fashion.m_wFashionScore);
+		PARSE_INT(Equip.Fashion.m_wAddExpPercent);
+		PARSE_INT(Equip.Fashion.m_wAddFame);
 		PARSE_INT(Equip.Fashion.m_wAddHPRegen);
 		PARSE_INT(Equip.Fashion.m_wAddMPRegen);
-		PARSE_INT(Equip.Fashion.m_wAddProperty);
-		PARSE_HEX(Equip.Fashion.m_dwEffectResID);
-		PARSE_INT(Equip.Fashion.m_dwEffectLevel);
-		PARSE_INT(Equip.Fashion.m_byEffectAttachType);
+		PARSE_INT(Equip.Fashion.m_dwCloakEffect);
+		PARSE_HEX(Equip.Fashion.m_dwCloakEffectOrder);
+		PARSE_INT(Equip.Fashion.m_byCloakEffectCount);
 
-		token = strtok(nullptr, delimiter); // 이펙트용 서브아이템
+		token = strtok(nullptr, delimiter); // 披風效果特效
 		if (!token) continue;
-		info->Equip.Fashion.m_wEffectSubItem = cltItemKindInfo::TranslateKindCode(token);
+		info->Equip.Fashion.m_wCapeEffectVisual = cltItemKindInfo::TranslateKindCode(token);
 
-		PARSE_INT(Equip.Fashion.m_dwAddHit_Land);
-		PARSE_INT(Equip.Fashion.m_dwAddHit_Water);
-		PARSE_INT(Equip.Fashion.m_dwAddDef_Magic);
-		PARSE_INT(Equip.Fashion.m_dwAddEva_Fly);
-		PARSE_INT(Equip.Fashion.m_dwAddHP);
+		PARSE_INT(Equip.Fashion.m_dwAccuracyThousand);
+		PARSE_INT(Equip.Fashion.m_dwDamagePercent);
+		PARSE_INT(Equip.Fashion.m_dwDefPercent);
+		PARSE_INT(Equip.Fashion.m_dwEvasionThousand);
 		PARSE_INT(Equip.Fashion.m_dwAddStr);
+		PARSE_INT(Equip.Fashion.m_dwAddSta);
 		PARSE_INT(Equip.Fashion.m_dwAddDex);
 		PARSE_INT(Equip.Fashion.m_dwAddInt);
-		PARSE_INT(Equip.Fashion.m_wFashionHPBonus);
+		PARSE_INT(Equip.Fashion.m_wFashionHpBarOffset);
 
 		token = strtok(nullptr, delimiter); // NameTagKind
 		if (!token) continue;
