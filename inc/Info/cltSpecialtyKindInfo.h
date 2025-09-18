@@ -7,11 +7,11 @@
 class cltSpecialtyKindInfo
 {
 public:
-    // ±N 5 ½X¥N¸¹¡]­º¦r¥À + 4 ¦ì¼Æ¡^Âà¬° 16-bit kind code
-    // ¤Ï½sÄ¶ÅŞ¿è¡G
-    // - ªø«×«D 5 ¡÷ ¦^¶Ç 0
+    // å°‡ 5 ç¢¼ä»£è™Ÿï¼ˆé¦–å­—æ¯ + 4 ä½æ•¸ï¼‰è½‰ç‚º 16-bit kind code
+    // åç·¨è­¯é‚è¼¯ï¼š
+    // - é•·åº¦é 5 â†’ å›å‚³ 0
     // - hi = (toupper(s[0]) + 31) << 11
-    // - lo = atoi(s+1)¡F¥²¶· < 0x800
-    // - ¦^¶Ç (hi | lo)¡A§_«h 0
+    // - lo = atoi(s+1)ï¼›å¿…é ˆ < 0x800
+    // - å›å‚³ (hi | lo)ï¼Œå¦å‰‡ 0
     static std::uint16_t TranslateKindCode(char* s);
 };

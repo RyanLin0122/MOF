@@ -4,15 +4,15 @@
 #include <cstring>
 #include <cctype>
 
-// »P¤Ï½sÄ¶¬Û²Åªº¤¶­±¡G¥u´£¨Ñ TranslateKindCode
+// èˆ‡åç·¨è­¯ç›¸ç¬¦çš„ä»‹é¢ï¼šåªæä¾› TranslateKindCode
 class cltPandoraKindInfo
 {
 public:
-    // ±N 5 ½X¥N¸¹¡]­º¦r¥À + 4¦ì¼Æ¡^Âà¦¨ 16-bit kind code¡C
-    // ³W«h¡]»P¤Ï½sÄ¶¤@­P¡^¡G
-    // 1) ªø«×¥²¬° 5¡F§_«h¦^¶Ç 0
+    // å°‡ 5 ç¢¼ä»£è™Ÿï¼ˆé¦–å­—æ¯ + 4ä½æ•¸ï¼‰è½‰æˆ 16-bit kind codeã€‚
+    // è¦å‰‡ï¼ˆèˆ‡åç·¨è­¯ä¸€è‡´ï¼‰ï¼š
+    // 1) é•·åº¦å¿…ç‚º 5ï¼›å¦å‰‡å›å‚³ 0
     // 2) hi = (toupper(s[0]) + 31) << 11
-    // 3) lo = atoi(s + 1)¡F¥²¶· < 0x800
-    // 4) ¦^¶Ç (hi | lo)¡A§_«h 0
+    // 3) lo = atoi(s + 1)ï¼›å¿…é ˆ < 0x800
+    // 4) å›å‚³ (hi | lo)ï¼Œå¦å‰‡ 0
     static std::uint16_t TranslateKindCode(char* s);
 };

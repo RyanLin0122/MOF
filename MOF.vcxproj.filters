@@ -534,9 +534,6 @@
     <ClCompile Include="src\Info\cltDebuffKindInfo.cpp">
       <Filter>來源檔案</Filter>
     </ClCompile>
-    <ClCompile Include="src\Info\cltItemKindInfo.cpp">
-      <Filter>來源檔案</Filter>
-    </ClCompile>
     <ClCompile Include="src\Info\cltClassKindInfo.cpp">
       <Filter>來源檔案</Filter>
     </ClCompile>
@@ -661,6 +658,9 @@
       <Filter>來源檔案</Filter>
     </ClCompile>
     <ClCompile Include="src\Info\cltPandoraKindInfo.cpp">
+      <Filter>來源檔案</Filter>
+    </ClCompile>
+    <ClCompile Include="src\Info\cltItemKindInfo.cpp">
       <Filter>來源檔案</Filter>
     </ClCompile>
   </ItemGroup>
