@@ -6,11 +6,12 @@
 #include <cctype>
 #include <string>
 #include <vector>
-#include "Info/cltClassKindInfo.h"
 #include "Info/cltMineKindInfo.h"
 #include "Info/cltDebuffKindInfo.h"
 #include "Other/cltAttackAtb.h"
 #include "global.h"
+
+class cltClassKindInfo;
 
 // ──────────────────────────────────────────────────────────────────────────
 // 技能記錄：嚴格 400 bytes（與反編譯一致）。

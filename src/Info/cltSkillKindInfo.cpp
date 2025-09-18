@@ -1,4 +1,5 @@
 #include "Info/cltSkillKindInfo.h"
+#include "Info/cltClassKindInfo.h"
 #include <cassert>
 
 // 靜態
