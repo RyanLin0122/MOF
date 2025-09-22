@@ -41,6 +41,36 @@
 // 與 IDA 相符的格式：1 字母 + 4 數字 + '\0'（額外留白以防萬一）
 static char s_szKindCode[1024] = { 0 };
 
+// 物品類別屬性陣列的初始化
+// 每個索引對應 EItemClass 的一個值
+unsigned int cltItemKindInfo::m_dwItemTypeAtb[25] = {
+	/*INSTANT*/           ITEM_ATTR_USE | ITEM_ATTR_SELL | ITEM_ATTR_DROP | ITEM_ATTR_TRADE | ITEM_ATTR_QUICKSLOT | ITEM_ATTR_STORAGE | ITEM_ATTR_SELL_AGENCY | ITEM_ATTR_TIMER | ITEM_ATTR_EX_STORAGE | ITEM_ATTR_PET_INVEN,
+	/*HUNT*/              ITEM_ATTR_SELL | ITEM_ATTR_DROP | ITEM_ATTR_EQUIP | ITEM_ATTR_TRADE | ITEM_ATTR_STORAGE | ITEM_ATTR_SELL_AGENCY | ITEM_ATTR_TIMER | ITEM_ATTR_EX_STORAGE | ITEM_ATTR_PET_INVEN,
+	/*FASHION*/           ITEM_ATTR_SELL | ITEM_ATTR_DROP | ITEM_ATTR_EQUIP | ITEM_ATTR_TRADE | ITEM_ATTR_STORAGE | ITEM_ATTR_SELL_AGENCY | ITEM_ATTR_TIMER | ITEM_ATTR_EX_STORAGE | ITEM_ATTR_PET_INVEN,
+	/*TRAINING*/          ITEM_ATTR_USE | ITEM_ATTR_SELL | ITEM_ATTR_DROP | ITEM_ATTR_TRADE | ITEM_ATTR_QUICKSLOT | ITEM_ATTR_STORAGE | ITEM_ATTR_SELL_AGENCY | ITEM_ATTR_TIMER | ITEM_ATTR_TRAINING | ITEM_ATTR_EX_STORAGE | ITEM_ATTR_PET_INVEN,
+	/*ETC*/               ITEM_ATTR_SELL | ITEM_ATTR_DROP | ITEM_ATTR_TRADE | ITEM_ATTR_STORAGE | ITEM_ATTR_SELL_AGENCY | ITEM_ATTR_EX_STORAGE | ITEM_ATTR_PET_INVEN,
+	/*NPCITEM*/           0,
+	/*GENERICBAG*/        ITEM_ATTR_SELL | ITEM_ATTR_DROP | ITEM_ATTR_TRADE | ITEM_ATTR_STORAGE | ITEM_ATTR_SELL_AGENCY | ITEM_ATTR_EX_STORAGE | ITEM_ATTR_PET_INVEN,
+	/*UPGRADE*/           ITEM_ATTR_SELL | ITEM_ATTR_DROP | ITEM_ATTR_TRADE | ITEM_ATTR_STORAGE | ITEM_ATTR_SELL_AGENCY | ITEM_ATTR_EX_STORAGE | ITEM_ATTR_PET_INVEN,
+	/*CASH_INSTANCE*/     ITEM_ATTR_USE | ITEM_ATTR_QUICKSLOT | ITEM_ATTR_STORAGE | ITEM_ATTR_CASH | ITEM_ATTR_TIMER | ITEM_ATTR_EX_STORAGE | ITEM_ATTR_PET_INVEN,
+	/*CASH_HUNT*/         ITEM_ATTR_EQUIP | ITEM_ATTR_STORAGE | ITEM_ATTR_CASH | ITEM_ATTR_TIMER | ITEM_ATTR_EX_STORAGE | ITEM_ATTR_PET_INVEN,
+	/*CASH_FASHION*/      ITEM_ATTR_EQUIP | ITEM_ATTR_STORAGE | ITEM_ATTR_CASH | ITEM_ATTR_TIMER | ITEM_ATTR_EX_STORAGE | ITEM_ATTR_PET_INVEN,
+	/*QUIZ*/              ITEM_ATTR_USE | ITEM_ATTR_DROP | ITEM_ATTR_QUICKSLOT | ITEM_ATTR_STORAGE | ITEM_ATTR_QUIZ | ITEM_ATTR_EX_STORAGE | ITEM_ATTR_PET_INVEN,
+	/*CASH_TRAINING*/     ITEM_ATTR_USE | ITEM_ATTR_QUICKSLOT | ITEM_ATTR_STORAGE | ITEM_ATTR_CASH | ITEM_ATTR_TIMER | ITEM_ATTR_TRAINING | ITEM_ATTR_EX_STORAGE | ITEM_ATTR_PET_INVEN,
+	/*STOREHOUSE*/        ITEM_ATTR_SELL | ITEM_ATTR_DROP | ITEM_ATTR_TRADE | ITEM_ATTR_STORAGE | ITEM_ATTR_SELL_AGENCY | ITEM_ATTR_EX_STORAGE | ITEM_ATTR_PET_INVEN,
+	/*EVENT_INSTANT*/     ITEM_ATTR_USE | ITEM_ATTR_QUICKSLOT | ITEM_ATTR_STORAGE | ITEM_ATTR_TIMER | ITEM_ATTR_EX_STORAGE | ITEM_ATTR_PET_INVEN,
+	/*EVENT_FASHION*/     ITEM_ATTR_EQUIP | ITEM_ATTR_STORAGE | ITEM_ATTR_TIMER | ITEM_ATTR_EX_STORAGE | ITEM_ATTR_PET_INVEN,
+	/*ETC_NOTTRADE*/      ITEM_ATTR_SELL | ITEM_ATTR_STORAGE | ITEM_ATTR_EX_STORAGE | ITEM_ATTR_PET_INVEN,
+	/*EXPAND_CIRCLEMEMBER*/ ITEM_ATTR_USE | ITEM_ATTR_SELL | ITEM_ATTR_DROP | ITEM_ATTR_TRADE | ITEM_ATTR_QUICKSLOT | ITEM_ATTR_STORAGE | ITEM_ATTR_SELL_AGENCY | ITEM_ATTR_EX_STORAGE | ITEM_ATTR_PET_INVEN,
+	/*PCBANG_INSTANT*/    ITEM_ATTR_USE | ITEM_ATTR_QUICKSLOT | ITEM_ATTR_STORAGE | ITEM_ATTR_TIMER | ITEM_ATTR_EX_STORAGE | ITEM_ATTR_PET_INVEN,
+	/*EVENT_HUNT*/        ITEM_ATTR_EQUIP | ITEM_ATTR_STORAGE | ITEM_ATTR_TIMER | ITEM_ATTR_EX_STORAGE | ITEM_ATTR_PET_INVEN,
+	/*EVENT_TRAINING*/    ITEM_ATTR_USE | ITEM_ATTR_QUICKSLOT | ITEM_ATTR_STORAGE | ITEM_ATTR_TIMER | ITEM_ATTR_TRAINING | ITEM_ATTR_EX_STORAGE | ITEM_ATTR_PET_INVEN,
+	/*EVENT_STOREHOUSE*/  ITEM_ATTR_STORAGE | ITEM_ATTR_EX_STORAGE | ITEM_ATTR_PET_INVEN,
+	/*EVENT_UPGRADE*/     ITEM_ATTR_STORAGE | ITEM_ATTR_EX_STORAGE | ITEM_ATTR_PET_INVEN,
+	/*COIN*/              ITEM_ATTR_STORAGE | ITEM_ATTR_EX_STORAGE | ITEM_ATTR_PET_INVEN | ITEM_ATTR_COIN,
+	/*EVENT_NO_EX_STORAGE_BAG*/ ITEM_ATTR_USE | ITEM_ATTR_QUICKSLOT | ITEM_ATTR_STORAGE | ITEM_ATTR_TIMER | ITEM_ATTR_PET_INVEN,
+};
+
 // Definition of static members
 cltClassKindInfo* cltItemKindInfo::m_pclClassKindInfo = nullptr;
 cltPetKindInfo* cltItemKindInfo::m_pclPetKindInfo = nullptr;
@@ -143,6 +173,7 @@ bool cltItemKindInfo::LoadItemList(const char* filename) {
 		token = strtok(nullptr, delimiter); // 物品價格
 		if (!token || !IsDigit(token)) goto load_error;
 		info->m_dwPrice = atoi(token);
+		if (info->m_dwPrice > 999999999) goto load_error;
 		if (info->m_dwPrice == 0) goto load_error; // Price cannot be 0 check
 
 		token = strtok(nullptr, delimiter); // PVP 購買點數
@@ -791,19 +822,6 @@ void cltItemKindInfo::CreateItemKindForMakingItemList() {
 	}
 }
 
-
-unsigned short cltItemKindInfo::TranslateKindCode(const char* code) {
-	if (strlen(code) != 5) return 0;
-
-	int prefix = (toupper(code[0]) - 'A' + 32) << 11;
-	unsigned short suffix = atoi(code + 1);
-
-	if (suffix < 2048) { // 0x800
-		return prefix | suffix;
-	}
-	return 0;
-}
-
 uint16_t cltItemKindInfo::TranslateKindCode(char* a1)
 {
 	if (!a1) return 0;
@@ -896,17 +914,493 @@ bool cltItemKindInfo::GetAttackType(const char* str) {
 }
 
 int cltItemKindInfo::GetEquipableClassAtb(char* str) {
+	// 依賴於已初始化的 m_pclClassKindInfo
+	if (!m_pclClassKindInfo) return 0;
+
+	// 如果字串是 "0"，代表所有職業皆可裝備 (或無限制)
 	if (str[0] == '0' && str[1] == '\0') return 0;
 
-	// Stub implementation. The original code calls cltClassKindInfo
-	// to resolve class names like "FIG", "MAG", etc., into bitmasks.
-	// This requires the full definition and data for cltClassKindInfo.
 	int atb = 0;
 	char* token = strtok(str, "|");
 	while (token) {
-		// Here, one would look up 'token' in cltClassKindInfo and OR the result into 'atb'.
-		// For example: atb |= g_clClassKindInfo->GetAtbForClass(token);
+		// 此邏輯模擬了反編譯程式碼的行為:
+		// 1. 將職業名稱字串 (如 "FIG") 轉換為其內部 Kind Code
+		unsigned short classKind = cltClassKindInfo::TranslateKindCode(token);
+		if (classKind != 0) {
+			// 2. 使用 Kind Code 獲取職業的詳細資訊結構
+			strClassKindInfo* classInfo = m_pclClassKindInfo->GetClassKindInfo(classKind);
+			if (classInfo) {
+				// 3. 從結構中取得屬性位元遮罩 (Attribute Bitmask) 並用 OR 運算符合併
+				// 假設 `m_dwAtb` 是 `stClassKindInfo` 結構中對應 `*((_DWORD *)v7 + 2)` 的成員
+				atb |= classInfo->atb;
+			}
+		}
 		token = strtok(nullptr, "|");
 	}
 	return atb;
+}
+
+bool cltItemKindInfo::IsValidItem(unsigned __int16 id) {
+	return m_pItemKindInfo[id] != NULL;
+}
+
+unsigned short cltItemKindInfo::GetHangleID2ItemKind(unsigned short a2) {
+	return m_pHangleID2ItemKind[a2];
+}
+unsigned short cltItemKindInfo::GetEnglishID2ItemKind(unsigned short a2) {
+	return m_pEnglishID2ItemKind[a2];
+}
+
+stItemKindInfo* cltItemKindInfo::GetItemKindInfo(unsigned short a2) {
+	return m_pItemKindInfo[a2];
+}
+
+bool cltItemKindInfo::IsUseItem(EItemClass itemClass) {
+	return (m_dwItemTypeAtb[itemClass] & ITEM_ATTR_USE) != 0;
+}
+
+bool cltItemKindInfo::IsEquipItem(EItemClass itemClass) {
+	return (m_dwItemTypeAtb[itemClass] & ITEM_ATTR_EQUIP) != 0;
+}
+
+bool cltItemKindInfo::IsQuickSlotItem(EItemClass itemClass) {
+	return (m_dwItemTypeAtb[itemClass] & ITEM_ATTR_QUICKSLOT) != 0;
+}
+
+bool cltItemKindInfo::IsDropItem(EItemClass itemClass) {
+	return (m_dwItemTypeAtb[itemClass] & ITEM_ATTR_DROP) != 0;
+}
+
+bool cltItemKindInfo::IsSellItem(EItemClass itemClass) {
+	return (m_dwItemTypeAtb[itemClass] & ITEM_ATTR_SELL) != 0;
+}
+
+bool cltItemKindInfo::IsTradeItem(EItemClass itemClass) {
+	return (m_dwItemTypeAtb[itemClass] & ITEM_ATTR_TRADE) != 0;
+}
+
+bool cltItemKindInfo::IsCashItem(EItemClass itemClass) {
+	return (m_dwItemTypeAtb[itemClass] & ITEM_ATTR_CASH) != 0;
+}
+
+bool cltItemKindInfo::IsSellingAgencyItem(EItemClass itemClass) {
+	return (m_dwItemTypeAtb[itemClass] & ITEM_ATTR_SELL_AGENCY) != 0;
+}
+
+bool cltItemKindInfo::IsTimerItem(EItemClass itemClass) {
+	return (m_dwItemTypeAtb[itemClass] & ITEM_ATTR_TIMER) != 0;
+}
+
+bool cltItemKindInfo::IsStorageItem(EItemClass itemClass) {
+	return (m_dwItemTypeAtb[itemClass] & ITEM_ATTR_STORAGE) != 0;
+}
+
+bool cltItemKindInfo::IsExStorageItem(EItemClass itemClass) {
+	return (m_dwItemTypeAtb[itemClass] & ITEM_ATTR_EX_STORAGE) != 0;
+}
+
+bool cltItemKindInfo::IsQuizItem(EItemClass itemClass) {
+	return (m_dwItemTypeAtb[itemClass] & ITEM_ATTR_QUIZ) != 0;
+}
+
+bool cltItemKindInfo::IsPetInventoryItem(EItemClass itemClass) {
+	return (m_dwItemTypeAtb[itemClass] & ITEM_ATTR_PET_INVEN) != 0;
+}
+
+bool cltItemKindInfo::IsTraningCard(EItemClass itemClass) {
+	return (m_dwItemTypeAtb[itemClass] & ITEM_ATTR_TRAINING) != 0;
+}
+
+// --- Member Function Implementations ---
+
+bool cltItemKindInfo::IsUseItem(unsigned short a2) {
+	stItemKindInfo* info = GetItemKindInfo(a2);
+	return info ? IsUseItem((EItemClass)info->m_byItemClass) : false;
+}
+
+bool cltItemKindInfo::IsEquipItem(unsigned short a2) {
+	stItemKindInfo* info = GetItemKindInfo(a2);
+	return info ? IsEquipItem((EItemClass)info->m_byItemClass) : false;
+}
+
+bool cltItemKindInfo::IsQuickSlotItem(unsigned short a2) {
+	stItemKindInfo* info = GetItemKindInfo(a2);
+	return info ? IsQuickSlotItem((EItemClass)info->m_byItemClass) : false;
+}
+
+bool cltItemKindInfo::IsDropItem(unsigned short a2) {
+	stItemKindInfo* info = GetItemKindInfo(a2);
+	return info ? IsDropItem((EItemClass)info->m_byItemClass) : false;
+}
+
+bool cltItemKindInfo::IsSellItem(unsigned short a2) {
+	stItemKindInfo* info = GetItemKindInfo(a2);
+	return info ? IsSellItem((EItemClass)info->m_byItemClass) : false;
+}
+
+bool cltItemKindInfo::IsTradeItem(unsigned short a2) {
+	stItemKindInfo* info = GetItemKindInfo(a2);
+	return info ? IsTradeItem((EItemClass)info->m_byItemClass) : false;
+}
+
+bool cltItemKindInfo::IsCashItem(unsigned short a2) {
+	stItemKindInfo* info = GetItemKindInfo(a2);
+	return info ? IsCashItem((EItemClass)info->m_byItemClass) : false;
+}
+
+bool cltItemKindInfo::IsSellingAgencyItem(unsigned short a2) {
+	stItemKindInfo* info = GetItemKindInfo(a2);
+	return info ? IsSellingAgencyItem((EItemClass)info->m_byItemClass) : false;
+}
+
+bool cltItemKindInfo::IsTimerItem(unsigned short a2) {
+	stItemKindInfo* info = GetItemKindInfo(a2);
+	return info ? IsTimerItem((EItemClass)info->m_byItemClass) : false;
+}
+
+bool cltItemKindInfo::IsStorageItem(unsigned short a2) {
+	stItemKindInfo* info = GetItemKindInfo(a2);
+	return info ? IsStorageItem((EItemClass)info->m_byItemClass) : false;
+}
+
+bool cltItemKindInfo::IsExStorageItem(unsigned short a2) {
+	stItemKindInfo* info = GetItemKindInfo(a2);
+	return info ? IsExStorageItem((EItemClass)info->m_byItemClass) : false;
+}
+
+bool cltItemKindInfo::IsQuizItem(unsigned short a2) {
+	stItemKindInfo* info = GetItemKindInfo(a2);
+	return info ? IsQuizItem((EItemClass)info->m_byItemClass) : false;
+}
+
+bool cltItemKindInfo::IsPetInventoryItem(unsigned short a2) {
+	stItemKindInfo* info = GetItemKindInfo(a2);
+	return info ? IsPetInventoryItem((EItemClass)info->m_byItemClass) : false;
+}
+
+bool cltItemKindInfo::IsTraningCard(unsigned short a2) {
+	stItemKindInfo* info = GetItemKindInfo(a2);
+	return info ? IsTraningCard((EItemClass)info->m_byItemClass) : false;
+}
+
+bool cltItemKindInfo::IsExStorageBagItem(unsigned short a2) {
+	stItemKindInfo* info = GetItemKindInfo(a2);
+	// The original function always returns 0.
+	return false;
+}
+
+bool cltItemKindInfo::IsReturnOrderSheet(unsigned short a2) {
+	stItemKindInfo* info = GetItemKindInfo(a2);
+	if (info && IsUseItem((EItemClass)info->m_byItemClass)) {
+		return info->Instant.m_wItemType == 1;
+	}
+	return false;
+}
+
+bool cltItemKindInfo::IsTeleportOrderSheet(unsigned short a2) {
+	stItemKindInfo* info = GetItemKindInfo(a2);
+	if (info && IsUseItem((EItemClass)info->m_byItemClass)) {
+		return info->Instant.m_wItemType == 2;
+	}
+	return false;
+}
+
+bool cltItemKindInfo::IsTownPortalOrderSheet(unsigned short a2) {
+	stItemKindInfo* info = GetItemKindInfo(a2);
+	if (info && IsUseItem((EItemClass)info->m_byItemClass)) {
+		return info->Instant.m_wItemType == 3;
+	}
+	return false;
+}
+
+bool cltItemKindInfo::IsPostItItem(unsigned short a2) {
+	stItemKindInfo* info = GetItemKindInfo(a2);
+	if (info && IsUseItem((EItemClass)info->m_byItemClass)) {
+		return info->Instant.m_bMessage != 0;
+	}
+	return false;
+}
+
+bool cltItemKindInfo::IsRareItem(unsigned short a2) {
+	stItemKindInfo* info = GetItemKindInfo(a2);
+	if (info) {
+		EItemClass itemClass = (EItemClass)info->m_byItemClass;
+		if (itemClass == ITEM_CLASS_HUNT || itemClass == ITEM_CLASS_CASH_HUNT) {
+			return info->Equip.Hunt.m_byRareType != 0;
+		}
+	}
+	return false;
+}
+
+bool cltItemKindInfo::IsCreatePetItem(unsigned short a2) {
+	stItemKindInfo* info = GetItemKindInfo(a2);
+	if (info && IsUseItem((EItemClass)info->m_byItemClass)) {
+		return info->Instant.m_PetBirth != 0;
+	}
+	return false;
+}
+
+bool cltItemKindInfo::IsExpandCircleMembersItem(unsigned short a2) {
+	stItemKindInfo* info = GetItemKindInfo(a2);
+	return info ? (info->m_byItemClass == ITEM_CLASS_EXPAND_CIRCLEMEMBER) : false;
+}
+
+bool cltItemKindInfo::IsCoupleRingItem(unsigned short a2) {
+	stItemKindInfo* info = GetItemKindInfo(a2);
+	if (info && IsUseItem((EItemClass)info->m_byItemClass)) {
+		return info->Instant.m_wCoupleRingId != 0;
+	}
+	return false;
+}
+
+bool cltItemKindInfo::IsPCBangInstant(unsigned short a2) {
+	stItemKindInfo* info = GetItemKindInfo(a2);
+	return info ? (info->m_byItemClass == ITEM_CLASS_PCBANG_INSTANT) : false;
+}
+
+bool cltItemKindInfo::IsChangeCharName(unsigned short a2) {
+	stItemKindInfo* info = GetItemKindInfo(a2);
+	return info ? (info->Instant.m_dwChangeCharNameId != 0) : false;
+}
+
+bool cltItemKindInfo::IsPetCanUseItem(unsigned short pet_kind, unsigned short item_kind) {
+	stItemKindInfo* info = GetItemKindInfo(item_kind);
+	if (info && IsUseItem((EItemClass)info->m_byItemClass)) {
+		return IsPetCanUseItem(pet_kind, info);
+	}
+	return false;
+}
+
+bool cltItemKindInfo::IsUseChangeServer(unsigned short item_kind, unsigned short server_id) {
+	stItemKindInfo* info = GetItemKindInfo(item_kind);
+	// Logic from assembly seems to be checking if the item can be used AT ALL,
+	// ignoring the server_id parameter if it's 0.
+	if (info) {
+		return server_id == 0 || server_id != info->Instant.m_bUseChangeServer;
+	}
+	return false;
+}
+
+bool cltItemKindInfo::IsSealItem(unsigned short a2) {
+	stItemKindInfo* info = GetItemKindInfo(a2);
+	return info ? (info->Instant.m_bIsSealItem != 0) : false;
+}
+
+bool cltItemKindInfo::CanSealItem(unsigned short a2) {
+	stItemKindInfo* info = GetItemKindInfo(a2);
+	return info ? (info->m_bCanSealItem != 0) : false;
+}
+
+bool cltItemKindInfo::GetReqClassKindsForEquip(unsigned short item_kind, int* num_classes, unsigned short* out_class_kinds) {
+	*num_classes = 0;
+	if (!IsEquipItem(item_kind)) {
+		return false;
+	}
+	stItemKindInfo* info = GetItemKindInfo(item_kind);
+	if (!info) {
+		return false;
+	}
+
+	// Assuming the bitmask is stored as an integer at the start of m_szEquipableClass
+	int classMask = *(reinterpret_cast<int*>(info->Equip.Hunt.m_szEquipableClass));
+
+	for (int i = 0; i < 32; ++i) {
+		int currentBit = 1 << i;
+		if (classMask & currentBit) {
+			// This part requires a real cltClassKindInfo implementation
+			// stClassKindInfo* classInfo = m_pclClassKindInfo->GetClassKindInfoByAtb(currentBit);
+			// if (classInfo) {
+			//     out_class_kinds[(*num_classes)++] = classInfo->m_wKind;
+			// }
+		}
+	}
+	return true;
+}
+
+bool cltItemKindInfo::IsTwoHandWeaponByItemClassType(unsigned short weaponType) {
+	// Corresponds to LONG_SWORD_TH through DUAL_SWORD in the enum/original code
+	return weaponType >= 4 && weaponType <= 10;
+}
+
+bool cltItemKindInfo::IsTwoHandWeaponByItemKind(unsigned short a2) {
+	stItemKindInfo* info = GetItemKindInfo(a2);
+	if (info && info->m_byItemClass == ITEM_CLASS_HUNT) {
+		return IsTwoHandWeaponByItemClassType(info->Equip.Hunt.m_wWeaponType);
+	}
+	return false;
+}
+
+bool cltItemKindInfo::IsFashionItem(unsigned short a2) {
+	stItemKindInfo* info = GetItemKindInfo(a2);
+	if (info) {
+		EItemClass itemClass = (EItemClass)info->m_byItemClass;
+		return itemClass == ITEM_CLASS_FASHION || itemClass == ITEM_CLASS_CASH_FASHION || itemClass == ITEM_CLASS_EVENT_FASHION;
+	}
+	return false;
+}
+
+bool cltItemKindInfo::IsEnchantMaterialItem(unsigned short a2) {
+	stItemKindInfo* info = GetItemKindInfo(a2);
+	if (info) {
+		EItemClass itemClass = (EItemClass)info->m_byItemClass;
+		return itemClass == ITEM_CLASS_UPGRADE || itemClass == ITEM_CLASS_EVENT_UPGRADE;
+	}
+	return false;
+}
+
+bool cltItemKindInfo::IsFullSetItem(unsigned short a2) {
+	stItemKindInfo* info = GetItemKindInfo(a2);
+	if (info && IsFashionItem(a2)) {
+		return (info->Equip.m_dwEquipAtb & EQUIP_ATB_F_FULLSET) != 0;
+	}
+	return false;
+}
+
+const char* cltItemKindInfo::UseSound(unsigned short a2) {
+	stItemKindInfo* info = GetItemKindInfo(a2);
+	if (info && info->m_byItemClass == ITEM_CLASS_HUNT) {
+		return info->m_szUseSound;
+	}
+	return nullptr;
+}
+
+
+bool cltItemKindInfo::IsSpecialUseItem(unsigned short a2) {
+	stItemKindInfo* info = GetItemKindInfo(a2);
+	return info ? (info->Instant.m_byInstantEffectType == INSTANT_EFFECT_SPECIAL) : false;
+}
+
+unsigned char cltItemKindInfo::GetSpecialUseItem(unsigned short a2) {
+	stItemKindInfo* info = GetItemKindInfo(a2);
+	return info ? info->Instant.m_wItemType : 0;
+}
+
+unsigned short cltItemKindInfo::GetQuizItemHangleID(unsigned short a2) {
+	stItemKindInfo* info = GetItemKindInfo(a2);
+	return info ? info->Quiz.m_wHangleID : 0;
+}
+
+unsigned char cltItemKindInfo::IsQuizItemConsonant(unsigned short a2) {
+	stItemKindInfo* info = GetItemKindInfo(a2);
+	return info ? info->Quiz.m_bySyllableType : 0;
+}
+
+bool cltItemKindInfo::IsMultiTargetWeapon(unsigned short a2) {
+	stItemKindInfo* info = GetItemKindInfo(a2);
+	if (info && info->m_byItemClass == ITEM_CLASS_HUNT) {
+		return info->Equip.Hunt.m_dwAttackType != 0; // 0 for SINGLE, 1 for MULTI
+	}
+	return false;
+}
+
+void cltItemKindInfo::ExtractItemCodeToFile(char* FileName) {
+	FILE* file = fopen(FileName, "wt");
+	if (file) {
+		for (int i = 0; i < 65536; ++i) {
+			if (m_pItemKindInfo[i]) {
+				fprintf(file, "%d\n", i);
+			}
+		}
+		fclose(file);
+	}
+}
+
+int cltItemKindInfo::GetLessonResourceByIndex(unsigned short item_kind, int skill_index, unsigned int* res_id, unsigned short* block_num) {
+	stItemKindInfo* info = GetItemKindInfo(item_kind);
+	if (!info || skill_index < 0 || skill_index >= 8) {
+		return 0;
+	}
+	*res_id = info->Training.m_Skill[skill_index].m_dwResID;
+	*block_num = info->Training.m_Skill[skill_index].m_wBlockNum;
+	return 1;
+}
+
+int cltItemKindInfo::GetLessonResourceByKind(unsigned short item_kind, unsigned char skill_kind, unsigned int* res_id, unsigned short* block_num) {
+	stItemKindInfo* info = GetItemKindInfo(item_kind);
+	if (!info) {
+		return 0;
+	}
+	// This mapping from skill_kind to index is based on the assembly case values.
+	// It assumes a specific mapping defined elsewhere (e.g., in cltSkillKindInfo).
+	int index = -1;
+	switch (skill_kind) {
+	case 0x0A: index = 0; break;
+	case 0x0B: index = 1; break;
+	case 0x14: index = 2; break;
+	case 0x15: index = 3; break;
+	case 0x1E: index = 4; break;
+	case 0x1F: index = 5; break;
+	case 0x28: index = 6; break;
+	case 0x29: index = 7; break;
+	default: return 0;
+	}
+	return GetLessonResourceByIndex(item_kind, index, res_id, block_num);
+}
+
+unsigned short cltItemKindInfo::GetReqSpecialtyKindByMakingItemKind(unsigned short making_item_kind) {
+	for (int i = 0; i < m_wMakingItemKindListNum; ++i) {
+		unsigned short itemKind = m_pItemKindForMakingItemList[i];
+		stItemKindInfo* info = GetItemKindInfo(itemKind);
+		if (info && info->Instant.m_AddedCraftItemCode == making_item_kind) {
+			return info->Instant.m_RequiredSpecialty;
+		}
+	}
+	return 0;
+}
+
+unsigned char cltItemKindInfo::GetMaxPileUpNum(unsigned short a2) {
+	stItemKindInfo* info = GetItemKindInfo(a2);
+	return info ? info->m_byMaxPileUpNum : 0;
+}
+
+bool cltItemKindInfo::IsQuickSlotRelinkableItem(unsigned short a2) {
+	stItemKindInfo* info = GetItemKindInfo(a2);
+	if (info && IsQuickSlotItem((EItemClass)info->m_byItemClass)) {
+		return info->m_byMaxPileUpNum > 1;
+	}
+	return false;
+}
+
+bool cltItemKindInfo::IsPetCanUseItem(unsigned short pet_kind, stItemKindInfo* pInfo) {
+	if (!pInfo) return false;
+
+	if (IsUseItem((EItemClass)pInfo->m_byItemClass)) {
+		if (pInfo->Instant.m_nUsablePetCount == 0) {
+			return true; // No restrictions, any pet can use.
+		}
+		if (pet_kind != 0) {
+			for (int i = 0; i < pInfo->Instant.m_nUsablePetCount; ++i) {
+				// This assumes a cltPetKindInfo::IsSamePet function exists.
+				// For now, we'll just do a direct comparison.
+				if (pInfo->Instant.m_wUsablePetKind[i] == pet_kind) {
+					return true;
+				}
+			}
+		}
+	}
+	return false;
+}
+
+bool cltItemKindInfo::IsCoinItem(unsigned short a2) {
+	stItemKindInfo* info = GetItemKindInfo(a2);
+	if (info) {
+		return (m_dwItemTypeAtb[info->m_byItemClass] & ITEM_ATTR_COIN) != 0;
+	}
+	return false;
+}
+
+bool cltItemKindInfo::IsChangeCoin(unsigned short a2) {
+	stItemKindInfo* info = GetItemKindInfo(a2);
+	if (info) {
+		// 2 for SILVER, 3 for BRONZE
+		return info->Instant.m_bChangeCoinType >= 2 && info->Instant.m_bChangeCoinType <= 3;
+	}
+	return false;
+}
+
+unsigned int cltItemKindInfo::GetEquipAtb(stItemKindInfo* pInfo) {
+	if (pInfo && IsEquipItem((EItemClass)pInfo->m_byItemClass)) {
+		return pInfo->Equip.m_dwEquipAtb;
+	}
+	return 0;
 }

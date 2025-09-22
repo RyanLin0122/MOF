@@ -144,6 +144,25 @@ enum EInstantEffectType {
     INSTANT_EFFECT_SPECIAL = 3,
 };
 
+// 物品類別屬性位元旗標 (Item Class Attribute Bit Flags)
+enum EItemTypeAttribute {
+    ITEM_ATTR_USE = 1 << 0,  // 사용 가능 (可使用)
+    ITEM_ATTR_SELL = 1 << 1,  // 상점 판매 가능 (可販售)
+    ITEM_ATTR_DROP = 1 << 2,  // 드랍 가능 (可丟棄)
+    ITEM_ATTR_EQUIP = 1 << 3,  // 장착 가능 (可裝備)
+    ITEM_ATTR_TRADE = 1 << 4,  // 거래 가능 (可交易)
+    ITEM_ATTR_QUICKSLOT = 1 << 5,  // 퀵슬롯 등록 가능 (可登錄快捷欄)
+    ITEM_ATTR_STORAGE = 1 << 6,  // 창고 보관 가능 (可存倉庫)
+    ITEM_ATTR_SELL_AGENCY = 1 << 7,  // 위탁 판매 가능 (可代售)
+    ITEM_ATTR_CASH = 1 << 8,  // 캐시 아이템 (商城物品)
+    ITEM_ATTR_TIMER = 1 << 9,  // 시간제 아이템 (計時物品)
+    ITEM_ATTR_QUIZ = 1 << 10, // 퀴즈 아이템 (測驗物品)
+    ITEM_ATTR_TRAINING = 1 << 11, // 트레이닝 카드 (訓練卡)
+    ITEM_ATTR_EX_STORAGE = 1 << 12, // 통합 창고 보관 가능 (可存共用倉庫)
+    ITEM_ATTR_PET_INVEN = 1 << 13, // 펫 인벤토리 보관 가능 (可存寵物背包)
+    ITEM_ATTR_COIN = 1 << 14, // 코인 아이템 (錢幣物品)
+};
+
 #pragma pack(push, 1)
 // Main structure for item data, size 0x128 (296 bytes).
 struct stItemKindInfo {
@@ -410,8 +429,64 @@ public:
     // Frees all allocated memory for item data.
     void Free();
 
-    // Retrieves item data by its kind code.
+    // --- Getters ---
+    stItemKindInfo* GetItemKindInfo(unsigned short a2);
     stItemKindInfo* GetItemKindInfoByIndex(unsigned int index);
+    unsigned short GetHangleID2ItemKind(unsigned short a2);
+    unsigned short GetEnglishID2ItemKind(unsigned short a2);
+    unsigned char GetMaxPileUpNum(unsigned short a2);
+    unsigned char GetSpecialUseItem(unsigned short a2);
+    unsigned short GetQuizItemHangleID(unsigned short a2);
+    unsigned char IsQuizItemConsonant(unsigned short a2);
+    int GetLessonResourceByIndex(unsigned short item_kind, int skill_index, unsigned int* res_id, unsigned short* block_num);
+    int GetLessonResourceByKind(unsigned short item_kind, unsigned char skill_kind, unsigned int* res_id, unsigned short* block_num);
+    unsigned short GetReqSpecialtyKindByMakingItemKind(unsigned short making_item_kind);
+    bool GetReqClassKindsForEquip(unsigned short item_kind, int* num_classes, unsigned short* out_class_kinds);
+    const char* UseSound(unsigned short a2);
+
+    // --- Boolean Checks ---
+    bool IsValidItem(unsigned short a2);
+    bool IsCoinItem(unsigned short a2);
+    bool IsChangeCoin(unsigned short a2);
+    bool IsUseItem(unsigned short a2);
+    bool IsEquipItem(unsigned short a2);
+    bool IsQuickSlotItem(unsigned short a2);
+    bool IsDropItem(unsigned short a2);
+    bool IsSellItem(unsigned short a2);
+    bool IsTradeItem(unsigned short a2);
+    bool IsCashItem(unsigned short a2);
+    bool IsSellingAgencyItem(unsigned short a2);
+    bool IsTimerItem(unsigned short a2);
+    bool IsStorageItem(unsigned short a2);
+    bool IsExStorageItem(unsigned short a2);
+    bool IsQuizItem(unsigned short a2);
+    bool IsPetInventoryItem(unsigned short a2);
+    bool IsTraningCard(unsigned short a2);
+    bool IsExStorageBagItem(unsigned short a2);
+    bool IsReturnOrderSheet(unsigned short a2);
+    bool IsTeleportOrderSheet(unsigned short a2);
+    bool IsTownPortalOrderSheet(unsigned short a2);
+    bool IsPostItItem(unsigned short a2);
+    bool IsRareItem(unsigned short a2);
+    bool IsCreatePetItem(unsigned short a2);
+    bool IsExpandCircleMembersItem(unsigned short a2);
+    bool IsCoupleRingItem(unsigned short a2);
+    bool IsPCBangInstant(unsigned short a2);
+    bool IsChangeCharName(unsigned short a2);
+    bool IsPetCanUseItem(unsigned short pet_kind, unsigned short item_kind);
+    bool IsUseChangeServer(unsigned short item_kind, unsigned short server_id);
+    bool IsSealItem(unsigned short a2);
+    bool CanSealItem(unsigned short a2);
+    bool IsTwoHandWeaponByItemKind(unsigned short a2);
+    bool IsFashionItem(unsigned short a2);
+    bool IsEnchantMaterialItem(unsigned short a2);
+    bool IsFullSetItem(unsigned short a2);
+    bool IsSpecialUseItem(unsigned short a2);
+    bool IsMultiTargetWeapon(unsigned short a2);
+    bool IsQuickSlotRelinkableItem(unsigned short a2);
+
+    // --- Utility ---
+    void ExtractItemCodeToFile(char* FileName);
 
     // Converts an item ID string (e.g., "A0001") to a numeric kind code.
     static unsigned short TranslateKindCode(const char* code);
@@ -425,7 +500,12 @@ public:
     // Setters for static dependency pointers.
     static void InitializeStaticVariable(cltClassKindInfo* a1, cltPetKindInfo* a2);
 
+    static unsigned int GetEquipAtb(stItemKindInfo* pInfo);
 private:
+    // 物品類別屬性位元遮罩 (從反編譯中還原)
+    // 每個 EItemClass 對應一個 unsigned int，用位元來儲存其屬性
+    static unsigned int m_dwItemTypeAtb[25];
+
     // Internal file loading functions.
     bool LoadItemList(const char* filename);
     bool LoadInstantItem(const char* filename);
@@ -444,4 +524,22 @@ private:
     static EInstantEffectType GetInstantEffectType(const char* str);
     static bool GetAttackType(const char* str);
     int GetEquipableClassAtb(char* str);
+
+    // --- Static Boolean Check Helpers (based on item class) ---
+    static bool IsUseItem(EItemClass itemClass);
+    static bool IsEquipItem(EItemClass itemClass);
+    static bool IsQuickSlotItem(EItemClass itemClass);
+    static bool IsDropItem(EItemClass itemClass);
+    static bool IsSellItem(EItemClass itemClass);
+    static bool IsTradeItem(EItemClass itemClass);
+    static bool IsCashItem(EItemClass itemClass);
+    static bool IsSellingAgencyItem(EItemClass itemClass);
+    static bool IsTimerItem(EItemClass itemClass);
+    static bool IsStorageItem(EItemClass itemClass);
+    static bool IsExStorageItem(EItemClass itemClass);
+    static bool IsQuizItem(EItemClass itemClass);
+    static bool IsPetInventoryItem(EItemClass itemClass);
+    static bool IsTraningCard(EItemClass itemClass);
+    static bool IsTwoHandWeaponByItemClassType(unsigned short weaponType);
+    static bool IsPetCanUseItem(unsigned short pet_kind, stItemKindInfo* pInfo);
 };
