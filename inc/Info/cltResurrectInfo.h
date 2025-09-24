@@ -33,7 +33,6 @@ public:
     // 取得已載入筆數
     int Count() const { return count_; }
 
-private:
     // 與反編譯一致的 5 碼 KindCode 轉碼（字首 + 4位數 → 16位代碼）
     static uint16_t TranslateKindCode(char* s) {
         if (!s || std::strlen(s) != 5) return 0;
@@ -43,6 +42,7 @@ private:
         return 0;
     }
 
+private:
     static bool IsDigitString(const char* s) {
         if (!s || !*s) return false;
         for (const unsigned char* p = reinterpret_cast<const unsigned char*>(s); *p; ++p)
