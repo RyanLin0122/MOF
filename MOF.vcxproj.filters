@@ -666,6 +666,15 @@
     <ClCompile Include="src\Info\cltWorldMapColorInfo.cpp">
       <Filter>來源檔案</Filter>
     </ClCompile>
+    <ClCompile Include="src\Other\cltBaseAbility.cpp">
+      <Filter>來源檔案</Filter>
+    </ClCompile>
+    <ClCompile Include="src\Other\CAttendanceBookParser.cpp">
+      <Filter>來源檔案</Filter>
+    </ClCompile>
+    <ClCompile Include="src\System\cltSexSystem.cpp">
+      <Filter>來源檔案</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="inc\Sound\COgg.h">
@@ -1326,6 +1335,15 @@
       <Filter>標頭檔</Filter>
     </ClInclude>
     <ClInclude Include="inc\Info\cltWorldMapColorInfo.h">
+      <Filter>標頭檔</Filter>
+    </ClInclude>
+    <ClInclude Include="inc\Other\cltBaseAbility.h">
+      <Filter>標頭檔</Filter>
+    </ClInclude>
+    <ClInclude Include="inc\Other\CAttendanceBookParser.h">
+      <Filter>標頭檔</Filter>
+    </ClInclude>
+    <ClInclude Include="inc\System\cltSexSystem.h">
       <Filter>標頭檔</Filter>
     </ClInclude>
   </ItemGroup>
