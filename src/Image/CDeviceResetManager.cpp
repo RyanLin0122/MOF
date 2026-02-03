@@ -128,8 +128,8 @@ TextureListData* CDeviceResetManager::CreateTexture(const char* pFileName, unsig
 
 	// 呼叫D3DX函式從檔案建立紋理
 	HRESULT hr = D3DXCreateTextureFromFileExA(
-		Device, pFileName, D3DX_DEFAULT_NONPOW2, D3DX_DEFAULT_NONPOW2, D3DX_DEFAULT, 0,
-		D3DFMT_UNKNOWN, D3DPOOL_MANAGED, D3DX_FILTER_LINEAR, D3DX_FILTER_LINEAR,
+		Device, pFileName, 0xFFFFFFFF, 0xFFFFFFFF, 1, 0,
+		D3DFMT_UNKNOWN, D3DPOOL_MANAGED, 4, 1,
 		0xFFFF00FF, nullptr, nullptr, &pNewNode->pTexture);
 
 	if (FAILED(hr)) {

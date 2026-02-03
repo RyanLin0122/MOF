@@ -29,3 +29,9 @@ extern short kGlyphIndexByStyleChar[] = { 51 }; //word_6C6B6C
 extern int   kDotGlyphIndexByStyle[] = { -1 }; //dword_6C6C54
 extern int   kAdvanceByStyle[] = { 0 }; //dword_6C6C58
 extern int   kAtlasIdByStyle[] = { 570425345 }; //dword_6C6C5C
+
+extern unsigned int D3DRS_BLENDOP_TYPE[8] = { 1u, 1u, 1u, 5u, 4u, 1u, 2u, 1u };
+extern unsigned int D3DRS_SRCBLEND_TYPE[8] = { 5u, 10u, 9u, 2u, 2u, 2u, 2u, 9u };
+extern unsigned int D3DRS_DESTBLEND_TYPE[8] = { 6u, 2u, 1u, 2u, 2u, 2u, 2u, 5u };
+
+extern DWORD g_dwHeartBeatTime = 0;

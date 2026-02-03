@@ -7,6 +7,7 @@
 
 #include "FileSystem/CMOFPacking.h" // 您的 CMofPacking 類別標頭檔 (單例版本)
 #include "Image/CDeviceResetManager.h"
+#include "Image/CDeviceManager.h"
 #include "Image/cltImageManager.h"
 #include "Test/Test.h"
 #include "global.h"  // 包含全域變數定義
@@ -110,6 +111,34 @@ void Setup() {
 	g_MoFFont.InitFontInfo("MofData/FontInfo.dat");
 	g_MoFFont.CreateMoFFont(g_pd3dDevice, "CharacterName");
 	g_IMMList.Create(40);
+
+	// D3DX Initialize
+	CDeviceManager::GetInstance()->SetRenderState(D3DRS_CULLMODE, 1u);
+	CDeviceManager::GetInstance()->SetRenderState(D3DRS_LIGHTING, 0);
+	CDeviceManager::GetInstance()->SetRenderState(D3DRS_ZENABLE, 0);
+	CDeviceManager::GetInstance()->SetRenderState(D3DRS_DITHERENABLE, 0);
+	CDeviceManager::GetInstance()->SetRenderState(D3DRS_SPECULARENABLE, 0);
+	CDeviceManager::GetInstance()->SetRenderState(D3DRS_FOGENABLE, 0);
+	Device->SetSamplerState(0, D3DSAMP_ADDRESSU, 3);
+	Device->SetSamplerState(0, D3DSAMP_ADDRESSV, 3);
+	CDeviceManager::GetInstance()->SetRenderState(D3DRS_ALPHATESTENABLE, 1u);
+	CDeviceManager::GetInstance()->SetRenderState(D3DRS_ALPHAFUNC, 6u);
+	CDeviceManager::GetInstance()->SetRenderState(D3DRS_ALPHAREF, 0);
+	Device->SetTextureStageState(0, D3DTSS_ALPHAOP, 4);
+	Device->SetTextureStageState(0, D3DTSS_ALPHAARG1, 2);
+	Device->SetTextureStageState(0, D3DTSS_ALPHAARG2, 0);
+	CDeviceManager::GetInstance()->SetRenderState(D3DRS_ALPHABLENDENABLE, 1u);
+	CDeviceManager::GetInstance()->SetRenderState(D3DRS_SRCBLEND, 5u);
+	CDeviceManager::GetInstance()->SetRenderState(D3DRS_DESTBLEND, 6u);
+	Device->SetSamplerState(0, D3DSAMP_MINFILTER, 1);
+	Device->SetSamplerState(0, D3DSAMP_MAGFILTER, 1);
+	Device->SetSamplerState(0, D3DSAMP_MIPFILTER, 0);
+	//dword_21C9C78 = 1023969417;
+	CMoFFontTextureManager::GetInstance()->InitCMoFFontTextureManager(Device);
+	g_MoFFont.CreateMoFFont(Device, "CharacterName");
+	g_dwHeartBeatTime = timeGetTime();
+	g_MoFFont.SetFont("CharacterName");
+
 	// To Do
 }
 

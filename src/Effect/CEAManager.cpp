@@ -11,54 +11,114 @@ CEAManager* CEAManager::GetInstance() {
     if (!s_pInstance) s_pInstance = new (std::nothrow) CEAManager();
     return s_pInstance;
 }
-CEAManager::CEAManager() {
-    memset(m_pEaData, 0, sizeof(m_pEaData));
-}
-CEAManager::~CEAManager() {
-    Reset();
-}
-void CEAManager::Reset() {
-    for (int i = 0; i < 65535; ++i) {
-        if (m_pEaData[i]) {
-            delete m_pEaData[i]; // 假設 EADATALISTINFO 的解構函式會處理內部指標
-            m_pEaData[i] = nullptr;
-        }
-    }
-}
 
-
-// --- GetEAData 維持不變，其懶漢式載入邏輯依然適用 ---
-void CEAManager::GetEAData(int effectID, const char* szFileName, CCAEffect* pEffect)
+CEAManager::CEAManager()
 {
-    if (effectID < 0 || effectID >= 65535 || !pEffect) return;
+    size_t totalSize = sizeof(EADATALISTINFO*) * 0xFFFF;
+    m_pEAData = (EADATALISTINFO**)std::malloc(totalSize);
+    if (m_pEAData) {
+        std::memset(m_pEAData, 0, totalSize);
+    }
+    m_dwTailFlag = 0;
+}
 
-    if (m_pEaData[effectID] == nullptr) {
-        m_pEaData[effectID] = new (std::nothrow) EADATALISTINFO();
-        if (!m_pEaData[effectID]) return;
+CEAManager::~CEAManager()
+{
+    if (m_pEAData)
+    {
+        for (int i = 0; i < 0xFFFF; ++i)
+        {
+            EADATALISTINFO* p = m_pEAData[i];
+            if (p)
+            {
+                p->~EADATALISTINFO();
+                ::operator delete(p);
+                m_pEAData[i] = nullptr;
+            }
+        }
+        std::free(m_pEAData);
+        m_pEAData = nullptr;
+    }
+}
 
-        // 根據旗標決定從獨立檔案或封裝檔載入
-        if (IsInMemory) {
+void CEAManager::Reset()
+{
+    if (!m_pEAData) return;
+
+    for (int i = 0; i < 0xFFFF; ++i)
+    {
+        EADATALISTINFO* p = m_pEAData[i];
+        if (p)
+        {
+            p->~EADATALISTINFO();
+            ::operator delete(p);
+            m_pEAData[i] = nullptr;
+        }
+    }
+    m_dwTailFlag = 0;
+}
+
+
+void CEAManager::GetEAData(int effectId, const char* fileName, CCAEffect* outEffect)
+{
+    // IDA signature: (this, a2=effectId, a3=fileName, a4=effect)
+    EADATALISTINFO* p = m_pEAData[effectId];
+
+    if (p)
+    {
+        // effect->(dword+1) = p
+        outEffect->SetEffectData(p);
+    }
+    else
+    {
+        void* mem = ::operator new(48u);
+        EADATALISTINFO* np = nullptr;
+        if (mem)
+        {
+            np = new (mem) EADATALISTINFO();
+            // IDA init sequence:
+            // *v7=0; v7[1]=0; v7[2]=0; v7[3]=12; v7[4]=0; v7[5]=0; v7[8]=0; bytes 24..28=0
+            np->m_nAnimationCount = 0;
+            np->m_pKeyFrames = nullptr;
+            np->m_nTotalFrames = 0;
+            np->m_nVersion = 12;
+            np->m_nLayerCount = 0;
+            np->m_pLayers = nullptr;
+            np->m_ucBlendOp = 0;
+            np->m_ucSrcBlend = 0;
+            np->m_ucDestBlend = 0;
+            np->m_ucEtcBlendOp = 0;
+            np->m_ucEtcSrcBlend = 0;
+            np->m_ucEtcDestBlend = 0;
+        }
+
+        m_pEAData[effectId] = np;
+
+        if (IsInMemory){
             char tempFileName[256];
-            strcpy_s(tempFileName, sizeof(tempFileName), szFileName);
-            LoadEAInPack(effectID, tempFileName);
+            strcpy_s(tempFileName, sizeof(tempFileName), fileName);
+            LoadEAInPack(effectId, tempFileName);
         }
-        else {
-            LoadEA(effectID, szFileName);
-        }
+        else
+            LoadEA(effectId, fileName);
+
+        outEffect->SetEffectData(m_pEAData[effectId]);
+        p = m_pEAData[effectId];
     }
 
-    // 將快取資料綁定到 CCAEffect 物件
-    EADATALISTINFO* pData = m_pEaData[effectID];
-    pEffect->SetData(pData);
+    // effect->(dword+2) = (EAData + 12)
+    auto* ea = m_pEAData[effectId];              // EADATALISTINFO*
+    auto* layerList = reinterpret_cast<VERTEXANIMATIONLAYERLISTINFO*>(&ea->m_nVersion);
+    outEffect->SetLayerList(layerList);
 
-    if (pData) {
-        if (pData->m_ucBlendOp > 7) {
-            pEffect->m_ucRenderStateSelector = 1;
-        }
-        else {
-            pEffect->m_ucRenderStateSelector = 0;
-        }
-    }
+    // Copy render-state bytes into effect at offsets 80..84; set render mode at 85 (blendOp > 7)
+    outEffect->m_ucBlendIndex =  p->m_ucBlendOp;
+    const uint8_t blendOp = p->m_ucBlendOp;
+    outEffect->m_ucUnk81 = p->m_ucDestBlend;
+    outEffect->m_ucEtcBlendOp = p->m_ucEtcBlendOp;
+    outEffect->m_ucEtcSrcBlend = p->m_ucEtcSrcBlend;
+    outEffect->m_ucEtcDestBlend = p->m_ucEtcDestBlend;
+    outEffect->m_ucRenderMode = static_cast<uint8_t>(blendOp > 7u);
 }
 
 
@@ -71,7 +131,7 @@ void CEAManager::GetEAData(int effectID, const char* szFileName, CCAEffect* pEff
  */
 void CEAManager::LoadEA(int effectID, const char* szFileName)
 {
-    EADATALISTINFO* pData = m_pEaData[effectID];
+    EADATALISTINFO* pData = m_pEAData[effectID];
     if (!pData) return;
 
     FILE* pFile = nullptr;
@@ -148,7 +208,7 @@ void CEAManager::LoadEA(int effectID, const char* szFileName)
  */
 void CEAManager::LoadEAInPack(int effectID, char* szFileName)
 {
-    EADATALISTINFO* pData = m_pEaData[effectID];
+    EADATALISTINFO* pData = m_pEAData[effectID];
     if (!pData) return;
 
     // 1. 從封裝檔管理器獲取檔案的記憶體緩衝區
