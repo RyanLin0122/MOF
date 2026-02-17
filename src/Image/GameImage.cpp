@@ -306,7 +306,13 @@ bool GameImage::Draw() {
     CDeviceManager::GetInstance()->SetTexture(0, m_pGIData->m_Resource.m_pTexture);
     CDeviceManager::GetInstance()->SetFVF(D3DFVF_XYZRHW | D3DFVF_DIFFUSE | D3DFVF_TEX1); // FVF: 0x144
     CDeviceManager::GetInstance()->SetStreamSource(0, m_pVBData->pVertexBuffer, 0, sizeof(GIVertex));
-
+    GIVertex* vb = nullptr;
+    HRESULT hr = m_pVBData->pVertexBuffer->Lock(0, sizeof(GIVertex) * 4, (void**)&vb, 0);
+    printf("VB Lock hr=0x%08X\n", (unsigned)hr);
+    if (SUCCEEDED(hr) && vb) {
+        printf("VB[0] Pos: (%f,%f) Color:0x%08X\n", vb[0].position_x, vb[0].position_y, vb[0].diffuse_color);
+        m_pVBData->pVertexBuffer->Unlock();
+    }
     // 根據旗標繪製不同的部分
     if (m_bDrawPart2 && !DontDraw) {
         Device->DrawPrimitive(D3DPT_TRIANGLEFAN, 4, 2); // 繪製頂點 4-7
@@ -366,6 +372,18 @@ void GameImage::VertexAnimationCalculator(const GIVertex* pSourceVertices)
 
     // 將外部傳入的8個頂點資料 (224 bytes) 複製到內部的頂點陣列中
     memcpy(m_Vertices, pSourceVertices, sizeof(m_Vertices));
+
+    if (m_pVBData && m_pVBData->pVertexBuffer)
+    {
+        void* p = nullptr;
+        HRESULT hr = m_pVBData->pVertexBuffer->Lock(0, sizeof(m_Vertices), &p, 0);
+        if (SUCCEEDED(hr) && p)
+        {
+            memcpy(p, m_Vertices, sizeof(m_Vertices));
+            m_pVBData->pVertexBuffer->Unlock();
+            m_bIsProcessed = true; // 如果你的流程用它表示 VB 已更新
+        }
+    }
 }
 
 void GameImage::UpdateVertexBuffer()

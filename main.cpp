@@ -133,6 +133,7 @@ void Setup() {
 	Device->SetSamplerState(0, D3DSAMP_MINFILTER, 1);
 	Device->SetSamplerState(0, D3DSAMP_MAGFILTER, 1);
 	Device->SetSamplerState(0, D3DSAMP_MIPFILTER, 0);
+
 	//dword_21C9C78 = 1023969417;
 	CMoFFontTextureManager::GetInstance()->InitCMoFFontTextureManager(Device);
 	g_MoFFont.CreateMoFFont(Device, "CharacterName");

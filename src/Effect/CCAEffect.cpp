@@ -139,7 +139,7 @@ void CCAEffect::SetFrameTime()
 {
     if (!m_pEffectData) return;
 
-    const int totalFrames = m_pEffectData->m_nTotalFrames;
+    const int totalFrames = m_pEffectData->totalFrames;
     if (totalFrames > 0)
         m_FrameSkip.m_fTimePerFrame = 1.0f / static_cast<float>(totalFrames);
     else
@@ -323,18 +323,18 @@ void CCAEffect::Play(int nAnimationID, bool bLoop)
 {
     if (!m_pEffectData) return;
 
-    if (m_pEffectData->m_nAnimationCount > nAnimationID)
+    if (m_pEffectData->animationCount > nAnimationID)
     {
         m_bIsPlaying = 1;
         m_bLoop = 0;
 
         m_nAnimationID = nAnimationID;
 
-        KEYINFO* keys = m_pEffectData->m_pKeyFrames;
+        KEYINFO* keys = m_pEffectData->keys;
         if (keys)
         {
-            m_nStartFrameIndex = *reinterpret_cast<int*>(reinterpret_cast<uint8_t*>(keys) + 28 * nAnimationID + 20);
-            m_nEndFrameIndex = *reinterpret_cast<int*>(reinterpret_cast<uint8_t*>(keys) + 28 * nAnimationID + 24);
+            m_nStartFrameIndex = *reinterpret_cast<int*>(reinterpret_cast<uint8_t*>(keys) + sizeof(KEYINFO) * nAnimationID + 20);
+            m_nEndFrameIndex = *reinterpret_cast<int*>(reinterpret_cast<uint8_t*>(keys) + sizeof(KEYINFO) * nAnimationID + 24);
         }
         else
         {

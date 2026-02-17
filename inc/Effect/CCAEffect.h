@@ -32,33 +32,30 @@ struct VERTEXANIMATIONLAYERLISTINFO
     VERTEXANIMATIONLAYERINFO* m_pLayers;    // +8
 };
 
-// 動畫 clip（IDA：v3[1] + 28*a2 + 20/+24）
+// 動畫 clip
 struct KEYINFO
 {
     char m_szName[20];   // +0
-    int  m_nStartFrame;  // +20
-    int  m_nEndFrame;    // +24
+    int  m_nStartFrame;  // +24
+    int  m_nEndFrame;    // +28
 };
 
 // .ea 最高層資料（至少需滿足 IDA 存取：+0 animationCount, +4 keyframes, +8 totalFrames）
 struct EADATALISTINFO
 {
-    int      m_nAnimationCount; // +0
-    KEYINFO* m_pKeyFrames;      // +4
-    int      m_nTotalFrames;    // +8
-    int      m_nVersion;        // +12
+    uint32_t                      animationCount; // offset 0  ( **((_DWORD**)this+idx) )
+    KEYINFO* keys;                                // offset 4
+    uint32_t                      totalFrames;    // offset 8
+    uint32_t                      unknown;        // offset 12 (dword_C24CF4)
+    uint32_t                      layerCount;     // offset 16 (dword_C24CF8)
+    VERTEXANIMATIONLAYERINFO* layers;             // offset 20
 
-    // 以下欄位在 IDA 片段未直接用到；保留以利上層資料填充
-    int      m_nLayerCount;     // +16
-    VERTEXANIMATIONLAYERINFO* m_pLayers;      // +20（實際專案可自行改成正確型別）
-
-    // Render state（若專案有使用，可由外部 setter 填入）
-    uint8_t  m_ucBlendOp;
-    uint8_t  m_ucSrcBlend;
-    uint8_t  m_ucDestBlend;
-    uint8_t  m_ucEtcBlendOp;
-    uint8_t  m_ucEtcSrcBlend;
-    uint8_t  m_ucEtcDestBlend;
+    uint8_t                       m_ucBlendOp;    // offset 24
+    uint8_t                       m_ucSrcBlend;   // offset 25
+    uint8_t                       m_ucEtcBlendOp;      // offset 26 (只在 blendOp==8 時會被寫)
+    uint8_t                       m_ucEtcSrcBlend; // offset 27 (只在 blendOp==8 時會被寫)
+    uint8_t                       m_ucEtcDestBlend;// offset 28 (只在 blendOp==8 時會被寫)
+    // IDA 沒寫 offset 29，表示「不一定存在第6個 byte」
 };
 #pragma pack(pop)
 // ============================================================================

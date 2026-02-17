@@ -65,7 +65,6 @@ void CEffect_Battle_Hit_Normal::Process()
 void CEffect_Battle_Hit_Normal::Draw()
 {
     if (m_bIsVisible) {
-        m_ccaEffect.colorNum = 2;
         m_ccaEffect.Draw();
     }
 }

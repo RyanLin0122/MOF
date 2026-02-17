@@ -95,15 +95,15 @@ void EffectSystemTest::Update(float fElapsedTime)
         //SpawnMagicBookEffect();
 
         // --- 新增的小遊戲特效 (請一次取消註解一個來測試) ---
-        //SpawnMiniGameArcherStringEffect();
+        //SpawnMiniGameArcherStringEffect(); //有bug，截掉右邊
         //SpawnMiniGameFighterBreakEffect();
-        //SpawnMiniGameFighterStringEffect();
-        SpawnMiniGameMagicStickLeftEffect();
+        //SpawnMiniGameFighterStringEffect(); //gi問題
+        //SpawnMiniGameMagicStickLeftEffect();
         //SpawnMiniGameMagicStickRightEffect();
         //SpawnMiniGamePriestHealEffect();
-        //SpawnMiniGamePriestLightEffect();
+        SpawnMiniGamePriestLightEffect();
         //SpawnMiniGameClassSwordEffect();
-        //SpawnMiniGameWizardStringEffect(); // 例如：測試法師文字特效
+        //SpawnMiniGameWizardStringEffect();
 
         m_fTimeSinceLastEffect = 0.0f; // 重置計時器
     }
