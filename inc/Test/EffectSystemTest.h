@@ -1,5 +1,7 @@
 #pragma once
 #include <windows.h> // for HRESULT
+#include <cstddef>
+#include <vector>
 
 // 前向宣告 (Forward Declarations)
 class ClientCharacter;
@@ -30,6 +32,16 @@ public:
     void Render();
 
 private:
+    struct EffectRenderTestCase {
+        const char* name;
+        void (EffectSystemTest::*spawnFunc)();
+    };
+
+    void InitializeRenderTestCases();
+    void SpawnNextRenderTestCase();
+    void GetCasterPosition(float& x, float& y) const;
+    void GetTargetPosition(float& x, float& y) const;
+
     /// @brief 一個輔助函式，用於在角色位置產生新的下劈斬特效。
     void SpawnDownCutEffect();
 
@@ -59,6 +71,78 @@ private:
 
     void SpawnMiniGameWizardStringEffect();
 
+    void SpawnTwoHandCutEffect();
+
+    void SpawnPierceEffect();
+
+    void SpawnGunSparkEffect();
+
+    void SpawnHitCriticalEffect();
+
+    void SpawnFieldAttackMissEffect();
+
+    void SpawnFieldMissEffect();
+
+    void SpawnSkillHitEffect();
+
+    void SpawnUseHitEffect();
+
+
+    void SpawnBowShootEffect();
+    void SpawnGunShootEffect();
+    void SpawnStaffShootEffect();
+    void SpawnFieldCriticalNumberEffect();
+    void SpawnFieldDamageNumberEffect();
+    void SpawnFieldExpNumberEffect();
+    void SpawnFieldHealNumberEffect();
+    void SpawnFieldItemPickEffect();
+    void SpawnFieldItemPickSubEffect();
+    void SpawnFieldPetItemPickEffect();
+    void SpawnFieldPetItemPickSubEffect();
+    void SpawnFieldRecallPotalEffect();
+    void SpawnFieldWalkdustEffect();
+    void SpawnFieldWarpEffect();
+    void SpawnItemTypeOnceEffect();
+    void SpawnItemUseHPPotionEffect();
+    void SpawnMapEffect();
+    void SpawnMonDarkBallEffect();
+    void SpawnMonDarkSparkEffect();
+    void SpawnMonDieGhostEffect();
+    void SpawnMonElecSparkEffect();
+    void SpawnMonFireSparkEffect();
+    void SpawnPetBaseEffect();
+    void SpawnPlayerDeadEffect();
+    void SpawnPlayerEnchantLevelEffect();
+    void SpawnPlayerFItemEffect();
+    void SpawnPlayerGogglesEffect();
+    void SpawnPlayerMapConquerorEffect();
+    void SpawnPlayerPCRoomEffect();
+    void SpawnPlayerSpecialBottomEffect();
+    void SpawnPlayerSpecialTopEffect();
+    void SpawnPlayerToleranceEffect();
+    void SpawnPlayerWeatherPreviewEffect();
+    void SpawnPortalEffect();
+    void SpawnSkillBlockingEffect();
+    void SpawnSkillFreezingEffect();
+    void SpawnSkillHealEffect();
+    void SpawnSkillHealPrayEffect();
+    void SpawnSkillIntegrityEffect();
+    void SpawnSkillOtherHealEffect();
+    void SpawnSkillResurrectionEffect();
+    void SpawnSkillSpeedUpEffect();
+    void SpawnSkillTakeEffect();
+    void SpawnSkillTrapExplosionEffect();
+    void SpawnSkillTypeDirectedEffect();
+    void SpawnSkillTypeDirectedTargetEffect();
+    void SpawnSkillTypeOnceEffect();
+    void SpawnSkillTypeShootUnitEffect();
+    void SpawnSkillTypeSustainEffect();
+    void SpawnUIButtonSideEffect();
+    void SpawnUIHpMpNumberEffect();
+    void SpawnUISkillSetEffect();
+    void SpawnUIWorldMapLightEffect();
+    void SpawnWeddingHallEffect();
+    void SpawnUseHitMultiEffect();
 
     // --- 私有成員 ---
 
@@ -67,4 +151,6 @@ private:
     ClientCharacter* m_pTarget;
     /// @brief 用於計時，以固定間隔產生新特效。
     float m_fTimeSinceLastEffect;
+    std::vector<EffectRenderTestCase> m_renderTestCases;
+    size_t m_currentRenderTestCaseIndex;
 };
