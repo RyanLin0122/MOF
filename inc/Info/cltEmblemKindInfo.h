@@ -9,103 +9,128 @@
 #include "Info/cltQuestKindInfo.h"
 #include "global.h"
 
+// ------------------------------------------------------------
+// strEmblemKindInfo：依 IDA 寫入 offset + size 還原成 416 bytes
+// 重點推斷：
+// - ItemImageFileId：_sscanf("%x", v6+32) => 寫入 4 bytes => uint32_t
+// - AcquireConditionMonsterType：strcpy 到 v6+44，且下一欄位在 172 => char[128]
+// - offset 16~23 在 GetBuyableEmblems 被當作 QWORD 檢查，且 Initialize 會寫入 (16,20)
+//   => 以 uint64_t 表示（非單純 dwAcquireConditionJobChange）
+// - 結尾補齊到 416 bytes
+// ------------------------------------------------------------
 #pragma pack(push, 1)
-
-// 每筆資料 416 bytes；欄位以反編譯位移標註（+offset）
 struct strEmblemKindInfo
 {
-    // 基本資料
-    uint16_t kind;                 // +0  Emblem ID(5碼→16bit)
-    uint16_t equipMinLv;           // +2  裝備條件(最低等)
-    uint16_t equipMaxLv;           // +4  裝備條件(最高等)
-    uint16_t acquireLevelReach;    // +6  獲得條件(等級到達)
-    uint16_t acquireQuestKind;     // +8  獲得條件(指定任務ID，5碼→16bit)
-    char     _pad0A[6];            // +0A..0F：保留（對齊到 +16）
+    uint16_t wEmblemId;                 // 0
+    uint16_t wEquipConditionLevelFrom;  // 2
+    uint16_t wEquipConditionLevelTo;    // 4
+    uint16_t wAcquireConditionLevel;    // 6
+    uint16_t wAcquireConditionQuest;    // 8
 
-    // 職業屬性（由 ClassKind 字串解析成 64-bit bitmask）
-    uint32_t classAtbLow;          // +16
-    uint32_t classAtbHigh;         // +20
+    uint8_t  padding_0[6];             // 10..15（保留/未使用；對應你給的自動補位）
 
-    // 商店/圖像/名稱等
-    int32_t  price;                // +24  價格
-    uint16_t nameTextCode;         // +28  名稱文本碼
-    uint16_t descTextCode;         // +30  說明文本碼
-    uint32_t imageFileIdHex;       // +32  圖檔ID(十六進位字串→uint32)
-    uint16_t imageBlockId;         // +36  圖塊ID
-    uint16_t _pad26;               // +38..39：對齊
-    int32_t  rareDiv;              // +40  稀有度/分類
+    uint64_t qwAcquireConditionJobChangeAtb; // 16..23（GetClassAtb 寫入，且 GetBuyableEmblems 檢查 QWORD）
 
-    // 取得條件(怪物種類字串等) —— 檔案多為 "0"
-    char     condMonsterType[128]; // +44..+171
+    uint32_t dwPrice;                  // 24..27
+    uint16_t wEmblemNameCode;          // 28..29
+    uint16_t wEmblemDescriptionCode;   // 30..31
 
-    // 取得條件(怪物擊殺數)
-    int32_t  condMonsterKillCnt;   // +172
+    uint32_t dwItemImageFileId;        // 32..35（_sscanf("%x", v6+32)）
 
-    // 觸發：機率(萬分率/千分率) —— 只要非 0 就會被分類到對應清單
-    int32_t  prob_OnDead;                  // +176
-    int32_t  prob_OnUsingRecoverHPItem;    // +180
-    int32_t  prob_OnUsingRecoverManaItem;  // +184
-    int32_t  prob_OnTeleportDragon;        // +188
-    int32_t  prob_OnBeAttackedCritically;  // +192
-    int32_t  prob_OnAttackCritically;      // +196
-    int32_t  misc200;                      // +200（未分組使用）
-    int32_t  prob_OnRegistrySellingAgency; // +204
-    int32_t  prob_OnBuyItemFromNPC;        // +208
-    int32_t  prob_OnCompleteMeritous;      // +212
-    int32_t  prob_OnCompleteSwordLesson;   // +216
-    int32_t  prob_OnCompleteBowLesson;     // +220
-    int32_t  prob_OnCompleteMagicLesson;   // +224
-    int32_t  prob_OnCompleteTheologyLesson;// +228
-    int32_t  prob_OnEnchantItem;           // +232
-    uint32_t questKindOnComplete;          // +236（5碼→16bit，原碼存入32位）
+    uint16_t wItemImageBlockId;        // 36..37
+    uint8_t  padding_3[2];             // 38..39（對齊 40）
 
-    int32_t  prob_OnKillBossMonster;       // +240
-    int32_t  prob_OnCompleteCircleQuest;   // +244
-    int32_t  prob_OnSellItemToNPC;         // +248
-    int32_t  prob_OnMultiAttack;           // +252
-    int32_t  prob_OnChangeClass;           // +256
+    uint32_t dwRarityType;             // 40..43
 
-    // 大量數值加成/調整（依檔案欄位序填入；此區間位移交錯出現）
-    // 涵蓋 +260..+384（124 bytes）
-    char     statsBlock[124];              // +260..+383（包含經驗/攻防/HP/MP/命中/閃避/屬性/價格/費用/分數等）
+    char     AcquireConditionMonsterType[128]; // 44..171（strcpy 到 v6+44）
 
-    // 後段欄位
-    int32_t  stat384;               // +384（檔案尾端數值之一）
-    int32_t  skillAoEIncrease;      // +388  스킬범위공격증가(千分率)
-    uint16_t trainingCardKind;      // +392  트레이닝 카드(5碼→16bit)
-    uint16_t _pad394;               // +394..+395：對齊
-    int32_t  publicMonsterDiscount; // +396  공적 몬스터 수 할인율(千分率)
-    int32_t  itemSellPriceDiscount; // +400  아이템 판매 가격 할인율(千分率)
-    int32_t  circleScore;           // +404  서클평가점수
-    uint16_t purchaseCondTextCode;  // +408  구입 조건 설명(文本碼)
-    char     _pad410[6];            // +410..+415 補齊 416 bytes
+    uint32_t dwAcquireConditionMonsterKillCount; // 172
+    uint32_t dwAcquireConditionDeathRate;        // 176
+    uint32_t dwAcquireConditionMpPotionRate;     // 180
+    uint32_t dwAcquireConditionHpPotionRate;     // 184
+    uint32_t dwAcquireConditionDragonUsageRate;  // 188
+    uint32_t dwAcquireConditionCritReceivedRate; // 192
+    uint32_t dwAcquireConditionCritDealtRate;    // 196
+    uint32_t dwAcquireConditionPersonalShopRate; // 200
+    uint32_t dwAcquireConditionRunePayRate;      // 204
+    uint32_t dwAcquireConditionShopUsageRate;    // 208
+    uint32_t dwAcquireConditionPublicQuestCompletionRate; // 212
+    uint32_t dwAcquireConditionSwordClassCompletionRate;  // 216
+    uint32_t dwAcquireConditionArcheryClassCompletionRate;// 220
+    uint32_t dwAcquireConditionMagicClassCompletionRate;  // 224
+    uint32_t dwAcquireConditionTheologyClassCompletionRate;// 228
+    uint32_t dwAcquireConditionEnchantRate;               // 232
+    uint32_t dwAcquireConditionQuestImmediateAcquire;     // 236
+    uint32_t dwAcquireConditionAllBossKill;               // 240
+    uint32_t dwAcquireConditionCircleTaskCompletion;      // 244
+    uint32_t dwAcquireConditionItemSale;                  // 248
+    uint32_t dwAcquireConditionAreaAttack;                // 252
+    uint32_t dwAcquireConditionJobChangeQuestCompletion;  // 256
+    uint32_t dwExtraExperienceRate;                       // 260
+    uint32_t dwExtraEvasionRate;                          // 264
+    uint32_t dwExtraHitRate;                              // 268
+    uint32_t dwExtraCriticalRate;                         // 272
+    uint32_t dwVsUndeadExtraAttackPowerRate;              // 276
+    uint32_t dwVsDemonExtraAttackPowerRate;               // 280
+    uint32_t dwVsAnimalExtraAttackPowerRate;              // 284
+    uint32_t dwVsOtherMonsterExtraAttackPowerRate;        // 288
+    uint32_t dwDeathPenaltyChangeRate;                    // 292
+    uint32_t dwHpPotionEffectChangeRate;                  // 296
+    uint32_t dwHpAutoRecoveryChangeRate;                  // 300
+    uint32_t dwMpPotionEffectChangeRate;                  // 304
+    uint32_t dwMpAutoRecoveryChangeRate;                  // 308
+    uint32_t dwExtraAttackPowerRate;                      // 312
+    uint32_t dwExtraDefenseRate;                          // 316
+    uint32_t dwExtraHpRate;                               // 320
+    uint32_t dwExtraMpRate;                               // 324
+    uint32_t dwStunRate;                                  // 328
+    uint32_t dwStunDurationMs;                            // 332
+    uint32_t dwBlockRate;                                 // 336
+    uint32_t dwBlockDurationMs;                           // 340
+    uint32_t dwFreezeRate;                                // 344
+    uint32_t dwFreezeDurationMs;                          // 348
+    uint32_t dwShopPurchasePriceChangeRate;               // 352
+    uint32_t dwRunePayFeeChange;                          // 356
+    uint32_t dwDragonUsageFeeChangeRate;                  // 360
+    uint32_t dwHuntingPublicQuestExtraPoints;             // 364
+    uint32_t dwSwordClassExtraPointsRate;                 // 368
+    uint32_t dwArcheryClassExtraPointsRate;               // 372
+    uint32_t dwMagicClassExtraPointsRate;                 // 376
+    uint32_t dwTheologyClassExtraPointsRate;              // 380
+    uint32_t dwEnchantSuccessRate;                        // 384
+    uint32_t dwSkillAreaAttackIncreaseRate;               // 388
+
+    uint16_t wTrainingCard;                               // 392
+    uint8_t  padding_5[2];                                // 394..395
+
+    uint32_t dwPublicQuestMonsterCountDiscountRate;       // 396
+    uint32_t dwItemSalePriceDiscountRate;                 // 400
+    uint32_t dwCircleEvaluationScore;                     // 404
+    uint16_t wPurchaseConditionDescription;               // 408
+
+    uint8_t  padding_tail[416 - 410];                     // 410..415（補齊到 416）
 };
-static_assert(sizeof(strEmblemKindInfo) == 416, "strEmblemKindInfo must be 416 bytes");
-
 #pragma pack(pop)
 
+static_assert(sizeof(strEmblemKindInfo) == 416, "strEmblemKindInfo size must be 416 bytes");
+
+// ------------------------------------------------------------
+// cltEmblemKindInfo：依 IDA 42 個 DWORD 的 layout 還原
+// ------------------------------------------------------------
 class cltEmblemKindInfo
 {
 public:
-    // 供外部在載入前注入 ClassKindInfo（必需）
-    static void InitializeStaticVariable(cltClassKindInfo* p) { m_pclClassKindInfo = p; }
-
-    // 建構/解構
     cltEmblemKindInfo();
-    ~cltEmblemKindInfo() { Free(); }
 
-    // 載入：成功完整讀畢(EOF)回傳 1；否則 0
-    int Initialize(char* filename);
+    static void InitializeStaticVariable(cltClassKindInfo* p);
+    int  Initialize(char* filename);
     void Free();
 
-    // 查詢
-    strEmblemKindInfo* GetEmblemKindInfo(uint16_t kind);
-    static uint16_t    TranslateKindCode(char* s);
+    strEmblemKindInfo* GetEmblemKindInfo(uint16_t emblemId);
+    static uint16_t TranslateKindCode(char* s);
 
-    // 可購買清單（依反編譯條件判斷）
-    int GetBuyableEmblems(uint16_t* outKinds);
+    int GetBuyableEmblems(uint16_t* outIds);
 
-    // 事件分類取回（回傳數量；以輸出參數帶出陣列起點）
     int GetEmblemKindInfo_OnDead(strEmblemKindInfo*** out);
     int GetEmblemKindInfo_OnUsingRecoverHPItem(strEmblemKindInfo*** out);
     int GetEmblemKindInfo_OnUsingRecoverManaItem(strEmblemKindInfo*** out);
@@ -128,41 +153,74 @@ public:
     int GetEmblemKindInfo_OnChangeClass(strEmblemKindInfo*** out);
 
 private:
-    // 小工具：整字串皆為數字 / 皆為英數（供防呆）
+    // IDA：dword[0]..dword[41]
+    strEmblemKindInfo* m_pInfos;    // [0]
+    int32_t                 m_nCount;    // [1]
+
+    strEmblemKindInfo** m_ppOnDead;  // [2]
+    int32_t                 m_nOnDead;   // [3]
+
+    strEmblemKindInfo** m_ppOnUsingRecoverHP; // [4]
+    int32_t                 m_nOnUsingRecoverHP;  // [5]
+
+    strEmblemKindInfo** m_ppOnUsingRecoverMP; // [6]
+    int32_t                 m_nOnUsingRecoverMP;  // [7]
+
+    strEmblemKindInfo** m_ppOnBuyItemFromNPC; // [8]
+    int32_t                 m_nOnBuyItemFromNPC;  // [9]
+
+    strEmblemKindInfo** m_ppOnRegistrySellingAgency; // [10]
+    int32_t                 m_nOnRegistrySellingAgency;  // [11]
+
+    strEmblemKindInfo** m_ppOnCompleteQuest; // [12]
+    int32_t                 m_nOnCompleteQuest;  // [13]
+
+    strEmblemKindInfo** m_ppOnKillBossMonster; // [14]
+    int32_t                 m_nOnKillBossMonster;  // [15]
+
+    strEmblemKindInfo** m_ppOnTeleportDragon; // [16]
+    int32_t                 m_nOnTeleportDragon;  // [17]
+
+    strEmblemKindInfo** m_ppOnCompleteMeritous; // [18]
+    int32_t                 m_nOnCompleteMeritous;  // [19]
+
+    strEmblemKindInfo** m_ppOnCompleteSwordLesson; // [20]
+    int32_t                 m_nOnCompleteSwordLesson;  // [21]
+
+    strEmblemKindInfo** m_ppOnCompleteBowLesson; // [22]
+    int32_t                 m_nOnCompleteBowLesson;  // [23]
+
+    strEmblemKindInfo** m_ppOnCompleteMagicLesson; // [24]
+    int32_t                 m_nOnCompleteMagicLesson;  // [25]
+
+    strEmblemKindInfo** m_ppOnCompleteTheologyLesson; // [26]
+    int32_t                 m_nOnCompleteTheologyLesson;  // [27]
+
+    strEmblemKindInfo** m_ppOnEnchantItem; // [28]
+    int32_t                 m_nOnEnchantItem;  // [29]
+
+    strEmblemKindInfo** m_ppOnCompleteCircleQuest; // [30]
+    int32_t                 m_nOnCompleteCircleQuest;  // [31]
+
+    strEmblemKindInfo** m_ppOnSellItemToNPC; // [32]
+    int32_t                 m_nOnSellItemToNPC;  // [33]
+
+    strEmblemKindInfo** m_ppOnMultiAttack; // [34]
+    int32_t                 m_nOnMultiAttack;  // [35]
+
+    strEmblemKindInfo** m_ppOnBeAttackedCritically; // [36]
+    int32_t                 m_nOnBeAttackedCritically;  // [37]
+
+    strEmblemKindInfo** m_ppOnAttackCritically; // [38]
+    int32_t                 m_nOnAttackCritically;  // [39]
+
+    strEmblemKindInfo** m_ppOnChangeClass; // [40]
+    int32_t                 m_nOnChangeClass;  // [41]
+
+private:
+    static cltClassKindInfo* m_pclClassKindInfo;
+
+private:
     static bool IsDigitStr(const char* s);
-    static bool IsAlphaNumStr(const char* s);
-
-    // 解析 ClassKind 串列（"KNI|SWO|..."）→ 64-bit bitmask
-    static void ParseClassAtbMask(const char* classList, uint32_t& lo, uint32_t& hi);
-
-private:
-    // 主資料
-    strEmblemKindInfo* m_list{ nullptr }; // +0
-    int                m_count{ 0 };       // +1
-
-    // 事件分類陣列（各自為指向 strEmblemKindInfo* 的陣列）
-    strEmblemKindInfo** m_onDead{ nullptr };                 int m_onDeadCnt{ 0 };                 // +2/+3
-    strEmblemKindInfo** m_onUseHP{ nullptr };                int m_onUseHPCnt{ 0 };                // +4/+5
-    strEmblemKindInfo** m_onUseMP{ nullptr };                int m_onUseMPCnt{ 0 };                // +6/+7
-    strEmblemKindInfo** m_onBuyNPC{ nullptr };               int m_onBuyNPCCnt{ 0 };               // +8/+9
-    strEmblemKindInfo** m_onRegistry{ nullptr };             int m_onRegistryCnt{ 0 };             // +10/+11
-    strEmblemKindInfo** m_onCompleteQuest{ nullptr };        int m_onCompleteQuestCnt{ 0 };        // +12/+13
-    strEmblemKindInfo** m_onKillBoss{ nullptr };             int m_onKillBossCnt{ 0 };             // +14/+15
-    strEmblemKindInfo** m_onTeleportDragon{ nullptr };       int m_onTeleportDragonCnt{ 0 };       // +16/+17
-    strEmblemKindInfo** m_onCompleteMeritous{ nullptr };     int m_onCompleteMeritousCnt{ 0 };     // +18/+19
-    strEmblemKindInfo** m_onSwordLesson{ nullptr };          int m_onSwordLessonCnt{ 0 };          // +20/+21
-    strEmblemKindInfo** m_onBowLesson{ nullptr };            int m_onBowLessonCnt{ 0 };            // +22/+23
-    strEmblemKindInfo** m_onMagicLesson{ nullptr };          int m_onMagicLessonCnt{ 0 };          // +24/+25
-    strEmblemKindInfo** m_onTheologyLesson{ nullptr };       int m_onTheologyLessonCnt{ 0 };       // +26/+27
-    strEmblemKindInfo** m_onEnchant{ nullptr };              int m_onEnchantCnt{ 0 };              // +28/+29
-    strEmblemKindInfo** m_onCircleQuest{ nullptr };          int m_onCircleQuestCnt{ 0 };          // +30/+31
-    strEmblemKindInfo** m_onSellToNPC{ nullptr };            int m_onSellToNPCCnt{ 0 };            // +32/+33
-    strEmblemKindInfo** m_onMultiAttack{ nullptr };          int m_onMultiAttackCnt{ 0 };          // +34/+35
-    strEmblemKindInfo** m_onBeCrit{ nullptr };               int m_onBeCritCnt{ 0 };               // +36/+37
-    strEmblemKindInfo** m_onDoCrit{ nullptr };               int m_onDoCritCnt{ 0 };               // +38/+39
-    strEmblemKindInfo** m_onChangeClass{ nullptr };          int m_onChangeClassCnt{ 0 };          // +40/+41
-
-private:
-    static cltClassKindInfo* m_pclClassKindInfo; // 由 InitializeStaticVariable 指定
+    static bool IsAlphaNumericStr(const char* s);
 };
-
