@@ -68,6 +68,28 @@ GameImage* cltImageManager::GetGameImage(unsigned int dwGroupID, unsigned int dw
         }
     }
 
+    if (dwGroupID == ResourceMgr::RES_EFFECT) {
+        static int s_effectRecycleCursor = 0;
+        for (int step = 0; step < MAX_IMAGES; ++step) {
+            int idx = (s_effectRecycleCursor + step) % MAX_IMAGES;
+            GameImage* pImage = &m_Images[idx];
+            if (!pImage->IsInUse() || pImage->m_dwGroupID != dwGroupID) {
+                continue;
+            }
+
+            pImage->ReleaseGIData();
+            pImage->GetGIData(dwGroupID, dwResourceID, a4, a5);
+            if (pImage->IsInUse()) {
+                ImageResourceListData* pGIData = pImage->GetGIDataPtr();
+                if (pGIData) {
+                    pGIData->m_Resource.LoadTexture();
+                }
+            }
+            s_effectRecycleCursor = (idx + 1) % MAX_IMAGES;
+            return pImage;
+        }
+    }
+
     // 如果遍歷完畢都沒找到閒置物件，表示物件池已滿。
     CHAR Text[256];
     wsprintfA(Text, "Put image over=>%0x:%0x", dwGroupID, dwResourceID);

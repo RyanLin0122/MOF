@@ -95,7 +95,7 @@ public:
 	void SetCanSpeedUp(bool value) { m_canSpeedUp = value; }
 	void SetPreparingSpeedUp(bool value) { m_preparingSpeedUp = value; }
 
-private:
+//private:
     // 內部輔助函式
     void DecideDrawFrame(unsigned int* pOutResourceID, unsigned short* pOutBlockID);
     void DecideDrawFrame();

@@ -181,8 +181,8 @@ void EffectSystemTest::InitializeRenderTestCases()
         //{ "Hit_Critical", &EffectSystemTest::SpawnHitCriticalEffect },
         //{ "Field_AttackMiss", &EffectSystemTest::SpawnFieldAttackMissEffect },
         //{ "Field_Miss", &EffectSystemTest::SpawnFieldMissEffect }, //沒東西
-        //{ "Skill_Hit", &EffectSystemTest::SpawnSkillHitEffect }//,
-        //{ "Use_Hit", &EffectSystemTest::SpawnUseHitEffect },
+        //{ "Skill_Hit", &EffectSystemTest::SpawnSkillHitEffect }, //OK 
+        //{ "Use_Hit", &EffectSystemTest::SpawnUseHitEffect }, //OK
 
         //{ "MiniGame_Archer_String", &EffectSystemTest::SpawnMiniGameArcherStringEffect }, //有bug，截掉右邊
         //{ "MiniGame_Fighter_Break", &EffectSystemTest::SpawnMiniGameFighterBreakEffect },
@@ -210,11 +210,11 @@ void EffectSystemTest::InitializeRenderTestCases()
         //{ "Item_Type_Once", &EffectSystemTest::SpawnItemTypeOnceEffect },
         //{ "Item_Use_HPPotion", &EffectSystemTest::SpawnItemUseHPPotionEffect },
         //{ "MapEffect", &EffectSystemTest::SpawnMapEffect },
-        //{ "Mon_DarkBall", &EffectSystemTest::SpawnMonDarkBallEffect },
-        //{ "Mon_DarkSpark", &EffectSystemTest::SpawnMonDarkSparkEffect },
-        //{ "Mon_Die_Ghost", &EffectSystemTest::SpawnMonDieGhostEffect },
-        //{ "Mon_ElecSpark", &EffectSystemTest::SpawnMonElecSparkEffect },
-        //{ "Mon_FireSpark", &EffectSystemTest::SpawnMonFireSparkEffect },
+        //{ "Mon_DarkBall", &EffectSystemTest::SpawnMonDarkBallEffect }, //OK
+        //{ "Mon_DarkSpark", &EffectSystemTest::SpawnMonDarkSparkEffect }, //沒東西
+        //{ "Mon_Die_Ghost", &EffectSystemTest::SpawnMonDieGhostEffect }, //OK
+        //{ "Mon_ElecSpark", &EffectSystemTest::SpawnMonElecSparkEffect }, //沒東西
+        //{ "Mon_FireSpark", &EffectSystemTest::SpawnMonFireSparkEffect }, //沒東西
         //{ "Pet_Base", &EffectSystemTest::SpawnPetBaseEffect },
         //{ "Player_Dead", &EffectSystemTest::SpawnPlayerDeadEffect },
         //{ "Player_EnchantLevel", &EffectSystemTest::SpawnPlayerEnchantLevelEffect },
@@ -224,30 +224,33 @@ void EffectSystemTest::InitializeRenderTestCases()
         //{ "Player_PCRoom_Effect", &EffectSystemTest::SpawnPlayerPCRoomEffect },
         //{ "Player_Special_Bottom_Effect", &EffectSystemTest::SpawnPlayerSpecialBottomEffect },
         //{ "Player_Special_Top_Effect", &EffectSystemTest::SpawnPlayerSpecialTopEffect },
-        //{ "Player_Tolerance", &EffectSystemTest::SpawnPlayerToleranceEffect },
-        //{ "Player_WeatherPreView", &EffectSystemTest::SpawnPlayerWeatherPreviewEffect },
-        { "Portal", &EffectSystemTest::SpawnPortalEffect },
-        { "Skill_Blocking", &EffectSystemTest::SpawnSkillBlockingEffect },
-        { "Skill_Freezing", &EffectSystemTest::SpawnSkillFreezingEffect },
-        { "Skill_Heal", &EffectSystemTest::SpawnSkillHealEffect },
-        { "Skill_HealPray", &EffectSystemTest::SpawnSkillHealPrayEffect },
-        { "Skill_Integrity", &EffectSystemTest::SpawnSkillIntegrityEffect },
-        { "Skill_OtherHeal", &EffectSystemTest::SpawnSkillOtherHealEffect },
-        { "Skill_Resurrection", &EffectSystemTest::SpawnSkillResurrectionEffect },
-        { "Skill_SpeedUP", &EffectSystemTest::SpawnSkillSpeedUpEffect },
-        { "Skill_Take", &EffectSystemTest::SpawnSkillTakeEffect },
-        { "Skill_Trap_Explosion", &EffectSystemTest::SpawnSkillTrapExplosionEffect },
-        //{ "Skill_Type_Directed", &EffectSystemTest::SpawnSkillTypeDirectedEffect },
-        //{ "Skill_Type_Directed_Target", &EffectSystemTest::SpawnSkillTypeDirectedTargetEffect },
-        //{ "Skill_Type_Once", &EffectSystemTest::SpawnSkillTypeOnceEffect },
-        //{ "Skill_Type_ShootUnit", &EffectSystemTest::SpawnSkillTypeShootUnitEffect },
-        //{ "Skill_Type_Sustain", &EffectSystemTest::SpawnSkillTypeSustainEffect },
-        //{ "UI_ButtonSide", &EffectSystemTest::SpawnUIButtonSideEffect },
-        //{ "UI_HP_MP_Number", &EffectSystemTest::SpawnUIHpMpNumberEffect },
-        //{ "UI_SkillSet", &EffectSystemTest::SpawnUISkillSetEffect },
-        //{ "UI_WorldMap_Light", &EffectSystemTest::SpawnUIWorldMapLightEffect },
-        //{ "WeddingHall", &EffectSystemTest::SpawnWeddingHallEffect },
-        //{ "UseHitMulti", &EffectSystemTest::SpawnUseHitMultiEffect },
+        
+        //{ "Player_Tolerance", &EffectSystemTest::SpawnPlayerToleranceEffect }, //OK 3種都測了
+        //{ "Portal", &EffectSystemTest::SpawnPortalEffect }, //OK 741~749都測了
+        //{ "Skill_Blocking", &EffectSystemTest::SpawnSkillBlockingEffect }, //OK
+        //{ "Skill_Freezing", &EffectSystemTest::SpawnSkillFreezingEffect }, //OK
+        //{ "Skill_Heal", &EffectSystemTest::SpawnSkillHealEffect }, //OK
+        //{ "Skill_HealPray", &EffectSystemTest::SpawnSkillHealPrayEffect }, //OK
+        //{ "Skill_Resurrection", &EffectSystemTest::SpawnSkillResurrectionEffect }, //OK
+        //{ "Skill_SpeedUP", &EffectSystemTest::SpawnSkillSpeedUpEffect }, //OK
+        //{ "Skill_Take", &EffectSystemTest::SpawnSkillTakeEffect }, //OK
+        //{ "Skill_Trap_Explosion", &EffectSystemTest::SpawnSkillTrapExplosionEffect }, //OK
+        //{ "UI_ButtonSide", &EffectSystemTest::SpawnUIButtonSideEffect }, //OK
+        //{ "UI_SkillSet", &EffectSystemTest::SpawnUISkillSetEffect }, //OK
+        //{ "UI_WorldMap_Light", &EffectSystemTest::SpawnUIWorldMapLightEffect }, //OK
+        //{ "WeddingHall", &EffectSystemTest::SpawnWeddingHallEffect }, //OK
+
+        //{ "Player_WeatherPreView", &EffectSystemTest::SpawnPlayerWeatherPreviewEffect }, //OK 01不行，02~12都可以
+        //{ "UI_HP_MP_Number", &EffectSystemTest::SpawnUIHpMpNumberEffect }, //不行
+        //{ "Skill_Integrity", &EffectSystemTest::SpawnSkillIntegrityEffect }, //不行
+        //{ "Skill_OtherHeal", &EffectSystemTest::SpawnSkillOtherHealEffect }, //不行 load texture失敗
+        //{ "UseHitMulti", &EffectSystemTest::SpawnUseHitMultiEffect }, //現在驗不了
+        //{ "Skill_Type_Directed", &EffectSystemTest::SpawnSkillTypeDirectedEffect }, //現在驗不了，要用EffectManager::AddEffect
+        //{ "Skill_Type_Directed_Target", &EffectSystemTest::SpawnSkillTypeDirectedTargetEffect }, //現在驗不了
+        //{ "Skill_Type_Once", &EffectSystemTest::SpawnSkillTypeOnceEffect }, //現在驗不了
+        //{ "Skill_Type_ShootUnit", &EffectSystemTest::SpawnSkillTypeShootUnitEffect }, //現在驗不了
+        //{ "Skill_Type_Sustain", &EffectSystemTest::SpawnSkillTypeSustainEffect }, //現在驗不了
+
     };
 }
 
@@ -866,14 +869,14 @@ void EffectSystemTest::SpawnPlayerToleranceEffect()
 {
     if (!m_pCaster) return;
     CEffect_Player_Tolerance* pEffect = new CEffect_Player_Tolerance();
-    pEffect->SetEffect(m_pCaster, 0);
+    pEffect->SetEffect(m_pCaster, 3); //1~3
     CEffectManager::GetInstance()->BulletAdd(pEffect);
 }
 
 void EffectSystemTest::SpawnPlayerWeatherPreviewEffect()
 {
     CEffect_Player_WeatherPreView* pEffect = new CEffect_Player_WeatherPreView();
-    char effectName[] = "efn_weatherpreview.ea";
+    char effectName[] = "efe-weather12.ea"; //01不行
     pEffect->SetEffect(100.0f, 100.0f, 0, effectName);
     CEffectManager::GetInstance()->BulletAdd(pEffect);
 }
@@ -883,7 +886,7 @@ void EffectSystemTest::SpawnPortalEffect()
     if (!m_pCaster) return;
     CEffect_Portal* pEffect = new CEffect_Portal();
     // CEffect_Portal::SetEffect 依照 mofclient.c 需傳入 kind code（例如 E0741），不是 ea 檔名。
-    char effectName[] = "E0741";
+    char effectName[] = "E0749"; //E0741 ~ E0749
     float x = 0.0f, y = 0.0f;
     GetCasterPosition(x, y);
     pEffect->SetEffect(effectName, x, y);
@@ -903,6 +906,7 @@ void EffectSystemTest::SpawnSkillFreezingEffect()
     if (!m_pTarget) return;
     CEffect_Skill_Freezing* pEffect = new CEffect_Skill_Freezing();
     pEffect->SetEffect(m_pTarget, 0);
+    m_pTarget->m_isFreezing = true; // 模擬角色被冰凍狀態，讓特效能正確顯示。
     CEffectManager::GetInstance()->BulletAdd(pEffect);
 }
 
@@ -1050,6 +1054,7 @@ void EffectSystemTest::SpawnUIWorldMapLightEffect()
 void EffectSystemTest::SpawnWeddingHallEffect()
 {
     if (!m_pCaster) return;
+    m_pCaster->m_wMapID = 4;
     CEffect_WeddingHall* pEffect = new CEffect_WeddingHall();
     float x = 0.0f, y = 0.0f;
     GetCasterPosition(x, y);

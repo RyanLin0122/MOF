@@ -28,7 +28,7 @@ CEffectManager* CEffectManager::GetInstance() {
 CEffectManager::CEffectManager() : m_pHead(nullptr), m_pTail(nullptr), m_uEffectCount(0)
 {
     // m_OverMindScreenEffect & cltMoFC_EffectKindInfo 和 m_SkillTypeOnceEffect 的建構函式會在此處自動呼叫
-	//g_clEffectKindInfo->Initialize("Effect/EffectKindInfo.txt");
+	g_clEffectKindInfo.Initialize((char*)"SkillEffect.txt");
 }
 
 // 對應反組譯碼: 0x0053AEE0

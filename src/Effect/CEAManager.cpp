@@ -280,7 +280,15 @@ void CEAManager::LoadEAInPack(int effectID, char* szFileName)
 
     // 1. 從封裝檔管理器獲取檔案的記憶體緩衝區
     CMofPacking* packer = CMofPacking::GetInstance();
-    char* fileBuffer = packer->FileRead(packer->ChangeString(szFileName));
+    char* changed = packer->ChangeString(szFileName);
+
+    const char prefix[] = "mofdata/";
+    if (changed && std::strncmp(changed, prefix, sizeof(prefix) - 1) == 0) {
+        std::memmove(changed, changed + (sizeof(prefix) - 1),
+            std::strlen(changed + (sizeof(prefix) - 1)) + 1);
+    }
+
+    char* fileBuffer = packer->FileRead(changed);
     if (!fileBuffer) {
         return;
     }

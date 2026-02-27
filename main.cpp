@@ -141,6 +141,7 @@ void Setup() {
 	g_MoFFont.SetFont("CharacterName");
 
 	// To Do
+
 }
 
 // EUC-KR(51949) 或 UHC(949) → UTF-16
