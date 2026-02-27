@@ -882,7 +882,8 @@ void EffectSystemTest::SpawnPortalEffect()
 {
     if (!m_pCaster) return;
     CEffect_Portal* pEffect = new CEffect_Portal();
-    char effectName[] = "efn_portal.ea";
+    // CEffect_Portal::SetEffect 依照 mofclient.c 需傳入 kind code（例如 E0741），不是 ea 檔名。
+    char effectName[] = "E0741";
     float x = 0.0f, y = 0.0f;
     GetCasterPosition(x, y);
     pEffect->SetEffect(effectName, x, y);
