@@ -31,5 +31,5 @@ public:
 
 private:
     // --- 成員變數 ---
-    bool m_bIsFinished; // 位移 +132 (0x84): 用於外部控制生命週期的旗標
+    bool m_bIsFinished; // 位移 +132 (0x84): 反編譯行為為「預設 true，SetEffect 成功後改為 false」
 };
