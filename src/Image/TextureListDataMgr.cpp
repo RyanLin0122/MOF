@@ -133,14 +133,14 @@ void TextureListDataMgr::DeviceLostToReLoad() {
             D3DXCreateTextureFromFileExA(
                 Device,
                 pCurrent->szFileName,
-                D3DX_DEFAULT_NONPOW2, // Width
-                D3DX_DEFAULT_NONPOW2, // Height
-                D3DX_DEFAULT,         // MipLevels
+                0xFFFFFFFF,           // Width
+                0xFFFFFFFF,           // Height
+                1,                    // MipLevels
                 0,                    // Usage
                 D3DFMT_UNKNOWN,       // Format
                 D3DPOOL_MANAGED,      // Pool
-                D3DX_FILTER_LINEAR,   // Filter
-                D3DX_FILTER_LINEAR,   // MipFilter
+                4,                    // Filter
+                1,                    // MipFilter
                 0xFFFF00FF,           // ColorKey
                 nullptr,              // SrcInfo
                 nullptr,              // Palette

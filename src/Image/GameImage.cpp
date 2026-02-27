@@ -276,37 +276,43 @@ bool GameImage::Draw() {
     //
     // 目標：捕捉每一次 Draw 呼叫前的所有關鍵狀態，以便比較成功與失敗時的差異。
     //
-    printf("\n--- GameImage::Draw() Snapshot ---\n");
-    printf("  GameImage Addr:  0x%p\n", this);
+    //printf("\n--- GameImage::Draw() Snapshot ---\n");
+    //printf("  GameImage Addr:  0x%p\n", this);
 
-    if (m_pGIData && m_pGIData->m_Resource.m_pTexture) {
-        printf("  Texture Addr:    0x%p\n", m_pGIData->m_Resource.m_pTexture);
-    }
-    else {
-        printf("  Texture Addr:    [NULL]\n");
-    }
+    //if (m_pGIData && m_pGIData->m_Resource.m_pTexture) {
+    //    printf("  Texture Addr:    0x%p\n", m_pGIData->m_Resource.m_pTexture);
+    //}
+    //else {
+    //    printf("  Texture Addr:    [NULL]\n");
+    //}
 
-    // 記錄四個頂點的關鍵資訊 (我們只看左上角和右下角，足以判斷問題)
-    printf("  Vertex[0] Pos:   (%.1f, %.1f)\n", m_Vertices[0].position_x, m_Vertices[0].position_y);
-    printf("  Vertex[0] Color: 0x%08X\n", m_Vertices[0].diffuse_color);
-    printf("  Vertex[2] Pos:   (%.1f, %.1f)\n", m_Vertices[2].position_x, m_Vertices[2].position_y);
-    printf("  Vertex[2] Color: 0x%08X\n", m_Vertices[2].diffuse_color);
+    //// 記錄四個頂點的關鍵資訊 (我們只看左上角和右下角，足以判斷問題)
+    //printf("  Vertex[0] Pos:   (%.1f, %.1f)\n", m_Vertices[0].position_x, m_Vertices[0].position_y);
+    //printf("  Vertex[0] Color: 0x%08X\n", m_Vertices[0].diffuse_color);
+    //printf("  Vertex[2] Pos:   (%.1f, %.1f)\n", m_Vertices[2].position_x, m_Vertices[2].position_y);
+    //printf("  Vertex[2] Color: 0x%08X\n", m_Vertices[2].diffuse_color);
 
-    // 記錄 DrawPrimitive 即將使用的參數
-    if (m_pVBData && m_pVBData->pVertexBuffer) {
-        printf("  VertexBuffer:    VALID (0x%p)\n", m_pVBData->pVertexBuffer);
-    }
-    else {
-        printf("  VertexBuffer:    [NULL]\n");
-    }
-    printf("  Draw Flags:      m_bIsProcessed=%d, m_bVertexAnimation=%d\n", m_bIsProcessed, m_bVertexAnimation);
-    // ===================== 黑盒子日誌記錄器 END ======================
+    //// 記錄 DrawPrimitive 即將使用的參數
+    //if (m_pVBData && m_pVBData->pVertexBuffer) {
+    //    printf("  VertexBuffer:    VALID (0x%p)\n", m_pVBData->pVertexBuffer);
+    //}
+    //else {
+    //    printf("  VertexBuffer:    [NULL]\n");
+    //}
+    //printf("  Draw Flags:      m_bIsProcessed=%d, m_bVertexAnimation=%d\n", m_bIsProcessed, m_bVertexAnimation);
+    //// ===================== 黑盒子日誌記錄器 END ======================
 
     // 設定渲染狀態
     CDeviceManager::GetInstance()->SetTexture(0, m_pGIData->m_Resource.m_pTexture);
     CDeviceManager::GetInstance()->SetFVF(D3DFVF_XYZRHW | D3DFVF_DIFFUSE | D3DFVF_TEX1); // FVF: 0x144
     CDeviceManager::GetInstance()->SetStreamSource(0, m_pVBData->pVertexBuffer, 0, sizeof(GIVertex));
-
+    GIVertex* vb = nullptr;
+    HRESULT hr = m_pVBData->pVertexBuffer->Lock(0, sizeof(GIVertex) * 4, (void**)&vb, 0);
+    //printf("VB Lock hr=0x%08X\n", (unsigned)hr);
+    if (SUCCEEDED(hr) && vb) {
+        //printf("VB[0] Pos: (%f,%f) Color:0x%08X\n", vb[0].position_x, vb[0].position_y, vb[0].diffuse_color);
+        m_pVBData->pVertexBuffer->Unlock();
+    }
     // 根據旗標繪製不同的部分
     if (m_bDrawPart2 && !DontDraw) {
         Device->DrawPrimitive(D3DPT_TRIANGLEFAN, 4, 2); // 繪製頂點 4-7
@@ -366,6 +372,18 @@ void GameImage::VertexAnimationCalculator(const GIVertex* pSourceVertices)
 
     // 將外部傳入的8個頂點資料 (224 bytes) 複製到內部的頂點陣列中
     memcpy(m_Vertices, pSourceVertices, sizeof(m_Vertices));
+
+    if (m_pVBData && m_pVBData->pVertexBuffer)
+    {
+        void* p = nullptr;
+        HRESULT hr = m_pVBData->pVertexBuffer->Lock(0, sizeof(m_Vertices), &p, 0);
+        if (SUCCEEDED(hr) && p)
+        {
+            memcpy(p, m_Vertices, sizeof(m_Vertices));
+            m_pVBData->pVertexBuffer->Unlock();
+            m_bIsProcessed = true; // 如果你的流程用它表示 VB 已更新
+        }
+    }
 }
 
 void GameImage::UpdateVertexBuffer()

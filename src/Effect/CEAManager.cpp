@@ -11,202 +11,340 @@ CEAManager* CEAManager::GetInstance() {
     if (!s_pInstance) s_pInstance = new (std::nothrow) CEAManager();
     return s_pInstance;
 }
-CEAManager::CEAManager() {
-    memset(m_pEaData, 0, sizeof(m_pEaData));
+
+CEAManager::CEAManager()
+{
+    size_t totalSize = sizeof(EADATALISTINFO*) * 0xFFFF;
+    m_pEAData = (EADATALISTINFO**)std::malloc(totalSize);
+    if (m_pEAData) {
+        std::memset(m_pEAData, 0, totalSize);
+    }
+    m_dwTailFlag = 0;
 }
-CEAManager::~CEAManager() {
-    Reset();
-}
-void CEAManager::Reset() {
-    for (int i = 0; i < 65535; ++i) {
-        if (m_pEaData[i]) {
-            delete m_pEaData[i]; // 假設 EADATALISTINFO 的解構函式會處理內部指標
-            m_pEaData[i] = nullptr;
+
+CEAManager::~CEAManager()
+{
+    if (m_pEAData)
+    {
+        for (int i = 0; i < 0xFFFF; ++i)
+        {
+            EADATALISTINFO* p = m_pEAData[i];
+            if (p)
+            {
+                p->~EADATALISTINFO();
+                ::operator delete(p);
+                m_pEAData[i] = nullptr;
+            }
         }
+        std::free(m_pEAData);
+        m_pEAData = nullptr;
     }
 }
 
-
-// --- GetEAData 維持不變，其懶漢式載入邏輯依然適用 ---
-void CEAManager::GetEAData(int effectID, const char* szFileName, CCAEffect* pEffect)
+void CEAManager::Reset()
 {
-    if (effectID < 0 || effectID >= 65535 || !pEffect) return;
+    if (!m_pEAData) return;
 
-    if (m_pEaData[effectID] == nullptr) {
-        m_pEaData[effectID] = new (std::nothrow) EADATALISTINFO();
-        if (!m_pEaData[effectID]) return;
+    for (int i = 0; i < 0xFFFF; ++i)
+    {
+        EADATALISTINFO* p = m_pEAData[i];
+        if (p)
+        {
+            p->~EADATALISTINFO();
+            ::operator delete(p);
+            m_pEAData[i] = nullptr;
+        }
+    }
+    m_dwTailFlag = 0;
+}
 
-        // 根據旗標決定從獨立檔案或封裝檔載入
+static inline uint32_t read_u32(const uint8_t*& p)
+{
+    uint32_t v;
+    std::memcpy(&v, p, sizeof(v));
+    p += 4;
+    return v;
+}
+
+static inline void read_bytes(const uint8_t*& p, void* dst, size_t n)
+{
+    std::memcpy(dst, p, n);
+    p += n;
+}
+
+void CEAManager::GetEAData(int effectId, const char* fileName, CCAEffect* outEffect)
+{
+    // IDA signature: (this, a2=effectId, a3=fileName, a4=effect)
+    EADATALISTINFO* p = m_pEAData[effectId];
+
+    if (p)
+    {
+        // effect->(dword+1) = p
+        outEffect->SetEffectData(p);
+    }
+    else
+    {
+        void* mem = ::operator new(48u);
+        EADATALISTINFO* np = nullptr;
+        if (mem)
+        {
+            np = new (mem) EADATALISTINFO();
+            // 依 CCAEffect.h 的 EADATALISTINFO layout 初始化
+            np->animationCount = 0;
+            np->keys = nullptr;
+            np->totalFrames = 0;
+            np->unknown = 0;
+            np->layerCount = 0;
+            np->layers = nullptr;
+            np->m_ucBlendOp = 0;
+            np->m_ucSrcBlend = 0;
+            np->m_ucEtcBlendOp = 0;
+            np->m_ucEtcSrcBlend = 0;
+            np->m_ucEtcDestBlend = 0;
+        }
+
+        m_pEAData[effectId] = np;
+
         if (IsInMemory) {
             char tempFileName[256];
-            strcpy_s(tempFileName, sizeof(tempFileName), szFileName);
-            LoadEAInPack(effectID, tempFileName);
+            strcpy_s(tempFileName, sizeof(tempFileName), fileName);
+            LoadEAInPack(effectId, tempFileName);
         }
-        else {
-            LoadEA(effectID, szFileName);
-        }
+        else
+            LoadEA(effectId, fileName);
+
+        outEffect->SetEffectData(m_pEAData[effectId]);
+        p = m_pEAData[effectId];
     }
 
-    // 將快取資料綁定到 CCAEffect 物件
-    EADATALISTINFO* pData = m_pEaData[effectID];
-    pEffect->SetData(pData);
+    auto* ea = m_pEAData[effectId];              // EADATALISTINFO*
+    outEffect->SetLayerList(reinterpret_cast<VERTEXANIMATIONLAYERLISTINFO*>(&ea->unknown));
 
-    if (pData) {
-        if (pData->m_ucBlendOp > 7) {
-            pEffect->m_ucRenderStateSelector = 1;
-        }
-        else {
-            pEffect->m_ucRenderStateSelector = 0;
-        }
-    }
+    outEffect->m_ucBlendIndex = p->m_ucBlendOp;
+    const uint8_t blendOp = p->m_ucBlendOp;
+
+    outEffect->m_ucUnk81 = p->m_ucSrcBlend;
+    outEffect->m_ucEtcBlendOp = p->m_ucEtcBlendOp;
+    outEffect->m_ucEtcSrcBlend = p->m_ucEtcSrcBlend;
+    outEffect->m_ucEtcDestBlend = p->m_ucEtcDestBlend;
+    outEffect->m_ucRenderMode = static_cast<uint8_t>(blendOp > 7u);
 }
 
-
-/**
- * @brief 從獨立的 .ea 檔案載入特效動畫數據。
- *
- * MODIFICATION: 此函式的實作已被完全重寫，以符合 `ea_parser.py` 所揭示的
- * 簡單檔案格式：Header(12 bytes) -> Frame Array -> Trailer(6+ bytes)。
- * 它將檔案內容解析為一個單一圖層的動畫。
- */
 void CEAManager::LoadEA(int effectID, const char* szFileName)
 {
-    EADATALISTINFO* pData = m_pEaData[effectID];
+    EADATALISTINFO* pData = m_pEAData[effectID];
     if (!pData) return;
+
+    // 若同一個 effectID 重複載入，先清掉舊資料避免 leak
+    if (pData->layers) {
+        for (uint32_t i = 0; i < pData->layerCount; ++i) {
+            delete[] pData->layers[i].m_pFrames;
+            pData->layers[i].m_pFrames = nullptr;
+            pData->layers[i].m_nFrameCount = 0;
+        }
+        delete[] pData->layers;
+        pData->layers = nullptr;
+    }
+    delete[] pData->keys;
+    pData->keys = nullptr;
+
+    pData->layerCount = 0;
+    pData->animationCount = 0;
+    pData->totalFrames = 0;
+    pData->m_ucBlendOp = 0;
+    pData->m_ucSrcBlend = 0;
+    pData->m_ucEtcBlendOp = 0;
+    pData->m_ucEtcSrcBlend = 0;
+    pData->m_ucEtcDestBlend = 0;
 
     FILE* pFile = nullptr;
     if (fopen_s(&pFile, szFileName, "rb") != 0 || pFile == nullptr) {
-        // 錯誤處理...
         return;
     }
 
-    // 1. 讀取 Header (num_keys, num_layers, num_frames)
-    // Python: num_keys, num_layers, num_frames = struct.unpack_from('<III', data, 0)
-    int num_keys, num_layers, num_frames;
-    fread(&num_keys, sizeof(int), 1, pFile);
-    fread(&num_layers, sizeof(int), 1, pFile);
-    fread(&num_frames, sizeof(int), 1, pFile);
-
-    // 2. 填充 EADATALISTINFO 結構
-    // 我們將此格式視為具有一個圖層和一個預設動畫片段
-    pData->m_nTotalFrames = num_frames;
-    pData->m_nLayerCount = 1; // 簡化為單一圖層
-    pData->m_pLayers = nullptr;
-    pData->m_nAnimationCount = 1; // 創建一個涵蓋所有影格的預設動畫片段
-    pData->m_pKeyFrames = nullptr;
-
-
-    // 3. 分配並設定圖層
-    if (pData->m_nLayerCount > 0 && num_frames > 0) {
-        pData->m_pLayers = new (std::nothrow) VERTEXANIMATIONLAYERINFO[pData->m_nLayerCount];
-        if (!pData->m_pLayers) { fclose(pFile); return; }
-
-        VERTEXANIMATIONLAYERINFO* pLayer = &pData->m_pLayers[0];
-        pLayer->m_nFrameCount = num_frames;
-        pLayer->m_pFrames = new (std::nothrow) VERTEXANIMATIONFRAMEINFO[num_frames];
-        if (!pLayer->m_pFrames) {
-            delete[] pData->m_pLayers;
-            pData->m_pLayers = nullptr;
-            fclose(pFile);
-            return;
-        }
-
-        // 4. 一次性讀取所有影格資料
-        // Python: ... loop ... struct.unpack_from ...
-        // C++: A single fread is more efficient here.
-        // Requires VERTEXANIMATIONFRAMEINFO to be exactly 120 bytes.
-        fread(pLayer->m_pFrames, sizeof(VERTEXANIMATIONFRAMEINFO), num_frames, pFile);
+    uint32_t unknown_tag = 0;
+    uint32_t layerCount = 0;
+    if (fread(&unknown_tag, sizeof(uint32_t), 1, pFile) != 1 ||
+        fread(&layerCount, sizeof(uint32_t), 1, pFile) != 1) {
+        fclose(pFile);
+        return;
     }
 
-    // 5. 建立預設的 KeyFrame
-    if (pData->m_nAnimationCount > 0) {
-        pData->m_pKeyFrames = new (std::nothrow) KEYINFO[pData->m_nAnimationCount];
-        if (pData->m_pKeyFrames) {
-            strcpy_s(pData->m_pKeyFrames[0].m_szName, sizeof(pData->m_pKeyFrames[0].m_szName), "default");
-            pData->m_pKeyFrames[0].m_nStartFrame = 0;
-            pData->m_pKeyFrames[0].m_nEndFrame = num_frames > 0 ? num_frames - 1 : 0;
+    pData->layerCount = layerCount;
+    pData->layers = (layerCount > 0) ? new (std::nothrow) VERTEXANIMATIONLAYERINFO[layerCount] : nullptr;
+    if (layerCount > 0 && !pData->layers) { fclose(pFile); return; }
+
+    // Layers + Frames
+    for (uint32_t li = 0; li < layerCount; ++li) {
+        uint32_t frameCount = 0;
+        if (fread(&frameCount, sizeof(uint32_t), 1, pFile) != 1) { fclose(pFile); return; }
+
+        VERTEXANIMATIONLAYERINFO& layer = pData->layers[li];
+        layer.m_nFrameCount = static_cast<int>(frameCount);
+        layer.m_pFrames = (frameCount > 0) ? new (std::nothrow) VERTEXANIMATIONFRAMEINFO[frameCount] : nullptr;
+        if (frameCount > 0 && !layer.m_pFrames) { fclose(pFile); return; }
+
+        for (uint32_t fi = 0; fi < frameCount; ++fi) {
+            VERTEXANIMATIONFRAMEINFO& fr = layer.m_pFrames[fi];
+
+            // 固定 0x74 bytes：imageID + 4 vertices
+            if (fread(&fr.m_dwImageID, sizeof(uint32_t), 1, pFile) != 1) { fclose(pFile); return; }
+            if (fread(&fr.m_Vertices[0], sizeof(GIVertex), 4, pFile) != 4) { fclose(pFile); return; }
+
+            // extraCount（在檔案中緊接於 0x74 bytes 後面）
+            uint32_t extraCount = 0;
+            if (fread(&extraCount, sizeof(uint32_t), 1, pFile) != 1) { fclose(pFile); return; }
+
+            // 注意：目前的 VERTEXANIMATIONFRAMEINFO（CCAEffect.h）沒有 extraCount 欄位，
+            // 先把 count 暫存在 m_ptrExtra，並把真正的 extra records 直接略過。
+            fr.m_ptrExtra = extraCount;
+
+            if (extraCount) {
+                const size_t skip = static_cast<size_t>(extraCount) * 0x66u;
+                if (fseek(pFile, static_cast<long>(skip), SEEK_CUR) != 0) { fclose(pFile); return; }
+            }
         }
     }
 
-    // 6. 讀取檔案尾部的渲染狀態 (Trailer)
-    // Python: trailer = data[offset:]
-    fread(&pData->m_ucBlendOp, sizeof(unsigned char), 1, pFile);
-    fread(&pData->m_ucSrcBlend, sizeof(unsigned char), 1, pFile);
-    fread(&pData->m_ucDestBlend, sizeof(unsigned char), 1, pFile);
-    fread(&pData->m_ucEtcBlendOp, sizeof(unsigned char), 1, pFile);
-    fread(&pData->m_ucEtcSrcBlend, sizeof(unsigned char), 1, pFile);
-    fread(&pData->m_ucEtcDestBlend, sizeof(unsigned char), 1, pFile);
+    // totalFrames / animationCount
+    uint32_t totalFrames = 0;
+    uint32_t animationCount = 0;
+    if (fread(&totalFrames, sizeof(uint32_t), 1, pFile) != 1 ||
+        fread(&animationCount, sizeof(uint32_t), 1, pFile) != 1) {
+        fclose(pFile);
+        return;
+    }
+    pData->totalFrames = totalFrames;
+    pData->animationCount = animationCount;
+
+    // keys（每個 24 bytes）
+    if (animationCount) {
+        pData->keys = new (std::nothrow) KEYINFO[animationCount];
+        if (!pData->keys) { fclose(pFile); return; }
+
+        for (uint32_t i = 0; i < animationCount; ++i) {
+            uint8_t raw[24];
+            if (fread(raw, 1, sizeof(raw), pFile) != sizeof(raw)) { fclose(pFile); return; }
+
+            std::memcpy(pData->keys[i].m_szName, raw, 16);
+            pData->keys[i].m_szName[15] = '\0';
+            std::memcpy(&pData->keys[i].m_nStartFrame, raw + 16, 4);
+            std::memcpy(&pData->keys[i].m_nEndFrame, raw + 20, 4);
+        }
+    }
+
+    // blend params
+    uint8_t blendOp = 0, srcBlend = 0;
+    if (fread(&blendOp, 1, 1, pFile) != 1 || fread(&srcBlend, 1, 1, pFile) != 1) {
+        fclose(pFile);
+        return;
+    }
+    pData->m_ucBlendOp = blendOp;
+    pData->m_ucSrcBlend = srcBlend;
+
+    if (blendOp == 8u) {
+        (void)fread(&pData->m_ucEtcBlendOp, 1, 1, pFile);
+        (void)fread(&pData->m_ucEtcSrcBlend, 1, 1, pFile);
+        (void)fread(&pData->m_ucEtcDestBlend, 1, 1, pFile);
+    }
 
     fclose(pFile);
 }
 
-/**
- * @brief 從封裝檔 (mof.pak) 的記憶體緩衝區載入 .ea 數據。
- *
- * MODIFICATION: 此函式也被重寫，以匹配新的解析邏輯。
- * 它從記憶體指標而不是檔案指標讀取資料。
- */
 void CEAManager::LoadEAInPack(int effectID, char* szFileName)
 {
-    EADATALISTINFO* pData = m_pEaData[effectID];
+    EADATALISTINFO* pData = m_pEAData[effectID];
     if (!pData) return;
+
+    // 若同一個 effectID 重複載入，先清掉舊資料避免 leak
+    if (pData->layers) {
+        for (uint32_t i = 0; i < pData->layerCount; ++i) {
+            delete[] pData->layers[i].m_pFrames;
+            pData->layers[i].m_pFrames = nullptr;
+            pData->layers[i].m_nFrameCount = 0;
+        }
+        delete[] pData->layers;
+        pData->layers = nullptr;
+    }
+    delete[] pData->keys;
+    pData->keys = nullptr;
+
+    pData->layerCount = 0;
+    pData->animationCount = 0;
+    pData->totalFrames = 0;
+    pData->m_ucBlendOp = 0;
+    pData->m_ucSrcBlend = 0;
+    pData->m_ucEtcBlendOp = 0;
+    pData->m_ucEtcSrcBlend = 0;
+    pData->m_ucEtcDestBlend = 0;
 
     // 1. 從封裝檔管理器獲取檔案的記憶體緩衝區
     CMofPacking* packer = CMofPacking::GetInstance();
     char* fileBuffer = packer->FileRead(packer->ChangeString(szFileName));
     if (!fileBuffer) {
-        // 錯誤處理...
         return;
     }
-    char* current_ptr = fileBuffer;
 
-    // 2. 解析 Header
-    int num_keys = *reinterpret_cast<int*>(current_ptr); current_ptr += sizeof(int);
-    int num_layers = *reinterpret_cast<int*>(current_ptr); current_ptr += sizeof(int);
-    int num_frames = *reinterpret_cast<int*>(current_ptr); current_ptr += sizeof(int);
+    const uint8_t* p = reinterpret_cast<const uint8_t*>(fileBuffer);
 
-    // 3. 填充 EADATALISTINFO (邏輯同 LoadEA)
-    pData->m_nTotalFrames = num_frames;
-    pData->m_nLayerCount = 1;
-    pData->m_pLayers = nullptr;
-    pData->m_nAnimationCount = 1;
-    pData->m_pKeyFrames = nullptr;
+    // 2. Header：unknown_tag + layerCount
+    (void)read_u32(p);
+    const uint32_t layerCount = read_u32(p);
+    pData->layerCount = layerCount;
 
-    // 4. 分配、設定並複製圖層與影格資料
-    if (pData->m_nLayerCount > 0 && num_frames > 0) {
-        pData->m_pLayers = new (std::nothrow) VERTEXANIMATIONLAYERINFO[pData->m_nLayerCount];
-        if (!pData->m_pLayers) return;
+    pData->layers = (layerCount > 0) ? new (std::nothrow) VERTEXANIMATIONLAYERINFO[layerCount] : nullptr;
+    if (layerCount > 0 && !pData->layers) return;
 
-        VERTEXANIMATIONLAYERINFO* pLayer = &pData->m_pLayers[0];
-        pLayer->m_nFrameCount = num_frames;
-        pLayer->m_pFrames = new (std::nothrow) VERTEXANIMATIONFRAMEINFO[num_frames];
-        if (!pLayer->m_pFrames) {
-            delete[] pData->m_pLayers;
-            pData->m_pLayers = nullptr;
-            return;
-        }
-        size_t frameDataSize = sizeof(VERTEXANIMATIONFRAMEINFO) * num_frames;
-        memcpy(pLayer->m_pFrames, current_ptr, frameDataSize);
-        current_ptr += frameDataSize;
-    }
+    // 3. Layers + Frames
+    for (uint32_t li = 0; li < layerCount; ++li) {
+        const uint32_t frameCount = read_u32(p);
 
-    // 5. 建立預設 KeyFrame (邏輯同 LoadEA)
-    if (pData->m_nAnimationCount > 0) {
-        pData->m_pKeyFrames = new (std::nothrow) KEYINFO[pData->m_nAnimationCount];
-        if (pData->m_pKeyFrames) {
-            strcpy_s(pData->m_pKeyFrames[0].m_szName, sizeof(pData->m_pKeyFrames[0].m_szName), "default");
-            pData->m_pKeyFrames[0].m_nStartFrame = 0;
-            pData->m_pKeyFrames[0].m_nEndFrame = num_frames > 0 ? num_frames - 1 : 0;
+        VERTEXANIMATIONLAYERINFO& layer = pData->layers[li];
+        layer.m_nFrameCount = static_cast<int>(frameCount);
+        layer.m_pFrames = (frameCount > 0) ? new (std::nothrow) VERTEXANIMATIONFRAMEINFO[frameCount] : nullptr;
+        if (frameCount > 0 && !layer.m_pFrames) return;
+
+        for (uint32_t fi = 0; fi < frameCount; ++fi) {
+            VERTEXANIMATIONFRAMEINFO& fr = layer.m_pFrames[fi];
+            fr.m_dwImageID = read_u32(p);
+            read_bytes(p, &fr.m_Vertices[0], sizeof(GIVertex) * 4);
+
+            const uint32_t extraCount = read_u32(p);
+            fr.m_ptrExtra = extraCount; // 暫存 count
+            if (extraCount) {
+                p += static_cast<size_t>(extraCount) * 0x66u;
+            }
         }
     }
 
-    // 6. 解析 Trailer 的渲染狀態
-    pData->m_ucBlendOp = *reinterpret_cast<unsigned char*>(current_ptr); current_ptr++;
-    pData->m_ucSrcBlend = *reinterpret_cast<unsigned char*>(current_ptr); current_ptr++;
-    pData->m_ucDestBlend = *reinterpret_cast<unsigned char*>(current_ptr); current_ptr++;
-    pData->m_ucEtcBlendOp = *reinterpret_cast<unsigned char*>(current_ptr); current_ptr++;
-    pData->m_ucEtcSrcBlend = *reinterpret_cast<unsigned char*>(current_ptr); current_ptr++;
-    pData->m_ucEtcDestBlend = *reinterpret_cast<unsigned char*>(current_ptr); current_ptr++;
+    // 4. totalFrames / animationCount
+    pData->totalFrames = read_u32(p);
+    pData->animationCount = read_u32(p);
+
+    // 5. keys（每個 28 bytes）
+    if (pData->animationCount) {
+        pData->keys = new (std::nothrow) KEYINFO[pData->animationCount];
+        if (!pData->keys) return;
+
+        for (uint32_t i = 0; i < pData->animationCount; ++i) {
+            uint8_t raw[28];
+            read_bytes(p, raw, sizeof(raw));
+
+            std::memcpy(pData->keys[i].m_szName, raw, 20);
+            pData->keys[i].m_szName[15] = '\0';
+            std::memcpy(&pData->keys[i].m_nStartFrame, raw + 20, 4);
+            std::memcpy(&pData->keys[i].m_nEndFrame, raw + 24, 4);
+        }
+    }
+
+    // 6. blend params
+    pData->m_ucBlendOp = *p++;
+    pData->m_ucSrcBlend = *p++;
+    if (pData->m_ucBlendOp == 8u) {
+        pData->m_ucEtcBlendOp = *p++;
+        pData->m_ucEtcSrcBlend = *p++;
+        pData->m_ucEtcDestBlend = *p++;
+    }
 
     // 記憶體緩衝區由 CMofPacking 管理，此處不釋放
 }

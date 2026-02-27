@@ -3,15 +3,8 @@
 
 #include <cstdint>
 #include <cstdio>
+#include "global.h"
 
-// 與反編譯一致的外部依賴（僅宣告；定義於他處）
-class cltTextFileManager {
-public:
-    // 反編譯呼叫為：cltTextFileManager::fopen(&g_clTextFileManager, path)
-    FILE* fopen(const char* path);
-    void  fclose(FILE* fp);
-};
-extern cltTextFileManager g_clTextFileManager;
 
 // 反編譯於 GetDate 回傳的資料結構（每筆佔 4 bytes）
 struct stAttendance {

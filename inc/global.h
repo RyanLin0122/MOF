@@ -46,6 +46,12 @@ extern int   kDotGlyphIndexByStyle[]; //dword_6C6C54
 extern int   kAdvanceByStyle[]; //dword_6C6C58
 extern int   kAtlasIdByStyle[]; //dword_6C6C5C
 
+extern unsigned int D3DRS_BLENDOP_TYPE[8];
+extern unsigned int D3DRS_SRCBLEND_TYPE[8];
+extern unsigned int D3DRS_DESTBLEND_TYPE[8];
+
+extern DWORD g_dwHeartBeatTime;
+
 enum Direction : uint8_t {
     DirUp = 0,        // 氣球箭頭朝上（置中）
     DirLeft = 1,        // 箭頭朝左（垂直置中）
