@@ -302,6 +302,7 @@
     <ClCompile Include="src\Pet\cltPetObject.cpp" />
     <ClCompile Include="src\Sound\COgg.cpp" />
     <ClCompile Include="src\System\cltBasicAppearSystem.cpp" />
+    <ClCompile Include="src\System\cltLevelSystem.cpp" />
     <ClCompile Include="src\System\cltMoneySystem.cpp" />
     <ClCompile Include="src\System\cltSexSystem.cpp" />
     <ClCompile Include="src\Test\cm_packing_integration_test.cpp" />
@@ -527,6 +528,7 @@
     <ClInclude Include="inc\Pet\cltPetObject.h" />
     <ClInclude Include="inc\Sound\COgg.h" />
     <ClInclude Include="inc\System\cltBasicAppearSystem.h" />
+    <ClInclude Include="inc\System\cltLevelSystem.h" />
     <ClInclude Include="inc\System\cltMoneySystem.h" />
     <ClInclude Include="inc\System\cltSexSystem.h" />
     <ClInclude Include="inc\Test\cm_packing_integration_test.h" />
