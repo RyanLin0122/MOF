@@ -675,6 +675,9 @@
     <ClCompile Include="src\System\cltSexSystem.cpp">
       <Filter>來源檔案</Filter>
     </ClCompile>
+    <ClCompile Include="src\Util\cltTimer.cpp">
+      <Filter>來源檔案</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="inc\Sound\COgg.h">
@@ -1344,6 +1347,9 @@
       <Filter>標頭檔</Filter>
     </ClInclude>
     <ClInclude Include="inc\System\cltSexSystem.h">
+      <Filter>標頭檔</Filter>
+    </ClInclude>
+    <ClInclude Include="inc\Util\cltTimer.h">
       <Filter>標頭檔</Filter>
     </ClInclude>
   </ItemGroup>

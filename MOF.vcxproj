@@ -365,6 +365,7 @@
     <ClCompile Include="src\Text\cltTextFileManager.cpp" />
     <ClCompile Include="src\Text\DCTTextManager.cpp" />
     <ClCompile Include="src\UI\CEditBoxBackgroundImage.cpp" />
+    <ClCompile Include="src\Util\cltTimer.cpp" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="inc\Character\ClientCharacter.h" />
@@ -590,6 +591,7 @@
     <ClInclude Include="inc\Text\cltTextFileManager.h" />
     <ClInclude Include="inc\Text\DCTTextManager.h" />
     <ClInclude Include="inc\UI\CEditBoxBackgroundImage.h" />
+    <ClInclude Include="inc\Util\cltTimer.h" />
   </ItemGroup>
   <ItemGroup>
     <Library Include="lib\fmod64vc.lib" />
