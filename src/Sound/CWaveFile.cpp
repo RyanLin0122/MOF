@@ -4,13 +4,6 @@
 #include <cstring>
 
 
-
-extern int dword_C24CF4;
-extern int dword_C24D00;
-extern int dword_C24D04[];
-extern unsigned char unk_C24D08;
-
-
 CWaveFile::CWaveFile() {
     m_pwfx = nullptr;
     m_hmmio = nullptr;
@@ -125,7 +118,7 @@ int CWaveFile::ReadMMIO() {
     else {
         WORD cb = 0;
         if (mmioRead(m_hmmio, reinterpret_cast<HPSTR>(&cb), 2) != 2) return -2147467259;
-        auto* p = static_cast<std::uint32_t*>(operator new(cb + 18));
+        auto* p = static_cast<std::uint32_t*>(operator new(static_cast<size_t>(cb) + 18));
         m_pwfx = reinterpret_cast<tWAVEFORMATEX*>(p);
         if (!p) return -2147467259;
         p[0] = *reinterpret_cast<std::uint32_t*>(head);
@@ -150,7 +143,7 @@ int CWaveFile::ReadMMIO() {
     return 0;
 }
 
-UINT CWaveFile::GetSize() { return m_dwSize; }
+UINT CWaveFile::GetSize() const { return m_dwSize; }
 
 int CWaveFile::ResetFile() {
     if (m_bIsReadingFromMemory) {
@@ -222,7 +215,7 @@ int CWaveFile::Read(BYTE* buffer, UINT bytesToRead, UINT* bytesRead) {
     BYTE* begin = m_pbData;
     BYTE* cur = m_pbDataCur;
     if (reinterpret_cast<std::uintptr_t>(cur) + bytesToRead > reinterpret_cast<std::uintptr_t>(begin) + m_ulDataSize) {
-        size = m_ulDataSize + reinterpret_cast<std::uintptr_t>(begin) - reinterpret_cast<std::uintptr_t>(cur);
+        size = static_cast<UINT>(m_ulDataSize - static_cast<UINT>(cur - begin));
     }
     std::memcpy(buffer, cur, size);
     if (bytesRead) *bytesRead = size;
@@ -263,7 +256,7 @@ int CWaveFile::Close() {
 }
 
 UINT CWaveFile::WriteMMIO(tWAVEFORMATEX* pwfx) {
-    char minusOne[4];
+    char minusOne[4]{};
     *reinterpret_cast<int*>(minusOne) = -1;
 
     m_ckRiff.fccType = 1163280727;
@@ -322,17 +315,20 @@ void WAVLoader::loadWAVFileIntoBuffer(char* path) {
     char* changed = CMofPacking::GetInstance()->ChangeString(localPath);
     CMofPacking::GetInstance()->FileReadBackGroundLoading(changed);
 
-    if (&dword_C24CF4) {
-        riff = static_cast<DWORD>(dword_C24D00);
-        riffChunkSize = static_cast<DWORD>(dword_C24D04[0]);
-        std::memcpy(fmtChunk, &unk_C24D08, riffChunkSize);
+    int readBytes = CMofPacking::GetInstance()->GetBufferSize();
+    if (readBytes > 0) {
+        char* buf = CMofPacking::GetInstance()->m_backgroundLoadBufferField;
 
-        char* chunk = reinterpret_cast<char*>(&unk_C24D08) + riffChunkSize;
+        riff = *reinterpret_cast<DWORD*>(buf + 12);
+        riffChunkSize = *reinterpret_cast<DWORD*>(buf + 16);
+        std::memcpy(fmtChunk, buf + 20, riffChunkSize);
+
+        char* chunk = buf + 20 + riffChunkSize;
         while (1) {
             dataTag = *reinterpret_cast<DWORD*>(chunk);
             dataSize = *reinterpret_cast<DWORD*>(chunk + 4);
             char* dataBegin = chunk + 8;
-            if (!_strnicmp(reinterpret_cast<const char*>(this) + 28, "data", 4u)) {
+            if (!_strnicmp(reinterpret_cast<const char*>(&dataTag), "data", 4u)) {
                 data = static_cast<BYTE*>(operator new(dataSize));
                 std::memcpy(data, dataBegin, dataSize);
                 break;

@@ -26,7 +26,7 @@ public:
     int Open(LPSTR pszFileName, tWAVEFORMATEX* pwfx, UINT mode);
     UINT OpenFromMemory(BYTE* data, UINT size, tWAVEFORMATEX* pwfx, UINT mode);
     int ReadMMIO();
-    UINT GetSize();
+    UINT GetSize() const;
     int ResetFile();
     int Read(BYTE* buffer, UINT bytesToRead, UINT* bytesRead);
     int Close();
@@ -37,9 +37,9 @@ public:
 private:
     tWAVEFORMATEX* m_pwfx = nullptr;       // +0
     HMMIO m_hmmio = nullptr;               // +4
-    MMCKINFO m_ck;                         // +8
+    MMCKINFO m_ck{};                       // +8
     MMIOINFO m_mmioinfoOut{};              // +52
-    MMCKINFO m_ckRiff;                     // +28
+    MMCKINFO m_ckRiff{};                   // +28
     DWORD m_dwSize = 0;                    // +48
     UINT m_mode = 0;                       // +124
     UINT m_bIsReadingFromMemory = 0;       // +128
