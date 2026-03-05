@@ -127,9 +127,6 @@ void COgg::OpenStreem(const char* filePath) {
         else {
             m_pStream = nullptr;
         }
-
-        // [移除] 絕對不能在這裡釋放緩衝區！
-        // packer->DeleteBuffer(); 
     }
     else {
         m_pStream = nullptr;

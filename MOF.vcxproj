@@ -119,7 +119,7 @@
       <SubSystem>Windows</SubSystem>
       <GenerateDebugInformation>true</GenerateDebugInformation>
       <AdditionalLibraryDirectories>C:\Program Files (x86)\Microsoft DirectX SDK (June 2010)\Lib\x64;$(SolutionDir)\lib;%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
-      <AdditionalDependencies>fmod64vc.lib;d3dx9.lib;d3d9.lib;dxguid.lib;winmm.lib;%(AdditionalDependencies)</AdditionalDependencies>
+      <AdditionalDependencies>fmod64vc.lib;d3dx9.lib;d3d9.lib;dxguid.lib;winmm.lib;dsound.lib;%(AdditionalDependencies)</AdditionalDependencies>
     </Link>
     <ProjectReference>
       <UseLibraryDependencyInputs>true</UseLibraryDependencyInputs>
@@ -301,6 +301,8 @@
     <ClCompile Include="src\Other\cltBaseAbility.cpp" />
     <ClCompile Include="src\Pet\cltPetObject.cpp" />
     <ClCompile Include="src\Sound\COgg.cpp" />
+    <ClCompile Include="src\Sound\CSoundSystem.cpp" />
+    <ClCompile Include="src\Sound\CWaveFile.cpp" />
     <ClCompile Include="src\System\cltBasicAppearSystem.cpp" />
     <ClCompile Include="src\System\cltLevelSystem.cpp" />
     <ClCompile Include="src\System\cltMoneySystem.cpp" />
@@ -527,6 +529,8 @@
     <ClInclude Include="inc\Other\cltBaseAbility.h" />
     <ClInclude Include="inc\Pet\cltPetObject.h" />
     <ClInclude Include="inc\Sound\COgg.h" />
+    <ClInclude Include="inc\Sound\CSoundSystem.h" />
+    <ClInclude Include="inc\Sound\CWaveFile.h" />
     <ClInclude Include="inc\System\cltBasicAppearSystem.h" />
     <ClInclude Include="inc\System\cltLevelSystem.h" />
     <ClInclude Include="inc\System\cltMoneySystem.h" />

@@ -51,6 +51,9 @@ HRESULT UIBasicTest::Initialize()
     m_pTestControl2 = new CControlAlphaBox();
     m_pTestControl2->Create(20, 20, 100, 40, 0.0f, 0.0f, 1.0f, 1.0f, m_pTestControl1);
 
+    m_pTestEditBox = new CControlEditBox();
+    m_pTestEditBox->Create(m_pRootControl);
+
     // 4. 建立一個文字控制項，用於顯示狀態資訊
     m_pStatusText = new CControlText();
     m_pStatusText->Create(10, 10, nullptr); // 掛在根底下 (nullptr)

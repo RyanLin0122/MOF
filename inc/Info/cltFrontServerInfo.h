@@ -52,4 +52,4 @@ private:
 
 
 // 與反編譯碼對應的除錯層級（2 時顯示錯誤）
-extern unsigned int g_DebugLevel;
+extern unsigned int g_DebugLevel; //dword_BE4BB4

@@ -681,6 +681,12 @@
     <ClCompile Include="src\System\cltLevelSystem.cpp">
       <Filter>來源檔案</Filter>
     </ClCompile>
+    <ClCompile Include="src\Sound\CSoundSystem.cpp">
+      <Filter>來源檔案</Filter>
+    </ClCompile>
+    <ClCompile Include="src\Sound\CWaveFile.cpp">
+      <Filter>來源檔案</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="inc\Sound\COgg.h">
@@ -1356,6 +1362,12 @@
       <Filter>標頭檔</Filter>
     </ClInclude>
     <ClInclude Include="inc\System\cltLevelSystem.h">
+      <Filter>標頭檔</Filter>
+    </ClInclude>
+    <ClInclude Include="inc\Sound\CSoundSystem.h">
+      <Filter>標頭檔</Filter>
+    </ClInclude>
+    <ClInclude Include="inc\Sound\CWaveFile.h">
       <Filter>標頭檔</Filter>
     </ClInclude>
   </ItemGroup>

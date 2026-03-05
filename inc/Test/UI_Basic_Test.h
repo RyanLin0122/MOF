@@ -2,6 +2,7 @@
 #include <d3d9.h>
 #include "UI/CControlAlphaBox.h"
 #include "UI/CControlText.h"
+#include "UI/CControlEditBox.h"
 
 /**
  * @class UIBasicTest
@@ -41,6 +42,8 @@ private:
 
     // 用於在畫面上顯示狀態資訊的文字控制項
     CControlText* m_pStatusText;
+
+    CControlEditBox* m_pTestEditBox;
 
     // 用於 Update 內的動畫計時
     float m_fTotalTime;
