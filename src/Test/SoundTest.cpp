@@ -170,10 +170,12 @@ bool test_cross_file_mixed_audio_flow() {
     ok &= (gs->m_bgmFadeVolume == 0);
     ok &= (gs->m_ambientFadeVolume == 0);
 
+    // 先明確建立「未載入 stream」條件，再驗證 IsBGMFinish。
+    gs->StopMusic();
+    gs->m_bgm.m_pStream = nullptr;
     // 未載入 stream 時 IsBGMFinish: 預期回傳 true。
     ok &= (gs->IsBGMFinish() == 1);
 
-    gs->StopMusic();
     gs->StopAmbientSound();
 
     delete gs;
