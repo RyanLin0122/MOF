@@ -16,7 +16,8 @@ using BOOL = int;
 struct SoundEntry {
     CSound* sound = nullptr;
     char path[256]{};
-    std::uint16_t baseVolume = 1;
+    std::uint16_t concurrentPlayCount = 1;
+    std::uint16_t localizedType = 0;
     std::uint32_t expireTick = 0;
     std::uint8_t loaded = 0;
 };
@@ -60,6 +61,8 @@ public:
     bool m_soundInitFailed = false;
     SoundEntry m_soundTable[0x10000]{};
     std::uint16_t* m_activeIds = nullptr;
+    std::uint16_t m_activeCount = 0;
+    std::uint16_t m_activeCapacity = 0;
     ClientCharacter* m_character = nullptr;
     int m_ambientFadeVolume = 0;
     int m_bgmFadeVolume = 0;
