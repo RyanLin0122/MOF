@@ -154,7 +154,7 @@ int CWaveFile::ResetFile() {
     if (!m_hmmio) return -2147221008;
 
     if (m_mode == 1) {
-        if (mmioSeek(m_hmmio, m_ck.dwDataOffset + 4, 0) == -1) return -2147467259;
+        if (mmioSeek(m_hmmio, m_ckRiff.dwDataOffset + 4, 0) == -1) return -2147467259;
         m_ck.ckid = 1635017060;
         if (!mmioDescend(m_hmmio, &m_ck, &m_ckRiff, 0x10u)) return 0;
         return -2147467259;
@@ -337,4 +337,3 @@ void WAVLoader::loadWAVFileIntoBuffer(char* path) {
         }
     }
 }
-
