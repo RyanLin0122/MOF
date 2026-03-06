@@ -4,6 +4,7 @@
 #include <cstdlib>
 #include <cmath>
 #include <cstring>
+#include <algorithm>
 
 // external symbols from original client
 extern int dword_829254;
@@ -18,6 +19,30 @@ int ClampVolume(int volume) {
     if (volume < 0) return 0;
     if (volume > 255) return 255;
     return volume;
+}
+
+void BuildSoundPath(char* outPath, size_t outPathSize, const char* fileName, int localizedType) {
+    if (!outPath || outPathSize == 0) return;
+    outPath[0] = '\0';
+    if (!fileName) return;
+
+    if (localizedType) {
+        const unsigned char nation = static_cast<unsigned char>(g_MoFFont.GetNationCode());
+        if (nation == 1) std::snprintf(outPath, outPathSize, "MOFData/Sound/Kor/%s", fileName);
+        else if (nation == 2) std::snprintf(outPath, outPathSize, "MOFData/Sound/jp/%s", fileName);
+        else if (nation == 3) std::snprintf(outPath, outPathSize, "MOFData/Sound/Tai/%s", fileName);
+        else if (nation == 4) std::snprintf(outPath, outPathSize, "MOFData/Sound/In/%s", fileName);
+        else if (nation == 5) std::snprintf(outPath, outPathSize, "MOFData/Sound/Hk/%s", fileName);
+        else std::snprintf(outPath, outPathSize, "MOFData/Sound/%s", fileName);
+    } else {
+        std::snprintf(outPath, outPathSize, "MOFData/Sound/%s", fileName);
+    }
+
+    if (dword_829254) {
+        for (char* p = outPath; *p; ++p) {
+            *p = static_cast<char>(std::tolower(static_cast<unsigned char>(*p)));
+        }
+    }
 }
 }
 
@@ -43,7 +68,7 @@ GameSound::GameSound() {
 GameSound::~GameSound() {
     for (auto& entry : m_soundTable) {
         if (entry.sound) {
-            operator delete(entry.sound);
+            delete entry.sound;
             entry.sound = nullptr;
         }
     }
@@ -73,27 +98,45 @@ int GameSound::InitSound(char* listFile) {
     std::uint16_t count = 0;
     char id[8]{};
     char name[256]{};
-    int baseVol = 0;
+    int concurrentCount = 0;
     int localized = 0;
     while (std::fgets(buf, 256, fp)) {
-        std::sscanf(buf, "%s%s%d%d", id, name, &baseVol, &localized);
+        if (std::sscanf(buf, "%7s%255s%d%d", id, name, &concurrentCount, &localized) != 4) {
+            continue;
+        }
+
         std::uint16_t idx = ParseSoundId(id);
-        if (m_soundTable[idx].sound) {
+        if (!idx) {
+            continue;
+        }
+
+        SoundEntry& entry = m_soundTable[idx];
+        if (entry.path[0] != '\0') {
             MessageBoxA(nullptr, "already setting sound file.", "warning", 0);
             continue;
         }
 
-        auto* entry = new SoundEntry();
-        entry->baseVolume = static_cast<std::uint16_t>(baseVol);
-        std::sprintf(entry->path, "MOFData/Sound/%s", name);
-        m_soundTable[idx] = *entry;
-        delete entry;
+        BuildSoundPath(entry.path, sizeof(entry.path), name, localized);
+        entry.concurrentPlayCount = static_cast<std::uint16_t>(std::max(1, concurrentCount));
+        entry.localizedType = static_cast<std::uint16_t>(localized);
+        entry.loaded = 0;
+        entry.expireTick = 0;
+        entry.sound = nullptr;
         ++count;
     }
 
-    m_activeIds = static_cast<std::uint16_t*>(operator new(sizeof(std::uint16_t) * count));
-    for (std::uint16_t i = 0; i < count; ++i) {
-        m_activeIds[i] = 0;
+    if (m_activeIds) {
+        operator delete(m_activeIds);
+        m_activeIds = nullptr;
+    }
+    m_activeCount = 0;
+    m_activeCapacity = count;
+
+    if (count > 0) {
+        m_activeIds = static_cast<std::uint16_t*>(operator new(sizeof(std::uint16_t) * count));
+        for (std::uint16_t i = 0; i < count; ++i) {
+            m_activeIds[i] = 0;
+        }
     }
 
     g_clTextFileManager.fclose(fp);
@@ -107,8 +150,37 @@ void GameSound::PlaySoundA(char* id, int x, int y) {
     if (!idx) return;
 
     SoundEntry& e = m_soundTable[idx];
-    if (!e.sound) {
+    if (e.path[0] == '\0') {
         MessageBoxA(nullptr, "sound file error!", "warning", 0);
+        return;
+    }
+
+    if (!e.loaded) {
+        if (dword_829254) {
+            WAVLoader loader;
+            loader.loadWAVFileIntoBuffer(e.path);
+
+            tWAVEFORMATEX wf{};
+            std::memcpy(&wf, loader.fmtChunk, std::min(sizeof(wf), sizeof(loader.fmtChunk)));
+            if (CreateFromMemory(&e.sound, loader.data, loader.dataSize, &wf,
+                DSBCAPS_CTRLVOLUME | DSBCAPS_CTRLPAN, GUID_NULL, e.concurrentPlayCount) < 0) {
+                return;
+            }
+        }
+        else {
+            if (Create(&e.sound, e.path,
+                DSBCAPS_CTRLVOLUME | DSBCAPS_CTRLPAN, GUID_NULL, e.concurrentPlayCount) < 0) {
+                return;
+            }
+        }
+
+        e.loaded = 1;
+        if (m_activeIds && m_activeCount < m_activeCapacity) {
+            m_activeIds[m_activeCount++] = idx;
+        }
+    }
+
+    if (!e.sound) {
         return;
     }
 
@@ -160,11 +232,42 @@ void GameSound::Process() {
 
     s_processTick = timeGetTime();
     s_processIndex = 0;
-    // 原反編譯碼在這裡清理播放超時 10 秒以上的動態 sound buffer。
+    for (std::uint16_t i = 0; i < m_activeCount; ++i) {
+        const std::uint16_t idx = m_activeIds[i];
+        SoundEntry& e = m_soundTable[idx];
+        if (!e.loaded || !e.sound || !e.expireTick) continue;
+
+        if (s_processTick >= e.expireTick && (s_processTick - e.expireTick) > 10000) {
+            delete e.sound;
+            e.sound = nullptr;
+            e.expireTick = 0;
+            e.loaded = 0;
+
+            m_activeIds[i] = m_activeIds[m_activeCount - 1];
+            --m_activeCount;
+            --i;
+        }
+    }
 }
 
 void GameSound::ResetAll() {
-    if (!m_activeIds) return;
+    if (m_activeIds) {
+        for (std::uint16_t i = 0; i < m_activeCount; ++i) {
+            SoundEntry& e = m_soundTable[m_activeIds[i]];
+            if (e.sound) {
+                e.sound->Stop();
+                delete e.sound;
+                e.sound = nullptr;
+            }
+            e.expireTick = 0;
+            e.loaded = 0;
+        }
+        m_activeCount = 0;
+        if (m_activeCapacity > 0) {
+            m_activeIds[0] = 0;
+        }
+    }
+
     m_masterDb = 0;
     m_soundInitFailed = false;
 }

@@ -240,6 +240,7 @@ int Run_Test() {
 	//tester.RunImageTests();
 	//ogg_play_test();
 	//text_manager_test();
+	run_sound_system_test_suite();
 	return 0;
 }
 
