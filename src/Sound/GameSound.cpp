@@ -5,6 +5,8 @@
 #include <cmath>
 #include <cstring>
 #include <algorithm>
+#include <cstdio>
+#include <cstdarg>
 
 // external symbols from original client
 extern const _GUID GUID_NULL;
@@ -14,6 +16,15 @@ static int s_processIndex = 0;
 static DWORD s_processTick = 0;
 
 namespace {
+void DebugSoundLog(const char* fmt, ...) {
+    char buf[512]{};
+    va_list ap;
+    va_start(ap, fmt);
+    std::vsnprintf(buf, sizeof(buf), fmt, ap);
+    va_end(ap);
+    OutputDebugStringA(buf);
+}
+
 int ClampVolume(int volume) {
     if (volume < 0) return 0;
     if (volume > 255) return 255;
@@ -155,25 +166,26 @@ void GameSound::PlaySoundA(char* id, int x, int y) {
     }
 
     if (!e.loaded) {
-        bool created = false;
-
         if (g_bLoadOggFromMofPack) {
             WAVLoader loader;
             loader.loadWAVFileIntoBuffer(e.path);
+            DebugSoundLog("[GameSound] pack WAV load path=%s size=%lu data=%p\n", e.path,
+                static_cast<unsigned long>(loader.dataSize), loader.data);
 
-            if (loader.data && loader.dataSize > 0) {
-                tWAVEFORMATEX wf{};
-                std::memcpy(&wf, loader.fmtChunk, min(sizeof(wf), sizeof(loader.fmtChunk)));
-                if (CreateFromMemory(&e.sound, loader.data, loader.dataSize, &wf,
-                    DSBCAPS_CTRLVOLUME | DSBCAPS_CTRLPAN, GUID_NULL, e.concurrentPlayCount) >= 0) {
-                    created = true;
-                }
+            tWAVEFORMATEX wf{};
+            std::memcpy(&wf, loader.fmtChunk, min(sizeof(wf), sizeof(loader.fmtChunk)));
+            const int hrCreate = CreateFromMemory(&e.sound, loader.data, loader.dataSize, &wf,
+                DSBCAPS_CTRLVOLUME | DSBCAPS_CTRLPAN, GUID_NULL, e.concurrentPlayCount);
+            DebugSoundLog("[GameSound] CreateFromMemory hr=%d sound=%p id=%s\n", hrCreate, e.sound, id);
+            if (hrCreate < 0) {
+                return;
             }
         }
-
-        if (!created) {
-            if (Create(&e.sound, e.path,
-                DSBCAPS_CTRLVOLUME | DSBCAPS_CTRLPAN, GUID_NULL, e.concurrentPlayCount) < 0) {
+        else {
+            const int hrCreate = Create(&e.sound, e.path,
+                DSBCAPS_CTRLVOLUME | DSBCAPS_CTRLPAN, GUID_NULL, e.concurrentPlayCount);
+            DebugSoundLog("[GameSound] Create(file) hr=%d path=%s sound=%p id=%s\n", hrCreate, e.path, e.sound, id);
+            if (hrCreate < 0) {
                 return;
             }
         }
@@ -216,7 +228,9 @@ void GameSound::PlaySoundA(char* id, int x, int y) {
     }
 
     e.expireTick = timeGetTime() + e.sound->GetLength();
-    e.sound->Play(0, 0, pan + m_masterDb, -1, freqShift);
+    const HRESULT playHr = e.sound->Play(0, 0, pan + m_masterDb, -1, freqShift);
+    DebugSoundLog("[GameSound] Play id=%s hr=%ld volume=%d pan=%d freqShift=%d expire=%lu\n",
+        id, static_cast<long>(playHr), pan + m_masterDb, pan, freqShift, static_cast<unsigned long>(e.expireTick));
 }
 
 void GameSound::StopSound(char* id) {
