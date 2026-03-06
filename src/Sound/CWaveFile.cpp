@@ -2,7 +2,20 @@
 
 #include <cstdlib>
 #include <cstring>
+#include <cstdio>
+#include <cstdarg>
 
+
+namespace {
+void DebugWaveLog(const char* fmt, ...) {
+    char buf[512]{};
+    va_list ap;
+    va_start(ap, fmt);
+    std::vsnprintf(buf, sizeof(buf), fmt, ap);
+    va_end(ap);
+    OutputDebugStringA(buf);
+}
+}
 
 CWaveFile::CWaveFile() {
     m_pwfx = nullptr;
@@ -62,8 +75,10 @@ int CWaveFile::Open(LPSTR pszFileName, tWAVEFORMATEX* pwfx, UINT mode) {
         }
 
         int hr = ReadMMIO();
+        DebugWaveLog("[CWaveFile] Open(read) path=%s hmmio=%p ReadMMIO=%d\n", pszFileName, m_hmmio, hr);
         if (hr >= 0) {
             hr = ResetFile();
+            DebugWaveLog("[CWaveFile] Open(read) ResetFile=%d cksize=%lu\n", hr, static_cast<unsigned long>(m_ck.cksize));
             if (hr >= 0) m_dwSize = m_ck.cksize;
         }
         else {
@@ -154,9 +169,17 @@ int CWaveFile::ResetFile() {
     if (!m_hmmio) return -2147221008;
 
     if (m_mode == 1) {
-        if (mmioSeek(m_hmmio, m_ck.dwDataOffset + 4, 0) == -1) return -2147467259;
+        const LONG seekPos = m_ckRiff.dwDataOffset + 4;
+        if (mmioSeek(m_hmmio, seekPos, 0) == -1) {
+            DebugWaveLog("[CWaveFile] ResetFile seek failed hmmio=%p seekPos=%ld riffOffset=%lu\n", m_hmmio, static_cast<long>(seekPos), static_cast<unsigned long>(m_ckRiff.dwDataOffset));
+            return -2147467259;
+        }
         m_ck.ckid = 1635017060;
-        if (!mmioDescend(m_hmmio, &m_ck, &m_ckRiff, 0x10u)) return 0;
+        if (!mmioDescend(m_hmmio, &m_ck, &m_ckRiff, 0x10u)) {
+            DebugWaveLog("[CWaveFile] ResetFile descend data ok size=%lu dataOffset=%lu\n", static_cast<unsigned long>(m_ck.cksize), static_cast<unsigned long>(m_ck.dwDataOffset));
+            return 0;
+        }
+        DebugWaveLog("[CWaveFile] ResetFile descend data failed hmmio=%p\n", m_hmmio);
         return -2147467259;
     }
 
@@ -316,6 +339,7 @@ void WAVLoader::loadWAVFileIntoBuffer(char* path) {
     CMofPacking::GetInstance()->FileReadBackGroundLoading(changed);
 
     int readBytes = CMofPacking::GetInstance()->GetBufferSize();
+    DebugWaveLog("[WAVLoader] load path=%s bytes=%d\n", changed, readBytes);
     if (readBytes > 0) {
         char* buf = CMofPacking::GetInstance()->m_backgroundLoadBufferField;
 
@@ -337,4 +361,3 @@ void WAVLoader::loadWAVFileIntoBuffer(char* path) {
         }
     }
 }
-
