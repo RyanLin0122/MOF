@@ -207,6 +207,7 @@ char* CMofPacking::FileRead(const char* filePathInPack) {
     return (char*)m_pReadBuffer;
 }
 
+
 // 釋放 m_pReadBuffer
 void CMofPacking::DeleteBuffer() {
     if (m_pReadBuffer) {
@@ -317,7 +318,12 @@ int CMofPacking::DataPacking_Recursive(const char* currentDirectory, const char*
                 if (fileSize > 0) {
                     char* buffer = new (std::nothrow) char[fileSize];
                     if (buffer) {
-                        fread(buffer, 1, fileSize, pFile);
+                        const size_t bytesReadFromDisk = fread(buffer, 1, fileSize, pFile);
+                        if (bytesReadFromDisk != static_cast<size_t>(fileSize)) {
+                            delete[] buffer;
+                            fclose(pFile);
+                            continue;
+                        }
 
                         // --- [核心修改] ---
                         // 計算相對於 rootPath 的路徑作為 VFS 中的鍵
@@ -337,7 +343,10 @@ int CMofPacking::DataPacking_Recursive(const char* currentDirectory, const char*
                         int fd = nfs_file_create(m_pNfsHandle, relativePathForVFS);
                         if (fd >= 0) {
                             printf("Packing: %s\n", relativePathForVFS); // [可選] 輸出打包的檔案路徑
-                            nfs_file_write(m_pNfsHandle, fd, buffer, fileSize);
+                            const int bytesWrittenToPack = nfs_file_write(m_pNfsHandle, fd, buffer, fileSize);
+                            if (bytesWrittenToPack != fileSize) {
+                                printf("Short write in VFS: %s (expect=%ld, actual=%d)\n", relativePathForVFS, fileSize, bytesWrittenToPack);
+                            }
                             nfs_file_close(m_pNfsHandle, fd);
                         }
                         else {

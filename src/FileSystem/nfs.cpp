@@ -11,6 +11,7 @@
 #include <vector>
 #include <cctype>  // For tolower (雖然原始碼可能手動轉換)
 #include <intrin.h>
+#include <climits>
 
 
 /* global variables */
@@ -24,6 +25,15 @@ int nfs_iio_IOMODE = 0;         // 範例值，影響開啟模式和 auto_trunca
 int nfs_data_IOMODE = 0;        // 範例值，影響 nfs_data_open 的開啟模式
 char nfs_glob_key_buffer[4096]; // 假設檔名不太可能超過此長度
 int nfs_errno = 0;	// 假設 nfs_errno 是一個全域變數，用於儲存錯誤碼。
+
+
+static int nfs_file_seek64(FILE* fp, long long offset) {
+#if defined(_WIN32)
+	return _fseeki64(fp, offset, SEEK_SET);
+#else
+	return fseeko(fp, static_cast<off_t>(offset), SEEK_SET);
+#endif
+}
 
 /* public function */
 
@@ -1857,7 +1867,7 @@ void nfs_iio_destroy(NfsIioFile* file_to_destroy) {
  * @param block_index_to_check 要檢查的區塊索引 (以512位元組為單位)。
  * @return 如果在快取內則為 1 (TRUE)，否則為 0 (FALSE)。
  */
-int is_in_cache(NfsDataHandle* handle, int block_index_to_check) // BOOL
+int is_in_cache(NfsDataHandle* handle, long long block_index_to_check) // BOOL
 {
 	if (!handle || !handle->cache) {
 		return 0;
@@ -1867,8 +1877,8 @@ int is_in_cache(NfsDataHandle* handle, int block_index_to_check) // BOOL
 	// cache_window_start_offset 是位元組偏移，buffer_capacity 是位元組大小
 	if (cache->buffer_capacity == 0) return 0;
 
-	int cache_start_block = cache->cache_window_start_offset / 512;
-	int cache_end_block = (cache->cache_window_start_offset + cache->buffer_capacity) / 512;
+	long long cache_start_block = cache->cache_window_start_offset / 512;
+	long long cache_end_block = (cache->cache_window_start_offset + static_cast<long long>(cache->buffer_capacity)) / 512;
 
 	if (block_index_to_check >= cache_start_block && block_index_to_check < cache_end_block) {
 		return 1;
@@ -1889,7 +1899,7 @@ int cache_flush(NfsDataHandle* handle)
 	NfsDataCacheHeader* cache = handle->cache;
 
 	if (cache->is_synced_flag != 1) { // 如果不是 clean (即 dirty)
-		if (fseek(handle->file_ptr, cache->cache_window_start_offset, SEEK_SET) != 0) {
+		if (nfs_file_seek64(handle->file_ptr, cache->cache_window_start_offset) != 0) {
 			return -1; // fseek 失敗
 		}
 		if (fwrite(cache->buffer, 1, cache->buffer_capacity, handle->file_ptr) != cache->buffer_capacity) {
@@ -1908,7 +1918,7 @@ int cache_flush(NfsDataHandle* handle)
  * @param new_desired_start_offset 新的快取視窗起始位元組偏移量。
  * @return 成功時返回 0，失敗時返回非 0 值。
  */
-int cache_slide(NfsDataHandle* handle, int new_desired_start_offset)
+int cache_slide(NfsDataHandle* handle, long long new_desired_start_offset)
 {
 	if (!handle || !handle->cache || !handle->file_ptr) {
 		return -1;
@@ -1921,13 +1931,13 @@ int cache_slide(NfsDataHandle* handle, int new_desired_start_offset)
 		}
 	}
 
-	int aligned_new_start_offset = new_desired_start_offset;
+	long long aligned_new_start_offset = new_desired_start_offset;
 	if (new_desired_start_offset % 512 != 0) { // 如果未對齊 512 位元組
 		aligned_new_start_offset = (new_desired_start_offset / 512) * 512; // 向下對齊
 	}
 
 	cache->cache_window_start_offset = aligned_new_start_offset;
-	if (fseek(handle->file_ptr, cache->cache_window_start_offset, SEEK_SET) != 0) {
+	if (nfs_file_seek64(handle->file_ptr, cache->cache_window_start_offset) != 0) {
 		return -1; // fseek 失敗
 	}
 
@@ -1973,7 +1983,7 @@ int cache_create(NfsDataHandle* handle)
 
 	// 初始讀取快取內容 (類似 cache_slide 到位置 0)
 	if (handle->file_ptr) { // 確保檔案指標有效
-		if (fseek(handle->file_ptr, cache->cache_window_start_offset, SEEK_SET) != 0) {
+		if (nfs_file_seek64(handle->file_ptr, cache->cache_window_start_offset) != 0) {
 			// fseek 失敗，清理並返回錯誤
 			free(cache->buffer);
 			free(cache);
@@ -2033,7 +2043,7 @@ int cache_resize(NfsDataHandle* handle, size_t new_capacity)
 	cache->is_synced_flag = 1; // 重新分配後，內容需要重新載入，視為 clean
 
 	// 重新載入目前視窗的內容
-	if (fseek(handle->file_ptr, cache->cache_window_start_offset, SEEK_SET) != 0) {
+	if (nfs_file_seek64(handle->file_ptr, cache->cache_window_start_offset) != 0) {
 		return -1; // fseek 失敗
 	}
 	fread(cache->buffer, 1, cache->buffer_capacity, handle->file_ptr);
@@ -2071,7 +2081,7 @@ int cache_destroy(NfsDataHandle* handle)
  * @param output_buffer 儲存讀取資料的緩衝區。
  * @return 成功時返回 0 (原始碼行為)，錯誤時可考慮返回非0。
  */
-int cache_get(NfsDataHandle* handle, int file_offset_to_read_from, int num_bytes_to_read, void* output_buffer)
+int cache_get(NfsDataHandle* handle, long long file_offset_to_read_from, int num_bytes_to_read, void* output_buffer)
 {
 	if (!handle || !handle->cache || !output_buffer || num_bytes_to_read < 0) {
 		return -1; // 或其他錯誤碼
@@ -2082,7 +2092,7 @@ int cache_get(NfsDataHandle* handle, int file_offset_to_read_from, int num_bytes
 
 	NfsDataCacheHeader* cache = handle->cache;
 	char* current_dest_ptr = static_cast<char*>(output_buffer);
-	int current_file_offset = file_offset_to_read_from;
+	long long current_file_offset = file_offset_to_read_from;
 	int bytes_remaining_to_read = num_bytes_to_read;
 
 	while (bytes_remaining_to_read > 0) {
@@ -2097,8 +2107,8 @@ int cache_get(NfsDataHandle* handle, int file_offset_to_read_from, int num_bytes
 		// cache = handle->cache; // 重新獲取以防萬一 (雖然在此結構中 NfsDataHandle 本身不動)
 
 		// 計算從目前快取視窗可以複製多少位元組
-		int offset_in_cache_buffer = current_file_offset - cache->cache_window_start_offset;
-		int bytes_available_in_window_from_offset = static_cast<int>(cache->buffer_capacity) - offset_in_cache_buffer;
+		long long offset_in_cache_buffer = current_file_offset - cache->cache_window_start_offset;
+		long long bytes_available_in_window_from_offset = static_cast<long long>(cache->buffer_capacity) - offset_in_cache_buffer;
 
 		if (offset_in_cache_buffer < 0 || bytes_available_in_window_from_offset <= 0) {
 			// current_file_offset 不在已滑動的快取視窗內，這不應該發生如果 cache_slide 成功
@@ -2106,7 +2116,7 @@ int cache_get(NfsDataHandle* handle, int file_offset_to_read_from, int num_bytes
 			return -1;
 		}
 
-		int bytes_to_copy_this_iteration = min(bytes_remaining_to_read, bytes_available_in_window_from_offset);
+		int bytes_to_copy_this_iteration = static_cast<int>(min(static_cast<long long>(bytes_remaining_to_read), bytes_available_in_window_from_offset));
 		// 原始碼中使用 0x200 (512) 作為複製單位，這暗示了它可能總是嘗試以512位元組的倍數來處理內部迴圈，
 		// 即使請求的大小不是。但 nfs_data_read_contiguous 的存在表明可以讀取更大的連續塊。
 		// 這裡我們採用更直接的 min 計算。如果需要完全符合原始碼的內部 512B chunking，邏輯會更複雜。
@@ -2140,7 +2150,7 @@ int cache_get(NfsDataHandle* handle, int file_offset_to_read_from, int num_bytes
  * @param input_buffer 包含要寫入資料的緩衝區。
  * @return 成功時返回 0 (原始碼行為)，錯誤時可考慮返回非0。
  */
-int cache_put(NfsDataHandle* handle, int file_offset_to_write_to, int num_bytes_to_write, const void* input_buffer)
+int cache_put(NfsDataHandle* handle, long long file_offset_to_write_to, int num_bytes_to_write, const void* input_buffer)
 {
 	if (!handle || !handle->cache || !input_buffer || num_bytes_to_write < 0) {
 		return -1;
@@ -2151,7 +2161,7 @@ int cache_put(NfsDataHandle* handle, int file_offset_to_write_to, int num_bytes_
 
 	NfsDataCacheHeader* cache = handle->cache;
 	const char* current_src_ptr = static_cast<const char*>(input_buffer);
-	int current_file_offset = file_offset_to_write_to;
+	long long current_file_offset = file_offset_to_write_to;
 	int bytes_remaining_to_write = num_bytes_to_write;
 
 	while (bytes_remaining_to_write > 0) {
@@ -2162,14 +2172,14 @@ int cache_put(NfsDataHandle* handle, int file_offset_to_write_to, int num_bytes_
 		}
 		// cache = handle->cache; // 重新獲取
 
-		int offset_in_cache_buffer = current_file_offset - cache->cache_window_start_offset;
-		int bytes_available_in_window_from_offset = static_cast<int>(cache->buffer_capacity) - offset_in_cache_buffer;
+		long long offset_in_cache_buffer = current_file_offset - cache->cache_window_start_offset;
+		long long bytes_available_in_window_from_offset = static_cast<long long>(cache->buffer_capacity) - offset_in_cache_buffer;
 
 		if (offset_in_cache_buffer < 0 || bytes_available_in_window_from_offset <= 0) {
 			return -1;
 		}
 
-		int bytes_to_copy_this_iteration = min(bytes_remaining_to_write, bytes_available_in_window_from_offset);
+		int bytes_to_copy_this_iteration = static_cast<int>(min(static_cast<long long>(bytes_remaining_to_write), bytes_available_in_window_from_offset));
 		// 同 cache_get 的註解，原始碼可能內部以512B為單位處理。
 
 		if (bytes_to_copy_this_iteration <= 0) break;
@@ -2306,10 +2316,12 @@ int nfs_data_set_cache_size(NfsDataHandle* handle, size_t new_size) {
  * @return cache_get 的返回值 (通常成功為0，失敗為-1)。
  */
 int nfs_data_read(NfsDataHandle* handle, int block_index, void* buffer) {
-	if (block_index >= 0) {
-		return cache_get(handle, block_index * 512, 512, buffer);
+	if (!handle || !buffer || block_index < 0) {
+		return -1;
 	}
-	return -1;
+
+	const long long offset = static_cast<long long>(block_index) * 512LL;
+	return cache_get(handle, offset, 512, buffer);
 }
 
 /**
@@ -2320,10 +2332,12 @@ int nfs_data_read(NfsDataHandle* handle, int block_index, void* buffer) {
  * @return cache_put 的返回值 (通常成功為0，失敗為-1)。
  */
 int nfs_data_write(NfsDataHandle* handle, int block_index, const void* buffer) {
-	if (block_index >= 0) {
-		return cache_put(handle, block_index * 512, 512, buffer);
+	if (!handle || !buffer || block_index < 0) {
+		return -1;
 	}
-	return -1;
+
+	const long long offset = static_cast<long long>(block_index) * 512LL;
+	return cache_put(handle, offset, 512, buffer);
 }
 
 /**
@@ -2335,11 +2349,18 @@ int nfs_data_write(NfsDataHandle* handle, int block_index, const void* buffer) {
  * @return cache_get 的返回值。
  */
 int nfs_data_read_contiguous(NfsDataHandle* handle, int start_block_index, int num_blocks, void* buffer) {
-	if (start_block_index >= 0 && num_blocks > 0) {
-		return cache_get(handle, start_block_index * 512, num_blocks * 512, buffer);
+	if (!handle || !buffer || start_block_index < 0 || num_blocks < 0) {
+		return -1;
 	}
 	if (num_blocks == 0) return 0; // 讀取0區塊成功
-	return -1;
+
+	const long long offset = static_cast<long long>(start_block_index) * 512LL;
+	const long long bytes = static_cast<long long>(num_blocks) * 512LL;
+	if (bytes > INT_MAX) {
+		return -1;
+	}
+
+	return cache_get(handle, offset, static_cast<int>(bytes), buffer);
 }
 
 /**
@@ -2351,11 +2372,18 @@ int nfs_data_read_contiguous(NfsDataHandle* handle, int start_block_index, int n
  * @return cache_put 的返回值。
  */
 int nfs_data_write_contiguous(NfsDataHandle* handle, int start_block_index, int num_blocks, const void* buffer) {
-	if (start_block_index >= 0 && num_blocks > 0) {
-		return cache_put(handle, start_block_index * 512, num_blocks * 512, buffer);
+	if (!handle || !buffer || start_block_index < 0 || num_blocks < 0) {
+		return -1;
 	}
 	if (num_blocks == 0) return 0; // 寫入0區塊成功
-	return -1;
+
+	const long long offset = static_cast<long long>(start_block_index) * 512LL;
+	const long long bytes = static_cast<long long>(num_blocks) * 512LL;
+	if (bytes > INT_MAX) {
+		return -1;
+	}
+
+	return cache_put(handle, offset, static_cast<int>(bytes), buffer);
 }
 
 /**
