@@ -287,12 +287,12 @@ bool test_integration_init_sound_with_reallist() {
             std::snprintf(expectedPath, sizeof(expectedPath), "MOFData/Sound/%s", row.fileName);
             ok &= (std::strcmp(e.path, expectedPath) == 0);
 
-            // 對答案: 第3欄(동시재생수)目前被 InitSound 寫入 baseVolume。
-            ok &= (e.baseVolume == static_cast<std::uint16_t>(row.concurrentCount));
+            // 對答案: 第3欄(동시재생수)會被 InitSound 寫入 concurrentPlayCount。
+            ok &= (e.concurrentPlayCount == static_cast<std::uint16_t>(row.concurrentCount));
 
             // 對答案補充: localized 欄位目前 InitSound 讀進來但未存入 SoundEntry，
             // 因此這裡僅驗證可成功載入整體表格與關鍵欄位。
-            (void)row.localized;
+            ok &= (e.localizedType == static_cast<std::uint16_t>(row.localized));
         }
     }
 
