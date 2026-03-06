@@ -7,8 +7,6 @@
 #include <algorithm>
 
 // external symbols from original client
-extern int dword_829254;
-extern int dword_C24CF4;
 extern const _GUID GUID_NULL;
 
 static int s_processIndex = 0;
@@ -38,7 +36,7 @@ void BuildSoundPath(char* outPath, size_t outPathSize, const char* fileName, int
         std::snprintf(outPath, outPathSize, "MOFData/Sound/%s", fileName);
     }
 
-    if (dword_829254) {
+    if (true) {
         for (char* p = outPath; *p; ++p) {
             *p = static_cast<char>(std::tolower(static_cast<unsigned char>(*p)));
         }
@@ -117,7 +115,7 @@ int GameSound::InitSound(char* listFile) {
         }
 
         BuildSoundPath(entry.path, sizeof(entry.path), name, localized);
-        entry.concurrentPlayCount = static_cast<std::uint16_t>(std::max(1, concurrentCount));
+        entry.concurrentPlayCount = static_cast<std::uint16_t>(max(1, concurrentCount));
         entry.localizedType = static_cast<std::uint16_t>(localized);
         entry.loaded = 0;
         entry.expireTick = 0;
@@ -156,12 +154,12 @@ void GameSound::PlaySoundA(char* id, int x, int y) {
     }
 
     if (!e.loaded) {
-        if (dword_829254) {
+        if (true) {
             WAVLoader loader;
             loader.loadWAVFileIntoBuffer(e.path);
 
             tWAVEFORMATEX wf{};
-            std::memcpy(&wf, loader.fmtChunk, std::min(sizeof(wf), sizeof(loader.fmtChunk)));
+            std::memcpy(&wf, loader.fmtChunk, min(sizeof(wf), sizeof(loader.fmtChunk)));
             if (CreateFromMemory(&e.sound, loader.data, loader.dataSize, &wf,
                 DSBCAPS_CTRLVOLUME | DSBCAPS_CTRLPAN, GUID_NULL, e.concurrentPlayCount) < 0) {
                 return;
