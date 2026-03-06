@@ -432,6 +432,9 @@
     <ClCompile Include="src\Test\UI_Basic_Test.cpp">
       <Filter>來源檔案</Filter>
     </ClCompile>
+    <ClCompile Include="src\Test\SoundTest.cpp">
+      <Filter>來源檔案</Filter>
+    </ClCompile>
     <ClCompile Include="src\Text\DCTIMM.cpp">
       <Filter>來源檔案</Filter>
     </ClCompile>
@@ -1113,6 +1116,9 @@
       <Filter>標頭檔</Filter>
     </ClInclude>
     <ClInclude Include="inc\Test\UI_Basic_Test.h">
+      <Filter>標頭檔</Filter>
+    </ClInclude>
+    <ClInclude Include="inc\Test\SoundTest.h">
       <Filter>標頭檔</Filter>
     </ClInclude>
     <ClInclude Include="inc\Text\DCTIMM.h">
