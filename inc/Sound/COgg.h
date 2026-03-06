@@ -20,11 +20,11 @@ public:
     // 停止目前播放的串流
     void Stop();
 
-private:
-    char* m_pMemoryBuffer;
     // 開啟音訊串流，根據 dword_829254 決定是從檔案系統直接開啟還是從 CMofPacking 載入
     // filePath: Ogg 檔案的路徑或名稱
     void OpenStreem(const char* filePath);
+
+    char* m_pMemoryBuffer;
 
     // 成員變數 (根據 cogg.c 中的記憶體位移推斷)
     FSOUND_STREAM* m_pStream;        // 指向 FMOD 音訊串流的指標 (對應 this+1)

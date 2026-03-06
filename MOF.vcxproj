@@ -303,6 +303,7 @@
     <ClCompile Include="src\Sound\COgg.cpp" />
     <ClCompile Include="src\Sound\CSoundSystem.cpp" />
     <ClCompile Include="src\Sound\CWaveFile.cpp" />
+    <ClCompile Include="src\Sound\GameSound.cpp" />
     <ClCompile Include="src\System\cltBasicAppearSystem.cpp" />
     <ClCompile Include="src\System\cltLevelSystem.cpp" />
     <ClCompile Include="src\System\cltMoneySystem.cpp" />
@@ -531,6 +532,7 @@
     <ClInclude Include="inc\Sound\COgg.h" />
     <ClInclude Include="inc\Sound\CSoundSystem.h" />
     <ClInclude Include="inc\Sound\CWaveFile.h" />
+    <ClInclude Include="inc\Sound\GameSound.h" />
     <ClInclude Include="inc\System\cltBasicAppearSystem.h" />
     <ClInclude Include="inc\System\cltLevelSystem.h" />
     <ClInclude Include="inc\System\cltMoneySystem.h" />
