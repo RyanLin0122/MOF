@@ -55,7 +55,7 @@ struct NfsIioFile {
 struct NfsDataCacheHeader {
 	size_t buffer_capacity;         // 快取緩衝區的目前容量 (位元組)
 	void* buffer;                   // 指向實際快取資料的指標
-	int cache_window_start_offset;  // 此快取視窗對應於檔案中的起始位元組偏移量
+	long long cache_window_start_offset;  // 此快取視窗對應於檔案中的起始位元組偏移量
 	int is_synced_flag;             // 旗標：1 表示快取與磁碟同步 (clean)，0 表示已修改 (dirty)
 };
 
@@ -232,14 +232,14 @@ int read_absolute_block_n(NfsIioFile* file, int absolute_block_index, int num_bl
 
 
 // Layer 3 (Data File I/O with Cache - .pak files)
-int is_in_cache(NfsDataHandle* handle, int block_index_to_check);
+int is_in_cache(NfsDataHandle* handle, long long block_index_to_check);
 int cache_flush(NfsDataHandle* handle);
-int cache_slide(NfsDataHandle* handle, int new_desired_start_offset);
+int cache_slide(NfsDataHandle* handle, long long new_desired_start_offset);
 int cache_create(NfsDataHandle* handle);
 int cache_resize(NfsDataHandle* handle, size_t new_capacity);
 int cache_destroy(NfsDataHandle* handle);
-int cache_get(NfsDataHandle* handle, int file_offset_to_read_from, int num_bytes_to_read, void* output_buffer);
-int cache_put(NfsDataHandle* handle, int file_offset_to_write_to, int num_bytes_to_write, const void* input_buffer);
+int cache_get(NfsDataHandle* handle, long long file_offset_to_read_from, int num_bytes_to_read, void* output_buffer);
+int cache_put(NfsDataHandle* handle, long long file_offset_to_write_to, int num_bytes_to_write, const void* input_buffer);
 
 NfsDataHandle* nfs_data_create(const char* fileName);
 NfsDataHandle* nfs_data_open(const char* fileName);
