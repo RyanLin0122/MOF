@@ -2,19 +2,94 @@
 
 #include <cstdio>
 #include <cstring>
+#include <cctype>
+#include <cstdlib>
+#include <cstdint>
 
 #include "Sound/GameSound.h"
-
 #include "Sound/COgg.h"
 #include "Sound/CSoundSystem.h"
 #include "Sound/CWaveFile.h"
+#include "FileSystem/CMOFPacking.h"
+#include "Character/ClientCharacter.h"
 #include "global.h"
 
+extern int g_bLoadOggFromMofPack;
+
 namespace {
+
+constexpr const char* kOggBgmRaw = "/mofdata/music/bg_eastfield.ogg";
+constexpr const char* kOggAmbientRaw = "/mofdata/music/embi_beastcave.ogg";
+constexpr const char* kWavSfxShortRaw = "/mofdata/sound/minigame_se_gagebutton.wav";
+constexpr const char* kWavSfxMonsterRaw = "/mofdata/sound/mon_atk_cho-s.wav";
 
 void print_case_result(const char* suite, const char* caseName, bool pass, const char* expected) {
     std::printf("[%s] %s: %s\n", suite, caseName, pass ? "PASS" : "FAIL");
     std::printf("    預期結果: %s\n", expected);
+}
+
+void to_relative_path(const char* rawPath, char* outPath, size_t outSize) {
+    if (!outPath || outSize == 0) return;
+    outPath[0] = '\0';
+
+    if (!rawPath) return;
+    while (*rawPath == '/' || *rawPath == '\\') {
+        ++rawPath;
+    }
+
+    std::snprintf(outPath, outSize, "%s", rawPath);
+}
+
+bool can_open_direct_file(const char* rawPath) {
+    char relativePath[260]{};
+    to_relative_path(rawPath, relativePath, sizeof(relativePath));
+
+    FILE* fp = std::fopen(relativePath, "rb");
+    if (!fp) return false;
+    std::fclose(fp);
+    return true;
+}
+
+bool can_read_from_pack_with_candidates(CMofPacking* packer, const char* const* candidates, int candidateCount) {
+    if (!packer || !packer->m_pNfsHandle || !candidates || candidateCount <= 0) return false;
+
+    for (int i = 0; i < candidateCount; ++i) {
+        if (!candidates[i]) continue;
+        char* buf = packer->FileRead(candidates[i]);
+        if (buf && packer->GetBufferSize() > 0) {
+            return true;
+        }
+    }
+    return false;
+}
+
+std::uint16_t local_parse_sound_id(const char* id) {
+    if (!id || std::strlen(id) != 5) return 0;
+
+    int high = (std::toupper(static_cast<unsigned char>(id[0])) + 31) << 11;
+    unsigned short low = static_cast<unsigned short>(std::atoi(id + 1));
+    if (low >= 0x800u) return 0;
+
+    return static_cast<std::uint16_t>(high | low);
+}
+
+bool parse_sound_list_line_like_gamesound(const char* line, char* outId, size_t outIdSize, char* outName, size_t outNameSize, int* outConcurrentCount, int* outLocalized) {
+    if (!line || !outId || !outName || !outConcurrentCount || !outLocalized) return false;
+
+    char id[32]{};
+    char name[256]{};
+    int concurrentCount = 0;
+    int localized = 0;
+
+    // 對齊 GameSound::InitSound 內的解析格式：%s%s%d%d
+    const int scanned = std::sscanf(line, "%31s%255s%d%d", id, name, &concurrentCount, &localized);
+    if (scanned != 4) return false;
+
+    std::snprintf(outId, outIdSize, "%s", id);
+    std::snprintf(outName, outNameSize, "%s", name);
+    *outConcurrentCount = concurrentCount;
+    *outLocalized = localized;
+    return true;
 }
 
 bool test_ogg_single_functions() {
@@ -182,6 +257,209 @@ bool test_cross_file_mixed_audio_flow() {
     return ok;
 }
 
+bool test_integration_soundlistinfo_format_parsing() {
+    bool ok = true;
+
+    // 模擬 SoundListInfo.txt：前幾行廢話、標題、資料列。
+    const char* lines[] = {
+        "이 줄은 설명이라서 스킵\n",
+        "파일ID(WORD)\t\"사운드파일명(경로포함,공백 x)\"\t동시재생수\t\"국가별 구분 파일인가?\"\t설명\n",
+        "J0001\tUI_se_button_small.wav\t1\t0\t나머지\n",
+        "J0002\tUI_se_button_small.wav\t1\t0\t작은 버튼 누름\n",
+    };
+
+    // InitSound 目前會先 fgets 跳過前兩行，因此測試也比照從第 3 行開始解析。
+    for (int i = 2; i < 4; ++i) {
+        char id[32]{};
+        char name[256]{};
+        int concurrentCount = 0;
+        int localized = 0;
+
+        const bool parsed = parse_sound_list_line_like_gamesound(
+            lines[i], id, sizeof(id), name, sizeof(name), &concurrentCount, &localized
+        );
+        ok &= parsed;
+        if (!parsed) continue;
+
+        // 預期: J0001/J0002 皆可解析，且可轉成有效 sound table index。
+        const std::uint16_t idx = local_parse_sound_id(id);
+        ok &= (idx != 0);
+        ok &= (concurrentCount == 1);
+        ok &= (localized == 0);
+        ok &= (std::strcmp(name, "UI_se_button_small.wav") == 0);
+    }
+
+    return ok;
+}
+
+bool test_integration_file_read_direct_and_mofpacking() {
+    bool ok = true;
+
+    // 指定檔案都先測「直接檔案路徑可讀」。
+    const bool directOggBgm = can_open_direct_file(kOggBgmRaw);
+    const bool directOggAmbient = can_open_direct_file(kOggAmbientRaw);
+    const bool directWavShort = can_open_direct_file(kWavSfxShortRaw);
+    const bool directWavMonster = can_open_direct_file(kWavSfxMonsterRaw);
+    ok &= directOggBgm && directOggAmbient && directWavShort && directWavMonster;
+
+    CMofPacking* packer = CMofPacking::GetInstance();
+    const bool packOpened = (packer && (packer->m_pNfsHandle || packer->PackFileOpen("mof")));
+    ok &= packOpened;
+
+    if (packOpened) {
+        const char* oggBgmCandidates[] = { "music/bg_eastfield.ogg", "mofdata/music/bg_eastfield.ogg" };
+        const char* oggAmbientCandidates[] = { "music/embi_beastcave.ogg", "mofdata/music/embi_beastcave.ogg" };
+        const char* wavShortCandidates[] = { "sound/minigame_se_gagebutton.wav", "mofdata/sound/minigame_se_gagebutton.wav" };
+        const char* wavMonsterCandidates[] = { "sound/mon_atk_cho-s.wav", "mofdata/sound/mon_atk_cho-s.wav" };
+
+        // 預期: 透過 mofpacking 讀取各檔案時，至少有一個候選路徑可成功讀取到 buffer。
+        ok &= can_read_from_pack_with_candidates(packer, oggBgmCandidates, 2);
+        ok &= can_read_from_pack_with_candidates(packer, oggAmbientCandidates, 2);
+        ok &= can_read_from_pack_with_candidates(packer, wavShortCandidates, 2);
+        ok &= can_read_from_pack_with_candidates(packer, wavMonsterCandidates, 2);
+    }
+
+    return ok;
+}
+
+bool test_integration_music_playback_bgm_and_ambient() {
+    bool ok = true;
+
+    GameSound* gs = new GameSound();
+    gs->m_soundInitFailed = false;
+
+    // 1) 直接檔案模式：測 bg_eastfield.ogg + embi_beastcave.ogg 播放與主動調整音量。
+    g_bLoadOggFromMofPack = 0;
+    gs->m_bgmTargetVolume = 80;
+    gs->m_ambientTargetVolume = 60;
+    gs->PlayMusic(const_cast<char*>("mofdata/music/bg_eastfield.ogg"));
+    gs->PlayAmbientSound(const_cast<char*>("mofdata/music/embi_beastcave.ogg"));
+    ok &= (gs->m_bgmFadeVolume == 80);
+    ok &= (gs->m_ambientFadeVolume == 60);
+
+    // 主動調整音量：預期 SetVolume 後保留新音量設定值。
+    gs->m_bgm.SetVolume(30);
+    gs->m_ambient.SetVolume(40);
+    ok &= (gs->m_bgm.m_nVolume == 30);
+    ok &= (gs->m_ambient.m_nVolume == 40);
+
+    // 2) mofpacking 模式：同檔案再播一次，驗證封包讀取路徑可被觸發。
+    CMofPacking* packer = CMofPacking::GetInstance();
+    const bool packOpened = (packer && (packer->m_pNfsHandle || packer->PackFileOpen("mof")));
+    ok &= packOpened;
+    if (packOpened) {
+        g_bLoadOggFromMofPack = 1;
+        gs->PlayMusic(const_cast<char*>("music/bg_eastfield.ogg"));
+        gs->PlayAmbientSound(const_cast<char*>("music/embi_beastcave.ogg"));
+
+        // 預期: 在 pack 模式下，Play 不應把 channel id 留在 -1（至少其中一軌成功）。
+        ok &= (gs->m_bgm.m_nChannelId != -1 || gs->m_ambient.m_nChannelId != -1);
+    }
+
+    gs->StopMusic();
+    gs->StopAmbientSound();
+    g_bLoadOggFromMofPack = 1;
+
+    delete gs;
+    return ok;
+}
+
+bool test_integration_wav_single_position_volume_and_multi_play() {
+    bool ok = true;
+
+    char wavShortPath[260]{};
+    char wavMonsterPath[260]{};
+    to_relative_path(kWavSfxShortRaw, wavShortPath, sizeof(wavShortPath));
+    to_relative_path(kWavSfxMonsterRaw, wavMonsterPath, sizeof(wavMonsterPath));
+
+    // 先驗證 WAV 可被 CWaveFile 直接讀取。
+    CWaveFile waveShort;
+    CWaveFile waveMonster;
+    const int openShort = waveShort.Open(wavShortPath, nullptr, 1u);
+    const int openMonster = waveMonster.Open(wavMonsterPath, nullptr, 1u);
+    ok &= (openShort >= 0 && waveShort.GetSize() > 0);
+    ok &= (openMonster >= 0 && waveMonster.GetSize() > 0);
+
+    // DirectSound 路徑：測單一短音效、主動調整音量、與多重同時播放。
+    CSoundManager mgr;
+    IDirectSound8* ds = nullptr;
+    HRESULT initHr = mgr.Initialize(&ds, g_hWnd, 2u);
+    if (SUCCEEDED(initHr)) {
+        mgr.SetPrimaryBufferFormat(2, 44100, 16);
+
+        CSound* shortSound = nullptr;
+        const int createRet = mgr.Create(
+            &shortSound,
+            wavShortPath,
+            DSBCAPS_CTRLVOLUME | DSBCAPS_CTRLPAN | DSBCAPS_CTRLFREQUENCY,
+            GUID_NULL,
+            3u // 同一個 wav 建立 3 個 buffer，測同時播放
+        );
+        ok &= (createRet >= 0 && shortSound != nullptr);
+
+        if (shortSound) {
+            // 單一短音效播放。
+            const HRESULT play1 = shortSound->Play(0, 0, -1200, -1, 0);
+            ok &= SUCCEEDED(play1);
+
+            // 主動調整音量（volume 參數改變）。
+            const HRESULT play2 = shortSound->Play(0, 0, -400, -1, 0);
+            ok &= SUCCEEDED(play2);
+
+            // 多音效同時播放（連續觸發多次，依靠多 buffer 疊加）。
+            const HRESULT play3 = shortSound->Play(0, 0, -900, -1, -2000);
+            const HRESULT play4 = shortSound->Play(0, 0, -900, -1, 2000);
+            ok &= SUCCEEDED(play3);
+            ok &= SUCCEEDED(play4);
+            ok &= (shortSound->IsSoundPlaying() != 0);
+        }
+
+        // GameSound 路徑：調整角色位置後觸發，驗證可更新到期時間（代表有執行播放流程）。
+        GameSound* gs = new GameSound();
+        gs->m_soundInitFailed = false;
+
+        const std::uint16_t id = local_parse_sound_id("J0001");
+        ok &= (id != 0);
+        if (id != 0) {
+            gs->m_soundTable[id].sound = shortSound;
+
+            ClientCharacter* ch = new ClientCharacter();
+            ch->SetPosX(600.0f);
+            ch->SetPosY(300.0f);
+            gs->SetCharacter(ch);
+
+            // 角色靠近音源。
+            gs->PlaySoundA(const_cast<char*>("J0001"), 580, 300);
+            const std::uint32_t nearExpire = gs->m_soundTable[id].expireTick;
+            ok &= (nearExpire > 0);
+
+            // 調整角色位置到遠處再播放（內部 pan/freqShift 會走不同分支）。
+            ch->SetPosX(2000.0f);
+            ch->SetPosY(1600.0f);
+            gs->PlaySoundA(const_cast<char*>("J0001"), 580, 300);
+            const std::uint32_t farExpire = gs->m_soundTable[id].expireTick;
+            ok &= (farExpire >= nearExpire);
+
+            gs->m_soundTable[id].sound = nullptr; // 避免 GameSound 解構時釋放 shortSound。
+            delete ch;
+        }
+
+        delete gs;
+
+        // 手動釋放 shortSound（沿用專案現有記憶體策略）。
+        if (shortSound) {
+            shortSound->Stop();
+            operator delete(shortSound);
+        }
+    }
+    else {
+        // 無法初始化 DirectSound 視為整合測試失敗。
+        ok = false;
+    }
+
+    return ok;
+}
+
 } // namespace
 
 int run_sound_system_test_suite() {
@@ -212,7 +490,30 @@ int run_sound_system_test_suite() {
         "GameSound + COgg + 淡入淡出流程可互動，且未載入 BGM stream 時 IsBGMFinish 回傳 true。"
     );
 
-    const bool allOk = oggOk && waveOk && managerOk && gameSoundOk && mixedOk;
+    const bool soundListFormatOk = test_integration_soundlistinfo_format_parsing();
+    print_case_result("Integration", "SoundListInfo.txt 格式解析", soundListFormatOk,
+        "可跳過前兩行並解析 J0001/J0002 資料列，欄位與索引轉換符合 InitSound 預期。"
+    );
+
+    const bool ioIntegrationOk = test_integration_file_read_direct_and_mofpacking();
+    print_case_result("Integration", "檔案讀取(直接檔案 + mofpacking)", ioIntegrationOk,
+        "指定 ogg/wav 檔案可從直接路徑讀取，且也可透過 mofpacking 讀取。"
+    );
+
+    const bool musicIntegrationOk = test_integration_music_playback_bgm_and_ambient();
+    print_case_result("Integration", "BGM + Ambient 播放與音量調整", musicIntegrationOk,
+        "bg_eastfield.ogg 與 embi_beastcave.ogg 可播放，且可主動調整音量。"
+    );
+
+    const bool wavIntegrationOk = test_integration_wav_single_position_volume_and_multi_play();
+    print_case_result("Integration", "WAV 單發/位置影響/音量/多重同播", wavIntegrationOk,
+        "短音效可播放；角色位置變更可走不同聲音參數流程；可主動調整音量並同時多次觸發播放。"
+    );
+
+    const bool allOk =
+        oggOk && waveOk && managerOk && gameSoundOk && mixedOk &&
+        soundListFormatOk && ioIntegrationOk && musicIntegrationOk && wavIntegrationOk;
+
     std::printf("========== Sound Test Suite 結束: %s ==========\n\n", allOk ? "PASS" : "FAIL");
 
     return allOk ? 0 : -1;
