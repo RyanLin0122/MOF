@@ -8,6 +8,7 @@
 
 // external symbols from original client
 extern const _GUID GUID_NULL;
+extern int g_bLoadOggFromMofPack;
 
 static int s_processIndex = 0;
 static DWORD s_processTick = 0;
@@ -154,18 +155,23 @@ void GameSound::PlaySoundA(char* id, int x, int y) {
     }
 
     if (!e.loaded) {
-        if (true) {
+        bool created = false;
+
+        if (g_bLoadOggFromMofPack) {
             WAVLoader loader;
             loader.loadWAVFileIntoBuffer(e.path);
 
-            tWAVEFORMATEX wf{};
-            std::memcpy(&wf, loader.fmtChunk, min(sizeof(wf), sizeof(loader.fmtChunk)));
-            if (CreateFromMemory(&e.sound, loader.data, loader.dataSize, &wf,
-                DSBCAPS_CTRLVOLUME | DSBCAPS_CTRLPAN, GUID_NULL, e.concurrentPlayCount) < 0) {
-                return;
+            if (loader.data && loader.dataSize > 0) {
+                tWAVEFORMATEX wf{};
+                std::memcpy(&wf, loader.fmtChunk, min(sizeof(wf), sizeof(loader.fmtChunk)));
+                if (CreateFromMemory(&e.sound, loader.data, loader.dataSize, &wf,
+                    DSBCAPS_CTRLVOLUME | DSBCAPS_CTRLPAN, GUID_NULL, e.concurrentPlayCount) >= 0) {
+                    created = true;
+                }
             }
         }
-        else {
+
+        if (!created) {
             if (Create(&e.sound, e.path,
                 DSBCAPS_CTRLVOLUME | DSBCAPS_CTRLPAN, GUID_NULL, e.concurrentPlayCount) < 0) {
                 return;
