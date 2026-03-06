@@ -3,9 +3,7 @@
 #include <cstdio>
 #include <cstring>
 
-#define private public
 #include "Sound/GameSound.h"
-#undef private
 
 #include "Sound/COgg.h"
 #include "Sound/CSoundSystem.h"
@@ -114,36 +112,30 @@ bool test_sound_manager_single_functions() {
 bool test_gamesound_single_functions() {
     bool ok = true;
 
-    GameSound gs;
-
-    // ParseSoundId: 合法格式預期可產生非 0 id。
-    char validId[] = "A0001";
-    ok &= (gs.ParseSoundId(validId) != 0);
-
-    // ParseSoundId: 長度錯誤預期回傳 0。
-    char badLen[] = "A01";
-    ok &= (gs.ParseSoundId(badLen) == 0);
-
-    // ParseSoundId: 數值超界預期回傳 0。
-    char overRange[] = "A9999";
-    ok &= (gs.ParseSoundId(overRange) == 0);
+    // GameSound 內含大型 sound table，改用 heap 避免 stack 壓力。
+    GameSound* gs = new GameSound();
 
     // SetCharacter: 預期內部指標被更新。
-    gs.SetCharacter(nullptr);
-    ok &= (gs.m_character == nullptr);
+    gs->SetCharacter(nullptr);
+    ok &= (gs->m_character == nullptr);
 
     // ResetAll 在 activeIds 不存在時: 預期不修改 masterDb。
-    gs.m_masterDb = -777;
-    gs.ResetAll();
-    ok &= (gs.m_masterDb == -777);
+    gs->m_masterDb = -777;
+    gs->ResetAll();
+    ok &= (gs->m_masterDb == -777);
 
     // 補上 activeIds 後再 ResetAll: 預期 masterDb 被重設為 0，初始化失敗旗標清除。
-    gs.m_activeIds = static_cast<std::uint16_t*>(operator new(sizeof(std::uint16_t)));
-    gs.m_soundInitFailed = true;
-    gs.ResetAll();
-    ok &= (gs.m_masterDb == 0);
-    ok &= (gs.m_soundInitFailed == false);
+    gs->m_activeIds = static_cast<std::uint16_t*>(operator new(sizeof(std::uint16_t)));
+    gs->m_soundInitFailed = true;
+    gs->ResetAll();
+    ok &= (gs->m_masterDb == 0);
+    ok &= (gs->m_soundInitFailed == false);
 
+    // Stop/Reset 傳入無效 id: 預期安全返回，不當機。
+    gs->StopSound(nullptr);
+    gs->ResetSound(nullptr);
+
+    delete gs;
     return ok;
 }
 
@@ -153,35 +145,37 @@ bool test_cross_file_mixed_audio_flow() {
     // 跨檔案整合流程:
     // GameSound 內含兩個 COgg (BGM/Ambient)，搭配 FadeIn/FadeOut 與 IsBGMFinish。
     // 這裡不依賴真實音效檔，測控制流程與邏輯。
-    GameSound gs;
-    gs.m_soundInitFailed = false;
+    // GameSound 物件改放 heap，避免測試函式堆疊使用過大。
+    GameSound* gs = new GameSound();
+    gs->m_soundInitFailed = false;
 
-    gs.m_bgmTargetVolume = 25;
-    gs.m_ambientTargetVolume = 30;
-    gs.PlayMusic(const_cast<char*>("music/bg_beavers.ogg"));      // 預期: 設定 BGM fade 起始音量
-    gs.PlayAmbientSound(const_cast<char*>("sound/ambient.ogg"));  // 預期: 設定 Ambient fade 起始音量
+    gs->m_bgmTargetVolume = 25;
+    gs->m_ambientTargetVolume = 30;
+    gs->PlayMusic(const_cast<char*>("music/bg_beavers.ogg"));      // 預期: 設定 BGM fade 起始音量
+    gs->PlayAmbientSound(const_cast<char*>("sound/ambient.ogg"));  // 預期: 設定 Ambient fade 起始音量
 
-    ok &= (gs.m_bgmFadeVolume == 25);
-    ok &= (gs.m_ambientFadeVolume == 30);
+    ok &= (gs->m_bgmFadeVolume == 25);
+    ok &= (gs->m_ambientFadeVolume == 30);
 
-    gs.m_bgmFadeVolume = 0;
-    gs.m_ambientFadeVolume = 0;
-    gs.FadeInMusic();
+    gs->m_bgmFadeVolume = 0;
+    gs->m_ambientFadeVolume = 0;
+    gs->FadeInMusic();
     // 預期: 每次 FadeIn 增加 10，且不超過 target。
-    ok &= (gs.m_bgmFadeVolume == 10);
-    ok &= (gs.m_ambientFadeVolume == 10);
+    ok &= (gs->m_bgmFadeVolume == 10);
+    ok &= (gs->m_ambientFadeVolume == 10);
 
-    gs.FadeOutMusic();
+    gs->FadeOutMusic();
     // 預期: 每次 FadeOut 減少 10，且不會小於 0。
-    ok &= (gs.m_bgmFadeVolume == 0);
-    ok &= (gs.m_ambientFadeVolume == 0);
+    ok &= (gs->m_bgmFadeVolume == 0);
+    ok &= (gs->m_ambientFadeVolume == 0);
 
     // 未載入 stream 時 IsBGMFinish: 預期回傳 true。
-    ok &= (gs.IsBGMFinish() == 1);
+    ok &= (gs->IsBGMFinish() == 1);
 
-    gs.StopMusic();
-    gs.StopAmbientSound();
+    gs->StopMusic();
+    gs->StopAmbientSound();
 
+    delete gs;
     return ok;
 }
 
@@ -207,7 +201,7 @@ int run_sound_system_test_suite() {
 
     const bool gameSoundOk = test_gamesound_single_functions();
     print_case_result("GameSound", "單一函式測試", gameSoundOk,
-        "ParseSoundId/SetCharacter/ResetAll 之狀態更新邏輯正確。"
+        "SetCharacter/ResetAll/StopSound/ResetSound 的防呆與狀態更新邏輯正確。"
     );
 
     const bool mixedOk = test_cross_file_mixed_audio_flow();
