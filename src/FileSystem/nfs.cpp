@@ -11,6 +11,7 @@
 #include <vector>
 #include <cctype>  // For tolower (雖然原始碼可能手動轉換)
 #include <intrin.h>
+#include <climits>
 
 
 /* global variables */
@@ -2306,10 +2307,16 @@ int nfs_data_set_cache_size(NfsDataHandle* handle, size_t new_size) {
  * @return cache_get 的返回值 (通常成功為0，失敗為-1)。
  */
 int nfs_data_read(NfsDataHandle* handle, int block_index, void* buffer) {
-	if (block_index >= 0) {
-		return cache_get(handle, block_index * 512, 512, buffer);
+	if (!handle || !buffer || block_index < 0) {
+		return -1;
 	}
-	return -1;
+
+	const long long offset = static_cast<long long>(block_index) * 512LL;
+	if (offset > INT_MAX) {
+		return -1;
+	}
+
+	return cache_get(handle, static_cast<int>(offset), 512, buffer);
 }
 
 /**
@@ -2320,10 +2327,16 @@ int nfs_data_read(NfsDataHandle* handle, int block_index, void* buffer) {
  * @return cache_put 的返回值 (通常成功為0，失敗為-1)。
  */
 int nfs_data_write(NfsDataHandle* handle, int block_index, const void* buffer) {
-	if (block_index >= 0) {
-		return cache_put(handle, block_index * 512, 512, buffer);
+	if (!handle || !buffer || block_index < 0) {
+		return -1;
 	}
-	return -1;
+
+	const long long offset = static_cast<long long>(block_index) * 512LL;
+	if (offset > INT_MAX) {
+		return -1;
+	}
+
+	return cache_put(handle, static_cast<int>(offset), 512, buffer);
 }
 
 /**
@@ -2335,11 +2348,18 @@ int nfs_data_write(NfsDataHandle* handle, int block_index, const void* buffer) {
  * @return cache_get 的返回值。
  */
 int nfs_data_read_contiguous(NfsDataHandle* handle, int start_block_index, int num_blocks, void* buffer) {
-	if (start_block_index >= 0 && num_blocks > 0) {
-		return cache_get(handle, start_block_index * 512, num_blocks * 512, buffer);
+	if (!handle || !buffer || start_block_index < 0 || num_blocks < 0) {
+		return -1;
 	}
 	if (num_blocks == 0) return 0; // 讀取0區塊成功
-	return -1;
+
+	const long long offset = static_cast<long long>(start_block_index) * 512LL;
+	const long long bytes = static_cast<long long>(num_blocks) * 512LL;
+	if (offset > INT_MAX || bytes > INT_MAX) {
+		return -1;
+	}
+
+	return cache_get(handle, static_cast<int>(offset), static_cast<int>(bytes), buffer);
 }
 
 /**
@@ -2351,11 +2371,18 @@ int nfs_data_read_contiguous(NfsDataHandle* handle, int start_block_index, int n
  * @return cache_put 的返回值。
  */
 int nfs_data_write_contiguous(NfsDataHandle* handle, int start_block_index, int num_blocks, const void* buffer) {
-	if (start_block_index >= 0 && num_blocks > 0) {
-		return cache_put(handle, start_block_index * 512, num_blocks * 512, buffer);
+	if (!handle || !buffer || start_block_index < 0 || num_blocks < 0) {
+		return -1;
 	}
 	if (num_blocks == 0) return 0; // 寫入0區塊成功
-	return -1;
+
+	const long long offset = static_cast<long long>(start_block_index) * 512LL;
+	const long long bytes = static_cast<long long>(num_blocks) * 512LL;
+	if (offset > INT_MAX || bytes > INT_MAX) {
+		return -1;
+	}
+
+	return cache_put(handle, static_cast<int>(offset), static_cast<int>(bytes), buffer);
 }
 
 /**
