@@ -38,9 +38,9 @@ private:
     tWAVEFORMATEX* m_pwfx = nullptr;       // +0
     HMMIO m_hmmio = nullptr;               // +4
     MMCKINFO m_ck{};                       // +8
-    MMIOINFO m_mmioinfoOut{};              // +52
     MMCKINFO m_ckRiff{};                   // +28
     DWORD m_dwSize = 0;                    // +48
+    MMIOINFO m_mmioinfoOut{};              // +52
     UINT m_mode = 0;                       // +124
     UINT m_bIsReadingFromMemory = 0;       // +128
     BYTE* m_pbData = nullptr;              // +132
