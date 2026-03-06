@@ -1,4 +1,4 @@
-﻿#include "Sound/COgg.h"
+#include "Sound/COgg.h"
 #include "FileSystem/CMOFPacking.h"
 #include <cstring>
 #include <cstdlib>
@@ -8,7 +8,7 @@ extern int g_bLoadOggFromMofPack = 1;
 COgg::COgg()
     : m_pStream(nullptr),
     m_nVolume(255),
-    m_nChannelId(0),
+    m_nChannelId(-1),
     m_nStreamOpenMode(0),
     m_pMemoryBuffer(nullptr) // [修改] 初始化新增的成員
 {
@@ -57,7 +57,7 @@ void COgg::Initalize(int loopEnabled) {
     m_pStream = nullptr;
     m_pMemoryBuffer = nullptr; // [新增] 確保初始化時為空
     m_nVolume = 255;
-    m_nChannelId = 0;
+    m_nChannelId = -1;
 
     unsigned int base_mode;
     unsigned int loop_mode = loopEnabled ? FSOUND_LOOP_NORMAL : FSOUND_LOOP_OFF;
@@ -103,6 +103,18 @@ void COgg::Play(const char* filePath) {
 void COgg::Stop() {
     if (m_pStream) {
         FSOUND_Stream_Stop(m_pStream);
+    }
+    m_nChannelId = -1;
+}
+
+void COgg::SetVolume(int volume) {
+    if (volume < 0) volume = 0;
+    if (volume > 255) volume = 255;
+
+    m_nVolume = volume;
+
+    if (m_nChannelId >= 0) {
+        FSOUND_SetVolume(m_nChannelId, m_nVolume);
     }
 }
 

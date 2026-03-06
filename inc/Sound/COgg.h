@@ -20,6 +20,9 @@ public:
     // 停止目前播放的串流
     void Stop();
 
+    // 設定目前聲道音量 (0-255)
+    void SetVolume(int volume);
+
     // 開啟音訊串流，根據 dword_829254 決定是從檔案系統直接開啟還是從 CMofPacking 載入
     // filePath: Ogg 檔案的路徑或名稱
     void OpenStreem(const char* filePath);
