@@ -13,6 +13,14 @@ extern const _GUID GUID_NULL;
 static int s_processIndex = 0;
 static DWORD s_processTick = 0;
 
+namespace {
+int ClampVolume(int volume) {
+    if (volume < 0) return 0;
+    if (volume > 255) return 255;
+    return volume;
+}
+}
+
 std::uint16_t GameSound::ParseSoundId(char* id) {
     if (!id || std::strlen(id) != 5) {
         return 0;
@@ -163,20 +171,26 @@ void GameSound::ResetAll() {
 
 void GameSound::PlayMusic(char* filePath) {
     if (m_soundInitFailed || !filePath) return;
+
+    m_bgmTargetVolume = ClampVolume(m_bgmTargetVolume);
+    m_bgmFadeVolume = m_bgmTargetVolume;
+
     m_bgm.Stop();
     m_bgm.Play(filePath);
-    m_bgm.m_nChannelId = m_bgmTargetVolume;
-    FSOUND_SetVolume(m_bgm.m_nChannelId, m_bgmTargetVolume);
+    m_bgm.SetVolume(m_bgmFadeVolume);
 }
 
 void GameSound::StopMusic() { m_bgm.Stop(); }
 
 void GameSound::PlayAmbientSound(char* filePath) {
     if (m_soundInitFailed || !filePath) return;
+
+    m_ambientTargetVolume = ClampVolume(m_ambientTargetVolume);
+    m_ambientFadeVolume = m_ambientTargetVolume;
+
     m_ambient.Stop();
     m_ambient.Play(filePath);
-    m_ambient.m_nChannelId = m_ambientTargetVolume;
-    FSOUND_SetVolume(m_ambient.m_nChannelId, m_ambientTargetVolume);
+    m_ambient.SetVolume(m_ambientFadeVolume);
 }
 
 void GameSound::StopAmbientSound() { m_ambient.Stop(); }
@@ -184,26 +198,24 @@ void GameSound::StopAmbientSound() { m_ambient.Stop(); }
 void GameSound::SetCharacter(ClientCharacter* character) { m_character = character; }
 
 void GameSound::FadeInBGM() {
-    if (m_bgmFadeVolume < m_ambientTargetVolume) {
+    const int target = ClampVolume(m_bgmTargetVolume);
+    if (m_bgmFadeVolume < target) {
         m_bgmFadeVolume += 10;
-        if (m_bgmFadeVolume >= 255) m_bgmFadeVolume = 255;
-        else m_bgmFadeVolume += 10;
-        m_bgm.m_nChannelId = static_cast<int>(0.5 * m_bgmFadeVolume);
-        FSOUND_SetVolume(m_bgm.m_nChannelId, m_bgm.m_nVolume);
+        if (m_bgmFadeVolume > target) {
+            m_bgmFadeVolume = target;
+        }
+        m_bgm.SetVolume(m_bgmFadeVolume);
     }
 }
 
 void GameSound::FadeInAmbient() {
-    if (m_ambientFadeVolume < m_ambientTargetVolume) {
+    const int target = ClampVolume(m_ambientTargetVolume);
+    if (m_ambientFadeVolume < target) {
         m_ambientFadeVolume += 10;
-        if (m_ambientFadeVolume >= 255) {
-            m_ambientFadeVolume = 255;
-            m_ambient.m_nChannelId = 255;
-        } else {
-            m_ambientFadeVolume += 10;
-            m_ambient.m_nChannelId = m_ambientFadeVolume;
+        if (m_ambientFadeVolume > target) {
+            m_ambientFadeVolume = target;
         }
-        FSOUND_SetVolume(m_ambient.m_nChannelId, m_ambient.m_nVolume);
+        m_ambient.SetVolume(m_ambientFadeVolume);
     }
 }
 
@@ -215,24 +227,20 @@ void GameSound::FadeInMusic() {
 void GameSound::FadeOutBGM() {
     if (m_bgmFadeVolume > 0) {
         m_bgmFadeVolume -= 10;
-        if (m_bgmFadeVolume <= 0) m_bgmFadeVolume = 0;
-        else m_bgmFadeVolume -= 10;
-        m_bgm.m_nChannelId = static_cast<int>(0.5 * m_bgmFadeVolume);
-        FSOUND_SetVolume(m_bgm.m_nChannelId, m_bgm.m_nVolume);
+        if (m_bgmFadeVolume < 0) {
+            m_bgmFadeVolume = 0;
+        }
+        m_bgm.SetVolume(m_bgmFadeVolume);
     }
 }
 
 void GameSound::FadeOutAmbient() {
     if (m_ambientFadeVolume > 0) {
         m_ambientFadeVolume -= 10;
-        if (m_ambientFadeVolume <= 0) {
+        if (m_ambientFadeVolume < 0) {
             m_ambientFadeVolume = 0;
-            m_ambient.m_nChannelId = 0;
-        } else {
-            m_ambientFadeVolume -= 10;
-            m_ambient.m_nChannelId = m_ambientFadeVolume;
         }
-        FSOUND_SetVolume(m_ambient.m_nChannelId, m_ambient.m_nVolume);
+        m_ambient.SetVolume(m_ambientFadeVolume);
     }
 }
 
@@ -242,6 +250,15 @@ void GameSound::FadeOutMusic() {
 }
 
 BOOL GameSound::IsBGMFinish() {
+    if (!m_bgm.m_pStream) {
+        return 1;
+    }
+
     int pos = FSOUND_Stream_GetPosition(m_bgm.m_pStream);
-    return pos > FSOUND_Stream_GetLength(m_bgm.m_pStream) - 60;
+    int len = FSOUND_Stream_GetLength(m_bgm.m_pStream);
+    if (pos < 0 || len <= 0) {
+        return 1;
+    }
+
+    return pos > len - 60;
 }
