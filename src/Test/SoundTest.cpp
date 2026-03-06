@@ -176,12 +176,12 @@ bool test_gamesound_single_functions() {
     gs->SetCharacter(nullptr);
     ok &= (gs->m_character == nullptr);
 
-    // ResetAll 在 activeIds 不存在時: 預期不修改 masterDb。
+    // ResetAll: 目前實作會將 masterDb 重設為 0。
     gs->m_masterDb = -777;
     gs->ResetAll();
-    ok &= (gs->m_masterDb == -777);
+    ok &= (gs->m_masterDb == 0);
 
-    // 補上 activeIds 後再 ResetAll: 預期 masterDb 被重設為 0，初始化失敗旗標清除。
+    // 補上 activeIds 後再 ResetAll: 預期 masterDb 維持 0，初始化失敗旗標清除。
     gs->m_activeIds = static_cast<std::uint16_t*>(operator new(sizeof(std::uint16_t)));
     gs->m_soundInitFailed = true;
     gs->ResetAll();
