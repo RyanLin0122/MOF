@@ -243,7 +243,7 @@ bool test_integration_init_sound_with_reallist() {
 
     // 實際調用 InitSound，輸入 SoundList.txt（非模擬字串）。
     GameSound* gs = new GameSound();
-    const int initRet = gs->InitSound(const_cast<char*>("SoundList.txt"));
+    const int initRet = gs->InitSound(const_cast<char*>("SoundListInfo.txt"));
     ok &= (initRet == 1);
     ok &= (gs->m_soundInitFailed == false);
 
@@ -284,7 +284,10 @@ bool test_integration_init_sound_with_reallist() {
 
             // 對答案: path 需是 InitSound 填入的 MOFData/Sound/<filename>
             char expectedPath[320]{};
-            std::snprintf(expectedPath, sizeof(expectedPath), "MOFData/Sound/%s", row.fileName);
+            std::snprintf(expectedPath, sizeof(expectedPath), "mofdata/sound/%s", row.fileName);
+            for (char* p = expectedPath; *p; ++p) {
+                *p = static_cast<char>(std::tolower(static_cast<unsigned char>(*p)));
+            }
             ok &= (std::strcmp(e.path, expectedPath) == 0);
 
             // 對答案: 第3欄(동시재생수)會被 InitSound 寫入 concurrentPlayCount。
