@@ -73,25 +73,6 @@ std::uint16_t local_parse_sound_id(const char* id) {
     return static_cast<std::uint16_t>(high | low);
 }
 
-bool parse_sound_list_line_like_gamesound(const char* line, char* outId, size_t outIdSize, char* outName, size_t outNameSize, int* outConcurrentCount, int* outLocalized) {
-    if (!line || !outId || !outName || !outConcurrentCount || !outLocalized) return false;
-
-    char id[32]{};
-    char name[256]{};
-    int concurrentCount = 0;
-    int localized = 0;
-
-    // 對齊 GameSound::InitSound 內的解析格式：%s%s%d%d
-    const int scanned = std::sscanf(line, "%31s%255s%d%d", id, name, &concurrentCount, &localized);
-    if (scanned != 4) return false;
-
-    std::snprintf(outId, outIdSize, "%s", id);
-    std::snprintf(outName, outNameSize, "%s", name);
-    *outConcurrentCount = concurrentCount;
-    *outLocalized = localized;
-    return true;
-}
-
 bool test_ogg_single_functions() {
     bool ok = true;
 
@@ -257,38 +238,65 @@ bool test_cross_file_mixed_audio_flow() {
     return ok;
 }
 
-bool test_integration_soundlistinfo_format_parsing() {
+bool test_integration_init_sound_with_reallist() {
     bool ok = true;
 
-    // 模擬 SoundListInfo.txt：前幾行廢話、標題、資料列。
-    const char* lines[] = {
-        "이 줄은 설명이라서 스킵\n",
-        "파일ID(WORD)\t\"사운드파일명(경로포함,공백 x)\"\t동시재생수\t\"국가별 구분 파일인가?\"\t설명\n",
-        "J0001\tUI_se_button_small.wav\t1\t0\t나머지\n",
-        "J0002\tUI_se_button_small.wav\t1\t0\t작은 버튼 누름\n",
+    // 實際調用 InitSound，輸入 SoundList.txt（非模擬字串）。
+    GameSound* gs = new GameSound();
+    const int initRet = gs->InitSound(const_cast<char*>("SoundList.txt"));
+    ok &= (initRet == 1);
+    ok &= (gs->m_soundInitFailed == false);
+
+    struct ExpectedRow {
+        const char* id;
+        const char* fileName;
+        int concurrentCount;
+        int localized;
     };
 
-    // InitSound 目前會先 fgets 跳過前兩行，因此測試也比照從第 3 行開始解析。
-    for (int i = 2; i < 4; ++i) {
-        char id[32]{};
-        char name[256]{};
-        int concurrentCount = 0;
-        int localized = 0;
+    const ExpectedRow expected[] = {
+        { "J0001", "UI_se_button_small.wav", 1, 0 },
+        { "J0002", "UI_se_button_small.wav", 1, 0 },
+        { "J0003", "UI_se_button_middle.wav", 1, 0 },
+        { "J0004", "UI_se_button_large.wav", 1, 0 },
+        { "J0005", "UI_se_window_open.wav", 1, 0 },
+        { "J0006", "UI_se_trade.wav", 1, 0 },
+        { "J0007", "UI_se_tab_chage.wav", 1, 0 },
+        { "J0008", "UI_se_window_close.wav", 10, 0 },
+        { "J0009", "UI_se_drop.wav", 10, 0 },
+        { "J0010", "WEAPON_se_hit_bg_bird.wav", 10, 0 },
+        { "J0013", "CHARATER_se_item_get.wav", 10, 0 },
+        { "J0014", "CHARATER_se_levelup.wav", 10, 0 },
+        { "J0015", "CHARATER_se_item_use_potion.wav", 10, 0 },
+        { "J0016", "CHARATER_se_warp.wav", 10, 0 },
+        { "J0017", "CHARATER_se_step.wav", 10, 0 },
+        { "J0018", "CHARATER_se_run.wav", 10, 0 },
+        { "J0019", "CHARATER_se_classup.wav", 10, 0 },
+    };
 
-        const bool parsed = parse_sound_list_line_like_gamesound(
-            lines[i], id, sizeof(id), name, sizeof(name), &concurrentCount, &localized
-        );
-        ok &= parsed;
-        if (!parsed) continue;
+    if (initRet == 1) {
+        for (const auto& row : expected) {
+            const std::uint16_t idx = local_parse_sound_id(row.id);
+            ok &= (idx != 0);
+            if (!idx) continue;
 
-        // 預期: J0001/J0002 皆可解析，且可轉成有效 sound table index。
-        const std::uint16_t idx = local_parse_sound_id(id);
-        ok &= (idx != 0);
-        ok &= (concurrentCount == 1);
-        ok &= (localized == 0);
-        ok &= (std::strcmp(name, "UI_se_button_small.wav") == 0);
+            const SoundEntry& e = gs->m_soundTable[idx];
+
+            // 對答案: path 需是 InitSound 填入的 MOFData/Sound/<filename>
+            char expectedPath[320]{};
+            std::snprintf(expectedPath, sizeof(expectedPath), "MOFData/Sound/%s", row.fileName);
+            ok &= (std::strcmp(e.path, expectedPath) == 0);
+
+            // 對答案: 第3欄(동시재생수)目前被 InitSound 寫入 baseVolume。
+            ok &= (e.baseVolume == static_cast<std::uint16_t>(row.concurrentCount));
+
+            // 對答案補充: localized 欄位目前 InitSound 讀進來但未存入 SoundEntry，
+            // 因此這裡僅驗證可成功載入整體表格與關鍵欄位。
+            (void)row.localized;
+        }
     }
 
+    delete gs;
     return ok;
 }
 
@@ -490,9 +498,9 @@ int run_sound_system_test_suite() {
         "GameSound + COgg + 淡入淡出流程可互動，且未載入 BGM stream 時 IsBGMFinish 回傳 true。"
     );
 
-    const bool soundListFormatOk = test_integration_soundlistinfo_format_parsing();
-    print_case_result("Integration", "SoundListInfo.txt 格式解析", soundListFormatOk,
-        "可跳過前兩行並解析 J0001/J0002 資料列，欄位與索引轉換符合 InitSound 預期。"
+    const bool initSoundRealListOk = test_integration_init_sound_with_reallist();
+    print_case_result("Integration", "InitSound + SoundList.txt 實檔對答案", initSoundRealListOk,
+        "實際調用 InitSound(\"SoundList.txt\")，並逐筆比對 J0001~J0019 的路徑與數值欄位。"
     );
 
     const bool ioIntegrationOk = test_integration_file_read_direct_and_mofpacking();
@@ -512,7 +520,7 @@ int run_sound_system_test_suite() {
 
     const bool allOk =
         oggOk && waveOk && managerOk && gameSoundOk && mixedOk &&
-        soundListFormatOk && ioIntegrationOk && musicIntegrationOk && wavIntegrationOk;
+        initSoundRealListOk && ioIntegrationOk && musicIntegrationOk && wavIntegrationOk;
 
     std::printf("========== Sound Test Suite 結束: %s ==========\n\n", allOk ? "PASS" : "FAIL");
 
