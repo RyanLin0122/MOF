@@ -23,19 +23,9 @@ COgg::~COgg() {
         m_pStream = nullptr;
     }
 
-    // [新增] 釋放我們自己管理的記憶體緩衝區
+    // 釋放 COgg 自己持有的獨立記憶體
     if (m_pMemoryBuffer) {
-        // 假設 CMofPacking 的 FileRead 是用 new[] 分配的
-        // 如果不是，請用對應的方式釋放 (例如 free)
-        // 為了安全，我們讓 packer 自己管理釋放
-        CMofPacking* packer = CMofPacking::GetInstance();
-        if (packer) {
-            // 這個設計有些耦合，但依循您現有 packer->DeleteBuffer() 的模式
-            // 更好的設計是 FileRead 返回指標後，由呼叫者用 delete[] 釋放
-            //packer->DeleteBuffer(m_pMemoryBuffer); // 假設 DeleteBuffer 可以接收指標
-        }
-        // 或者，如果 packer 沒有提供這樣的函式，您需要知道它是如何分配的
-        // delete[] m_pMemoryBuffer; 
+        delete[] m_pMemoryBuffer;
         m_pMemoryBuffer = nullptr;
     }
 
@@ -78,11 +68,9 @@ void COgg::Play(const char* filePath) {
         FSOUND_Stream_Close(m_pStream);
         m_pStream = nullptr;
     }
-    // [新增] 同時釋放舊的記憶體緩衝區
+    // 釋放舊的獨立記憶體緩衝區
     if (m_pMemoryBuffer) {
-        CMofPacking* packer = CMofPacking::GetInstance();
-        //if (packer) packer->DeleteBuffer(m_pMemoryBuffer); // 同解構函式的假設
-        // delete[] m_pMemoryBuffer;
+        delete[] m_pMemoryBuffer;
         m_pMemoryBuffer = nullptr;
     }
 
@@ -127,20 +115,23 @@ void COgg::OpenStreem(const char* filePath) {
         return;
     }
 
-    // [修改] 將 packer->FileRead 的結果存到成員變數 m_pMemoryBuffer
-    m_pMemoryBuffer = packer->FileRead(filePath);
+    char localPath[256]{};
+    std::strncpy(localPath, filePath, sizeof(localPath) - 1);
+    char* changed = packer->ChangeString(localPath);
+    packer->FileReadBackGroundLoading(changed);
 
-    if (m_pMemoryBuffer) {
-        int bufferSize = packer->GetBufferSize();
-        if (bufferSize > 0) {
-            // 使用我們自己持有的 m_pMemoryBuffer 來開啟串流
-            m_pStream = FSOUND_Stream_Open(m_pMemoryBuffer, m_nStreamOpenMode, 0, bufferSize);
-        }
-        else {
-            m_pStream = nullptr;
-        }
-    }
-    else {
+    const int bufferSize = packer->GetBufferSize();
+    if (bufferSize <= 0) {
         m_pStream = nullptr;
+        return;
     }
+
+    m_pMemoryBuffer = new (std::nothrow) char[bufferSize];
+    if (!m_pMemoryBuffer) {
+        m_pStream = nullptr;
+        return;
+    }
+
+    std::memcpy(m_pMemoryBuffer, packer->m_backgroundLoadBufferField, static_cast<size_t>(bufferSize));
+    m_pStream = FSOUND_Stream_Open(m_pMemoryBuffer, m_nStreamOpenMode, 0, bufferSize);
 }

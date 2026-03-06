@@ -207,6 +207,7 @@ char* CMofPacking::FileRead(const char* filePathInPack) {
     return (char*)m_pReadBuffer;
 }
 
+
 // 釋放 m_pReadBuffer
 void CMofPacking::DeleteBuffer() {
     if (m_pReadBuffer) {
