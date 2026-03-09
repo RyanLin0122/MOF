@@ -5,6 +5,14 @@ from typing import Dict, List, Optional, Set
 # ========= 可調整設定 =========
 START_LINE = 26022
 
+# 手動指定「一定算未完成」的 class 清單
+# 只要 class 名稱在這裡，就直接視為未完成
+FORCE_MISSING_CLASSES = [
+    "ClientCharacter",
+    "ClientCharacterManager",
+    "CMoFNetwork"
+]
+
 # 例外清單：放 class 名稱字串，這些 class 會被跳過
 EXCLUDE_CLASSES = [
     "D3DXShader",
@@ -234,16 +242,23 @@ def compare_tool_vs_headers(tool_result_list: List[dict], header_class_names: Li
     正確口徑：
     - 總 class / 總行數 都以 .c tool 結果為準
     - header 只拿來判斷哪些 class 算完成
-    - 完成 = class_name 同時存在於 tool 結果與 header 名單
-    - 未完成 = tool 有，但 header 沒有
+    - 完成 = class_name 同時存在於 tool 結果與 header 名單，且不在 FORCE_MISSING_CLASSES
+    - 未完成 = tool 有，但 header 沒有；或被手動指定為未完成
     """
     header_set = set(header_class_names)
+    force_missing_set = set(FORCE_MISSING_CLASSES)
 
     implemented_classes = []
     missing_classes = []
 
     for item in tool_result_list:
         class_name = item["class_name"]
+
+        # 手動指定未完成的優先權最高
+        if class_name in force_missing_set:
+            missing_classes.append(item)
+            continue
+
         if class_name in header_set:
             implemented_classes.append(item)
         else:
@@ -279,7 +294,6 @@ def compare_tool_vs_headers(tool_result_list: List[dict], header_class_names: Li
         "class_completion": class_completion,
         "line_completion": line_completion,
     }
-
 
 def main():
     tool_result_list = analyze_c_file(C_FILE_PATH)
