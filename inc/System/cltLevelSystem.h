@@ -8,11 +8,17 @@ class cltPlayerAbility {
 public:
     static void IncreaseBonusPoint(cltPlayerAbility* self, int value);
     static void ResetAbility(cltPlayerAbility* self);
+
+    std::uint16_t GetBaseStr();
+    std::uint16_t GetBaseDex();
+    std::uint16_t GetBaseInt();
+    std::uint16_t GetBaseVit();
 };
 
 class cltEmblemSystem {
 public:
     static void UpdateValidity(cltEmblemSystem* self);
+    void OnEvent_ChangeClass();
 };
 
 

@@ -1,4 +1,4 @@
-#include "DCTNetwork.h"
+#include "Network/DCTNetwork.h"
 
 #include <cstring>
 

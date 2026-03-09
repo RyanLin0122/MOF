@@ -1,4 +1,4 @@
-#include "CMofMsg.h"
+#include "Network/CMofMsg.h"
 
 #include <cstring>
 #include <windows.h>

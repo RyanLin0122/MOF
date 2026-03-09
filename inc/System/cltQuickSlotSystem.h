@@ -1,5 +1,6 @@
 #pragma once
 
+#include <array>
 #include <cstdint>
 
 typedef unsigned int _DWORD;
@@ -48,5 +49,13 @@ public:
 
     static cltItemKindInfo* m_pclItemKindInfo;
     static cltSkillKindInfo* m_pclSkillKindInfo;
+
+private:
+    cltBaseInventory* m_pBaseInventory = nullptr;
+    cltMyItemSystem* m_pMyItemSystem = nullptr;
+    cltQuestSystem* m_pQuestSystem = nullptr;
+    std::array<std::array<std::uint32_t, 12>, 3> m_slotValues{};
+    std::array<std::array<std::uint32_t, 12>, 3> m_dirtyFlags{};
+    std::uint32_t m_hasPendingChange = 0;
 };
 

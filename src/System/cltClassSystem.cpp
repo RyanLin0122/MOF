@@ -1,61 +1,21 @@
-#include "cltClassSystem.h"
+#include "System/cltClassSystem.h"
 
 #include <cstdint>
 
-class cltClassKindInfo {
-public:
-    static strClassKindInfo* GetClassKindInfo(cltClassKindInfo* self, std::uint16_t classCode);
-    static unsigned short GetTotalClassNum(cltClassKindInfo* self);
-    static strClassKindInfo* GetClassKindInfoByIndex(cltClassKindInfo* self, unsigned int index);
-    static std::uint16_t TranslateKindCode(char* code);
-};
-
-class cltItemKindInfo {
-public:
-    static void* GetItemKindInfo(cltItemKindInfo* self, std::uint16_t itemCode);
-};
-
-class cltLevelSystem { public: static std::uint8_t GetLevel(cltLevelSystem* self); };
-class cltPlayerAbility {
-public:
-    static std::uint16_t GetBaseStr(cltPlayerAbility* self);
-    static std::uint16_t GetBaseDex(cltPlayerAbility* self);
-    static std::uint16_t GetBaseInt(cltPlayerAbility* self);
-    static std::uint16_t GetBaseVit(cltPlayerAbility* self);
-};
-class cltLessonSystem {
-public:
-    static std::uint16_t GetSwordLessonPt(cltLessonSystem* self);
-    static std::uint16_t GetBowLessonPt(cltLessonSystem* self);
-    static std::uint16_t GetTheologyLessonPt(cltLessonSystem* self);
-    static std::uint16_t GetMagicLessonPt(cltLessonSystem* self);
-};
-class cltBaseInventory {
-public:
-    static int CanAddInventoryItems(cltBaseInventory* self, cltItemList* list);
-    static void AddInventoryItem(cltBaseInventory* self, cltItemList* list, std::uint8_t* outFlags);
-};
-class cltEquipmentSystem { public: static int IsEquipedBattleItem(cltEquipmentSystem* self); };
-class cltQuickSlotSystem { public: static void OnClassReseted(cltQuickSlotSystem* self); };
-class cltUsingSkillSystem { public: static int GetUsingSkillNum(cltUsingSkillSystem* self); };
-class cltWorkingPassiveSkillSystem { public: static int GetWorkingSkillNum(cltWorkingPassiveSkillSystem* self); };
-class cltSkillSystem { public: static void UpdateValidity(cltSkillSystem* self); };
-class cltEmblemSystem { public: static void OnEvent_ChangeClass(cltEmblemSystem* self); };
-class cltItemList {
-public:
-    static void AddItem(int self, std::uint16_t itemCode, std::uint16_t count, int a4, int a5, std::uint16_t a6, int a7);
-};
-
-void cltItemList_ctor(cltItemList* self);
-void cltItemList_dtor(cltItemList* self);
+#include "Info/cltClassKindInfo.h"
+#include "Info/cltItemKindInfo.h"
+#include "System/cltLevelSystem.h"
+#include "System/cltLessonSystem.h"
+#include "System/cltSkillSystem.h"
+#include "System/cltUsingSkillSystem.h"
+#include "System/cltWorkingPassiveSkillSystem.h"
+#include "Logic/cltBaseInventory.h"
+#include "System/cltEquipmentSystem.h"
+#include "System/cltQuickSlotSystem.h"
+#include "Logic/cltItemList.h"
 
 cltClassKindInfo* cltClassSystem::m_pstClassKindInfo = nullptr;
 cltItemKindInfo* cltClassSystem::m_pclItemKindInfo = nullptr;
-
-namespace {
-constexpr std::size_t kItemListObjectSize = 10012;
-constexpr const char* kFighterCode = "FIG"; // decompile token was `string`
-}
 
 void cltClassSystem::InitializeStaticVariable(cltClassKindInfo* classKindInfo, cltItemKindInfo* itemKindInfo) {
     m_pstClassKindInfo = classKindInfo;
@@ -106,222 +66,220 @@ void cltClassSystem::Free() {
 void cltClassSystem::SetClass(std::uint16_t classCode) {
     m_wClassCode = classCode;
     if (classCode) {
-        m_pClassKindInfo = cltClassKindInfo::GetClassKindInfo(m_pstClassKindInfo, classCode);
+        m_pClassKindInfo = m_pstClassKindInfo->GetClassKindInfo(classCode);
     } else {
         m_pClassKindInfo = nullptr;
     }
 }
 
-std::uint16_t cltClassSystem::GetClass() { return m_wClassCode; }
+std::uint16_t cltClassSystem::GetClass() {
+    return m_wClassCode;
+}
 
 unsigned int cltClassSystem::CanUpgradeClass(
-    std::uint16_t classCode,
+    std::uint16_t targetClassCode,
     int extraItemCount,
     std::uint16_t* extraItemCodes,
     std::uint16_t* extraItemCounts) {
-    std::uint8_t temp[kItemListObjectSize] = {};
-    auto* itemList = reinterpret_cast<cltItemList*>(temp);
-    cltItemList_ctor(itemList);
 
-    strClassKindInfo* kind = cltClassKindInfo::GetClassKindInfo(m_pstClassKindInfo, classCode);
-    if (!kind || kind->byNeedLevel > cltLevelSystem::GetLevel(m_pLevelSystem) || kind->wNeedClassCode != GetClass()) {
-        cltItemList_dtor(itemList);
+    cltItemList requiredItems;
+
+    strClassKindInfo* classInfo = m_pstClassKindInfo->GetClassKindInfo(targetClassCode);
+    if (!classInfo) {
         return 6;
     }
-    if (kind->wNeedStr > cltPlayerAbility::GetBaseStr(m_pPlayerAbility)) {
-        cltItemList_dtor(itemList);
+    if (classInfo->min_level > m_pLevelSystem->GetLevel()) {
+        return 602;
+    }
+    if (classInfo->from_class != GetClass()) {
+        return 6;
+    }
+    if (classInfo->min_attack > m_pPlayerAbility->GetBaseStr()) {
         return 7;
     }
-    if (kind->wNeedDex > cltPlayerAbility::GetBaseDex(m_pPlayerAbility)) {
-        cltItemList_dtor(itemList);
+    if (classInfo->min_dex > m_pPlayerAbility->GetBaseDex()) {
         return 8;
     }
-    if (kind->wNeedInt > cltPlayerAbility::GetBaseInt(m_pPlayerAbility)) {
-        cltItemList_dtor(itemList);
+    if (classInfo->min_int > m_pPlayerAbility->GetBaseInt()) {
         return 9;
     }
-    if (kind->wNeedVit > cltPlayerAbility::GetBaseVit(m_pPlayerAbility)) {
-        cltItemList_dtor(itemList);
+    if (classInfo->min_con > m_pPlayerAbility->GetBaseVit()) {
         return 10;
     }
-    if (kind->wNeedSwordLesson > cltLessonSystem::GetSwordLessonPt(m_pLessonSystem)) {
-        cltItemList_dtor(itemList);
+    if (classInfo->mastery_sword > m_pLessonSystem->GetSwordLessonPt()) {
         return 11;
     }
-    if (kind->wNeedBowLesson > cltLessonSystem::GetBowLessonPt(m_pLessonSystem)) {
-        cltItemList_dtor(itemList);
+    if (classInfo->mastery_magic > m_pLessonSystem->GetBowLessonPt()) {
         return 12;
     }
-    if (kind->wNeedTheologyLesson > cltLessonSystem::GetTheologyLessonPt(m_pLessonSystem)) {
-        cltItemList_dtor(itemList);
+    if (classInfo->mastery_priest > m_pLessonSystem->GetTheologyLessonPt()) {
         return 13;
     }
-    if (kind->wNeedMagicLesson > cltLessonSystem::GetMagicLessonPt(m_pLessonSystem)) {
-        cltItemList_dtor(itemList);
+    if (classInfo->mastery_archery > m_pLessonSystem->GetMagicLessonPt()) {
         return 14;
     }
 
-    if (kind->wNeedItemCode1) {
-        cltItemList::AddItem(static_cast<int>(reinterpret_cast<std::intptr_t>(itemList)), kind->wNeedItemCode1, kind->wNeedItemCount1, 0, 0, 0xFFFFu, 0);
+    if (classInfo->item1_code) {
+        requiredItems.AddItem(classInfo->item1_code, classInfo->item1_count, 0, 0, 0xFFFFu, nullptr);
     }
-    if (kind->wNeedItemCode2) {
-        cltItemList::AddItem(static_cast<int>(reinterpret_cast<std::intptr_t>(itemList)), kind->wNeedItemCode2, kind->wNeedItemCount2, 0, 0, 0xFFFFu, 0);
+    if (classInfo->item2_code) {
+        requiredItems.AddItem(classInfo->item2_code, classInfo->item2_count, 0, 0, 0xFFFFu, nullptr);
     }
     for (int i = 0; i < extraItemCount; ++i) {
-        cltItemList::AddItem(static_cast<int>(reinterpret_cast<std::intptr_t>(itemList)), extraItemCodes[i], extraItemCounts[i], 0, 0, 0xFFFFu, 0);
+        requiredItems.AddItem(extraItemCodes[i], extraItemCounts[i], 0, 0, 0xFFFFu, nullptr);
     }
 
-    const int canAdd = cltBaseInventory::CanAddInventoryItems(m_pBaseInventory, itemList);
-    cltItemList_dtor(itemList);
-    if (canAdd) {
+    if (m_pBaseInventory->CanAddInventoryItems(&requiredItems)) {
         return 103;
     }
     return 0;
 }
 
 void cltClassSystem::UpgradeClass(
-    std::uint16_t classCode,
-    int a3,
+    std::uint16_t targetClassCode,
+    int sealedTimeValue,
     int extraItemCount,
     std::uint16_t* extraItemCodes,
     std::uint16_t* extraItemCounts,
-    std::uint8_t* outFlags,
-    cltItemList* outItemList) {
-    std::uint8_t temp[kItemListObjectSize] = {};
-    auto* localList = reinterpret_cast<cltItemList*>(temp);
-    cltItemList_ctor(localList);
+    std::uint8_t* inventoryChangeFlags,
+    cltItemList* externalItemList) {
 
-    SetClass(classCode);
-    strClassKindInfo* kind = cltClassKindInfo::GetClassKindInfo(m_pstClassKindInfo, classCode);
-    if (kind) {
-        cltItemList* targetList = outItemList ? outItemList : localList;
+    cltItemList localItemList;
 
-        if (kind->wNeedItemCode1) {
-            cltItemList::AddItem(static_cast<int>(reinterpret_cast<std::intptr_t>(targetList)), kind->wNeedItemCode1, kind->wNeedItemCount1, 0, 0, 0xFFFFu, 0);
+    SetClass(targetClassCode);
+    strClassKindInfo* classInfo = m_pstClassKindInfo->GetClassKindInfo(targetClassCode);
+    if (classInfo) {
+        cltItemList* targetList = externalItemList ? externalItemList : &localItemList;
+
+        if (classInfo->item1_code) {
+            targetList->AddItem(classInfo->item1_code, classInfo->item1_count, 0, 0, 0xFFFFu, nullptr);
         }
-        if (kind->wNeedItemCode2) {
-            cltItemList::AddItem(static_cast<int>(reinterpret_cast<std::intptr_t>(targetList)), kind->wNeedItemCode2, kind->wNeedItemCount2, 0, 0, 0xFFFFu, 0);
+        if (classInfo->item2_code) {
+            targetList->AddItem(classInfo->item2_code, classInfo->item2_count, 0, 0, 0xFFFFu, nullptr);
         }
 
         for (int i = 0; i < extraItemCount; ++i) {
-            int opt = 0;
-            if ((*reinterpret_cast<std::uint16_t*>(static_cast<std::uint8_t*>(cltItemKindInfo::GetItemKindInfo(m_pclItemKindInfo, extraItemCodes[i])) + 60)) != 0) {
-                opt = a3;
+            int timeValue = 0;
+            stItemKindInfo* itemInfo = m_pclItemKindInfo->GetItemKindInfo(extraItemCodes[i]);
+            if (itemInfo && itemInfo->m_wUseTerm != 0) {
+                timeValue = sealedTimeValue;
             }
-            cltItemList::AddItem(static_cast<int>(reinterpret_cast<std::intptr_t>(targetList)), extraItemCodes[i], extraItemCounts[i], opt, 0, 0xFFFFu, 0);
+            targetList->AddItem(extraItemCodes[i], extraItemCounts[i], timeValue, 0, 0xFFFFu, nullptr);
         }
 
-        cltBaseInventory::AddInventoryItem(m_pBaseInventory, targetList, outFlags);
-        cltEmblemSystem::OnEvent_ChangeClass(m_pEmblemSystem);
+        m_pBaseInventory->AddInventoryItem(targetList, inventoryChangeFlags);
+        m_pEmblemSystem->OnEvent_ChangeClass();
     }
-
-    cltItemList_dtor(localList);
 }
 
-BOOL cltClassSystem::CanResetClass(std::uint16_t classCode) {
-    if (cltUsingSkillSystem::GetUsingSkillNum(m_pUsingSkillSystem)) {
+BOOL cltClassSystem::CanResetClass(std::uint16_t targetClassCode) {
+    if (m_pUsingSkillSystem->GetUsingSkillNum()) {
         return 0;
     }
-    if (cltWorkingPassiveSkillSystem::GetWorkingSkillNum(m_pWorkingPassiveSkillSystem)) {
+    if (m_pWorkingPassiveSkillSystem->GetWorkingSkillNum()) {
         return 0;
     }
-    if (cltEquipmentSystem::IsEquipedBattleItem(m_pEquipmentSystem) == 1) {
+    if (m_pEquipmentSystem->IsEquipedBattleItem() == 1) {
         return 0;
     }
-    if (GetClass() == classCode) {
+    if (GetClass() == targetClassCode) {
         return 0;
     }
 
-    return classCode == cltClassKindInfo::TranslateKindCode(const_cast<char*>(kFighterCode))
-        || classCode == cltClassKindInfo::TranslateKindCode(const_cast<char*>("ARC"))
-        || classCode == cltClassKindInfo::TranslateKindCode(const_cast<char*>("MAG"))
-        || classCode == cltClassKindInfo::TranslateKindCode(const_cast<char*>("CLA"));
+    return targetClassCode == cltClassKindInfo::TranslateKindCode(const_cast<char*>("FIG"))
+        || targetClassCode == cltClassKindInfo::TranslateKindCode(const_cast<char*>("ARC"))
+        || targetClassCode == cltClassKindInfo::TranslateKindCode(const_cast<char*>("MAG"))
+        || targetClassCode == cltClassKindInfo::TranslateKindCode(const_cast<char*>("CLA"));
 }
 
-void cltClassSystem::ResetClass(std::uint16_t classCode) {
-    SetClass(classCode);
-    cltQuickSlotSystem::OnClassReseted(m_pQuickSlotSystem);
-    cltSkillSystem::UpdateValidity(m_pSkillSystem);
+void cltClassSystem::ResetClass(std::uint16_t targetClassCode) {
+    SetClass(targetClassCode);
+    m_pQuickSlotSystem->OnClassReseted();
+    m_pSkillSystem->UpdateValidity();
 }
 
 std::uint16_t cltClassSystem::GetUpgradeableClasses(std::uint16_t* outClassCodes, std::uint16_t maxCount) {
-    std::uint16_t count = 0;
-    unsigned int i = 0;
-    if (!cltClassKindInfo::GetTotalClassNum(m_pstClassKindInfo)) {
+    std::uint16_t foundCount = 0;
+    unsigned int index = 0;
+    if (!m_pstClassKindInfo->GetTotalClassNum()) {
         return 0;
     }
 
     do {
-        auto* info = reinterpret_cast<std::uint16_t*>(cltClassKindInfo::GetClassKindInfoByIndex(m_pstClassKindInfo, i));
-        if (info[10] == m_wClassCode && maxCount > count) {
-            outClassCodes[count++] = *info;
+        strClassKindInfo* classInfo = m_pstClassKindInfo->GetClassKindInfoByIndex(index);
+        if (classInfo && classInfo->from_class == m_wClassCode && maxCount > foundCount) {
+            outClassCodes[foundCount++] = classInfo->kind;
         }
-        ++i;
-    } while (i < cltClassKindInfo::GetTotalClassNum(m_pstClassKindInfo));
+        ++index;
+    } while (index < m_pstClassKindInfo->GetTotalClassNum());
 
-    return count;
+    return foundCount;
 }
 
 std::uint16_t cltClassSystem::GetMaxHPConstant() {
-    const int level = m_pClassKindInfo->byClassLevel;
-    if (level == 1) return 4;
-    if (level == 2) return 5;
+    const int classLevel = m_pClassKindInfo->job_step;
+    if (classLevel == 1) return 4;
+    if (classLevel == 2) return 5;
     return 3;
 }
 
 std::uint16_t cltClassSystem::GetMaxManaConstant() {
-    const int level = m_pClassKindInfo->byClassLevel;
-    if (level == 1) return 5;
-    if (level == 2) return 6;
+    const int classLevel = m_pClassKindInfo->job_step;
+    if (classLevel == 1) return 5;
+    if (classLevel == 2) return 6;
     return 4;
 }
 
 std::uint16_t cltClassSystem::GetAPowerConstant() {
-    const int level = m_pClassKindInfo->byClassLevel;
-    if (level == 1) return 150;
-    if (level == 2) return 200;
+    const int classLevel = m_pClassKindInfo->job_step;
+    if (classLevel == 1) return 150;
+    if (classLevel == 2) return 200;
     return 100;
 }
 
 std::uint16_t cltClassSystem::GetDPowerConstant() {
-    const int level = m_pClassKindInfo->byClassLevel;
-    if (level == 1) return 120;
-    if (level == 2) return 150;
+    const int classLevel = m_pClassKindInfo->job_step;
+    if (classLevel == 1) return 120;
+    if (classLevel == 2) return 150;
     return 100;
 }
 
 BOOL cltClassSystem::IsFighterClass() {
-    strClassKindInfo* kind = m_pClassKindInfo;
-    for (std::uint16_t root = kind->wNeedClassCode; root; root = kind->wNeedClassCode) {
-        kind = cltClassKindInfo::GetClassKindInfo(m_pstClassKindInfo, root);
+    strClassKindInfo* rootClass = m_pClassKindInfo;
+    for (std::uint16_t parentCode = rootClass->from_class; parentCode; parentCode = rootClass->from_class) {
+        rootClass = m_pstClassKindInfo->GetClassKindInfo(parentCode);
     }
-    return kind->wClassCode == cltClassKindInfo::TranslateKindCode(const_cast<char*>(kFighterCode));
+    return rootClass->kind == cltClassKindInfo::TranslateKindCode(const_cast<char*>("FIG"));
 }
 
 BOOL cltClassSystem::IsArcherClass() {
-    strClassKindInfo* kind = m_pClassKindInfo;
-    for (std::uint16_t root = kind->wNeedClassCode; root; root = kind->wNeedClassCode) {
-        kind = cltClassKindInfo::GetClassKindInfo(m_pstClassKindInfo, root);
+    strClassKindInfo* rootClass = m_pClassKindInfo;
+    for (std::uint16_t parentCode = rootClass->from_class; parentCode; parentCode = rootClass->from_class) {
+        rootClass = m_pstClassKindInfo->GetClassKindInfo(parentCode);
     }
-    return kind->wClassCode == cltClassKindInfo::TranslateKindCode(const_cast<char*>("ARC"));
+    return rootClass->kind == cltClassKindInfo::TranslateKindCode(const_cast<char*>("ARC"));
 }
 
 BOOL cltClassSystem::IsMageClass() {
-    strClassKindInfo* kind = m_pClassKindInfo;
-    for (std::uint16_t root = kind->wNeedClassCode; root; root = kind->wNeedClassCode) {
-        kind = cltClassKindInfo::GetClassKindInfo(m_pstClassKindInfo, root);
+    strClassKindInfo* rootClass = m_pClassKindInfo;
+    for (std::uint16_t parentCode = rootClass->from_class; parentCode; parentCode = rootClass->from_class) {
+        rootClass = m_pstClassKindInfo->GetClassKindInfo(parentCode);
     }
-    return kind->wClassCode == cltClassKindInfo::TranslateKindCode(const_cast<char*>("MAG"));
+    return rootClass->kind == cltClassKindInfo::TranslateKindCode(const_cast<char*>("MAG"));
 }
 
 BOOL cltClassSystem::IsClericClass() {
-    strClassKindInfo* kind = m_pClassKindInfo;
-    for (std::uint16_t root = kind->wNeedClassCode; root; root = kind->wNeedClassCode) {
-        kind = cltClassKindInfo::GetClassKindInfo(m_pstClassKindInfo, root);
+    strClassKindInfo* rootClass = m_pClassKindInfo;
+    for (std::uint16_t parentCode = rootClass->from_class; parentCode; parentCode = rootClass->from_class) {
+        rootClass = m_pstClassKindInfo->GetClassKindInfo(parentCode);
     }
-    return kind->wClassCode == cltClassKindInfo::TranslateKindCode(const_cast<char*>("CLA"));
+    return rootClass->kind == cltClassKindInfo::TranslateKindCode(const_cast<char*>("CLA"));
 }
 
-std::uint8_t cltClassSystem::GetClassLevel() { return m_pClassKindInfo->byClassLevel; }
+std::uint8_t cltClassSystem::GetClassLevel() {
+    return m_pClassKindInfo->job_step;
+}
 
-int cltClassSystem::GetDefaultBuffNum() { return static_cast<int>(m_pClassKindInfo->dwDefaultBuffNum); }
+int cltClassSystem::GetDefaultBuffNum() {
+    return static_cast<int>(m_pClassKindInfo->base_buff_uses);
+}

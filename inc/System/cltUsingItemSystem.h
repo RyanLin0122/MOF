@@ -17,7 +17,16 @@ typedef unsigned int _DWORD;
 typedef unsigned short _WORD;
 
 struct stItemKindInfo;
-struct strUsingItemInfo;
+struct strUsingItemInfo {
+    std::uint16_t itemKind = 0;
+    std::uint16_t reserved = 0;
+    std::uint32_t timerId = 0;
+    std::uint32_t value0 = 0;
+    std::uint16_t addStr = 0;
+    std::uint16_t addDex = 0;
+    std::uint16_t addInt = 0;
+    std::uint16_t addVit = 0;
+};
 class cltItemKindInfo;
 class cltPandoraKindInfo;
 class cltPetKindInfo;
@@ -117,5 +126,27 @@ public:
     static void (*m_pExternUsingItemPollFuncPtr)(unsigned int, unsigned int);
     static void (*m_pExternUsingItemCustomFuncPtr)(unsigned int, unsigned int);
     static void (*m_pExternUsingItemTimeOutFuncPtr)(unsigned int, unsigned int);
+
+private:
+    void* m_pOwner = nullptr;
+    cltBaseInventory* m_pBaseInventory = nullptr;
+    cltPlayerAbility* m_pPlayerAbility = nullptr;
+    cltSpecialtySystem* m_pSpecialtySystem = nullptr;
+    cltMakingItemSystem* m_pMakingItemSystem = nullptr;
+    cltUsingSkillSystem* m_pUsingSkillSystem = nullptr;
+    cltWorkingPassiveSkillSystem* m_pWorkingPassiveSkillSystem = nullptr;
+    cltEmblemSystem* m_pEmblemSystem = nullptr;
+    cltSkillSystem* m_pSkillSystem = nullptr;
+    cltClassSystem* m_pClassSystem = nullptr;
+    cltSexSystem* m_pSexSystem = nullptr;
+    cltEquipmentSystem* m_pEquipmentSystem = nullptr;
+    cltBasicAppearSystem* m_pBasicAppearSystem = nullptr;
+    cltPetSystem* m_pPetSystem = nullptr;
+    cltMyItemSystem* m_pMyItemSystem = nullptr;
+    cltMarriageSystem* m_pMarriageSystem = nullptr;
+    strUsingItemInfo m_usingItems[10]{};
+    int m_changeCoinSuccessRate = 0;
+    int m_changeCoinRateA = 0;
+    int m_changeCoinRateB = 0;
 };
 

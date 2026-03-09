@@ -1,5 +1,6 @@
 #pragma once
 
+#include <array>
 #include <cstdint>
 
 typedef int BOOL;
@@ -8,8 +9,22 @@ typedef unsigned short _WORD;
 typedef unsigned int _DWORD;
 
 struct stItemKindInfo;
-struct strInventoryItem;
-struct strInventoryItemForSort;
+
+struct strInventoryItem {
+    std::uint16_t itemKind = 0;
+    std::uint16_t itemQty = 0;
+    std::uint32_t value0 = 0;
+    std::uint32_t value1 = 0;
+};
+
+struct strInventoryItemForSort {
+    std::uint16_t sortKey = 0;
+    std::uint16_t itemKind = 0;
+    std::uint32_t value0 = 0;
+    std::uint32_t value1 = 0;
+    std::uint16_t itemPos = 0;
+    std::uint16_t pad = 0;
+};
 class cltItemList;
 class cltQuickSlotSystem;
 class cltTitleSystem;
@@ -94,6 +109,18 @@ public:
     static cltItemKindInfo* m_pclItemKindInfo;
     static DCTTextManager* m_pclTextManager;
     static void (*m_pExternCriticalErrorFuncPtr)(char*, char*, unsigned int);
+
+private:
+    int m_lockToken = 0;
+    int m_isLocked = 0;
+    char m_lockReason[1024]{};
+    std::uint32_t m_lockTick = 0;
+    std::uint8_t m_genericBagNum = 1;
+    std::uint8_t m_padding1041[3]{};
+    cltQuickSlotSystem* m_pQuickSlotSystem = nullptr;
+    cltTitleSystem* m_pTitleSystem = nullptr;
+    cltPetSystem* m_pPetSystem = nullptr;
+    std::array<strInventoryItem, 255> m_inventoryItems{};
 };
 
 int comp_arry_kind_up(const void* a1, const void* a2);

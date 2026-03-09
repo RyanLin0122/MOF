@@ -1,4 +1,4 @@
-#include "CMoFNetwork.h"
+#include "Network/CMoFNetwork.h"
 
 CMoFNetwork *__thiscall CMoFNetwork::CMoFNetwork(CMoFNetwork *this)
 {

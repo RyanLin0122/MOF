@@ -4,30 +4,7 @@
 
 using BOOL = int;
 
-struct strClassKindInfo {
-    std::uint16_t wClassCode;                 // +0
-    std::uint8_t pad02[16];                   // +2
-    std::uint8_t byClassLevel;                // +18
-    std::uint8_t pad13;                       // +19
-    std::uint16_t wNeedClassCode;             // +20
-    std::uint8_t byNeedLevel;                 // +22
-    std::uint8_t pad17;                       // +23
-    std::uint16_t wNeedStr;                   // +24
-    std::uint16_t wNeedDex;                   // +26
-    std::uint16_t wNeedVit;                   // +28
-    std::uint16_t wNeedInt;                   // +30
-    std::uint16_t wNeedSwordLesson;           // +32
-    std::uint16_t wNeedBowLesson;             // +34
-    std::uint16_t wNeedMagicLesson;           // +36
-    std::uint16_t wNeedTheologyLesson;        // +38
-    std::uint8_t pad28[12];                   // +40
-    std::uint16_t wNeedItemCode1;             // +52
-    std::uint16_t wNeedItemCount1;            // +54
-    std::uint16_t wNeedItemCode2;             // +56
-    std::uint16_t wNeedItemCount2;            // +58
-    std::uint32_t dwDefaultBuffNum;           // +60
-};
-
+struct strClassKindInfo;
 class cltClassKindInfo;
 class cltItemKindInfo;
 class cltLevelSystem;
@@ -66,22 +43,22 @@ public:
     std::uint16_t GetClass();
 
     unsigned int CanUpgradeClass(
-        std::uint16_t classCode,
+        std::uint16_t targetClassCode,
         int extraItemCount,
         std::uint16_t* extraItemCodes,
         std::uint16_t* extraItemCounts);
 
     void UpgradeClass(
-        std::uint16_t classCode,
-        int a3,
+        std::uint16_t targetClassCode,
+        int sealedTimeValue,
         int extraItemCount,
         std::uint16_t* extraItemCodes,
         std::uint16_t* extraItemCounts,
-        std::uint8_t* outFlags,
-        cltItemList* outItemList);
+        std::uint8_t* inventoryChangeFlags,
+        cltItemList* externalItemList);
 
-    BOOL CanResetClass(std::uint16_t classCode);
-    void ResetClass(std::uint16_t classCode);
+    BOOL CanResetClass(std::uint16_t targetClassCode);
+    void ResetClass(std::uint16_t targetClassCode);
 
     std::uint16_t GetUpgradeableClasses(std::uint16_t* outClassCodes, std::uint16_t maxCount);
 

@@ -1,5 +1,6 @@
 #pragma once
 
+#include <array>
 #include <cstdint>
 
 #ifndef __int8
@@ -19,7 +20,12 @@ typedef unsigned int _DWORD;
 
 struct stItemKindInfo;
 struct strInventoryItem;
-struct stEquipItemInfo;
+struct stEquipItemInfo {
+    std::uint16_t itemKind = 0;
+    std::uint16_t reserved = 0;
+    std::uint32_t itemTime = 0;
+    std::uint32_t sealedStatus = 0;
+};
 class cltItemKindInfo;
 class cltClassKindInfo;
 class cltSexSystem;
@@ -94,5 +100,23 @@ public:
     static unsigned int* m_dwEquipAtbForFashion;
     static unsigned int* m_dwEquipAtbForBattle;
     static unsigned __int16* m_wFashionFullSetEffectedKinds;
+
+public:
+    cltLevelSystem* m_pLevelSystem = nullptr;
+    cltClassSystem* m_pClassSystem = nullptr;
+    cltSexSystem* m_pSexSystem = nullptr;
+    cltPlayerAbility* m_pPlayerAbility = nullptr;
+    cltBaseInventory* m_pBaseInventory = nullptr;
+    cltSkillSystem* m_pSkillSystem = nullptr;
+    CPlayerSpirit* m_pPlayerSpirit = nullptr;
+    cltBasicAppearSystem* m_pBasicAppearSystem = nullptr;
+    std::array<std::uint16_t, 11> m_fashionItemKinds{};
+    std::array<std::uint16_t, 11> m_battleItemKinds{};
+    std::array<std::uint32_t, 11> m_fashionValidity{};
+    std::array<std::uint32_t, 11> m_battleValidity{};
+    std::array<std::uint32_t, 11> m_fashionItemTimes{};
+    std::array<std::uint32_t, 11> m_battleItemTimes{};
+    std::array<std::uint32_t, 11> m_fashionSealStates{};
+    std::array<std::uint32_t, 11> m_battleSealStates{};
 };
 
