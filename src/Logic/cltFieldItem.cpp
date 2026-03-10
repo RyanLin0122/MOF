@@ -3,8 +3,10 @@
 #include <algorithm>
 #include <cmath>
 #include <cstring>
+#include <windows.h>
 
 #include "Info/cltItemKindInfo.h"
+#include "global.h"
 
 cltItemKindInfo* cltFieldItem::m_pclItemKindInfo = nullptr;
 Map* cltFieldItem::m_pMap = nullptr;
@@ -215,7 +217,11 @@ int cltFieldItemManager::GetNearItemInfo(float x, float y, uint16_t* outFieldIte
 }
 
 void cltFieldItemManager::SetSysMsg(int textID) {
-    m_lastSysMsgTick = static_cast<std::uint32_t>(textID);
+    const std::uint32_t now = timeGetTime();
+    if (now - m_lastSysMsgTick > 5000) {
+        m_lastSysMsgTick = now;
+        (void)g_DCTTextManager.GetText(textID);
+    }
 }
 
 cltFieldItem* cltFieldItemManager::GetFieldItem(uint16_t fieldItemID) {
@@ -228,10 +234,12 @@ cltFieldItem* cltFieldItemManager::GetFieldItem(uint16_t fieldItemID) {
 }
 
 int cltFieldItemManager::DelTempBufferItem(uint16_t fieldItemID) {
-    for (std::uint8_t bufferIndex = 0; bufferIndex < m_tempBufferCount; ++bufferIndex) {
+    for (std::uint8_t bufferIndex = 0; bufferIndex < 200; ++bufferIndex) {
         if (m_tempBuffer[bufferIndex].fieldItemID == fieldItemID) {
-            std::memmove(&m_tempBuffer[bufferIndex], &m_tempBuffer[bufferIndex + 1], (m_tempBufferCount - bufferIndex - 1) * sizeof(cltFieldItemBufferEntry));
-            --m_tempBufferCount;
+            std::memset(&m_tempBuffer[bufferIndex], 0, sizeof(cltFieldItemBufferEntry));
+            if (m_tempBufferCount > 0) {
+                --m_tempBufferCount;
+            }
             return 1;
         }
     }
@@ -239,16 +247,27 @@ int cltFieldItemManager::DelTempBufferItem(uint16_t fieldItemID) {
 }
 
 void cltFieldItemManager::PushBuffer(uint32_t accountID, uint16_t fieldItemID, int itemCount, uint16_t itemID, uint16_t itemInfo, uint8_t moveType) {
-    if (m_tempBufferCount >= 200) {
+    if (m_tempBufferCount > 200 || accountID == 0) {
         return;
     }
-    cltFieldItemBufferEntry& bufferEntry = m_tempBuffer[m_tempBufferCount++];
+
+    std::uint8_t targetIndex = 0;
+    while (targetIndex < 200 && m_tempBuffer[targetIndex].accountID != 0) {
+        ++targetIndex;
+    }
+
+    if (targetIndex >= 200) {
+        return;
+    }
+
+    cltFieldItemBufferEntry& bufferEntry = m_tempBuffer[targetIndex];
     bufferEntry.accountID = accountID;
     bufferEntry.fieldItemID = fieldItemID;
     bufferEntry.itemCount = itemCount;
     bufferEntry.itemID = itemID;
     bufferEntry.itemInfo = itemInfo;
     bufferEntry.moveType = moveType;
+    ++m_tempBufferCount;
 }
 
 void cltFieldItemManager::PopBuffer(uint32_t accountID) {

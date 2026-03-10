@@ -6,6 +6,7 @@
 #include "Network/CMofMsg.h"
 #include "Logic/cltBaseInventory.h"
 #include "Info/cltItemKindInfo.h"
+#include "Info/cltSkillKindInfo.h"
 
 cltItemKindInfo* cltQuickSlotSystem::m_pclItemKindInfo = nullptr;
 cltSkillKindInfo* cltQuickSlotSystem::m_pclSkillKindInfo = nullptr;
@@ -22,8 +23,20 @@ bool IsItemSlot(std::uint32_t rawSlotValue) {
     return (rawSlotValue & kQuickSlotTypeMask) == kQuickSlotItemTag;
 }
 
+bool IsSkillSlot(std::uint32_t rawSlotValue) {
+    return (rawSlotValue & kQuickSlotTypeMask) == kQuickSlotSkillTag;
+}
+
 std::uint16_t GetPayload(std::uint32_t rawSlotValue) {
     return static_cast<std::uint16_t>(rawSlotValue);
+}
+
+std::uint16_t GetPreSkillKind(const stSkillKindInfo* skillInfo) {
+    if (!skillInfo) {
+        return 0;
+    }
+
+    return *reinterpret_cast<const std::uint16_t*>(skillInfo->raw + 70);
 }
 }
 
@@ -62,7 +75,7 @@ void cltQuickSlotSystem::Initialize(cltBaseInventory* baseInventory, cltMyItemSy
         if (IsItemSlot(rawSlotValue) && m_pBaseInventory) {
             auto* inventoryItem = m_pBaseInventory->GetInventoryItem(GetPayload(rawSlotValue));
             if (!inventoryItem || !inventoryItem->itemKind) {
-                OnItemOuted(static_cast<std::uint8_t>(GetPayload(rawSlotValue)), pageIndex);
+                OnItemOuted(static_cast<std::uint8_t>(GetPayload(rawSlotValue)), 0xFFFF);
             }
         }
     }
@@ -105,6 +118,9 @@ stItemKindInfo* cltQuickSlotSystem::AddForItem(unsigned int pageIndex, unsigned 
 
     stItemKindInfo* itemInfo = m_pclItemKindInfo->GetItemKindInfo(inventoryItem->itemKind);
     if (!itemInfo) {
+        return nullptr;
+    }
+    if (!m_pclItemKindInfo->IsQuickSlotItem(inventoryItem->itemKind)) {
         return nullptr;
     }
 
@@ -193,18 +209,18 @@ void cltQuickSlotSystem::OnItemMoved(std::uint8_t sourceInventorySlotIndex, std:
 
 void cltQuickSlotSystem::OnItemOuted(std::uint8_t inventorySlotIndex, int pageIndex) {
     const std::uint32_t targetRawSlotValue = kQuickSlotItemTag | inventorySlotIndex;
-    if (pageIndex >= 0 && pageIndex < kQuickSlotPageCount) {
-        for (int slotIndex = 0; slotIndex < kQuickSlotEntriesPerPage; ++slotIndex) {
-            if (m_slotValues[pageIndex][slotIndex] == targetRawSlotValue) {
-                m_slotValues[pageIndex][slotIndex] = 0;
-                SetChange(pageIndex, slotIndex);
-            }
-        }
+
+    if (m_pclItemKindInfo && m_pclItemKindInfo->IsQuickSlotRelinkableItem(static_cast<std::uint16_t>(pageIndex))
+        && OnRelinkItem(targetRawSlotValue, pageIndex)) {
         return;
     }
 
     for (int currentPageIndex = 0; currentPageIndex < kQuickSlotPageCount; ++currentPageIndex) {
-        OnItemOuted(inventorySlotIndex, currentPageIndex);
+        for (int slotIndex = 0; slotIndex < kQuickSlotEntriesPerPage; ++slotIndex) {
+            if (m_slotValues[currentPageIndex][slotIndex] == targetRawSlotValue) {
+                Del(currentPageIndex, slotIndex);
+            }
+        }
     }
 }
 
@@ -220,12 +236,31 @@ void cltQuickSlotSystem::OnSkillDeleted(std::uint16_t skillKind) {
     }
 }
 
-void cltQuickSlotSystem::OnSkillAdded(std::uint16_t skillKind) {}
+void cltQuickSlotSystem::OnSkillAdded(std::uint16_t skillKind) {
+    if (!m_pclSkillKindInfo) {
+        return;
+    }
+
+    stSkillKindInfo* skillInfo = m_pclSkillKindInfo->GetSkillKindInfo(skillKind);
+    const std::uint16_t preSkillKind = GetPreSkillKind(skillInfo);
+    if (!preSkillKind) {
+        return;
+    }
+
+    for (int pageIndex = 0; pageIndex < kQuickSlotPageCount; ++pageIndex) {
+        for (int slotIndex = 0; slotIndex < kQuickSlotEntriesPerPage; ++slotIndex) {
+            if (IsSkillSlot(m_slotValues[pageIndex][slotIndex]) && GetPayload(m_slotValues[pageIndex][slotIndex]) == preSkillKind) {
+                m_slotValues[pageIndex][slotIndex] = kQuickSlotSkillTag | skillKind;
+                SetChange(pageIndex, slotIndex);
+            }
+        }
+    }
+}
 
 void cltQuickSlotSystem::OnClassReseted() {
     for (int pageIndex = 0; pageIndex < kQuickSlotPageCount; ++pageIndex) {
         for (int slotIndex = 0; slotIndex < kQuickSlotEntriesPerPage; ++slotIndex) {
-            if (!IsItemSlot(m_slotValues[pageIndex][slotIndex])) {
+            if (IsSkillSlot(m_slotValues[pageIndex][slotIndex])) {
                 m_slotValues[pageIndex][slotIndex] = 0;
                 SetChange(pageIndex, slotIndex);
             }
@@ -275,22 +310,39 @@ void cltQuickSlotSystem::GetQuickSlotInfoForDBQuery(char* buffer) {
     m_hasPendingChange = 0;
 }
 
-void cltQuickSlotSystem::OnPremiumQuickSlotEnabled() {}
-
-void cltQuickSlotSystem::OnPremiumQuickSlotDisabled() {}
-
-int cltQuickSlotSystem::OnRelinkItem(unsigned int pageIndex, int inventorySlotIndex) {
-    if (pageIndex >= kQuickSlotPageCount || inventorySlotIndex < 0) {
-        return 0;
-    }
-    for (int slotIndex = 0; slotIndex < kQuickSlotEntriesPerPage; ++slotIndex) {
-        if (IsItemSlot(m_slotValues[pageIndex][slotIndex])) {
-            m_slotValues[pageIndex][slotIndex] = kQuickSlotItemTag | static_cast<std::uint16_t>(inventorySlotIndex);
-            SetChange(static_cast<int>(pageIndex), slotIndex);
-            return 1;
+void cltQuickSlotSystem::OnPremiumQuickSlotEnabled() {
+    for (int pageIndex = 0; pageIndex < kQuickSlotPageCount; ++pageIndex) {
+        for (int slotIndex = 0; slotIndex < kQuickSlotEntriesPerPage; ++slotIndex) {
+            m_slotValues[pageIndex][slotIndex] = 0;
+            SetChange(pageIndex, slotIndex);
         }
     }
-    return 0;
+}
+
+void cltQuickSlotSystem::OnPremiumQuickSlotDisabled() {
+    OnPremiumQuickSlotEnabled();
+}
+
+int cltQuickSlotSystem::OnRelinkItem(unsigned int sourceRawSlotValue, int itemKind) {
+    if (!m_pBaseInventory || itemKind < 0) {
+        return 0;
+    }
+
+    const int firstItemSlotIndex = m_pBaseInventory->FindFirstItem(itemKind);
+    if (firstItemSlotIndex < 0) {
+        return 0;
+    }
+
+    const std::uint32_t targetRawSlotValue = kQuickSlotItemTag | static_cast<std::uint16_t>(firstItemSlotIndex);
+    for (int pageIndex = 0; pageIndex < kQuickSlotPageCount; ++pageIndex) {
+        for (int slotIndex = 0; slotIndex < kQuickSlotEntriesPerPage; ++slotIndex) {
+            if (m_slotValues[pageIndex][slotIndex] == sourceRawSlotValue) {
+                m_slotValues[pageIndex][slotIndex] = targetRawSlotValue;
+                SetChange(pageIndex, slotIndex);
+            }
+        }
+    }
+    return 1;
 }
 
 void cltQuickSlotSystem::SetChange(int pageIndex, int slotIndex) {
