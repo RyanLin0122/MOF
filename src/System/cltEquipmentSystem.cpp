@@ -23,6 +23,24 @@ constexpr int kEquipSlotCount = 11;
 constexpr unsigned int kFashionEquipType = 0;
 constexpr unsigned int kBattleEquipType = 1;
 
+constexpr std::array<unsigned int, kEquipSlotCount> kFashionEquipAtbBySlot = {
+    EQUIP_ATB_F_CAP, EQUIP_ATB_F_EYE,      EQUIP_ATB_F_FACE,   EQUIP_ATB_F_MANTEAU,
+    EQUIP_ATB_F_SHIRTS, EQUIP_ATB_F_PANTS, EQUIP_ATB_F_GLOVE,  EQUIP_ATB_F_SHOES,
+    EQUIP_ATB_F_HAIR,   EQUIP_ATB_F_NAMETAG, EQUIP_ATB_F_CHATBALLON,
+};
+
+constexpr std::array<unsigned int, kEquipSlotCount> kBattleEquipAtbBySlot = {
+    EQUIP_ATB_B_CAP,   EQUIP_ATB_B_RING,    EQUIP_ATB_B_NECKLACE, EQUIP_ATB_B_WEAPON_OH,
+    EQUIP_ATB_B_WEAPON_TH, EQUIP_ATB_B_SHIELD, EQUIP_ATB_B_ARMOR, EQUIP_ATB_B_LEGGIN,
+    EQUIP_ATB_B_GLOVE, EQUIP_ATB_B_SHOES,   EQUIP_ATB_B_SPIRIT,
+};
+
+constexpr std::array<unsigned __int16, 4> kFashionFullSetEffectedKinds = {4, 5, 6, 7};
+
+bool IsEquipTypeValid(unsigned int equipType) {
+    return equipType == kFashionEquipType || equipType == kBattleEquipType;
+}
+
 const std::array<unsigned int, kEquipSlotCount>& GetValidityArray(const cltEquipmentSystem* self, unsigned int equipType) {
     return equipType == kFashionEquipType ? self->m_fashionValidity : self->m_battleValidity;
 }
@@ -59,6 +77,9 @@ std::array<std::uint32_t, kEquipSlotCount>& GetSealStateArray(cltEquipmentSystem
 void cltEquipmentSystem::InitializeStaticVariable(cltItemKindInfo* itemKindInfo, cltClassKindInfo* classKindInfo) {
     m_pclItemKindInfo = itemKindInfo;
     m_pclClassKindInfo = classKindInfo;
+    m_dwEquipAtbForFashion = const_cast<unsigned int*>(kFashionEquipAtbBySlot.data());
+    m_dwEquipAtbForBattle = const_cast<unsigned int*>(kBattleEquipAtbBySlot.data());
+    m_wFashionFullSetEffectedKinds = const_cast<unsigned __int16*>(kFashionFullSetEffectedKinds.data());
 }
 
 cltEquipmentSystem::cltEquipmentSystem() = default;
@@ -160,29 +181,158 @@ void cltEquipmentSystem::Free() {
 }
 
 strInventoryItem* cltEquipmentSystem::CanEquipItem(int equipType, unsigned __int16 inventorySlotIndex) {
-    if (!m_pBaseInventory) {
+    if (!IsEquipTypeValid(static_cast<unsigned int>(equipType)) || !m_pBaseInventory) {
         return nullptr;
     }
-    return m_pBaseInventory->GetInventoryItem(inventorySlotIndex);
+
+    if (!m_pBaseInventory->CanDelInventoryItem(inventorySlotIndex, 1)) {
+        return nullptr;
+    }
+
+    auto* inventoryItem = m_pBaseInventory->GetInventoryItem(inventorySlotIndex);
+    if (!inventoryItem) {
+        return nullptr;
+    }
+
+    return CanEquipItemByItemKind(equipType, inventoryItem->itemKind) ? inventoryItem : nullptr;
 }
 
 unsigned int cltEquipmentSystem::CanEquipItem(unsigned int equipType, unsigned int equipSlotIndex, unsigned __int16 inventorySlotIndex) {
-    if (equipSlotIndex >= kEquipSlotCount || !m_pBaseInventory) {
+    if (!IsEquipTypeValid(equipType) || equipSlotIndex >= kEquipSlotCount || !m_pBaseInventory || !m_pclItemKindInfo) {
         return 1;
     }
+
+    if (!m_pBaseInventory->CanDelInventoryItem(inventorySlotIndex, 1)) {
+        return 1;
+    }
+
     auto* inventoryItem = m_pBaseInventory->GetInventoryItem(inventorySlotIndex);
-    return inventoryItem && inventoryItem->itemKind ? 0u : 1u;
+    if (!inventoryItem || !inventoryItem->itemKind) {
+        return 1;
+    }
+
+    stItemKindInfo* itemInfo = m_pclItemKindInfo->GetItemKindInfo(inventoryItem->itemKind);
+    if (!itemInfo || !CanEquipItemByItemKind(static_cast<int>(equipType), inventoryItem->itemKind)) {
+        return 1;
+    }
+
+    const unsigned int requiredAtb = equipType == kBattleEquipType
+        ? kBattleEquipAtbBySlot[equipSlotIndex]
+        : kFashionEquipAtbBySlot[equipSlotIndex];
+
+    if ((itemInfo->Equip.m_dwEquipAtb & requiredAtb) == 0) {
+        return 1;
+    }
+
+    if (equipType == kBattleEquipType && equipSlotIndex == 4) {
+        if (cltItemKindInfo::IsTwoHandWeaponByItemKind(inventoryItem->itemKind) && GetEquipItem(kBattleEquipType, 5)) {
+            return 400;
+        }
+    } else if (equipType == kBattleEquipType && equipSlotIndex == 5) {
+        const unsigned __int16 twoHandSlotKind = GetEquipItem(kBattleEquipType, 4);
+        if (twoHandSlotKind && cltItemKindInfo::IsTwoHandWeaponByItemKind(twoHandSlotKind)) {
+            return 401;
+        }
+    }
+
+    if (equipType == kFashionEquipType && cltItemKindInfo::IsFullSetItem(inventoryItem->itemKind)) {
+        if (IsEquipedFashionFullSet()) {
+            return 0;
+        }
+        for (unsigned __int16 slotKind : kFashionFullSetEffectedKinds) {
+            if (GetEquipItem(kFashionEquipType, slotKind)) {
+                switch (slotKind) {
+                case 4: return 402;
+                case 5: return 403;
+                case 6: return 404;
+                case 7: return 405;
+                default: return 1;
+                }
+            }
+        }
+    } else if (equipType == kFashionEquipType && IsEquipedFashionFullSet() && IsEffectedEquipKindByFashionFullSet(equipSlotIndex)) {
+        return 406;
+    }
+
+    return 0;
 }
 
 stItemKindInfo* cltEquipmentSystem::CanEquipItemByItemKind(int equipType, unsigned __int16 itemKind) {
-    if (!m_pclItemKindInfo) {
+    if (!IsEquipTypeValid(static_cast<unsigned int>(equipType)) || !m_pclItemKindInfo) {
         return nullptr;
     }
-    return m_pclItemKindInfo->GetItemKindInfo(itemKind);
+
+    stItemKindInfo* itemInfo = m_pclItemKindInfo->GetItemKindInfo(itemKind);
+    if (!itemInfo || !m_pclItemKindInfo->IsEquipItem(itemKind)) {
+        return nullptr;
+    }
+
+    const bool isBattleItemClass = itemInfo->m_byItemClass == ITEM_CLASS_HUNT
+        || itemInfo->m_byItemClass == ITEM_CLASS_CASH_HUNT
+        || itemInfo->m_byItemClass == ITEM_CLASS_EVENT_HUNT;
+    const bool isFashionItemClass = itemInfo->m_byItemClass == ITEM_CLASS_FASHION
+        || itemInfo->m_byItemClass == ITEM_CLASS_CASH_FASHION
+        || itemInfo->m_byItemClass == ITEM_CLASS_EVENT_FASHION;
+
+    if (isBattleItemClass) {
+        if (!m_pLevelSystem || !m_pClassSystem || !m_pPlayerAbility || !m_pclClassKindInfo) {
+            return nullptr;
+        }
+        if (itemInfo->Equip.Hunt.m_byLevel > m_pLevelSystem->GetLevel()) {
+            return nullptr;
+        }
+        if (itemInfo->Equip.Hunt.m_wNeedStr > m_pPlayerAbility->GetBaseStr()) {
+            return nullptr;
+        }
+        if (itemInfo->Equip.Hunt.m_wNeedDex > m_pPlayerAbility->GetBaseDex()) {
+            return nullptr;
+        }
+        if (itemInfo->Equip.Hunt.m_wNeedInt > m_pPlayerAbility->GetBaseInt()) {
+            return nullptr;
+        }
+        if (itemInfo->Equip.Hunt.m_wNeedSta > m_pPlayerAbility->GetBaseVit()) {
+            return nullptr;
+        }
+
+        strClassKindInfo* classInfo = m_pclClassKindInfo->GetClassKindInfo(m_pClassSystem->GetClass());
+        if (!classInfo) {
+            return nullptr;
+        }
+
+        const std::uint64_t requiredClassAtb = cltClassKindInfo::GetClassAtb(itemInfo->Equip.Hunt.m_szEquipableClass);
+        if (!requiredClassAtb) {
+            return itemInfo;
+        }
+
+        while (classInfo) {
+            if ((requiredClassAtb & classInfo->atb) != 0) {
+                return itemInfo;
+            }
+            classInfo = m_pclClassKindInfo->GetClassKindInfo(classInfo->from_class);
+        }
+
+        return nullptr;
+    }
+
+    if (isFashionItemClass) {
+        if (!itemInfo->Equip.m_dwEquipAtb) {
+            return nullptr;
+        }
+        if (m_pSexSystem) {
+            if (itemInfo->Equip.Fashion.m_byGender == 'F' && !m_pSexSystem->IsFemale()) {
+                return nullptr;
+            }
+            if (itemInfo->Equip.Fashion.m_byGender == 'M' && !m_pSexSystem->IsMale()) {
+                return nullptr;
+            }
+        }
+    }
+
+    return itemInfo;
 }
 
 __int16 cltEquipmentSystem::EquipItem(unsigned int equipType, unsigned int equipSlotIndex, unsigned __int16 inventorySlotIndex) {
-    if (equipSlotIndex >= kEquipSlotCount || !m_pBaseInventory) {
+    if (!IsEquipTypeValid(equipType) || equipSlotIndex >= kEquipSlotCount || !m_pBaseInventory) {
         return 0;
     }
 
@@ -191,11 +341,27 @@ __int16 cltEquipmentSystem::EquipItem(unsigned int equipType, unsigned int equip
         return 0;
     }
 
+    const __int16 oldItemKind = static_cast<__int16>(GetItemKindArray(this, equipType)[equipSlotIndex]);
+    const int oldItemTime = static_cast<int>(GetItemTimeArray(this, equipType)[equipSlotIndex]);
+    const int oldSealState = static_cast<int>(GetSealStateArray(this, equipType)[equipSlotIndex]);
+
     GetItemKindArray(this, equipType)[equipSlotIndex] = inventoryItem->itemKind;
     GetItemTimeArray(this, equipType)[equipSlotIndex] = inventoryItem->value0;
     GetSealStateArray(this, equipType)[equipSlotIndex] = inventoryItem->value1;
+
+    if (equipType == kFashionEquipType && m_pclItemKindInfo && m_pBasicAppearSystem) {
+        stItemKindInfo* itemInfo = m_pclItemKindInfo->GetItemKindInfo(inventoryItem->itemKind);
+        if (itemInfo && itemInfo->m_wItemType == ITEM_TYPE_HELMET) {
+            m_pBasicAppearSystem->ResetHairColorKey();
+        }
+    }
+
+    m_pBaseInventory->EquipedItem(inventorySlotIndex, oldItemKind, oldItemTime, oldSealState);
     UpdateValidity();
-    return static_cast<__int16>(inventoryItem->itemKind);
+    if (m_pSkillSystem) {
+        m_pSkillSystem->UpdateValidity();
+    }
+    return oldItemKind;
 }
 
 strInventoryItem* cltEquipmentSystem::CanUnEquipItem(unsigned int equipType, unsigned int equipSlotIndex, unsigned __int16 inventorySlotIndex) {
@@ -350,7 +516,18 @@ int cltEquipmentSystem::IsEquipItemValidity(unsigned int equipType, unsigned int
 }
 
 int cltEquipmentSystem::GetWeaponAttackAtb() { return 0; }
-int cltEquipmentSystem::IsEquipedFashionFullSet() { return 0; }
+int cltEquipmentSystem::IsEquipedFashionFullSet() {
+    if (!m_pclItemKindInfo) {
+        return 0;
+    }
+
+    for (std::uint16_t itemKind : m_fashionItemKinds) {
+        if (itemKind && cltItemKindInfo::IsFullSetItem(itemKind)) {
+            return 1;
+        }
+    }
+    return 0;
+}
 
 stItemKindInfo* cltEquipmentSystem::IsEquipedMultiTargetWeapon() {
     return nullptr;
@@ -365,7 +542,14 @@ int cltEquipmentSystem::IsEquipedBattleItem() {
     return 0;
 }
 
-int cltEquipmentSystem::IsEffectedEquipKindByFashionFullSet(unsigned int a2) { return 0; }
+int cltEquipmentSystem::IsEffectedEquipKindByFashionFullSet(unsigned int a2) {
+    for (unsigned __int16 slotKind : kFashionFullSetEffectedKinds) {
+        if (a2 == slotKind) {
+            return 1;
+        }
+    }
+    return 0;
+}
 int cltEquipmentSystem::GetMagicResist() { return 0; }
 int cltEquipmentSystem::GetAutoRecoverHPAdvantage() { return 0; }
 int cltEquipmentSystem::GetAutoRecoverManaAdavntage() { return 0; }

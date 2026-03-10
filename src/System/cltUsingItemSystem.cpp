@@ -50,11 +50,12 @@ void cltUsingItemSystem::InitializeStaticVariable(cltItemKindInfo* itemKindInfo,
     m_pIsRelayServerConnectedFuncPtr = isRelayServerConnectedFunc;
     m_pCanUsePostItItemFuncPtr = canUsePostItItemFunc;
     m_pPostItFuncPtr = postItFunc;
-    m_pCanPlayerCureFuncPtr = reinterpret_cast<unsigned int (*)(void*)>(canPlayerCureFunc);
+    m_pCanUseChangeSexItemFuncPtr = canUseChangeSexItemFunc;
     m_pCanUseMapUsingItemFuncPtr = canUseMapUsingItemFunc;
-    m_pPlayerCureFuncPtr = reinterpret_cast<void (*)(void*)>(openGiftBoxFunc);
-    m_pCanUseChangeSexItemFuncPtr = reinterpret_cast<int (*)(void*)>(canUseChangeSexItemFunc);
-    m_pOpenGiftBoxFuncPtr = reinterpret_cast<void (*)(void*, std::uint16_t)>(playerCureFunc);
+    m_pUseMapUsingItemFuncPtr = useMapUsingItemFunc;
+    m_pCanPlayerCureFuncPtr = canPlayerCureFunc;
+    m_pPlayerCureFuncPtr = playerCureFunc;
+    m_pOpenGiftBoxFuncPtr = openGiftBoxFunc;
     m_pCanChangeCoupleRingFuncPtr = canChangeCoupleRingFunc;
     m_pChangeCoupleRingFuncPtr = changeCoupleRingFunc;
     m_pExternUsingItemInitializeFuncPtr = externUsingItemInitializeFunc;
