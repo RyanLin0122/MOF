@@ -8,6 +8,7 @@
 #include "System/cltClassSystem.h"
 #include "System/cltLevelSystem.h"
 #include "System/cltSexSystem.h"
+#include "System/cltSkillSystem.h"
 #include "System/cltBasicAppearSystem.h"
 #include "Logic/cltBaseInventory.h"
 #include "Logic/cltItemList.h"
@@ -225,17 +226,17 @@ unsigned int cltEquipmentSystem::CanEquipItem(unsigned int equipType, unsigned i
     }
 
     if (equipType == kBattleEquipType && equipSlotIndex == 4) {
-        if (cltItemKindInfo::IsTwoHandWeaponByItemKind(inventoryItem->itemKind) && GetEquipItem(kBattleEquipType, 5)) {
+        if (m_pclItemKindInfo->IsTwoHandWeaponByItemKind(inventoryItem->itemKind) && GetEquipItem(kBattleEquipType, 5)) {
             return 400;
         }
     } else if (equipType == kBattleEquipType && equipSlotIndex == 5) {
         const unsigned __int16 twoHandSlotKind = GetEquipItem(kBattleEquipType, 4);
-        if (twoHandSlotKind && cltItemKindInfo::IsTwoHandWeaponByItemKind(twoHandSlotKind)) {
+        if (twoHandSlotKind && m_pclItemKindInfo->IsTwoHandWeaponByItemKind(twoHandSlotKind)) {
             return 401;
         }
     }
 
-    if (equipType == kFashionEquipType && cltItemKindInfo::IsFullSetItem(inventoryItem->itemKind)) {
+    if (equipType == kFashionEquipType && m_pclItemKindInfo->IsFullSetItem(inventoryItem->itemKind)) {
         if (IsEquipedFashionFullSet()) {
             return 0;
         }
@@ -299,7 +300,7 @@ stItemKindInfo* cltEquipmentSystem::CanEquipItemByItemKind(int equipType, unsign
             return nullptr;
         }
 
-        const std::uint64_t requiredClassAtb = cltClassKindInfo::GetClassAtb(itemInfo->Equip.Hunt.m_szEquipableClass);
+        const std::uint64_t requiredClassAtb = m_pclClassKindInfo->GetClassAtb(itemInfo->Equip.Hunt.m_szEquipableClass);
         if (!requiredClassAtb) {
             return itemInfo;
         }
@@ -522,7 +523,7 @@ int cltEquipmentSystem::IsEquipedFashionFullSet() {
     }
 
     for (std::uint16_t itemKind : m_fashionItemKinds) {
-        if (itemKind && cltItemKindInfo::IsFullSetItem(itemKind)) {
+        if (itemKind && m_pclItemKindInfo->IsFullSetItem(itemKind)) {
             return 1;
         }
     }
