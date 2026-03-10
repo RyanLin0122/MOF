@@ -225,7 +225,7 @@ unsigned long *CMofMsg::operator=(unsigned long *a2) {
 unsigned int CMofMsg::EnCodeCheckSum(unsigned int a2, unsigned int a3) { return a2 + (a3 ^ a2); }
 unsigned int CMofMsg::DeCodeCheckSum(unsigned int a2, unsigned int a3) { return a2 ^ (a3 - a2); }
 void CMofMsg::AddMsg(CMofMsg *a2) { Put(reinterpret_cast<char *>(a2->m_pMsg), a2->m_dwUsageSize); }
-int CMofMsg::IsPacketOnServer() { return m_bPacketOnServer; }
+int CMofMsg::IsPacketOnServer() const { return m_bPacketOnServer; }
 
 int CMofMsg::VerifyStringValidity(char *a2) {
   const unsigned int v2 = strlen(a2) + 1;
@@ -329,7 +329,7 @@ int CMoFMsgMgr::GetMsg(unsigned int a2, unsigned __int8 *const a3) {
   return info.firstLen + info.secondLen;
 }
 
-unsigned int CMoFMsgMgr::GetMsgNum() {
+unsigned int CMoFMsgMgr::GetMsgNum() const {
   return m_dwMsgNum;
 }
 

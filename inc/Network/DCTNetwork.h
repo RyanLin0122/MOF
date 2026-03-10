@@ -13,10 +13,10 @@ public:
   virtual ~DCTNetwork();
 
   BOOL Initialize();
-  int Connect(char *cp, u_short hostshort);
+  int Connect(const char* cp, u_short hostshort);
   void Disconnect();
 
-  BOOL IsConnected();
+  BOOL IsConnected() const;
   BOOL IsReadable();
   BOOL IsWriteable();
 

@@ -49,7 +49,7 @@ public:
   unsigned int EnCodeCheckSum(unsigned int a2, unsigned int a3);
   unsigned int DeCodeCheckSum(unsigned int a2, unsigned int a3);
   void AddMsg(CMofMsg *a2);
-  int IsPacketOnServer();
+  int IsPacketOnServer() const;
   int VerifyStringValidity(char *a2);
   int IsIncludeViolationChars(char *a2, char *a3);
 
@@ -68,7 +68,7 @@ public:
 
   int AddMsg(unsigned __int8 *a2, unsigned __int16 a3);
   int GetMsg(unsigned int a2, unsigned __int8 *const a3);
-  unsigned int GetMsgNum();
+  unsigned int GetMsgNum() const;
   void ClearMsg();
 
 private:

@@ -1,5 +1,7 @@
 #include "Network/DCTNetwork.h"
 
+#include <winsock2.h>
+#include <ws2tcpip.h>
 #include <cstring>
 
 DCTNetwork::OnSocketClosedFunc DCTNetwork::m_pOnSocketClosedFuncPtr = nullptr;
@@ -23,17 +25,26 @@ BOOL DCTNetwork::Initialize() {
   return !WSAStartup(0x202u, &wsaData) && wsaData.wVersion == 514;
 }
 
-int DCTNetwork::Connect(char *cp, u_short hostshort) {
-  sockaddr name{};
-  m_socket = socket(AF_INET, SOCK_STREAM, IPPROTO_TCP);
-  name.sa_family = AF_INET;
-  *reinterpret_cast<uint32_t *>(&name.sa_data[2]) = inet_addr(cp);
-  *reinterpret_cast<u_short *>(&name.sa_data[0]) = htons(hostshort);
-  if (connect(m_socket, &name, 16) != -1) {
-    return 1;
-  }
-  Disconnect();
-  return 0;
+int DCTNetwork::Connect(const char* cp, u_short hostshort) {
+    sockaddr_in addr{};
+    addr.sin_family = AF_INET;
+    addr.sin_port = htons(hostshort);
+
+    if (InetPtonA(AF_INET, cp, &addr.sin_addr) != 1) {
+        return 0; // IP ¦r¦ê®æ¦¡¿ù»~
+    }
+
+    m_socket = socket(AF_INET, SOCK_STREAM, IPPROTO_TCP);
+    if (m_socket == INVALID_SOCKET) {
+        return 0;
+    }
+
+    if (connect(m_socket, reinterpret_cast<sockaddr*>(&addr), sizeof(addr)) != SOCKET_ERROR) {
+        return 1;
+    }
+
+    Disconnect();
+    return 0;
 }
 
 void DCTNetwork::Disconnect() {
@@ -43,7 +54,7 @@ void DCTNetwork::Disconnect() {
   }
 }
 
-BOOL DCTNetwork::IsConnected() {
+BOOL DCTNetwork::IsConnected() const {
   return m_socket != static_cast<SOCKET>(-1);
 }
 
