@@ -9,6 +9,9 @@
 #include "Font/MoFFont.h"
 #include "Text/DCTIMMList.h"
 
+class cltClassKindInfo;
+class cltItemKindInfo;
+
 //-----------------------------------------------------------------------------
 // 全域變數
 //-----------------------------------------------------------------------------
@@ -40,6 +43,8 @@ extern DCTTextManager g_DCTTextManager;
 extern MoFFont g_MoFFont;
 
 extern DCTIMMList g_IMMList;
+extern cltClassKindInfo g_clClassKindInfo;
+extern cltItemKindInfo g_clItemKindInfo;
 
 extern short kGlyphIndexByStyleChar[]; //word_6C6B6C
 extern int   kDotGlyphIndexByStyle[]; //dword_6C6C54

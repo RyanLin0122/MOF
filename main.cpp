@@ -9,6 +9,10 @@
 #include "Image/CDeviceResetManager.h"
 #include "Image/CDeviceManager.h"
 #include "Image/cltImageManager.h"
+#include "Info/cltClassKindInfo.h"
+#include "Info/cltItemKindInfo.h"
+#include "System/cltClassSystem.h"
+#include "System/cltEquipmentSystem.h"
 #include "Test/Test.h"
 #include "global.h"  // 包含全域變數定義
 #include "conf.h"
@@ -105,6 +109,12 @@ void CreateDebugConsole()
 }
 
 void Setup() {
+	g_clClassKindInfo.Initialize((char*)"classkindinfo.txt");
+	cltItemKindInfo::InitializeStaticVariable(&g_clClassKindInfo, nullptr);
+	cltClassSystem::InitializeStaticVariable(&g_clClassKindInfo, &g_clItemKindInfo);
+	cltEquipmentSystem::InitializeStaticVariable(&g_clItemKindInfo, &g_clClassKindInfo);
+	g_clItemKindInfo.Initialize("itemkindinfo.txt", "item_instant.txt", "item_hunt.txt", "item_fashion.txt", "koreatext.txt", "TrainningCardInfo.txt");
+
 	g_DCTTextManager.Initialize((char*)"MoFTexts.txt");
 	CMoFFontTextureManager::GetInstance()->InitCMoFFontTextureManager(g_pd3dDevice);
 	printf("  CMoFFontTextureManager 初始化完畢。\n");

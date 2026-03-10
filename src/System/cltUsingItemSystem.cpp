@@ -34,9 +34,9 @@ constexpr int kUsingItemSlotCount = 10;
 }
 
 void cltUsingItemSystem::InitializeStaticVariable(cltItemKindInfo* itemKindInfo, cltPandoraKindInfo* pandoraKindInfo, cltPetKindInfo* petKindInfo, cltTimerManager* timerManager,
-    int (*isPlayerDeadFunc)(void*), void (*resurrectPlayerFunc)(void*), void (*shoutFunc)(int, void*, char*), void (*useMapUsingItemFunc)(void*, std::uint16_t), int (*isRelayServerConnectedFunc)(),
-    unsigned int (*canUsePostItItemFunc)(void*, std::uint16_t, char*), void (*postItFunc)(int, void*, char*, char*), int (*canPlayerCureFunc)(void*),
-    int (*canUseMapUsingItemFunc)(void*, std::uint16_t), void (*playerCureFunc)(void*, std::uint16_t), unsigned int (*canUseChangeSexItemFunc)(void*), void (*openGiftBoxFunc)(void*),
+    int (*isPlayerDeadFunc)(void*), void (*resurrectPlayerFunc)(void*), void (*shoutFunc)(int, void*, char*), void (*openGiftBoxFunc)(void*, std::uint16_t), int (*isRelayServerConnectedFunc)(),
+    unsigned int (*canUsePostItItemFunc)(void*, std::uint16_t, char*), void (*postItFunc)(int, void*, char*, char*), int (*canUseChangeSexItemFunc)(void*),
+    int (*canUseMapUsingItemFunc)(void*, std::uint16_t), void (*useMapUsingItemFunc)(void*, std::uint16_t), unsigned int (*canPlayerCureFunc)(void*), void (*playerCureFunc)(void*),
     unsigned int (*canChangeCoupleRingFunc)(void*, std::uint16_t), void (*changeCoupleRingFunc)(void*, std::uint16_t, int), void (*externUsingItemInitializeFunc)(unsigned int, unsigned int),
     void (*externUsingItemPollFunc)(unsigned int, unsigned int), void (*externUsingItemCustomFunc)(unsigned int, unsigned int), void (*externUsingItemTimeOutFunc)(unsigned int, unsigned int)) {
     m_pclItemKindInfo = itemKindInfo;
@@ -46,7 +46,7 @@ void cltUsingItemSystem::InitializeStaticVariable(cltItemKindInfo* itemKindInfo,
     m_pIsPlayerDeadFuncPtr = isPlayerDeadFunc;
     m_pResurrectPlayerFuncPtr = resurrectPlayerFunc;
     m_pShoutFuncPtr = shoutFunc;
-    m_pUseMapUsingItemFuncPtr = useMapUsingItemFunc;
+    m_pOpenGiftBoxFuncPtr = openGiftBoxFunc;
     m_pIsRelayServerConnectedFuncPtr = isRelayServerConnectedFunc;
     m_pCanUsePostItItemFuncPtr = canUsePostItItemFunc;
     m_pPostItFuncPtr = postItFunc;
@@ -55,7 +55,6 @@ void cltUsingItemSystem::InitializeStaticVariable(cltItemKindInfo* itemKindInfo,
     m_pUseMapUsingItemFuncPtr = useMapUsingItemFunc;
     m_pCanPlayerCureFuncPtr = canPlayerCureFunc;
     m_pPlayerCureFuncPtr = playerCureFunc;
-    m_pOpenGiftBoxFuncPtr = openGiftBoxFunc;
     m_pCanChangeCoupleRingFuncPtr = canChangeCoupleRingFunc;
     m_pChangeCoupleRingFuncPtr = changeCoupleRingFunc;
     m_pExternUsingItemInitializeFuncPtr = externUsingItemInitializeFunc;
