@@ -11,7 +11,7 @@ public:
   ~CMoFNetwork() override;
   void Initialize(void (__cdecl *a2)(unsigned __int8 *, unsigned __int16, unsigned int), unsigned int a3);
   void Poll();
-  void OnRecv();
+  void OnRecv() override;
   int SetSendData(char *a2, unsigned __int16 a3);
   int Login(int a2);
   int Move(unsigned __int16 a2, unsigned __int16 a3, unsigned __int8 a4, unsigned __int16 a5);
@@ -288,4 +288,9 @@ public:
   int ItemSealUnLock(unsigned __int16 a2, unsigned __int16 a3);
   char *CheckChatMsg(char *a2);
   static void __cdecl OnSocketClosed();
+private:
+  void (*m_messageHandler)(unsigned __int8 *, unsigned __int16, unsigned int) = nullptr;
+  unsigned int m_messageHandlerContext = 0;
+  CMoFMsgMgr m_msgMgr;
+
 };
