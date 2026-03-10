@@ -1,8 +1,9 @@
 #pragma once
 
-#include "DCTNetwork.h"
+#include "Network/CMofMsg.h"
+#include "Network/DCTNetwork.h"
+#include "Logic/cltItemList.h"
 
-struct cltItemList;
 
 class CMoFNetwork : public DCTNetwork {
 public:
