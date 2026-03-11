@@ -11,6 +11,11 @@
 #include "System/cltLevelSystem.h"
 #include "System/cltQuickSlotSystem.h"
 
+class cltTitleSystem {
+public:
+    void OnEvent_acquireskill(std::uint16_t);
+};
+
 cltItemKindInfo* cltSkillSystem::m_pclItemKindInfo = nullptr;
 cltSkillKindInfo* cltSkillSystem::m_pclSkillKindInfo = nullptr;
 cltClassKindInfo* cltSkillSystem::m_pclClassKindInfo = nullptr;
@@ -33,13 +38,15 @@ void cltSkillSystem::Initialize(
     cltLevelSystem* levelSystem,
     cltClassSystem* classSystem,
     cltEquipmentSystem* equipmentSystem,
-    cltPlayerAbility* playerAbility) {
+    cltPlayerAbility* playerAbility,
+    cltTitleSystem* titleSystem) {
     m_pQuickSlotSystem = quickSlotSystem;
     m_pLessonSystem = lessonSystem;
     m_pLevelSystem = levelSystem;
     m_pClassSystem = classSystem;
     m_pEquipmentSystem = equipmentSystem;
     m_pPlayerAbility = playerAbility;
+    m_pTitleSystem = titleSystem;
     m_userData1 = 0;
 }
 
@@ -50,10 +57,11 @@ void cltSkillSystem::Initialize(
     cltClassSystem* classSystem,
     cltEquipmentSystem* equipmentSystem,
     cltPlayerAbility* playerAbility,
+    cltTitleSystem* titleSystem,
     std::uint16_t skillNum,
     const std::uint16_t* skillKinds,
     unsigned int userData1) {
-    Initialize(quickSlotSystem, lessonSystem, levelSystem, classSystem, equipmentSystem, playerAbility);
+    Initialize(quickSlotSystem, lessonSystem, levelSystem, classSystem, equipmentSystem, playerAbility, titleSystem);
     m_userData1 = userData1;
     m_skillKinds.clear();
     m_skillValidity.clear();
@@ -120,7 +128,43 @@ int cltSkillSystem::FindSkillIndex(std::uint16_t skillKind) const {
     return static_cast<int>(it - m_skillKinds.begin());
 }
 
-void cltSkillSystem::AddSkill(std::uint16_t skillKind) {
+void cltSkillSystem::AddSkill(std::uint16_t skillKind, int* replaced, std::uint16_t* replacedSkillKind) {
+    if (replaced) {
+        *replaced = 0;
+    }
+    auto* info = m_pclSkillKindInfo ? m_pclSkillKindInfo->GetSkillKindInfo(skillKind) : nullptr;
+    if (!info) {
+        return;
+    }
+
+    const auto prevSkill = *reinterpret_cast<std::uint16_t*>(reinterpret_cast<unsigned char*>(info) + 70);
+    if (prevSkill != 0) {
+        const int idx = FindSkillIndex(prevSkill);
+        if (idx >= 0) {
+            if (replaced) {
+                *replaced = 1;
+            }
+            if (replacedSkillKind) {
+                *replacedSkillKind = m_skillKinds[idx];
+            }
+            m_skillKinds[idx] = skillKind;
+            if (m_pQuickSlotSystem) {
+                m_pQuickSlotSystem->OnSkillAdded(skillKind);
+            }
+            if (cltSkillKindInfo::IsPassiveSkill(skillKind)) {
+                const auto circleKind = *reinterpret_cast<std::uint32_t*>(reinterpret_cast<unsigned char*>(info) + 256);
+                if (circleKind != 0 && m_pOnAcquireCircleSkillFuncPtr) {
+                    m_pOnAcquireCircleSkillFuncPtr(static_cast<unsigned int>(reinterpret_cast<std::uintptr_t>(this)));
+                }
+            }
+            if (m_pTitleSystem) {
+                m_pTitleSystem->OnEvent_acquireskill(skillKind);
+            }
+            UpdateValidity();
+            return;
+        }
+    }
+
     if (IsExistSkill(skillKind) || m_skillKinds.size() >= 100) {
         return;
     }
@@ -129,14 +173,14 @@ void cltSkillSystem::AddSkill(std::uint16_t skillKind) {
     if (m_pQuickSlotSystem) {
         m_pQuickSlotSystem->OnSkillAdded(skillKind);
     }
-    if (m_pOnAcquireCircleSkillFuncPtr) {
-        stSkillKindInfo* info = m_pclSkillKindInfo ? m_pclSkillKindInfo->GetSkillKindInfo(skillKind) : nullptr;
-        if (info) {
-            const auto circleKind = *reinterpret_cast<std::uint32_t*>(reinterpret_cast<unsigned char*>(info) + 256);
-            if (circleKind != 0) {
-                m_pOnAcquireCircleSkillFuncPtr(circleKind);
-            }
+    if (cltSkillKindInfo::IsPassiveSkill(skillKind)) {
+        const auto circleKind = *reinterpret_cast<std::uint32_t*>(reinterpret_cast<unsigned char*>(info) + 256);
+        if (circleKind != 0 && m_pOnAcquireCircleSkillFuncPtr) {
+            m_pOnAcquireCircleSkillFuncPtr(static_cast<unsigned int>(reinterpret_cast<std::uintptr_t>(this)));
         }
+    }
+    if (m_pTitleSystem) {
+        m_pTitleSystem->OnEvent_acquireskill(skillKind);
     }
     UpdateValidity();
 }
@@ -159,13 +203,22 @@ std::uint16_t cltSkillSystem::GetActiveSkill(std::uint16_t* out, int onlyValid) 
     return count;
 }
 
-std::uint16_t cltSkillSystem::GetPassiveSkill(std::uint16_t* out, int onlyValid, int) const {
+std::uint16_t cltSkillSystem::GetPassiveSkill(std::uint16_t* out, int onlyValid, int workingOnly) const {
     if (!out) return 0;
     std::uint16_t count = 0;
     for (std::size_t i = 0; i < m_skillKinds.size(); ++i) {
         const auto skill = m_skillKinds[i];
         if (cltSkillKindInfo::IsActiveSkill(skill)) continue;
         if (onlyValid && (i >= m_skillValidity.size() || !m_skillValidity[i])) continue;
+        if (workingOnly) {
+            auto* info = m_pclSkillKindInfo ? m_pclSkillKindInfo->GetSkillKindInfo_P(skill) : nullptr;
+            if (!info) {
+                continue;
+            }
+            if (*reinterpret_cast<std::uint32_t*>(reinterpret_cast<unsigned char*>(info) + 196) != 0) {
+                continue;
+            }
+        }
         out[count++] = skill;
     }
     return count;
@@ -242,7 +295,7 @@ int cltSkillSystem::CanAcquireSkill(std::uint16_t skillKind) const {
     if (!m_pclSkillKindInfo || !m_pClassSystem) {
         return 0;
     }
-    if (IsExistSkill(skillKind)) {
+    if (IsAcquiredSkill(skillKind, nullptr)) {
         return 0;
     }
     auto* info = m_pclSkillKindInfo->GetSkillKindInfo(skillKind);
@@ -255,7 +308,7 @@ int cltSkillSystem::CanAcquireSkill(std::uint16_t skillKind) const {
     }
 
     const std::uint16_t prevCode = *reinterpret_cast<std::uint16_t*>(reinterpret_cast<unsigned char*>(info) + 70);
-    if (prevCode != 0 && !IsExistSkill(prevCode)) {
+    if (prevCode != 0 && !IsAcquiredSkill(prevCode, nullptr)) {
         return 0;
     }
 
@@ -301,10 +354,22 @@ int cltSkillSystem::CanBuySkill(std::uint16_t skillKind) const {
 }
 
 void cltSkillSystem::BuySkill(std::uint16_t skillKind) {
-    if (!CanBuySkill(skillKind)) {
+    auto* info = m_pclSkillKindInfo ? m_pclSkillKindInfo->GetSkillKindInfo(skillKind) : nullptr;
+    if (!info) {
         return;
     }
-    AddSkill(skillKind);
+    if (!CanBuySkill(skillKind) || !m_pLessonSystem) {
+        return;
+    }
+    const auto needFig = *reinterpret_cast<std::uint32_t*>(reinterpret_cast<unsigned char*>(info) + 52);
+    const auto needArc = *reinterpret_cast<std::uint32_t*>(reinterpret_cast<unsigned char*>(info) + 56);
+    const auto needMag = *reinterpret_cast<std::uint32_t*>(reinterpret_cast<unsigned char*>(info) + 60);
+    const auto needPri = *reinterpret_cast<std::uint32_t*>(reinterpret_cast<unsigned char*>(info) + 64);
+    m_pLessonSystem->DecLessonPt_Sword(needFig);
+    m_pLessonSystem->DecLessonPt_Bow(needArc);
+    m_pLessonSystem->DecLessonPt_Theology(needPri);
+    m_pLessonSystem->DecLessonPt_Magic(needMag);
+    AddSkill(skillKind, nullptr, nullptr);
 }
 
 std::uint16_t cltSkillSystem::GetBuyAbleSkillList(unsigned int skillClass, std::uint16_t* outSkillKinds, int highClassOnly) const {
@@ -360,7 +425,7 @@ bool cltSkillSystem::IsAcquireSkill_Run() const {
     if (!m_pclSkillKindInfo) {
         return false;
     }
-    return IsExistSkill(cltSkillKindInfo::TranslateKindCode("P00001")) == 1;
+    return IsAcquiredSkill(cltSkillKindInfo::TranslateKindCode("P00001"), nullptr) == 1;
 }
 
 bool cltSkillSystem::IsActiveSkill(std::uint16_t skillKind) const {
@@ -473,7 +538,24 @@ static bool get_max_state_info(const cltSkillSystem* self, std::size_t typeIdx, 
 bool cltSkillSystem::GetMaxFaintingInfo(int* a2, int* a3, int a4, std::uint16_t* a5) const { return get_max_state_info(this, 62, 82, 83, a2, a3, a4, a5); }
 bool cltSkillSystem::GetMaxConfusionInfo(int* a2, int* a3, int a4, std::uint16_t* a5) const { return get_max_state_info(this, 62, 84, 85, a2, a3, a4, a5); }
 bool cltSkillSystem::GetMaxFreezingInfo(int* a2, int* a3, int a4, std::uint16_t* a5) const { return get_max_state_info(this, 62, 86, 87, a2, a3, a4, a5); }
-std::uint16_t cltSkillSystem::GetGeneralPartyAdvantageSkillKind() const { return 0; }
+std::uint16_t cltSkillSystem::GetGeneralPartyAdvantageSkillKind() const {
+    if (!m_pclSkillKindInfo) {
+        return 0;
+    }
+    std::uint16_t passives[100]{};
+    const auto count = GetPassiveSkill(passives, 1, 0);
+    for (std::uint16_t i = 0; i < count; ++i) {
+        auto* info = m_pclSkillKindInfo->GetSkillKindInfo(passives[i]);
+        if (!info) {
+            continue;
+        }
+        const auto* dw = reinterpret_cast<const std::uint32_t*>(reinterpret_cast<const unsigned char*>(info));
+        if (dw[68] || dw[71] || dw[74] || dw[77] || dw[69] || dw[72] || dw[75] || dw[78]) {
+            return *reinterpret_cast<std::uint16_t*>(reinterpret_cast<unsigned char*>(info) + 0);
+        }
+    }
+    return 0;
+}
 int cltSkillSystem::MT_GetDPowerAdvantage() const { return GetDPowerAdvantage(); }
 int cltSkillSystem::MT_GetAPowerAdvantage() const { return GetAPowerAdvantage(0); }
 int cltSkillSystem::MT_GetHitRateAdvantage() const { return GetHitRateAdvantage(); }

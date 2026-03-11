@@ -12,6 +12,7 @@ class cltLevelSystem;
 class cltClassSystem;
 class cltEquipmentSystem;
 class cltPlayerAbility;
+class cltTitleSystem;
 
 class cltSkillSystem {
 public:
@@ -27,7 +28,8 @@ public:
         cltLevelSystem* levelSystem,
         cltClassSystem* classSystem,
         cltEquipmentSystem* equipmentSystem,
-        cltPlayerAbility* playerAbility);
+        cltPlayerAbility* playerAbility,
+        cltTitleSystem* titleSystem = nullptr);
     void Initialize(
         cltQuickSlotSystem* quickSlotSystem,
         cltLessonSystem* lessonSystem,
@@ -35,6 +37,7 @@ public:
         cltClassSystem* classSystem,
         cltEquipmentSystem* equipmentSystem,
         cltPlayerAbility* playerAbility,
+        cltTitleSystem* titleSystem,
         std::uint16_t skillNum,
         const std::uint16_t* skillKinds,
         unsigned int userData1);
@@ -44,7 +47,7 @@ public:
     std::uint16_t GetSkillKind(unsigned int index) const;
     int GetClassActiveSkill(std::uint16_t* outSkillKinds, int* outAcquiredFlags) const;
     int GetClassPassiveSkill(std::uint16_t* outSkillKinds, int* outAcquiredFlags) const;
-    void AddSkill(std::uint16_t skillKind);
+    void AddSkill(std::uint16_t skillKind, int* replaced = nullptr, std::uint16_t* replacedSkillKind = nullptr);
     bool IsSkillCountOver() const;
     int IsExistSkill(std::uint16_t skillKind) const;
     std::uint16_t GetActiveSkill(std::uint16_t* out, int onlyValid) const;
@@ -105,6 +108,7 @@ private:
     cltClassSystem* m_pClassSystem = nullptr;
     cltEquipmentSystem* m_pEquipmentSystem = nullptr;
     cltPlayerAbility* m_pPlayerAbility = nullptr;
+    cltTitleSystem* m_pTitleSystem = nullptr;
     std::vector<std::uint16_t> m_skillKinds;
     std::vector<int> m_skillValidity;
     unsigned int m_userData1 = 0;
