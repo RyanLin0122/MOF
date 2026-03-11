@@ -9,7 +9,8 @@ START_LINE = 26022
 # 只要 class 名稱在這裡，就直接視為未完成
 FORCE_MISSING_CLASSES = [
     "ClientCharacter",
-    "ClientCharacterManager"
+    "ClientCharacterManager",
+    "cltQuestSystem"
 ]
 
 # 例外清單：放 class 名稱字串，這些 class 會被跳過

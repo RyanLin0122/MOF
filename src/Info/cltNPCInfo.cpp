@@ -3,7 +3,7 @@
 #include <cstdlib> // atoi
 #include <cctype>  // toupper
 
-uint16_t cltNPCInfo::TranslateKindCode(char* s) {
+uint16_t cltNPCInfo::TranslateKindCode(const char* s) {
     // 與反編譯一致：
     // - 長度必須為 5
     // - 取 s[0]（轉大寫）後加 31，左移 11 位

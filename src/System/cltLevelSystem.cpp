@@ -174,8 +174,3 @@ void cltLevelSystem::ResetLevel() {
 void cltLevelSystem::SetExp(std::int64_t a2) { m_i64Exp = a2; }
 
 std::int64_t cltLevelSystem::GetExpDestination() const { return m_pi64ExpData[m_byLevel]; }
-
-
-void cltEmblemSystem::OnEvent_ChangeClass() {
-    // TODO: Full implementation depends on cltEmblemKindInfo, cltClassSystem, cltQuestSystem
-}

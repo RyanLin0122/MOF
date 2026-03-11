@@ -4,56 +4,15 @@
 
 #include "System/cltLevelSystem.h"
 #include "System/cltSkillSystem.h"
-
-class cltPartySystem {
-public:
-    int GetStrAdvantage(int, int, int);
-    int GetDexAdvantage(int, int, int);
-    int GetIntAdvantage(int, int, int);
-    int GetVitAdvantage(int, int, int);
-    int GetAPowerRateAdvantage(int, int, int);
-    int GetDPowerRateAdvantage(int, int, int);
-    int GetHitRateAdvantage(int, int, int);
-    int GetExpAdvantage(int, int, int);
-};
-
-class cltEmblemSystem {
-public:
-    int GetAPowerAdvantage(int);
-    int GetDPowerAdvantage();
-    int GetShopItemPriceAdvantage();
-    int GetSellingAgencyTaxAdvantage();
-    int GetDeadPenaltyExpAdvantage();
-    int GetExpAdvantage();
-    int GetFaintingInfo(int*, int*);
-    int GetConfusionInfo(int*, int*);
-    int GetFreezingInfo(int*, int*);
-};
-
-class cltMonsterToleranceSystem {
-public:
-    int GetAPowerAdvantage(std::uint16_t);
-    int GetDPowerAdvantage(std::uint16_t);
-    int GetSkillAPowerAdvantage(std::uint16_t);
-};
-
-class cltRestBonusSystem {
-public:
-    int GetExpAdvantage();
-};
-
-class cltPetSystem {
-public:
-    int GetSTRAdvantage();
-    int GetDEXAdvantage();
-    int GetINTAdvantage();
-    int GetVITAdvantage();
-    int GetAPowerAdvantage();
-    int GetDPowerAdvantage();
-    int GetAttackSpeedAdvantage();
-    int GetDropRateAdvantage();
-    int GetSkillAPowerAdvantage(std::uint16_t);
-};
+#include "System/cltUsingItemSystem.h"
+#include "System/cltEquipmentSystem.h"
+#include "System/cltEmblemSystem.h"
+#include "System/cltMonsterToleranceSystem.h"
+#include "System/cltPetSystem.h"
+#include "System/cltRestBonusSystem.h"
+#include "System/cltUsingSkillSystem.h"
+#include "System/cltWorkingPassiveSkillSystem.h"
+#include "System/cltPartySystem.h"
 
 cltCharKindInfo* cltPlayerAbility::m_pclCharKindInfo = nullptr;
 cltItemKindInfo* cltPlayerAbility::m_pclItemKindInfo = nullptr;

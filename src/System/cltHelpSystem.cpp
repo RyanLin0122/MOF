@@ -6,22 +6,16 @@
 #include "Info/cltSkillKindInfo.h"
 #include "System/cltEquipmentSystem.h"
 #include "System/cltLevelSystem.h"
+#include "System/cltQuestSystem.h"
 #include "System/cltSkillSystem.h"
-
-class cltQuestSystem {
-public:
-    void* GetPlayingQuestInfoByNPCID(std::uint16_t);
-    void* GetPlayingQuestInfoByQuestID(std::uint16_t);
-    int CanReward(int);
-};
+#include "System/cltLessonSystem.h"
+#include "global.h"
 
 class stPlayingQuestInfo {
 public:
     std::uint16_t questKind;
     std::uint8_t completed;
 };
-
-extern cltMapInfo g_Map;
 
 void (*cltHelpSystem::m_pPopupMessagePtr)(HelpKind) = nullptr;
 cltCharKindInfo* cltHelpSystem::m_pclCharKindInfo = nullptr;

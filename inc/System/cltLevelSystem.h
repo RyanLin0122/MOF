@@ -5,12 +5,8 @@
 #include "global.h"
 
 #include "System/cltPlayerAbility.h"
-
-class cltEmblemSystem {
-public:
-    static void UpdateValidity(cltEmblemSystem* self);
-    void OnEvent_ChangeClass();
-};
+#include "System/cltEmblemSystem.h"
+#include "Info/cltMapInfo.h"
 
 
 class cltLevelSystem {

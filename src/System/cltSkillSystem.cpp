@@ -10,11 +10,7 @@
 #include "System/cltLessonSystem.h"
 #include "System/cltLevelSystem.h"
 #include "System/cltQuickSlotSystem.h"
-
-class cltTitleSystem {
-public:
-    void OnEvent_acquireskill(std::uint16_t);
-};
+#include "System/cltTitleSystem.h"
 
 cltItemKindInfo* cltSkillSystem::m_pclItemKindInfo = nullptr;
 cltSkillKindInfo* cltSkillSystem::m_pclSkillKindInfo = nullptr;

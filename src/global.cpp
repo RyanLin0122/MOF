@@ -1,6 +1,7 @@
 #include "global.h"
 #include "Info/cltClassKindInfo.h"
 #include "Info/cltItemKindInfo.h"
+#include "Info/cltMapInfo.h"
 
 //-----------------------------------------------------------------------------
 // 全域變數
@@ -26,6 +27,7 @@ extern MoFFont g_MoFFont = *(new MoFFont());
 extern DCTIMMList g_IMMList = *(new DCTIMMList());
 extern cltClassKindInfo g_clClassKindInfo = *(new cltClassKindInfo());
 extern cltItemKindInfo g_clItemKindInfo = *(new cltItemKindInfo());
+extern cltMapInfo g_Map = *(new cltMapInfo());
 
 extern HWND             g_hWnd = NULL;
 
