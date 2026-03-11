@@ -175,13 +175,6 @@ void cltLevelSystem::SetExp(std::int64_t a2) { m_i64Exp = a2; }
 
 std::int64_t cltLevelSystem::GetExpDestination() const { return m_pi64ExpData[m_byLevel]; }
 
-// TODO: cltPlayerAbility inherits from cltBaseAbility.
-// GetBase* methods are IDA inlined stubs that return base ability stats.
-// Full implementation requires proper inheritance setup from cltBaseAbility.
-std::uint16_t cltPlayerAbility::GetBaseStr() { return 0; }
-std::uint16_t cltPlayerAbility::GetBaseDex() { return 0; }
-std::uint16_t cltPlayerAbility::GetBaseInt() { return 0; }
-std::uint16_t cltPlayerAbility::GetBaseVit() { return 0; }
 
 void cltEmblemSystem::OnEvent_ChangeClass() {
     // TODO: Full implementation depends on cltEmblemKindInfo, cltClassSystem, cltQuestSystem
