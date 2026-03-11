@@ -450,9 +450,9 @@ void cltEmblemSystem::OnEvent_ChangeClass() {
     for (int i = 0; i < count; ++i) {
         strEmblemKindInfo* info = infos[i];
         if (!info || IsAcquiredEmblem(info->wEmblemId) == 1) continue;
-        if (info->dwAcquireConditionJobChangeQuestCompletionRate == 0) continue;
+        if (info->dwAcquireConditionJobChangeQuestCompletion == 0) continue;
         if (m_pQuestSystem && m_pQuestSystem->IsGiveupQuestPermanently() == 1) continue;
-        if (classInfo->job_step == static_cast<std::uint8_t>(info->dwAcquireConditionJobChangeQuestCompletionRate)) {
+        if (classInfo->job_step == static_cast<std::uint8_t>(info->dwAcquireConditionJobChangeQuestCompletion)) {
             AcquireEmblem(info->wEmblemId);
             if (m_pExternOnAcquiredEmblemFuncPtr) m_pExternOnAcquiredEmblemFuncPtr(m_userData0, info->wEmblemId);
         }

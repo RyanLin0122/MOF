@@ -199,11 +199,19 @@ int cltLessonSystem::CanTraningLessonByType(std::uint8_t lessonType) {
 
 int cltLessonSystem::TraningLessonFinished(unsigned int seed, std::uint8_t hitType, int success, unsigned int* inoutPt) {
     int idx = 0;
+    bool found = false;
     while (idx < 4 && m_lessonState[idx] != 1) {
-        if (++idx >= 4) goto done;
+        if (++idx >= 4) {
+            break;
+        }
+    }
+    if (idx < 4 && m_lessonState[idx] == 1) {
+        found = true;
     }
 
-    strLessonKindInfo* lessonInfo = m_pclLessonKindInfo ? m_pclLessonKindInfo->GetLessonKindInfo(m_lessonSchedule[idx]) : nullptr;
+    strLessonKindInfo* lessonInfo = (found && m_pclLessonKindInfo)
+        ? m_pclLessonKindInfo->GetLessonKindInfo(m_lessonSchedule[idx])
+        : nullptr;
     if (lessonInfo && inoutPt) {
         switch (lessonInfo->type) {
             case 0: {
@@ -252,7 +260,6 @@ int cltLessonSystem::TraningLessonFinished(unsigned int seed, std::uint8_t hitTy
         }
     }
 
-done:
     if (idx != 3 && idx >= 0 && idx < 3 && m_lessonState[idx + 1]) return 0;
     ScheduleFinished();
     return 1;
