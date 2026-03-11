@@ -1,82 +1,77 @@
-# cltHelpSystem / cltSkillSystem / cltPlayerAbility 與 `mofclient.c` 等價性差異分析
+# cltHelpSystem / cltSkillSystem / cltPlayerAbility 與 `mofclient.c` 等價性差異分析（現況）
 
 > 基準：`mofclient.c`（ground truth）
-> 
-> 本文件只列出「行為不一致」與「高風險不等價」項目；不在此階段修改程式。
+>
+> 範圍：僅分析差異，**這一版不改程式邏輯**。
 
-## 1) cltHelpSystem
+## 1) `cltHelpSystem`
 
-### A. 事件流程差異
-- `OnReceiptedQuest`：現行實作只呼叫 `Check_SetSchedule` 與 `Check_DoLesson`，**缺少** ground truth 的 `Check_GoTo_Curuno`。  
-  - ground truth 會在接任務時觸發此提示路徑。  
-- `OnMeetNPC`：現行為空函式；ground truth 會呼叫 `Check_GoTo_Rora_For_Reward`。
-- `OnLevelUp`：現行多呼叫了 `Check_EquipItem`；ground truth 的 `OnLevelUp` 不含這一步。
+### 已對齊（主流程）
+以下核心事件流目前與 `mofclient.c` 一致：
+- `OnReceiptedQuest` 依序檢查 `SetSchedule` / `DoLesson` / `GoTo_Curuno`。
+- `OnMeetNPC` 會檢查 `GoTo_Rora_For_Reward`。
+- `OnMapEntered` 會做 `ReceiptQuest/AttackMonster/ViewWorldMap/SeeDiary/DoLessonEachSubject`。
+- `OnLevelUp` 會檢查 bonus point / 可學主動技 / 升武器 / 升職。
+- `Check_ReceiptQuest`、`Check_GoTo_Rora_For_Reward`、`Check_AttackMonster`、`Check_SetScheduleQuestComplete`、`Check_DoLessonEachSubject`、`Check_GoToRoraForRewar` 的判斷條件目前都已跟上 ground truth。
 
-### B. 條件判斷差異
-- `Check_ReceiptQuest`：現行僅看 `m_needReceiptQuestCheck`；ground truth 還會檢查 `N0015` NPC 相關進行中任務不存在時才彈窗（`GetPlayingQuestInfoByNPCID` 條件）。
-- `Check_GoTo_Rora_For_Reward`：現行只要 `Q1501` 就彈；ground truth 還要求該任務存在且完成旗標未完成（`!*((_BYTE*)v3+4)`）。
-- `Check_AttackMonster`：現行用 `mapKind == M0004`；ground truth 用 `Map::GetMapCaps(...) == 1`，判定範圍不同。
-- `Check_SetScheduleQuestComplete`：現行無條件彈 17；ground truth 會檢查 `Q0001` 是否可領獎勵（`CanReward`）才彈。
-- `Check_DoLessonEachSubject`：現行只看地圖就直接彈 18；ground truth 會檢查 `Q0002` 進行狀態與各課程可訓練條件，並依進度彈 18/19/20/21。
-- `Check_GoToRoraForRewar`：現行無條件彈 22；ground truth 需要 `Q0002` 條件與四系 lesson total point 都 > 0 才彈。
-
-### C. 未還原（目前為 stub / no-op）
-- `Check_Party_Caution1`：現行空實作；ground truth 依隊伍狀態、怪物資料與隊員數決定是否彈 10。  
-- `Check_SkillHelper`：現行空實作；ground truth 在特定地圖/等級/技能數時開啟 UI Help 頁面。  
-- `Check_MajorHelper`：現行空實作；ground truth 在特定地圖/年級/專長狀態時開啟 UI Help 頁面。
+### 仍不等價差異
+1. `Check_Party_Caution1` 仍是空實作。  
+   - Ground truth 會在「已組隊」時讀怪物資料，依 `monsterExp / partyMemberNum == 0` 觸發 help 10。
+2. `Check_SkillHelper` 仍是空實作。  
+   - Ground truth 在 `T0004`、等級=3、技能數<=1 時會打開 UI Help 第 3 頁。
+3. `Check_MajorHelper` 仍是空實作。  
+   - Ground truth 在 `T0004`、年級=2、且三類專長皆未取得時會打開 UI Help 第 12 頁。
 
 ---
 
-## 2) cltSkillSystem
+## 2) `cltSkillSystem`
 
-### A. 物件模型與 API 介面不一致
-- `Initialize`：ground truth 版本含 `cltTitleSystem*` 參數並直接接收技能陣列；現行介面拆成兩個 overload，且沒有 title system 依賴。
-- `AddSkill`：ground truth 簽名為 `AddSkill(skill, int* replaced, uint16_t* replacedKind)`，可覆蓋前置技能（升階替換）；現行只有 `AddSkill(skill)`，**不回傳替換資訊**，且不做「前置技能替換」。
+### 仍不等價差異
+1. `GetPassiveSkill(out, onlyValid, workingOnly)` 的 `workingOnly` 邏輯與 ground truth 相反。  
+   - Ground truth：`workingOnly==1` 時應該只回傳 `workingType!=0` 的被動技。  
+   - 現況：`workingOnly==0` 時反而排除了 `workingType!=0`，導致預設路徑只拿到「非 working」被動技。
+2. `AddSkill` 的「普通新增」分支有額外保護行為。  
+   - Ground truth 在 `prev==0` 時直接寫入陣列（不做重複與上限防護）。  
+   - 現況有 `!IsExistSkill` 與 `<100` 才 push 的限制。若外部誤調用，行為會不同。
 
-### B. 核心行為差異
-- `AddSkill`：ground truth 若新技能有 `prev`，會在已持有清單中替換舊技能；現行一律 `push_back`（只檢查重複/上限），行為不等價。  
-- `AddSkill` 觸發事件：ground truth 會呼叫 `cltTitleSystem::OnEvent_acquireskill`；現行缺少。
-- `AddSkill` 圓陣回呼：ground truth 回呼傳入 `this`（skill system instance）；現行傳入 circle kind，callback 語義不同。
-- `BuySkill`：ground truth 會先扣 lesson 點數（四系），再加技能；現行只 `AddSkill`，**不扣點**。
-- `IsAcquireSkill_Run`：ground truth 走 `IsAcquiredSkill(P00001)`（含升階鏈）；現行用 `IsExistSkill(P00001)`（只看直接持有），可能漏判。
-- `GetGeneralPartyAdvantageSkillKind`：ground truth 會找出符合條件的被動技能 kind；現行固定回傳 0。
-
-### C. 有條件偏差 / 邊界邏輯差異
-- `GetPassiveSkill`：ground truth `workingOnly` 參數會過濾 `!skillInfo[49]`；現行忽略第三參數，僅做 active/passive + validity。  
-- `UpdateValidity`：ground truth 檢查特定武器型別需求（對照 `skillInfo +72..` 與裝備 item type）；現行僅檢查「有裝任一有效武器」即可，條件更寬鬆。  
-- `CanAcquireSkill`：ground truth 透過 `IsAcquiredSkill` 判重（含升階鏈）而非 `IsExistSkill`，現行可能允許不該可學的同鏈技能。  
-- `Initialize` 未見 ground truth 類似 `Free/clear` 的流程語義，現行 vector 初始化流程與固定陣列模型仍有語義差距（特別是保留/覆蓋時序）。
+### 其餘重點（目前看起來已對齊）
+- `AddSkill` 的前置技能替換、quickslot 通知、circle callback（傳 `this`）、title event、`UpdateValidity` 觸發。
+- `BuySkill` 的四系 lesson 點扣除順序。
+- `IsAcquireSkill_Run` 使用 `IsAcquiredSkill(P00001)`。
+- `UpdateValidity` 的 class mask + 16 種武器需求檢查模型。
+- `GetGeneralPartyAdvantageSkillKind` 已實作掃描判定。
 
 ---
 
-## 3) cltPlayerAbility（你訊息中的 `clyPlayerAbility` 應為此類別）
+## 3) `cltPlayerAbility`
 
-### A. 依賴系統缺失導致大量行為不可等價
-- ground truth `Initialize` 依賴多個系統：`CPlayerSpirit`、`cltEmblemSystem`、`cltMonsterToleranceSystem`、`cltRestBonusSystem`、`cltPetSystem`、`cltMyItemSystem` 等；現行版本只保留少數指標，缺少多數來源，導致後續計算行為顯著簡化。
+### 仍不等價差異（重要）
+1. `ResetAbility` 與 `CanResetAbility` 規則不同。  
+   - Ground truth：重置後 `STR/DEX/INT/VIT` 都設為 4，`bonusPoint = 5 * (level+1)`，並 `UpdateValidity()`。  
+   - 現況：重置為 `initial*`，不會回到固定 4，也不會重算 bonus point。
+2. `GetMaxHP` / `GetMaxMP` 少算 emblem 加成。  
+   - Ground truth 把 `cltEmblemSystem` 的 MaxHP/MaxMP advantage 納入百分比加成。  
+   - 現況只算 skill + equipment + using-item。
+3. `GetHPRate` 取樣基準不同。  
+   - Ground truth 透過虛擬路徑取「含上下文的最大 HP」（可帶 party 脈絡）。  
+   - 現況直接用 `GetMaxHP(m_baseVit)`，未帶 party/最終 vit 計算路徑。
+4. `GetAPower` / `GetDPower` 忽略目標 `charKind` 屬性。  
+   - Ground truth 會從 `cltCharKindInfo` 取目標 atb（例如 demon 等），並套用對應 AP/DP 與特例加成。  
+   - 現況固定 `atb = -1`，`charKind` 幾乎被忽略，導致 atb 特化加成失效（包含 demon 分支）。
+5. `GetAttackAtb(int)` 缺少「外部覆寫 attack attribute」分支。  
+   - Ground truth 先嘗試由傳入參數（虛擬呼叫）取得 attack atb，失敗才退回武器 atb。  
+   - 現況永遠回傳武器 atb。
 
-### B. 屬性/能力計算明顯簡化
-- `GetStr/GetDex/GetInt/GetVit`：ground truth = base + 裝備 + 使用物品 + 使用技能 + 寵物 + 派對；現行直接回傳 base 值。  
-- `GetAPower/GetDPower`：ground truth 為大型綜合公式（包含 class/monster tolerance/equipment/skill/item/emblem/pet/party 等）；現行僅極簡近似（`GetAPower` 幾乎等於 base str，`GetDPower` 只做 `baseVit + a4`）。
-- `GetNeedManaForUsingSkill`：ground truth 使用 `SkillManaAdvantage` 計算折減且下限 1；現行幾乎不折減（只做 `max(1, baseSkillMana)`）。
-
-### C. 多個方法為固定值 / 未還原
-- 現行固定回傳 0（或 false）的方法，在 ground truth 有完整邏輯：
-  - `CanMultiAttack`, `GetAttackSpeedAdvantage`, `GetDamageHP2ManaRate`, `GetDropRateAdvantage`, `GetDeadPenaltyExpAdvantage`, `GetExpAdvantage`, `IsActiveFastRun`, `IsActiveNonDelayAttack`, `GetAttackAtb`
-  - `GetItemRecoverHPAdvantage`, `GetItemRecoverManaAdvantage`, `GetMagicResistRateAdvantage`, `GetMagicResistRate`
-  - `GetPartyAPowerAdvantage`, `GetPartyDPowerAdvantage`, `GetPartyHitRateAdvantage`
-  - `GetCriticalHitRateAdvantage`, `GetMissRateAdvantage`, `GetSkillAPowerAdvantage`
-  - `GetShopItemPriceAdvangtage`, `GetSellingAgencyTaxAdvantage`
-  - `GetMaxFaintingInfo`, `GetMaxConfusionInfo`, `GetMaxFreezingInfo`（ground truth 會整合 skill/using-skill/emblem 三來源，取最大）
-- `GetBuffNum/GetMaxBuffNum/CanAddBuff`：ground truth 動態計算（含 class default + skill add，且上限 10）；現行只看兩個成員變數，未接軌真實狀態。
-
-### D. 最大 HP/MP 公式仍需再確認
-- 現行 `GetMaxHP/GetMaxMP` 使用簡化線性公式；ground truth 實際公式在 `cltPlayerAbility` 內含更多上下文（class / 各系統加成），目前不可視為等價。
+### 其餘已接近 ground truth 的項目
+- `GetStr/GetDex/GetInt/GetVit`（裝備/物品/技能/寵物/隊伍加成匯總）
+- `CanMultiAttack`、`GetAttackSpeedAdvantage`、`GetDamageHP2ManaRate`、`GetExpAdvantage`
+- `GetBuffNum/GetMaxBuffNum/CanAddBuff`
+- `GetNeedManaForUsingSkill`、`GetMaxFainting/Confusion/FreezingInfo`
 
 ---
 
-## 4) 結論（本階段）
+## 結論
 
-- `cltHelpSystem`：有多處「條件缺失 / 過度簡化 / 空實作」，與 ground truth **不等價**。  
-- `cltSkillSystem`：關鍵流程（加技能替換、買技能扣點、validity 條件、一般隊伍加成技能判定）存在差異，與 ground truth **不等價**。  
-- `cltPlayerAbility`：目前屬「大量未還原 + 返回常數」狀態，與 ground truth **不等價**，而且差異範圍最大。
-
+- `cltHelpSystem`：主幹流程大致對齊，剩 3 個 helper 仍為 stub。  
+- `cltSkillSystem`：主要差異集中在 `GetPassiveSkill` 的 `workingOnly` 判斷（功能性差異）與 `AddSkill` 防護行為。  
+- `cltPlayerAbility`：仍有數個核心公式/流程不等價（重置規則、HP/MP 加成來源、AP/DP atb 路徑、AttackAtb 覆寫邏輯）。

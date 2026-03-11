@@ -172,7 +172,10 @@ void cltHelpSystem::Check_ViewWorldMap(std::uint16_t mapKind) {
     }
 }
 
-void cltHelpSystem::Check_Party_Caution1(std::uint16_t) {}
+void cltHelpSystem::Check_Party_Caution1(std::uint16_t) {
+    // TODO: Ground truth behavior opens popup(10) based on party state and killed monster EXP-per-member.
+    // UI/character-kind integration path is not wired in current codebase.
+}
 
 void cltHelpSystem::Check_Can_Acquire_ActiveSkill() {
     if (m_pLevelSystem && m_pLevelSystem->GetLevel() == 3 && m_pPopupMessagePtr) {
@@ -263,5 +266,11 @@ void cltHelpSystem::Check_GoToRoraForRewar() {
     }
 }
 
-void cltHelpSystem::Check_SkillHelper(std::uint16_t) {}
-void cltHelpSystem::Check_MajorHelper(std::uint16_t) {}
+void cltHelpSystem::Check_SkillHelper(std::uint16_t) {
+    // TODO: Ground truth behavior opens UI Help page for skill guidance in specific map/level/skill-count conditions.
+    // Current repository has no active UI help window path to invoke here.
+}
+void cltHelpSystem::Check_MajorHelper(std::uint16_t) {
+    // TODO: Ground truth behavior opens UI Help page for major/specialty guidance under grade/specialty conditions.
+    // Current repository has no active UI help window path to invoke here.
+}

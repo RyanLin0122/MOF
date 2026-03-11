@@ -198,12 +198,12 @@ std::uint16_t cltSkillSystem::GetPassiveSkill(std::uint16_t* out, int onlyValid,
         const auto skill = m_skillKinds[i];
         if (cltSkillKindInfo::IsActiveSkill(skill)) continue;
         if (onlyValid && (i >= m_skillValidity.size() || !m_skillValidity[i])) continue;
-        if (!workingOnly) {
+        if (workingOnly) {
             auto* info = m_pclSkillKindInfo ? m_pclSkillKindInfo->GetSkillKindInfo_P(skill) : nullptr;
             if (!info) {
                 continue;
             }
-            if (*reinterpret_cast<std::uint32_t*>(reinterpret_cast<unsigned char*>(info) + 196) != 0) {
+            if (*reinterpret_cast<std::uint32_t*>(reinterpret_cast<unsigned char*>(info) + 196) == 0) {
                 continue;
             }
         }

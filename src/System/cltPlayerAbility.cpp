@@ -94,10 +94,15 @@ void cltPlayerAbility::ResetAbility(cltPlayerAbility* self) {
     if (!self) {
         return;
     }
-    self->m_baseStr = self->m_initialStr;
-    self->m_baseDex = self->m_initialDex;
-    self->m_baseInt = self->m_initialInt;
-    self->m_baseVit = self->m_initialVit;
+    const int level = self->m_pLevelSystem ? self->m_pLevelSystem->GetLevel() : 0;
+    self->m_bonusPoint = static_cast<std::uint16_t>(5 * (level + 1));
+    self->m_baseStr = 4;
+    self->m_baseDex = 4;
+    self->m_baseInt = 4;
+    self->m_baseVit = 4;
+    if (self->m_pEquipmentSystem) {
+        self->m_pEquipmentSystem->UpdateValidity();
+    }
 }
 
 void cltPlayerAbility::DecreaseBonusPoint(std::uint16_t value) {
@@ -197,7 +202,10 @@ int cltPlayerAbility::GetMaxHP(std::uint16_t vit) {
     }
     const int base = 16 * vit + 10 * m_pLevelSystem->GetLevel() + 36;
     if (!m_pSkillSystem || !m_pEquipmentSystem || !m_pUsingItemSystem) return base;
-    const int adv = m_pSkillSystem->GetMaxHPAdvantage() + m_pEquipmentSystem->GetMaxHPAdvantage() + m_pUsingItemSystem->GetMaxHPAdvantage();
+    const int adv = m_pSkillSystem->GetMaxHPAdvantage()
+        + m_pEquipmentSystem->GetMaxHPAdvantage()
+        + (m_pEmblemSystem ? m_pEmblemSystem->GetMaxHPAdvantage() : 0)
+        + m_pUsingItemSystem->GetMaxHPAdvantage();
     return base + base * adv / 100;
 }
 
@@ -207,15 +215,18 @@ int cltPlayerAbility::GetMaxMP(std::uint16_t intel) {
     }
     const int base = 12 * intel + 10 * m_pLevelSystem->GetLevel();
     if (!m_pSkillSystem || !m_pEquipmentSystem || !m_pUsingItemSystem) return base;
-    const int adv = m_pSkillSystem->GetMaxMPAdvantage() + m_pEquipmentSystem->GetMaxManaAdvantage() + m_pUsingItemSystem->GetMaxManaAdvantage();
+    const int adv = m_pSkillSystem->GetMaxMPAdvantage()
+        + m_pEquipmentSystem->GetMaxManaAdvantage()
+        + (m_pEmblemSystem ? m_pEmblemSystem->GetMaxManaAdvantage() : 0)
+        + m_pUsingItemSystem->GetMaxManaAdvantage();
     return base + base * adv / 100;
 }
 
 int cltPlayerAbility::CanResetAbility() const {
-    return m_baseStr != m_initialStr
-        || m_baseDex != m_initialDex
-        || m_baseInt != m_initialInt
-        || m_baseVit != m_initialVit;
+    return m_baseStr != 4
+        || m_baseDex != 4
+        || m_baseInt != 4
+        || m_baseVit != 4;
 }
 
 int cltPlayerAbility::GetNeedManaForUsingSkill(int baseSkillMana) const {
@@ -300,8 +311,9 @@ void cltPlayerAbility::DecreaseMPPercent(int percent, unsigned char, void*) {
     DecreaseMP(GetMaxMP(GetBaseInt()) * percent / 100);
 }
 
-int cltPlayerAbility::GetHPRate(void*) const {
-    const int maxHp = const_cast<cltPlayerAbility*>(this)->GetMaxHP(m_baseVit);
+int cltPlayerAbility::GetHPRate(void* party) const {
+    const int maxHp = const_cast<cltPlayerAbility*>(this)->GetMaxHP(
+        const_cast<cltPlayerAbility*>(this)->GetVit(0, party));
     if (maxHp <= 0) return 0;
     return (100 * m_hp) / maxHp;
 }
@@ -350,7 +362,20 @@ int cltPlayerAbility::IsActiveFastRun() const {
     return m_pUsingSkillSystem && m_pUsingSkillSystem->IsActiveFastRunSkill() == 1;
 }
 int cltPlayerAbility::IsActiveNonDelayAttack() const { return m_pUsingSkillSystem && m_pUsingSkillSystem->IsActiveNonDelayAttack() == 1; }
-int cltPlayerAbility::GetAttackAtb(int) const { return m_pEquipmentSystem ? m_pEquipmentSystem->GetWeaponAttackAtb() : 0; }
+int cltPlayerAbility::GetAttackAtb(int a2) const {
+    if (a2) {
+        using Fn = int(*)(void*, int*, unsigned int, unsigned int);
+        void* obj = reinterpret_cast<void*>(static_cast<std::uintptr_t>(a2));
+        auto** vft = reinterpret_cast<Fn**>(obj);
+        if (vft && *vft) {
+            int atb = 0;
+            if ((*vft)[6](obj, &atb, 0, 0) == 1) {
+                return atb;
+            }
+        }
+    }
+    return m_pEquipmentSystem ? m_pEquipmentSystem->GetWeaponAttackAtb() : 0;
+}
 
 int cltPlayerAbility::GetItemRecoverHPAdvantage() const { return m_pEmblemSystem ? m_pEmblemSystem->GetItemRecoverHPAdvantage() : 0; }
 int cltPlayerAbility::GetItemRecoverManaAdvantage() const { return m_pEmblemSystem ? m_pEmblemSystem->GetItemRecoverManaAdvantage() : 0; }
@@ -486,10 +511,10 @@ void cltPlayerAbility::GetAPower(std::uint16_t* outMin, std::uint16_t* outMax, s
     if (atb == 5) {
         rate += bonusForDemon;
     }
-    if (m_pPetSystem) {
-        rate += m_pPetSystem->GetAPowerAdvantage();
-    }
-    rate += baseAdv + petBonus;
+    rate += baseAdv;
+
+    // Ground truth applies a x10 scale before per-mille contribution.
+    rate = 10 * rate + (m_pPetSystem ? m_pPetSystem->GetAPowerAdvantage() : 0) + petBonus;
 
     const int level = m_pLevelSystem ? m_pLevelSystem->GetLevel() : 0;
     const int baseMin = static_cast<int>(eMin) + str / 5 + level / 2;
@@ -514,7 +539,6 @@ int cltPlayerAbility::GetDPower(std::uint16_t charKind, void* party, int a4) con
     if (m_pEquipmentSystem) rate += m_pEquipmentSystem->GetDPowerAdvatnage(atb);
     if (party) rate += reinterpret_cast<cltPartySystem*>(party)->GetDPowerRateAdvantage(0, 0, 0);
     if (m_pEmblemSystem) rate += m_pEmblemSystem->GetDPowerAdvantage();
-    if (m_pPetSystem) rate += m_pPetSystem->GetDPowerAdvantage();
-    rate += a4;
+    rate = 10 * rate + (m_pPetSystem ? m_pPetSystem->GetDPowerAdvantage() : 0) + a4;
     return (base + base * rate / 1000) / 3;
 }
