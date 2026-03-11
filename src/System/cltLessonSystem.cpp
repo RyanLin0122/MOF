@@ -66,7 +66,7 @@ void cltLessonSystem::Initialize(cltBaseInventory* baseInventory, CMofMsg* msg) 
 void cltLessonSystem::Free() {
     m_pBaseInventory = nullptr;
     m_pEmblemSystem = nullptr;
-    m_wTraningItemKind = 0;
+    std::fill(m_lessonSchedule.begin(), m_lessonSchedule.end(), 0);
     std::fill(m_lessonState.begin(), m_lessonState.end(), 0);
 }
 
@@ -79,11 +79,10 @@ int cltLessonSystem::CanCancelSchedule() { return 1; }
 
 void cltLessonSystem::CancelSchedule() {
     m_wTraningItemKind = 0;
-    std::fill(m_lessonState.begin(), m_lessonState.end(), 0);
+    std::fill(m_lessonSchedule.begin(), m_lessonSchedule.end(), 0);
 }
 
 strLessonHistory* cltLessonSystem::GetLessonHistory(std::uint8_t lessonType, std::uint8_t rankOrMode) {
-    if (lessonType >= 4 || rankOrMode >= 3) return nullptr;
     return &m_lessonHistory[lessonType][rankOrMode];
 }
 
@@ -92,16 +91,16 @@ std::uint16_t cltLessonSystem::GetTraningItemKind() { return m_wTraningItemKind;
 int cltLessonSystem::CanSetupSchedule(int traningItemKind, const std::uint8_t* lessonSchedule) {
     int validCount = 0;
 
-    if (!(m_pEmblemSystem && m_pEmblemSystem->GetTraningCardItemKind() && m_pEmblemSystem->GetTraningCardItemKind() == static_cast<std::uint16_t>(traningItemKind))) {
-        if (!m_pclItemKindInfo || !m_pclItemKindInfo->IsTraningCard(static_cast<unsigned short>(traningItemKind))) return 303;
-        if (!m_pBaseInventory || !m_pBaseInventory->GetInventoryItemQuantity(traningItemKind)) return 303;
+    if (!(m_pEmblemSystem->GetTraningCardItemKind() && m_pEmblemSystem->GetTraningCardItemKind() == static_cast<std::uint16_t>(traningItemKind))) {
+        if (!m_pclItemKindInfo->IsTraningCard(static_cast<unsigned short>(traningItemKind))) return 303;
+        if (!m_pBaseInventory->GetInventoryItemQuantity(traningItemKind)) return 303;
         if (m_pBaseInventory->IsLock() == 1) return 1;
     }
 
     for (int i = 0; i < 4; ++i) {
         const std::uint8_t kind = lessonSchedule[i];
         if (kind == 0) return validCount != 0 ? 0 : 300;
-        if (!m_pclLessonKindInfo || !m_pclLessonKindInfo->IsValidLessonKind(kind)) return 304;
+        if (!m_pclLessonKindInfo->IsValidLessonKind(kind)) return 304;
         ++validCount;
     }
 
@@ -119,9 +118,7 @@ void cltLessonSystem::SetupSchedule(std::uint16_t traningItemKind, const std::ui
 
     m_wTraningItemKind = traningItemKind;
     if (consumeCard) {
-        if (m_pBaseInventory) {
-            m_pBaseInventory->DelInventoryItemKind(traningItemKind, 1u, itemList, nullptr);
-        }
+        m_pBaseInventory->DelInventoryItemKind(traningItemKind, 1u, itemList, nullptr);
         if (outUsingCardKind) *outUsingCardKind = 0;
     } else if (outUsingCardKind) {
         *outUsingCardKind = m_pEmblemSystem ? m_pEmblemSystem->GetTraningCardItemKind() : 0;
@@ -193,53 +190,46 @@ int cltLessonSystem::CanTraningLessonByType(std::uint8_t lessonType) {
         if (++idx >= 4) return 1;
     }
 
-    strLessonKindInfo* info = m_pclLessonKindInfo ? m_pclLessonKindInfo->GetLessonKindInfo(m_lessonSchedule[idx]) : nullptr;
-    return (!info || info->type != lessonType) ? 0x12E : 0;
+    strLessonKindInfo* info = m_pclLessonKindInfo->GetLessonKindInfo(m_lessonSchedule[idx]);
+    return (info->type != lessonType) ? 0x12E : 0;
 }
 
 int cltLessonSystem::TraningLessonFinished(unsigned int seed, std::uint8_t hitType, int success, unsigned int* inoutPt) {
     int idx = 0;
-    bool found = false;
     while (idx < 4 && m_lessonState[idx] != 1) {
         if (++idx >= 4) {
-            break;
+            goto finish_check;
         }
     }
-    if (idx < 4 && m_lessonState[idx] == 1) {
-        found = true;
-    }
-
-    strLessonKindInfo* lessonInfo = (found && m_pclLessonKindInfo)
-        ? m_pclLessonKindInfo->GetLessonKindInfo(m_lessonSchedule[idx])
-        : nullptr;
-    if (lessonInfo && inoutPt) {
+    {
+        strLessonKindInfo* lessonInfo = m_pclLessonKindInfo->GetLessonKindInfo(m_lessonSchedule[idx]);
         switch (lessonInfo->type) {
             case 0: {
                 const unsigned int p = *inoutPt;
-                *inoutPt = p + p * (m_pEmblemSystem ? m_pEmblemSystem->GetSwordLessonPtAdvantage() : 0) / 1000;
+                *inoutPt = p + p * m_pEmblemSystem->GetSwordLessonPtAdvantage() / 1000;
                 IncLessonPt_Sword(*inoutPt);
-                if (m_pEmblemSystem) m_pEmblemSystem->OnEvent_CompleteSwordLesson(seed);
+                m_pEmblemSystem->OnEvent_CompleteSwordLesson(seed);
                 break;
             }
             case 1: {
                 const unsigned int p = *inoutPt;
-                *inoutPt = p + p * (m_pEmblemSystem ? m_pEmblemSystem->GetBowLessonPtAdvantage() : 0) / 1000;
+                *inoutPt = p + p * m_pEmblemSystem->GetBowLessonPtAdvantage() / 1000;
                 IncLessonPt_Bow(*inoutPt);
-                if (m_pEmblemSystem) m_pEmblemSystem->OnEvent_CompleteBowLesson(seed);
+                m_pEmblemSystem->OnEvent_CompleteBowLesson(seed);
                 break;
             }
             case 2: {
                 const unsigned int p = *inoutPt;
-                *inoutPt = p + p * (m_pEmblemSystem ? m_pEmblemSystem->GetMagicLessonPtAdvantage() : 0) / 1000;
+                *inoutPt = p + p * m_pEmblemSystem->GetMagicLessonPtAdvantage() / 1000;
                 IncLessonPt_Magic(*inoutPt);
-                if (m_pEmblemSystem) m_pEmblemSystem->OnEvent_CompleteMagicLesson(seed);
+                m_pEmblemSystem->OnEvent_CompleteMagicLesson(seed);
                 break;
             }
             case 3: {
                 const unsigned int p = *inoutPt;
-                *inoutPt = p + p * (m_pEmblemSystem ? m_pEmblemSystem->GetTheologyLessonPtAdvantage() : 0) / 1000;
+                *inoutPt = p + p * m_pEmblemSystem->GetTheologyLessonPtAdvantage() / 1000;
                 IncLessonPt_Theology(*inoutPt);
-                if (m_pEmblemSystem) m_pEmblemSystem->OnEvent_CompleteTheologyLesson(seed);
+                m_pEmblemSystem->OnEvent_CompleteTheologyLesson(seed);
                 break;
             }
             default: break;
@@ -250,7 +240,7 @@ int cltLessonSystem::TraningLessonFinished(unsigned int seed, std::uint8_t hitTy
         else if (mapped == 2) mapped = 1;
         else if (mapped == 4) mapped = 2;
 
-        strLessonHistory* hist = GetLessonHistory(lessonInfo ? lessonInfo->type : 0, mapped);
+        strLessonHistory* hist = GetLessonHistory(lessonInfo->type, mapped);
         if (success == 1) {
             m_lessonState[idx] = 3;
             if (hist) ++hist->successCount;
@@ -260,7 +250,8 @@ int cltLessonSystem::TraningLessonFinished(unsigned int seed, std::uint8_t hitTy
         }
     }
 
-    if (idx != 3 && idx >= 0 && idx < 3 && m_lessonState[idx + 1]) return 0;
+finish_check:
+    if (idx != 3 && m_lessonState[idx + 1]) return 0;
     ScheduleFinished();
     return 1;
 }
@@ -279,8 +270,7 @@ int cltLessonSystem::GetThisLessonInfo(std::uint8_t* outIndex, std::uint8_t* out
         if (++idx >= 4) return 0;
     }
 
-    strLessonKindInfo* info = m_pclLessonKindInfo ? m_pclLessonKindInfo->GetLessonKindInfo(m_lessonSchedule[idx]) : nullptr;
-    if (!info) return 0;
+    strLessonKindInfo* info = m_pclLessonKindInfo->GetLessonKindInfo(m_lessonSchedule[idx]);
 
     *outIndex = static_cast<std::uint8_t>(idx);
     *outType = info->type;
