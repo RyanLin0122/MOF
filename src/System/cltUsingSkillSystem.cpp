@@ -10,6 +10,7 @@ int cltUsingSkillSystem::GetAttackSpeedAdvantage(){ return 0; }
 int cltUsingSkillSystem::IsActiveFastRunSkill(){ return 0; }
 int cltUsingSkillSystem::IsActiveNonDelayAttack(){ return 0; }
 int cltUsingSkillSystem::IsActiveManashieldSkill(){ return 0; }
+int cltUsingSkillSystem::GetCriticalRate(){ return 0; }
 int cltUsingSkillSystem::GetTotalAPowerOfUsingSkill(){ return 0; }
 int cltUsingSkillSystem::GetTotalDPowerOfUsingSkill() { return 0; }
 int cltUsingSkillSystem::GetExpAdvantage(int) { return 0; }
