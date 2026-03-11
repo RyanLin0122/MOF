@@ -125,11 +125,12 @@ int cltSkillSystem::FindSkillIndex(std::uint16_t skillKind) const {
 }
 
 void cltSkillSystem::AddSkill(std::uint16_t skillKind, int* replaced, std::uint16_t* replacedSkillKind) {
-    if (replaced) {
-        *replaced = 0;
-    }
+    int localReplaced = 0;
     auto* info = m_pclSkillKindInfo ? m_pclSkillKindInfo->GetSkillKindInfo(skillKind) : nullptr;
     if (!info) {
+        if (replaced) {
+            *replaced = 0;
+        }
         return;
     }
 
@@ -137,39 +138,25 @@ void cltSkillSystem::AddSkill(std::uint16_t skillKind, int* replaced, std::uint1
     if (prevSkill != 0) {
         const int idx = FindSkillIndex(prevSkill);
         if (idx >= 0) {
-            if (replaced) {
-                *replaced = 1;
-            }
+            localReplaced = 1;
             if (replacedSkillKind) {
                 *replacedSkillKind = m_skillKinds[idx];
             }
             m_skillKinds[idx] = skillKind;
-            if (m_pQuickSlotSystem) {
-                m_pQuickSlotSystem->OnSkillAdded(skillKind);
-            }
-            if (cltSkillKindInfo::IsPassiveSkill(skillKind)) {
-                const auto circleKind = *reinterpret_cast<std::uint32_t*>(reinterpret_cast<unsigned char*>(info) + 256);
-                if (circleKind != 0 && m_pOnAcquireCircleSkillFuncPtr) {
-                    m_pOnAcquireCircleSkillFuncPtr(static_cast<unsigned int>(reinterpret_cast<std::uintptr_t>(this)));
-                }
-            }
-            if (m_pTitleSystem) {
-                m_pTitleSystem->OnEvent_acquireskill(skillKind);
-            }
-            UpdateValidity();
-            return;
+        } else {
+            goto notify_only;
         }
-        if (replaced) {
-            *replaced = 0;
+    } else {
+        if (!IsExistSkill(skillKind) && m_skillKinds.size() < 100) {
+            m_skillKinds.push_back(skillKind);
+            m_skillValidity.push_back(0);
         }
-        return;
     }
 
-    if (IsExistSkill(skillKind) || m_skillKinds.size() >= 100) {
-        return;
+notify_only:
+    if (replaced) {
+        *replaced = localReplaced;
     }
-    m_skillKinds.push_back(skillKind);
-    m_skillValidity.push_back(0);
     if (m_pQuickSlotSystem) {
         m_pQuickSlotSystem->OnSkillAdded(skillKind);
     }
@@ -358,7 +345,7 @@ void cltSkillSystem::BuySkill(std::uint16_t skillKind) {
     if (!info) {
         return;
     }
-    if (!CanBuySkill(skillKind) || !m_pLessonSystem) {
+    if (!m_pLessonSystem) {
         return;
     }
     const auto needFig = *reinterpret_cast<std::uint32_t*>(reinterpret_cast<unsigned char*>(info) + 52);
@@ -720,11 +707,24 @@ void cltSkillSystem::UpdateValidity() {
 
         bool weaponValid = true;
         const std::uint32_t reqWeaponCount = *reinterpret_cast<std::uint32_t*>(reinterpret_cast<unsigned char*>(skillInfo) + 88);
-        if (reqWeaponCount && m_pEquipmentSystem) {
+        if (reqWeaponCount && m_pEquipmentSystem && m_pclItemKindInfo) {
             weaponValid = false;
-            for (unsigned int slot = 0; slot < 11; ++slot) {
+            const unsigned int refEquipKind[16] = { 4, 5, 6, 7, 8, 9, 10, 4, 4, 4, 4, 4, 4, 4, 4, 4 };
+            for (int reqIdx = 0; reqIdx < 16; ++reqIdx) {
+                if (*reinterpret_cast<unsigned char*>(reinterpret_cast<unsigned char*>(skillInfo) + 72 + reqIdx) == 0) {
+                    continue;
+                }
+                const auto slot = refEquipKind[reqIdx];
                 const auto itemKind = m_pEquipmentSystem->GetEquipItem(1, slot);
-                if (itemKind != 0 && m_pEquipmentSystem->IsEquipItemValidity(1, slot)) {
+                if (!itemKind || !m_pEquipmentSystem->IsEquipItemValidity(1, slot)) {
+                    continue;
+                }
+                auto* itemInfo = m_pclItemKindInfo->GetItemKindInfo(itemKind);
+                if (!itemInfo) {
+                    continue;
+                }
+                const auto itemTypeAt84 = *reinterpret_cast<std::uint16_t*>(reinterpret_cast<unsigned char*>(itemInfo) + 84);
+                if (itemTypeAt84 == reqIdx) {
                     weaponValid = true;
                     break;
                 }
