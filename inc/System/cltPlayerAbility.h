@@ -11,6 +11,12 @@ class cltClassSystem;
 class cltUsingItemSystem;
 class cltUsingSkillSystem;
 class cltWorkingPassiveSkillSystem;
+class CPlayerSpirit;
+class cltEmblemSystem;
+class cltMonsterToleranceSystem;
+class cltRestBonusSystem;
+class cltPetSystem;
+class cltMyItemSystem;
 
 class cltPlayerAbility {
 public:
@@ -24,6 +30,12 @@ public:
         cltUsingItemSystem* usingItemSystem,
         cltUsingSkillSystem* usingSkillSystem,
         cltWorkingPassiveSkillSystem* workingPassiveSkillSystem,
+        CPlayerSpirit* playerSpirit,
+        cltEmblemSystem* emblemSystem,
+        cltMonsterToleranceSystem* monsterToleranceSystem,
+        cltRestBonusSystem* restBonusSystem,
+        cltPetSystem* petSystem,
+        cltMyItemSystem* myItemSystem,
         int hp,
         int mp,
         std::uint16_t str,
@@ -118,6 +130,12 @@ private:
     cltUsingItemSystem* m_pUsingItemSystem = nullptr;
     cltUsingSkillSystem* m_pUsingSkillSystem = nullptr;
     cltWorkingPassiveSkillSystem* m_pWorkingPassiveSkillSystem = nullptr;
+    CPlayerSpirit* m_pPlayerSpirit = nullptr;
+    cltEmblemSystem* m_pEmblemSystem = nullptr;
+    cltMonsterToleranceSystem* m_pMonsterToleranceSystem = nullptr;
+    cltRestBonusSystem* m_pRestBonusSystem = nullptr;
+    cltPetSystem* m_pPetSystem = nullptr;
+    cltMyItemSystem* m_pMyItemSystem = nullptr;
 
     std::uint16_t m_baseStr = 0;
     std::uint16_t m_baseDex = 0;

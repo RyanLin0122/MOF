@@ -1,6 +1,7 @@
 #include "System/cltHelpSystem.h"
 
 #include "Info/cltMapInfo.h"
+#include "Info/cltNPCInfo.h"
 #include "Info/cltQuestKindInfo.h"
 #include "Info/cltSkillKindInfo.h"
 #include "System/cltEquipmentSystem.h"
@@ -9,8 +10,18 @@
 
 class cltQuestSystem {
 public:
-    void* GetPlayingQuestInfoByNPCID(std::uint16_t) {};
+    void* GetPlayingQuestInfoByNPCID(std::uint16_t);
+    void* GetPlayingQuestInfoByQuestID(std::uint16_t);
+    int CanReward(int);
 };
+
+class stPlayingQuestInfo {
+public:
+    std::uint16_t questKind;
+    std::uint8_t completed;
+};
+
+extern cltMapInfo g_Map;
 
 void (*cltHelpSystem::m_pPopupMessagePtr)(HelpKind) = nullptr;
 cltCharKindInfo* cltHelpSystem::m_pclCharKindInfo = nullptr;
@@ -36,9 +47,10 @@ void cltHelpSystem::Initialize(cltLevelSystem* levelSystem, cltQuestSystem* ques
 void cltHelpSystem::OnReceiptedQuest(std::uint16_t questKind) {
     Check_SetSchedule(questKind);
     Check_DoLesson(questKind);
+    Check_GoTo_Curuno(questKind);
 }
 
-void cltHelpSystem::OnMeetNPC(std::uint16_t) {}
+void cltHelpSystem::OnMeetNPC(std::uint16_t questKind) { Check_GoTo_Rora_For_Reward(questKind); }
 
 void cltHelpSystem::OnMapEntered(std::uint16_t mapKind) {
     Check_ReceiptQuest();
@@ -58,7 +70,6 @@ void cltHelpSystem::OnLevelUp() {
     Check_Can_Acquire_ActiveSkill();
     Check_Can_Upgrade_Weapon();
     Check_Can_Upgrade_Class();
-    Check_EquipItem();
 }
 
 void cltHelpSystem::OnOpenCharInfoWindow() { m_popupOpened[HELP_USE_BONUS_POINT] = 1; }
@@ -78,7 +89,11 @@ void cltHelpSystem::OnMapEnteredHelpWindow(std::uint16_t mapKind) {
 }
 
 void cltHelpSystem::Check_ReceiptQuest() {
-    if (m_popupOpened[HELP_RECEIPT_QUEST] != 1 && m_needReceiptQuestCheck && m_pPopupMessagePtr) {
+    if (m_popupOpened[HELP_RECEIPT_QUEST] != 1 && m_needReceiptQuestCheck && m_pPopupMessagePtr && m_pQuestSystem) {
+        const auto npcKind = cltNPCInfo::TranslateKindCode("N0015");
+        if (m_pQuestSystem->GetPlayingQuestInfoByNPCID(npcKind)) {
+            return;
+        }
         m_pPopupMessagePtr(HELP_RECEIPT_QUEST);
     }
 }
@@ -114,13 +129,16 @@ void cltHelpSystem::Check_GoTo_Curuno(std::uint16_t questKind) {
 }
 
 void cltHelpSystem::Check_GoTo_Rora_For_Reward(std::uint16_t questKind) {
-    if (questKind == cltQuestKindInfo::TranslateKindCode("Q1501") && m_pPopupMessagePtr) {
-        m_pPopupMessagePtr(static_cast<HelpKind>(15));
+    if (questKind == cltQuestKindInfo::TranslateKindCode("Q1501") && m_pPopupMessagePtr && m_pQuestSystem) {
+        auto* info = reinterpret_cast<stPlayingQuestInfo*>(m_pQuestSystem->GetPlayingQuestInfoByQuestID(questKind));
+        if (info && !info->completed) {
+            m_pPopupMessagePtr(static_cast<HelpKind>(15));
+        }
     }
 }
 
 void cltHelpSystem::Check_AttackMonster(std::uint16_t mapKind) {
-    if (m_popupOpened[HELP_ATTACK_MONSTER] != 1 && m_pLevelSystem && m_pLevelSystem->GetLevel() <= 1 && mapKind == cltMapInfo::TranslateKindCode("M0004") && m_pPopupMessagePtr) {
+    if (m_popupOpened[HELP_ATTACK_MONSTER] != 1 && m_pLevelSystem && m_pLevelSystem->GetLevel() <= 1 && g_Map.GetMapCaps(mapKind) == 1 && m_pPopupMessagePtr) {
         m_pPopupMessagePtr(HELP_ATTACK_MONSTER);
     }
 }
@@ -198,22 +216,55 @@ void cltHelpSystem::Check_See_Diary(std::uint16_t mapKind) {
 }
 
 void cltHelpSystem::Check_SetScheduleQuestComplete(std::uint16_t) {
-    if (m_pPopupMessagePtr) {
+    if (!m_pPopupMessagePtr || !m_pQuestSystem) {
+        return;
+    }
+    const auto q = cltQuestKindInfo::TranslateKindCode("Q0001");
+    auto* info = reinterpret_cast<stPlayingQuestInfo*>(m_pQuestSystem->GetPlayingQuestInfoByQuestID(q));
+    if (info && m_pQuestSystem->CanReward(static_cast<int>(info->questKind))) {
         m_pPopupMessagePtr(static_cast<HelpKind>(17));
     }
 }
 
 void cltHelpSystem::Check_DoLessonEachSubject(std::uint16_t mapKind) {
-    if (!m_pPopupMessagePtr) {
+    if (!m_pPopupMessagePtr || !m_pQuestSystem || !m_pLessonSystem) {
         return;
     }
     if (mapKind == cltMapInfo::TranslateKindCode("T0004") || mapKind == cltMapInfo::TranslateKindCode("V0032")) {
-        m_pPopupMessagePtr(static_cast<HelpKind>(18));
+        const auto q = cltQuestKindInfo::TranslateKindCode("Q0002");
+        auto* info = reinterpret_cast<stPlayingQuestInfo*>(m_pQuestSystem->GetPlayingQuestInfoByQuestID(q));
+        if (!info || info->completed) {
+            return;
+        }
+        if (m_pLessonSystem->CanTraningLesson(10) && m_pLessonSystem->CanTraningLesson(11)) {
+            if (m_pLessonSystem->CanTraningLesson(20) && m_pLessonSystem->CanTraningLesson(21)) {
+                if (m_pLessonSystem->CanTraningLesson(30) && m_pLessonSystem->CanTraningLesson(31)) {
+                    if (!m_pLessonSystem->CanTraningLesson(40) || !m_pLessonSystem->CanTraningLesson(41)) {
+                        m_pPopupMessagePtr(static_cast<HelpKind>(21));
+                    }
+                } else {
+                    m_pPopupMessagePtr(static_cast<HelpKind>(20));
+                }
+            } else {
+                m_pPopupMessagePtr(static_cast<HelpKind>(19));
+            }
+        } else {
+            m_pPopupMessagePtr(static_cast<HelpKind>(18));
+        }
     }
 }
 
 void cltHelpSystem::Check_GoToRoraForRewar() {
-    if (m_pPopupMessagePtr) {
+    if (!m_pPopupMessagePtr || !m_pQuestSystem || !m_pLessonSystem) {
+        return;
+    }
+    const auto q = cltQuestKindInfo::TranslateKindCode("Q0002");
+    auto* info = reinterpret_cast<stPlayingQuestInfo*>(m_pQuestSystem->GetPlayingQuestInfoByQuestID(q));
+    if (info && !info->completed
+        && m_pLessonSystem->GetTotalSwordLessonPt()
+        && m_pLessonSystem->GetTotalBowLessonPt()
+        && m_pLessonSystem->GetTotalTheologyLessonPt()
+        && m_pLessonSystem->GetTotalMagicLessonPt()) {
         m_pPopupMessagePtr(static_cast<HelpKind>(22));
     }
 }
