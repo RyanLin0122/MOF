@@ -9,6 +9,7 @@
 #include "System/cltEquipmentSystem.h"
 #include "System/cltLessonSystem.h"
 #include "System/cltLevelSystem.h"
+#include "System/cltPartySystem.h"
 #include "System/cltQuickSlotSystem.h"
 #include "System/cltTitleSystem.h"
 
@@ -125,11 +126,12 @@ int cltSkillSystem::FindSkillIndex(std::uint16_t skillKind) const {
 }
 
 void cltSkillSystem::AddSkill(std::uint16_t skillKind, int* replaced, std::uint16_t* replacedSkillKind) {
-    if (replaced) {
-        *replaced = 0;
-    }
+    int localReplaced = 0;
     auto* info = m_pclSkillKindInfo ? m_pclSkillKindInfo->GetSkillKindInfo(skillKind) : nullptr;
     if (!info) {
+        if (replaced) {
+            *replaced = 0;
+        }
         return;
     }
 
@@ -137,39 +139,25 @@ void cltSkillSystem::AddSkill(std::uint16_t skillKind, int* replaced, std::uint1
     if (prevSkill != 0) {
         const int idx = FindSkillIndex(prevSkill);
         if (idx >= 0) {
-            if (replaced) {
-                *replaced = 1;
-            }
+            localReplaced = 1;
             if (replacedSkillKind) {
                 *replacedSkillKind = m_skillKinds[idx];
             }
             m_skillKinds[idx] = skillKind;
-            if (m_pQuickSlotSystem) {
-                m_pQuickSlotSystem->OnSkillAdded(skillKind);
-            }
-            if (cltSkillKindInfo::IsPassiveSkill(skillKind)) {
-                const auto circleKind = *reinterpret_cast<std::uint32_t*>(reinterpret_cast<unsigned char*>(info) + 256);
-                if (circleKind != 0 && m_pOnAcquireCircleSkillFuncPtr) {
-                    m_pOnAcquireCircleSkillFuncPtr(static_cast<unsigned int>(reinterpret_cast<std::uintptr_t>(this)));
-                }
-            }
-            if (m_pTitleSystem) {
-                m_pTitleSystem->OnEvent_acquireskill(skillKind);
-            }
-            UpdateValidity();
-            return;
+        } else {
+            goto notify_only;
         }
-        if (replaced) {
-            *replaced = 0;
+    } else {
+        if (!IsExistSkill(skillKind) && m_skillKinds.size() < 100) {
+            m_skillKinds.push_back(skillKind);
+            m_skillValidity.push_back(0);
         }
-        return;
     }
 
-    if (IsExistSkill(skillKind) || m_skillKinds.size() >= 100) {
-        return;
+notify_only:
+    if (replaced) {
+        *replaced = localReplaced;
     }
-    m_skillKinds.push_back(skillKind);
-    m_skillValidity.push_back(0);
     if (m_pQuickSlotSystem) {
         m_pQuickSlotSystem->OnSkillAdded(skillKind);
     }
@@ -358,7 +346,7 @@ void cltSkillSystem::BuySkill(std::uint16_t skillKind) {
     if (!info) {
         return;
     }
-    if (!CanBuySkill(skillKind) || !m_pLessonSystem) {
+    if (!m_pLessonSystem) {
         return;
     }
     const auto needFig = *reinterpret_cast<std::uint32_t*>(reinterpret_cast<unsigned char*>(info) + 52);
@@ -594,7 +582,11 @@ int cltSkillSystem::GetPartyAPowerAdvantage(void* party) const {
         if (!info) continue;
         const auto* dw = reinterpret_cast<const std::uint32_t*>(reinterpret_cast<const unsigned char*>(info));
         if (dw[68] || dw[71] || dw[74] || dw[77]) {
-            sum += static_cast<int>(dw[71]);
+            const int memberNum = reinterpret_cast<cltPartySystem*>(party)->GetPartyMemberNum();
+            if (memberNum == 3) sum += static_cast<int>(dw[71]);
+            else if (memberNum == 4) sum += static_cast<int>(dw[74]);
+            else if (memberNum == 5) sum += static_cast<int>(dw[77]);
+            else sum += static_cast<int>(dw[68]);
         }
     }
     return sum;
@@ -611,7 +603,11 @@ int cltSkillSystem::GetPartyDPowerAdvantage(void* party) const {
         if (!info) continue;
         const auto* dw = reinterpret_cast<const std::uint32_t*>(reinterpret_cast<const unsigned char*>(info));
         if (dw[69] || dw[72] || dw[75] || dw[78]) {
-            sum += static_cast<int>(dw[72]);
+            const int memberNum = reinterpret_cast<cltPartySystem*>(party)->GetPartyMemberNum();
+            if (memberNum == 3) sum += static_cast<int>(dw[72]);
+            else if (memberNum == 4) sum += static_cast<int>(dw[75]);
+            else if (memberNum == 5) sum += static_cast<int>(dw[78]);
+            else sum += static_cast<int>(dw[69]);
         }
     }
     return sum;
@@ -628,7 +624,11 @@ int cltSkillSystem::GetPartyHitRateAdvantage(void* party) const {
         if (!info) continue;
         const auto* dw = reinterpret_cast<const std::uint32_t*>(reinterpret_cast<const unsigned char*>(info));
         if (dw[70] || dw[73] || dw[76] || dw[79]) {
-            sum += static_cast<int>(dw[73]);
+            const int memberNum = reinterpret_cast<cltPartySystem*>(party)->GetPartyMemberNum();
+            if (memberNum == 3) sum += static_cast<int>(dw[73]);
+            else if (memberNum == 4) sum += static_cast<int>(dw[76]);
+            else if (memberNum == 5) sum += static_cast<int>(dw[79]);
+            else sum += static_cast<int>(dw[70]);
         }
     }
     return sum;
@@ -720,11 +720,24 @@ void cltSkillSystem::UpdateValidity() {
 
         bool weaponValid = true;
         const std::uint32_t reqWeaponCount = *reinterpret_cast<std::uint32_t*>(reinterpret_cast<unsigned char*>(skillInfo) + 88);
-        if (reqWeaponCount && m_pEquipmentSystem) {
+        if (reqWeaponCount && m_pEquipmentSystem && m_pclItemKindInfo) {
             weaponValid = false;
-            for (unsigned int slot = 0; slot < 11; ++slot) {
+            const unsigned int refEquipKind[16] = { 4, 5, 6, 7, 8, 9, 10, 4, 4, 4, 4, 4, 4, 4, 4, 4 };
+            for (int reqIdx = 0; reqIdx < 16; ++reqIdx) {
+                if (*reinterpret_cast<unsigned char*>(reinterpret_cast<unsigned char*>(skillInfo) + 72 + reqIdx) == 0) {
+                    continue;
+                }
+                const auto slot = refEquipKind[reqIdx];
                 const auto itemKind = m_pEquipmentSystem->GetEquipItem(1, slot);
-                if (itemKind != 0 && m_pEquipmentSystem->IsEquipItemValidity(1, slot)) {
+                if (!itemKind || !m_pEquipmentSystem->IsEquipItemValidity(1, slot)) {
+                    continue;
+                }
+                auto* itemInfo = m_pclItemKindInfo->GetItemKindInfo(itemKind);
+                if (!itemInfo) {
+                    continue;
+                }
+                const auto itemTypeAt84 = *reinterpret_cast<std::uint16_t*>(reinterpret_cast<unsigned char*>(itemInfo) + 84);
+                if (itemTypeAt84 == reqIdx) {
                     weaponValid = true;
                     break;
                 }

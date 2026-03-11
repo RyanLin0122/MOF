@@ -10,8 +10,10 @@ public:
     int GetAttackSpeedAdvantage();
     int IsActiveFastRunSkill();
     int IsActiveNonDelayAttack();
+    int IsActiveMultiAttack();
     int IsActiveManashieldSkill();
     int GetCriticalRate();
+    int GetMissRateAdvantage();
     int GetTotalAPowerOfUsingSkill();
     int GetTotalDPowerOfUsingSkill();
     int GetExpAdvantage(int includePassive);

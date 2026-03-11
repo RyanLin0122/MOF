@@ -30,9 +30,9 @@ void cltPlayerAbility::Initialize(
     cltClassSystem* classSystem,
     cltUsingItemSystem* usingItemSystem,
     cltUsingSkillSystem* usingSkillSystem,
-    cltWorkingPassiveSkillSystem* workingPassiveSkillSystem,
     CPlayerSpirit* playerSpirit,
     cltEmblemSystem* emblemSystem,
+    cltWorkingPassiveSkillSystem* workingPassiveSkillSystem,
     cltMonsterToleranceSystem* monsterToleranceSystem,
     cltRestBonusSystem* restBonusSystem,
     cltPetSystem* petSystem,
@@ -87,8 +87,7 @@ void cltPlayerAbility::IncreaseBonusPoint(cltPlayerAbility* self, int value) {
     if (!self || value <= 0) {
         return;
     }
-    const int next = static_cast<int>(self->m_bonusPoint) + value;
-    self->m_bonusPoint = static_cast<std::uint16_t>(std::clamp(next, 0, 0xFFFF));
+    self->m_bonusPoint = static_cast<std::uint16_t>(self->m_bonusPoint + static_cast<std::uint16_t>(value));
 }
 
 void cltPlayerAbility::ResetAbility(cltPlayerAbility* self) {
@@ -102,11 +101,7 @@ void cltPlayerAbility::ResetAbility(cltPlayerAbility* self) {
 }
 
 void cltPlayerAbility::DecreaseBonusPoint(std::uint16_t value) {
-    if (value >= m_bonusPoint) {
-        m_bonusPoint = 0;
-    } else {
-        m_bonusPoint = static_cast<std::uint16_t>(m_bonusPoint - value);
-    }
+    m_bonusPoint = static_cast<std::uint16_t>(m_bonusPoint - value);
 }
 
 std::uint16_t cltPlayerAbility::GetBaseStr() const { return m_baseStr; }
@@ -297,7 +292,7 @@ void cltPlayerAbility::IncreaseMP(int value, int, void*) {
 
 void cltPlayerAbility::IncreaseMPPercent(int percent, unsigned char, void*) {
     if (percent <= 0) return;
-    m_mana += GetMaxMP(GetBaseInt()) * percent / 100;
+    IncreaseMP(GetMaxMP(GetBaseInt()) * percent / 100, 0, nullptr);
 }
 
 void cltPlayerAbility::DecreaseMPPercent(int percent, unsigned char, void*) {
@@ -311,7 +306,19 @@ int cltPlayerAbility::GetHPRate(void*) const {
     return (100 * m_hp) / maxHp;
 }
 
-int cltPlayerAbility::CanMultiAttack() const { return 0; }
+int cltPlayerAbility::CanMultiAttack() const {
+    if (!m_pEquipmentSystem || !m_pclItemKindInfo) {
+        return 0;
+    }
+    const auto weaponKind = m_pEquipmentSystem->GetEquipItem(1, 4);
+    if (weaponKind == 0) {
+        return 0;
+    }
+    if (m_pclItemKindInfo->IsMultiTargetWeapon(weaponKind)) {
+        return 1;
+    }
+    return (m_pUsingSkillSystem && m_pUsingSkillSystem->IsActiveMultiAttack()) ? 1 : 0;
+}
 int cltPlayerAbility::GetAttackSpeedAdvantage() const {
     if (!m_pUsingSkillSystem || !m_pWorkingPassiveSkillSystem) {
         return 0;
@@ -420,11 +427,12 @@ int cltPlayerAbility::GetCriticalHitRateAdvantage(std::uint16_t a2) const {
 }
 int cltPlayerAbility::GetCriticalHitRate(std::uint16_t a2) const { return static_cast<int>(a2) + 100 + GetCriticalHitRateAdvantage(a2); }
 int cltPlayerAbility::GetMissRateAdvantage(std::uint16_t charKind) const {
-    int v = m_pSkillSystem ? m_pSkillSystem->GetMissRateAdvantage() : 0;
-    if (m_pEquipmentSystem) v += m_pEquipmentSystem->GetMissRate();
+    int v = m_pEquipmentSystem ? m_pEquipmentSystem->GetMissRate() : 0;
+    if (m_pSkillSystem) v += m_pSkillSystem->GetMissRateAdvantage();
+    if (m_pUsingSkillSystem) v += m_pUsingSkillSystem->GetMissRateAdvantage();
     if (m_pUsingItemSystem) v += m_pUsingItemSystem->GetMissRateAdvantage();
     if (m_pMonsterToleranceSystem) v += m_pMonsterToleranceSystem->GetMissRateAdvantage(charKind);
-    if (m_pPetSystem) v += m_pPetSystem->GetMissRateAdvantage();
+    if (m_pWorkingPassiveSkillSystem) v += m_pWorkingPassiveSkillSystem->GetMissRateAdvantage();
     if (m_pEmblemSystem) v += m_pEmblemSystem->GetMissRateAdvantage();
     return v;
 }
@@ -441,16 +449,72 @@ int cltPlayerAbility::GetSkillAPowerAdvantage(std::uint16_t charKind) const {
 int cltPlayerAbility::GetShopItemPriceAdvangtage() const { return m_pEmblemSystem ? m_pEmblemSystem->GetShopItemPriceAdvantage() : 0; }
 int cltPlayerAbility::GetSellingAgencyTaxAdvantage() const { return m_pEmblemSystem ? m_pEmblemSystem->GetSellingAgencyTaxAdvantage() : 0; }
 
-void cltPlayerAbility::GetAPower(std::uint16_t* outMin, std::uint16_t* outMax, std::uint16_t, std::uint16_t, int, void*, int, int, std::uint16_t*, int) const {
+void cltPlayerAbility::GetAPower(std::uint16_t* outMin, std::uint16_t* outMax, std::uint16_t str, std::uint16_t charKind, int baseAdv, void* party, int bonusForDemon, int extraSkillCount, std::uint16_t* extraSkillKinds, int petBonus) const {
     std::uint16_t eMin = 0, eMax = 0;
     if (m_pEquipmentSystem) {
         m_pEquipmentSystem->GetAPower(&eMin, &eMax);
     }
-    if (outMin) *outMin = eMin;
-    if (outMax) *outMax = eMax;
+
+    int atb = -1;
+    (void)charKind;
+    int rate = 0;
+    if (m_pSkillSystem) {
+        rate += m_pSkillSystem->GetAPowerAdvantage_P(atb, extraSkillCount, extraSkillKinds,
+            static_cast<int>(reinterpret_cast<std::uintptr_t>(party)));
+    }
+    if (m_pMonsterToleranceSystem) {
+        rate += m_pMonsterToleranceSystem->GetAPowerAdvantage(charKind);
+    }
+    if (m_pWorkingPassiveSkillSystem) {
+        rate += m_pWorkingPassiveSkillSystem->GetAPowerAdvantage();
+    }
+    if (m_pUsingSkillSystem) {
+        rate += m_pUsingSkillSystem->GetTotalAPowerOfUsingSkill();
+    }
+    if (m_pUsingItemSystem) {
+        rate += m_pUsingItemSystem->GetAPowerAdvantage();
+    }
+    if (m_pEquipmentSystem) {
+        rate += m_pEquipmentSystem->GetAPowerAdvantage(atb);
+    }
+    if (party) {
+        rate += reinterpret_cast<cltPartySystem*>(party)->GetAPowerRateAdvantage(0, 0, 0);
+    }
+    if (m_pEmblemSystem) {
+        rate += m_pEmblemSystem->GetAPowerAdvantage(atb);
+    }
+    if (atb == 5) {
+        rate += bonusForDemon;
+    }
+    if (m_pPetSystem) {
+        rate += m_pPetSystem->GetAPowerAdvantage();
+    }
+    rate += baseAdv + petBonus;
+
+    const int level = m_pLevelSystem ? m_pLevelSystem->GetLevel() : 0;
+    const int baseMin = static_cast<int>(eMin) + str / 5 + level / 2;
+    const int baseMax = static_cast<int>(eMax) + str / 2 + level / 2;
+    const int minPower = baseMin + (2 * baseMin * str) / 1000;
+    const int maxPower = baseMax + (3 * baseMax * str) / 1000;
+
+    if (outMin) *outMin = static_cast<std::uint16_t>(minPower + (rate * minPower) / 1000);
+    if (outMax) *outMax = static_cast<std::uint16_t>(maxPower + (rate * maxPower) / 1000);
 }
 
-int cltPlayerAbility::GetDPower(std::uint16_t, void*, int a4) const {
+int cltPlayerAbility::GetDPower(std::uint16_t charKind, void* party, int a4) const {
     const int base = m_pEquipmentSystem ? m_pEquipmentSystem->GetDPower() : 0;
-    return (base + base * a4 / 1000) / 3;
+    int atb = -1;
+    (void)charKind;
+    int rate = 0;
+    if (m_pSkillSystem) rate += m_pSkillSystem->GetDPowerAdvantage_P(atb);
+    if (m_pMonsterToleranceSystem) rate += m_pMonsterToleranceSystem->GetDPowerAdvantage(charKind);
+    if (m_pWorkingPassiveSkillSystem) rate += m_pWorkingPassiveSkillSystem->GetDPowerAdvantage();
+    if (m_pUsingSkillSystem) rate += m_pUsingSkillSystem->GetTotalDPowerOfUsingSkill();
+    if (m_pUsingItemSystem) rate += m_pUsingItemSystem->GetDPowerAdvantage();
+    if (m_pEquipmentSystem) rate += m_pEquipmentSystem->GetDPowerAdvatnage(atb);
+    if (party) rate += reinterpret_cast<cltPartySystem*>(party)->GetDPowerRateAdvantage(0, 0, 0);
+    if (m_pEmblemSystem) rate += m_pEmblemSystem->GetDPowerAdvantage();
+    if (m_pPetSystem) rate += m_pPetSystem->GetDPowerAdvantage();
+    rate += a4;
+    return (base + base * rate / 1000) / 3;
 }
