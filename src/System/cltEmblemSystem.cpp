@@ -120,7 +120,7 @@ int cltEmblemSystem::CanAcquireEmblem(std::uint16_t emblemKind) {
         if (!classInfo || ((info->qwAcquireConditionJobChangeAtb & classInfo->atb) == 0)) return 0;
     }
 
-    if (info->wAcquireConditionQuest != 0 && m_pQuestSystem && m_pQuestSystem->IsCompleteQuest(info->wAcquireConditionQuest) == 0) {
+    if (info->wAcquireConditionQuest != 0 && m_pQuestSystem->IsCompleteQuest(info->wAcquireConditionQuest) == 0) {
         return 0;
     }
 
@@ -129,12 +129,8 @@ int cltEmblemSystem::CanAcquireEmblem(std::uint16_t emblemKind) {
 
 void cltEmblemSystem::AcquireEmblem(std::uint16_t emblemKind) {
     strEmblemKindInfo* info = m_pclEmblemKindInfo ? m_pclEmblemKindInfo->GetEmblemKindInfo(emblemKind) : nullptr;
-    if (m_acquiredEmblemNum < m_acquiredEmblemKinds.size()) {
-        m_acquiredEmblemKinds[m_acquiredEmblemNum++] = emblemKind;
-    }
-    if (m_pMoneySystem && info) {
-        m_pMoneySystem->DecreaseMoney(static_cast<int>(info->dwPrice));
-    }
+    m_acquiredEmblemKinds[m_acquiredEmblemNum++] = emblemKind;
+    m_pMoneySystem->DecreaseMoney(static_cast<int>(info->dwPrice));
 }
 
 int cltEmblemSystem::IsAcquiredEmblem(std::uint16_t emblemKind) {
@@ -151,8 +147,8 @@ int cltEmblemSystem::CanSetUsingEmblem(std::uint16_t emblemKind) {
     strEmblemKindInfo* info = m_pclEmblemKindInfo ? m_pclEmblemKindInfo->GetEmblemKindInfo(emblemKind) : nullptr;
     if (!info) return 0;
 
-    if (info->wEquipConditionLevelFrom && m_pLevelSystem && m_pLevelSystem->GetLevel() < info->wEquipConditionLevelFrom) return 0;
-    if (info->wEquipConditionLevelTo && m_pLevelSystem && m_pLevelSystem->GetLevel() > info->wEquipConditionLevelTo) return 0;
+    if (info->wEquipConditionLevelFrom && m_pLevelSystem->GetLevel() < info->wEquipConditionLevelFrom) return 0;
+    if (info->wEquipConditionLevelTo && m_pLevelSystem->GetLevel() > info->wEquipConditionLevelTo) return 0;
     return 1;
 }
 
@@ -161,7 +157,7 @@ void cltEmblemSystem::SetUsingEmblem(std::uint16_t emblemKind) {
     if (emblemKind) {
         m_pUsingEmblemInfo = m_pclEmblemKindInfo ? m_pclEmblemKindInfo->GetEmblemKindInfo(emblemKind) : nullptr;
         UpdateValidity(this);
-        if (m_pTitleSystem) m_pTitleSystem->OnEvent_setemblem(m_usingEmblemKind);
+        m_pTitleSystem->OnEvent_setemblem(m_usingEmblemKind);
     } else {
         m_pUsingEmblemInfo = nullptr;
         m_isUsingEmblemValid = 0;
@@ -169,10 +165,8 @@ void cltEmblemSystem::SetUsingEmblem(std::uint16_t emblemKind) {
 }
 
 int cltEmblemSystem::IsKillMonster(char* monsterTypeList, int killCount) {
-    if (!monsterTypeList) return 1;
-
     char buffer[1024]{};
-    std::strncpy(buffer, monsterTypeList, sizeof(buffer) - 1);
+    std::strcpy(buffer, monsterTypeList);
 
     const char* delim = "|";
     char* tok = std::strtok(buffer, delim);
@@ -180,7 +174,7 @@ int cltEmblemSystem::IsKillMonster(char* monsterTypeList, int killCount) {
 
     while (tok) {
         std::uint16_t kind = cltCharKindInfo::TranslateKindCode(tok);
-        if (!kind || !m_pExternIsKillMonsterFuncPtr || !m_pExternIsKillMonsterFuncPtr(m_userData0, kind, killCount)) {
+        if (!kind || !m_pExternIsKillMonsterFuncPtr(m_userData0, kind, killCount)) {
             return 0;
         }
         tok = std::strtok(nullptr, delim);
@@ -191,14 +185,15 @@ int cltEmblemSystem::IsKillMonster(char* monsterTypeList, int killCount) {
 
 int cltEmblemSystem::GetUsingValue(std::uint32_t strEmblemKindInfo::*field) {
     int result = IsUsingEmblemValidity();
-    if (result && m_pUsingEmblemInfo) result = static_cast<int>(m_pUsingEmblemInfo->*field);
+    if (result) result = m_pUsingEmblemInfo ? static_cast<int>(m_pUsingEmblemInfo->*field) : 0;
     return result;
 }
 
 int cltEmblemSystem::GetExpAdvantage() { return GetUsingValue(&strEmblemKindInfo::dwExtraExperienceRate); }
 int cltEmblemSystem::GetAPowerAdvantage(int monsterType) {
     int result = IsUsingEmblemValidity();
-    if (!result || !m_pUsingEmblemInfo) return result;
+    if (!result) return result;
+    if (!m_pUsingEmblemInfo) return 0;
 
     result = static_cast<int>(m_pUsingEmblemInfo->dwExtraAttackPowerRate);
     switch (monsterType) {
@@ -373,7 +368,7 @@ void cltEmblemSystem::OnEvent_KillBossMonster() {
     for (int i = 0; i < count; ++i) {
         strEmblemKindInfo* info = infos[i];
         if (!info || IsAcquiredEmblem(info->wEmblemId) == 1) continue;
-        if (m_pExternIsKillBossMonsterFuncPtr && m_pExternIsKillBossMonsterFuncPtr(m_userData0, static_cast<int>(info->dwAcquireConditionAllBossKill))) {
+        if (m_pExternIsKillBossMonsterFuncPtr(m_userData0, static_cast<int>(info->dwAcquireConditionAllBossKill))) {
             AcquireEmblem(info->wEmblemId);
             if (m_pExternOnAcquiredEmblemFuncPtr) m_pExternOnAcquiredEmblemFuncPtr(m_userData0, info->wEmblemId);
         }
@@ -451,7 +446,7 @@ void cltEmblemSystem::OnEvent_ChangeClass() {
         strEmblemKindInfo* info = infos[i];
         if (!info || IsAcquiredEmblem(info->wEmblemId) == 1) continue;
         if (info->dwAcquireConditionJobChangeQuestCompletion == 0) continue;
-        if (m_pQuestSystem && m_pQuestSystem->IsGiveupQuestPermanently() == 1) continue;
+        if (m_pQuestSystem->IsGiveupQuestPermanently() == 1) continue;
         if (classInfo->job_step == static_cast<std::uint8_t>(info->dwAcquireConditionJobChangeQuestCompletion)) {
             AcquireEmblem(info->wEmblemId);
             if (m_pExternOnAcquiredEmblemFuncPtr) m_pExternOnAcquiredEmblemFuncPtr(m_userData0, info->wEmblemId);
