@@ -12,6 +12,7 @@ public:
     int GetDPowerAdvantage();
     int GetAttackSpeedAdvantage();
     int GetDropRateAdvantage();
+    int GetHitRateAdvantage();
+    int GetMissRateAdvantage();
     int GetSkillAPowerAdvantage(std::uint16_t charKind);
 };
-

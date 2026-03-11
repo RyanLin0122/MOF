@@ -159,6 +159,10 @@ void cltSkillSystem::AddSkill(std::uint16_t skillKind, int* replaced, std::uint1
             UpdateValidity();
             return;
         }
+        if (replaced) {
+            *replaced = 0;
+        }
+        return;
     }
 
     if (IsExistSkill(skillKind) || m_skillKinds.size() >= 100) {
@@ -206,7 +210,7 @@ std::uint16_t cltSkillSystem::GetPassiveSkill(std::uint16_t* out, int onlyValid,
         const auto skill = m_skillKinds[i];
         if (cltSkillKindInfo::IsActiveSkill(skill)) continue;
         if (onlyValid && (i >= m_skillValidity.size() || !m_skillValidity[i])) continue;
-        if (workingOnly) {
+        if (!workingOnly) {
             auto* info = m_pclSkillKindInfo ? m_pclSkillKindInfo->GetSkillKindInfo_P(skill) : nullptr;
             if (!info) {
                 continue;
@@ -233,11 +237,11 @@ std::uint16_t cltSkillSystem::GetPassiveSkill_Workingable(std::uint16_t* out) co
         if (!m_skillValidity.empty() && !m_skillValidity[i]) {
             continue;
         }
-        stSkillKindInfo* info = m_pclSkillKindInfo->GetSkillKindInfo(skill);
+        stSkillKindInfo* info = m_pclSkillKindInfo->GetSkillKindInfo_P(skill);
         if (!info) {
             continue;
         }
-        const auto workingType = *reinterpret_cast<std::uint32_t*>(reinterpret_cast<unsigned char*>(info) + 248);
+        const auto workingType = *reinterpret_cast<std::uint32_t*>(reinterpret_cast<unsigned char*>(info) + 196);
         if (workingType != 0) {
             out[count++] = skill;
         }
@@ -491,18 +495,144 @@ std::uint16_t cltSkillSystem::GetMaxMPAdvantage_A() const { return 0; }
 std::uint16_t cltSkillSystem::GetMaxHPAdvantage() const { return static_cast<std::uint16_t>(GetMaxHPAdvantage_P() + GetMaxHPAdvantage_A()); }
 std::uint16_t cltSkillSystem::GetMaxMPAdvantage() const { return static_cast<std::uint16_t>(GetMaxMPAdvantage_P() + GetMaxMPAdvantage_A()); }
 
-int cltSkillSystem::GetAPowerAdvantage_P(int, int, std::uint16_t*, int) const { return sum_passive_valid(this, 30); }
+int cltSkillSystem::GetAPowerAdvantage_P(int atb, int extraCount, std::uint16_t* extraKinds, int) const {
+    if (!m_pclSkillKindInfo) {
+        return 0;
+    }
+    int sum = 0;
+    std::uint16_t kinds[200]{};
+    auto count = GetPassiveSkill(kinds, 1, 0);
+    if (extraKinds && extraCount > 0) {
+        for (int i = 0; i < extraCount && count < 200; ++i) {
+            stSkillKindInfo* info = m_pclSkillKindInfo->GetSkillKindInfo(extraKinds[i]);
+            if (info && *reinterpret_cast<std::uint32_t*>(reinterpret_cast<unsigned char*>(info) + 248) == 1) {
+                kinds[count++] = extraKinds[i];
+            }
+        }
+    }
+    for (std::uint16_t i = 0; i < count; ++i) {
+        stSkillKindInfo* info = m_pclSkillKindInfo->GetSkillKindInfo(kinds[i]);
+        if (!info) {
+            continue;
+        }
+        const auto* dw = reinterpret_cast<const std::uint32_t*>(reinterpret_cast<const unsigned char*>(info));
+        sum += static_cast<int>(dw[6]);
+        switch (atb) {
+        case 0: sum += static_cast<int>(dw[33]); break;
+        case 1: sum += static_cast<int>(dw[34]); break;
+        case 2: sum += static_cast<int>(dw[35]); break;
+        case 3: sum += static_cast<int>(dw[36]); break;
+        case 4: sum += static_cast<int>(dw[37]); break;
+        case 5: sum += static_cast<int>(dw[38]); break;
+        case 6: sum += static_cast<int>(dw[39]); break;
+        case 7: sum += static_cast<int>(dw[40]); break;
+        default: break;
+        }
+    }
+    return sum;
+}
 std::uint16_t cltSkillSystem::GetAPowerAdvantage_A() const { return 0; }
 int cltSkillSystem::GetAPowerAdvantage(int a2) const { return GetAPowerAdvantage_P(a2, 0, nullptr, 0) + GetAPowerAdvantage_A(); }
-std::uint16_t cltSkillSystem::GetDPowerAdvantage_P(int) const { return static_cast<std::uint16_t>(sum_passive_valid(this, 31)); }
-std::uint16_t cltSkillSystem::GetDPowerAdvantage() const { return GetDPowerAdvantage_P(0); }
+std::uint16_t cltSkillSystem::GetDPowerAdvantage_P(int atb) const {
+    if (!m_pclSkillKindInfo) {
+        return 0;
+    }
+    int sum = 0;
+    std::uint16_t passives[100]{};
+    const auto count = GetPassiveSkill(passives, 1, 0);
+    for (std::uint16_t i = 0; i < count; ++i) {
+        stSkillKindInfo* info = m_pclSkillKindInfo->GetSkillKindInfo(passives[i]);
+        if (!info) {
+            continue;
+        }
+        const auto* dw = reinterpret_cast<const std::uint32_t*>(reinterpret_cast<const unsigned char*>(info));
+        sum += static_cast<int>(dw[7]);
+        switch (atb) {
+        case 0: sum += static_cast<int>(dw[41]); break;
+        case 1: sum += static_cast<int>(dw[42]); break;
+        case 2: sum += static_cast<int>(dw[43]); break;
+        case 3: sum += static_cast<int>(dw[44]); break;
+        case 4: sum += static_cast<int>(dw[45]); break;
+        case 5: sum += static_cast<int>(dw[46]); break;
+        case 6: sum += static_cast<int>(dw[47]); break;
+        case 7: sum += static_cast<int>(dw[48]); break;
+        default: break;
+        }
+    }
+    return static_cast<std::uint16_t>(sum);
+}
+std::uint16_t cltSkillSystem::GetDPowerAdvantage() const { return GetDPowerAdvantage_P(-1); }
 int cltSkillSystem::GetHitRateAdvantage() const { return sum_passive_valid(this, 32); }
 int cltSkillSystem::GetCriticalRateAdvantage() const { return sum_passive_valid(this, 33); }
 int cltSkillSystem::GetSkillAPowerAdvantage() const { return sum_passive_valid(this, 34); }
-int cltSkillSystem::GetMissRateAdvantage() const { return sum_passive_valid(this, 35); }
-int cltSkillSystem::GetPartyAPowerAdvantage(void*) const { return sum_passive_valid(this, 36); }
-int cltSkillSystem::GetPartyDPowerAdvantage(void*) const { return sum_passive_valid(this, 37); }
-int cltSkillSystem::GetPartyHitRateAdvantage(void*) const { return sum_passive_valid(this, 38); }
+int cltSkillSystem::GetMissRateAdvantage() const {
+    if (!m_pclSkillKindInfo) {
+        return 0;
+    }
+    int value = 0;
+    std::uint16_t passives[100]{};
+    const auto count = GetPassiveSkill(passives, 1, 0);
+    for (std::uint16_t i = 0; i < count; ++i) {
+        stSkillKindInfo* info = m_pclSkillKindInfo->GetSkillKindInfo(passives[i]);
+        if (!info) continue;
+        const auto* dw = reinterpret_cast<const std::uint32_t*>(reinterpret_cast<const unsigned char*>(info));
+        if (dw[67]) {
+            value = static_cast<int>(dw[67]);
+        }
+    }
+    return value;
+}
+int cltSkillSystem::GetPartyAPowerAdvantage(void* party) const {
+    if (!party || !m_pclSkillKindInfo) {
+        return 0;
+    }
+    int sum = 0;
+    std::uint16_t passives[100]{};
+    const auto count = GetPassiveSkill(passives, 1, 0);
+    for (std::uint16_t i = 0; i < count; ++i) {
+        stSkillKindInfo* info = m_pclSkillKindInfo->GetSkillKindInfo(passives[i]);
+        if (!info) continue;
+        const auto* dw = reinterpret_cast<const std::uint32_t*>(reinterpret_cast<const unsigned char*>(info));
+        if (dw[68] || dw[71] || dw[74] || dw[77]) {
+            sum += static_cast<int>(dw[71]);
+        }
+    }
+    return sum;
+}
+int cltSkillSystem::GetPartyDPowerAdvantage(void* party) const {
+    if (!party || !m_pclSkillKindInfo) {
+        return 0;
+    }
+    int sum = 0;
+    std::uint16_t passives[100]{};
+    const auto count = GetPassiveSkill(passives, 1, 0);
+    for (std::uint16_t i = 0; i < count; ++i) {
+        stSkillKindInfo* info = m_pclSkillKindInfo->GetSkillKindInfo(passives[i]);
+        if (!info) continue;
+        const auto* dw = reinterpret_cast<const std::uint32_t*>(reinterpret_cast<const unsigned char*>(info));
+        if (dw[69] || dw[72] || dw[75] || dw[78]) {
+            sum += static_cast<int>(dw[72]);
+        }
+    }
+    return sum;
+}
+int cltSkillSystem::GetPartyHitRateAdvantage(void* party) const {
+    if (!party || !m_pclSkillKindInfo) {
+        return 0;
+    }
+    int sum = 0;
+    std::uint16_t passives[100]{};
+    const auto count = GetPassiveSkill(passives, 1, 0);
+    for (std::uint16_t i = 0; i < count; ++i) {
+        stSkillKindInfo* info = m_pclSkillKindInfo->GetSkillKindInfo(passives[i]);
+        if (!info) continue;
+        const auto* dw = reinterpret_cast<const std::uint32_t*>(reinterpret_cast<const unsigned char*>(info));
+        if (dw[70] || dw[73] || dw[76] || dw[79]) {
+            sum += static_cast<int>(dw[73]);
+        }
+    }
+    return sum;
+}
 int cltSkillSystem::GetAutoRecoverHPAdvantage() const { return sum_passive_valid(this, 65); }
 int cltSkillSystem::GetAutoRecoverManaAdvantage() const { return sum_passive_valid(this, 66); }
 int cltSkillSystem::GetSkillManaAdvantage() const { return sum_passive_valid(this, 90); }

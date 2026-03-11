@@ -3,6 +3,7 @@
 #include <algorithm>
 
 #include "System/cltLevelSystem.h"
+#include "System/cltClassSystem.h"
 #include "System/cltSkillSystem.h"
 #include "System/cltUsingItemSystem.h"
 #include "System/cltEquipmentSystem.h"
@@ -153,6 +154,7 @@ void cltPlayerAbility::IncreaseStr(int value, int byBonusPoint) {
         DecreaseBonusPoint(static_cast<std::uint16_t>(req));
     }
     m_baseStr = static_cast<std::uint16_t>(min(0xFFFF, static_cast<int>(m_baseStr) + value));
+    if (m_pEquipmentSystem) m_pEquipmentSystem->UpdateValidity();
 }
 
 void cltPlayerAbility::IncreaseDex(int value, int byBonusPoint) {
@@ -165,6 +167,7 @@ void cltPlayerAbility::IncreaseDex(int value, int byBonusPoint) {
         DecreaseBonusPoint(static_cast<std::uint16_t>(req));
     }
     m_baseDex = static_cast<std::uint16_t>(min(0xFFFF, static_cast<int>(m_baseDex) + value));
+    if (m_pEquipmentSystem) m_pEquipmentSystem->UpdateValidity();
 }
 
 void cltPlayerAbility::IncreaseInt(int value, int byBonusPoint) {
@@ -177,6 +180,7 @@ void cltPlayerAbility::IncreaseInt(int value, int byBonusPoint) {
         DecreaseBonusPoint(static_cast<std::uint16_t>(req));
     }
     m_baseInt = static_cast<std::uint16_t>(min(0xFFFF, static_cast<int>(m_baseInt) + value));
+    if (m_pEquipmentSystem) m_pEquipmentSystem->UpdateValidity();
 }
 
 void cltPlayerAbility::IncreaseVit(int value, int byBonusPoint) {
@@ -189,20 +193,27 @@ void cltPlayerAbility::IncreaseVit(int value, int byBonusPoint) {
         DecreaseBonusPoint(static_cast<std::uint16_t>(req));
     }
     m_baseVit = static_cast<std::uint16_t>(min(0xFFFF, static_cast<int>(m_baseVit) + value));
+    if (m_pEquipmentSystem) m_pEquipmentSystem->UpdateValidity();
 }
 
 int cltPlayerAbility::GetMaxHP(std::uint16_t vit) {
     if (!m_pLevelSystem || !m_pClassSystem) {
         return 1;
     }
-    return 16 * vit + 10 * m_pLevelSystem->GetLevel() + 36;
+    const int base = 16 * vit + 10 * m_pLevelSystem->GetLevel() + 36;
+    if (!m_pSkillSystem || !m_pEquipmentSystem || !m_pUsingItemSystem) return base;
+    const int adv = m_pSkillSystem->GetMaxHPAdvantage() + m_pEquipmentSystem->GetMaxHPAdvantage() + m_pUsingItemSystem->GetMaxHPAdvantage();
+    return base + base * adv / 100;
 }
 
 int cltPlayerAbility::GetMaxMP(std::uint16_t intel) {
     if (!m_pLevelSystem || !m_pClassSystem) {
         return 1;
     }
-    return 12 * intel + 10 * m_pLevelSystem->GetLevel();
+    const int base = 12 * intel + 10 * m_pLevelSystem->GetLevel();
+    if (!m_pSkillSystem || !m_pEquipmentSystem || !m_pUsingItemSystem) return base;
+    const int adv = m_pSkillSystem->GetMaxMPAdvantage() + m_pEquipmentSystem->GetMaxManaAdvantage() + m_pUsingItemSystem->GetMaxManaAdvantage();
+    return base + base * adv / 100;
 }
 
 int cltPlayerAbility::CanResetAbility() const {
@@ -224,9 +235,17 @@ int cltPlayerAbility::GetNeedManaForUsingSkill(int baseSkillMana) const {
     return max(1, need);
 }
 
-int cltPlayerAbility::GetBuffNum() const { return m_buffNum; }
-int cltPlayerAbility::GetMaxBuffNum() const { return m_maxBuffNum; }
-bool cltPlayerAbility::CanAddBuff() const { return m_buffNum < m_maxBuffNum; }
+int cltPlayerAbility::GetBuffNum() const {
+    const int usingSkill = m_pUsingSkillSystem ? m_pUsingSkillSystem->GetUsingSkillNum() : 0;
+    const int usingItem = m_pUsingItemSystem ? m_pUsingItemSystem->GetUsingItemNum() : 0;
+    const int working = m_pWorkingPassiveSkillSystem ? m_pWorkingPassiveSkillSystem->GetWorkingSkillNum() : 0;
+    return usingSkill + usingItem + working;
+}
+int cltPlayerAbility::GetMaxBuffNum() const {
+    const int base = m_pClassSystem ? m_pClassSystem->GetDefaultBuffNum() : 0;
+    return min(10, base + (m_pSkillSystem ? m_pSkillSystem->GetAddBuffNum() : 0));
+}
+bool cltPlayerAbility::CanAddBuff() const { return GetBuffNum() < GetMaxBuffNum(); }
 
 
 std::uint16_t cltPlayerAbility::GetStr(int, void* party) const {
@@ -272,7 +291,8 @@ std::uint16_t cltPlayerAbility::GetVit(int, void* party) const {
 
 void cltPlayerAbility::IncreaseMP(int value, int, void*) {
     if (value <= 0) return;
-    m_mana += value;
+    const int maxMp = const_cast<cltPlayerAbility*>(this)->GetMaxMP(GetBaseInt());
+    m_mana = min(maxMp, m_mana + value);
 }
 
 void cltPlayerAbility::IncreaseMPPercent(int percent, unsigned char, void*) {
@@ -325,13 +345,13 @@ int cltPlayerAbility::IsActiveFastRun() const {
 int cltPlayerAbility::IsActiveNonDelayAttack() const { return m_pUsingSkillSystem && m_pUsingSkillSystem->IsActiveNonDelayAttack() == 1; }
 int cltPlayerAbility::GetAttackAtb(int) const { return m_pEquipmentSystem ? m_pEquipmentSystem->GetWeaponAttackAtb() : 0; }
 
-int cltPlayerAbility::GetItemRecoverHPAdvantage() const { return 0; }
-int cltPlayerAbility::GetItemRecoverManaAdvantage() const { return 0; }
+int cltPlayerAbility::GetItemRecoverHPAdvantage() const { return m_pEmblemSystem ? m_pEmblemSystem->GetItemRecoverHPAdvantage() : 0; }
+int cltPlayerAbility::GetItemRecoverManaAdvantage() const { return m_pEmblemSystem ? m_pEmblemSystem->GetItemRecoverManaAdvantage() : 0; }
 int cltPlayerAbility::GetMagicResistRateAdvantage() const { return 0; }
-int cltPlayerAbility::GetMagicResistRate() const { return 0; }
-int cltPlayerAbility::GetPartyAPowerAdvantage(void*) const { return m_pSkillSystem ? m_pSkillSystem->GetPartyAPowerAdvantage(nullptr) : 0; }
-int cltPlayerAbility::GetPartyDPowerAdvantage(void*) const { return m_pSkillSystem ? m_pSkillSystem->GetPartyDPowerAdvantage(nullptr) : 0; }
-int cltPlayerAbility::GetPartyHitRateAdvantage(void*) const { return m_pSkillSystem ? m_pSkillSystem->GetPartyHitRateAdvantage(nullptr) : 0; }
+int cltPlayerAbility::GetMagicResistRate() const { return (m_pEquipmentSystem ? m_pEquipmentSystem->GetMagicResist() : 0) + GetMagicResistRateAdvantage(); }
+int cltPlayerAbility::GetPartyAPowerAdvantage(void* party) const { return m_pSkillSystem ? m_pSkillSystem->GetPartyAPowerAdvantage(party) : 0; }
+int cltPlayerAbility::GetPartyDPowerAdvantage(void* party) const { return m_pSkillSystem ? m_pSkillSystem->GetPartyDPowerAdvantage(party) : 0; }
+int cltPlayerAbility::GetPartyHitRateAdvantage(void* party) const { return m_pSkillSystem ? m_pSkillSystem->GetPartyHitRateAdvantage(party) : 0; }
 
 bool cltPlayerAbility::GetMaxFaintingInfo(int* a2, int* a3, int, std::uint16_t*) const {
     int v1 = 0, d1 = 0, v2 = 0, d2 = 0, v3 = 0, d3 = 0;
@@ -373,14 +393,44 @@ bool cltPlayerAbility::GetMaxFreezingInfo(int* a2, int* a3, int, std::uint16_t*)
 }
 
 
-int cltPlayerAbility::GetHitRateAdvantage(std::uint16_t, int a3, void*) const { return a3; }
-int cltPlayerAbility::GetHitRate(std::uint16_t a2, void* party) const { return GetHitRateAdvantage(0, 3 * a2, party); }
-int cltPlayerAbility::GetCriticalHitRateAdvantage(std::uint16_t) const {
-    return m_pSkillSystem ? m_pSkillSystem->GetCriticalRateAdvantage() : 0;
+int cltPlayerAbility::GetHitRateAdvantage(std::uint16_t charKind, int base, void* party) const {
+    int v = base;
+    if (m_pSkillSystem) v += m_pSkillSystem->GetHitRateAdvantage();
+    if (m_pEquipmentSystem) v += m_pEquipmentSystem->GetHitRate();
+    if (m_pUsingItemSystem) v += m_pUsingItemSystem->GetHitRateAdvantage();
+    if (m_pMonsterToleranceSystem) v += m_pMonsterToleranceSystem->GetHitRateAdvantage(charKind);
+    if (m_pPetSystem) v += m_pPetSystem->GetHitRateAdvantage();
+    if (party) v += reinterpret_cast<cltPartySystem*>(party)->GetHitRateAdvantage(0, 0, 0);
+    return v;
 }
-int cltPlayerAbility::GetCriticalHitRate(std::uint16_t a2) const { return a2 + GetCriticalHitRateAdvantage(a2); }
-int cltPlayerAbility::GetMissRateAdvantage(std::uint16_t) const { return m_pSkillSystem ? m_pSkillSystem->GetMissRateAdvantage() : 0; }
-int cltPlayerAbility::GetMissRate(std::uint16_t a2) const { return a2 + GetMissRateAdvantage(a2); }
+int cltPlayerAbility::GetHitRate(std::uint16_t a2, void* party) const {
+    int v = 3 * a2 + 2 * (400 - (m_pLevelSystem ? m_pLevelSystem->GetLevel() : 0));
+    if (m_pEmblemSystem) v += m_pEmblemSystem->GetHitRateAdvantage();
+    return GetHitRateAdvantage(0, v, party);
+}
+int cltPlayerAbility::GetCriticalHitRateAdvantage(std::uint16_t a2) const {
+    int v = 0;
+    if (m_pSkillSystem) v += m_pSkillSystem->GetCriticalRateAdvantage();
+    if (m_pEquipmentSystem) v += m_pEquipmentSystem->GetCriticalHitRate();
+    if (m_pUsingSkillSystem) v += m_pUsingSkillSystem->GetCriticalRate();
+    if (m_pUsingItemSystem) v += m_pUsingItemSystem->GetCriticalHitRateAdvantage();
+    if (m_pMonsterToleranceSystem) v += m_pMonsterToleranceSystem->GetCriticalHitRateAdvantage(a2);
+    if (m_pEmblemSystem) v += m_pEmblemSystem->GetCriticalHitRateAdvantage();
+    return v;
+}
+int cltPlayerAbility::GetCriticalHitRate(std::uint16_t a2) const { return static_cast<int>(a2) + 100 + GetCriticalHitRateAdvantage(a2); }
+int cltPlayerAbility::GetMissRateAdvantage(std::uint16_t charKind) const {
+    int v = m_pSkillSystem ? m_pSkillSystem->GetMissRateAdvantage() : 0;
+    if (m_pEquipmentSystem) v += m_pEquipmentSystem->GetMissRate();
+    if (m_pUsingItemSystem) v += m_pUsingItemSystem->GetMissRateAdvantage();
+    if (m_pMonsterToleranceSystem) v += m_pMonsterToleranceSystem->GetMissRateAdvantage(charKind);
+    if (m_pPetSystem) v += m_pPetSystem->GetMissRateAdvantage();
+    if (m_pEmblemSystem) v += m_pEmblemSystem->GetMissRateAdvantage();
+    return v;
+}
+int cltPlayerAbility::GetMissRate(std::uint16_t a2) const {
+    return 3 * a2 - (m_pLevelSystem ? m_pLevelSystem->GetLevel() : 0) + 200 + GetMissRateAdvantage(0);
+}
 int cltPlayerAbility::GetSkillAPowerAdvantage(std::uint16_t charKind) const {
     int v = 0;
     if (m_pEquipmentSystem) v += m_pEquipmentSystem->GetSkillAPowerAdvantage();

@@ -11,6 +11,7 @@ public:
     int IsActiveFastRunSkill();
     int IsActiveNonDelayAttack();
     int IsActiveManashieldSkill();
+    int GetCriticalRate();
     int GetTotalAPowerOfUsingSkill();
     int GetTotalDPowerOfUsingSkill();
     int GetExpAdvantage(int includePassive);
