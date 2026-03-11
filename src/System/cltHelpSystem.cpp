@@ -9,7 +9,7 @@
 
 class cltQuestSystem {
 public:
-    void* GetPlayingQuestInfoByNPCID(std::uint16_t);
+    void* GetPlayingQuestInfoByNPCID(std::uint16_t) {};
 };
 
 void (*cltHelpSystem::m_pPopupMessagePtr)(HelpKind) = nullptr;

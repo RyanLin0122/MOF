@@ -513,7 +513,7 @@ char* cltMapInfo::TranslateMapID(unsigned short map_id) {
 	return buffer;
 }
 
-uint16_t cltMapInfo::TranslateKindCode(char* a1)
+uint16_t cltMapInfo::TranslateKindCode(const char* a1)
 {
 	if (!a1) return 0;
 

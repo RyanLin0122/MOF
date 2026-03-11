@@ -726,6 +726,24 @@
     <ClCompile Include="src\Network\DCTNetwork.cpp">
       <Filter>來源檔案</Filter>
     </ClCompile>
+    <ClCompile Include="src\System\cltLessonSystem.cpp">
+      <Filter>來源檔案</Filter>
+    </ClCompile>
+    <ClCompile Include="src\System\cltSkillSystem.cpp">
+      <Filter>來源檔案</Filter>
+    </ClCompile>
+    <ClCompile Include="src\System\cltUsingSkillSystem.cpp">
+      <Filter>來源檔案</Filter>
+    </ClCompile>
+    <ClCompile Include="src\System\cltWorkingPassiveSkillSystem.cpp">
+      <Filter>來源檔案</Filter>
+    </ClCompile>
+    <ClCompile Include="src\System\cltHelpSystem.cpp">
+      <Filter>來源檔案</Filter>
+    </ClCompile>
+    <ClCompile Include="src\System\cltPlayerAbility.cpp">
+      <Filter>來源檔案</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="inc\Sound\COgg.h">
@@ -1446,6 +1464,24 @@
       <Filter>標頭檔</Filter>
     </ClInclude>
     <ClInclude Include="inc\Network\DCTNetwork.h">
+      <Filter>標頭檔</Filter>
+    </ClInclude>
+    <ClInclude Include="inc\System\cltLessonSystem.h">
+      <Filter>標頭檔</Filter>
+    </ClInclude>
+    <ClInclude Include="inc\System\cltSkillSystem.h">
+      <Filter>標頭檔</Filter>
+    </ClInclude>
+    <ClInclude Include="inc\System\cltUsingSkillSystem.h">
+      <Filter>標頭檔</Filter>
+    </ClInclude>
+    <ClInclude Include="inc\System\cltWorkingPassiveSkillSystem.h">
+      <Filter>標頭檔</Filter>
+    </ClInclude>
+    <ClInclude Include="inc\System\cltHelpSystem.h">
+      <Filter>標頭檔</Filter>
+    </ClInclude>
+    <ClInclude Include="inc\System\cltPlayerAbility.h">
       <Filter>標頭檔</Filter>
     </ClInclude>
   </ItemGroup>

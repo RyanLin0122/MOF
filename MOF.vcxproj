@@ -306,12 +306,14 @@
     <ClCompile Include="src\Sound\GameSound.cpp" />
     <ClCompile Include="src\System\cltBasicAppearSystem.cpp" />
     <ClCompile Include="src\System\cltClassSystem.cpp" />
+    <ClCompile Include="src\System\cltHelpSystem.cpp" />
     <ClCompile Include="src\System\cltLevelSystem.cpp" />
     <ClCompile Include="src\System\cltMoneySystem.cpp" />
     <ClCompile Include="src\Logic\cltBaseInventory.cpp" />
     <ClCompile Include="src\Logic\cltItemList.cpp" />
     <ClCompile Include="src\System\cltEquipmentSystem.cpp" />
     <ClCompile Include="src\Logic\cltFieldItem.cpp" />
+    <ClCompile Include="src\System\cltPlayerAbility.cpp" />
     <ClCompile Include="src\System\cltQuickSlotSystem.cpp" />
     <ClCompile Include="src\System\cltUsingItemSystem.cpp" />
     <ClCompile Include="src\Logic\cltLogicCompatibility.cpp" />
@@ -551,9 +553,11 @@
     <ClInclude Include="inc\Sound\GameSound.h" />
     <ClInclude Include="inc\System\cltBasicAppearSystem.h" />
     <ClInclude Include="inc\System\cltClassSystem.h" />
+    <ClInclude Include="inc\System\cltHelpSystem.h" />
     <ClInclude Include="inc\System\cltLevelSystem.h" />
     <ClInclude Include="inc\System\cltMoneySystem.h" />
     <ClInclude Include="inc\System\cltLessonSystem.h" />
+    <ClInclude Include="inc\System\cltPlayerAbility.h" />
     <ClInclude Include="inc\System\cltSexSystem.h" />
     <ClInclude Include="inc\System\cltSkillSystem.h" />
     <ClInclude Include="inc\System\cltUsingSkillSystem.h" />

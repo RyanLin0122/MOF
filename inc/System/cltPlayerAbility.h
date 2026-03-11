@@ -37,10 +37,10 @@ public:
     static void ResetAbility(cltPlayerAbility* self);
     void DecreaseBonusPoint(std::uint16_t value);
 
-    std::uint16_t GetBaseStr();
-    std::uint16_t GetBaseDex();
-    std::uint16_t GetBaseInt();
-    std::uint16_t GetBaseVit();
+    std::uint16_t GetBaseStr() const;
+    std::uint16_t GetBaseDex() const;
+    std::uint16_t GetBaseInt() const;
+    std::uint16_t GetBaseVit() const;
 
     void SetMana(int mana);
     int GetMP() const;
@@ -100,7 +100,7 @@ public:
     bool GetMaxFreezingInfo(int* a2, int* a3, int a4, std::uint16_t* a5) const;
     int GetMaxHP(std::uint16_t vit);
     int GetMaxMP(std::uint16_t intel);
-    int CanResetAbility();
+    int CanResetAbility() const;
     int GetNeedManaForUsingSkill(int baseSkillMana) const;
 
     int GetBuffNum() const;

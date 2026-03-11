@@ -41,8 +41,8 @@ void cltPlayerAbility::Initialize(
     m_baseInt = m_initialInt = intel;
     m_baseVit = m_initialVit = vit;
     m_bonusPoint = bonusPoint;
-    m_hp = std::max(1, hp);
-    m_mana = std::max(0, mp);
+    m_hp = max(1, hp);
+    m_mana = max(0, mp);
 }
 
 void cltPlayerAbility::Free() {
@@ -81,19 +81,19 @@ void cltPlayerAbility::DecreaseBonusPoint(std::uint16_t value) {
     }
 }
 
-std::uint16_t cltPlayerAbility::GetBaseStr() { return m_baseStr; }
-std::uint16_t cltPlayerAbility::GetBaseDex() { return m_baseDex; }
-std::uint16_t cltPlayerAbility::GetBaseInt() { return m_baseInt; }
-std::uint16_t cltPlayerAbility::GetBaseVit() { return m_baseVit; }
+std::uint16_t cltPlayerAbility::GetBaseStr() const { return m_baseStr; }
+std::uint16_t cltPlayerAbility::GetBaseDex() const { return m_baseDex; }
+std::uint16_t cltPlayerAbility::GetBaseInt() const { return m_baseInt; }
+std::uint16_t cltPlayerAbility::GetBaseVit() const { return m_baseVit; }
 
-void cltPlayerAbility::SetMana(int mana) { m_mana = std::max(mana, 0); }
+void cltPlayerAbility::SetMana(int mana) { m_mana = max(mana, 0); }
 int cltPlayerAbility::GetMP() const { return m_mana; }
 
 void cltPlayerAbility::DecreaseMP(int value) {
     if (value <= 0) {
         return;
     }
-    m_mana = std::max(0, m_mana - value);
+    m_mana = max(0, m_mana - value);
 }
 
 std::uint16_t cltPlayerAbility::GetBonusPoint() const { return m_bonusPoint; }
@@ -125,7 +125,7 @@ void cltPlayerAbility::IncreaseStr(int value, int byBonusPoint) {
         }
         DecreaseBonusPoint(static_cast<std::uint16_t>(req));
     }
-    m_baseStr = static_cast<std::uint16_t>(std::min(0xFFFF, static_cast<int>(m_baseStr) + value));
+    m_baseStr = static_cast<std::uint16_t>(min(0xFFFF, static_cast<int>(m_baseStr) + value));
 }
 
 void cltPlayerAbility::IncreaseDex(int value, int byBonusPoint) {
@@ -137,7 +137,7 @@ void cltPlayerAbility::IncreaseDex(int value, int byBonusPoint) {
         }
         DecreaseBonusPoint(static_cast<std::uint16_t>(req));
     }
-    m_baseDex = static_cast<std::uint16_t>(std::min(0xFFFF, static_cast<int>(m_baseDex) + value));
+    m_baseDex = static_cast<std::uint16_t>(min(0xFFFF, static_cast<int>(m_baseDex) + value));
 }
 
 void cltPlayerAbility::IncreaseInt(int value, int byBonusPoint) {
@@ -149,7 +149,7 @@ void cltPlayerAbility::IncreaseInt(int value, int byBonusPoint) {
         }
         DecreaseBonusPoint(static_cast<std::uint16_t>(req));
     }
-    m_baseInt = static_cast<std::uint16_t>(std::min(0xFFFF, static_cast<int>(m_baseInt) + value));
+    m_baseInt = static_cast<std::uint16_t>(min(0xFFFF, static_cast<int>(m_baseInt) + value));
 }
 
 void cltPlayerAbility::IncreaseVit(int value, int byBonusPoint) {
@@ -161,7 +161,7 @@ void cltPlayerAbility::IncreaseVit(int value, int byBonusPoint) {
         }
         DecreaseBonusPoint(static_cast<std::uint16_t>(req));
     }
-    m_baseVit = static_cast<std::uint16_t>(std::min(0xFFFF, static_cast<int>(m_baseVit) + value));
+    m_baseVit = static_cast<std::uint16_t>(min(0xFFFF, static_cast<int>(m_baseVit) + value));
 }
 
 int cltPlayerAbility::GetMaxHP(std::uint16_t vit) {
@@ -178,7 +178,7 @@ int cltPlayerAbility::GetMaxMP(std::uint16_t intel) {
     return 12 * intel + 10 * m_pLevelSystem->GetLevel();
 }
 
-int cltPlayerAbility::CanResetAbility() {
+int cltPlayerAbility::CanResetAbility() const {
     return m_baseStr != m_initialStr
         || m_baseDex != m_initialDex
         || m_baseInt != m_initialInt
@@ -190,7 +190,7 @@ int cltPlayerAbility::GetNeedManaForUsingSkill(int baseSkillMana) const {
         return baseSkillMana;
     }
     // Requires cltSkillSystem::GetSkillManaAdvantage full restoration.
-    return std::max(1, baseSkillMana);
+    return max(1, baseSkillMana);
 }
 
 int cltPlayerAbility::GetBuffNum() const { return m_buffNum; }

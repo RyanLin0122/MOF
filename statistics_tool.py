@@ -9,8 +9,7 @@ START_LINE = 26022
 # 只要 class 名稱在這裡，就直接視為未完成
 FORCE_MISSING_CLASSES = [
     "ClientCharacter",
-    "ClientCharacterManager",
-    "CMoFNetwork"
+    "ClientCharacterManager"
 ]
 
 # 例外清單：放 class 名稱字串，這些 class 會被跳過
@@ -29,7 +28,11 @@ EXCLUDE_CLASSES = [
     "ID3DXSprite",
     "D3DXVECTOR4",
     "D3DXPLANE",
-    "D3DX"
+    "D3DX",
+    "D3DXQUATERNION",
+    "D3DXVECTOR3",
+    "D3DXCOLOR",
+    "ATL"
 ]
 
 # sort 方式：

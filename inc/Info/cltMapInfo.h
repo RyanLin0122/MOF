@@ -171,7 +171,7 @@ public:
     // 靜態工具函數
     static void InitializeStaticVariable(DCTTextManager* text_manager);
     static char* TranslateMapID(unsigned short map_id);
-    static unsigned short TranslateKindCode(char* a1);
+    static unsigned short TranslateKindCode(const char* a1);
     static bool CanUseReturnItem(unsigned short map_id);
     static bool CanUseTeleportItem(unsigned short map_id);
     static bool CanMoveTeleportItem(unsigned short map_id);
