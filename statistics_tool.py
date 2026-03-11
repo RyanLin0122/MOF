@@ -31,8 +31,10 @@ EXCLUDE_CLASSES = [
     "D3DXPLANE",
     "D3DX",
     "D3DXQUATERNION",
+    "D3DXVECTOR2",
     "D3DXVECTOR3",
     "D3DXCOLOR",
+    "D3DXMATRIX",
     "ATL"
 ]
 
