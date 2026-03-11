@@ -10,3 +10,4 @@ int cltWorkingPassiveSkillSystem::GetAttackSpeedAdvantage() { return 0; }
 int cltWorkingPassiveSkillSystem::GetDamageHP2ManaRate() { return 0; }
 int cltWorkingPassiveSkillSystem::GetAPowerAdvantage() { return 0; }
 int cltWorkingPassiveSkillSystem::GetDPowerAdvantage() { return 0; }
+int cltWorkingPassiveSkillSystem::GetMissRateAdvantage() { return 0; }

@@ -7,4 +7,5 @@ public:
     int GetDamageHP2ManaRate();
     int GetAPowerAdvantage();
     int GetDPowerAdvantage();
+    int GetMissRateAdvantage();
 };

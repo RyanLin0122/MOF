@@ -2,6 +2,8 @@
 
 class cltPartySystem {
 public:
+    int IsCreated();
+    int GetPartyMemberNum();
     int GetStrAdvantage(int, int, int);
     int GetDexAdvantage(int, int, int);
     int GetIntAdvantage(int, int, int);

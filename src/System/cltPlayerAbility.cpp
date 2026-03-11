@@ -314,7 +314,10 @@ int cltPlayerAbility::CanMultiAttack() const {
     if (weaponKind == 0) {
         return 0;
     }
-    return m_pclItemKindInfo->IsMultiTargetWeapon(weaponKind) ? 1 : 0;
+    if (m_pclItemKindInfo->IsMultiTargetWeapon(weaponKind)) {
+        return 1;
+    }
+    return (m_pUsingSkillSystem && m_pUsingSkillSystem->IsActiveMultiAttack()) ? 1 : 0;
 }
 int cltPlayerAbility::GetAttackSpeedAdvantage() const {
     if (!m_pUsingSkillSystem || !m_pWorkingPassiveSkillSystem) {
@@ -426,8 +429,10 @@ int cltPlayerAbility::GetCriticalHitRate(std::uint16_t a2) const { return static
 int cltPlayerAbility::GetMissRateAdvantage(std::uint16_t charKind) const {
     int v = m_pEquipmentSystem ? m_pEquipmentSystem->GetMissRate() : 0;
     if (m_pSkillSystem) v += m_pSkillSystem->GetMissRateAdvantage();
+    if (m_pUsingSkillSystem) v += m_pUsingSkillSystem->GetMissRateAdvantage();
     if (m_pUsingItemSystem) v += m_pUsingItemSystem->GetMissRateAdvantage();
     if (m_pMonsterToleranceSystem) v += m_pMonsterToleranceSystem->GetMissRateAdvantage(charKind);
+    if (m_pWorkingPassiveSkillSystem) v += m_pWorkingPassiveSkillSystem->GetMissRateAdvantage();
     if (m_pEmblemSystem) v += m_pEmblemSystem->GetMissRateAdvantage();
     return v;
 }

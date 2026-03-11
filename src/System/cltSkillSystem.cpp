@@ -9,6 +9,7 @@
 #include "System/cltEquipmentSystem.h"
 #include "System/cltLessonSystem.h"
 #include "System/cltLevelSystem.h"
+#include "System/cltPartySystem.h"
 #include "System/cltQuickSlotSystem.h"
 #include "System/cltTitleSystem.h"
 
@@ -581,7 +582,11 @@ int cltSkillSystem::GetPartyAPowerAdvantage(void* party) const {
         if (!info) continue;
         const auto* dw = reinterpret_cast<const std::uint32_t*>(reinterpret_cast<const unsigned char*>(info));
         if (dw[68] || dw[71] || dw[74] || dw[77]) {
-            sum += static_cast<int>(dw[71]);
+            const int memberNum = reinterpret_cast<cltPartySystem*>(party)->GetPartyMemberNum();
+            if (memberNum == 3) sum += static_cast<int>(dw[71]);
+            else if (memberNum == 4) sum += static_cast<int>(dw[74]);
+            else if (memberNum == 5) sum += static_cast<int>(dw[77]);
+            else sum += static_cast<int>(dw[68]);
         }
     }
     return sum;
@@ -598,7 +603,11 @@ int cltSkillSystem::GetPartyDPowerAdvantage(void* party) const {
         if (!info) continue;
         const auto* dw = reinterpret_cast<const std::uint32_t*>(reinterpret_cast<const unsigned char*>(info));
         if (dw[69] || dw[72] || dw[75] || dw[78]) {
-            sum += static_cast<int>(dw[72]);
+            const int memberNum = reinterpret_cast<cltPartySystem*>(party)->GetPartyMemberNum();
+            if (memberNum == 3) sum += static_cast<int>(dw[72]);
+            else if (memberNum == 4) sum += static_cast<int>(dw[75]);
+            else if (memberNum == 5) sum += static_cast<int>(dw[78]);
+            else sum += static_cast<int>(dw[69]);
         }
     }
     return sum;
@@ -615,7 +624,11 @@ int cltSkillSystem::GetPartyHitRateAdvantage(void* party) const {
         if (!info) continue;
         const auto* dw = reinterpret_cast<const std::uint32_t*>(reinterpret_cast<const unsigned char*>(info));
         if (dw[70] || dw[73] || dw[76] || dw[79]) {
-            sum += static_cast<int>(dw[73]);
+            const int memberNum = reinterpret_cast<cltPartySystem*>(party)->GetPartyMemberNum();
+            if (memberNum == 3) sum += static_cast<int>(dw[73]);
+            else if (memberNum == 4) sum += static_cast<int>(dw[76]);
+            else if (memberNum == 5) sum += static_cast<int>(dw[79]);
+            else sum += static_cast<int>(dw[70]);
         }
     }
     return sum;
