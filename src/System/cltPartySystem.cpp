@@ -6,7 +6,7 @@
 struct cltUsingSkillSystem {
     int GetPartyMemberAPowerAdvantage(int*, std::uint16_t*);
     int GetPartyMemberDPowerAdvantage(int*, std::uint16_t*);
-    int GetPartyMemberExpAdvantage(int*, std::uint16_t*);
+    int GetPartyExpAdvantage(int*, std::uint16_t*);
     int GetPartyMemberStrAdvantage(int*, std::uint16_t*);
     int GetPartyMemberDexAdvantage(int*, std::uint16_t*);
     int GetPartyMemberVitAdvantage(int*, std::uint16_t*);
@@ -14,6 +14,7 @@ struct cltUsingSkillSystem {
     int GetPartyMemberAttackAtb(AttackAtb*, unsigned int*, std::uint16_t*);
 };
 struct cltWorkingPassiveSkillSystem {
+    int GetPartyMemberAPowerAdvantage(int*, std::uint16_t*);
     int GetPartyMemberHitRateAdvantage();
 };
 
@@ -80,13 +81,9 @@ void cltPartySystem::Free() {
     members_.fill(nullptr);
     memberCount_ = 0;
     userData1_ = 0;
-    userData2_ = 0;
     apAdv_ = 0;
     dpAdv_ = 0;
     expAdv_ = 0;
-    if (m_pOnPartyFreeFuncPtr) {
-        m_pOnPartyFreeFuncPtr(this);
-    }
 }
 
 unsigned int cltPartySystem::CanJoin(void* a2) {
@@ -111,15 +108,16 @@ void cltPartySystem::Join(void* a2) {
 }
 
 int cltPartySystem::CanLeave(void* a2) {
-    for (std::uint8_t i = 0; i < memberCount_; ++i) {
+    for (std::uint8_t i = 0; i < 5; ++i) {
         if (members_[i] == a2) {
-            return 0;
+            return 1;
         }
     }
-    return 1;
+    return 0;
 }
 
 void cltPartySystem::Leave(void* a2) {
+    const bool wasLeader = GetLeadInstance() == a2;
     int found = -1;
     for (int i = 0; i < memberCount_; ++i) {
         if (members_[i] == a2) {
@@ -135,28 +133,32 @@ void cltPartySystem::Leave(void* a2) {
     members_[memberCount_ - 1] = nullptr;
     --memberCount_;
 
-    if (memberCount_ && leaderIndex_ == found) {
-        leaderIndex_ = 0;
-        if (m_pOnPartyLeaderChangedFuncPtr) {
-            m_pOnPartyLeaderChangedFuncPtr(this);
+    if (memberCount_ > 1) {
+        if (wasLeader) {
+            if (m_pOnPartyLeaderChangedFuncPtr) {
+                m_pOnPartyLeaderChangedFuncPtr(this);
+            }
         }
-    }
-
-    if (m_pPartyLeftPartyMemeberFuncPtr) {
-        m_pPartyLeftPartyMemeberFuncPtr(this);
+        if (m_pPartyLeftPartyMemeberFuncPtr) {
+            m_pPartyLeftPartyMemeberFuncPtr(this);
+        }
+    } else {
+        if (m_pOnPartyFreeFuncPtr) {
+            m_pOnPartyFreeFuncPtr(this);
+        }
+        Free();
     }
 }
 
 void* cltPartySystem::GetLeadInstance() {
     if (!memberCount_) return nullptr;
-    if (leaderIndex_ >= memberCount_) return nullptr;
     return members_[leaderIndex_];
 }
 
 std::uint8_t cltPartySystem::GetPartyMemberNum() { return memberCount_; }
 
 void* cltPartySystem::GetPartyInstance(int a2) {
-    if (a2 < 0 || a2 >= memberCount_) return nullptr;
+    if (a2 >= memberCount_) return nullptr;
     return members_[a2];
 }
 
@@ -173,20 +175,30 @@ void cltPartySystem::SetAdvantages(int a2, int a3, int a4) {
 
 int cltPartySystem::GetAPowerRateAdvantage(void** a2, int* a3, std::uint16_t* a4) {
     int best = 0;
-    if (!m_pPartyGetUsingSkillFuncPtr) return 0;
+    if (!m_pPartyGetUsingSkillFuncPtr || !m_pPartyGetWPSSystemFuncPtr) return apAdv_;
     for (std::uint8_t i = 0; i < memberCount_; ++i) {
         auto* use = m_pPartyGetUsingSkillFuncPtr(members_[i]);
-        if (!use) continue;
-        int n = 0; std::uint16_t ids[10]{};
-        const int v = use->GetPartyMemberAPowerAdvantage(&n, ids);
-        if (v > best) { best = v; if (a2) *a2 = members_[i]; if (a4) { if (a3) *a3 = n; std::memcpy(a4, ids, n * sizeof(std::uint16_t)); } }
+        auto* wps = m_pPartyGetWPSSystemFuncPtr(members_[i]);
+        if (!use || !wps) continue;
+        int nUse = 0, nWps = 0;
+        std::uint16_t idsUse[10]{}, idsWps[10]{};
+        const int v = use->GetPartyMemberAPowerAdvantage(&nUse, idsUse) + wps->GetPartyMemberAPowerAdvantage(&nWps, idsWps);
+        if (v > best) {
+            best = v;
+            if (a2) *a2 = members_[i];
+            if (a4) {
+                if (a3) *a3 = nUse + nWps;
+                std::memcpy(a4, idsUse, nUse * sizeof(std::uint16_t));
+                std::memcpy(a4 + nUse, idsWps, nWps * sizeof(std::uint16_t));
+            }
+        }
     }
-    return best;
+    return best + apAdv_;
 }
 
 int cltPartySystem::GetDPowerRateAdvantage(void** a2, int* a3, std::uint16_t* a4) {
     int best = 0;
-    if (!m_pPartyGetUsingSkillFuncPtr) return 0;
+    if (!m_pPartyGetUsingSkillFuncPtr) return dpAdv_;
     for (std::uint8_t i = 0; i < memberCount_; ++i) {
         auto* use = m_pPartyGetUsingSkillFuncPtr(members_[i]);
         if (!use) continue;
@@ -194,7 +206,7 @@ int cltPartySystem::GetDPowerRateAdvantage(void** a2, int* a3, std::uint16_t* a4
         const int v = use->GetPartyMemberDPowerAdvantage(&n, ids);
         if (v > best) { best = v; if (a2) *a2 = members_[i]; if (a4) { if (a3) *a3 = n; std::memcpy(a4, ids, n * sizeof(std::uint16_t)); } }
     }
-    return best;
+    return best + dpAdv_;
 }
 
 int cltPartySystem::GetExpAdvantage(void** a2, int* a3, std::uint16_t* a4) {
@@ -204,26 +216,13 @@ int cltPartySystem::GetExpAdvantage(void** a2, int* a3, std::uint16_t* a4) {
         auto* use = m_pPartyGetUsingSkillFuncPtr(members_[i]);
         if (!use) continue;
         int n = 0; std::uint16_t ids[10]{};
-        const int v = use->GetPartyMemberExpAdvantage(&n, ids);
+        const int v = use->GetPartyExpAdvantage(&n, ids);
         if (v > best) { best = v; if (a2) *a2 = members_[i]; if (a4) { if (a3) *a3 = n; std::memcpy(a4, ids, n * sizeof(std::uint16_t)); } }
     }
     return best;
 }
 
-int cltPartySystem::GetHitRateAdvantage() {
-    if (!m_pPartyGetWPSSystemFuncPtr || !memberCount_) {
-        return 0;
-    }
-
-    int result = 0;
-    for (std::uint8_t i = 0; i < memberCount_; ++i) {
-        auto* wps = m_pPartyGetWPSSystemFuncPtr(members_[i]);
-        if (wps) {
-            result += wps->GetPartyMemberHitRateAdvantage();
-        }
-    }
-    return result;
-}
+int cltPartySystem::GetHitRateAdvantage() { return expAdv_; }
 
 int cltPartySystem::GetIncSTR(void** a2, int* a3, std::uint16_t* a4) {
     int best = 0;
