@@ -9,9 +9,9 @@ struct cltCharKindInfo;
 struct cltTimerManager;
 struct cltLevelSystem;
 struct cltMoneySystem;
-struct CMofMsg;
-struct cltPetSkillSystem;
-struct cltPetInventorySystem;
+class CMofMsg;
+class cltPetSkillSystem;
+class cltPetInventorySystem;
 struct strPetKindInfo;
 
 class cltPetSystem {

@@ -17,3 +17,9 @@ std::uint16_t cltQuestKindInfo::TranslateKindCode(const char* a1)
         return static_cast<std::uint16_t>(v2 | v3);
     return 0;
 }
+
+void* cltQuestKindInfo::GetQuestKindInfo(std::uint16_t)
+{
+    // 目前專案未建 QuestKind 資料表，先回傳 nullptr 以滿足連結。
+    return nullptr;
+}

@@ -11,3 +11,11 @@ int cltWorkingPassiveSkillSystem::GetDamageHP2ManaRate() { return 0; }
 int cltWorkingPassiveSkillSystem::GetAPowerAdvantage() { return 0; }
 int cltWorkingPassiveSkillSystem::GetDPowerAdvantage() { return 0; }
 int cltWorkingPassiveSkillSystem::GetMissRateAdvantage() { return 0; }
+
+int cltWorkingPassiveSkillSystem::GetPartyMemberAPowerAdvantage(int* outNum, unsigned short* outSkillKinds) {
+    if (outNum) *outNum = 0;
+    (void)outSkillKinds;
+    return 0;
+}
+
+int cltWorkingPassiveSkillSystem::GetPartyMemberHitRateAdvantage() { return 0; }

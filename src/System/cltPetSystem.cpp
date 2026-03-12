@@ -6,7 +6,10 @@
 #include "Info/cltCharKindInfo.h"
 #include "Info/cltPetKindInfo.h"
 #include "Info/cltPetSkillKindInfo.h"
+#include "Network/CMofMsg.h"
 #include "System/cltLevelSystem.h"
+#include "System/cltPetInventorySystem.h"
+#include "System/cltPetSkillSystem.h"
 
 struct cltTimerManager {
     void SetTimer(int, int);
@@ -16,48 +19,6 @@ struct cltMoneySystem {
     int CanDecreaseMoney(int);
     void IncreaseMoney(int);
     void DecreaseMoney(int);
-};
-struct CMofMsg {
-    static void Get_LONG(CMofMsg*, int*);
-    static void Get_WORD(CMofMsg*, std::uint16_t*);
-    static void Get_Z1(CMofMsg*, char*, int, int, int);
-    static void Get_BYTE(CMofMsg*, std::uint8_t*);
-};
-struct cltPetSkillSystem {
-    void Initialize(CMofMsg*);
-    void Free();
-    void OnPetCreated();
-    void OnPetDeleted();
-    int GetSkillAPowerAdvantage(std::uint16_t);
-    int GetAPowerAdvantage(std::uint16_t);
-    int GetDPowerAdvantage(std::uint16_t);
-    int GetHitRateAdvantage(std::uint16_t);
-    int GetAutoRecoverHPAdvantage(std::uint16_t);
-    int GetAutoRecoverManaAdvantage(std::uint16_t);
-    int CanPickupItem(std::uint16_t);
-    int GetDropRateAdvantage(std::uint16_t);
-    int GetSTRAdvantage(std::uint16_t);
-    int GetVITAdvantage(std::uint16_t);
-    int GetDEXAdvantage(std::uint16_t);
-    int GetINTAdvantage(std::uint16_t);
-    int GetAttackSpeedAdvantage(std::uint16_t);
-    int CanSetPetUsingSkill(std::uint8_t, std::uint16_t);
-    void SetPetUsingSkill(std::uint8_t, std::uint16_t);
-    unsigned int CanAddPetSkill(std::uint16_t);
-    void AddPetSkill(std::uint16_t);
-    std::uint16_t GetPetSkillNum();
-};
-struct cltPetInventorySystem {
-    void Initialize(CMofMsg*);
-    void Free();
-    void OnPetCreated(std::uint8_t);
-    void OnPetDeleted();
-    int CanMoveItem(std::uint8_t, std::uint8_t);
-    void MoveItem(std::uint8_t, std::uint8_t, std::uint8_t*);
-    int IsPetInventoryEmpty();
-    std::uint8_t GetPetBagNum();
-    int CanIncreasePetBagNum();
-    void IncreasePetBagNum();
 };
 
 cltPetKindInfo* cltPetSystem::m_pclPetKindInfo = nullptr;
@@ -81,17 +42,17 @@ void cltPetSystem::Initialize(cltLevelSystem* a2, cltMoneySystem* a3, CMofMsg* a
     petID_ = 0;
 
     if (a4) {
-        CMofMsg::Get_LONG(a4, &petID_);
+        a4->Get_LONG(&petID_);
     }
 
     if (petID_) {
-        CMofMsg::Get_WORD(a4, &petKind_);
-        CMofMsg::Get_Z1(a4, petName_.data(), 0, 0, 0);
+        a4->Get_WORD(&petKind_);
+        a4->Get_Z1(petName_.data(), 0, 0, nullptr);
 
         std::uint8_t isActive = 0;
-        CMofMsg::Get_BYTE(a4, &isActive);
-        CMofMsg::Get_LONG(a4, &petExp_);
-        CMofMsg::Get_LONG(a4, &petSatiety_);
+        a4->Get_BYTE(&isActive);
+        a4->Get_LONG(&petExp_);
+        a4->Get_LONG(&petSatiety_);
 
         petKindInfo_ = m_pclPetKindInfo ? m_pclPetKindInfo->GetPetKindInfo(petKind_) : nullptr;
         SetActivity(petKindInfo_ ? isActive : 0);
@@ -373,13 +334,13 @@ void cltPetSystem::OnTakeKeepingPet(int a2, CMofMsg* a3) {
     if (petInventorySystem_) petInventorySystem_->Free();
     if (petSkillSystem_) petSkillSystem_->Free();
     if (moneySystem_) moneySystem_->DecreaseMoney(a2);
-    CMofMsg::Get_LONG(a3, &petID_);
-    CMofMsg::Get_WORD(a3, &petKind_);
-    CMofMsg::Get_Z1(a3, petName_.data(), 0, 0, 0);
+    a3->Get_LONG(&petID_);
+    a3->Get_WORD(&petKind_);
+    a3->Get_Z1(petName_.data(), 0, 0, nullptr);
     std::uint8_t isActive = 0;
-    CMofMsg::Get_BYTE(a3, &isActive);
-    CMofMsg::Get_LONG(a3, &petExp_);
-    CMofMsg::Get_LONG(a3, &petSatiety_);
+    a3->Get_BYTE(&isActive);
+    a3->Get_LONG(&petExp_);
+    a3->Get_LONG(&petSatiety_);
     petKindInfo_ = m_pclPetKindInfo ? m_pclPetKindInfo->GetPetKindInfo(petKind_) : nullptr;
     SetActivity(isActive);
     if (petInventorySystem_) petInventorySystem_->Initialize(a3);
@@ -414,12 +375,12 @@ int cltPetSystem::CanPetMarketBuy() {
 void cltPetSystem::PetMarketBuy(CMofMsg* a2, int* a3) {
     int price = 0;
     if (!a2) return;
-    CMofMsg::Get_LONG(a2, &price);
-    CMofMsg::Get_LONG(a2, &petID_);
-    CMofMsg::Get_WORD(a2, &petKind_);
-    CMofMsg::Get_Z1(a2, petName_.data(), 0, 0, 0);
-    CMofMsg::Get_LONG(a2, &petExp_);
-    CMofMsg::Get_LONG(a2, &petSatiety_);
+    a2->Get_LONG(&price);
+    a2->Get_LONG(&petID_);
+    a2->Get_WORD(&petKind_);
+    a2->Get_Z1(petName_.data(), 0, 0, nullptr);
+    a2->Get_LONG(&petExp_);
+    a2->Get_LONG(&petSatiety_);
     petKindInfo_ = m_pclPetKindInfo ? m_pclPetKindInfo->GetPetKindInfo(petKind_) : nullptr;
     SetActivity(0);
     if (petInventorySystem_) petInventorySystem_->Initialize(a2);

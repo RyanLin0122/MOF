@@ -315,6 +315,8 @@
     <ClCompile Include="src\System\cltEquipmentSystem.cpp" />
     <ClCompile Include="src\Logic\cltFieldItem.cpp" />
     <ClCompile Include="src\System\cltPartySystem.cpp" />
+    <ClCompile Include="src\System\cltPetInventorySystem.cpp" />
+    <ClCompile Include="src\System\cltPetSkillSystem.cpp" />
     <ClCompile Include="src\System\cltPlayerAbility.cpp" />
     <ClCompile Include="src\System\cltQuestSystem.cpp" />
     <ClCompile Include="src\System\cltQuickSlotSystem.cpp" />
@@ -567,6 +569,8 @@
     <ClInclude Include="inc\System\cltLessonSystem.h" />
     <ClInclude Include="inc\System\cltMonsterToleranceSystem.h" />
     <ClInclude Include="inc\System\cltPartySystem.h" />
+    <ClInclude Include="inc\System\cltPetInventorySystem.h" />
+    <ClInclude Include="inc\System\cltPetSkillSystem.h" />
     <ClInclude Include="inc\System\cltPlayerAbility.h" />
     <ClInclude Include="inc\System\cltPetSystem.h" />
     <ClInclude Include="inc\System\cltQuestSystem.h" />

@@ -765,6 +765,12 @@
     <ClCompile Include="src\System\cltTitleSystem.cpp">
       <Filter>來源檔案</Filter>
     </ClCompile>
+    <ClCompile Include="src\System\cltPetInventorySystem.cpp">
+      <Filter>來源檔案</Filter>
+    </ClCompile>
+    <ClCompile Include="src\System\cltPetSkillSystem.cpp">
+      <Filter>來源檔案</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="inc\Sound\COgg.h">
@@ -1524,6 +1530,12 @@
       <Filter>標頭檔</Filter>
     </ClInclude>
     <ClInclude Include="inc\System\cltTitleSystem.h">
+      <Filter>標頭檔</Filter>
+    </ClInclude>
+    <ClInclude Include="inc\System\cltPetInventorySystem.h">
+      <Filter>標頭檔</Filter>
+    </ClInclude>
+    <ClInclude Include="inc\System\cltPetSkillSystem.h">
       <Filter>標頭檔</Filter>
     </ClInclude>
   </ItemGroup>

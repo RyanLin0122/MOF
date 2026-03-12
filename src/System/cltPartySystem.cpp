@@ -3,20 +3,8 @@
 #include <algorithm>
 #include <cstring>
 
-struct cltUsingSkillSystem {
-    int GetPartyMemberAPowerAdvantage(int*, std::uint16_t*);
-    int GetPartyMemberDPowerAdvantage(int*, std::uint16_t*);
-    int GetPartyExpAdvantage(int*, std::uint16_t*);
-    int GetPartyMemberStrAdvantage(int*, std::uint16_t*);
-    int GetPartyMemberDexAdvantage(int*, std::uint16_t*);
-    int GetPartyMemberVitAdvantage(int*, std::uint16_t*);
-    int GetPartyMemberIntAdvantage(int*, std::uint16_t*);
-    int GetPartyMemberAttackAtb(AttackAtb*, unsigned int*, std::uint16_t*);
-};
-struct cltWorkingPassiveSkillSystem {
-    int GetPartyMemberAPowerAdvantage(int*, std::uint16_t*);
-    int GetPartyMemberHitRateAdvantage();
-};
+#include "System/cltUsingSkillSystem.h"
+#include "System/cltWorkingPassiveSkillSystem.h"
 
 void (*cltPartySystem::m_pOnPartyFreeFuncPtr)(cltPartySystem*) = nullptr;
 void (*cltPartySystem::m_pOnPartyLeaderChangedFuncPtr)(cltPartySystem*) = nullptr;

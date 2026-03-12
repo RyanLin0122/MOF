@@ -17,3 +17,9 @@ uint16_t cltCharKindInfo::TranslateKindCode(char* a1)
 
     return 0;
 }
+
+void* cltCharKindInfo::GetCharKindInfo(uint16_t)
+{
+    // 目前專案未建 CharKind 資料表，先回傳 nullptr 以滿足連結。
+    return nullptr;
+}
