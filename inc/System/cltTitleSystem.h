@@ -2,11 +2,11 @@
 
 #include <cstdint>
 
-struct cltTitleKindInfo;
-struct cltQuestKindInfo;
-struct cltCharKindInfo;
-struct cltLevelSystem;
-struct cltBaseInventory;
+#include "Info/cltCharKindInfo.h"
+#include "Info/cltQuestKindInfo.h"
+#include "Info/cltTitleKindInfo.h"
+#include "Logic/cltBaseInventory.h"
+#include "System/cltLevelSystem.h"
 
 class cltTitleSystem {
 public:

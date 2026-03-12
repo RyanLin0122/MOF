@@ -2,12 +2,6 @@
 
 #include <cstdint>
 
-#include "Info/cltCharKindInfo.h"
-#include "Info/cltQuestKindInfo.h"
-#include "Info/cltTitleKindInfo.h"
-#include "Logic/cltBaseInventory.h"
-#include "System/cltLevelSystem.h"
-
 cltTitleKindInfo* cltTitleSystem::m_pclTitleKindInfo = nullptr;
 cltQuestKindInfo* cltTitleSystem::m_pclQuestKindInfo = nullptr;
 cltCharKindInfo* cltTitleSystem::m_pclCharKindInfo = nullptr;

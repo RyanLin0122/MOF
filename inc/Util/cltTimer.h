@@ -4,8 +4,6 @@
 #include <cstdint>
 #include <windows.h>
 
-using BOOL = int;
-
 #ifndef __cdecl
 #define __cdecl
 #endif
@@ -51,7 +49,7 @@ public:
     void Release();
     unsigned int GetTimerID() const;
     int IsTimeOut() const;
-    BOOL IsUsing() const;
+    int IsUsing() const;
     void Initialize();
     int Poll();
     std::uint8_t GetProgressingPercent() const;

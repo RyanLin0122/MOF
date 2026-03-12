@@ -2,10 +2,9 @@
 
 #include <array>
 #include <cstdint>
-
-struct cltUsingSkillSystem;
-struct cltWorkingPassiveSkillSystem;
-enum AttackAtb : int;
+#include "Other/cltAttackAtb.h"
+#include "System/cltUsingSkillSystem.h"
+#include "System/cltWorkingPassiveSkillSystem.h"
 
 class cltPartySystem {
 public:

@@ -3,9 +3,6 @@
 #include <algorithm>
 #include <cstring>
 
-#include "System/cltUsingSkillSystem.h"
-#include "System/cltWorkingPassiveSkillSystem.h"
-
 void (*cltPartySystem::m_pOnPartyFreeFuncPtr)(cltPartySystem*) = nullptr;
 void (*cltPartySystem::m_pOnPartyLeaderChangedFuncPtr)(cltPartySystem*) = nullptr;
 cltUsingSkillSystem* (*cltPartySystem::m_pPartyGetUsingSkillFuncPtr)(void*) = nullptr;

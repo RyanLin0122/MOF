@@ -3,23 +3,6 @@
 #include <algorithm>
 #include <cstring>
 
-#include "Info/cltCharKindInfo.h"
-#include "Info/cltPetKindInfo.h"
-#include "Info/cltPetSkillKindInfo.h"
-#include "Network/CMofMsg.h"
-#include "System/cltLevelSystem.h"
-#include "System/cltPetInventorySystem.h"
-#include "System/cltPetSkillSystem.h"
-
-struct cltTimerManager {
-    void SetTimer(int, int);
-};
-struct cltMoneySystem {
-    int CanIncreaseMoney(int);
-    int CanDecreaseMoney(int);
-    void IncreaseMoney(int);
-    void DecreaseMoney(int);
-};
 
 cltPetKindInfo* cltPetSystem::m_pclPetKindInfo = nullptr;
 cltPetSkillKindInfo* cltPetSystem::m_pclPetSkillKindInfo = nullptr;

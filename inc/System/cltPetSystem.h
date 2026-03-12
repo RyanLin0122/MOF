@@ -3,16 +3,15 @@
 #include <array>
 #include <cstdint>
 
-struct cltPetKindInfo;
-struct cltPetSkillKindInfo;
-struct cltCharKindInfo;
-struct cltTimerManager;
-struct cltLevelSystem;
-struct cltMoneySystem;
-class CMofMsg;
-class cltPetSkillSystem;
-class cltPetInventorySystem;
-struct strPetKindInfo;
+#include "Info/cltCharKindInfo.h"
+#include "Info/cltPetKindInfo.h"
+#include "Info/cltPetSkillKindInfo.h"
+#include "Network/CMofMsg.h"
+#include "System/cltLevelSystem.h"
+#include "System/cltPetInventorySystem.h"
+#include "System/cltPetSkillSystem.h"
+#include "System/cltMoneySystem.h"
+#include "Util/cltTimer.h"
 
 class cltPetSystem {
 public:
