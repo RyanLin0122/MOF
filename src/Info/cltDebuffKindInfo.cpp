@@ -1,197 +1,232 @@
 ﻿#include "Info/cltDebuffKindInfo.h"
-#include "Text/cltTextFileManager.h"  // 由你提供的檔案
+#include <new>
 
-// Delimiters 與反編譯碼一致：「\t\n」
-static constexpr const char* kDelims = "\t\n";
 
-// 小工具：安全 fgets，回傳是否成功
-static inline bool ReadLine(char* buf, int size, FILE* f) {
-    return std::fgets(buf, size, f) != nullptr;
-}
-
-// 與 IDA 邏輯一致的 TranslateKindCode
-uint16_t cltDebuffKindInfo::TranslateKindCode(char* a1)
+cltDebuffKindInfo::cltDebuffKindInfo()
+    : m_pInfo(nullptr), m_nCount(0)
 {
-    if (!a1) return 0;
-
-    // 反編譯碼：長度必須等於 5
-    if (std::strlen(a1) != 5)
-        return 0;
-
-    // 第一碼字母 -> toupper，再加 31，左移 11 bits
-    int high = (std::toupper(static_cast<unsigned char>(*a1)) + 31) << 11;
-
-    // 後四碼轉數字，需 < 0x800
-    int v = std::atoi(a1 + 1);
-    if (v < 0x800)
-        return static_cast<uint16_t>(high | v);
-
-    return 0;
 }
 
-int cltDebuffKindInfo::Initialize(char* filename)
+cltDebuffKindInfo::~cltDebuffKindInfo()
 {
     Free();
+}
 
-    if (!filename) return 0;
+int cltDebuffKindInfo::Initialize(char* fileName)
+{
+    char delimiter[3] = "\t\n";
+    int result = 0;
 
-    // 以 cltTextFileManager 開檔
-    FILE* f = g_clTextFileManager.fopen(filename);
-    if (!f) return 0;
+    Free();
 
-    // 反編譯碼：先讀 3 行表頭
-    char buffer[1024] = {};
-    if (!ReadLine(buffer, sizeof(buffer), f) ||
-        !ReadLine(buffer, sizeof(buffer), f) ||
-        !ReadLine(buffer, sizeof(buffer), f))
+    FILE* fp = g_clTextFileManager.fopen(fileName);
+    FILE* stream = fp;
+    if (!fp)
+        return 0;
+
+    char buffer[1024];
+    std::memset(buffer, 0, sizeof(buffer));
+
+    // 先讀三行，之後從第 4 行開始當資料區
+    if (std::fgets(buffer, 1023, fp) &&
+        std::fgets(buffer, 1023, fp) &&
+        std::fgets(buffer, 1023, fp))
     {
-        g_clTextFileManager.fclose(f);
-        return 0;
-    }
+        std::fpos_t position;
+        std::fgetpos(fp, &position);
 
-    // 記錄位置並計數
-    fpos_t pos{};
-    std::fgetpos(f, &pos);
-
-    int count = 0;
-    while (ReadLine(buffer, sizeof(buffer), f)) {
-        ++count;
-    }
-
-    // 配置並清零
-    if (count <= 0) {
-        g_clTextFileManager.fclose(f);
-        return 0;
-    }
-
-    m_list = static_cast<strDebuffKindInfo*>(operator new[](count * sizeof(strDebuffKindInfo)));
-    std::memset(m_list, 0, count * sizeof(strDebuffKindInfo));
-    m_count = count;
-
-    // 回到資料起點
-    std::fsetpos(f, &pos);
-
-    // 逐行解析
-    int idx = 0;
-    bool ok_all = true;
-
-    while (idx < m_count && ReadLine(buffer, sizeof(buffer), f))
-    {
-        strDebuffKindInfo& rec = m_list[idx];
-        std::memset(&rec, 0, sizeof(rec));
-
-        // 逐欄位以 strtok 解析（與反編譯碼一致的呼叫順序）
-        char* tok = std::strtok(buffer, kDelims); // ID
-        if (!tok) { ok_all = false; break; }
-
-        rec.kind = TranslateKindCode(tok);
-        if (rec.kind == 0) { ok_all = false; break; }
-
-        tok = std::strtok(nullptr, kDelims); // 企劃用名稱（忽略）
-        if (!tok) { ok_all = false; break; }
-
-        tok = std::strtok(nullptr, kDelims); // 지속시간
-        if (!tok) { ok_all = false; break; }
-        rec.duration = std::atoi(tok);
-
-        tok = std::strtok(nullptr, kDelims); // 지속시간(보스)
-        if (!tok) { ok_all = false; break; }
-        rec.duration_boss = std::atoi(tok);
-
-        tok = std::strtok(nullptr, kDelims); // 반복주기
-        if (!tok) { ok_all = false; break; }
-        rec.period = std::atoi(tok);
-
-        tok = std::strtok(nullptr, kDelims); // 반복주기(보스)
-        if (!tok) { ok_all = false; break; }
-        rec.period_boss = std::atoi(tok);
-
-        tok = std::strtok(nullptr, kDelims); // 데미지 타입
-        if (!tok) { ok_all = false; break; }
-
-        // 與反編譯碼一致的字串比對（不分大小寫）
-        if (_stricmp(tok, "DMGTYPE_NONE") == 0) {
-            rec.damage_type = 0;
-        }
-        else if (_stricmp(tok, "DMGTYPE_CONSTANT") == 0) {
-            rec.damage_type = 1;
-        }
-        else if (_stricmp(tok, "DMGTYPE_RATE_CHP") == 0) {
-            rec.damage_type = 2;
-        }
-        else if (_stricmp(tok, "DMGTYPE_CALC") == 0) {
-            rec.damage_type = 3;
-        }
-        else {
-            ok_all = false; break;
+        // 計算資料行數
+        for (; std::fgets(buffer, 1023, fp); ++m_nCount)
+        {
         }
 
-        tok = std::strtok(nullptr, kDelims); // Param1
-        if (!tok) { ok_all = false; break; }
-        rec.dmg_param1 = std::atoi(tok);
+        // 用 operator new 配置 raw memory，再 memset 清零
+        m_pInfo = static_cast<strDebuffKindInfo*>(::operator new(sizeof(strDebuffKindInfo) * static_cast<size_t>(m_nCount)));
+        std::memset(m_pInfo, 0, sizeof(strDebuffKindInfo) * static_cast<size_t>(m_nCount));
 
-        tok = std::strtok(nullptr, kDelims); // Param2
-        if (!tok) { ok_all = false; break; }
-        rec.dmg_param2 = std::atoi(tok);
+        // 回到資料起點
+        std::fsetpos(fp, &position);
 
-        tok = std::strtok(nullptr, kDelims); // Param3
-        if (!tok) { ok_all = false; break; }
-        rec.dmg_param3 = std::atoi(tok);
+        char* rowPtr = reinterpret_cast<char*>(m_pInfo);
 
-        tok = std::strtok(nullptr, kDelims); // Param4
-        if (!tok) { ok_all = false; break; }
-        rec.dmg_param4 = std::atoi(tok);
+        // 若沒有任何資料列，反編譯會直接走成功結束
+        if (!std::fgets(buffer, 1023, fp))
+        {
+            result = 1;
+            g_clTextFileManager.fclose(fp);
+            return result;
+        }
 
-        // 後四欄：怪物欄位（可為 "0" 或 5 碼代碼）
-        tok = std::strtok(nullptr, kDelims); // Top-1
-        if (!tok) { ok_all = false; break; }
-        rec.mon_top1 = TranslateKindCode(tok);
+        while (true)
+        {
+            char* tok = std::strtok(buffer, delimiter); // 1. ID -> wId
+            if (!tok)
+                break;
 
-        tok = std::strtok(nullptr, kDelims); // Top-2
-        if (!tok) { ok_all = false; break; }
-        rec.mon_top2 = TranslateKindCode(tok);
+            uint16_t kindCode = TranslateKindCode(tok);
+            reinterpret_cast<strDebuffKindInfo*>(rowPtr)->wId = kindCode;
+            if (!kindCode)
+                break;
 
-        tok = std::strtok(nullptr, kDelims); // Bot-1
-        if (!tok) { ok_all = false; break; }
-        rec.mon_bot1 = TranslateKindCode(tok);
+            // 2. PlannerUse：原始程式只取 token，不存入結構
+            if (!std::strtok(nullptr, delimiter))
+                break;
 
-        tok = std::strtok(nullptr, kDelims); // Bot-2
-        if (!tok) { ok_all = false; break; }
-        rec.mon_bot2 = TranslateKindCode(tok);
+            tok = std::strtok(nullptr, delimiter); // 3. dwDuration
+            if (!tok)
+                break;
+            reinterpret_cast<strDebuffKindInfo*>(rowPtr)->dwDuration = static_cast<uint32_t>(std::atoi(tok));
 
-        ++idx;
+            tok = std::strtok(nullptr, delimiter); // 4. dwBossDuration
+            if (!tok)
+                break;
+            reinterpret_cast<strDebuffKindInfo*>(rowPtr)->dwBossDuration = static_cast<uint32_t>(std::atoi(tok));
+
+            tok = std::strtok(nullptr, delimiter); // 5. dwRepeatCycle
+            if (!tok)
+                break;
+            reinterpret_cast<strDebuffKindInfo*>(rowPtr)->dwRepeatCycle = static_cast<uint32_t>(std::atoi(tok));
+
+            tok = std::strtok(nullptr, delimiter); // 6. dwBossRepeatCycle
+            if (!tok)
+                break;
+            reinterpret_cast<strDebuffKindInfo*>(rowPtr)->dwBossRepeatCycle = static_cast<uint32_t>(std::atoi(tok));
+
+            tok = std::strtok(nullptr, delimiter); // 7. dwDamageType
+            if (!tok)
+                break;
+
+#if defined(_MSC_VER)
+            if (_stricmp(tok, "DMGTYPE_NONE") == 0)
+#else
+            if (strcasecmp(tok, "DMGTYPE_NONE") == 0)
+#endif
+            {
+                reinterpret_cast<strDebuffKindInfo*>(rowPtr)->dwDamageType = 0;
+            }
+#if defined(_MSC_VER)
+            else if (_stricmp(tok, "DMGTYPE_CONSTANT") == 0)
+#else
+            else if (strcasecmp(tok, "DMGTYPE_CONSTANT") == 0)
+#endif
+            {
+                reinterpret_cast<strDebuffKindInfo*>(rowPtr)->dwDamageType = 1;
+            }
+#if defined(_MSC_VER)
+            else if (_stricmp(tok, "DMGTYPE_RATE_CHP") == 0)
+#else
+            else if (strcasecmp(tok, "DMGTYPE_RATE_CHP") == 0)
+#endif
+            {
+                reinterpret_cast<strDebuffKindInfo*>(rowPtr)->dwDamageType = 2;
+            }
+#if defined(_MSC_VER)
+            else if (_stricmp(tok, "DMGTYPE_CALC") == 0)
+#else
+            else if (strcasecmp(tok, "DMGTYPE_CALC") == 0)
+#endif
+            {
+                reinterpret_cast<strDebuffKindInfo*>(rowPtr)->dwDamageType = 3;
+            }
+            else
+            {
+                break;
+            }
+
+            tok = std::strtok(nullptr, delimiter); // 8. dwDamageParam1
+            if (!tok)
+                break;
+            reinterpret_cast<strDebuffKindInfo*>(rowPtr)->dwDamageParam1 = static_cast<uint32_t>(std::atoi(tok));
+
+            tok = std::strtok(nullptr, delimiter); // 9. dwDamageParam2
+            if (!tok)
+                break;
+            reinterpret_cast<strDebuffKindInfo*>(rowPtr)->dwDamageParam2 = static_cast<uint32_t>(std::atoi(tok));
+
+            tok = std::strtok(nullptr, delimiter); // 10. dwDamageParam3
+            if (!tok)
+                break;
+            reinterpret_cast<strDebuffKindInfo*>(rowPtr)->dwDamageParam3 = static_cast<uint32_t>(std::atoi(tok));
+
+            tok = std::strtok(nullptr, delimiter); // 11. dwDamageParam4
+            if (!tok)
+                break;
+            reinterpret_cast<strDebuffKindInfo*>(rowPtr)->dwDamageParam4 = static_cast<uint32_t>(std::atoi(tok));
+
+            tok = std::strtok(nullptr, delimiter); // 12. wMonsterTop1
+            if (!tok)
+                break;
+            reinterpret_cast<strDebuffKindInfo*>(rowPtr)->wMonsterTop1 = TranslateKindCode(tok);
+
+            tok = std::strtok(nullptr, delimiter); // 13. wMonsterTop2
+            if (!tok)
+                break;
+            reinterpret_cast<strDebuffKindInfo*>(rowPtr)->wMonsterTop2 = TranslateKindCode(tok);
+
+            tok = std::strtok(nullptr, delimiter); // 14. wMonsterBot1
+            if (!tok)
+                break;
+            reinterpret_cast<strDebuffKindInfo*>(rowPtr)->wMonsterBot1 = TranslateKindCode(tok);
+
+            tok = std::strtok(nullptr, delimiter); // 15. wMonsterBot2
+            if (!tok)
+                break;
+            reinterpret_cast<strDebuffKindInfo*>(rowPtr)->wMonsterBot2 = TranslateKindCode(tok);
+
+            rowPtr += sizeof(strDebuffKindInfo);
+
+            if (!std::fgets(buffer, 1023, stream))
+            {
+                result = 1;
+                g_clTextFileManager.fclose(fp);
+                return result;
+            }
+        }
     }
 
-    // 關檔
-    g_clTextFileManager.fclose(f);
-
-    // 若非完整讀畢或中途失敗，依反編譯行為回傳 0
-    if (!ok_all || idx != m_count) {
-        Free();
-        return 0;
-    }
-
-    // 成功
-    return 1;
+    g_clTextFileManager.fclose(fp);
+    return result;
 }
 
 void cltDebuffKindInfo::Free()
 {
-    if (m_list) {
-        operator delete[](m_list);
-        m_list = nullptr;
+    if (m_pInfo)
+    {
+        ::operator delete(m_pInfo);
+        m_pInfo = nullptr;
     }
-    m_count = 0;
+
+    m_nCount = 0;
 }
 
-strDebuffKindInfo* cltDebuffKindInfo::GetDebuffKindInfo(uint16_t a2)
+strDebuffKindInfo* cltDebuffKindInfo::GetDebuffKindInfo(uint16_t id)
 {
-    if (!m_list || m_count <= 0) return nullptr;
+    if (m_nCount <= 0)
+        return nullptr;
 
-    // 與反編譯碼一致：逐 36 WORD (=72 bytes) 掃描
-    for (int i = 0; i < m_count; ++i) {
-        if (m_list[i].kind == a2)
-            return &m_list[i];
+    for (int i = 0; i < m_nCount; ++i)
+    {
+        if (m_pInfo[i].wId == id)
+            return &m_pInfo[i];
     }
+
     return nullptr;
+}
+
+uint16_t cltDebuffKindInfo::TranslateKindCode(char* text)
+{
+    if (!text)
+        return 0;
+
+    if (std::strlen(text) != 5)
+        return 0;
+
+    const int upper = std::toupper(static_cast<unsigned char>(text[0]));
+    const int prefix = (upper + 31) << 11;
+    const int value = std::atoi(text + 1);
+
+    if (value < 0x800)
+        return static_cast<uint16_t>(prefix | value);
+
+    return 0;
 }
