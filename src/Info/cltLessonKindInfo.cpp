@@ -157,8 +157,9 @@ int cltLessonKindInfo::Initialize(char* fileName)
                 if (!token || !IsAlphaNumericString(token))
                     break;
 
-                unsigned int iconValue = info.IconResourceId;
-                std::sscanf(token, "%x", &iconValue);
+                unsigned int iconValue = 0;
+                if (std::sscanf(token, "%x", &iconValue) != 1)
+                    break;
                 info.IconResourceId = static_cast<uint32_t>(iconValue);
 
                 // 8 區塊ID
