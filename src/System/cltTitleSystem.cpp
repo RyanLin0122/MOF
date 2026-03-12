@@ -2,35 +2,11 @@
 
 #include <cstdint>
 
-struct strTitleKindInfo {
-    std::uint16_t title_code;
-    std::uint16_t name_code;
-    int lv_min;
-    int lv_max;
-    int condition;
-    std::uint16_t param1_code;
-    std::uint16_t _pad;
-    int param2;
-    int param3;
-};
-
-enum TitleGetCondition : int {
-    TGC_COMPLETEQUEST = 1,
-    TGC_GETSKILL = 2,
-    TGC_SETEMBLEM = 3,
-    TGC_GETITEM = 4,
-    TGC_KILLMONSTER = 6,
-};
-
-struct cltTitleKindInfo {
-    strTitleKindInfo* GetTitleKindInfo();
-    int GetTitleKindNum();
-};
-
-struct cltQuestKindInfo { void* GetQuestKindInfo(std::uint16_t); };
-struct cltCharKindInfo { void* GetCharKindInfo(std::uint16_t); };
-struct cltLevelSystem { std::uint8_t GetLevel() const; };
-struct cltBaseInventory { std::int16_t GetInventoryItemQuantity(int); };
+#include "Info/cltCharKindInfo.h"
+#include "Info/cltQuestKindInfo.h"
+#include "Info/cltTitleKindInfo.h"
+#include "Logic/cltBaseInventory.h"
+#include "System/cltLevelSystem.h"
 
 cltTitleKindInfo* cltTitleSystem::m_pclTitleKindInfo = nullptr;
 cltQuestKindInfo* cltTitleSystem::m_pclQuestKindInfo = nullptr;
@@ -62,13 +38,15 @@ void cltTitleSystem::Free() {
 }
 
 int cltTitleSystem::CanSetTitleKind(std::uint16_t a2) { return newTitleKind_ == a2 ? titleKind_ != a2 : 0; }
-void cltTitleSystem::SetTitleKind(std::uint16_t a2) { if (CanSetTitleKind(a2)) titleKind_ = a2; }
+void cltTitleSystem::SetTitleKind(std::uint16_t a2) { titleKind_ = a2; }
 std::uint16_t cltTitleSystem::GetTitleKind() { return titleKind_; }
 std::uint16_t cltTitleSystem::GetNewTitleKind() { return newTitleKind_; }
 
 void cltTitleSystem::OnNewTitle(std::uint16_t a2) {
-    newTitleKind_ = a2;
-    if (m_pOnNewTitleFuncPtr) m_pOnNewTitleFuncPtr(owner_, a2);
+    if (titleKind_ != a2) {
+        if (m_pOnNewTitleFuncPtr) m_pOnNewTitleFuncPtr(owner_, a2);
+        newTitleKind_ = a2;
+    }
 }
 
 void cltTitleSystem::OnEvent_killmonster(std::uint16_t a2, int a3) {
