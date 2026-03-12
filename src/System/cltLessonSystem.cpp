@@ -191,7 +191,7 @@ int cltLessonSystem::CanTraningLessonByType(std::uint8_t lessonType) {
     }
 
     strLessonKindInfo* info = m_pclLessonKindInfo->GetLessonKindInfo(m_lessonSchedule[idx]);
-    return (info->type != lessonType) ? 0x12E : 0;
+    return (info->bLessonType != lessonType) ? 0x12E : 0;
 }
 
 int cltLessonSystem::TraningLessonFinished(unsigned int seed, std::uint8_t hitType, int success, unsigned int* inoutPt) {
@@ -203,7 +203,7 @@ int cltLessonSystem::TraningLessonFinished(unsigned int seed, std::uint8_t hitTy
     }
     {
         strLessonKindInfo* lessonInfo = m_pclLessonKindInfo->GetLessonKindInfo(m_lessonSchedule[idx]);
-        switch (lessonInfo->type) {
+        switch (lessonInfo->bLessonType) {
             case 0: {
                 const unsigned int p = *inoutPt;
                 *inoutPt = p + p * m_pEmblemSystem->GetSwordLessonPtAdvantage() / 1000;
@@ -240,7 +240,7 @@ int cltLessonSystem::TraningLessonFinished(unsigned int seed, std::uint8_t hitTy
         else if (mapped == 2) mapped = 1;
         else if (mapped == 4) mapped = 2;
 
-        strLessonHistory* hist = GetLessonHistory(lessonInfo->type, mapped);
+        strLessonHistory* hist = GetLessonHistory(lessonInfo->bLessonType, mapped);
         if (success == 1) {
             m_lessonState[idx] = 3;
             if (hist) ++hist->successCount;
@@ -273,8 +273,8 @@ int cltLessonSystem::GetThisLessonInfo(std::uint8_t* outIndex, std::uint8_t* out
     strLessonKindInfo* info = m_pclLessonKindInfo->GetLessonKindInfo(m_lessonSchedule[idx]);
 
     *outIndex = static_cast<std::uint8_t>(idx);
-    *outType = info->type;
-    *outKind = info->kind;
+    *outType = info->bLessonType;
+    *outKind = info->bClassType;
     return 1;
 }
 

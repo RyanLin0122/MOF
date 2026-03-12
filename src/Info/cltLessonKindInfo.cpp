@@ -1,183 +1,298 @@
 ﻿#include "Info/cltLessonKindInfo.h"
 
-static constexpr const char* kDelims = "\t\n";
-
-int cltLessonKindInfo::Initialize(char* filename)
+// ------------------------------------------------------------
+// 協助函式
+// ------------------------------------------------------------
+static bool IsDigitString(const char* s)
 {
-    Free();
-    if (!filename) return 0;
+    if (!s || !*s)
+        return false;
 
-    FILE* f = g_clTextFileManager.fopen(filename);
-    if (!f) return 0;
-
-    char buf[1024] = {};
-
-    // 略過 3 行表頭
-    if (!std::fgets(buf, sizeof(buf), f) ||
-        !std::fgets(buf, sizeof(buf), f) ||
-        !std::fgets(buf, sizeof(buf), f))
+    while (*s)
     {
-        g_clTextFileManager.fclose(f);
-        return 0;
+        if (!std::isdigit(static_cast<unsigned char>(*s)))
+            return false;
+        ++s;
     }
+    return true;
+}
 
-    // 計數
-    fpos_t pos{};
-    std::fgetpos(f, &pos);
-    m_count = 0;
-    while (std::fgets(buf, sizeof(buf), f)) ++m_count;
+// AlphaNumeric 檢查。
+// 注意：這會接受 G~Z，與 "%x" 的實際可解析範圍不完全相同，
+// 但這正是最貼近反編譯行為的還原。
+static bool IsAlphaNumericString(const char* s)
+{
+    if (!s || !*s)
+        return false;
 
-    // 配置
-    if (m_count <= 0) { g_clTextFileManager.fclose(f); return 0; }
-    m_list = static_cast<strLessonKindInfo*>(operator new[](m_count * sizeof(strLessonKindInfo)));
-    std::memset(m_list, 0, m_count * sizeof(strLessonKindInfo));
-
-    // 重置到資料起點
-    std::fsetpos(f, &pos);
-
-    int idx = 0;
-    bool ok_all = true;
-
-    if (std::fgets(buf, sizeof(buf), f))
+    while (*s)
     {
-        while (true)
+        if (!std::isalnum(static_cast<unsigned char>(*s)))
+            return false;
+        ++s;
+    }
+    return true;
+}
+
+// ------------------------------------------------------------
+// cltLessonKindInfo
+// ------------------------------------------------------------
+cltLessonKindInfo::cltLessonKindInfo()
+{
+    // IDA: return this;
+    // 真正可用的還原需初始化成安全狀態
+    m_pInfo = nullptr;
+    m_nCount = 0;
+}
+
+int cltLessonKindInfo::Initialize(char* fileName)
+{
+    FILE* stream;
+    FILE* fp;
+    void* mem;
+    int result;
+    char* token;
+    char delimiter[3];
+    fpos_t position;
+    char buffer[1024];
+
+    std::memset(buffer, 0, sizeof(buffer));
+    std::strcpy(delimiter, "\t\n");
+
+    result = 0;
+    m_nCount = 0;
+
+    fp = g_clTextFileManager.fopen(fileName);
+    stream = fp;
+    if (!fp)
+        return 0;
+
+    // 跳過前三行
+    if (std::fgets(buffer, 1023, fp) &&
+        std::fgets(buffer, 1023, fp) &&
+        std::fgets(buffer, 1023, fp))
+    {
+        std::fgetpos(fp, &position);
+
+        for (; std::fgets(buffer, 1023, fp); ++m_nCount)
         {
-            strLessonKindInfo& r = m_list[idx];
-            std::memset(&r, 0, sizeof(r));
+        }
 
-            // 1) 수업 종류
-            char* tok = std::strtok(buf, kDelims);
-            if (!tok) { ok_all = false; break; }
-            uint8_t kind = (uint8_t)GetLessonKind(tok);
-            r.kind = kind;
-            if (kind == 0) { ok_all = false; break; }
+        mem = operator new(static_cast<std::size_t>(sizeof(strLessonKindInfo) * m_nCount));
+        m_pInfo = static_cast<strLessonKindInfo*>(mem);
+        std::memset(m_pInfo, 0, sizeof(strLessonKindInfo) * static_cast<std::size_t>(m_nCount));
 
-            // 2) 설명（略過）
-            if (!std::strtok(nullptr, kDelims)) { ok_all = false; break; }
+        std::fsetpos(fp, &position);
 
-            // 3) 랭킹용 수업 종류
-            tok = std::strtok(nullptr, kDelims);
-            if (!tok) { ok_all = false; break; }
-            uint8_t rank_kind = (uint8_t)GetLessonKindOfRanking(tok);
-            r.ranking_kind = rank_kind;
-            if (rank_kind == 0) { ok_all = false; break; }
+        int index = 0;
 
-            // 4) 수업 타입
-            tok = std::strtok(nullptr, kDelims);
-            if (!tok) { ok_all = false; break; }
-            uint8_t t = GetLessonType(tok);
-            r.type = t;
-            if (t == 4) { ok_all = false; break; }
+        if (std::fgets(buffer, 1023, stream))
+        {
+            while (true)
+            {
+                if (index >= m_nCount)
+                    break;
 
-            // 5) 이름 코드 (WORD)
-            tok = std::strtok(nullptr, kDelims);
-            if (!tok || !IsDigitStr(tok)) { ok_all = false; break; }
-            r.name_code = (uint16_t)std::atoi(tok);
+                strLessonKindInfo& info = m_pInfo[index];
 
-            // 6) 설명 코드 (WORD)
-            tok = std::strtok(nullptr, kDelims);
-            if (!tok || !IsDigitStr(tok)) { ok_all = false; break; }
-            r.desc_code = (uint16_t)std::atoi(tok);
+                // 1 課程種類
+                token = std::strtok(buffer, delimiter);
+                if (!token)
+                    break;
 
-            // 7) 아이콘 리소스 아이디 (DWORD, hex)
-            tok = std::strtok(nullptr, kDelims);
-            if (!tok || !IsAlphaNumStr(tok)) { ok_all = false; break; }
-            unsigned int hexv = 0;
-            std::sscanf(tok, "%x", &hexv);
-            r.icon_res_id = hexv;
+                info.bClassType = static_cast<uint8_t>(GetLessonKind(token));
+                if (!info.bClassType)
+                    break;
 
-            // 8) 블록 아이디 (WORD)
-            tok = std::strtok(nullptr, kDelims);
-            if (!tok || !IsDigitStr(tok)) { ok_all = false; break; }
-            r.block_id = (uint16_t)std::atoi(tok);
+                // 2 說明（讀取但不存）
+                if (!std::strtok(nullptr, delimiter))
+                    break;
 
-            // 9) PlaceCode (WORD) —— 反編譯最後寫入到 +8
-            tok = std::strtok(nullptr, kDelims);
-            if (!tok || !IsDigitStr(tok)) { ok_all = false; break; }
-            r.place_code = (uint16_t)std::atoi(tok);
+                // 3 排名用課程種類
+                token = std::strtok(nullptr, delimiter);
+                if (!token)
+                    break;
 
-            // 準備下一行
-            ++idx;
-            if (!std::fgets(buf, sizeof(buf), f)) {
-                // 正常讀到 EOF
-                break;
+                info.bRankingClassType = static_cast<uint8_t>(GetLessonKindOfRanking(token));
+                if (!info.bRankingClassType)
+                    break;
+
+                // 4 課程類型
+                token = std::strtok(nullptr, delimiter);
+                if (!token)
+                    break;
+
+                info.bLessonType = GetLessonType(token);
+                if (info.bLessonType == 4)
+                    break;
+
+                // 5 名稱代碼
+                token = std::strtok(nullptr, delimiter);
+                if (!token || !IsDigitString(token))
+                    break;
+
+                info.wNameCode = static_cast<uint16_t>(std::atoi(token));
+
+                // 6 說明代碼
+                token = std::strtok(nullptr, delimiter);
+                if (!token || !IsDigitString(token))
+                    break;
+
+                info.wDescriptionCode = static_cast<uint16_t>(std::atoi(token));
+
+                // 7 圖示資源ID
+                token = std::strtok(nullptr, delimiter);
+                if (!token || !IsAlphaNumericString(token))
+                    break;
+
+                unsigned int iconValue = 0;
+                if (std::sscanf(token, "%x", &iconValue) != 1)
+                    break;
+                info.IconResourceId = static_cast<uint32_t>(iconValue);
+
+                // 8 區塊ID
+                token = std::strtok(nullptr, delimiter);
+                if (!token || !IsDigitString(token))
+                    break;
+
+                info.wBlockId = static_cast<uint16_t>(std::atoi(token));
+
+                // 9 地點代碼
+                token = std::strtok(nullptr, delimiter);
+                if (!token || !IsDigitString(token))
+                    break;
+
+                info.wPlaceCode = static_cast<uint16_t>(std::atoi(token));
+
+                ++index;
+
+                if (!std::fgets(buffer, 1023, stream))
+                    goto LABEL_SUCCESS;
             }
-            if (idx >= m_count) break;
+        }
+        else
+        {
+        LABEL_SUCCESS:
+            result = 1;
         }
     }
-    else {
-        // 第一筆資料行就讀不到：當作成功（與反編譯 LABEL_26 邏輯對齊）
-        ok_all = true;
-    }
 
-    g_clTextFileManager.fclose(f);
-
-    // 完整成功：idx 應等於 m_count
-    if (!ok_all || idx != m_count) {
-        Free();
-        return 0;
-    }
-    return 1;
+    g_clTextFileManager.fclose(stream);
+    return result;
 }
 
 void cltLessonKindInfo::Free()
 {
-    if (m_list) {
-        operator delete[](m_list);
-        m_list = nullptr;
+    if (m_pInfo)
+    {
+        operator delete(m_pInfo);
+        m_pInfo = nullptr;
     }
-    m_count = 0;
 }
 
-strLessonKindInfo* cltLessonKindInfo::GetLessonKindInfo(uint8_t a2)
+strLessonKindInfo* cltLessonKindInfo::GetLessonKindInfo(uint8_t classType)
 {
-    if (!m_list || m_count <= 0) return nullptr;
-    for (int i = 0; i < m_count; ++i) {
-        if (m_list[i].kind == a2)
-            return &m_list[i];
+    int i;
+    int count;
+    unsigned char* base;
+    unsigned char* p;
+
+    count = m_nCount;
+    i = 0;
+    if (count <= 0)
+        return nullptr;
+
+    base = reinterpret_cast<unsigned char*>(m_pInfo);
+    for (p = reinterpret_cast<unsigned char*>(m_pInfo); *p != classType; p += 20)
+    {
+        if (++i >= count)
+            return nullptr;
     }
-    return nullptr;
+
+    return reinterpret_cast<strLessonKindInfo*>(base + 20 * i);
 }
 
-strLessonKindInfo* cltLessonKindInfo::GetLessonKindInfoByIndex(int a2)
+strLessonKindInfo* cltLessonKindInfo::GetLessonKindInfoByIndex(int index)
 {
-    if (!m_list || a2 < 0 || a2 >= m_count) return nullptr;
-    return (strLessonKindInfo*)((uint8_t*)m_list + 20u * a2);
+    if (index < 0 || index >= m_nCount)
+        return nullptr;
+
+    return reinterpret_cast<strLessonKindInfo*>(
+        reinterpret_cast<unsigned char*>(m_pInfo) + 20 * index);
 }
 
-int cltLessonKindInfo::GetLessonKind(char* a2)
+int cltLessonKindInfo::GetLessonKind(char* text)
 {
-    if (std::strcmp(a2, "SWORD_1") == 0)    return 10;
-    if (std::strcmp(a2, "SWORD_2") == 0)    return 11;
-    if (std::strcmp(a2, "BOW_1") == 0)      return 20;
-    if (std::strcmp(a2, "BOW_2") == 0)      return 21;
-    if (std::strcmp(a2, "MAGIC_1") == 0)    return 30;
-    if (std::strcmp(a2, "MAGIC_2") == 0)    return 31;
-    if (std::strcmp(a2, "THEOLOGY_1") == 0) return 40;
-    if (std::strcmp(a2, "THEOLOGY_2") == 0) return 41;
+    if (!std::strcmp(text, "SWORD_1"))
+        return 10;
+    if (!std::strcmp(text, "SWORD_2"))
+        return 11;
+    if (!std::strcmp(text, "BOW_1"))
+        return 20;
+    if (!std::strcmp(text, "BOW_2"))
+        return 21;
+    if (!std::strcmp(text, "MAGIC_1"))
+        return 30;
+    if (!std::strcmp(text, "MAGIC_2"))
+        return 31;
+    if (!std::strcmp(text, "THEOLOGY_1"))
+        return 40;
+    if (!std::strcmp(text, "THEOLOGY_2"))
+        return 41;
     return 0;
 }
 
-int cltLessonKindInfo::GetLessonKindOfRanking(char* a2)
+int cltLessonKindInfo::GetLessonKindOfRanking(char* text)
 {
-    // 與 GetLessonKind 相同的對映
-    return GetLessonKind(a2);
-}
-
-uint8_t cltLessonKindInfo::GetLessonType(char* a2)
-{
-    if (std::strcmp(a2, "SWORD") == 0)    return 0;
-    if (std::strcmp(a2, "BOW") == 0)      return 1; // 反編譯的 `string` 即 BOW
-    if (std::strcmp(a2, "MAGIC") == 0)    return 2;
-    if (std::strcmp(a2, "THEOLOGY") == 0) return 3;
-    return 4; // 非法
-}
-
-int cltLessonKindInfo::IsValidLessonKind(uint8_t a2)
-{
-    if (!m_list || m_count <= 0) return 0;
-    for (int i = 0; i < m_count; i += 1) {
-        if (m_list[i].kind == a2) return 1;
-    }
+    if (!std::strcmp(text, "SWORD_1"))
+        return 10;
+    if (!std::strcmp(text, "SWORD_2"))
+        return 11;
+    if (!std::strcmp(text, "BOW_1"))
+        return 20;
+    if (!std::strcmp(text, "BOW_2"))
+        return 21;
+    if (!std::strcmp(text, "MAGIC_1"))
+        return 30;
+    if (!std::strcmp(text, "MAGIC_2"))
+        return 31;
+    if (!std::strcmp(text, "THEOLOGY_1"))
+        return 40;
+    if (!std::strcmp(text, "THEOLOGY_2"))
+        return 41;
     return 0;
+}
+
+uint8_t cltLessonKindInfo::GetLessonType(char* text)
+{
+    if (!std::strcmp(text, "SWORD"))
+        return 0;
+    if (!std::strcmp(text, "BOW"))
+        return 1;
+    if (!std::strcmp(text, "MAGIC"))
+        return 2;
+    if (!std::strcmp(text, "THEOLOGY"))
+        return 3;
+    return 4;
+}
+
+int cltLessonKindInfo::IsValidLessonKind(uint8_t classType)
+{
+    int i;
+    int count;
+    unsigned char* p;
+
+    count = m_nCount;
+    i = 0;
+
+    if (count <= 0)
+        return 0;
+
+    for (p = reinterpret_cast<unsigned char*>(m_pInfo); *p != classType; p += 20)
+    {
+        if (++i >= count)
+            return 0;
+    }
+
+    return 1;
 }
