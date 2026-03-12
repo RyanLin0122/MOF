@@ -5,16 +5,25 @@
 // ------------------------------------------------------------
 static bool IsDigitString(const char* s)
 {
-    if (!s || !*s)
+    if (!s)
         return false;
 
-    while (*s)
+    if (!*s)
+        return true;
+
+    while (true)
     {
+        if (*s == '+' || *s == '-')
+            ++s;
+
         if (!std::isdigit(static_cast<unsigned char>(*s)))
             return false;
+
         ++s;
+
+        if (!*s)
+            return true;
     }
-    return true;
 }
 
 // AlphaNumeric 檢查。
@@ -22,8 +31,11 @@ static bool IsDigitString(const char* s)
 // 但這正是最貼近反編譯行為的還原。
 static bool IsAlphaNumericString(const char* s)
 {
-    if (!s || !*s)
+    if (!s)
         return false;
+
+    if (!*s)
+        return true;
 
     while (*s)
     {
@@ -145,9 +157,8 @@ int cltLessonKindInfo::Initialize(char* fileName)
                 if (!token || !IsAlphaNumericString(token))
                     break;
 
-                unsigned int iconValue = 0;
-                if (std::sscanf(token, "%x", &iconValue) != 1)
-                    break;
+                unsigned int iconValue = info.IconResourceId;
+                std::sscanf(token, "%x", &iconValue);
                 info.IconResourceId = static_cast<uint32_t>(iconValue);
 
                 // 8 區塊ID
