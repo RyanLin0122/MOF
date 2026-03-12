@@ -87,8 +87,8 @@ public:
 private:
     cltLevelSystem* levelSystem_{};
     cltMoneySystem* moneySystem_{};
-    cltPetSkillSystem* petSkillSystem_{};
-    cltPetInventorySystem* petInventorySystem_{};
+    cltPetSkillSystem petSkillSystem_{};
+    cltPetInventorySystem petInventorySystem_{};
 
     int petID_{};
     std::uint16_t petKind_{};
