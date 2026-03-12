@@ -259,7 +259,7 @@ std::uint16_t cltPlayerAbility::GetStr(int, void* party) const {
         return 0;
     }
     const auto p = reinterpret_cast<cltPartySystem*>(party);
-    const int partyAdv = p ? p->GetStrAdvantage(0, 0, 0) : 0;
+    const int partyAdv = p ? p->GetIncSTR(nullptr, nullptr, nullptr) : 0;
     const int petAdv = m_pPetSystem ? m_pPetSystem->GetSTRAdvantage() : 0;
     return static_cast<std::uint16_t>(m_baseStr + m_pEquipmentSystem->GetTotalStr() + m_pUsingItemSystem->GetTotalStrOfUsingItem()
         + m_pUsingSkillSystem->GetTotalStrOfUsingSkill() + partyAdv + petAdv);
@@ -269,7 +269,7 @@ std::uint16_t cltPlayerAbility::GetDex(int, void* party) const {
         return 0;
     }
     const auto p = reinterpret_cast<cltPartySystem*>(party);
-    const int partyAdv = p ? p->GetDexAdvantage(0, 0, 0) : 0;
+    const int partyAdv = p ? p->GetIncDEX(nullptr, nullptr, nullptr) : 0;
     const int petAdv = m_pPetSystem ? m_pPetSystem->GetDEXAdvantage() : 0;
     return static_cast<std::uint16_t>(m_baseDex + m_pEquipmentSystem->GetTotalDex() + m_pUsingItemSystem->GetTotalDexOfUsingItem()
         + m_pUsingSkillSystem->GetTotalDexOfUsingSkill() + partyAdv + petAdv);
@@ -279,7 +279,7 @@ std::uint16_t cltPlayerAbility::GetInt(int, void* party) const {
         return 0;
     }
     const auto p = reinterpret_cast<cltPartySystem*>(party);
-    const int partyAdv = p ? p->GetIntAdvantage(0, 0, 0) : 0;
+    const int partyAdv = p ? p->GetIncINT(nullptr, nullptr, nullptr) : 0;
     const int petAdv = m_pPetSystem ? m_pPetSystem->GetINTAdvantage() : 0;
     return static_cast<std::uint16_t>(m_baseInt + m_pEquipmentSystem->GetTotalInt() + m_pUsingItemSystem->GetTotalIntOfUsingItem()
         + m_pUsingSkillSystem->GetTotalIntOfUsingSkill() + partyAdv + petAdv);
@@ -289,7 +289,7 @@ std::uint16_t cltPlayerAbility::GetVit(int, void* party) const {
         return 0;
     }
     const auto p = reinterpret_cast<cltPartySystem*>(party);
-    const int partyAdv = p ? p->GetVitAdvantage(0, 0, 0) : 0;
+    const int partyAdv = p ? p->GetIncVIT(nullptr, nullptr, nullptr) : 0;
     const int petAdv = m_pPetSystem ? m_pPetSystem->GetVITAdvantage() : 0;
     return static_cast<std::uint16_t>(m_baseVit + m_pEquipmentSystem->GetTotalVit() + m_pUsingItemSystem->GetTotalVitOfUsingItem()
         + m_pUsingSkillSystem->GetTotalVitOfUsingSkill() + partyAdv + petAdv);
@@ -432,7 +432,7 @@ int cltPlayerAbility::GetHitRateAdvantage(std::uint16_t charKind, int base, void
     if (m_pUsingItemSystem) v += m_pUsingItemSystem->GetHitRateAdvantage();
     if (m_pMonsterToleranceSystem) v += m_pMonsterToleranceSystem->GetHitRateAdvantage(charKind);
     if (m_pPetSystem) v += m_pPetSystem->GetHitRateAdvantage();
-    if (party) v += reinterpret_cast<cltPartySystem*>(party)->GetHitRateAdvantage(0, 0, 0);
+    if (party) v += reinterpret_cast<cltPartySystem*>(party)->GetHitRateAdvantage();
     return v;
 }
 int cltPlayerAbility::GetHitRate(std::uint16_t a2, void* party) const {
@@ -468,7 +468,7 @@ int cltPlayerAbility::GetSkillAPowerAdvantage(std::uint16_t charKind) const {
     int v = 0;
     if (m_pEquipmentSystem) v += m_pEquipmentSystem->GetSkillAPowerAdvantage();
     if (m_pMonsterToleranceSystem) v += m_pMonsterToleranceSystem->GetSkillAPowerAdvantage(charKind);
-    if (m_pPetSystem) v += m_pPetSystem->GetSkillAPowerAdvantage(charKind);
+    if (m_pPetSystem) v += m_pPetSystem->GetSkillAPowerAdvantage();
     return v;
 }
 int cltPlayerAbility::GetShopItemPriceAdvangtage() const { return m_pEmblemSystem ? m_pEmblemSystem->GetShopItemPriceAdvantage() : 0; }
