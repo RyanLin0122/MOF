@@ -33,7 +33,13 @@ void cltPartySystem::InitializeStaticVariable(
 
 cltPartySystem::cltPartySystem() = default;
 cltPartySystem::~cltPartySystem() = default;
-cltPartySystem* cltPartySystem::vector_deleting_destructor(char) { return this; }
+cltPartySystem* cltPartySystem::vector_deleting_destructor(char a2) {
+    this->~cltPartySystem();
+    if (a2 & 1) {
+        operator delete(this);
+    }
+    return this;
+}
 
 void cltPartySystem::Create(void* a2, void* a3) {
     members_[0] = a2;
@@ -51,7 +57,6 @@ void cltPartySystem::Create(void* a2, void* a3) {
 void cltPartySystem::Create(void* const* a2, std::uint8_t a3) {
     std::memcpy(members_.data(), a2, 0x14u);
     leaderIndex_ = a3;
-    memberCount_ = 0;
     for (void* m : members_) {
         if (m) ++memberCount_;
     }
@@ -84,11 +89,9 @@ unsigned int cltPartySystem::CanJoin(void* a2) {
 }
 
 void cltPartySystem::Join(void* a2) {
-    if (memberCount_ < 5) {
-        members_[memberCount_++] = a2;
-        if (m_pPartyJoinedNewPartyMemberFuncPtr) {
-            m_pPartyJoinedNewPartyMemberFuncPtr(this);
-        }
+    members_[memberCount_++] = a2;
+    if (m_pPartyJoinedNewPartyMemberFuncPtr) {
+        m_pPartyJoinedNewPartyMemberFuncPtr(this);
     }
 }
 
@@ -104,7 +107,7 @@ int cltPartySystem::CanLeave(void* a2) {
 void cltPartySystem::Leave(void* a2) {
     const bool wasLeader = GetLeadInstance() == a2;
     int found = -1;
-    for (int i = 0; i < memberCount_; ++i) {
+    for (int i = 0; i < 5; ++i) {
         if (members_[i] == a2) {
             found = i;
             break;

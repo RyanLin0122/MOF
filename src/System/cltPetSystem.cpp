@@ -40,12 +40,8 @@ void cltPetSystem::Initialize(cltLevelSystem* a2, cltMoneySystem* a3, CMofMsg* a
         petKindInfo_ = m_pclPetKindInfo ? m_pclPetKindInfo->GetPetKindInfo(petKind_) : nullptr;
         SetActivity(petKindInfo_ ? isActive : 0);
 
-        if (petInventorySystem_) {
-            petInventorySystem_->Initialize(a4);
-        }
-        if (petSkillSystem_) {
-            petSkillSystem_->Initialize(a4);
-        }
+        petInventorySystem_.Initialize(a4);
+        petSkillSystem_.Initialize(a4);
     } else {
         SetActivity(0);
     }
@@ -60,12 +56,8 @@ void cltPetSystem::Free() {
     petExp_ = 0;
     petSatiety_ = 0;
 
-    if (petInventorySystem_) {
-        petInventorySystem_->Free();
-    }
-    if (petSkillSystem_) {
-        petSkillSystem_->Free();
-    }
+    petInventorySystem_.Free();
+    petSkillSystem_.Free();
 
     levelSystem_ = nullptr;
     moneySystem_ = nullptr;
@@ -87,13 +79,9 @@ void cltPetSystem::CreatePet(int a2, std::uint16_t a3) {
     petExp_ = 0;
     petSatiety_ = petKindInfo_ ? petKindInfo_->satiety : 0;
     SetActivity(1);
-    if (petInventorySystem_) {
-        const std::uint8_t bag = petKindInfo_ ? petKindInfo_->bagInitCount : 0;
-        petInventorySystem_->OnPetCreated(bag);
-    }
-    if (petSkillSystem_) {
-        petSkillSystem_->OnPetCreated();
-    }
+    const std::uint8_t bag = petKindInfo_ ? petKindInfo_->bagInitCount : 0;
+    petInventorySystem_.OnPetCreated(bag);
+    petSkillSystem_.OnPetCreated();
     petName_.fill(0);
 }
 
@@ -105,7 +93,7 @@ int cltPetSystem::CanReleasePet() {
     if (!petKindInfo_) return 1;
     if (IsLock() == 1) return 1;
     if (!moneySystem_ || !moneySystem_->CanIncreaseMoney(0)) return 106;
-    if (!petInventorySystem_ || !petInventorySystem_->IsPetInventoryEmpty()) return 1900;
+    if (!petInventorySystem_.IsPetInventoryEmpty()) return 1900;
     return 0;
 }
 
@@ -122,8 +110,8 @@ void cltPetSystem::ReleasePet(int* a2) {
     petExp_ = 0;
     petSatiety_ = 0;
     petExpChanged_ = 0;
-    if (petInventorySystem_) petInventorySystem_->OnPetDeleted();
-    if (petSkillSystem_) petSkillSystem_->OnPetDeleted();
+    petInventorySystem_.OnPetDeleted();
+    petSkillSystem_.OnPetDeleted();
     if (moneySystem_) moneySystem_->IncreaseMoney(costValue);
 }
 
@@ -136,8 +124,8 @@ void cltPetSystem::KeepingPet() {
     petExp_ = 0;
     petSatiety_ = 0;
     petExpChanged_ = 0;
-    if (petInventorySystem_) petInventorySystem_->OnPetDeleted();
-    if (petSkillSystem_) petSkillSystem_->OnPetDeleted();
+    petInventorySystem_.OnPetDeleted();
+    petSkillSystem_.OnPetDeleted();
 }
 
 int cltPetSystem::CanSetActivity(int a2) {
@@ -154,19 +142,19 @@ void cltPetSystem::SetActivity(int a2) {
 }
 
 int cltPetSystem::IsActivity() { return isActivity_; }
-int cltPetSystem::GetSkillAPowerAdvantage() { return IsPetSkillInvalidated() || !petSkillSystem_ ? 0 : petSkillSystem_->GetSkillAPowerAdvantage(petKindInfo_->basePassiveSkill); }
-int cltPetSystem::GetAPowerAdvantage() { return IsPetSkillInvalidated() || !petSkillSystem_ ? 0 : petSkillSystem_->GetAPowerAdvantage(petKindInfo_->basePassiveSkill); }
-int cltPetSystem::GetDPowerAdvantage() { return IsPetSkillInvalidated() || !petSkillSystem_ ? 0 : petSkillSystem_->GetDPowerAdvantage(petKindInfo_->basePassiveSkill); }
-int cltPetSystem::GetHitRateAdvantage() { return IsPetSkillInvalidated() || !petSkillSystem_ ? 0 : petSkillSystem_->GetHitRateAdvantage(petKindInfo_->basePassiveSkill); }
-int cltPetSystem::GetAutoRecoverHPAdvantage() { return IsPetSkillInvalidated() || !petSkillSystem_ ? 0 : petSkillSystem_->GetAutoRecoverHPAdvantage(petKindInfo_->basePassiveSkill); }
-int cltPetSystem::GetAutoRecoverManaAdvantage() { return IsPetSkillInvalidated() || !petSkillSystem_ ? 0 : petSkillSystem_->GetAutoRecoverManaAdvantage(petKindInfo_->basePassiveSkill); }
-int cltPetSystem::CanPickupItem() { return IsPetSkillInvalidated() || !petSkillSystem_ ? 0 : petSkillSystem_->CanPickupItem(petKindInfo_->basePassiveSkill); }
-int cltPetSystem::GetDropRateAdvantage() { return IsPetSkillInvalidated() || !petSkillSystem_ ? 0 : petSkillSystem_->GetDropRateAdvantage(petKindInfo_->basePassiveSkill); }
-int cltPetSystem::GetSTRAdvantage() { return IsPetSkillInvalidated() || !petSkillSystem_ ? 0 : petSkillSystem_->GetSTRAdvantage(petKindInfo_->basePassiveSkill); }
-int cltPetSystem::GetVITAdvantage() { return IsPetSkillInvalidated() || !petSkillSystem_ ? 0 : petSkillSystem_->GetVITAdvantage(petKindInfo_->basePassiveSkill); }
-int cltPetSystem::GetDEXAdvantage() { return IsPetSkillInvalidated() || !petSkillSystem_ ? 0 : petSkillSystem_->GetDEXAdvantage(petKindInfo_->basePassiveSkill); }
-int cltPetSystem::GetINTAdvantage() { return IsPetSkillInvalidated() || !petSkillSystem_ ? 0 : petSkillSystem_->GetINTAdvantage(petKindInfo_->basePassiveSkill); }
-int cltPetSystem::GetAttackSpeedAdvantage() { return IsPetSkillInvalidated() || !petSkillSystem_ ? 0 : petSkillSystem_->GetAttackSpeedAdvantage(petKindInfo_->basePassiveSkill); }
+int cltPetSystem::GetSkillAPowerAdvantage() { return IsPetSkillInvalidated() ? 0 : petSkillSystem_.GetSkillAPowerAdvantage(petKindInfo_->basePassiveSkill); }
+int cltPetSystem::GetAPowerAdvantage() { return IsPetSkillInvalidated() ? 0 : petSkillSystem_.GetAPowerAdvantage(petKindInfo_->basePassiveSkill); }
+int cltPetSystem::GetDPowerAdvantage() { return IsPetSkillInvalidated() ? 0 : petSkillSystem_.GetDPowerAdvantage(petKindInfo_->basePassiveSkill); }
+int cltPetSystem::GetHitRateAdvantage() { return IsPetSkillInvalidated() ? 0 : petSkillSystem_.GetHitRateAdvantage(petKindInfo_->basePassiveSkill); }
+int cltPetSystem::GetAutoRecoverHPAdvantage() { return IsPetSkillInvalidated() ? 0 : petSkillSystem_.GetAutoRecoverHPAdvantage(petKindInfo_->basePassiveSkill); }
+int cltPetSystem::GetAutoRecoverManaAdvantage() { return IsPetSkillInvalidated() ? 0 : petSkillSystem_.GetAutoRecoverManaAdvantage(petKindInfo_->basePassiveSkill); }
+int cltPetSystem::CanPickupItem() { return IsPetSkillInvalidated() ? 0 : petSkillSystem_.CanPickupItem(petKindInfo_->basePassiveSkill); }
+int cltPetSystem::GetDropRateAdvantage() { return IsPetSkillInvalidated() ? 0 : petSkillSystem_.GetDropRateAdvantage(petKindInfo_->basePassiveSkill); }
+int cltPetSystem::GetSTRAdvantage() { return IsPetSkillInvalidated() ? 0 : petSkillSystem_.GetSTRAdvantage(petKindInfo_->basePassiveSkill); }
+int cltPetSystem::GetVITAdvantage() { return IsPetSkillInvalidated() ? 0 : petSkillSystem_.GetVITAdvantage(petKindInfo_->basePassiveSkill); }
+int cltPetSystem::GetDEXAdvantage() { return IsPetSkillInvalidated() ? 0 : petSkillSystem_.GetDEXAdvantage(petKindInfo_->basePassiveSkill); }
+int cltPetSystem::GetINTAdvantage() { return IsPetSkillInvalidated() ? 0 : petSkillSystem_.GetINTAdvantage(petKindInfo_->basePassiveSkill); }
+int cltPetSystem::GetAttackSpeedAdvantage() { return IsPetSkillInvalidated() ? 0 : petSkillSystem_.GetAttackSpeedAdvantage(petKindInfo_->basePassiveSkill); }
 
 void cltPetSystem::IncreasePetExp(int a2, std::uint16_t* a3) {
     const int prevExp = petExp_;
@@ -204,8 +192,8 @@ void cltPetSystem::IncreasePetSatiety(int a2) {
     petSatiety_ = updated >= maxSatiety ? maxSatiety : updated;
 }
 
-cltPetSkillSystem* cltPetSystem::GetPetSkillSystem() { return petSkillSystem_; }
-cltPetInventorySystem* cltPetSystem::GetPetInventorySystem() { return petInventorySystem_; }
+cltPetSkillSystem* cltPetSystem::GetPetSkillSystem() { return &petSkillSystem_; }
+cltPetInventorySystem* cltPetSystem::GetPetInventorySystem() { return &petInventorySystem_; }
 
 void cltPetSystem::OnDecreasePetSatiety() {
     petSatiety_ -= petKindInfo_ ? static_cast<int>(petKindInfo_->satietyDropPerMin) : 0;
@@ -221,20 +209,19 @@ int cltPetSystem::GetPetSatiety() { return petSatiety_; }
 
 int cltPetSystem::CanIncreasePetBagNum() {
     if (!petKindInfo_) return 0;
-    if (!petInventorySystem_) return 0;
-    if (petInventorySystem_->GetPetBagNum() >= petKindInfo_->bagMaxExpand) return 0;
-    return petInventorySystem_->CanIncreasePetBagNum();
+    if (petInventorySystem_.GetPetBagNum() >= petKindInfo_->bagMaxExpand) return 0;
+    return petInventorySystem_.CanIncreasePetBagNum();
 }
-void cltPetSystem::IncreasePetBagNum() { if (petInventorySystem_) petInventorySystem_->IncreasePetBagNum(); }
+void cltPetSystem::IncreasePetBagNum() { petInventorySystem_.IncreasePetBagNum(); }
 
 int cltPetSystem::GetPetLevel() { return petKindInfo_ ? petKindInfo_->levelComputed : 0; }
 
 int cltPetSystem::CanSetUsingSkill(std::uint8_t a2, std::uint16_t a3) {
-    return (petKindInfo_ && petSkillSystem_) ? petSkillSystem_->CanSetPetUsingSkill(a2, a3) : 0;
+    return petKindInfo_ ? petSkillSystem_.CanSetPetUsingSkill(a2, a3) : 0;
 }
 
 void cltPetSystem::SetUsingSkill(std::uint8_t a2, std::uint16_t a3) {
-    if (petSkillSystem_) petSkillSystem_->SetPetUsingSkill(a2, a3);
+    petSkillSystem_.SetPetUsingSkill(a2, a3);
 }
 
 unsigned int cltPetSystem::CanChangePetName(char* a2) {
@@ -257,10 +244,10 @@ unsigned int cltPetSystem::CanAddPetSkill(std::uint16_t a2) {
     auto* skillKind = m_pclPetSkillKindInfo->GetPetSkillKindInfo(a2);
     if (!skillKind) return 1;
     if (petKindInfo_->levelComputed < skillKind->RequiredLevel) return 1;
-    return petSkillSystem_ ? (petSkillSystem_->CanAddPetSkill(a2) == 0) : 1;
+    return petSkillSystem_.CanAddPetSkill(a2) == 0;
 }
 
-void cltPetSystem::AddPetSkill(std::uint16_t a2) { if (petSkillSystem_) petSkillSystem_->AddPetSkill(a2); }
+void cltPetSystem::AddPetSkill(std::uint16_t a2) { petSkillSystem_.AddPetSkill(a2); }
 int cltPetSystem::IsPetSkillInvalidated() {
     if (!petKindInfo_) return 1;
     if (!IsActivity()) return 1;
@@ -268,11 +255,11 @@ int cltPetSystem::IsPetSkillInvalidated() {
 }
 
 int cltPetSystem::CanMoveItem(std::uint8_t a2, std::uint8_t a3) {
-    return petKindInfo_ && petInventorySystem_ ? petInventorySystem_->CanMoveItem(a2, a3) : 0;
+    return petKindInfo_ ? petInventorySystem_.CanMoveItem(a2, a3) : 0;
 }
 
 void cltPetSystem::MoveItem(std::uint8_t a2, std::uint8_t a3, std::uint8_t* a4) {
-    if (petInventorySystem_) petInventorySystem_->MoveItem(a2, a3, a4);
+    petInventorySystem_.MoveItem(a2, a3, a4);
 }
 
 void cltPetSystem::OnKillMonster(std::uint16_t a2, int* a3, int a4, int a5) {
@@ -304,8 +291,8 @@ void cltPetSystem::OnKillMonster(std::uint16_t a2, int* a3, int a4, int a5) {
 }
 
 strPetKindInfo* cltPetSystem::GetPetReleaseCost() {
-    if (!petKindInfo_ || !m_pclPetKindInfo || !petSkillSystem_) return nullptr;
-    const std::uint16_t skillNum = petSkillSystem_->GetPetSkillNum();
+    if (!petKindInfo_ || !m_pclPetKindInfo) return nullptr;
+    const std::uint16_t skillNum = petSkillSystem_.GetPetSkillNum();
     return m_pclPetKindInfo->GetPetReleaseCost(petKindInfo_->kind, skillNum);
 }
 
@@ -314,8 +301,8 @@ void cltPetSystem::Unlock() { lockFlag_ = 0; }
 int cltPetSystem::IsLock() { return lockFlag_; }
 
 void cltPetSystem::OnTakeKeepingPet(int a2, CMofMsg* a3) {
-    if (petInventorySystem_) petInventorySystem_->Free();
-    if (petSkillSystem_) petSkillSystem_->Free();
+    petInventorySystem_.Free();
+    petSkillSystem_.Free();
     if (moneySystem_) moneySystem_->DecreaseMoney(a2);
     a3->Get_LONG(&petID_);
     a3->Get_WORD(&petKind_);
@@ -326,8 +313,8 @@ void cltPetSystem::OnTakeKeepingPet(int a2, CMofMsg* a3) {
     a3->Get_LONG(&petSatiety_);
     petKindInfo_ = m_pclPetKindInfo ? m_pclPetKindInfo->GetPetKindInfo(petKind_) : nullptr;
     SetActivity(isActive);
-    if (petInventorySystem_) petInventorySystem_->Initialize(a3);
-    if (petSkillSystem_) petSkillSystem_->Initialize(a3);
+    petInventorySystem_.Initialize(a3);
+    petSkillSystem_.Initialize(a3);
     petExpChanged_ = 0;
 }
 
@@ -345,8 +332,8 @@ void cltPetSystem::PetMarketRegistry(int a2) {
     petExp_ = 0;
     petSatiety_ = 0;
     petExpChanged_ = 0;
-    if (petInventorySystem_) petInventorySystem_->OnPetDeleted();
-    if (petSkillSystem_) petSkillSystem_->OnPetDeleted();
+    petInventorySystem_.OnPetDeleted();
+    petSkillSystem_.OnPetDeleted();
     if (moneySystem_) moneySystem_->DecreaseMoney(a2);
 }
 
@@ -366,8 +353,8 @@ void cltPetSystem::PetMarketBuy(CMofMsg* a2, int* a3) {
     a2->Get_LONG(&petSatiety_);
     petKindInfo_ = m_pclPetKindInfo ? m_pclPetKindInfo->GetPetKindInfo(petKind_) : nullptr;
     SetActivity(0);
-    if (petInventorySystem_) petInventorySystem_->Initialize(a2);
-    if (petSkillSystem_) petSkillSystem_->Initialize(a2);
+    petInventorySystem_.Initialize(a2);
+    petSkillSystem_.Initialize(a2);
     if (moneySystem_) moneySystem_->DecreaseMoney(price);
     if (a3) *a3 = price;
     petExpChanged_ = 0;
