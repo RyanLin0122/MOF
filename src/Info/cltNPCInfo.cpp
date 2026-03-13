@@ -1,14 +1,10 @@
 #include "Info/cltNPCInfo.h"
-#include <cstring> // strlen
-#include <cstdlib> // atoi
-#include <cctype>  // toupper
+#include <cstring>
+#include <cstdlib>
+#include <cctype>
+#include <utility>
 
 uint16_t cltNPCInfo::TranslateKindCode(const char* s) {
-    // 與反編譯一致：
-    // - 長度必須為 5
-    // - 取 s[0]（轉大寫）後加 31，左移 11 位
-    // - 後 4 碼以十進位解析，需 < 0x800
-    // - 否則回傳 0
     if (!s) return 0;
     if (std::strlen(s) != 5) return 0;
 
@@ -18,4 +14,19 @@ uint16_t cltNPCInfo::TranslateKindCode(const char* s) {
         return static_cast<uint16_t>(hi | num);
     }
     return 0;
+}
+
+int cltNPCInfo::GetTotalNPCNum() const {
+    return static_cast<int>(m_npcs.size());
+}
+
+stNPCInfo* cltNPCInfo::GetNPCInfoByIndex(int index) {
+    if (index < 0 || index >= static_cast<int>(m_npcs.size())) {
+        return nullptr;
+    }
+    return &m_npcs[index];
+}
+
+void cltNPCInfo::SetNPCList(std::vector<stNPCInfo> list) {
+    m_npcs = std::move(list);
 }
