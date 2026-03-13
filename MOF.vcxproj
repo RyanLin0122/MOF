@@ -322,6 +322,11 @@
     <ClCompile Include="src\System\cltQuickSlotSystem.cpp" />
     <ClCompile Include="src\System\cltRestBonusSystem.cpp" />
     <ClCompile Include="src\System\cltUsingItemSystem.cpp" />
+    <ClCompile Include="src\System\cltTransformSystem.cpp" />
+    <ClCompile Include="src\System\cltOverMindSystem.cpp" />
+    <ClCompile Include="src\System\cltPetMarketMySalePetSystem.cpp" />
+    <ClCompile Include="src\System\cltPKRankSystem.cpp" />
+    <ClCompile Include="src\System\cltDebuffSystem.cpp" />
     <ClCompile Include="src\Logic\cltLogicCompatibility.cpp" />
     <ClCompile Include="src\Network\DCTNetwork.cpp" />
     <ClCompile Include="src\Network\CMoFNetwork.cpp" />
@@ -587,6 +592,11 @@
     <ClInclude Include="inc\System\cltQuickSlotSystem.h" />
     <ClInclude Include="inc\Logic\cltShopInfo.h" />
     <ClInclude Include="inc\System\cltUsingItemSystem.h" />
+    <ClInclude Include="inc\System\cltTransformSystem.h" />
+    <ClInclude Include="inc\System\cltOverMindSystem.h" />
+    <ClInclude Include="inc\System\cltPetMarketMySalePetSystem.h" />
+    <ClInclude Include="inc\System\cltPKRankSystem.h" />
+    <ClInclude Include="inc\System\cltDebuffSystem.h" />
     <ClInclude Include="inc\Network\DCTNetwork.h" />
     <ClInclude Include="inc\Network\CMoFNetwork.h" />
     <ClInclude Include="inc\Network\CMofMsg.h" />
