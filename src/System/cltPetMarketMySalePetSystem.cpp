@@ -27,7 +27,7 @@ void cltPetMarketMySalePetSystem::Initialize(void* owner, cltPetSystem* petSyste
     msg->Get_Z1(info_.petName, 0, 0, nullptr);
     msg->Get_LONG(&info_.salePrice);
     msg->Get_LONG(&info_.saleTime);
-    msg->Get_BYTE(&info_.state);
+    msg->Get_BYTE(&info_.optionPageCount);
 
     msg->Get_LONG(&optionCount);
     for (int i = 0; i < optionCount; ++i) {
@@ -59,7 +59,7 @@ void cltPetMarketMySalePetSystem::FillOutSalePetInfo(CMofMsg* msg) {
     msg->Put_Z1(info_.petName);
     msg->Put_LONG(info_.salePrice);
     msg->Put_LONG(info_.saleTime);
-    msg->Put_BYTE(info_.state);
+    msg->Put_BYTE(info_.optionPageCount);
 
     std::uint8_t* optionCountPos = msg->GetCurrentPos();
     msg->Put_LONG(0);
