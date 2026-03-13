@@ -12,8 +12,6 @@ cltPetInventorySystem::cltPetInventorySystem() {
 void cltPetInventorySystem::Initialize(CMofMsg* msg) {
     std::memset(m_items.data(), 0, sizeof(m_items));
     m_bagNum = 0;
-    if (!msg) return;
-
     msg->Get_BYTE(&m_bagNum);
     int itemCount = 0;
     msg->Get_LONG(&itemCount);
@@ -21,12 +19,6 @@ void cltPetInventorySystem::Initialize(CMofMsg* msg) {
     for (int i = 0; i < itemCount; ++i) {
         std::uint8_t slot = 0xFF;
         msg->Get_BYTE(&slot);
-        if (slot >= kMaxSlots) {
-            std::uint16_t dummy{};
-            msg->Get_WORD(&dummy);
-            msg->Get_WORD(&dummy);
-            continue;
-        }
         msg->Get_WORD(&m_items[slot].itemKind);
         msg->Get_WORD(&m_items[slot].itemQty);
     }
@@ -39,7 +31,7 @@ void cltPetInventorySystem::Free() {
 
 int cltPetInventorySystem::CanAddItem(std::uint16_t itemKind, std::uint16_t itemQty) {
     if (!itemKind || !itemQty) return 1;
-    if (!m_pclItemKindInfo || !m_pclItemKindInfo->IsPetInventoryItem(itemKind)) return 1904;
+    if (!m_pclItemKindInfo->IsPetInventoryItem(itemKind)) return 1904;
 
     int remained = itemQty;
     const int maxSlot = kSlotsPerBag * static_cast<int>(m_bagNum);
@@ -65,7 +57,7 @@ void cltPetInventorySystem::AddItem(std::uint16_t itemKind, int itemQty, std::ui
 
     for (int i = 0; i < maxSlot; ++i) {
         if (m_items[i].itemKind && m_items[i].itemKind == itemKind) {
-            const int maxPile = m_pclItemKindInfo ? m_pclItemKindInfo->GetMaxPileUpNum(itemKind) : 1;
+            const int maxPile = m_pclItemKindInfo->GetMaxPileUpNum(itemKind);
             if (maxPile - m_items[i].itemQty >= static_cast<std::uint16_t>(remained)) {
                 AddItem(static_cast<std::uint8_t>(i), itemKind, static_cast<std::uint16_t>(remained), outChangedSlots);
                 return;
@@ -78,7 +70,7 @@ void cltPetInventorySystem::AddItem(std::uint16_t itemKind, int itemQty, std::ui
         }
     }
 
-    const int maxPile = m_pclItemKindInfo ? m_pclItemKindInfo->GetMaxPileUpNum(itemKind) : 1;
+    const int maxPile = m_pclItemKindInfo->GetMaxPileUpNum(itemKind);
     std::uint16_t neededSlots = static_cast<std::uint16_t>(remained / maxPile);
     if (static_cast<std::uint16_t>(remained) % maxPile > 0) ++neededSlots;
 
@@ -96,7 +88,6 @@ void cltPetInventorySystem::AddItem(std::uint16_t itemKind, int itemQty, std::ui
 }
 
 void cltPetInventorySystem::AddItem(std::uint8_t slot, std::uint16_t itemKind, std::uint16_t itemQty, std::uint8_t* outChangedSlots) {
-    if (slot >= kMaxSlots) return;
     m_items[slot].itemKind = itemKind;
     m_items[slot].itemQty = static_cast<std::uint16_t>(m_items[slot].itemQty + itemQty);
     if (outChangedSlots) outChangedSlots[slot] = 1;
@@ -117,7 +108,7 @@ void cltPetInventorySystem::MoveItem(std::uint8_t from, std::uint8_t to, std::ui
 
     std::uint8_t changedFrom = from;
     if (src->itemKind == dst->itemKind) {
-        const auto* info = m_pclItemKindInfo ? m_pclItemKindInfo->GetItemKindInfo(src->itemKind) : nullptr;
+        const auto* info = m_pclItemKindInfo->GetItemKindInfo(src->itemKind);
         if (info) {
             const std::uint8_t maxPile = info->m_byMaxPileUpNum;
             if (maxPile > dst->itemQty) {
@@ -154,7 +145,7 @@ int cltPetInventorySystem::CanDelItemBySlot(std::uint8_t slot, std::uint16_t qty
 
 int cltPetInventorySystem::CanDelItemBySlot(std::uint8_t slot) {
     const strPetInventoryItem* item = GetPetInventoryItem(slot);
-    return item ? CanDelItemBySlot(slot, item->itemQty) : 0;
+    return CanDelItemBySlot(slot, item->itemQty);
 }
 
 int cltPetInventorySystem::CanDelItemByItemKind(std::uint16_t itemKind, std::uint16_t qty) {
@@ -162,7 +153,6 @@ int cltPetInventorySystem::CanDelItemByItemKind(std::uint16_t itemKind, std::uin
 }
 
 void cltPetInventorySystem::DelItemBySlot(std::uint8_t slot, std::uint16_t qty, std::uint8_t* outChangedSlots) {
-    if (slot >= kMaxSlots) return;
     strPetInventoryItem& item = m_items[slot];
     item.itemQty = static_cast<std::uint16_t>(item.itemQty - qty);
     if (!item.itemQty) {
@@ -173,7 +163,6 @@ void cltPetInventorySystem::DelItemBySlot(std::uint8_t slot, std::uint16_t qty, 
 
 void cltPetInventorySystem::DelItemBySlot(std::uint8_t slot, std::uint8_t* outChangedSlots) {
     strPetInventoryItem* item = GetPetInventoryItem(slot);
-    if (!item) return;
     DelItemBySlot(slot, item->itemQty, outChangedSlots);
 }
 
@@ -198,7 +187,7 @@ int cltPetInventorySystem::IsValidSlot(std::uint8_t slot) {
 }
 
 strPetInventoryItem* cltPetInventorySystem::GetPetInventoryItem(std::uint8_t slot) {
-    if (!IsValidSlot(slot) || slot >= kMaxSlots) return nullptr;
+    if (!IsValidSlot(slot)) return nullptr;
     return &m_items[slot];
 }
 
