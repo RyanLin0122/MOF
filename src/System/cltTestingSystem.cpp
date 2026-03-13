@@ -143,7 +143,7 @@ int cltTestingSystem::GetLastTestingTime() {
 
 int cltTestingSystem::GetTestingCost(std::uint8_t grade) {
     static constexpr std::array<int, 21> kTestingCost = {
-        0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+        100, 200, 300, 400, 800, 1200, 2400, 4800, 7200, 14400, 28800, 57600, 86400, 172800, 259200, 450000, 700000, 950000, 1300000, 1650000, 2000000,
     };
 
     if (grade <= 0x14u) {
