@@ -26,7 +26,6 @@ void cltPKRankSystem::Initailize(cltSpecialtySystem* specialtySystem, CMeritorio
 void cltPKRankSystem::Free() {
     specialtySystem_ = nullptr;
     meritoriousSystem_ = nullptr;
-    questSystem_ = nullptr;
     pkRankKind_ = 0;
     accPoint_ = 0;
     point_ = 0;
@@ -42,15 +41,17 @@ int cltPKRankSystem::GetLoseNum() { return loseNum_; }
 int cltPKRankSystem::GetPoint() { return point_; }
 int cltPKRankSystem::GetAccPoint() { return accPoint_; }
 
-int cltPKRankSystem::Win(int deltaPoint, int* gainedSpecialtyPoint, std::uint16_t*, unsigned int*) {
+int cltPKRankSystem::Win(int deltaPoint, int* gainedSpecialtyPoint, std::uint16_t* questKinds, unsigned int* questValues) {
     ++winNum_;
+    questSystem_->CompleteFunctionQuest(29, questKinds, questValues);
     if (deltaPoint > 0) return IncreasePoint(deltaPoint, gainedSpecialtyPoint);
     if (deltaPoint < 0) DecreasePoint(-deltaPoint);
     return 0;
 }
 
-int cltPKRankSystem::Lose(int deltaPoint, int* gainedSpecialtyPoint, std::uint16_t*, unsigned int*) {
+int cltPKRankSystem::Lose(int deltaPoint, int* gainedSpecialtyPoint, std::uint16_t* questKinds, unsigned int* questValues) {
     ++loseNum_;
+    questSystem_->CompleteFunctionQuest(29, questKinds, questValues);
     if (deltaPoint > 0) return IncreasePoint(deltaPoint, gainedSpecialtyPoint);
     if (deltaPoint < 0) DecreasePoint(-deltaPoint);
     return 0;
@@ -71,12 +72,18 @@ int cltPKRankSystem::IncreasePoint(int deltaPoint, int* gainedSpecialtyPoint) {
             strPKRankKindInfo* nxt = m_pclPKRankKindInfo->GetPKRankKindInfo(nextKind);
             if (cur && nxt && cur->needPoint < nxt->needPoint) {
                 pkRankKind_ = nextKind;
-                if (gainedSpecialtyPoint && nxt->meritPoint) *gainedSpecialtyPoint = nxt->meritPoint;
+                if (nxt->meritPoint) {
+                    specialtySystem_->IncreaseSpecialtyPt(static_cast<unsigned short>(nxt->meritPoint));
+                    if (gainedSpecialtyPoint) *gainedSpecialtyPoint = nxt->meritPoint;
+                }
             }
         } else {
             strPKRankKindInfo* nxt = m_pclPKRankKindInfo->GetPKRankKindInfo(nextKind);
             pkRankKind_ = nextKind;
-            if (gainedSpecialtyPoint && nxt && nxt->meritPoint) *gainedSpecialtyPoint = nxt->meritPoint;
+            if (nxt && nxt->meritPoint) {
+                specialtySystem_->IncreaseSpecialtyPt(static_cast<unsigned short>(nxt->meritPoint));
+                if (gainedSpecialtyPoint) *gainedSpecialtyPoint = nxt->meritPoint;
+            }
         }
     }
 
