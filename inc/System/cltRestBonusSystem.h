@@ -1,8 +1,8 @@
 #pragma once
 
 #include <cstdint>
-
-class cltLevelSystem;
+#include <ctime>
+#include "System/cltLevelSystem.h"
 
 class cltRestBonusSystem {
 public:

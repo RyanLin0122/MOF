@@ -1,31 +1,5 @@
 #include "System/CQuizEventSystem.h"
 
-#include <cstring>
-
-#include "Info/cltItemKindInfo.h"
-#include "Logic/cltBaseInventory.h"
-#include "Network/CMofMsg.h"
-#include "System/cltLevelSystem.h"
-#include "System/cltMoneySystem.h"
-
-struct stQuizInfo {
-    std::uint16_t id;
-    std::uint16_t unk;
-    std::uint16_t answerLineCount;
-    std::uint16_t isEnglish;
-    std::uint16_t answerCount[6];
-    std::uint16_t reserved[16];
-    std::uint16_t answerHangleID[6][11];
-};
-
-class CQuizEventParser {
-public:
-    stQuizInfo* GetQuizInfo(std::uint16_t quizID);
-};
-
-stQuizInfo* CQuizEventParser::GetQuizInfo(std::uint16_t) {
-    return nullptr;
-}
 
 cltItemKindInfo* CQuizEventSystem::m_pclItemKindInfo = nullptr;
 CQuizEventParser* CQuizEventSystem::m_pclQuizEventParser = nullptr;

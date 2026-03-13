@@ -1,14 +1,5 @@
 #include "System/cltSpecialtySystem.h"
-
-#include <algorithm>
-#include <cstring>
-
-#include "Info/cltSpecialtyKindInfo.h"
-#include "Network/CMofMsg.h"
 #include "System/cltGradeSystem.h"
-#include "System/cltLevelSystem.h"
-#include "System/cltQuestSystem.h"
-#include "System/cltSkillSystem.h"
 
 cltSpecialtyKindInfo* cltSpecialtySystem::m_pclSpecialtyKindInfo = nullptr;
 

@@ -31,7 +31,7 @@ int DCTNetwork::Connect(const char* cp, u_short hostshort) {
     addr.sin_port = htons(hostshort);
 
     if (InetPtonA(AF_INET, cp, &addr.sin_addr) != 1) {
-        return 0; // IP ¦r¦ê®æ¦¡¿ù»~
+        return 0; // IP å­—ä¸²æ ¼å¼éŒ¯èª¤
     }
 
     m_socket = socket(AF_INET, SOCK_STREAM, IPPROTO_TCP);

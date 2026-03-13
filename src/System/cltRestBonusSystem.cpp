@@ -1,9 +1,5 @@
 #include "System/cltRestBonusSystem.h"
 
-#include <ctime>
-
-#include "System/cltLevelSystem.h"
-
 cltRestBonusSystem::cltRestBonusSystem() {
     m_pLevelSystem = nullptr;
     m_iRestEndTime = 0;

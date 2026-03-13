@@ -2,17 +2,14 @@
 
 #include <array>
 #include <cstdint>
+#include <cstring>
 
-class CMofMsg;
-class CQuizEventParser;
-class cltBaseInventory;
-class cltItemKindInfo;
-class cltLevelSystem;
-class cltMoneySystem;
-
-struct stQuizAnswer {
-    std::array<std::uint16_t, 4> answer{};
-};
+#include "Info/cltItemKindInfo.h"
+#include "Logic/cltBaseInventory.h"
+#include "Network/CMofMsg.h"
+#include "System/cltLevelSystem.h"
+#include "System/cltMoneySystem.h"
+#include "Logic/CQuizEventParser.h"
 
 class CQuizEventSystem {
 public:

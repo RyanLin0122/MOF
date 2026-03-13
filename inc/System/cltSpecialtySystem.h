@@ -2,13 +2,16 @@
 
 #include <array>
 #include <cstdint>
+#include <algorithm>
+#include <cstring>
 
-class CMofMsg;
+#include "Info/cltSpecialtyKindInfo.h"
+#include "Network/CMofMsg.h"
+#include "System/cltLevelSystem.h"
+#include "System/cltQuestSystem.h"
+#include "System/cltSkillSystem.h"
+
 class cltGradeSystem;
-class cltLevelSystem;
-class cltQuestSystem;
-class cltSkillSystem;
-class cltSpecialtyKindInfo;
 
 class cltSpecialtySystem {
 public:

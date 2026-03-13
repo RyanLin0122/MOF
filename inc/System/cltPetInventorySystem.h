@@ -2,9 +2,11 @@
 
 #include <array>
 #include <cstdint>
+#include <algorithm>
+#include <cstring>
 
-class CMofMsg;
-class cltItemKindInfo;
+#include "Info/cltItemKindInfo.h"
+#include "Network/CMofMsg.h"
 
 struct strPetInventoryItem {
     std::uint16_t itemKind = 0;

@@ -1,23 +1,5 @@
 #include "System/cltMarriageSystem.h"
 
-#include <ctime>
-#include <cstring>
-
-#include "Info/cltCoupleRingKindInfo.h"
-#include "Info/cltItemKindInfo.h"
-#include "Info/cltWeddingHallKindInfo.h"
-#include "Logic/cltBaseInventory.h"
-#include "Logic/cltItemList.h"
-#include "Network/CMofMsg.h"
-
-class cltMyItemSystem {
-public:
-    static int GetSpouseChargeRecallQty(cltMyItemSystem* self);
-};
-
-int cltMyItemSystem::GetSpouseChargeRecallQty(cltMyItemSystem*) {
-    return 0;
-}
 
 cltItemKindInfo* cltMarriageSystem::m_pclItemKindInfo = nullptr;
 cltWeddingHallKindInfo* cltMarriageSystem::m_pclWeddingHallKindInfo = nullptr;
@@ -118,8 +100,8 @@ void cltMarriageSystem::ChangeCoupleRing(int now, std::uint16_t ringKind) {
 }
 
 int cltMarriageSystem::GetMarriageState() { return m_marriageState; }
-int cltMarriageSystem::CanPropose() { return !IsMarriageState_None(); }
-int cltMarriageSystem::CanBeProposed() { return !IsMarriageState_None(); }
+bool cltMarriageSystem::CanPropose() { return !IsMarriageState_None(); }
+bool cltMarriageSystem::CanBeProposed() { return !IsMarriageState_None(); }
 int cltMarriageSystem::CanRecallSpouse() {
     if (IsMarriageState_Married()) return GetRemainedRecallQty_Total() <= 0;
     return 1;
@@ -150,7 +132,7 @@ void cltMarriageSystem::Marry(int now, int consumeRing, std::uint32_t spouseDbAc
     strWeddingHallKindInfo* hall = m_pclWeddingHallKindInfo ? m_pclWeddingHallKindInfo->GetWeddingHallKindInfoByItemKind(weddingTicketItemKind) : nullptr;
     stItemKindInfo* ringItem = m_pclItemKindInfo ? m_pclItemKindInfo->GetItemKindInfo(coupleRingItemKind) : nullptr;
     strCoupleRingKindInfo* ringInfo = (ringItem && m_pclCoupleRingKindInfo)
-                                          ? m_pclCoupleRingKindInfo->GetCoupleRingKindInfo(ringItem->u.hunt.wCoupleRingKind)
+                                          ? m_pclCoupleRingKindInfo->GetCoupleRingKindInfo(ringItem->Instant.m_wCoupleRingId)
                                           : nullptr;
 
     m_spouseDBAccount = spouseDbAccount;

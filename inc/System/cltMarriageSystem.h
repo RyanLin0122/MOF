@@ -2,16 +2,18 @@
 
 #include <array>
 #include <cstdint>
+#include <ctime>
+#include <cstring>
 
-class CMofMsg;
-class cltBaseInventory;
-class cltClassSystem;
-class cltCoupleRingKindInfo;
-class cltItemKindInfo;
-class cltItemList;
-class cltMyItemSystem;
-class cltWeddingHallKindInfo;
-struct strCoupleRingKindInfo;
+#include "Info/cltCoupleRingKindInfo.h"
+#include "Info/cltItemKindInfo.h"
+#include "Info/cltWeddingHallKindInfo.h"
+#include "Logic/cltBaseInventory.h"
+#include "Logic/cltItemList.h"
+#include "Network/CMofMsg.h"
+#include "System/cltClassSystem.h"
+#include "System/cltMyItemSystem.h"
+
 
 class cltMarriageSystem {
 public:
@@ -35,8 +37,8 @@ public:
     void ChangeCoupleRing(int now, std::uint16_t ringKind);
 
     int GetMarriageState();
-    int CanPropose();
-    int CanBeProposed();
+    bool CanPropose();
+    bool CanBeProposed();
     int CanRecallSpouse();
     void RecallSpouse();
 
