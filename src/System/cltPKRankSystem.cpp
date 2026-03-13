@@ -1,9 +1,6 @@
 #include "System/cltPKRankSystem.h"
 
-#include <ctime>
 
-#include "Info/cltPKRankKindInfo.h"
-#include "Network/CMofMsg.h"
 
 cltPKRankKindInfo* cltPKRankSystem::m_pclPKRankKindInfo = nullptr;
 

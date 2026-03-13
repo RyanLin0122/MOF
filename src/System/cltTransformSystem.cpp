@@ -1,7 +1,5 @@
 #include "System/cltTransformSystem.h"
 
-#include <cstdlib>
-
 cltTransformKindInfo* cltTransformSystem::m_pclTransformKindInfo = nullptr;
 cltTimerManager* cltTransformSystem::m_pclTimerManager = nullptr;
 void(__cdecl* cltTransformSystem::m_pExternTransformBeginFuncPtr)(unsigned int, std::uint16_t) = nullptr;

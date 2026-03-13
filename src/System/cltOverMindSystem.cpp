@@ -1,7 +1,5 @@
 #include "System/cltOverMindSystem.h"
 
-#include "System/cltClassSystem.h"
-
 cltOverMindSystem::cltOverMindSystem() = default;
 
 void cltOverMindSystem::Initialize(cltClassSystem* classSystem) {

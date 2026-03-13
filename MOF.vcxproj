@@ -345,6 +345,7 @@
     <ClCompile Include="src\System\cltTitleSystem.cpp" />
     <ClCompile Include="src\System\cltUsingSkillSystem.cpp" />
     <ClCompile Include="src\System\cltWorkingPassiveSkillSystem.cpp" />
+    <ClCompile Include="src\System\CMeritoriousSystem.cpp" />
     <ClCompile Include="src\Test\cm_packing_integration_test.cpp" />
     <ClCompile Include="src\Test\CompTest.cpp" />
     <ClCompile Include="src\Test\EffectSystemTest.cpp" />
@@ -612,6 +613,7 @@
     <ClInclude Include="inc\Network\DCTNetwork.h" />
     <ClInclude Include="inc\Network\CMoFNetwork.h" />
     <ClInclude Include="inc\Network\CMofMsg.h" />
+    <ClInclude Include="inc\System\CMeritoriousSystem.h" />
     <ClInclude Include="inc\Test\cm_packing_integration_test.h" />
     <ClInclude Include="inc\Test\CompTest.h" />
     <ClInclude Include="inc\Test\EffectSystemTest.h" />

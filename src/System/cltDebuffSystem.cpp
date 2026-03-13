@@ -1,6 +1,5 @@
 #include "System/cltDebuffSystem.h"
 
-#include <cstring>
 
 cltDebuffKindInfo* cltDebuffSystem::m_pclDebuffKindInfo = nullptr;
 cltTimerManager* cltDebuffSystem::m_pclTimerManager = nullptr;

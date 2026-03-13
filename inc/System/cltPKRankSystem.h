@@ -1,12 +1,12 @@
 #pragma once
 
 #include <cstdint>
-
-class cltPKRankKindInfo;
-class cltSpecialtySystem;
-class CMeritoriousSystem;
-class cltQuestSystem;
-class CMofMsg;
+#include <ctime>
+#include "Info/cltPKRankKindInfo.h"
+#include "Network/CMofMsg.h"
+#include "System/cltSpecialtySystem.h"
+#include "System/cltQuestSystem.h"
+#include "System/CMeritoriousSystem.h"
 
 class cltPKRankSystem {
 public:

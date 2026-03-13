@@ -2,11 +2,12 @@
 
 #include <cstddef>
 #include <cstdint>
+#include <cstring>
 
-class cltPetKindInfo;
-class cltPetSystem;
-class cltMoneySystem;
-class CMofMsg;
+#include "Info/cltPetKindInfo.h"
+#include "Network/CMofMsg.h"
+#include "System/cltMoneySystem.h"
+#include "System/cltPetSystem.h"
 
 #pragma pack(push, 1)
 struct strPetMarketMySalePetInfo {

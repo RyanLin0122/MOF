@@ -1,7 +1,7 @@
 #pragma once
 
 #include <cstdint>
-
+#include <cstdlib>
 #include "Info/cltTransformKindInfo.h"
 #include "Util/cltTimer.h"
 

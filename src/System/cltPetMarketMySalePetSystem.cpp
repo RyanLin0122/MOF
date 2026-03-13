@@ -1,10 +1,5 @@
 #include "System/cltPetMarketMySalePetSystem.h"
 
-#include <cstring>
-
-#include "Info/cltPetKindInfo.h"
-#include "Network/CMofMsg.h"
-#include "System/cltMoneySystem.h"
 
 cltPetKindInfo* cltPetMarketMySalePetSystem::m_pclPetKindInfo = nullptr;
 

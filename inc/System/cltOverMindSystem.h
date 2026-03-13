@@ -1,6 +1,6 @@
 #pragma once
 
-class cltClassSystem;
+#include "System/cltClassSystem.h"
 
 class cltOverMindSystem {
 public:

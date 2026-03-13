@@ -1,7 +1,7 @@
 #pragma once
 
 #include <cstdint>
-
+#include <cstring>
 #include "Info/cltDebuffKindInfo.h"
 #include "Util/cltTimer.h"
 
