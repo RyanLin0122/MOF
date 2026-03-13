@@ -1,217 +1,316 @@
 ﻿#include "Info/cltInstantDungeonKindInfo.h"
 
-#if defined(_WIN32)
+#include <cctype>
+#include <cstdio>
+#include <cstdlib>
+#include <cstring>
+#include <iostream>
+#include <new>
+
+#ifdef _WIN32
 #include <windows.h>
 #endif
 
-static constexpr const char* kDelims = "\t\n";
+cltInstantDungeonKindInfo::cltInstantDungeonKindInfo()
+    : m_data(nullptr)
+    , m_count(0)
+{
+}
 
-int cltInstantDungeonKindInfo::Initialize(char* filename)
+cltInstantDungeonKindInfo::~cltInstantDungeonKindInfo()
 {
     Free();
-    if (!filename) return 0;
+}
 
-    FILE* f = g_clTextFileManager.fopen(filename);
-    FILE* Stream = f;
-    int   ok = 0;
-    if (!f) return 0;
+int cltInstantDungeonKindInfo::Initialize(char* fileName)
+{
+    char delimiter[3];
+    FILE* stream = nullptr;
+    int result = 0;
+    std::fpos_t position;
+    char buffer[1024];
 
-    char buf[1024] = {};
+    std::memset(buffer, 0, sizeof(buffer));
+    std::strcpy(delimiter, "\t\n");
 
-    // 先略過 3 行表頭
-    if (std::fgets(buf, sizeof(buf), f) &&
-        std::fgets(buf, sizeof(buf), f) &&
-        std::fgets(buf, sizeof(buf), f))
+    stream = g_clTextFileManager.fopen(fileName);
+    if (!stream)
     {
-        // 計數
-        fpos_t pos{};
-        std::fgetpos(f, &pos);
-        while (std::fgets(buf, sizeof(buf), f)) ++m_count;
+        return result;
+    }
 
-        if (m_count == 0) { // 與反編譯相同：無資料也回傳成功
-            g_clTextFileManager.fclose(Stream);
+    if (std::fgets(buffer, 1023, stream) &&
+        std::fgets(buffer, 1023, stream) &&
+        std::fgets(buffer, 1023, stream))
+    {
+        std::fgetpos(stream, &position);
+
+        for (; std::fgets(buffer, 1023, stream); ++m_count)
+        {
+        }
+
+        if (!m_count)
+        {
+            g_clTextFileManager.fclose(stream);
             return 1;
         }
 
-        // 配置
-        m_list = static_cast<strInstantDungeonKindInfo*>(
-            operator new[](m_count * sizeof(strInstantDungeonKindInfo)));
-        std::memset(m_list, 0, m_count * sizeof(strInstantDungeonKindInfo));
+        m_data = static_cast<strInstantDungeonKindInfo*>(::operator new(sizeof(strInstantDungeonKindInfo) * m_count));
+        std::memset(m_data, 0, sizeof(strInstantDungeonKindInfo) * m_count);
 
-        // 回到資料起點
-        std::fsetpos(f, &pos);
+        std::fsetpos(stream, &position);
 
-        int idx = 0;
-        if (std::fgets(buf, sizeof(buf), f))
+        char* line = std::fgets(buffer, 1023, stream);
+        auto* current = reinterpret_cast<unsigned char*>(m_data);
+        if (line)
         {
             while (true)
             {
-                strInstantDungeonKindInfo& r = m_list[idx];
-                std::memset(&r, 0, sizeof(r));
+                char* token = std::strtok(buffer, delimiter); // 1 wIndunType
+                if (!token)
+                {
+                    goto EXIT_LABEL;
+                }
+                *reinterpret_cast<std::uint16_t*>(current + 0) = TranslateKindCode(token);
 
-                char* t = std::strtok(buf, kDelims); // indun kind
-                if (!t) break;
-                r.kind = TranslateKindCode(t);
-
-                // 企劃名（略過）
-                if (!std::strtok(nullptr, kDelims)) break;
-
-                // 인던 이름 텍스트코드（WORD）
-                t = std::strtok(nullptr, kDelims); if (!t) break;
-                r.name_text_code = (uint16_t)std::atoi(t);
-
-                // BaseIndun_ID（WORD, Sxxxx 或 0）
-                t = std::strtok(nullptr, kDelims); if (!t) break;
-                r.base_indun = TranslateKindCode(t);
-
-                // 레벨 제한（BYTE）
-                t = std::strtok(nullptr, kDelims); if (!t) break;
-                r.level_limit = (uint8_t)std::atoi(t);
-
-                // 生成 아이템 ID(열쇠아이템)
-                t = std::strtok(nullptr, kDelims); if (!t) break;
-                r.key_item = TranslateKindCode(t);
-
-                // NPC ID
-                t = std::strtok(nullptr, kDelims); if (!t) break;
-                r.npc_id = TranslateKindCode(t);
-
-                // 보스몬스터 ID
-                t = std::strtok(nullptr, kDelims); if (!t) break;
-                r.boss_id = TranslateKindCode(t);
-
-                // 랜덤몬스터등장
-                t = std::strtok(nullptr, kDelims); if (!t) break;
-                r.random_spawn = (uint16_t)std::atoi(t);
-
-                // 느림보몬스터ID
-                t = std::strtok(nullptr, kDelims); if (!t) break;
-                r.slow_id = TranslateKindCode(t);
-
-                // 느림보몬스터확률
-                t = std::strtok(nullptr, kDelims); if (!t) break;
-                r.slow_prob = (uint16_t)std::atoi(t);
-
-                // 파워맨몬스터ID
-                t = std::strtok(nullptr, kDelims); if (!t) break;
-                r.power_id = TranslateKindCode(t);
-
-                // 파워맨몬스터확률
-                t = std::strtok(nullptr, kDelims); if (!t) break;
-                r.power_prob = (uint16_t)std::atoi(t);
-
-                // 인던 안내 텍스트 코드
-                t = std::strtok(nullptr, kDelims); if (!t) break;
-                r.guide_text_code = (uint16_t)std::atoi(t);
-
-                // timelimit（DWORD）
-                t = std::strtok(nullptr, kDelims); if (!t) break;
-                r.time_limit = (uint32_t)std::atoi(t);
-
-                // 로딩리소스ID（十六進位）
-                t = std::strtok(nullptr, kDelims);
-                if (!t || !IsAlphaNum(t)) break;
-                unsigned int hexv = 0;
-                std::sscanf(t, "%x", &hexv);
-                r.loading_res_id = hexv;
-
-                // i_map1_id..i_map4_id
-                for (int k = 0; k < 4; ++k) {
-                    t = std::strtok(nullptr, kDelims);
-                    if (!t) { Stream = f; goto PARSE_END; }
-                    r.map_id[k] = cltInstantDungeonMapKindInfo::TranslateKindCode(t);
+                if (!std::strtok(nullptr, delimiter)) // 2 PlannerName, only consumed
+                {
+                    goto EXIT_LABEL;
                 }
 
-                ++idx;
-                if (!std::fgets(buf, sizeof(buf), f)) { ok = 1; break; } // 完成
-                if (idx >= m_count) { ok = 1; break; }
-                continue;
+                token = std::strtok(nullptr, delimiter); // 3 wIndunNameTextCode
+                if (!token)
+                {
+                    goto EXIT_LABEL;
+                }
+                *reinterpret_cast<std::uint16_t*>(current + 4) = static_cast<std::uint16_t>(std::atoi(token));
 
-            PARSE_END:
-                // 中斷（失敗）
-                ok = 0;
-                break;
+                token = std::strtok(nullptr, delimiter); // 4 wBaseIndunId
+                if (!token)
+                {
+                    goto EXIT_LABEL;
+                }
+                *reinterpret_cast<std::uint16_t*>(current + 2) = TranslateKindCode(token);
+
+                token = std::strtok(nullptr, delimiter); // 5 bLevelLimit
+                if (!token)
+                {
+                    goto EXIT_LABEL;
+                }
+                *reinterpret_cast<std::uint8_t*>(current + 6) = static_cast<std::uint8_t>(std::atoi(token));
+
+                token = std::strtok(nullptr, delimiter); // 6 wItemIdForGeneration
+                if (!token)
+                {
+                    goto EXIT_LABEL;
+                }
+                *reinterpret_cast<std::uint16_t*>(current + 8) = TranslateKindCode(token);
+
+                token = std::strtok(nullptr, delimiter); // 7 wNpcId
+                if (!token)
+                {
+                    goto EXIT_LABEL;
+                }
+                *reinterpret_cast<std::uint16_t*>(current + 10) = TranslateKindCode(token);
+
+                token = std::strtok(nullptr, delimiter); // 8 wBossMonsterId
+                if (!token)
+                {
+                    goto EXIT_LABEL;
+                }
+                *reinterpret_cast<std::uint16_t*>(current + 12) = TranslateKindCode(token);
+
+                token = std::strtok(nullptr, delimiter); // 9 wRandomMonsterSpawn
+                if (!token)
+                {
+                    goto EXIT_LABEL;
+                }
+                *reinterpret_cast<std::uint16_t*>(current + 14) = static_cast<std::uint16_t>(std::atoi(token));
+
+                token = std::strtok(nullptr, delimiter); // 10 wSlowMonsterId
+                if (!token)
+                {
+                    goto EXIT_LABEL;
+                }
+                *reinterpret_cast<std::uint16_t*>(current + 16) = TranslateKindCode(token);
+
+                token = std::strtok(nullptr, delimiter); // 11 wSlowMonsterProbability
+                if (!token)
+                {
+                    goto EXIT_LABEL;
+                }
+                *reinterpret_cast<std::uint16_t*>(current + 18) = static_cast<std::uint16_t>(std::atoi(token));
+
+                token = std::strtok(nullptr, delimiter); // 12 wPowerManMonsterId
+                if (!token)
+                {
+                    goto EXIT_LABEL;
+                }
+                *reinterpret_cast<std::uint16_t*>(current + 20) = TranslateKindCode(token);
+
+                token = std::strtok(nullptr, delimiter); // 13 wPowerManMonsterProbability
+                if (!token)
+                {
+                    goto EXIT_LABEL;
+                }
+                *reinterpret_cast<std::uint16_t*>(current + 22) = static_cast<std::uint16_t>(std::atoi(token));
+
+                token = std::strtok(nullptr, delimiter); // 14 wIndunGuideTextCode
+                if (!token)
+                {
+                    goto EXIT_LABEL;
+                }
+                *reinterpret_cast<std::uint16_t*>(current + 24) = static_cast<std::uint16_t>(std::atoi(token));
+
+                token = std::strtok(nullptr, delimiter); // 15 dwTimeLimit
+                if (!token)
+                {
+                    goto EXIT_LABEL;
+                }
+                *reinterpret_cast<std::uint32_t*>(current + 28) = static_cast<std::uint32_t>(std::atoi(token));
+
+                token = std::strtok(nullptr, delimiter); // 16 LoadingResourceId
+                if (!token || !IsAlphaNumeric(token))
+                {
+                    goto EXIT_LABEL;
+                }
+
+                if (std::sscanf(token, "%x", reinterpret_cast<unsigned int*>(current + 32)) != 1)
+                {
+                    goto EXIT_LABEL;
+                }
+
+                auto* mapId = reinterpret_cast<std::uint16_t*>(current + 36);
+                int count = 0;
+                do
+                {
+                    token = std::strtok(nullptr, delimiter); // 17~20 wMap1Id ~ wMap4Id
+                    if (!token)
+                    {
+                        goto EXIT_LABEL;
+                    }
+                    *mapId = cltInstantDungeonMapKindInfo::TranslateKindCode(token);
+                    ++count;
+                    ++mapId;
+                } while (count < 4);
+
+                current += sizeof(strInstantDungeonKindInfo);
+                if (!std::fgets(buffer, 1023, stream))
+                {
+                    break;
+                }
             }
         }
-        else {
-            ok = 1; // 與反編譯一致：第一筆就讀不到資料也視為成功
-        }
+
+        result = 1;
     }
 
-    g_clTextFileManager.fclose(Stream);
-    if (!ok) { Free(); }
-    return ok;
+EXIT_LABEL:
+    g_clTextFileManager.fclose(stream);
+    return result;
 }
 
 void cltInstantDungeonKindInfo::Free()
 {
-    if (m_list) {
-        operator delete[](m_list);
-        m_list = nullptr;
+    if (m_data)
+    {
+        ::operator delete(m_data);
+        m_data = nullptr;
     }
     m_count = 0;
 }
 
-strInstantDungeonKindInfo*
-cltInstantDungeonKindInfo::GetInstantDungeonKindInfo(uint16_t a2)
+strInstantDungeonKindInfo* cltInstantDungeonKindInfo::GetInstantDungeonKindInfo(std::uint16_t kind)
 {
-    if (!m_list || m_count <= 0) return nullptr;
-
-    // 逐 22 WORD (= 44 bytes) 掃描 kind
-    uint16_t* base = reinterpret_cast<uint16_t*>(m_list);
-    for (int i = 0; i < m_count; ++i, base += 22) {
-        if (base[0] == a2) return reinterpret_cast<strInstantDungeonKindInfo*>(base);
+    int index = 0;
+    if (m_count <= 0)
+    {
+        return nullptr;
     }
-    return nullptr;
+
+    auto* base = reinterpret_cast<std::uint16_t*>(m_data);
+    for (auto* it = reinterpret_cast<std::uint16_t*>(m_data); *it != kind; it += 22)
+    {
+        if (++index >= m_count)
+        {
+            return nullptr;
+        }
+    }
+
+    return reinterpret_cast<strInstantDungeonKindInfo*>(&base[22 * index]);
 }
 
-strInstantDungeonKindInfo*
-cltInstantDungeonKindInfo::GetInstantDungeonKindInfoByItem(uint16_t a2)
+strInstantDungeonKindInfo* cltInstantDungeonKindInfo::GetInstantDungeonKindInfoByItem(std::uint16_t itemKind)
 {
-    if (!m_list || m_count <= 0) return nullptr;
-
-    // 從 +8（key_item）開始，步距 22 WORD
-    uint16_t* base = reinterpret_cast<uint16_t*>(m_list);
-    uint16_t* p = reinterpret_cast<uint16_t*>((uint8_t*)m_list + 8);
-    for (int i = 0; i < m_count; ++i, p += 22) {
-        if (*p == a2) return reinterpret_cast<strInstantDungeonKindInfo*>((uint8_t*)m_list + 44 * i);
+    int index = 0;
+    if (m_count <= 0)
+    {
+        return nullptr;
     }
-    return nullptr;
+
+    auto base = reinterpret_cast<std::uintptr_t>(m_data);
+    for (auto* it = reinterpret_cast<std::uint16_t*>(base + 8); *it != itemKind; it += 22)
+    {
+        if (++index >= m_count)
+        {
+            return nullptr;
+        }
+    }
+
+    return reinterpret_cast<strInstantDungeonKindInfo*>(base + sizeof(strInstantDungeonKindInfo) * index);
 }
 
-uint16_t
-cltInstantDungeonKindInfo::GetInstantDungeonKindByItem(uint16_t a2)
+std::uint16_t cltInstantDungeonKindInfo::GetInstantDungeonKindByItem(std::uint16_t itemKind)
 {
-    if (!m_list || m_count <= 0) return 0;
-
-    uint16_t* p = reinterpret_cast<uint16_t*>((uint8_t*)m_list + 8);
-    for (int i = 0; i < m_count; ++i, p += 22) {
-        if (*p == a2) return *reinterpret_cast<uint16_t*>((uint8_t*)m_list + 44 * i);
+    int index = 0;
+    if (m_count <= 0)
+    {
+        return 0;
     }
+
+    auto base = reinterpret_cast<std::uintptr_t>(m_data);
+    for (auto* it = reinterpret_cast<std::uint16_t*>(base + 8); *it != itemKind; it += 22)
+    {
+        if (++index >= m_count)
+        {
+            return 0;
+        }
+    }
+
+    return *reinterpret_cast<std::uint16_t*>(base + sizeof(strInstantDungeonKindInfo) * index);
+}
+
+std::uint16_t cltInstantDungeonKindInfo::TranslateKindCode(char* text)
+{
+    char buffer[256];
+
+    if (std::strlen(text) != 5)
+    {
+        return 0;
+    }
+
+    const int prefix = (std::toupper(*text) + 31) << 11;
+    const std::uint16_t value = static_cast<std::uint16_t>(std::atoi(text + 1));
+    if (value < 0x800u)
+    {
+        return static_cast<std::uint16_t>(prefix | value);
+    }
+
+    std::memset(buffer, 0, sizeof(buffer));
+    std::sprintf(buffer, "Numberic 2048 Over (%s)", text);
+    MessageBoxA(nullptr, "InstantDungeonKindInfo Error", "Error", MB_OK);
+    MessageBoxA(nullptr, buffer, "Error", MB_OK);
     return 0;
 }
 
-strInstantDungeonKindInfo*
-cltInstantDungeonKindInfo::GetInstantDungeonKindInfoByIndex(int a2)
+strInstantDungeonKindInfo* cltInstantDungeonKindInfo::GetInstantDungeonKindInfoByIndex(int index)
 {
-    // 反編譯條件：a2 < 0 || a2 > count 時回傳 0（注意「>」非「>=」）
-    if (a2 < 0 || a2 > m_count) return nullptr;
-    return reinterpret_cast<strInstantDungeonKindInfo*>((uint8_t*)m_list + 44u * a2);
-}
+    // 依反編譯碼保留原始邏輯：index == m_count 時仍會回傳越界指標。
+    if (index < 0 || index > m_count)
+    {
+        return nullptr;
+    }
 
-uint16_t cltInstantDungeonKindInfo::TranslateKindCode(char* a1)
-{
-    if (!a1 || std::strlen(a1) != 5) return 0;
-
-    int hi = (std::toupper(static_cast<unsigned char>(a1[0])) + 31) << 11;
-    int lo = std::atoi(a1 + 1);
-    if (lo < 0x800) return static_cast<uint16_t>(hi | lo);
-
-    // 超過 2047：顯示錯誤視窗（與反編譯一致）
-#if defined(_WIN32)
-    MessageBoxA(nullptr, "InstantDungeonKindInfo Error", "Error", 0);
-    char buf[256]; std::snprintf(buf, sizeof(buf), "Numberic 2048 Over (%s)", a1);
-    MessageBoxA(nullptr, buf, "Error", 0);
-#endif
-    return 0;
+    return reinterpret_cast<strInstantDungeonKindInfo*>(
+        reinterpret_cast<std::uintptr_t>(m_data) + sizeof(strInstantDungeonKindInfo) * index);
 }
