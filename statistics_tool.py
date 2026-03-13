@@ -10,7 +10,12 @@ START_LINE = 26022
 FORCE_MISSING_CLASSES = [
     "ClientCharacter",
     "ClientCharacterManager",
-    "cltQuestSystem"
+    "cltQuestSystem",
+    "CMeritoriousSystem",
+    "cltSpecialtySystem",
+    "cltPetInventorySystem",
+    "cltRestBonusSystem",
+    "cltUsingSkillSystem"
 ]
 
 # 例外清單：放 class 名稱字串，這些 class 會被跳過
