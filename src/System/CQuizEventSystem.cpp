@@ -59,9 +59,8 @@ void CQuizEventSystem::StartQuizEvent(std::uint16_t quizID) {
 }
 
 void CQuizEventSystem::BonusQuiz() {
-    if (!m_pclQuizEventParser || !m_pclItemKindInfo) return;
     stQuizInfo* info = m_pclQuizEventParser->GetQuizInfo(m_quizID);
-    if (!info || !info->answerLineCount) return;
+    if (!info->answerLineCount) return;
 
     for (int line = 0; line < info->answerLineCount; ++line) {
         for (int i = 0; i < info->answerCount[line]; ++i) {
@@ -130,9 +129,7 @@ int CQuizEventSystem::CanDelQuiz() {
 }
 
 void CQuizEventSystem::DelQuiz() {
-    if (!m_pclQuizEventParser) return;
     stQuizInfo* info = m_pclQuizEventParser->GetQuizInfo(m_quizID);
-    if (!info) return;
 
     for (int line = 0; line < info->answerLineCount; ++line) {
         for (int i = 0; i < info->answerCount[line]; ++i) {
@@ -156,9 +153,8 @@ std::uint16_t CQuizEventSystem::CanCompleteQuiz() {
     if (!m_quizID) return 1400;
     if (m_playedQuiz == 1) return 1406;
 
-    if (!m_pclQuizEventParser || !m_pclItemKindInfo) return 0;
     stQuizInfo* info = m_pclQuizEventParser->GetQuizInfo(m_quizID);
-    if (!info || !info->answerLineCount) return 0;
+    if (!info->answerLineCount) return 0;
 
     for (int line = 0; line < info->answerLineCount; ++line) {
         for (int i = 0; i < info->answerCount[line]; ++i) {
@@ -194,7 +190,6 @@ std::uint16_t CQuizEventSystem::GetAnswerID(std::uint16_t answerPos) {
     int row = answerPos >> 2;
     std::uint16_t col = answerPos & 3;
 
-    if (!m_pclQuizEventParser) return 0;
     stQuizInfo* info = m_pclQuizEventParser->GetQuizInfo(m_quizID);
     if (!info) return 0;
 
@@ -207,9 +202,7 @@ std::uint16_t CQuizEventSystem::GetAnswerID(std::uint16_t answerPos) {
 }
 
 void CQuizEventSystem::FillOutQuiz(CMofMsg* msg) {
-    stQuizInfo fallback{};
-    stQuizInfo* info = m_pclQuizEventParser ? m_pclQuizEventParser->GetQuizInfo(m_quizID) : nullptr;
-    if (!info) info = &fallback;
+    stQuizInfo* info = m_pclQuizEventParser->GetQuizInfo(m_quizID);
 
     msg->Put_WORD(m_quizID);
     msg->Put_BYTE(static_cast<std::uint8_t>(m_playedQuiz));

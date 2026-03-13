@@ -28,8 +28,7 @@ void cltSpecialtySystem::Initialize(cltGradeSystem* gradeSystem, cltSkillSystem*
     m_acquiredSpecialtyNum = acquiredSpecialtyNum;
     m_pSkillSystem = skillSystem;
     m_pQuestSystem = questSystem;
-    std::memcpy(m_acquiredSpecialtyKinds.data(), acquiredSpecialtyKind,
-                sizeof(std::uint16_t) * std::min<std::size_t>(acquiredSpecialtyNum, m_acquiredSpecialtyKinds.size()));
+    std::memcpy(m_acquiredSpecialtyKinds.data(), acquiredSpecialtyKind, sizeof(std::uint16_t) * acquiredSpecialtyNum);
 }
 
 void cltSpecialtySystem::Free() {
@@ -50,13 +49,13 @@ std::uint16_t* cltSpecialtySystem::GetAcquiredSpecialtyKind() { return m_acquire
 int cltSpecialtySystem::CanAcquireSpecialty(std::uint16_t specialtyKind) {
     if (m_acquiredSpecialtyNum >= 30) return 0;
 
-    auto* info = m_pclSpecialtyKindInfo ? m_pclSpecialtyKindInfo->GetSpecialtyKindInfo(specialtyKind) : nullptr;
+    auto* info = m_pclSpecialtyKindInfo->GetSpecialtyKindInfo(specialtyKind);
     if (!info) return 0;
 
     if (IsAcquiredSpecialty(specialtyKind) == 1) return 0;
     if (info->byRequiredSpecialtyPt > m_specialtyPt) return 0;
-    if (m_pGradeSystem && info->byRequiredGrade > m_pGradeSystem->GetGrade()) return 0;
-    if (m_pLevelSystem && info->dwRequiredLevel > m_pLevelSystem->GetLevel()) return 0;
+    if (info->byRequiredGrade > m_pGradeSystem->GetGrade()) return 0;
+    if (info->dwRequiredLevel > m_pLevelSystem->GetLevel()) return 0;
 
     const std::uint16_t req = info->wRequiredSpecialtyKind;
     if (!req || IsAcquiredSpecialty(req)) return 1;
@@ -69,12 +68,11 @@ int cltSpecialtySystem::IsAcquiredSpecialty(std::uint16_t specialtyKind) {
     for (std::uint16_t i = 0; i < m_acquiredSpecialtyNum; ++i) {
         if (m_acquiredSpecialtyKinds[i] == specialtyKind) return 1;
 
-        auto* info = m_pclSpecialtyKindInfo ? m_pclSpecialtyKindInfo->GetSpecialtyKindInfo(m_acquiredSpecialtyKinds[i]) : nullptr;
+        auto* info = m_pclSpecialtyKindInfo->GetSpecialtyKindInfo(m_acquiredSpecialtyKinds[i]);
         if (!info) continue;
 
         for (std::uint16_t parent = info->wRequiredSpecialtyKind; parent != 0;) {
-            auto* parentInfo = m_pclSpecialtyKindInfo ? m_pclSpecialtyKindInfo->GetSpecialtyKindInfo(parent) : nullptr;
-            if (!parentInfo) break;
+            auto* parentInfo = m_pclSpecialtyKindInfo->GetSpecialtyKindInfo(parent);
             if (parentInfo->wKind == specialtyKind) return 1;
             parent = parentInfo->wRequiredSpecialtyKind;
         }
@@ -86,11 +84,7 @@ void cltSpecialtySystem::AcquireSpecialty(std::uint16_t specialtyKind, std::uint
                                           std::uint16_t* outSkillKinds, std::uint16_t* outQuestKinds,
                                           unsigned int* outQuestValues) {
     std::uint16_t skillCount = 0;
-    auto* info = m_pclSpecialtyKindInfo ? m_pclSpecialtyKindInfo->GetSpecialtyKindInfo(specialtyKind) : nullptr;
-    if (!info) {
-        if (outSkillNum) *outSkillNum = 0;
-        return;
-    }
+    auto* info = m_pclSpecialtyKindInfo->GetSpecialtyKindInfo(specialtyKind);
 
     const std::uint16_t req = info->wRequiredSpecialtyKind;
     if (req) {
@@ -109,24 +103,23 @@ void cltSpecialtySystem::AcquireSpecialty(std::uint16_t specialtyKind, std::uint
     for (int i = 0; i < 5; ++i) {
         const std::uint16_t skillKind = info->wAcquiredSkillKinds[i];
         if (!skillKind) break;
-        if (m_pSkillSystem) m_pSkillSystem->AddSkill(skillKind, nullptr, nullptr);
+        m_pSkillSystem->AddSkill(skillKind, nullptr, nullptr);
         if (outSkillKinds) outSkillKinds[skillCount] = skillKind;
         ++skillCount;
     }
 
     if (outSkillNum) *outSkillNum = skillCount;
-    if (m_pQuestSystem) m_pQuestSystem->CompleteFunctionQuest(16, outQuestKinds, outQuestValues);
+    m_pQuestSystem->CompleteFunctionQuest(16, outQuestKinds, outQuestValues);
 }
 
 int cltSpecialtySystem::GetAcquireAbleSpecialtyList(char category, std::uint16_t* outSpecialtyKindList) {
     int available = 0;
-    const int count = m_pclSpecialtyKindInfo ? m_pclSpecialtyKindInfo->GetSpecialtyList(category, outSpecialtyKindList) : 0;
+    const int count = m_pclSpecialtyKindInfo->GetSpecialtyList(category, outSpecialtyKindList);
     if (count <= 0) return 0;
 
     std::uint16_t* write = outSpecialtyKindList;
     for (int i = 0; i < count; ++i) {
         auto* info = m_pclSpecialtyKindInfo->GetSpecialtyKindInfo(outSpecialtyKindList[i]);
-        if (!info) continue;
 
         const std::uint16_t req = info->wRequiredSpecialtyKind;
         const bool reqOk = (!req || IsAcquiredSpecialty(req));
@@ -149,7 +142,7 @@ void cltSpecialtySystem::FillOutSpecialtyInfo(CMofMsg* msg) {
 std::uint16_t cltSpecialtySystem::GetAcquiredGenericSpecialty(std::uint16_t* outSpecialtyKinds) {
     std::uint16_t count = 0;
     for (std::uint16_t i = 0; i < m_acquiredSpecialtyNum; ++i) {
-        if (m_pclSpecialtyKindInfo && m_pclSpecialtyKindInfo->IsGenericSpeciatly(m_acquiredSpecialtyKinds[i])) {
+        if (m_pclSpecialtyKindInfo->IsGenericSpeciatly(m_acquiredSpecialtyKinds[i])) {
             outSpecialtyKinds[count++] = m_acquiredSpecialtyKinds[i];
         }
     }
@@ -159,7 +152,7 @@ std::uint16_t cltSpecialtySystem::GetAcquiredGenericSpecialty(std::uint16_t* out
 std::uint16_t cltSpecialtySystem::GetAcquiredMakingItemSpecialty(std::uint16_t* outSpecialtyKinds) {
     std::uint16_t count = 0;
     for (std::uint16_t i = 0; i < m_acquiredSpecialtyNum; ++i) {
-        if (m_pclSpecialtyKindInfo && m_pclSpecialtyKindInfo->IsMakingItemSpecialty(m_acquiredSpecialtyKinds[i])) {
+        if (m_pclSpecialtyKindInfo->IsMakingItemSpecialty(m_acquiredSpecialtyKinds[i])) {
             outSpecialtyKinds[count++] = m_acquiredSpecialtyKinds[i];
         }
     }
@@ -169,7 +162,7 @@ std::uint16_t cltSpecialtySystem::GetAcquiredMakingItemSpecialty(std::uint16_t* 
 std::uint16_t cltSpecialtySystem::GetAcquiredTransformSpecialty(std::uint16_t* outSpecialtyKinds) {
     std::uint16_t count = 0;
     for (std::uint16_t i = 0; i < m_acquiredSpecialtyNum; ++i) {
-        if (m_pclSpecialtyKindInfo && m_pclSpecialtyKindInfo->IsTransformSpecialty(m_acquiredSpecialtyKinds[i])) {
+        if (m_pclSpecialtyKindInfo->IsTransformSpecialty(m_acquiredSpecialtyKinds[i])) {
             outSpecialtyKinds[count++] = m_acquiredSpecialtyKinds[i];
         }
     }
@@ -179,7 +172,7 @@ std::uint16_t cltSpecialtySystem::GetAcquiredTransformSpecialty(std::uint16_t* o
 int cltSpecialtySystem::CanResetSpecialty(int includeCircle) {
     const std::int16_t n = m_acquiredSpecialtyNum;
     if (!n) return 0;
-    return includeCircle || n != 1 || (m_pclSpecialtyKindInfo && !m_pclSpecialtyKindInfo->IsCircleSpecialty(m_acquiredSpecialtyKinds[0]));
+    return includeCircle || n != 1 || !m_pclSpecialtyKindInfo->IsCircleSpecialty(m_acquiredSpecialtyKinds[0]);
 }
 
 int cltSpecialtySystem::CanResetCircleSpecialty(int allow) {
@@ -187,7 +180,7 @@ int cltSpecialtySystem::CanResetCircleSpecialty(int allow) {
     if (!m_acquiredSpecialtyNum) return 0;
 
     for (std::uint16_t i = 0; i < m_acquiredSpecialtyNum; ++i) {
-        if (m_pclSpecialtyKindInfo && m_pclSpecialtyKindInfo->IsCircleSpecialty(m_acquiredSpecialtyKinds[i])) return 1;
+        if (m_pclSpecialtyKindInfo->IsCircleSpecialty(m_acquiredSpecialtyKinds[i])) return 1;
     }
     return 0;
 }
@@ -202,7 +195,7 @@ void cltSpecialtySystem::ResetSpecialty(int includeCircle, int* outDeletedSpecia
 
     if (!includeCircle && m_acquiredSpecialtyNum) {
         for (std::uint16_t i = 0; i < m_acquiredSpecialtyNum; ++i) {
-            if (m_pclSpecialtyKindInfo && m_pclSpecialtyKindInfo->IsCircleSpecialty(m_acquiredSpecialtyKinds[i])) {
+            if (m_pclSpecialtyKindInfo->IsCircleSpecialty(m_acquiredSpecialtyKinds[i])) {
                 circleIndex = i;
                 preserve = m_acquiredSpecialtyKinds[i];
                 break;
@@ -217,10 +210,8 @@ void cltSpecialtySystem::ResetSpecialty(int includeCircle, int* outDeletedSpecia
         if (outDeletedSpecialtyNum) outDeletedSpecialty[(*outDeletedSpecialtyNum)++] = specialty;
         DeleteSpecialtySkill(specialty, outDeletedSkillNum, outDeletedSkillKinds);
 
-        if (m_pclSpecialtyKindInfo) {
-            const std::int16_t back = m_pclSpecialtyKindInfo->GetSpecialtyTotalPoint(specialty);
-            IncreaseSpecialtyPt(back);
-        }
+        const std::int16_t back = m_pclSpecialtyKindInfo->GetSpecialtyTotalPoint(specialty);
+        IncreaseSpecialtyPt(back);
     }
 
     if (preserve) {
@@ -239,16 +230,14 @@ void cltSpecialtySystem::ResetCircleSpecialty(int* outDeletedSpecialtyNum, std::
     if (!m_acquiredSpecialtyNum) return;
 
     for (std::uint16_t i = 0; i < m_acquiredSpecialtyNum; ++i) {
-        if (!(m_pclSpecialtyKindInfo && m_pclSpecialtyKindInfo->IsCircleSpecialty(m_acquiredSpecialtyKinds[i]))) continue;
+        if (!m_pclSpecialtyKindInfo->IsCircleSpecialty(m_acquiredSpecialtyKinds[i])) continue;
 
         const auto specialty = m_acquiredSpecialtyKinds[i];
         if (outDeletedSpecialtyNum) outDeletedSpecialty[(*outDeletedSpecialtyNum)++] = specialty;
         DeleteSpecialtySkill(specialty, outDeletedSkillNum, outDeletedSkillKinds);
 
-        if (m_pclSpecialtyKindInfo) {
-            const std::int16_t back = m_pclSpecialtyKindInfo->GetSpecialtyTotalPoint(specialty);
-            IncreaseSpecialtyPt(back);
-        }
+        const std::int16_t back = m_pclSpecialtyKindInfo->GetSpecialtyTotalPoint(specialty);
+        IncreaseSpecialtyPt(back);
 
         std::memmove(&m_acquiredSpecialtyKinds[i], &m_acquiredSpecialtyKinds[i + 1],
                      sizeof(std::uint16_t) * (m_acquiredSpecialtyNum - i - 1));
@@ -259,14 +248,13 @@ void cltSpecialtySystem::ResetCircleSpecialty(int* outDeletedSpecialtyNum, std::
 
 void cltSpecialtySystem::DeleteSpecialtySkill(std::uint16_t specialtyKind, int* outDeletedSkillNum,
                                               std::uint16_t* outDeletedSkillKinds) {
-    auto* info = m_pclSpecialtyKindInfo ? m_pclSpecialtyKindInfo->GetSpecialtyKindInfo(specialtyKind) : nullptr;
-    if (!info) return;
+    auto* info = m_pclSpecialtyKindInfo->GetSpecialtyKindInfo(specialtyKind);
 
     for (int i = 0; i < 5; ++i) {
         const std::uint16_t skillKind = info->wAcquiredSkillKinds[i];
         if (!skillKind) continue;
 
         if (outDeletedSkillNum) outDeletedSkillKinds[(*outDeletedSkillNum)++] = skillKind;
-        if (m_pSkillSystem) m_pSkillSystem->DeleteSkill(skillKind);
+        m_pSkillSystem->DeleteSkill(skillKind);
     }
 }

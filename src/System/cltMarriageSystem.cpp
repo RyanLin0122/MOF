@@ -76,7 +76,7 @@ void cltMarriageSystem::SetSpouseName(char* spouseName) {
     m_remainedRecallQty = 0;
     m_remainedRecallQtyMyItem = 0;
     m_lastChargedRecallQtyTime = 0;
-    if (spouseName) std::strcpy(m_spouseName.data(), spouseName);
+    std::strcpy(m_spouseName.data(), spouseName);
 }
 
 int cltMarriageSystem::CanChangeCoupleRing(std::uint16_t ringKind) {
@@ -86,7 +86,7 @@ int cltMarriageSystem::CanChangeCoupleRing(std::uint16_t ringKind) {
 
 void cltMarriageSystem::ChangeCoupleRing(int now, std::uint16_t ringKind) {
     m_coupleRingKind = ringKind;
-    strCoupleRingKindInfo* info = m_pclCoupleRingKindInfo ? m_pclCoupleRingKindInfo->GetCoupleRingKindInfo(ringKind) : nullptr;
+    strCoupleRingKindInfo* info = m_pclCoupleRingKindInfo->GetCoupleRingKindInfo(ringKind);
     if (!info) return;
 
     if (info->canSummonSpouse > 0) {
@@ -129,34 +129,32 @@ void cltMarriageSystem::Marry(int now, int consumeRing, std::uint32_t spouseDbAc
                               cltItemList* outRewardItems, cltItemList* outConsumedItems) {
     cltItemList gained;
 
-    strWeddingHallKindInfo* hall = m_pclWeddingHallKindInfo ? m_pclWeddingHallKindInfo->GetWeddingHallKindInfoByItemKind(weddingTicketItemKind) : nullptr;
-    stItemKindInfo* ringItem = m_pclItemKindInfo ? m_pclItemKindInfo->GetItemKindInfo(coupleRingItemKind) : nullptr;
-    strCoupleRingKindInfo* ringInfo = (ringItem && m_pclCoupleRingKindInfo)
-                                          ? m_pclCoupleRingKindInfo->GetCoupleRingKindInfo(ringItem->Instant.m_wCoupleRingId)
-                                          : nullptr;
+    strWeddingHallKindInfo* hall = m_pclWeddingHallKindInfo->GetWeddingHallKindInfoByItemKind(weddingTicketItemKind);
+    stItemKindInfo* ringItem = m_pclItemKindInfo->GetItemKindInfo(coupleRingItemKind);
+    strCoupleRingKindInfo* ringInfo = m_pclCoupleRingKindInfo->GetCoupleRingKindInfo(ringItem->Instant.m_wCoupleRingId);
 
     m_spouseDBAccount = spouseDbAccount;
     m_marriageState = 1;
-    if (spouseName) std::strcpy(m_spouseName.data(), spouseName);
-    m_coupleRingKind = ringInfo ? ringInfo->ringKind : 0;
+    std::strcpy(m_spouseName.data(), spouseName);
+    m_coupleRingKind = ringInfo->ringKind;
 
     if (consumeRing) {
         if (outConsumedItems) {
-            if (auto* a = m_pBaseInventory->GetInventoryItem(slotA)) outConsumedItems->AddItem(a->itemKind, 1, 0, 0, 0xFFFF, nullptr);
-            if (auto* b = m_pBaseInventory->GetInventoryItem(slotB)) outConsumedItems->AddItem(b->itemKind, 1, 0, 0, 0xFFFF, nullptr);
+            auto* a = m_pBaseInventory->GetInventoryItem(slotA);
+            outConsumedItems->AddItem(a->itemKind, 1, 0, 0, 0xFFFF, nullptr);
+            auto* b = m_pBaseInventory->GetInventoryItem(slotB);
+            outConsumedItems->AddItem(b->itemKind, 1, 0, 0, 0xFFFF, nullptr);
         }
         m_pBaseInventory->DelInventoryItem(slotA, 1, outInventoryChanged);
         m_pBaseInventory->DelInventoryItem(slotB, 1, outInventoryChanged);
     }
 
-    if (hall) {
-        const std::uint16_t* rewardPair = &hall->bouquetItemKind;
-        for (int i = 0; i < 1; ++i) {
-            if (!rewardPair[0] || !rewardPair[1]) break;
-            gained.AddItem(rewardPair[0], rewardPair[1], 0, 0, 0xFFFF, nullptr);
-            if (outRewardItems) outRewardItems->AddItem(rewardPair[0], rewardPair[1], 0, 0, 0xFFFF, nullptr);
-            rewardPair += 2;
-        }
+    const std::uint16_t* rewardPair = &hall->bouquetItemKind;
+    for (int i = 0; i < 1; ++i) {
+        if (!rewardPair[0] || !rewardPair[1]) break;
+        gained.AddItem(rewardPair[0], rewardPair[1], 0, 0, 0xFFFF, nullptr);
+        if (outRewardItems) outRewardItems->AddItem(rewardPair[0], rewardPair[1], 0, 0, 0xFFFF, nullptr);
+        rewardPair += 2;
     }
 
     if (gained.GetItemsNum()) {
@@ -231,12 +229,14 @@ void cltMarriageSystem::OnDivorced() {
 }
 
 int cltMarriageSystem::GetCoupleRingExpAdvantage() {
-    auto* info = m_pclCoupleRingKindInfo ? m_pclCoupleRingKindInfo->GetCoupleRingKindInfo(m_coupleRingKind) : nullptr;
-    return info ? info->expRatePercent : 0;
+    auto* info = m_pclCoupleRingKindInfo->GetCoupleRingKindInfo(m_coupleRingKind);
+    if (info) return info->expRatePercent;
+    return 0;
 }
 
 int cltMarriageSystem::ChargeRecallQty(int now) {
-    std::tm current = *std::localtime(reinterpret_cast<const std::time_t*>(&now));
+    std::time_t currentTs = static_cast<std::time_t>(now);
+    std::tm current = *std::localtime(&currentTs);
     std::time_t lastTs = static_cast<std::time_t>(m_lastChargedRecallQtyTime);
     std::tm last = *std::localtime(&lastTs);
 
@@ -246,7 +246,7 @@ int cltMarriageSystem::ChargeRecallQty(int now) {
     m_remainedRecallQty = 0;
     m_remainedRecallQtyMyItem = 0;
 
-    auto* info = m_pclCoupleRingKindInfo ? m_pclCoupleRingKindInfo->GetCoupleRingKindInfo(ringKind) : nullptr;
+    auto* info = m_pclCoupleRingKindInfo->GetCoupleRingKindInfo(ringKind);
     if (!info) return 0;
 
     m_remainedRecallQty = info->canSummonSpouse;
@@ -256,7 +256,7 @@ int cltMarriageSystem::ChargeRecallQty(int now) {
 }
 
 void cltMarriageSystem::OnChargeRecallQtyByMyItem(int chargedQty) {
-    auto* info = m_pclCoupleRingKindInfo ? m_pclCoupleRingKindInfo->GetCoupleRingKindInfo(m_coupleRingKind) : nullptr;
+    auto* info = m_pclCoupleRingKindInfo->GetCoupleRingKindInfo(m_coupleRingKind);
     if (info && info->canSummonSpouse > 0) {
         m_remainedRecallQtyMyItem = chargedQty;
         if (m_pChargedRecallQtyByMyItemFuncPtr) {
