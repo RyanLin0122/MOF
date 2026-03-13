@@ -1,8 +1,5 @@
 #include "System/cltNPCRecallSystem.h"
 
-#include "Info/cltMapInfo.h"
-#include "Info/cltNPCInfo.h"
-#include "System/cltMoneySystem.h"
 
 cltNPCInfo* cltNPCRecallSystem::m_pclNPCInfo = nullptr;
 cltMapInfo* cltNPCRecallSystem::m_pclMapInfo = nullptr;

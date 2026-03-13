@@ -1,15 +1,5 @@
 #include "System/cltTestingSystem.h"
 
-#include <array>
-#include <cstdlib>
-#include <cstring>
-#include <ctime>
-
-#include "Info/cltQuestionKindInfo.h"
-#include "System/cltGradeSystem.h"
-#include "System/cltMoneySystem.h"
-#include "System/cltQuestSystem.h"
-
 cltQuestionKindInfo* cltTestingSystem::m_pclQuestionKindInfo = nullptr;
 
 void cltTestingSystem::InitializeStaticVariable(cltQuestionKindInfo* questionKindInfo) {

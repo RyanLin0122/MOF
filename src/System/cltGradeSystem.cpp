@@ -1,12 +1,5 @@
 #include "System/cltGradeSystem.h"
 
-#include "Network/CMofMsg.h"
-
-class cltSpecialtySystem {
-public:
-    void IncreaseSpecialtyPt(unsigned short);
-};
-
 cltGradeSystem::cltGradeSystem() = default;
 
 void cltGradeSystem::Initialize(cltSpecialtySystem* specialtySystem, cltClassSystem* classSystem, std::uint8_t grade) {

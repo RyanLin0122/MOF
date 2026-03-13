@@ -1,8 +1,9 @@
 #pragma once
 
 #include <cstdint>
+#include <cstring>
 
-class CMofMsg;
+#include "Network/CMofMsg.h"
 
 struct strMyMsg {
     std::int64_t i64MsgID = 0;

@@ -1,10 +1,9 @@
 #pragma once
 
 #include <cstdint>
-
-class cltNPCInfo;
-class cltMapInfo;
-class cltMoneySystem;
+#include "Info/cltMapInfo.h"
+#include "Info/cltNPCInfo.h"
+#include "System/cltMoneySystem.h"
 
 class cltNPCRecallSystem {
 public:

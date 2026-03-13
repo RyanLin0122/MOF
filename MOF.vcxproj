@@ -306,7 +306,9 @@
     <ClCompile Include="src\Sound\GameSound.cpp" />
     <ClCompile Include="src\System\cltBasicAppearSystem.cpp" />
     <ClCompile Include="src\System\cltClassSystem.cpp" />
+    <ClCompile Include="src\System\cltCountrySystem.cpp" />
     <ClCompile Include="src\System\cltEmblemSystem.cpp" />
+    <ClCompile Include="src\System\cltGradeSystem.cpp" />
     <ClCompile Include="src\System\cltHelpSystem.cpp" />
     <ClCompile Include="src\System\cltLevelSystem.cpp" />
     <ClCompile Include="src\System\cltMoneySystem.cpp" />
@@ -314,6 +316,8 @@
     <ClCompile Include="src\Logic\cltItemList.cpp" />
     <ClCompile Include="src\System\cltEquipmentSystem.cpp" />
     <ClCompile Include="src\Logic\cltFieldItem.cpp" />
+    <ClCompile Include="src\System\cltMyMsgSystem.cpp" />
+    <ClCompile Include="src\System\cltNPCRecallSystem.cpp" />
     <ClCompile Include="src\System\cltPartySystem.cpp" />
     <ClCompile Include="src\System\cltPetInventorySystem.cpp" />
     <ClCompile Include="src\System\cltPetSkillSystem.cpp" />
@@ -321,6 +325,8 @@
     <ClCompile Include="src\System\cltQuestSystem.cpp" />
     <ClCompile Include="src\System\cltQuickSlotSystem.cpp" />
     <ClCompile Include="src\System\cltRestBonusSystem.cpp" />
+    <ClCompile Include="src\System\cltSpecialtySystem.cpp" />
+    <ClCompile Include="src\System\cltTestingSystem.cpp" />
     <ClCompile Include="src\System\cltUsingItemSystem.cpp" />
     <ClCompile Include="src\Logic\cltLogicCompatibility.cpp" />
     <ClCompile Include="src\Network\DCTNetwork.cpp" />
@@ -562,12 +568,16 @@
     <ClInclude Include="inc\Sound\GameSound.h" />
     <ClInclude Include="inc\System\cltBasicAppearSystem.h" />
     <ClInclude Include="inc\System\cltClassSystem.h" />
+    <ClInclude Include="inc\System\cltCountrySystem.h" />
     <ClInclude Include="inc\System\cltEmblemSystem.h" />
+    <ClInclude Include="inc\System\cltGradeSystem.h" />
     <ClInclude Include="inc\System\cltHelpSystem.h" />
     <ClInclude Include="inc\System\cltLevelSystem.h" />
     <ClInclude Include="inc\System\cltMoneySystem.h" />
     <ClInclude Include="inc\System\cltLessonSystem.h" />
     <ClInclude Include="inc\System\cltMonsterToleranceSystem.h" />
+    <ClInclude Include="inc\System\cltMyMsgSystem.h" />
+    <ClInclude Include="inc\System\cltNPCRecallSystem.h" />
     <ClInclude Include="inc\System\cltPartySystem.h" />
     <ClInclude Include="inc\System\cltPetInventorySystem.h" />
     <ClInclude Include="inc\System\cltPetSkillSystem.h" />
@@ -575,6 +585,8 @@
     <ClInclude Include="inc\System\cltPetSystem.h" />
     <ClInclude Include="inc\System\cltQuestSystem.h" />
     <ClInclude Include="inc\System\cltRestBonusSystem.h" />
+    <ClInclude Include="inc\System\cltSpecialtySystem.h" />
+    <ClInclude Include="inc\System\cltTestingSystem.h" />
     <ClInclude Include="inc\System\cltTitleSystem.h" />
     <ClInclude Include="inc\System\cltSexSystem.h" />
     <ClInclude Include="inc\System\cltSkillSystem.h" />

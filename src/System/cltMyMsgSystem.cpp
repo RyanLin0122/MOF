@@ -1,8 +1,5 @@
 #include "System/cltMyMsgSystem.h"
 
-#include <cstring>
-
-#include "Network/CMofMsg.h"
 
 cltMyMsgSystem::ExternInitFn cltMyMsgSystem::m_pExternInitializeFuncPtr = nullptr;
 

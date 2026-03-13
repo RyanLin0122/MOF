@@ -1,10 +1,9 @@
 #pragma once
 
 #include <cstdint>
-
-class CMofMsg;
-class cltSpecialtySystem;
-class cltClassSystem;
+#include "System/cltSpecialtySystem.h"
+#include "System/cltClassSystem.h"
+#include "Network/CMofMsg.h"
 
 class cltGradeSystem {
 public:

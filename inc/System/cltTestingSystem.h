@@ -2,12 +2,16 @@
 
 #include <cstdint>
 #include <ctime>
+#include <array>
+#include <cstdlib>
+#include <cstring>
 
-class cltQuestionKindInfo;
-class cltMoneySystem;
-class cltLessonSystem;
-class cltGradeSystem;
-class cltQuestSystem;
+#include "Info/cltQuestionKindInfo.h"
+#include "System/cltGradeSystem.h"
+#include "System/cltMoneySystem.h"
+#include "System/cltQuestSystem.h"
+#include "System/cltLessonSystem.h"
+
 
 class cltTestingSystem {
 public:
