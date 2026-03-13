@@ -1,37 +1,24 @@
-#ifndef CLT_SEX_SYSTEM_H
+ï»¿#ifndef CLT_SEX_SYSTEM_H
 #define CLT_SEX_SYSTEM_H
 
 #include <cstdint>
 
-typedef int BOOL; // ¹ï»ô¤Ï½sÄ¶¤¤ªº BOOL¡]«D¥²­n¤£¤Þ¤J windows.h¡^
+typedef int BOOL;
 
 class cltSexSystem
 {
 public:
-    // 00590880¡G«Øºc¤l¡]¶È¦^¶Ç this¡A¤£°µªì©l¤Æ¡^
     cltSexSystem();
 
-    // 005908A0¡GInitialize(this, a2) -> *this = a2
     void Initialize(uint8_t a2);
-
-    // 005908B0¡GIsMale -> toupper(*this) == 'M'(77)
     BOOL IsMale();
-
-    // 005908D0¡GIsFemale -> toupper(*this) == 'F'(70)
     BOOL IsFemale();
-
-    // 005908F0¡GSetSex_male -> *this = 'M'(77)
     void SetSex_male();
-
-    // 00590900¡GSetSex_female -> *this = 'F'(70)
     void SetSex_female();
-
-    // 00590910¡GGetSex -> ¦^¶Ç­º¦ì¤¸²Õ
     uint8_t GetSex();
 
 private:
-    // ª«¥ó­º¦ì¤¸²Õ§Y©Ê§O¦r¤¸¡]ASCII 'M'/'F' ©Î¤p¼g¡^
-    uint8_t mSex; // ¹ïÀ³ *(_BYTE*)this
+    uint8_t mSex;
 };
 
 #endif // CLT_SEX_SYSTEM_H

@@ -1,151 +1,241 @@
 ﻿#include "Info/cltMyItemKindInfo.h"
 
-static constexpr const char* kDelims = "\t\n";
 
-int cltMyItemKindInfo::Initialize(char* filename)
+cltMyItemKindInfo::cltMyItemKindInfo()
+    : m_pInfo(nullptr), m_nCount(0)
+{
+}
+
+cltMyItemKindInfo::~cltMyItemKindInfo()
 {
     Free();
-    if (!filename) return 0;
+}
 
-    FILE* f = g_clTextFileManager.fopen(filename);
-    FILE* Stream = f;
-    int ok = 0;
-    if (!f) return 0;
+int cltMyItemKindInfo::Initialize(char* filePath)
+{
+    FILE* fp = g_clTextFileManager.fopen(filePath);
+    FILE* stream = fp;
+    int result = 0;
 
-    char buf[1024] = {};
+    char delimiter[3];
+    delimiter[0] = '\t';
+    delimiter[1] = '\n';
+    delimiter[2] = '\0';
 
-    // 略過三行表頭
-    if (std::fgets(buf, sizeof(buf), f) &&
-        std::fgets(buf, sizeof(buf), f) &&
-        std::fgets(buf, sizeof(buf), f))
+    char buffer[1024];
+    std::memset(buffer, 0, sizeof(buffer));
+
+    if (!fp)
+        return 0;
+
+    // 必須先成功讀掉前三行
+    if (std::fgets(buffer, 1023, fp) &&
+        std::fgets(buffer, 1023, fp) &&
+        std::fgets(buffer, 1023, fp))
     {
-        // 計數
-        fpos_t pos{};
-        std::fgetpos(f, &pos);
-        while (std::fgets(buf, sizeof(buf), f)) ++m_count;
+        fpos_t position{};
+        std::fgetpos(fp, &position);
 
-        // 配置（即使 m_count==0 也沿用反編譯流程）
-        m_list = static_cast<strMyItemKindInfo*>(operator new[](m_count * sizeof(strMyItemKindInfo)));
-        if (m_count) std::memset(m_list, 0, m_count * sizeof(strMyItemKindInfo));
-
-        // 回到資料起點
-        std::fsetpos(f, &pos);
-
-        int idx = 0;
-        if (!std::fgets(buf, sizeof(buf), f)) {
-            ok = 1; // 無任何資料行：視為成功
+        // 從第 4 行開始計數
+        for (; std::fgets(buffer, 1023, fp); ++m_nCount)
+        {
         }
-        else {
-            while (true)
+
+        m_pInfo = static_cast<strMyItemKindInfo*>(
+            ::operator new(sizeof(strMyItemKindInfo) * static_cast<size_t>(m_nCount))
+            );
+
+        std::memset(m_pInfo, 0, sizeof(strMyItemKindInfo) * static_cast<size_t>(m_nCount));
+
+        std::fsetpos(fp, &position);
+
+        strMyItemKindInfo* cur = m_pInfo;
+
+        // 沒有第 4 行時，直接視為成功
+        if (!std::fgets(buffer, 1023, fp))
+        {
+            result = 1;
+            g_clTextFileManager.fclose(fp);
+            return result;
+        }
+
+        while (true)
+        {
+            char* tok = std::strtok(buffer, delimiter);   // 1 ID
+            if (!tok)
+                break;
+            cur->wId = TranslateKindCode(tok);
+
+            tok = std::strtok(nullptr, delimiter);        // 2 名稱(不使用)
+            if (!tok)
+                break;
+
+            tok = std::strtok(nullptr, delimiter);        // 3 名稱文本代碼
+            if (!tok)
+                break;
+            cur->wNameTextCode = static_cast<uint16_t>(std::atoi(tok));
+
+            tok = std::strtok(nullptr, delimiter);        // 4 資源ID
+            if (!tok)
+                break;
+            cur->ResourceId = 0;
+            const int scanned = std::sscanf(tok, "%x", &cur->ResourceId);
+            (void)scanned;
+
+            tok = std::strtok(nullptr, delimiter);        // 5 區塊編號
+            if (!tok)
+                break;
+            cur->wBlockNumber = static_cast<uint16_t>(std::atoi(tok));
+
+            tok = std::strtok(nullptr, delimiter);        // 6 類型
+            if (!tok)
+                break;
+
+            // 第一個字串常值在提供的 IDA 輸出中顯示為 `string'
+            // 這裡照反編譯文字保留為 "string"
+            if (STRCASECMP(tok, "string") == 0)
             {
-                strMyItemKindInfo& r = m_list[idx];
-                std::memset(&r, 0, sizeof(r));
+                cur->bType = 1;
+            }
+            else if (STRCASECMP(tok, "LIBI") == 0)
+            {
+                cur->bType = 2;
+            }
+            else if (STRCASECMP(tok, "PSLOT") == 0)
+            {
+                cur->bType = 3;
+            }
+            else if (STRCASECMP(tok, "ITEMDROP") == 0)
+            {
+                cur->bType = 4;
+            }
+            else if (STRCASECMP(tok, "STATUS") == 0)
+            {
+                cur->bType = 5;
+            }
+            else if (STRCASECMP(tok, "FASTMOVE") == 0)
+            {
+                cur->bType = 6;
+            }
+            else if (STRCASECMP(tok, "EMBLEM") == 0)
+            {
+                cur->bType = 7;
+            }
+            else if (STRCASECMP(tok, "WAYPOINT") == 0)
+            {
+                cur->bType = 8;
+            }
+            else if (STRCASECMP(tok, "RECALL") == 0)
+            {
+                cur->bType = 9;
+            }
+            // 若不是上述任何值，原碼不會中斷，只是保持 0
 
-                // 1) ID
-                char* t = std::strtok(buf, kDelims);
-                if (!t) break;
-                r.kind = TranslateKindCode(t);
+            tok = std::strtok(nullptr, delimiter);        // 7 重複
+            if (!tok)
+                break;
+            if (std::toupper(static_cast<unsigned char>(tok[0])) == 'T')
+            {
+                cur->dwDuplicate = 1;
+            }
+            else
+            {
+                if (std::toupper(static_cast<unsigned char>(tok[0])) != 'F')
+                    break;
+                cur->dwDuplicate = 0;
+            }
 
-                // 2) NAME(NOTUSE) 略過
-                if (!std::strtok(nullptr, kDelims)) break;
+            tok = std::strtok(nullptr, delimiter);        // 8 經驗值加成(100)
+            if (!tok)
+                break;
+            cur->dwExpAdv100 = static_cast<uint32_t>(std::atoi(tok));
 
-                // 3) NAMETEXTCODE
-                t = std::strtok(nullptr, kDelims); if (!t) break;
-                r.name_text_code = (uint16_t)std::atoi(t);
+            tok = std::strtok(nullptr, delimiter);        // 9 掉落金錢數量加成(100)
+            if (!tok)
+                break;
+            cur->dwDropMoneyAmountAdv100 = static_cast<uint32_t>(std::atoi(tok));
 
-                // 4) 리소스아이디 (hex)
-                t = std::strtok(nullptr, kDelims); if (!t) break;
-                unsigned int hexv = 0;
-                std::sscanf(t, "%x", &hexv);
-                r.resource_id_hex = hexv;
+            tok = std::strtok(nullptr, delimiter);        // 10 是否為高級快速槽
+            if (!tok)
+                break;
+            cur->dwIsPremiumQuickSlot = static_cast<uint32_t>(std::atoi(tok));
 
-                // 5) 블럭넘버
-                t = std::strtok(nullptr, kDelims); if (!t) break;
-                r.block_no = (uint16_t)std::atoi(t);
+            tok = std::strtok(nullptr, delimiter);        // 11 配偶每日召喚充能
+            if (!tok)
+                break;
+            cur->dwSpouseDailySummonCharge = static_cast<uint32_t>(std::atoi(tok));
 
-                // 6) 타입
-                t = std::strtok(nullptr, kDelims); if (!t) break;
-                r.type = ParseType(t);
+            tok = std::strtok(nullptr, delimiter);        // 12 效果說明
+            if (!tok)
+                break;
+            cur->wEffectDescription = static_cast<uint16_t>(std::atoi(tok));
 
-                // 7) DUPLICATE (T/F)
-                t = std::strtok(nullptr, kDelims); if (!t) break;
-                r.duplicate_flag = (std::toupper((unsigned char)t[0]) == 'T') ? 1 : 0;
+            ++cur;
 
-                // 8) EXPADV(100)
-                t = std::strtok(nullptr, kDelims); if (!t) break;
-                r.exp_adv_100 = std::atoi(t);
-
-                // 9) DROPMONEYAMOUNTADV(100)
-                t = std::strtok(nullptr, kDelims); if (!t) break;
-                r.dropmoney_adv_100 = std::atoi(t);
-
-                // 10) 프리미엄퀵슬롯여부
-                t = std::strtok(nullptr, kDelims); if (!t) break;
-                r.premium_quickslot = std::atoi(t);
-
-                // 11) 배우자 일일 소환 충전
-                t = std::strtok(nullptr, kDelims); if (!t) break;
-                r.spouse_daily_recall = std::atoi(t);
-
-                // 12) 효과설명 텍스트코드
-                t = std::strtok(nullptr, kDelims); if (!t) break;
-                r.effect_text_code = (uint16_t)std::atoi(t);
-
-                // 下一列
-                ++idx;
-                if (!std::fgets(buf, sizeof(buf), f)) { ok = 1; break; }
-                if (idx >= m_count) { ok = 1; break; }
+            if (!std::fgets(buffer, 1023, stream))
+            {
+                result = 1;
+                g_clTextFileManager.fclose(fp);
+                return result;
             }
         }
     }
 
-    g_clTextFileManager.fclose(Stream);
-    if (!ok) { Free(); }
-    return ok;
+    g_clTextFileManager.fclose(fp);
+    return result;
 }
 
 void cltMyItemKindInfo::Free()
 {
-    if (m_list) {
-        operator delete[](m_list);
-        m_list = nullptr;
+    if (m_pInfo)
+    {
+        ::operator delete(m_pInfo);
+        m_pInfo = nullptr;
     }
-    m_count = 0;
+    m_nCount = 0;
 }
 
-strMyItemKindInfo* cltMyItemKindInfo::GetMyItemKindInfo(uint16_t a2)
+strMyItemKindInfo* cltMyItemKindInfo::GetMyItemKindInfo(uint16_t kindCode)
 {
-    if (!m_list || m_count <= 0) return nullptr;
+    if (m_nCount <= 0)
+        return nullptr;
 
-    // 以 WORD* 方式與反編譯步距一致（每筆 18 WORD = 36 bytes）
-    uint16_t* p = reinterpret_cast<uint16_t*>(m_list);
-    for (int i = 0; i < m_count; ++i, p += 18) {
-        if (p[0] == a2)
-            return reinterpret_cast<strMyItemKindInfo*>(p);
+    for (int i = 0; i < m_nCount; ++i)
+    {
+        if (m_pInfo[i].wId == kindCode)
+            return &m_pInfo[i];
     }
+
     return nullptr;
 }
 
-uint8_t cltMyItemKindInfo::GetMyItemType(uint16_t a2)
+uint8_t cltMyItemKindInfo::GetMyItemType(uint16_t kindCode)
 {
-    if (!m_list || m_count <= 0) return 0;
+    if (m_nCount <= 0)
+        return 0;
 
-    uint16_t* p = reinterpret_cast<uint16_t*>(m_list);
-    for (int i = 0; i < m_count; ++i, p += 18) {
-        if (p[0] == a2) {
-            // 反編譯：v4[18*i + 16]（WORD 讀取），回傳值為 8-bit
-            const uint16_t w = p[16]; // 偏移 +32
-            return static_cast<uint8_t>(w & 0xFF);
-        }
+    for (int i = 0; i < m_nCount; ++i)
+    {
+        if (m_pInfo[i].wId == kindCode)
+            return m_pInfo[i].bType;
     }
+
     return 0;
 }
 
-uint16_t cltMyItemKindInfo::TranslateKindCode(char* a1)
+uint16_t cltMyItemKindInfo::TranslateKindCode(char* text)
 {
-    if (!a1 || std::strlen(a1) != 5) return 0;
+    if (!text)
+        return 0;
 
-    int hi = (std::toupper(static_cast<unsigned char>(a1[0])) + 31) << 11;
-    int lo = std::atoi(a1 + 1);
-    return (lo < 0x800) ? static_cast<uint16_t>(hi | lo) : 0;
+    if (std::strlen(text) != 5)
+        return 0;
+
+    int high = (std::toupper(static_cast<unsigned char>(text[0])) + 31) << 11;
+    uint16_t low = static_cast<uint16_t>(std::atoi(text + 1));
+
+    if (low < 0x800u)
+        return static_cast<uint16_t>(high | low);
+
+    return 0;
 }
