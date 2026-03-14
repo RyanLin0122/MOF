@@ -223,6 +223,9 @@ void cltTutorialSystem::MoveCharacterMission(std::uint8_t missionType) {
     // ground-truth special-case: missionType==3 only adds tutorial id 6,
     // and does not advance tutorial state.
     if (missionType == 3) {
+        if (step == kTutorialAddStepMoveDown) {
+            EmitTutorialStep(kTutorialAddStepMoveDown);
+        }
         return;
     }
 
@@ -384,8 +387,12 @@ void cltTutorialSystem::InitializeHelpAndUIState() {
 }
 
 void cltTutorialSystem::AddTutorialStep(int stepId) {
-    (void)stepId; // step id kept for parity with CUITutorial::AddTutorial.
+    EmitTutorialStep(stepId);
     ++tutorialState_;
+}
+
+void cltTutorialSystem::EmitTutorialStep(int stepId) {
+    (void)stepId;
 }
 
 void cltTutorialSystem::PushSystemMessage(const std::string& msg) {

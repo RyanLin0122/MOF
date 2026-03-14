@@ -98,36 +98,46 @@ int CMeritoriousSystem::Initialize(cltQuestSystem* questSystem, cltBaseInventory
 }
 
 unsigned int CMeritoriousSystem::StartWarMeritoriousQuest(std::uint16_t mapKind, int difficulty, std::uint16_t* outQuestKinds) {
-    (void)mapKind;
+    warQuestMonKinds_.fill(0);
+    warQuestMonGoals_.fill(0);
+    warQuestMonKills_.fill(0);
+
+    warQuestMonCount_ = std::clamp<int>(difficulty, 0, kMaxQuestMonster);
     if (outQuestKinds) {
         for (std::uint16_t i = 0; i < warQuestMonCount_; ++i) {
-            outQuestKinds[i] = warQuestMonKinds_[i];
+            warQuestMonKinds_[i] = outQuestKinds[i];
         }
     }
     warQuestPlaying_ = true;
-    warQuestDifficulty_ = static_cast<std::uint16_t>(max(difficulty, 0));
+    warQuestDifficulty_ = mapKind;
     return 0;
 }
 
 unsigned int CMeritoriousSystem::CanStartWarMeritoriousQuest(int minLv, int maxLv, std::uint16_t needClass, std::uint16_t needNation,
                                                              std::uint16_t monsterKind, stMonsterKind*) {
-    if (!CanStartWarMeritoriousQuest()) return 0;
-    if (!monsterKind) return 0;
+    if (CanStartWarMeritoriousQuest()) return 1;
+    if (!monsterKind) return 1;
 
-    if (minLv > maxLv) return 0;
-    if (needClass == 0 || needNation == 0) return 0;
+    if (minLv > maxLv) return 1;
+    if (needClass == 0 || needNation == 0) return 1;
 
-    return 1;
+    return 0;
 }
 
 int CMeritoriousSystem::CanStartWarMeritoriousQuest() {
-    if (warQuestPlaying_) return 0;
-    if (supplyQuestPlaying_) return 0;
-    return 1;
+    return warQuestPlaying_ ? 1 : 0;
 }
 
 void CMeritoriousSystem::PlayWarMeritoriousQuest(int playing) {
-    warQuestPlaying_ = (playing != 0);
+    if (!warQuestPlaying_) return;
+
+    const auto kind = static_cast<std::uint16_t>(playing);
+    for (std::uint16_t i = 0; i < warQuestMonCount_; ++i) {
+        if (warQuestMonKinds_[i] == kind) {
+            ++warQuestMonKills_[i];
+            return;
+        }
+    }
 }
 
 unsigned int CMeritoriousSystem::CompleteWarMeritoriousQuest(unsigned int seed, std::int64_t* outExp, int* outMoney,
@@ -191,10 +201,10 @@ void CMeritoriousSystem::SetMeritoriousUpGrade(std::uint16_t grade, std::uint16_
 }
 
 unsigned int CMeritoriousSystem::CanCompleteWarMeritoriousQuest() {
-    if (!warQuestMonCount_) return 0;
+    if (!warQuestMonCount_) return 1;
     for (std::uint16_t i = 0; i < warQuestMonCount_; ++i) {
         if (warQuestMonGoals_[i] == 0) continue;
-        if (warQuestMonGoals_[i] >= warQuestMonKills_[i]) return 1;
+        if (warQuestMonGoals_[i] > warQuestMonKills_[i]) return 1;
     }
     return 0;
 }
@@ -224,6 +234,7 @@ std::uint16_t CMeritoriousSystem::GetWarMeritoriousMonsterGoalKillCount(std::uin
 }
 
 int CMeritoriousSystem::GetWarMeritoriousMonsterKind(std::uint16_t* outSize, std::uint16_t* outKinds) {
+    if (!warQuestPlaying_) return 0;
     if (outSize) *outSize = warQuestMonCount_;
 
     if (outKinds) {
@@ -241,14 +252,7 @@ void CMeritoriousSystem::IncreaseMeritoriousPoint(std::uint16_t point) {
 }
 
 void CMeritoriousSystem::DecreaseMeritoriousPoint(std::uint16_t point) {
-    if (point_ > point) point_ -= point;
-    else point_ = 0;
-
-    std::uint16_t g = grade_;
-    std::uint16_t gp = gradePoint_;
-    CalcMeritoriousGrade(&g, &gp);
-    grade_ = g;
-    gradePoint_ = gp;
+    point_ -= point;
 }
 
 int CMeritoriousSystem::IsExistWarQuestMonsterKind(std::uint16_t kind) {
@@ -259,7 +263,7 @@ int CMeritoriousSystem::IsExistWarQuestMonsterKind(std::uint16_t kind) {
 }
 
 int CMeritoriousSystem::CanGiveUpWarMeritorious() {
-    return warQuestPlaying_ ? 1 : 0;
+    return warQuestPlaying_ ? 0 : 1;
 }
 
 void CMeritoriousSystem::GiveUpWarMeritorious() {
@@ -270,7 +274,7 @@ void CMeritoriousSystem::GiveUpWarMeritorious() {
 }
 
 int CMeritoriousSystem::CanGiveUpSupplyMeritorious() {
-    return supplyQuestPlaying_ ? 1 : 0;
+    return supplyQuestKind_ == 0 ? 1 : 0;
 }
 
 void CMeritoriousSystem::GiveUpSupplyMeritorious() {
@@ -379,10 +383,12 @@ void CMeritoriousSystem::SetMeritoriousInfo(unsigned int point, unsigned int tot
                                             const std::uint16_t* warQuestMonGoals) {
     point_ = point;
     totalPoint_ = totalPoint;
-    grade_ = ClampGrade(grade);
-    gradePoint_ = static_cast<std::uint16_t>(gradePoint % kGradeUnitPoint);
+    supplyQuestKind_ = grade;
+    warQuestDifficulty_ = gradePoint;
+    grade_ = static_cast<std::uint8_t>(supplyQuestPlaying);
+    gradePoint_ = 0;
     warQuestPlaying_ = warQuestPlaying;
-    supplyQuestPlaying_ = supplyQuestPlaying;
+    supplyQuestPlaying_ = 0;
 
     warQuestMonCount_ = std::min<std::uint16_t>(warQuestMonCount, kMaxQuestMonster);
     warQuestMonKinds_.fill(0);
@@ -390,34 +396,35 @@ void CMeritoriousSystem::SetMeritoriousInfo(unsigned int point, unsigned int tot
     warQuestMonKills_.fill(0);
 
     for (std::uint16_t i = 0; i < warQuestMonCount_; ++i) {
-        warQuestMonKinds_[i] = warQuestMonKinds ? warQuestMonKinds[i] : 0;
-        warQuestMonGoals_[i] = warQuestMonGoals ? warQuestMonGoals[i] : 0;
+        SetWarMeritoriousQuest(warQuestMonKinds ? warQuestMonKinds[i] : 0,
+                               warQuestMonGoals ? warQuestMonGoals[i] : 0);
     }
 
-    std::uint16_t g = grade_;
-    std::uint16_t gp = gradePoint_;
-    CalcMeritoriousGrade(&g, &gp);
-    grade_ = g;
-    gradePoint_ = gp;
 }
 
 void CMeritoriousSystem::SetWarMeritoriousQuest(int playing, int difficulty) {
-    warQuestPlaying_ = (playing != 0);
-    warQuestDifficulty_ = static_cast<std::uint16_t>(max(difficulty, 0));
-    if (!warQuestPlaying_) {
-        warQuestMonKills_.fill(0);
+    const auto kind = static_cast<std::uint16_t>(playing);
+    const auto goal = static_cast<std::uint16_t>(std::max(difficulty, 0));
+    if (kind == 0) return;
+
+    for (std::uint16_t i = 0; i < warQuestMonCount_; ++i) {
+        if (warQuestMonKinds_[i] == kind) {
+            if (goal > warQuestMonGoals_[i]) warQuestMonGoals_[i] = goal;
+            return;
+        }
+        if (warQuestMonKinds_[i] == 0) {
+            warQuestMonKinds_[i] = kind;
+            warQuestMonGoals_[i] = goal;
+            warQuestMonKills_[i] = 0;
+            return;
+        }
     }
 }
 
 int CMeritoriousSystem::CalcMeritoriousGrade(std::uint16_t* outGrade, std::uint16_t* outGradePoint) {
-    unsigned int value = point_;
-    std::uint16_t g = 1;
-    while (value >= kGradeUnitPoint && g < kMaxGrade) {
-        value -= kGradeUnitPoint;
-        ++g;
-    }
-
-    if (outGrade) *outGrade = g;
-    if (outGradePoint) *outGradePoint = static_cast<std::uint16_t>(value);
-    return g;
+    if (!m_pclMeritoriousGradeParser) return 0;
+    if (m_pclMeritoriousGradeParser->CalcMeritoriousGrade(point_, grade_, outGrade, outGradePoint) != 1) return 0;
+    if (outGrade) grade_ = *outGrade;
+    if (specialtySystem_ && outGradePoint) specialtySystem_->IncreaseSpecialtyPt(*outGradePoint);
+    return 1;
 }

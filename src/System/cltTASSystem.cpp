@@ -78,7 +78,7 @@ void cltTASSystem::Initialize(cltLevelSystem* levelSystem, cltMoneySystem* money
 
     std::uint8_t classMateCount = 0;
     std::uint8_t studentCount = 0;
-    std::int64_t gatherExp = 0;
+    int gatherExp = 0;
     std::uint8_t teacherLevel = 0;
 
     if (msg) {
@@ -98,7 +98,7 @@ void cltTASSystem::Initialize(cltLevelSystem* levelSystem, cltMoneySystem* money
             msg->Get_BYTE(&students[i].grade);
         }
 
-        msg->Get_INT64(&gatherExp);
+        msg->Get_LONG(&gatherExp);
         msg->Get_BYTE(&teacherLevel);
     }
 
@@ -133,8 +133,6 @@ int cltTASSystem::CanSetTeacher(std::uint8_t teacherLevel) {
 
 void cltTASSystem::SetTeacher(char* teacherName, char classKind, char level, CMofMsg* msg,
                               std::uint16_t* questKinds, unsigned int* questValues) {
-    DelTeacher();
-
     AssignName(teacher_.name, teacherName);
     teacher_.classKind = static_cast<std::uint8_t>(classKind);
     myTeacherLevel_ = static_cast<std::uint8_t>(level);

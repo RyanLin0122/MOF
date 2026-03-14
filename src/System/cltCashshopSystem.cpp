@@ -1,6 +1,7 @@
 #include "System/cltCashshopSystem.h"
 
 #include "Logic/cltCashShopItem.h"
+#include "Logic/cltItemList.h"
 
 namespace {
 constexpr std::uint16_t kMaxBoughtItem = 1000;
@@ -118,25 +119,15 @@ int cltCashshopSystem::CanMoveBoughtCashItemToInventory(int itemCount, std::int6
     if (!itemIds || itemCount <= 0) return 0;
     if (!inventory_) return 0;
 
-    std::array<strInventoryItem, kMaxMsgBoughtItem> toAdd{};
-    int addN = 0;
+    cltItemList itemList;
+    itemList.Initialize(1000);
 
     for (int i = 0; i < itemCount; ++i) {
         const int idx = FindBoughtIndex(bought_, boughtCount_, itemIds[i]);
         if (idx < 0) return 0;
-
-        if (addN >= static_cast<int>(toAdd.size())) return 0;
-
-        toAdd[addN].itemKind = bought_[idx].itemKind;
-        toAdd[addN].itemQty = bought_[idx].qty;
-        ++addN;
+        itemList.AddItem(bought_[idx].itemKind, bought_[idx].qty, 0, 0, 0xFFFF, 0);
     }
-
-    for (int i = 0; i < addN; ++i) {
-        if (inventory_->CanAddInventoryItem(toAdd[i].itemKind, toAdd[i].itemQty) != 0) return 0;
-    }
-
-    return 1;
+    return inventory_->CanAddInventoryItems(&itemList) == 0;
 }
 
 void cltCashshopSystem::MoveBoughtCashItemToInventory(std::int64_t itemId, unsigned int extraArg,
@@ -184,7 +175,7 @@ void cltCashshopSystem::MoveBoughtCashItemToInventory(int itemCount, std::int64_
 
         if (buffer && inv.value0) {
             char tmp[128]{};
-            std::snprintf(tmp, sizeof(tmp), "%s%lld,%u,", buffer, static_cast<long long>(b.id), pos);
+            std::snprintf(tmp, sizeof(tmp), "%s%lld, %u, ", buffer, static_cast<long long>(b.id), pos);
             std::strncpy(buffer, tmp, 1023);
             buffer[1023] = '\0';
         }
