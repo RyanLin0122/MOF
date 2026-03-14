@@ -403,7 +403,7 @@ void CMeritoriousSystem::SetMeritoriousInfo(unsigned int point, unsigned int tot
 
 void CMeritoriousSystem::SetWarMeritoriousQuest(int playing, int difficulty) {
     const auto kind = static_cast<std::uint16_t>(playing);
-    const auto goal = static_cast<std::uint16_t>(std::max(difficulty, 0));
+    const auto goal = static_cast<std::uint16_t>(max(difficulty, 0));
     if (kind == 0) return;
 
     for (std::uint16_t i = 0; i < warQuestMonCount_; ++i) {
