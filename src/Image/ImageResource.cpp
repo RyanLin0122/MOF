@@ -1,9 +1,9 @@
 #include "Image/ImageResource.h"
+#include "Logic/CMessageBoxManager.h"
 #include <cassert> // 用於 assert
 
 // 假設這些外部相依性在連結時可用
 extern LPDIRECT3DDEVICE9 Device;
-void* g_pMsgBoxMgr = nullptr;
 
 // 輔助函式，用於安全地釋放 COM 物件
 template<typename T>

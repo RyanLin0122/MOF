@@ -122,7 +122,7 @@ void cltTutorialSystem::AttackMonster() {
     lastAttackTick_ = fakeNowTick_;
 
     int damage = 5 + (std::rand() % 5);
-    damage = std::min(damage, monsterHp_);
+    damage = min(damage, monsterHp_);
     IssueAttackOrder(*me, *mon, damage);
 
     if (monsterHp_ <= 0) {
@@ -430,8 +430,8 @@ std::uint32_t cltTutorialSystem::FindNearestAliveMonsterAccount() const {
 }
 
 void cltTutorialSystem::IssueAttackOrder(TutorialCharacter& me, TutorialCharacter& target, int damage) {
-    me.attackPower = std::max(0, me.attackPower - damage);
-    monsterHp_ = std::max(0, monsterHp_ - damage);
+    me.attackPower = max(0, me.attackPower - damage);
+    monsterHp_ = max(0, monsterHp_ - damage);
     target.hp = monsterHp_;
     if (target.hp <= 0) {
         target.dead = 1;
@@ -496,7 +496,7 @@ void cltTutorialSystem::PickupCandidate(TutorialItemDrop& drop) {
 
     auto* me = GetMyCharacter();
     if (me) {
-        me->hp = std::min(me->maxHp, me->hp + 30);
+        me->hp = min(me->maxHp, me->hp + 30);
     }
 
     PushSystemMessage("Picked tutorial item");
