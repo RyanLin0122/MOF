@@ -7,7 +7,7 @@
 
 namespace {
 std::uint16_t Translate5Code(const char* s) {
-    if (!s || std::strlen(s) != 5) return 0;
+    if (std::strlen(s) != 5) return 0;
     const int head = (std::toupper(static_cast<unsigned char>(s[0])) + 31) << 11;
     const unsigned int tail = static_cast<unsigned int>(std::atoi(s + 1));
     if (tail >= 0x800u) return 0;
@@ -25,8 +25,6 @@ CExpRewardParser::~CExpRewardParser() {
 int CExpRewardParser::Initialize(char* fileName) {
     FILE* fp = g_clTextFileManager.fopen(fileName);
     if (!fp) return 0;
-
-    Free();
 
     char buffer[1024]{};
     char delim[] = "\t\n";
@@ -91,7 +89,6 @@ int CSupplyMeritoriousParser::Initialize(char* fileName) {
     FILE* fp = g_clTextFileManager.fopen(fileName);
     if (!fp) return 0;
 
-    infos_.clear();
     char buffer[1024]{};
     char delim[] = "\t\n";
     int ok = 0;
@@ -214,7 +211,6 @@ unsigned int CMeritoriousRewardParser::GetMeritoriousRewardItemRequirePoint(std:
 }
 
 std::uint16_t CMeritoriousRewardParser::GetMeritoriousRewardItemKind(std::uint16_t index) {
-    if (index >= list_.size() || !list_[index]) return 0;
     return list_[index]->itemKind;
 }
 
@@ -279,7 +275,6 @@ int CMeritoriousGradeParser::Initialize(char* fileName) {
 stMeritoriousGradeInfo** CMeritoriousGradeParser::GetMeritoriousGradeInfoList() { return list_.data(); }
 
 stMeritoriousGradeInfo* CMeritoriousGradeParser::GetMeritoriousGradeInfoList(std::uint16_t index) {
-    if (index >= list_.size()) return nullptr;
     return list_[index];
 }
 
@@ -291,12 +286,12 @@ int CMeritoriousGradeParser::CalcMeritoriousGrade(std::uint16_t point, std::uint
         if (!p) continue;
         if (p->nextGrade != static_cast<std::uint16_t>(grade + 1)) continue;
         if (p->needPoint <= point) {
-            if (outGrade) *outGrade = p->nextGrade;
-            if (outGradePoint) *outGradePoint = p->emblem;
+            *outGrade = p->nextGrade;
+            *outGradePoint = p->emblem;
             return 1;
         }
-        if (outGrade) *outGrade = grade;
-        if (outGradePoint) *outGradePoint = 0;
+        *outGrade = grade;
+        *outGradePoint = 0;
         return 0;
     }
     return 0;
