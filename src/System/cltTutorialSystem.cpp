@@ -11,6 +11,7 @@ constexpr int kMyAccount = 10;
 constexpr int kMonsterAccount = 100;
 constexpr int kTutorialMapKind = 0x5001;
 constexpr std::uint16_t kTutorialDropPotionKind = 0x292E;
+constexpr std::uint16_t kTutorialInventorySeedKind = 16396;
 constexpr std::uint16_t kTutorialUseItemKind = 10542;
 
 constexpr int kExitLeft = 1420;
@@ -146,7 +147,7 @@ void cltTutorialSystem::PickUpItem() {
 
     if (std::abs(drop->x - me->x) <= 10 && std::abs(drop->y - me->y) <= 10) {
         PickupCandidate(*drop);
-        AddTutorialStep(kTutorialAddStepPickupDone);
+        EmitTutorialStep(kTutorialAddStepPickupDone);
     }
 }
 
@@ -195,10 +196,10 @@ void cltTutorialSystem::SendTutorialMsg(std::uint8_t msgType) {
         ++tutorialState_;
         break;
     case 0x0B:
-        // add a potion item to inventory (ground-truth uses AddInventoryItem)
+        // ground-truth adds item kind 16396 here.
         for (auto& slot : inventory_) {
             if (slot.itemKind == 0) {
-                slot.itemKind = kTutorialDropPotionKind;
+                slot.itemKind = kTutorialInventorySeedKind;
                 slot.itemQty = 1;
                 break;
             }
@@ -234,13 +235,13 @@ void cltTutorialSystem::MoveCharacterMission(std::uint8_t missionType) {
 
 void cltTutorialSystem::OnTimer_EndUseItem() {
     if (!s_activeTutorial) return;
-    s_activeTutorial->AddTutorialStep(kTutorialAddStepUseItemDone);
+    s_activeTutorial->EmitTutorialStep(kTutorialAddStepUseItemDone);
 }
 
 void cltTutorialSystem::OnTimer_StartExitMap() {
     if (!s_activeTutorial) return;
+    s_activeTutorial->EmitTutorialStep(kTutorialAddStepExitReady);
     ++s_activeTutorial->tutorialState_;
-    s_activeTutorial->AddTutorialStep(kTutorialAddStepExitReady);
 }
 
 void cltTutorialSystem::ResetRuntimeState() {

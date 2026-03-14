@@ -2,7 +2,7 @@
 
 namespace {
 constexpr int kFunctionQuestSetTeacher = 13;
-constexpr int kFunctionQuestAddStudent = 14;
+constexpr int kFunctionQuestAddStudent = 26;
 constexpr int kStudentMax = 10;
 constexpr int kClassMateMax = 10;
 constexpr std::uint8_t kDefaultClass = 0;
@@ -177,7 +177,7 @@ void cltTASSystem::DelClassMate(char* name) {
 }
 
 int cltTASSystem::CanAddStudent(char* name) {
-    if (!name || !name[0]) return 0;
+    if (!name) return 0;
     if (studentCount_ >= kStudentMax) return 0;
 
     if (FindByName(students_, studentCount_, name) >= 0) return 0;
@@ -281,10 +281,8 @@ void cltTASSystem::OnLevelUp(std::uint8_t oldLevel, std::int64_t* outGatherExp, 
     int money = 0;
 
     for (std::uint8_t lv = oldLevel; lv < curLv; ++lv) {
-        const int p = GetMaxGatherExpPercent(myTeacherLevel_, lv);
-        const std::int64_t needExp = cltLevelSystem::GetExpByLevel(static_cast<std::uint8_t>(lv + 1)) -
-                                   cltLevelSystem::GetExpByLevel(lv);
-        const std::int64_t add = (needExp * p) / 100;
+        const std::int64_t p = GetMaxGatherExpPercent(myTeacherLevel_, lv);
+        const std::int64_t add = (p * cltLevelSystem::GetExpByLevel(static_cast<std::uint8_t>(lv + 1))) / 100;
         gathered = ClampAdd64(gathered, add);
     }
 
