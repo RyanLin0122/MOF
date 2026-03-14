@@ -19,7 +19,7 @@ void cltMoneySystem::Free() {
 }
 
 // ----- CanIncreaseMoney：檢查加總是否在 [0, 上限]，且未鎖定 -----
-BOOL cltMoneySystem::CanIncreaseMoney(int a2) {
+bool cltMoneySystem::CanIncreaseMoney(int a2) {
     if (IsLock() == 1) return 0;
 
     // 以 64 位計算避免溢位，忠於反編譯裡用 HIDWORD/OFADD 的意圖
@@ -46,7 +46,7 @@ void cltMoneySystem::IncreaseMoney(int a2) {
 }
 
 // ----- CanDecreaseMoney：未鎖、a2>=0、且 a2<=現金額 -----
-BOOL cltMoneySystem::CanDecreaseMoney(int a2) {
+bool cltMoneySystem::CanDecreaseMoney(int a2) {
     if (IsLock() == 1) return 0;
     if (a2 < 0) return 0;
     return (a2 <= m_money) ? 1 : 0;

@@ -2,18 +2,22 @@
 
 #include <array>
 #include <cstdint>
+#include <algorithm>
+#include <cstring>
+
+#include "Logic/cltBaseInventory.h"
+#include "Logic/cltItemList.h"
+#include "System/cltMoneySystem.h"
+#include "Info/cltCharKindInfo.h"
+#include "System/cltQuestSystem.h"
+#include "System/cltEmblemSystem.h"
+#include "System/cltSpecialtySystem.h"
 
 class CExpRewardParser;
 class CMeritoriousGradeParser;
 class CMeritoriousRewardParser;
 class CSupplyMeritoriousParser;
-class cltBaseInventory;
-class cltCharKindInfo;
-class cltEmblemSystem;
-class cltItemList;
-class cltMoneySystem;
-class cltQuestSystem;
-class cltSpecialtySystem;
+
 struct stMonsterKind;
 
 class CMeritoriousSystem {

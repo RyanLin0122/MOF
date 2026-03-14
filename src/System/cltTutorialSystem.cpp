@@ -1,10 +1,5 @@
 #include "System/cltTutorialSystem.h"
 
-#include <algorithm>
-#include <cmath>
-#include <cstdio>
-#include <cstdlib>
-
 namespace {
 constexpr int kMyAccount = 10;
 constexpr int kMonsterAccount = 100;

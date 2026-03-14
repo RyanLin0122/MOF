@@ -1,9 +1,6 @@
 #pragma once
 #include <cstdint>
 
-#ifndef BOOL
-#define BOOL int
-#endif
 
 // 反編譯顯示含有 vtable（出現 vector deleting destructor）
 // 這裡提供虛擬解構以對應 vptr 版位（[0]）。
@@ -19,17 +16,17 @@ public:
     // 將金額與鎖定旗標清為 0
     void Free();
 
-    // 對應：BOOL __thiscall CanIncreaseMoney(this, a2)
+    // 對應：bool __thiscall CanIncreaseMoney(this, a2)
     // 不在鎖定狀態時，檢查 (money + a2) 是否介於 [0, 2_000_000_000]
-    BOOL CanIncreaseMoney(int a2);
+    bool CanIncreaseMoney(int a2);
 
     // 對應：void __thiscall IncreaseMoney(this, a2)
     // money += a2；若 >= 2_000_000_000 則飽和為上限
     void IncreaseMoney(int a2);
 
-    // 對應：BOOL __thiscall CanDecreaseMoney(this, a2)
+    // 對應：bool __thiscall CanDecreaseMoney(this, a2)
     // 不在鎖定狀態時，僅允許 a2 >= 0 且 a2 <= money
-    BOOL CanDecreaseMoney(int a2);
+    bool CanDecreaseMoney(int a2);
 
     // 對應：void __thiscall DecreaseMoney(this, a2)
     // money -= a2；若 <= 0 則設為 0

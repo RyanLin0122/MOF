@@ -1,13 +1,5 @@
 #include "System/CMeritoriousSystem.h"
 
-#include <algorithm>
-#include <array>
-#include <cstdint>
-#include <cstring>
-
-#include "Logic/cltBaseInventory.h"
-#include "Logic/cltItemList.h"
-#include "System/cltMoneySystem.h"
 
 namespace {
 constexpr std::uint16_t kMaxQuestMonster = 16;
@@ -220,7 +212,7 @@ unsigned int CMeritoriousSystem::GetRewardWarMeritoriousPoint() {
 
     unsigned int total = 0;
     for (std::uint16_t i = 0; i < warQuestMonCount_; ++i) {
-        const unsigned int kill = std::min(warQuestMonKills_[i], warQuestMonGoals_[i]);
+        const unsigned int kill = min(warQuestMonKills_[i], warQuestMonGoals_[i]);
         total = SafeAdd(total, kill);
     }
 

@@ -2,11 +2,12 @@
 
 #include <array>
 #include <cstdint>
-
-class CMofMsg;
-class cltLevelSystem;
-class cltMoneySystem;
-class cltQuestSystem;
+#include <algorithm>
+#include <cstring>
+#include "Network/CMofMsg.h"
+#include "System/cltLevelSystem.h"
+#include "System/cltMoneySystem.h"
+#include "System/cltQuestSystem.h"
 
 struct strTASMemberInfo {
     std::array<char, 32> name{};

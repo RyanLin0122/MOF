@@ -2,11 +2,15 @@
 
 #include <array>
 #include <cstdint>
+#include <algorithm>
+#include <cstdio>
+#include <cstring>
 
-class CMofMsg;
-class cltBaseInventory;
+#include "Logic/cltBaseInventory.h"
+#include "Network/CMofMsg.h"
+#include "Info/cltItemKindInfo.h"
+
 class cltCashShopItem;
-class cltItemKindInfo;
 
 struct strBoughtCashshopItemInfo {
     std::int64_t id{};

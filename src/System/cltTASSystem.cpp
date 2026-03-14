@@ -1,14 +1,5 @@
 #include "System/cltTASSystem.h"
 
-#include <algorithm>
-#include <array>
-#include <cstring>
-
-#include "Network/CMofMsg.h"
-#include "System/cltLevelSystem.h"
-#include "System/cltMoneySystem.h"
-#include "System/cltQuestSystem.h"
-
 namespace {
 constexpr int kFunctionQuestSetTeacher = 13;
 constexpr int kFunctionQuestAddStudent = 14;
@@ -31,14 +22,6 @@ static void AssignName(std::array<char, 32>& out, const char* in) {
 }
 
 static int FindByName(const std::array<strTASMemberInfo, kStudentMax>& arr, int n, const char* name) {
-    if (!name || !name[0]) return -1;
-    for (int i = 0; i < n; ++i) {
-        if (std::strcmp(arr[i].name.data(), name) == 0) return i;
-    }
-    return -1;
-}
-
-static int FindByName(const std::array<strTASMemberInfo, kClassMateMax>& arr, int n, const char* name) {
     if (!name || !name[0]) return -1;
     for (int i = 0; i < n; ++i) {
         if (std::strcmp(arr[i].name.data(), name) == 0) return i;

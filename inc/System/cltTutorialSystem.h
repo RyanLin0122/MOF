@@ -4,6 +4,10 @@
 #include <cstdint>
 #include <string>
 #include <vector>
+#include <algorithm>
+#include <cmath>
+#include <cstdio>
+#include <cstdlib>
 
 class cltTutorialSystem {
 public:
