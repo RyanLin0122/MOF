@@ -25,4 +25,11 @@ void cltPetSkillSystem::SetPetUsingSkill(std::uint8_t, std::uint16_t) {}
 unsigned int cltPetSkillSystem::CanAddPetSkill(std::uint16_t) { return 0; }
 void cltPetSkillSystem::AddPetSkill(std::uint16_t) {}
 std::uint16_t cltPetSkillSystem::GetPetSkillNum() { return 0; }
-
+std::uint16_t* cltPetSkillSystem::GetPetSkillKind() {
+    static std::uint16_t s_dummy[100]{};
+    return s_dummy;
+}
+std::uint16_t* cltPetSkillSystem::GetPetUsingSkillKind() {
+    static std::uint16_t s_dummy[4]{};
+    return s_dummy;
+}

@@ -94,6 +94,7 @@ private:
     void InitializeHelpAndUIState();
 
     void AddTutorialStep(int stepId);
+    void EmitTutorialStep(int stepId);
     void PushSystemMessage(const std::string& msg);
 
     TutorialCharacter* GetMyCharacter();

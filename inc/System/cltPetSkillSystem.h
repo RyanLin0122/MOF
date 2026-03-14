@@ -29,5 +29,6 @@ public:
     unsigned int CanAddPetSkill(std::uint16_t skillKind);
     void AddPetSkill(std::uint16_t skillKind);
     std::uint16_t GetPetSkillNum();
+    std::uint16_t* GetPetSkillKind();
+    std::uint16_t* GetPetUsingSkillKind();
 };
-

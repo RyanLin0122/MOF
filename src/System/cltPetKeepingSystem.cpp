@@ -138,8 +138,15 @@ void cltPetKeepingSystem::KeepingPet(int nowTime) {
         cltPetSkillSystem* skill = petSystem_->GetPetSkillSystem();
         if (skill) {
             const auto num = skill->GetPetSkillNum();
-            for (std::uint16_t i = 0; i < num && i < k.skills.size(); ++i) {
-                k.skills[i] = 0; // no accessor in current codebase
+            if (auto* skills = skill->GetPetSkillKind()) {
+                for (std::uint16_t i = 0; i < num && i < k.skills.size(); ++i) {
+                    k.skills[i] = skills[i];
+                }
+            }
+            if (auto* usingSkills = skill->GetPetUsingSkillKind()) {
+                for (std::size_t i = 0; i < k.usingSkills.size(); ++i) {
+                    k.usingSkills[i] = usingSkills[i];
+                }
             }
         }
         k.keepingStartTime = nowTime;
