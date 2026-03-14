@@ -250,11 +250,9 @@ std::int64_t cltTASSystem::GetGatherExpByStudents() {
 }
 
 std::int64_t cltTASSystem::GetMaxGatherableExpByStudents() {
-    if (!levelSystem_ || !AmIStudent()) return 0;
-
-    const auto myLv = levelSystem_->GetLevel();
-    const int p = GetMaxGatherExpPercent(myTeacherLevel_, myLv);
-    return static_cast<std::int64_t>(p) * 1000;
+    if (!levelSystem_) return 0;
+    // ground-truth: return 5% of total exp at current level
+    return (levelSystem_->GetTotalExpOfLevel() * 5) / 100;
 }
 
 int cltTASSystem::GetMaxGatherExpPercent(strTASMemberInfo* member) {
@@ -263,8 +261,13 @@ int cltTASSystem::GetMaxGatherExpPercent(strTASMemberInfo* member) {
 }
 
 int cltTASSystem::GetMaxGatherExpPercent(std::uint8_t teacherLevel, std::uint8_t myLevel) {
-    const int value = (static_cast<int>(teacherLevel) - static_cast<int>(myLevel)) * 5;
-    return std::clamp(value, 0, 100);
+    // ground-truth:
+    // if teacherLevel >= myLevel => 5
+    // else ((myLevel - teacherLevel) / 2) + 5, capped at 25
+    if (teacherLevel >= myLevel) return 5;
+    int value = (static_cast<int>(myLevel) - static_cast<int>(teacherLevel)) / 2 + 5;
+    if (value > 25) value = 25;
+    return value;
 }
 
 void cltTASSystem::OnLevelUp(std::uint8_t oldLevel, std::int64_t* outGatherExp, int* outMoney) {
@@ -314,7 +317,7 @@ int cltTASSystem::GetMyGatherExpForTeacher() {
 }
 
 int cltTASSystem::GetDelStudentCost(std::uint8_t level) {
-    return 100 * level;
+    return 1000 * level;
 }
 
 void cltTASSystem::FillOutClassMateInfo(CMofMsg* msg) {

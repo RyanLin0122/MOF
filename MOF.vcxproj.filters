@@ -717,6 +717,18 @@
     <ClCompile Include="src\Logic\cltLogicCompatibility.cpp">
       <Filter>來源檔案</Filter>
     </ClCompile>
+    <ClCompile Include="src\Logic\CShortKey.cpp">
+      <Filter>來源檔案</Filter>
+    </ClCompile>
+    <ClCompile Include="src\Logic\CMessageBoxManager.cpp">
+      <Filter>來源檔案</Filter>
+    </ClCompile>
+    <ClCompile Include="src\Logic\cltSystemMessage.cpp">
+      <Filter>來源檔案</Filter>
+    </ClCompile>
+    <ClCompile Include="src\Logic\cltMyCharData.cpp">
+      <Filter>來源檔案</Filter>
+    </ClCompile>
     <ClCompile Include="src\Network\CMofMsg.cpp">
       <Filter>來源檔案</Filter>
     </ClCompile>
@@ -1668,6 +1680,18 @@
       <Filter>標頭檔</Filter>
     </ClInclude>
     <ClInclude Include="inc\Logic\CMeritoriousParsers.h">
+      <Filter>標頭檔</Filter>
+    </ClInclude>
+    <ClInclude Include="inc\Logic\CShortKey.h">
+      <Filter>標頭檔</Filter>
+    </ClInclude>
+    <ClInclude Include="inc\Logic\CMessageBoxManager.h">
+      <Filter>標頭檔</Filter>
+    </ClInclude>
+    <ClInclude Include="inc\Logic\cltSystemMessage.h">
+      <Filter>標頭檔</Filter>
+    </ClInclude>
+    <ClInclude Include="inc\Logic\cltMyCharData.h">
       <Filter>標頭檔</Filter>
     </ClInclude>
   </ItemGroup>

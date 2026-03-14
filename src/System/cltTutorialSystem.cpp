@@ -1,5 +1,11 @@
 #include "System/cltTutorialSystem.h"
 
+#include "Logic/CMessageBoxManager.h"
+#include "Logic/CShortKey.h"
+#include "Logic/cltMyCharData.h"
+#include "Logic/cltSystemMessage.h"
+#include "global.h"
+
 namespace {
 constexpr int kMyAccount = 10;
 constexpr int kMonsterAccount = 100;
@@ -214,6 +220,12 @@ void cltTutorialSystem::MoveCharacterMission(std::uint8_t missionType) {
     const int step = ShouldAdvanceMissionByMovement(missionType);
     if (step <= 0) return;
 
+    // ground-truth special-case: missionType==3 only adds tutorial id 6,
+    // and does not advance tutorial state.
+    if (missionType == 3) {
+        return;
+    }
+
     AddTutorialStep(step);
 }
 
@@ -347,9 +359,15 @@ void cltTutorialSystem::BuildInitialWorld(const TutorialProfile& profile) {
 }
 
 void cltTutorialSystem::InitializeInputAndMessageLayer() {
-    // In original code this resets key map, saves key setting,
-    // creates system message box and pushes 안내 text 8208.
-    // Here we preserve the side effects as deterministic state changes.
+    // keep direct call shape so code can be incrementally aligned with mofclient.c
+    CShortKey::SetAllDefaultKey(g_pShortKeyList);
+    CShortKey::SaveKeySetting(g_pShortKeyList);
+    CMessageBoxManager::AddOK(g_pMsgBoxMgr, 8208, 0, 0, 0, -1);
+
+    const char* msg = g_DCTTextManager.GetText(8208);
+    cltSystemMessage::SetSystemMessage(&g_clSysemMessage, msg, 0, 0, 0);
+    cltMyCharData::SetMyAccount(&g_clMyCharData, kMyAccount);
+
     PushSystemMessage("Tutorial initialized");
 }
 
