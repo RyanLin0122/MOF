@@ -79,7 +79,7 @@ CSupplyMeritoriousParser::CSupplyMeritoriousParser() = default;
 
 CSupplyMeritoriousParser::~CSupplyMeritoriousParser() = default;
 
-bool IsDigit(const char* t)
+bool IsDigit_(const char* t)
 {
     if (!t || !*t) return false;
     for (const unsigned char* p = (const unsigned char*)t; *p; ++p)
@@ -107,11 +107,11 @@ int CSupplyMeritoriousParser::Initialize(char* fileName) {
                 (void)std::strtok(nullptr, delim);
                 tok = std::strtok(nullptr, delim); if (!tok) break;
                 const auto itemKind = TranslateKindCode(tok);
-                tok = std::strtok(nullptr, delim); if (!tok || !IsDigit(tok)) break;
+                tok = std::strtok(nullptr, delim); if (!tok || !IsDigit_(tok)) break;
                 const auto itemCount = static_cast<std::uint16_t>(std::atoi(tok));
-                tok = std::strtok(nullptr, delim); if (!tok || !IsDigit(tok)) break;
+                tok = std::strtok(nullptr, delim); if (!tok || !IsDigit_(tok)) break;
                 const auto rewardPoint = static_cast<std::uint16_t>(std::atoi(tok));
-                tok = std::strtok(nullptr, delim); if (!tok || !IsDigit(tok)) break;
+                tok = std::strtok(nullptr, delim); if (!tok || !IsDigit_(tok)) break;
                 const auto rewardLibi = static_cast<std::uint32_t>(std::atoi(tok));
                 AddSupplyMeritorious(id, itemKind, itemCount, rewardPoint, rewardLibi);
                 if (!std::fgets(buffer, sizeof(buffer), fp)) {
@@ -170,7 +170,7 @@ int CMeritoriousRewardParser::Initialize(char* fileName) {
         if (std::fgets(buffer, sizeof(buffer), fp)) {
             while (true) {
                 char* tok = std::strtok(buffer, delim);
-                if (!tok || !IsDigit(tok)) break;
+                if (!tok || !IsDigit_(tok)) break;
                 const std::uint16_t idx = static_cast<std::uint16_t>(std::atoi(tok));
                 if (idx >= list_.size() || list_[idx]) break;
 
@@ -181,9 +181,9 @@ int CMeritoriousRewardParser::Initialize(char* fileName) {
                 if (!std::strtok(nullptr, delim)) break;
                 tok = std::strtok(nullptr, delim); if (!tok) break;
                 info->itemKind = TranslateKindCode(tok);
-                tok = std::strtok(nullptr, delim); if (!tok || !IsDigit(tok)) break;
+                tok = std::strtok(nullptr, delim); if (!tok || !IsDigit_(tok)) break;
                 info->requirePoint = static_cast<std::uint32_t>(std::atoi(tok));
-                tok = std::strtok(nullptr, delim); if (!tok || !IsDigit(tok)) break;
+                tok = std::strtok(nullptr, delim); if (!tok || !IsDigit_(tok)) break;
                 info->quantity = static_cast<std::uint16_t>(std::atoi(tok));
                 ++count_;
 
@@ -245,7 +245,7 @@ int CMeritoriousGradeParser::Initialize(char* fileName) {
         if (std::fgets(buffer, sizeof(buffer), fp)) {
             while (true) {
                 char* tok = std::strtok(buffer, delim);
-                if (!tok || !IsDigit(tok)) break;
+                if (!tok || !IsDigit_(tok)) break;
                 const std::uint16_t idx = static_cast<std::uint16_t>(std::atoi(tok));
                 if (idx >= list_.size() || list_[idx]) break;
 
@@ -256,11 +256,11 @@ int CMeritoriousGradeParser::Initialize(char* fileName) {
                 tok = std::strtok(nullptr, delim); if (!tok) break;
                 info->needPoint = static_cast<std::uint32_t>(std::atoi(tok));
                 if (!std::strtok(nullptr, delim)) break;
-                tok = std::strtok(nullptr, delim); if (!tok || !IsDigit(tok)) break;
+                tok = std::strtok(nullptr, delim); if (!tok || !IsDigit_(tok)) break;
                 info->rank = static_cast<std::uint16_t>(std::atoi(tok));
-                tok = std::strtok(nullptr, delim); if (!tok || !IsDigit(tok)) break;
+                tok = std::strtok(nullptr, delim); if (!tok || !IsDigit_(tok)) break;
                 info->nextGrade = static_cast<std::uint16_t>(std::atoi(tok));
-                tok = std::strtok(nullptr, delim); if (!tok || !IsDigit(tok)) break;
+                tok = std::strtok(nullptr, delim); if (!tok || !IsDigit_(tok)) break;
                 info->emblem = static_cast<std::uint16_t>(std::atoi(tok));
                 ++count_;
 
