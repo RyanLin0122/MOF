@@ -67,8 +67,6 @@ int cltCashshopSystem::Initialize(cltBaseInventory* inventory, int cashMoney, CM
     inventory_ = inventory;
     cashMoney_ = cashMoney;
 
-    if (!msg) return 1;
-
     std::uint16_t count = 0;
     if (!msg->Get_WORD(&count) || count >= kMaxBoughtItem) {
         Free();
@@ -198,10 +196,11 @@ void cltCashshopSystem::SetVerifiedCharInfo(char* name, char age, std::uint16_t 
     verified_.gender = static_cast<std::uint8_t>(gender);
     verified_.nation = static_cast<std::uint8_t>(nation);
 
-    if (account) std::strncpy(verified_.account.data(), account, verified_.account.size() - 1);
-
-    verified_.value0 = value0;
-    verified_.value1 = value1;
+    if (account) {
+        std::strncpy(verified_.account.data(), account, verified_.account.size() - 1);
+        verified_.value0 = value0;
+        verified_.value1 = value1;
+    }
 }
 
 void cltCashshopSystem::ResetVerifiedCharInfo() {
@@ -234,12 +233,13 @@ int cltCashshopSystem::IsThereVerifiedChar() {
 int cltCashshopSystem::SetBuyingCashItemsInfo(std::uint8_t shopType, std::uint8_t buyCount, int* ids) {
     if (!buyCount) return 0;
     if (buyCount + boughtCount_ >= kMaxBoughtItem) return 0;
+    if (!ids) return 0;
 
     buying_.shopType = shopType;
     buying_.buyCount = buyCount;
 
     for (std::uint8_t i = 0; i < buyCount; ++i) {
-        buying_.itemIds[i] = ids ? ids[i] : 0;
+        buying_.itemIds[i] = ids[i];
     }
 
     return 1;

@@ -201,7 +201,7 @@ void CMeritoriousSystem::SetMeritoriousUpGrade(std::uint16_t grade, std::uint16_
 }
 
 unsigned int CMeritoriousSystem::CanCompleteWarMeritoriousQuest() {
-    if (!warQuestMonCount_) return 1;
+    if (!warQuestMonCount_) return 0;
     for (std::uint16_t i = 0; i < warQuestMonCount_; ++i) {
         if (warQuestMonGoals_[i] == 0) continue;
         if (warQuestMonGoals_[i] > warQuestMonKills_[i]) return 1;
@@ -367,7 +367,6 @@ int CMeritoriousSystem::RewardMeritoriousItem(std::uint16_t itemKind, unsigned i
 
 int CMeritoriousSystem::CanRewardMeritoriousItem(std::uint16_t itemKind) {
     if (!inventory_) return 1;
-    if (!itemKind) return 1;
     const auto requirePoint = m_pclMeritoriousRewardParser
                                   ? m_pclMeritoriousRewardParser->GetMeritoriousRewardItemRequirePoint(itemKind)
                                   : 0;
@@ -383,11 +382,11 @@ void CMeritoriousSystem::SetMeritoriousInfo(unsigned int point, unsigned int tot
                                             const std::uint16_t* warQuestMonGoals) {
     point_ = point;
     totalPoint_ = totalPoint;
-    supplyQuestKind_ = grade;
+    warQuestPlaying_ = warQuestPlaying;
     warQuestDifficulty_ = gradePoint;
     grade_ = static_cast<std::uint8_t>(supplyQuestPlaying);
+    supplyQuestKind_ = grade;
     gradePoint_ = 0;
-    warQuestPlaying_ = warQuestPlaying;
     supplyQuestPlaying_ = 0;
 
     warQuestMonCount_ = std::min<std::uint16_t>(warQuestMonCount, kMaxQuestMonster);

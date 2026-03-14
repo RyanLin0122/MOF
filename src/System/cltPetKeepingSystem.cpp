@@ -55,6 +55,19 @@ void cltPetKeepingSystem::Initialize(int nowTime, std::uint16_t* owner, cltPetSy
         for (int i = 0; i < skillCount && i < static_cast<int>(info.skills.size()); ++i) {
             msg->Get_WORD(&info.skills[i]);
         }
+
+        int usingSkillCount = 0;
+        msg->Get_LONG(&usingSkillCount);
+        for (int i = 0; i < usingSkillCount; ++i) {
+            std::uint8_t slot = 0;
+            std::uint16_t skill = 0;
+            msg->Get_BYTE(&slot);
+            msg->Get_WORD(&skill);
+            if (slot < info.usingSkills.size()) {
+                info.usingSkills[slot] = skill;
+            }
+        }
+
         msg->Get_LONG(&info.keepingStartTime);
     }
 }
@@ -102,6 +115,18 @@ void cltPetKeepingSystem::FillOutPetKeepingInfo(CMofMsg* msg) {
             ++skillCount;
         }
         *skillCountPos = skillCount;
+
+        auto* usingSkillCountPos = reinterpret_cast<std::int32_t*>(msg->GetCurrentPos());
+        msg->Put_LONG(0);
+        int usingSkillCount = 0;
+        for (int i = 0; i < 4; ++i) {
+            if (!info.usingSkills[i]) continue;
+            msg->Put_BYTE(static_cast<std::uint8_t>(i));
+            msg->Put_WORD(info.usingSkills[i]);
+            ++usingSkillCount;
+        }
+        *usingSkillCountPos = usingSkillCount;
+
         msg->Put_LONG(info.keepingStartTime);
     }
     *countPos = count;
@@ -164,7 +189,7 @@ int cltPetKeepingSystem::GetKeepingCost(int petId) {
     auto* k = GetKeepingPetInfo(petId);
     if (!k) return 0;
 
-    int level = 1;
+    int level = 0;
     if (m_pclPetKindInfo) {
         if (auto* info = m_pclPetKindInfo->GetPetKindInfo(k->petKind)) level = info->levelComputed;
     }
@@ -183,7 +208,7 @@ int cltPetKeepingSystem::CanReleaseKeepingPet(int petId) {
     if (IsLock() == 1) return 1;
     if (!GetKeepingPetInfo(petId)) return 1;
     auto* release = GetReleaseKeepingPetCost(petId);
-    if (!moneySystem_ || !moneySystem_->CanIncreaseMoney(static_cast<int>(reinterpret_cast<std::uintptr_t>(release)))) return 106;
+    if (!moneySystem_->CanIncreaseMoney(static_cast<int>(reinterpret_cast<std::uintptr_t>(release)))) return 106;
     return IsPetInventoryEmpty(petId) ? 0 : 1900;
 }
 
@@ -213,9 +238,8 @@ strPetKindInfo* cltPetKeepingSystem::GetReleaseKeepingPetCost(int petId) {
 int cltPetKeepingSystem::CanTakeKeepingPet(int petId) {
     if (IsLock() == 1) return 1;
     if (!GetKeepingPetInfo(petId)) return 1;
-    if (!moneySystem_ || !moneySystem_->CanDecreaseMoney(GetKeepingCost(petId))) return 1;
+    if (!moneySystem_->CanDecreaseMoney(GetKeepingCost(petId))) return 1;
 
-    if (!petSystem_) return 1;
     if (petSystem_->GetPetID()) return petSystem_->CanKeepingPet() ? 0 : 1;
     return petSystem_->CanCreatePet() ? 0 : 1;
 }
@@ -246,6 +270,7 @@ int cltPetKeepingSystem::CanPetMarketRegistry(int petId, int price) {
 void cltPetKeepingSystem::PetMarketRegistry(int petId, int price, int tax) {
     auto* k = GetKeepingPetInfo(petId);
     if (!k) return;
+    GetReleaseKeepingPetCost(petId);
     if (moneySystem_) moneySystem_->DecreaseMoney(price + tax);
     *k = {};
 }
