@@ -11,11 +11,9 @@ void cltClientPartySystem::Create(std::uint8_t count, strPartyMemberInfo* member
     std::array<void*, 5> ptrs{};
     std::memset(m_members.data(), 0, sizeof(m_members));
 
-    if (members && count > 0) {
-        std::memcpy(m_members.data(), members, sizeof(strPartyMemberInfo) * count);
-        for (std::uint8_t i = 0; i < count && i < 5; ++i) {
-            ptrs[i] = &m_members[i];
-        }
+    std::memcpy(m_members.data(), members, sizeof(strPartyMemberInfo) * count);
+    for (std::uint8_t i = 0; i < count; ++i) {
+        ptrs[i] = &m_members[i];
     }
 
     m_incStr = m_incDex = m_incVit = m_incInt = 0;
@@ -26,7 +24,7 @@ void cltClientPartySystem::Join(unsigned int accountId, char* name, char classCo
     for (auto& m : m_members) {
         if (m.dwAccountId != 0) continue;
         m.dwAccountId = accountId;
-        std::strcpy(m.szName, name ? name : "");
+        std::strcpy(m.szName, name);
         m.byClass = static_cast<std::uint8_t>(classCode);
         m.nInfo0 = a5;
         m.nInfo1 = a7;
@@ -41,6 +39,7 @@ void cltClientPartySystem::Join(unsigned int accountId, char* name, char classCo
 void cltClientPartySystem::Leave(unsigned int accountId) {
     auto* member = GetPartyMemberInstance(accountId);
     if (!member) return;
+
     cltPartySystem::Leave(member);
     std::memset(member, 0, sizeof(*member));
 }

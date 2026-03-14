@@ -27,9 +27,9 @@ int cltEmoticonSystem::Initialize(std::uint8_t* shortcutData) {
 
     ++m_ownedSetCount;
     for (int slot = 168; slot <= 191; ++slot) {
-        auto* inv = m_pcltBaseInventory ? m_pcltBaseInventory->GetInventoryItem(static_cast<std::uint16_t>(slot)) : nullptr;
+        auto* inv = m_pcltBaseInventory->GetInventoryItem(static_cast<std::uint16_t>(slot));
         if (!inv || !inv->itemKind || !inv->itemQty) continue;
-        if (!m_pcltEmoticonKindInfo || !m_pcltEmoticonKindInfo->IsEmoticonItem(inv->itemKind)) continue;
+        if (!m_pcltEmoticonKindInfo->IsEmoticonItem(inv->itemKind)) continue;
 
         auto* info = m_pcltEmoticonKindInfo->GetEmoticonItemInfoByID(inv->itemKind);
         if (!info) continue;
@@ -42,7 +42,7 @@ int cltEmoticonSystem::Initialize(std::uint8_t* shortcutData) {
     }
 
     for (int i = 0; i < 5; ++i) {
-        m_shortCut[i] = shortcutData ? shortcutData[i] : 0;
+        m_shortCut[i] = shortcutData[i];
     }
     return 1;
 }
@@ -57,9 +57,9 @@ int cltEmoticonSystem::AutoReload() {
 
     ++m_ownedSetCount;
     for (int slot = 168; slot <= 191; ++slot) {
-        auto* inv = m_pcltBaseInventory ? m_pcltBaseInventory->GetInventoryItem(static_cast<std::uint16_t>(slot)) : nullptr;
+        auto* inv = m_pcltBaseInventory->GetInventoryItem(static_cast<std::uint16_t>(slot));
         if (!inv || !inv->itemKind || !inv->itemQty) continue;
-        if (!m_pcltEmoticonKindInfo || !m_pcltEmoticonKindInfo->IsEmoticonItem(inv->itemKind)) continue;
+        if (!m_pcltEmoticonKindInfo->IsEmoticonItem(inv->itemKind)) continue;
 
         auto* info = m_pcltEmoticonKindInfo->GetEmoticonItemInfoByID(inv->itemKind);
         if (!info) continue;
@@ -109,11 +109,10 @@ int cltEmoticonSystem::GetData(std::uint8_t index) {
 }
 
 void cltEmoticonSystem::AddEmoticonItem(std::uint16_t kind) {
-    if (!m_pcltEmoticonKindInfo || !m_pcltEmoticonKindInfo->IsEmoticonItem(kind)) return;
+    if (!m_pcltEmoticonKindInfo->IsEmoticonItem(kind)) return;
     auto* info = m_pcltEmoticonKindInfo->GetEmoticonItemInfoByID(kind);
     if (!info) return;
 
-    if (m_ownedSetCount >= 24) return;
     for (int i = 0; i < 5; ++i) {
         const int idx = 5 * m_ownedSetCount + i;
         m_kindSlots[idx] = static_cast<std::uint16_t>(info->slot[i].kind);
@@ -122,7 +121,7 @@ void cltEmoticonSystem::AddEmoticonItem(std::uint16_t kind) {
 }
 
 void cltEmoticonSystem::DelEmoticonItem(std::uint16_t kind) {
-    if (!m_pcltEmoticonKindInfo || !m_pcltEmoticonKindInfo->IsEmoticonItem(kind)) return;
+    if (!m_pcltEmoticonKindInfo->IsEmoticonItem(kind)) return;
     if (!m_pcltEmoticonKindInfo->GetEmoticonItemInfoByID(kind)) return;
 
     for (int group = 0; group < m_ownedSetCount; ++group) {

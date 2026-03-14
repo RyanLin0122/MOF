@@ -66,7 +66,7 @@ void cltMyItemSystem::Free() {
 unsigned int cltMyItemSystem::CanAddMyItem(std::uint16_t myItemKind) {
     if (m_myItemCount >= 10) return 1;
 
-    auto* info = m_pclMyItemKindInfo ? m_pclMyItemKindInfo->GetMyItemKindInfo(myItemKind) : nullptr;
+    auto* info = m_pclMyItemKindInfo->GetMyItemKindInfo(myItemKind);
     if (!info) return 1;
 
     if (!info->dwDuplicate) {
@@ -78,9 +78,9 @@ unsigned int cltMyItemSystem::CanAddMyItem(std::uint16_t myItemKind) {
     }
 
     if (static_cast<int>(info->dwSpouseDailySummonCharge) > 0) {
-        if (!m_marriageSystem || !m_marriageSystem->IsMarried()) return 1;
+        if (!m_marriageSystem->IsMarried()) return 1;
         const auto coupleRingKind = m_marriageSystem->GetCoupleRingKind();
-        auto* ring = m_pclCoupleRingKindInfo ? m_pclCoupleRingKindInfo->GetCoupleRingKindInfo(coupleRingKind) : nullptr;
+        auto* ring = m_pclCoupleRingKindInfo->GetCoupleRingKindInfo(coupleRingKind);
         if (!ring || ring->canSummonSpouse <= 0) return 1;
     }
 
@@ -88,21 +88,19 @@ unsigned int cltMyItemSystem::CanAddMyItem(std::uint16_t myItemKind) {
 }
 
 void cltMyItemSystem::AddMyItem(std::uint16_t myItemKind, int v0, int v1, int v2) {
-    if (m_myItemCount >= 10) return;
-
     auto& item = m_myItems[m_myItemCount++];
     item.wKind = myItemKind;
     item.nValue0 = v0;
     item.nValue1 = v1;
     item.nValue2 = v2;
 
-    auto* info = m_pclMyItemKindInfo ? m_pclMyItemKindInfo->GetMyItemKindInfo(myItemKind) : nullptr;
+    auto* info = m_pclMyItemKindInfo->GetMyItemKindInfo(myItemKind);
     if (!info) return;
 
-    if (info->dwIsPremiumQuickSlot == 1 && m_quickSlotSystem) {
+    if (info->dwIsPremiumQuickSlot == 1) {
         m_quickSlotSystem->OnPremiumQuickSlotEnabled();
     }
-    if (static_cast<int>(info->dwSpouseDailySummonCharge) > 0 && m_marriageSystem) {
+    if (static_cast<int>(info->dwSpouseDailySummonCharge) > 0) {
         m_marriageSystem->OnChargeRecallQtyByMyItem(static_cast<int>(info->dwSpouseDailySummonCharge));
     }
 }
@@ -113,8 +111,8 @@ void cltMyItemSystem::DelMyItem(std::uint16_t myItemKind, int v0) {
             std::memmove(&m_myItems[i], &m_myItems[i + 1], sizeof(strMyItem) * (m_myItemCount - i - 1));
             --m_myItemCount;
 
-            auto* info = m_pclMyItemKindInfo ? m_pclMyItemKindInfo->GetMyItemKindInfo(myItemKind) : nullptr;
-            if (info && info->dwIsPremiumQuickSlot == 1 && m_quickSlotSystem) {
+            auto* info = m_pclMyItemKindInfo->GetMyItemKindInfo(myItemKind);
+            if (info && info->dwIsPremiumQuickSlot == 1) {
                 m_quickSlotSystem->OnPremiumQuickSlotDisabled();
             }
             return;
@@ -127,8 +125,8 @@ void cltMyItemSystem::DeleteExpiredMyItem() {
 
     for (int i = 0; i < m_myItemCount; ++i) {
         if (m_myItems[i].nValue0 <= static_cast<int>(now)) {
-            auto* info = m_pclMyItemKindInfo ? m_pclMyItemKindInfo->GetMyItemKindInfo(m_myItems[i].wKind) : nullptr;
-            if (info && info->dwIsPremiumQuickSlot == 1 && m_quickSlotSystem) {
+            auto* info = m_pclMyItemKindInfo->GetMyItemKindInfo(m_myItems[i].wKind);
+            if (info && info->dwIsPremiumQuickSlot == 1) {
                 m_quickSlotSystem->OnPremiumQuickSlotDisabled();
             }
             if (m_pMyItemFuncPtr_OnMyItemTimeouted) {
@@ -145,7 +143,7 @@ void cltMyItemSystem::DeleteExpiredMyItem() {
 int cltMyItemSystem::GetExpAdvantage() {
     int total = 0;
     for (int i = 0; i < m_myItemCount; ++i) {
-        auto* info = m_pclMyItemKindInfo ? m_pclMyItemKindInfo->GetMyItemKindInfo(m_myItems[i].wKind) : nullptr;
+        auto* info = m_pclMyItemKindInfo->GetMyItemKindInfo(m_myItems[i].wKind);
         if (info) total += static_cast<int>(info->dwExpAdv100);
     }
     return total;
@@ -154,7 +152,7 @@ int cltMyItemSystem::GetExpAdvantage() {
 int cltMyItemSystem::GetDropMoneyAmountAdvangae() {
     int total = 0;
     for (int i = 0; i < m_myItemCount; ++i) {
-        auto* info = m_pclMyItemKindInfo ? m_pclMyItemKindInfo->GetMyItemKindInfo(m_myItems[i].wKind) : nullptr;
+        auto* info = m_pclMyItemKindInfo->GetMyItemKindInfo(m_myItems[i].wKind);
         if (info) total += static_cast<int>(info->dwDropMoneyAmountAdv100);
     }
     return total;
@@ -164,7 +162,7 @@ int cltMyItemSystem::GetSpouseChargeRecallQty(cltMyItemSystem* self) { return se
 
 int cltMyItemSystem::GetSpouseChargeRecallQty() {
     for (int i = 0; i < m_myItemCount; ++i) {
-        auto* info = m_pclMyItemKindInfo ? m_pclMyItemKindInfo->GetMyItemKindInfo(m_myItems[i].wKind) : nullptr;
+        auto* info = m_pclMyItemKindInfo->GetMyItemKindInfo(m_myItems[i].wKind);
         if (info && info->dwSpouseDailySummonCharge) {
             return static_cast<int>(info->dwSpouseDailySummonCharge);
         }

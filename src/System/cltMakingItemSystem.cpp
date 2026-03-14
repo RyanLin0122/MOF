@@ -39,8 +39,8 @@ cltMakingItemSystem::~cltMakingItemSystem() { Free(); }
 void cltMakingItemSystem::Initialize(cltBaseInventory* baseInventory, cltSpecialtySystem* specialtySystem, int acquiredCount, std::uint16_t* acquiredKinds) {
     m_baseInventory = baseInventory;
     m_specialtySystem = specialtySystem;
-    m_acquiredCount = std::clamp(acquiredCount, 0, 1000);
-    if (acquiredKinds && m_acquiredCount > 0) {
+    m_acquiredCount = acquiredCount;
+    if (m_acquiredCount > 0) {
         std::memcpy(m_acquiredKinds, acquiredKinds, sizeof(std::uint16_t) * m_acquiredCount);
     }
 }
@@ -67,9 +67,7 @@ int cltMakingItemSystem::CanAcquireMakingItem(std::uint16_t makingKind) {
 }
 
 void cltMakingItemSystem::AcquireMakingItem(std::uint16_t makingKind) {
-    if (m_acquiredCount < 1000) {
-        m_acquiredKinds[m_acquiredCount++] = makingKind;
-    }
+    m_acquiredKinds[m_acquiredCount++] = makingKind;
 }
 
 void cltMakingItemSystem::FillOutMakingItemInfo(CMofMsg* msg) {
@@ -81,8 +79,7 @@ unsigned int cltMakingItemSystem::CanMakingItem(std::uint16_t makingKind, std::u
     if (!IsAcquireMakingItem(makingKind)) return 1;
     if (!IsValidMakingItem(makingKind)) return 1;
 
-    auto* info = m_pclMakingItemKindInfo ? m_pclMakingItemKindInfo->GetMakingItemKindInfo(makingKind) : nullptr;
-    if (!info || !m_baseInventory) return 1;
+    auto* info = m_pclMakingItemKindInfo->GetMakingItemKindInfo(makingKind);
 
     for (int i = 0; i < 10; ++i) {
         const auto ingredientKind = info->Ingredient[i].Kind;
@@ -97,8 +94,7 @@ unsigned int cltMakingItemSystem::CanMakingItem(std::uint16_t makingKind, std::u
 }
 
 int cltMakingItemSystem::MakingItem(unsigned int seed, std::uint16_t makingKind, std::uint16_t tryQty, std::uint8_t* changedFlag) {
-    auto* info = m_pclMakingItemKindInfo ? m_pclMakingItemKindInfo->GetMakingItemKindInfo(makingKind) : nullptr;
-    if (!info || !m_baseInventory) return 0;
+    auto* info = m_pclMakingItemKindInfo->GetMakingItemKindInfo(makingKind);
 
     for (int i = 0; i < 10; ++i) {
         const auto ingredientKind = info->Ingredient[i].Kind;
@@ -122,8 +118,8 @@ int cltMakingItemSystem::MakingItem(unsigned int seed, std::uint16_t makingKind,
 }
 
 std::uint16_t cltMakingItemSystem::GetMaxMakeableItemQty(std::uint16_t makingKind) {
-    auto* info = m_pclMakingItemKindInfo ? m_pclMakingItemKindInfo->GetMakingItemKindInfo(makingKind) : nullptr;
-    if (!info || !m_baseInventory) return 0;
+    auto* info = m_pclMakingItemKindInfo->GetMakingItemKindInfo(makingKind);
+    if (!info) return 0;
 
     std::uint16_t maxQty = 0xFFFF;
     for (int i = 0; i < 10; ++i) {
@@ -139,19 +135,17 @@ std::uint16_t cltMakingItemSystem::GetMaxMakeableItemQty(std::uint16_t makingKin
 }
 
 int cltMakingItemSystem::GetAcquiredMakingItemKinds(std::uint16_t* outKinds) {
-    if (!outKinds) return 0;
-
     int total = 0;
     std::uint16_t specialtyKinds[30]{};
-    const int specialtyCount = m_specialtySystem ? m_specialtySystem->GetAcquiredMakingItemSpecialty(specialtyKinds) : 0;
+    const int specialtyCount = m_specialtySystem->GetAcquiredMakingItemSpecialty(specialtyKinds);
     for (int i = 0; i < specialtyCount; ++i) {
-        auto* info = m_pclSpecialtyKindInfo ? m_pclSpecialtyKindInfo->GetSpecialtyKindInfo(specialtyKinds[i]) : nullptr;
+        auto* info = m_pclSpecialtyKindInfo->GetSpecialtyKindInfo(specialtyKinds[i]);
         while (info) {
             for (std::uint16_t skillKind : info->wAcquiredSkillKinds) {
                 if (!skillKind) break;
                 if (total < 1000) outKinds[total++] = skillKind;
             }
-            info = m_pclSpecialtyKindInfo ? m_pclSpecialtyKindInfo->GetSpecialtyKindInfo(info->wRequiredSpecialtyKind) : nullptr;
+            info = m_pclSpecialtyKindInfo->GetSpecialtyKindInfo(info->wRequiredSpecialtyKind);
         }
     }
 
@@ -164,7 +158,7 @@ int cltMakingItemSystem::GetAcquiredMakingItemKinds(std::uint16_t* outKinds) {
 int cltMakingItemSystem::GetMakingItemKinds(unsigned int itemType, std::uint16_t* outKinds) {
     std::uint16_t acquired[1000]{};
     const int acquiredCount = GetAcquiredMakingItemKinds(acquired);
-    if (acquiredCount <= 0 || !outKinds) return 0;
+    if (acquiredCount <= 0) return 0;
 
     std::vector<strMakingItemKindInfo*> infos(acquiredCount, nullptr);
     for (int i = 0; i < acquiredCount; ++i) {
@@ -174,9 +168,8 @@ int cltMakingItemSystem::GetMakingItemKinds(unsigned int itemType, std::uint16_t
 
     int outCount = 0;
     for (auto* info : infos) {
-        if (!info) continue;
-        auto* itemInfo = m_pclItemKindInfo ? m_pclItemKindInfo->GetItemKindInfo(info->ResultItemID) : nullptr;
-        if (itemInfo && itemInfo->m_wItemType == itemType) {
+        auto* itemInfo = m_pclItemKindInfo->GetItemKindInfo(info->ResultItemID);
+        if (itemInfo->m_wItemType == itemType) {
             outKinds[outCount++] = info->MakingID;
         }
     }
@@ -184,7 +177,7 @@ int cltMakingItemSystem::GetMakingItemKinds(unsigned int itemType, std::uint16_t
 }
 
 int cltMakingItemSystem::IsValidMakingItem(std::uint16_t makingKind) {
-    const auto reqSpecialty = m_pclItemKindInfo ? m_pclItemKindInfo->GetReqSpecialtyKindByMakingItemKind(makingKind) : 0;
+    const auto reqSpecialty = m_pclItemKindInfo->GetReqSpecialtyKindByMakingItemKind(makingKind);
     if (!reqSpecialty) return 1;
-    return m_specialtySystem ? m_specialtySystem->IsAcquiredSpecialty(reqSpecialty) : 0;
+    return m_specialtySystem->IsAcquiredSpecialty(reqSpecialty);
 }
