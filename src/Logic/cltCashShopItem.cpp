@@ -391,7 +391,10 @@ stItemKindInfo* cltCashShopItem::IsFashionItem(stCashShopItemList* a2) {
         if (!p) continue;
         for (int i = 0; i < 5; ++i) {
             if (!p->itemKind[i]) continue;
-            return g_clItemKindInfo.IsFashionItem(p->itemKind[i]);
+            if (g_clItemKindInfo.IsFashionItem(p->itemKind[i])) {
+                return g_clItemKindInfo.GetItemKindInfo(p->itemKind[i]);
+            }
+            return nullptr;
         }
     }
     return nullptr;
