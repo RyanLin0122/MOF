@@ -105,7 +105,7 @@ unsigned int CMeritoriousSystem::StartWarMeritoriousQuest(std::uint16_t mapKind,
         }
     }
     warQuestPlaying_ = true;
-    warQuestDifficulty_ = static_cast<std::uint16_t>(std::max(difficulty, 0));
+    warQuestDifficulty_ = static_cast<std::uint16_t>(max(difficulty, 0));
     return 0;
 }
 
@@ -377,7 +377,7 @@ void CMeritoriousSystem::SetMeritoriousInfo(unsigned int point, unsigned int tot
 
 void CMeritoriousSystem::SetWarMeritoriousQuest(int playing, int difficulty) {
     warQuestPlaying_ = (playing != 0);
-    warQuestDifficulty_ = static_cast<std::uint16_t>(std::max(difficulty, 0));
+    warQuestDifficulty_ = static_cast<std::uint16_t>(max(difficulty, 0));
     if (!warQuestPlaying_) {
         warQuestMonKills_.fill(0);
     }

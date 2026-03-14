@@ -7,11 +7,13 @@
 
 #include "Logic/cltBaseInventory.h"
 #include "Logic/cltItemList.h"
+#include "Logic/CMeritoriousParsers.h"
 #include "System/cltMoneySystem.h"
 #include "Info/cltCharKindInfo.h"
 #include "System/cltQuestSystem.h"
 #include "System/cltEmblemSystem.h"
 #include "System/cltSpecialtySystem.h"
+
 
 class CExpRewardParser;
 class CMeritoriousGradeParser;

@@ -11,7 +11,6 @@ FORCE_MISSING_CLASSES = [
     "ClientCharacter",
     "ClientCharacterManager",
     "cltQuestSystem",
-    "CMeritoriousSystem",
     "cltUsingSkillSystem",
     "cltMyItemSystem",
     "cltPetSkillSystem"

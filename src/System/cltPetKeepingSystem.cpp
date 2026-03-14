@@ -26,7 +26,7 @@ void cltPetKeepingSystem::Initialize(int nowTime, std::uint16_t* owner, cltPetSy
 
     int count = 0;
     msg->Get_LONG(&count);
-    count = std::min(count, static_cast<int>(keepings_.size()));
+    count = min(count, static_cast<int>(keepings_.size()));
 
     for (int idx = 0; idx < count; ++idx) {
         auto& info = keepings_[idx];
