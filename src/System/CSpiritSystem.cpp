@@ -4,12 +4,11 @@
 #include <cstdio>
 #include <cstdlib>
 #include <cstring>
-#include <utility>
 
 #include "global.h"
 
 namespace {
-bool IsDigitStr(const char* s) {
+bool IsDigit(const char* s) {
     if (!s || !*s) return false;
     for (const unsigned char* p = reinterpret_cast<const unsigned char*>(s); *p; ++p) {
         if (!std::isdigit(*p)) return false;
@@ -26,125 +25,149 @@ bool IsAlphaNumeric(const char* s) {
 }
 } // namespace
 
-CSpiritSystem::CSpiritSystem() = default;
-CSpiritSystem::~CSpiritSystem() = default;
+CSpiritSystem::CSpiritSystem() { m_infoCount = 0; }
+
+CSpiritSystem::~CSpiritSystem() {
+    for (auto*& info : m_infos) {
+        delete info;
+        info = nullptr;
+    }
+    m_infoCount = 0;
+}
 
 int CSpiritSystem::Initialize(char* filename) {
-    m_infos.clear();
+    char delimiter[3] = "\t\n";
+    int count = 0;
+    int success = 0;
 
     FILE* fp = g_clTextFileManager.fopen(filename);
     if (!fp) return 0;
 
-    char line[1024]{};
-    const char* delimiter = "\t\n";
+    char buffer[1024]{};
+    if (std::fgets(buffer, sizeof(buffer), fp) && std::fgets(buffer, sizeof(buffer), fp) && std::fgets(buffer, sizeof(buffer), fp)) {
+        if (std::fgets(buffer, sizeof(buffer), fp)) {
+            while (true) {
+                char* tok = std::strtok(buffer, delimiter);
+                if (!tok) break;
 
-    if (!std::fgets(line, sizeof(line), fp) || !std::fgets(line, sizeof(line), fp) || !std::fgets(line, sizeof(line), fp)) {
-        g_clTextFileManager.fclose(fp);
-        return 0;
-    }
+                if (count >= static_cast<int>(m_infos.size())) {
+                    break;
+                }
 
-    std::vector<stSpiritInfo> parsedInfos;
-    while (std::fgets(line, sizeof(line), fp)) {
-        stSpiritInfo info{};
-        char* tok = std::strtok(line, delimiter);
-        if (!tok) break;
-        info.wKind = TranslateKindCode(tok);
+                const std::uint16_t kind = TranslateKindCode(tok);
+                if (m_infos[static_cast<std::uint16_t>(count)] != nullptr) {
+                    break;
+                }
 
-        tok = std::strtok(nullptr, delimiter);
-        if (!tok) break;
+                auto* info = new stSpiritInfo{};
+                m_infos[static_cast<std::uint16_t>(count)] = info;
+                info->wSpiritId = kind;
 
-        tok = std::strtok(nullptr, delimiter);
-        if (!tok || !IsDigitStr(tok)) break;
-        info.wTextCode = static_cast<std::uint16_t>(std::atoi(tok));
+                if (!std::strtok(nullptr, delimiter)) break;
 
-        tok = std::strtok(nullptr, delimiter);
-        if (!tok || !IsDigitStr(tok)) break;
-        info.wGrade = static_cast<std::uint16_t>(std::atoi(tok));
+                tok = std::strtok(nullptr, delimiter);
+                if (!tok || !IsDigit(tok)) break;
+                info->wNameTextCode = static_cast<std::uint16_t>(std::atoi(tok));
 
-        tok = std::strtok(nullptr, delimiter);
-        if (!tok || !IsDigitStr(tok)) break;
-        info.wFromLevel = static_cast<std::uint16_t>(std::atoi(tok));
+                tok = std::strtok(nullptr, delimiter);
+                if (!tok || !IsDigit(tok)) break;
+                info->wDescTextCode = static_cast<std::uint16_t>(std::atoi(tok));
 
-        tok = std::strtok(nullptr, delimiter);
-        if (!tok || !IsDigitStr(tok)) break;
-        info.wToLevel = static_cast<std::uint16_t>(std::atoi(tok));
+                tok = std::strtok(nullptr, delimiter);
+                if (!tok || !IsDigit(tok)) break;
+                info->wNeedLevelFrom = static_cast<std::uint16_t>(std::atoi(tok));
 
-        tok = std::strtok(nullptr, delimiter);
-        if (!tok) break;
-        info.wSpiritKind = TranslateKindCode(tok);
+                tok = std::strtok(nullptr, delimiter);
+                if (!tok || !IsDigit(tok)) break;
+                info->wNeedLevelTo = static_cast<std::uint16_t>(std::atoi(tok));
 
-        tok = std::strtok(nullptr, delimiter);
-        if (!tok || !IsDigitStr(tok)) break;
-        info.wUnknown6 = static_cast<std::uint16_t>(std::atoi(tok));
+                tok = std::strtok(nullptr, delimiter);
+                if (!tok) break;
+                info->wNeedItemId = TranslateKindCode(tok);
 
-        tok = std::strtok(nullptr, delimiter);
-        if (!tok || !IsDigitStr(tok)) break;
-        info.wUnknown7 = static_cast<std::uint16_t>(std::atoi(tok));
+                tok = std::strtok(nullptr, delimiter);
+                if (!tok || !IsDigit(tok)) break;
+                info->wSpiritAttribute = static_cast<std::uint16_t>(std::atoi(tok));
 
-        tok = std::strtok(nullptr, delimiter);
-        if (!tok || !IsDigitStr(tok)) break;
-        info.wUnknown8 = static_cast<std::uint16_t>(std::atoi(tok));
+                tok = std::strtok(nullptr, delimiter);
+                if (!tok || !IsDigit(tok)) break;
+                info->wIncStr = static_cast<std::uint16_t>(std::atoi(tok));
 
-        tok = std::strtok(nullptr, delimiter);
-        if (!tok || !IsDigitStr(tok)) break;
-        info.wUnknown9 = static_cast<std::uint16_t>(std::atoi(tok));
+                tok = std::strtok(nullptr, delimiter);
+                if (!tok || !IsDigit(tok)) break;
+                info->wIncInt = static_cast<std::uint16_t>(std::atoi(tok));
 
-        tok = std::strtok(nullptr, delimiter);
-        if (!tok || !IsDigitStr(tok)) break;
-        info.wUnknown10 = static_cast<std::uint16_t>(std::atoi(tok));
+                tok = std::strtok(nullptr, delimiter);
+                if (!tok || !IsDigit(tok)) break;
+                info->wIncDex = static_cast<std::uint16_t>(std::atoi(tok));
 
-        tok = std::strtok(nullptr, delimiter);
-        if (!tok || !IsAlphaNumeric(tok)) break;
-        std::sscanf(tok, "%hx", &info.wResId);
+                tok = std::strtok(nullptr, delimiter);
+                if (!tok || !IsDigit(tok)) break;
+                info->wIncVit = static_cast<std::uint16_t>(std::atoi(tok));
 
-        tok = std::strtok(nullptr, delimiter);
-        if (!tok || !IsDigitStr(tok)) break;
-        info.wBlockId = static_cast<std::uint16_t>(std::atoi(tok));
+                tok = std::strtok(nullptr, delimiter);
+                if (!tok || !IsAlphaNumeric(tok)) break;
+                std::sscanf(tok, "%x", &info->dwResourceId);
 
-        tok = std::strtok(nullptr, delimiter);
-        if (!tok || !IsDigitStr(tok)) break;
-        info.wTooltipId = static_cast<std::uint16_t>(std::atoi(tok));
+                tok = std::strtok(nullptr, delimiter);
+                if (!tok || !IsDigit(tok)) break;
+                info->wStartBlockId = static_cast<std::uint16_t>(std::atoi(tok));
 
-        parsedInfos.push_back(info);
-    }
+                tok = std::strtok(nullptr, delimiter);
+                if (!tok || !IsDigit(tok)) break;
+                info->wBlockCount = static_cast<std::uint16_t>(std::atoi(tok));
 
-    const bool success = std::feof(fp) != 0;
-    if (success) {
-        m_infos = std::move(parsedInfos);
+                ++count;
+                if (!std::fgets(buffer, sizeof(buffer), fp)) {
+                    success = 1;
+                    m_infoCount = static_cast<std::uint16_t>(count);
+                    break;
+                }
+            }
+        } else {
+            success = 1;
+            m_infoCount = 0;
+        }
     }
 
     g_clTextFileManager.fclose(fp);
-    return success ? 1 : 0;
+    return success;
 }
 
 std::uint16_t CSpiritSystem::GetSpiritKind(std::uint16_t level) {
-    for (const auto& info : m_infos) {
-        if (info.wFromLevel <= level && info.wToLevel >= level) {
-            return info.wKind;
+    if (!m_infoCount) return 0;
+    for (std::uint16_t i = 0; i < m_infoCount; ++i) {
+        auto* info = m_infos[i];
+        if (info && info->wNeedLevelFrom <= level && info->wNeedLevelTo >= level) {
+            return info->wSpiritId;
         }
     }
     return 0;
 }
 
 stSpiritInfo* CSpiritSystem::GetSpiritInfo(std::uint16_t spiritKind, std::uint16_t level) {
-    for (auto& info : m_infos) {
-        if (info.wSpiritKind == spiritKind && info.wFromLevel <= level && info.wToLevel >= level) {
-            return &info;
+    if (!m_infoCount) return nullptr;
+    for (std::uint16_t i = 0; i < m_infoCount; ++i) {
+        auto* info = m_infos[i];
+        if (info && info->wNeedItemId == spiritKind && info->wNeedLevelFrom <= level && info->wNeedLevelTo >= level) {
+            return info;
         }
     }
     return nullptr;
 }
 
 stSpiritInfo* CSpiritSystem::GetSpiritInfo(std::uint16_t kind) {
-    for (auto& info : m_infos) {
-        if (info.wKind == kind) return &info;
+    if (!m_infoCount) return nullptr;
+    for (std::uint16_t i = 0; i < m_infoCount; ++i) {
+        auto* info = m_infos[i];
+        if (info && info->wSpiritId == kind) return info;
     }
     return nullptr;
 }
 
 std::uint16_t CSpiritSystem::TranslateKindCode(char* s) {
     if (!s || std::strlen(s) != 5) return 0;
-    const int prefix = (std::toupper(*s) + 31) << 11;
+    const int prefix = (std::toupper(static_cast<unsigned char>(*s)) + 31) << 11;
     const auto number = static_cast<std::uint16_t>(std::atoi(s + 1));
     if (number >= 0x800u) return 0;
     return static_cast<std::uint16_t>(prefix | number);

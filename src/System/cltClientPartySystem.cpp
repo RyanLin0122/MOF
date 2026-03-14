@@ -40,7 +40,11 @@ void cltClientPartySystem::Leave(unsigned int accountId) {
     auto* member = GetPartyMemberInstance(accountId);
     if (!member) return;
 
-    cltPartySystem::Leave(member);
+    if (accountId == cltPartySystem::GetUserData1()) {
+        cltPartySystem::Free();
+    } else {
+        cltPartySystem::Leave(member);
+    }
     std::memset(member, 0, sizeof(*member));
 }
 
@@ -56,8 +60,7 @@ strPartyMemberInfo* cltClientPartySystem::GetPartyMemberInfo(std::uint8_t index)
 }
 
 unsigned int* cltClientPartySystem::GetLeaderAccount() {
-    auto* lead = static_cast<unsigned int*>(cltPartySystem::GetLeadInstance());
-    return lead ? reinterpret_cast<unsigned int*>(*reinterpret_cast<void**>(lead)) : nullptr;
+    return static_cast<unsigned int*>(cltPartySystem::GetLeadInstance());
 }
 
 void cltClientPartySystem::UpdatePartyMemberInfo(unsigned int accountId, char classCode, int a4, int a5, int a6, int a7, std::int64_t a8) {

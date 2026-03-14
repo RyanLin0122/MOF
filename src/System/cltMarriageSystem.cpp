@@ -91,7 +91,7 @@ void cltMarriageSystem::ChangeCoupleRing(int now, std::uint16_t ringKind) {
 
     if (info->canSummonSpouse > 0) {
         m_remainedRecallQty = info->canSummonSpouse;
-        m_remainedRecallQtyMyItem = cltMyItemSystem::GetSpouseChargeRecallQty(m_pMyItemSystem);
+        m_remainedRecallQtyMyItem = m_pMyItemSystem ? m_pMyItemSystem->GetSpouseChargeRecallQty() : 0;
     } else {
         m_remainedRecallQty = 0;
         m_remainedRecallQtyMyItem = 0;
@@ -250,7 +250,7 @@ int cltMarriageSystem::ChargeRecallQty(int now) {
     if (!info) return 0;
 
     m_remainedRecallQty = info->canSummonSpouse;
-    m_remainedRecallQtyMyItem = cltMyItemSystem::GetSpouseChargeRecallQty(m_pMyItemSystem);
+    m_remainedRecallQtyMyItem = m_pMyItemSystem ? m_pMyItemSystem->GetSpouseChargeRecallQty() : 0;
     m_lastChargedRecallQtyTime = now;
     return 1;
 }
