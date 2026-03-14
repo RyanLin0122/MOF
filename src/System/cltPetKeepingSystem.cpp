@@ -24,22 +24,37 @@ void cltPetKeepingSystem::Initialize(int nowTime, std::uint16_t* owner, cltPetSy
 
     if (!msg) return;
 
-    for (auto& info : keepings_) {
-        msg->Get_LONG(&info.petId);
-        if (!info.petId) continue;
+    int count = 0;
+    msg->Get_LONG(&count);
+    count = std::min(count, static_cast<int>(keepings_.size()));
 
+    for (int idx = 0; idx < count; ++idx) {
+        auto& info = keepings_[idx];
+        int itemCount = 0;
+        int skillCount = 0;
+        msg->Get_LONG(&info.petId);
         msg->Get_WORD(&info.petKind);
         msg->Get_Z1(info.petName, 0, 0, nullptr);
         msg->Get_LONG(&info.petExp);
         msg->Get_LONG(&info.petSatiety);
         msg->Get_BYTE(&info.bagNum);
-
-        for (int i = 0; i < 255; ++i) {
-            msg->Get_WORD(&info.itemKinds[i]);
-            msg->Get_WORD(&info.itemQtys[i]);
+        msg->Get_LONG(&itemCount);
+        for (int i = 0; i < itemCount; ++i) {
+            std::uint8_t slot = 0;
+            msg->Get_BYTE(&slot);
+            if (slot >= info.itemKinds.size()) {
+                std::uint16_t dummy = 0;
+                msg->Get_WORD(&dummy);
+                msg->Get_WORD(&dummy);
+                continue;
+            }
+            msg->Get_WORD(&info.itemKinds[slot]);
+            msg->Get_WORD(&info.itemQtys[slot]);
         }
-        for (int i = 0; i < 100; ++i) msg->Get_WORD(&info.skills[i]);
-        for (int i = 0; i < 4; ++i) msg->Get_WORD(&info.usingSkills[i]);
+        msg->Get_LONG(&skillCount);
+        for (int i = 0; i < skillCount && i < static_cast<int>(info.skills.size()); ++i) {
+            msg->Get_WORD(&info.skills[i]);
+        }
         msg->Get_LONG(&info.keepingStartTime);
     }
 }
@@ -55,22 +70,41 @@ void cltPetKeepingSystem::Free() {
 
 void cltPetKeepingSystem::FillOutPetKeepingInfo(CMofMsg* msg) {
     if (!msg) return;
+    auto* countPos = reinterpret_cast<std::int32_t*>(msg->GetCurrentPos());
+    msg->Put_LONG(0);
+    int count = 0;
     for (const auto& info : keepings_) {
-        msg->Put_LONG(info.petId);
         if (!info.petId) continue;
+        ++count;
+        msg->Put_LONG(info.petId);
         msg->Put_WORD(info.petKind);
         msg->Put_Z1(const_cast<char*>(info.petName));
         msg->Put_LONG(info.petExp);
         msg->Put_LONG(info.petSatiety);
         msg->Put_BYTE(info.bagNum);
+        auto* itemCountPos = reinterpret_cast<std::int32_t*>(msg->GetCurrentPos());
+        msg->Put_LONG(0);
+        int itemCount = 0;
         for (int i = 0; i < 255; ++i) {
+            if (!info.itemKinds[i]) continue;
+            msg->Put_BYTE(static_cast<std::uint8_t>(i));
             msg->Put_WORD(info.itemKinds[i]);
             msg->Put_WORD(info.itemQtys[i]);
+            ++itemCount;
         }
-        for (int i = 0; i < 100; ++i) msg->Put_WORD(info.skills[i]);
-        for (int i = 0; i < 4; ++i) msg->Put_WORD(info.usingSkills[i]);
+        *itemCountPos = itemCount;
+        auto* skillCountPos = reinterpret_cast<std::int32_t*>(msg->GetCurrentPos());
+        msg->Put_LONG(0);
+        int skillCount = 0;
+        for (int i = 0; i < 100; ++i) {
+            if (!info.skills[i]) break;
+            msg->Put_WORD(info.skills[i]);
+            ++skillCount;
+        }
+        *skillCountPos = skillCount;
         msg->Put_LONG(info.keepingStartTime);
     }
+    *countPos = count;
 }
 
 void* cltPetKeepingSystem::GetOwner() { return owner_; }

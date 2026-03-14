@@ -1,5 +1,7 @@
 #include "System/cltCashshopSystem.h"
 
+#include "Logic/cltCashShopItem.h"
+
 namespace {
 constexpr std::uint16_t kMaxBoughtItem = 1000;
 constexpr std::uint8_t kMaxMsgBoughtItem = 100;
@@ -37,9 +39,11 @@ static bool HasName(const strVerifiedCharInfo& v) {
 }
 
 static unsigned int ComputeExtraValue(std::uint16_t itemKind, unsigned int extraArg) {
-    // keeps deterministic behavior while preserving the original branch intent
-    // (some item kinds require additional metadata from server).
-    if ((itemKind % 7) == 0 || (itemKind % 11) == 0) return extraArg;
+    auto* info = g_clItemKindInfo.GetItemKindInfo(itemKind);
+    if (!info) return 0;
+    if (info->m_byItemTab == 8 || info->m_byItemTab == 9 || info->m_byItemTab == 16 || info->m_byItemTab == 17 || info->m_byItemTab == 18) {
+        return extraArg;
+    }
     return 0;
 }
 } // namespace
@@ -259,35 +263,13 @@ int cltCashshopSystem::CanBuyCashItems() {
 }
 
 int cltCashshopSystem::GetBuyingItemAllPrices() {
-    int total = 0;
-
-    for (std::uint8_t i = 0; i < buying_.buyCount; ++i) {
-        const int id = buying_.itemIds[i];
-        if (id <= 0) continue;
-
-        // Fallback local rule when real cash-shop parser data is unavailable.
-        // Preserve deterministic cost calculation.
-        total += (id % 10000);
-    }
-
-    return total;
+    if (!m_pclCashShopItem) return 0;
+    return m_pclCashShopItem->GetTotalPrice(buying_.itemIds.data(), buying_.buyCount, buying_.shopType);
 }
 
 void cltCashshopSystem::GetBuyingItemStringForWeb(char* out, int outSize) {
-    if (!out || outSize <= 0) return;
-
-    out[0] = '\0';
-    int used = 0;
-
-    for (std::uint8_t i = 0; i < buying_.buyCount; ++i) {
-        const int id = buying_.itemIds[i];
-        const int wrote = std::snprintf(out + used, outSize - used, "%d%s",
-                                        id,
-                                        (i + 1 == buying_.buyCount ? "" : ","));
-        if (wrote <= 0) break;
-        used += wrote;
-        if (used >= outSize) break;
-    }
+    if (!out || outSize <= 0 || !m_pclCashShopItem) return;
+    m_pclCashShopItem->GetCompositionItemData(out, buying_.itemIds.data(), buying_.buyCount, buying_.shopType, outSize);
 }
 
 void cltCashshopSystem::BoughtCashItems(int cashMoney, int itemCount,

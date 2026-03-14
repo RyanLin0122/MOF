@@ -224,6 +224,7 @@ void cltTutorialSystem::OnTimer_EndUseItem() {
 
 void cltTutorialSystem::OnTimer_StartExitMap() {
     if (!s_activeTutorial) return;
+    ++s_activeTutorial->tutorialState_;
     s_activeTutorial->AddTutorialStep(kTutorialAddStepExitReady);
 }
 
