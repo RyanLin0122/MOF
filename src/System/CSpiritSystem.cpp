@@ -4,6 +4,7 @@
 #include <cstdio>
 #include <cstdlib>
 #include <cstring>
+#include <utility>
 
 #include "global.h"
 
@@ -42,11 +43,15 @@ int CSpiritSystem::Initialize(char* filename) {
         return 0;
     }
 
+    std::vector<stSpiritInfo> parsedInfos;
     while (std::fgets(line, sizeof(line), fp)) {
         stSpiritInfo info{};
         char* tok = std::strtok(line, delimiter);
         if (!tok) break;
         info.wKind = TranslateKindCode(tok);
+
+        tok = std::strtok(nullptr, delimiter);
+        if (!tok) break;
 
         tok = std::strtok(nullptr, delimiter);
         if (!tok || !IsDigitStr(tok)) break;
@@ -100,11 +105,16 @@ int CSpiritSystem::Initialize(char* filename) {
         if (!tok || !IsDigitStr(tok)) break;
         info.wTooltipId = static_cast<std::uint16_t>(std::atoi(tok));
 
-        m_infos.push_back(info);
+        parsedInfos.push_back(info);
+    }
+
+    const bool success = std::feof(fp) != 0;
+    if (success) {
+        m_infos = std::move(parsedInfos);
     }
 
     g_clTextFileManager.fclose(fp);
-    return 1;
+    return success ? 1 : 0;
 }
 
 std::uint16_t CSpiritSystem::GetSpiritKind(std::uint16_t level) {
