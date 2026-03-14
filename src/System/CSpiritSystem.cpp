@@ -27,13 +27,7 @@ bool IsAlphaNumeric(const char* s) {
 
 CSpiritSystem::CSpiritSystem() { m_infoCount = 0; }
 
-CSpiritSystem::~CSpiritSystem() {
-    for (auto*& info : m_infos) {
-        delete info;
-        info = nullptr;
-    }
-    m_infoCount = 0;
-}
+CSpiritSystem::~CSpiritSystem() { m_infoCount = 0; }
 
 int CSpiritSystem::Initialize(char* filename) {
     char delimiter[3] = "\t\n";
@@ -49,10 +43,6 @@ int CSpiritSystem::Initialize(char* filename) {
             while (true) {
                 char* tok = std::strtok(buffer, delimiter);
                 if (!tok) break;
-
-                if (count >= static_cast<int>(m_infos.size())) {
-                    break;
-                }
 
                 const std::uint16_t kind = TranslateKindCode(tok);
                 if (m_infos[static_cast<std::uint16_t>(count)] != nullptr) {

@@ -12,6 +12,7 @@
 class cltClassKindInfo;
 class cltItemKindInfo;
 class cltMapInfo;
+class ClientCharacterManager;
 
 //-----------------------------------------------------------------------------
 // 全域變數
@@ -58,6 +59,9 @@ extern unsigned int D3DRS_SRCBLEND_TYPE[8];
 extern unsigned int D3DRS_DESTBLEND_TYPE[8];
 
 extern DWORD g_dwHeartBeatTime;
+
+extern unsigned int g_dwMyAccountID;
+extern ClientCharacterManager& g_ClientCharMgr;
 
 enum Direction : uint8_t {
     DirUp = 0,        // 氣球箭頭朝上（置中）
