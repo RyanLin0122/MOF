@@ -37,7 +37,6 @@ public:
     int GetExpAdvantage();
     int GetDropMoneyAmountAdvangae();
     int GetSpouseChargeRecallQty();
-    static int GetSpouseChargeRecallQty(cltMyItemSystem* self);
 
     int GetMyItemNum();
     strMyItem* GetMyItem();

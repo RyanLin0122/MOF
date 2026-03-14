@@ -158,8 +158,6 @@ int cltMyItemSystem::GetDropMoneyAmountAdvangae() {
     return total;
 }
 
-int cltMyItemSystem::GetSpouseChargeRecallQty(cltMyItemSystem* self) { return self ? self->GetSpouseChargeRecallQty() : 0; }
-
 int cltMyItemSystem::GetSpouseChargeRecallQty() {
     for (int i = 0; i < m_myItemCount; ++i) {
         auto* info = m_pclMyItemKindInfo->GetMyItemKindInfo(m_myItems[i].wKind);
