@@ -1,5 +1,8 @@
 #include "Character/ClientCharacter.h"
 
+#include "Info/cltClassKindInfo.h"
+#include "global.h"
+
 /// @brief 建構函式
 ClientCharacter::ClientCharacter() {
 	m_wMapID = 0; // 假設初始地圖 ID 為 0
@@ -67,4 +70,21 @@ int ClientCharacter::GetPetPosX() {
 
 int ClientCharacter::GetPetPosY() {
 	return 0;
+}
+
+void ClientCharacter::SetClassCode(unsigned short classCode, int updateNameTag) {
+	auto* info = g_clClassKindInfo.GetClassKindInfo(classCode);
+	if (!info) {
+		return;
+	}
+
+	reinterpret_cast<unsigned short*>(this)[4856] = classCode;
+	const auto classMark = *(reinterpret_cast<unsigned char*>(info) + 18);
+	reinterpret_cast<unsigned char*>(this)[9728] = classMark;
+	SetNameTagInfo(classMark, updateNameTag);
+}
+
+void ClientCharacter::SetNameTagInfo(unsigned char /*classMark*/, int /*updateNameTag*/) {
+	// Ground truth 會進一步更新 NameTag 顏色與 UI。此專案目前缺少完整相依函式，
+	// 先保留呼叫路徑以對齊 SetClassCode 的副作用流程。
 }

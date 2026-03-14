@@ -33,8 +33,14 @@ void cltMakingItemSystem::InitializeStaticVariable(cltItemKindInfo* itemKindInfo
     m_pclSpecialtyKindInfo = specialtyKindInfo;
 }
 
-cltMakingItemSystem::cltMakingItemSystem() { Free(); }
-cltMakingItemSystem::~cltMakingItemSystem() { Free(); }
+cltMakingItemSystem::cltMakingItemSystem() {
+    m_acquiredCount = 0;
+    std::memset(m_acquiredKinds, 0, sizeof(m_acquiredKinds));
+}
+cltMakingItemSystem::~cltMakingItemSystem() {
+    m_acquiredCount = 0;
+    std::memset(m_acquiredKinds, 0, sizeof(m_acquiredKinds));
+}
 
 void cltMakingItemSystem::Initialize(cltBaseInventory* baseInventory, cltSpecialtySystem* specialtySystem, int acquiredCount, std::uint16_t* acquiredKinds) {
     m_baseInventory = baseInventory;
@@ -156,7 +162,8 @@ int cltMakingItemSystem::GetAcquiredMakingItemKinds(std::uint16_t* outKinds) {
 }
 
 int cltMakingItemSystem::GetMakingItemKinds(unsigned int itemType, std::uint16_t* outKinds) {
-    std::uint16_t acquired[1000]{};
+    std::uint16_t acquired[1000];
+    std::memset(acquired, 0, 0x3E8u);
     const int acquiredCount = GetAcquiredMakingItemKinds(acquired);
     if (acquiredCount <= 0) return 0;
 

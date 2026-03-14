@@ -2,6 +2,7 @@
 #include "Info/cltClassKindInfo.h"
 #include "Info/cltItemKindInfo.h"
 #include "Info/cltMapInfo.h"
+#include "Character/ClientCharacterManager.h"
 
 //-----------------------------------------------------------------------------
 // 全域變數
@@ -41,3 +42,6 @@ extern unsigned int D3DRS_SRCBLEND_TYPE[8] = { 5u, 10u, 9u, 2u, 2u, 2u, 2u, 9u }
 extern unsigned int D3DRS_DESTBLEND_TYPE[8] = { 6u, 2u, 1u, 2u, 2u, 2u, 2u, 5u };
 
 extern DWORD g_dwHeartBeatTime = 0;
+
+extern unsigned int g_dwMyAccountID = 0;
+extern ClientCharacterManager& g_ClientCharMgr = *ClientCharacterManager::GetInstance();

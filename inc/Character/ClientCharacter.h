@@ -81,6 +81,9 @@ public:
     int GetPetPosX();
 
     int GetPetPosY();
+
+    void SetClassCode(unsigned short classCode, int updateNameTag);
+    void SetNameTagInfo(unsigned char classMark, int updateNameTag);
 	unsigned short GetMapID() const { return m_wMapID; }
 	unsigned int GetActionState() const { return m_dwActionState; }
     int IsTransformed() const { return m_dwTransformation != 0; }

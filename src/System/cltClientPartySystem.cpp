@@ -2,6 +2,10 @@
 
 #include <cstring>
 
+#include "Character/ClientCharacter.h"
+#include "Character/ClientCharacterManager.h"
+#include "global.h"
+
 cltClientPartySystem::cltClientPartySystem() : cltPartySystem() {
     std::memset(m_members.data(), 0, sizeof(m_members));
 }
@@ -37,15 +41,40 @@ void cltClientPartySystem::Join(unsigned int accountId, char* name, char classCo
 }
 
 void cltClientPartySystem::Leave(unsigned int accountId) {
+    ClientCharacter* chr = g_ClientCharMgr.GetCharByAccount(accountId);
+    if (chr) {
+        chr->SetClassCode(reinterpret_cast<unsigned short*>(chr)[4856], 0);
+    }
+
     auto* member = GetPartyMemberInstance(accountId);
     if (!member) return;
 
-    if (accountId == cltPartySystem::GetUserData1()) {
-        cltPartySystem::Free();
+    if (accountId == g_dwMyAccountID) {
+        int idx = 0;
+        const int memberNum = cltPartySystem::GetPartyMemberNum();
+        while (idx < memberNum) {
+            auto* partyMember = GetPartyMemberInfo(static_cast<std::uint8_t>(idx));
+            if (partyMember) {
+                ClientCharacter* memberChar = g_ClientCharMgr.GetCharByAccount(partyMember->dwAccountId);
+                if (memberChar) {
+                    memberChar->SetClassCode(reinterpret_cast<unsigned short*>(memberChar)[4856], 0);
+                }
+            }
+            ++idx;
+        }
+        this->Free();
     } else {
         cltPartySystem::Leave(member);
     }
+
     std::memset(member, 0, sizeof(*member));
+
+    if (cltPartySystem::GetPartyMemberNum() == 0) {
+        ClientCharacter* myChar = g_ClientCharMgr.GetCharByAccount(g_dwMyAccountID);
+        if (myChar) {
+            myChar->SetClassCode(reinterpret_cast<unsigned short*>(myChar)[4856], 0);
+        }
+    }
 }
 
 strPartyMemberInfo* cltClientPartySystem::GetPartyMemberInstance(unsigned int accountId) {
@@ -60,7 +89,11 @@ strPartyMemberInfo* cltClientPartySystem::GetPartyMemberInfo(std::uint8_t index)
 }
 
 unsigned int* cltClientPartySystem::GetLeaderAccount() {
-    return static_cast<unsigned int*>(cltPartySystem::GetLeadInstance());
+    auto* leader = static_cast<unsigned int**>(cltPartySystem::GetLeadInstance());
+    if (leader) {
+        return *leader;
+    }
+    return nullptr;
 }
 
 void cltClientPartySystem::UpdatePartyMemberInfo(unsigned int accountId, char classCode, int a4, int a5, int a6, int a7, std::int64_t a8) {
