@@ -232,10 +232,12 @@ int cltCashShopItem::CheckCopyItemExistInNonCopyItem() {
     int found = 0;
     if (!counters_[3]) return 1;
 
-    for (std::size_t i = 0; i < items_.size(); ++i) {
+    std::size_t i = 0;
+    while (i < items_.size()) {
         if (!GetCashShopItemBySellID(items_[i].sellID)) break;
         ++found;
         if (found >= counters_[3]) return 1;
+        ++i;
     }
     return 0;
 }
@@ -248,7 +250,7 @@ int cltCashShopItem::ParsingItemType(stCashShopItemList* a2, char* s) {
         "FASHION_FULLSET", "FASHION_CAP", "FASHION_EYE", "FASHION_FACE", "FASHION_HAIR_ACC",
         "FASHION_MANTEAU", "FASHION_SHIRTS", "FASHION_PANTS", "FASHION_GLOVE", "FASHION_SHOES",
         "FASHION_ETC", "PET_EGG", "PET_FEED", "PET_SKILL", "PET_DYE", "PET_ONETIME",
-        "ONETIME_FUNCTIONAL", "ONETIME_AVATAR", "ONETIME_EMOTICON", "ONETIME_ETC", "ONETIME_DYE"
+        "ONETIME_FUNCTIONAL", "ONETIME_ONETIME", "ONETIME_MAPUSE", "ONETIME_COSMETIC", "ONETIME_DYE"
     };
 
     for (std::uint8_t i = 0; i < 25; ++i) {
