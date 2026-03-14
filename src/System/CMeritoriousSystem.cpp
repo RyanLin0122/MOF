@@ -315,33 +315,59 @@ void CMeritoriousSystem::InitCompleteSupplyMeritoriousQuest() {
 }
 
 int CMeritoriousSystem::RewardMeritoriousItem(std::uint16_t itemKind, unsigned int qty) {
-    if (CanRewardMeritoriousItem(itemKind) != 0) return 0;
-    if (!inventory_) return 0;
+    const int can = CanRewardMeritoriousItem(itemKind);
+    if (can != 0) return can;
+    if (!inventory_) return 1;
 
     strInventoryItem it{};
     it.itemKind = itemKind;
-    it.itemQty = static_cast<std::uint16_t>(std::clamp<unsigned int>(qty, 1, 65535));
+    it.itemQty = static_cast<std::uint16_t>(std::clamp<unsigned int>(qty, 1, 1));
 
-    return inventory_->AddInventoryItem(&it, nullptr, nullptr) == 0;
+    const auto requirePoint = static_cast<std::uint16_t>(
+        m_pclMeritoriousRewardParser
+            ? m_pclMeritoriousRewardParser->GetMeritoriousRewardItemRequirePoint(itemKind)
+            : 0);
+
+    const int ret = inventory_->AddInventoryItem(&it, nullptr, nullptr);
+    if (ret == 0) {
+        DecreaseMeritoriousPoint(requirePoint);
+        return 0;
+    }
+
+    return ret;
 }
 
 int CMeritoriousSystem::RewardMeritoriousItem(std::uint16_t itemKind, unsigned int* outPos, std::uint8_t* outChangedSlots) {
-    if (CanRewardMeritoriousItem(itemKind) != 0) return 0;
-    if (!inventory_) return 0;
+    const int can = CanRewardMeritoriousItem(itemKind);
+    if (can != 0) return can;
+    if (!inventory_) return 1;
 
     strInventoryItem it{};
     it.itemKind = itemKind;
     it.itemQty = 1;
 
     std::uint16_t pos = 0;
+    const auto requirePoint = static_cast<std::uint16_t>(
+        m_pclMeritoriousRewardParser
+            ? m_pclMeritoriousRewardParser->GetMeritoriousRewardItemRequirePoint(itemKind)
+            : 0);
+
     const int ret = inventory_->AddInventoryItem(&it, outChangedSlots, &pos);
     if (outPos) *outPos = pos;
-    return ret == 0;
+    if (ret == 0) {
+        DecreaseMeritoriousPoint(requirePoint);
+        return 0;
+    }
+    return ret;
 }
 
 int CMeritoriousSystem::CanRewardMeritoriousItem(std::uint16_t itemKind) {
     if (!inventory_) return 1;
     if (!itemKind) return 1;
+    const auto requirePoint = m_pclMeritoriousRewardParser
+                                  ? m_pclMeritoriousRewardParser->GetMeritoriousRewardItemRequirePoint(itemKind)
+                                  : 0;
+    if (point_ < requirePoint) return 107;
     return inventory_->CanAddInventoryItem(itemKind, 1);
 }
 

@@ -41,7 +41,9 @@ static bool HasName(const strVerifiedCharInfo& v) {
 static unsigned int ComputeExtraValue(std::uint16_t itemKind, unsigned int extraArg) {
     auto* info = g_clItemKindInfo.GetItemKindInfo(itemKind);
     if (!info) return 0;
-    if (info->m_byItemTab == 8 || info->m_byItemTab == 9 || info->m_byItemTab == 16 || info->m_byItemTab == 17 || info->m_byItemTab == 18) {
+    // Ground-truth (mofclient.c) gates this by the WORD at offset +0x3C in stItemKindInfo,
+    // which maps to m_wUseTerm in our reconstructed struct.
+    if (info->m_wUseTerm != 0) {
         return extraArg;
     }
     return 0;

@@ -343,6 +343,10 @@
     <ClCompile Include="src\System\cltPKRankSystem.cpp" />
     <ClCompile Include="src\System\cltDebuffSystem.cpp" />
     <ClCompile Include="src\Logic\cltLogicCompatibility.cpp" />
+    <ClCompile Include="src\Logic\CShortKey.cpp" />
+    <ClCompile Include="src\Logic\CMessageBoxManager.cpp" />
+    <ClCompile Include="src\Logic\cltSystemMessage.cpp" />
+    <ClCompile Include="src\Logic\cltMyCharData.cpp" />
     <ClCompile Include="src\Network\DCTNetwork.cpp" />
     <ClCompile Include="src\Network\CMoFNetwork.cpp" />
     <ClCompile Include="src\Network\CMofMsg.cpp" />
@@ -576,6 +580,10 @@
     <ClInclude Include="inc\Info\cltWorldMapColorInfo.h" />
     <ClInclude Include="inc\Logic\cltCashShopItem.h" />
     <ClInclude Include="inc\Logic\CMeritoriousParsers.h" />
+    <ClInclude Include="inc\Logic\CShortKey.h" />
+    <ClInclude Include="inc\Logic\CMessageBoxManager.h" />
+    <ClInclude Include="inc\Logic\cltSystemMessage.h" />
+    <ClInclude Include="inc\Logic\cltMyCharData.h" />
     <ClInclude Include="inc\Logic\CQuizEventParser.h" />
     <ClInclude Include="inc\Other\CAttendanceBookParser.h" />
     <ClInclude Include="inc\Other\cltAttackAtb.h" />
