@@ -322,6 +322,10 @@
     <ClCompile Include="src\System\cltEquipmentSystem.cpp" />
     <ClCompile Include="src\Logic\cltFieldItem.cpp" />
     <ClCompile Include="src\System\cltMyItemSystem.cpp" />
+    <ClCompile Include="src\System\cltMakingItemSystem.cpp" />
+    <ClCompile Include="src\System\cltEmoticonSystem.cpp" />
+    <ClCompile Include="src\System\CSpiritSystem.cpp" />
+    <ClCompile Include="src\System\cltClientPartySystem.cpp" />
     <ClCompile Include="src\System\cltMyMsgSystem.cpp" />
     <ClCompile Include="src\System\cltNPCRecallSystem.cpp" />
     <ClCompile Include="src\System\cltPartySystem.cpp" />
@@ -606,6 +610,10 @@
     <ClInclude Include="inc\System\cltLessonSystem.h" />
     <ClInclude Include="inc\System\cltMonsterToleranceSystem.h" />
     <ClInclude Include="inc\System\cltMyItemSystem.h" />
+    <ClInclude Include="inc\System\cltMakingItemSystem.h" />
+    <ClInclude Include="inc\System\cltEmoticonSystem.h" />
+    <ClInclude Include="inc\System\CSpiritSystem.h" />
+    <ClInclude Include="inc\System\cltClientPartySystem.h" />
     <ClInclude Include="inc\System\cltMyMsgSystem.h" />
     <ClInclude Include="inc\System\cltNPCRecallSystem.h" />
     <ClInclude Include="inc\System\cltPartySystem.h" />
