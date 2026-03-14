@@ -79,6 +79,14 @@ CSupplyMeritoriousParser::CSupplyMeritoriousParser() = default;
 
 CSupplyMeritoriousParser::~CSupplyMeritoriousParser() = default;
 
+bool IsDigit(const char* t)
+{
+    if (!t || !*t) return false;
+    for (const unsigned char* p = (const unsigned char*)t; *p; ++p)
+        if (!std::isdigit(*p)) return false;
+    return true;
+}
+
 int CSupplyMeritoriousParser::Initialize(char* fileName) {
     FILE* fp = g_clTextFileManager.fopen(fileName);
     if (!fp) return 0;

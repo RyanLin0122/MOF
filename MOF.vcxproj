@@ -296,6 +296,8 @@
     <ClCompile Include="src\Info\cltTransformKindInfo.cpp" />
     <ClCompile Include="src\Info\cltWeddingHallKindInfo.cpp" />
     <ClCompile Include="src\Info\cltWorldMapColorInfo.cpp" />
+    <ClCompile Include="src\Logic\cltCashShopItem.cpp" />
+    <ClCompile Include="src\Logic\CMeritoriousParsers.cpp" />
     <ClCompile Include="src\Logic\CQuizEventParser.cpp" />
     <ClCompile Include="src\Other\CAttendanceBookParser.cpp" />
     <ClCompile Include="src\Other\cltAttackAtb.cpp" />
@@ -572,6 +574,8 @@
     <ClInclude Include="inc\Info\cltTransformKindInfo.h" />
     <ClInclude Include="inc\Info\cltWeddingHallKindInfo.h" />
     <ClInclude Include="inc\Info\cltWorldMapColorInfo.h" />
+    <ClInclude Include="inc\Logic\cltCashShopItem.h" />
+    <ClInclude Include="inc\Logic\CMeritoriousParsers.h" />
     <ClInclude Include="inc\Logic\CQuizEventParser.h" />
     <ClInclude Include="inc\Other\CAttendanceBookParser.h" />
     <ClInclude Include="inc\Other\cltAttackAtb.h" />
