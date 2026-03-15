@@ -23,3 +23,9 @@ void* cltCharKindInfo::GetCharKindInfo(uint16_t)
     // 目前專案未建 CharKind 資料表，先回傳 nullptr 以滿足連結。
     return nullptr;
 }
+
+uint16_t cltCharKindInfo::GetRealCharID(uint16_t charKind)
+{
+    // stub：資料表未建立，直接回傳輸入值。
+    return charKind;
+}

@@ -298,6 +298,7 @@
     <ClCompile Include="src\Info\cltWorldMapColorInfo.cpp" />
     <ClCompile Include="src\Logic\cltCashShopItem.cpp" />
     <ClCompile Include="src\Logic\CMeritoriousParsers.cpp" />
+    <ClCompile Include="src\Logic\CMonsterGroupPerLevel.cpp" />
     <ClCompile Include="src\Logic\CQuizEventParser.cpp" />
     <ClCompile Include="src\Other\CAttendanceBookParser.cpp" />
     <ClCompile Include="src\Other\cltAttackAtb.cpp" />
@@ -584,6 +585,7 @@
     <ClInclude Include="inc\Info\cltWorldMapColorInfo.h" />
     <ClInclude Include="inc\Logic\cltCashShopItem.h" />
     <ClInclude Include="inc\Logic\CMeritoriousParsers.h" />
+    <ClInclude Include="inc\Logic\CMonsterGroupPerLevel.h" />
     <ClInclude Include="inc\Logic\CShortKey.h" />
     <ClInclude Include="inc\Logic\CMessageBoxManager.h" />
     <ClInclude Include="inc\Logic\cltSystemMessage.h" />

@@ -9,6 +9,7 @@ public:
     int CanReward(int questKind);
     int IsCompleteQuest(std::uint16_t questKind); // TODO
     int IsGiveupQuestPermanently(); // TODO: real quest state logic
+    int IsQuestMonster(std::uint16_t monsterKind);
     void CompleteFunctionQuest(int functionType, std::uint16_t* questKinds, unsigned int* questValues);
 };
 

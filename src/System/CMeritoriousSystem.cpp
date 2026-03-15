@@ -1,42 +1,12 @@
 #include "System/CMeritoriousSystem.h"
 
 
-namespace {
-constexpr std::uint16_t kMaxQuestMonster = 16;
-constexpr std::uint16_t kMaxGrade = 15;
-constexpr unsigned int kGradeUnitPoint = 1000;
-constexpr unsigned int kWarPointRewardBase = 10;
-
-static std::uint16_t ClampGrade(std::uint16_t grade) {
-    return std::clamp<std::uint16_t>(grade, 1, kMaxGrade);
-}
-
-static unsigned int SafeMul(unsigned int a, unsigned int b) {
-    if (a == 0 || b == 0) return 0;
-    if (a > 0xFFFFFFFFu / b) return 0xFFFFFFFFu;
-    return a * b;
-}
-
-static unsigned int SafeAdd(unsigned int a, unsigned int b) {
-    if (a > 0xFFFFFFFFu - b) return 0xFFFFFFFFu;
-    return a + b;
-}
-
-static bool GetSupplyInfo(CSupplyMeritoriousParser* parser, std::uint16_t id, CSupplyMeritoriousInfo* out) {
-    if (!parser || !out) return false;
-    const auto& m = parser->GetMap();
-    const auto it = m.find(id);
-    if (it == m.end()) return false;
-    *out = it->second;
-    return true;
-}
-}
-
 cltCharKindInfo* CMeritoriousSystem::m_pclCharKindInfo = nullptr;
 CExpRewardParser* CMeritoriousSystem::m_pclExpRewardParser = nullptr;
 CMeritoriousGradeParser* CMeritoriousSystem::m_pclMeritoriousGradeParser = nullptr;
 CMeritoriousRewardParser* CMeritoriousSystem::m_pclMeritoriousRewardParser = nullptr;
 CSupplyMeritoriousParser* CMeritoriousSystem::m_pclSupplyMeritoriousParser = nullptr;
+CMonsterGroupPerLevel CMeritoriousSystem::m_clMonsterGroupPerLevel;
 
 void CMeritoriousSystem::InitializeStaticVariable(cltCharKindInfo* a1, CSupplyMeritoriousParser* a2,
                                                   CMeritoriousRewardParser* a3, CMeritoriousGradeParser* a4,
@@ -48,34 +18,14 @@ void CMeritoriousSystem::InitializeStaticVariable(cltCharKindInfo* a1, CSupplyMe
     m_pclExpRewardParser = a5;
 }
 
-CMeritoriousSystem::CMeritoriousSystem() { Free(); }
-CMeritoriousSystem::~CMeritoriousSystem() = default;
-
+// Free: 只清除怪物擊殺追蹤 map（ground truth 中 Free 僅清空此 map）
 void CMeritoriousSystem::Free() {
-    questSystem_ = nullptr;
-    inventory_ = nullptr;
-    specialtySystem_ = nullptr;
-    moneySystem_ = nullptr;
-    emblemSystem_ = nullptr;
-
-    point_ = 0;
-    totalPoint_ = 0;
-    grade_ = 1;
-    gradePoint_ = 0;
-
-    warQuestPlaying_ = false;
-    supplyQuestPlaying_ = 0;
-    warQuestDifficulty_ = 0;
-    supplyQuestKind_ = 0;
-
-    warQuestMonKinds_.fill(0);
-    warQuestMonGoals_.fill(0);
-    warQuestMonKills_.fill(0);
-    warQuestMonCount_ = 0;
+    monsterKillMap_.clear();
 }
 
-int CMeritoriousSystem::Initialize(cltQuestSystem* questSystem, cltBaseInventory* inventory, cltSpecialtySystem* specialty,
-                                   cltMoneySystem* moneySystem, cltEmblemSystem* emblemSystem,
+int CMeritoriousSystem::Initialize(cltQuestSystem* questSystem, cltBaseInventory* inventory,
+                                   cltSpecialtySystem* specialty, cltMoneySystem* moneySystem,
+                                   cltEmblemSystem* emblemSystem,
                                    unsigned int point, unsigned int totalPoint,
                                    std::uint16_t grade, std::uint16_t gradePoint,
                                    bool warQuestPlaying, char supplyQuestPlaying,
@@ -93,186 +43,215 @@ int CMeritoriousSystem::Initialize(cltQuestSystem* questSystem, cltBaseInventory
     SetMeritoriousInfo(point, totalPoint, grade, gradePoint,
                        warQuestPlaying, supplyQuestPlaying,
                        warQuestMonCount, warQuestMonKinds, warQuestMonGoals);
-
     return 1;
 }
 
-unsigned int CMeritoriousSystem::StartWarMeritoriousQuest(std::uint16_t mapKind, int difficulty, std::uint16_t* outQuestKinds) {
-    warQuestMonKinds_.fill(0);
-    warQuestMonGoals_.fill(0);
-    warQuestMonKills_.fill(0);
-
-    warQuestMonCount_ = std::clamp<int>(difficulty, 0, kMaxQuestMonster);
-    if (outQuestKinds) {
-        for (std::uint16_t i = 0; i < warQuestMonCount_; ++i) {
-            warQuestMonKinds_[i] = outQuestKinds[i];
-        }
+// StartWarMeritoriousQuest: 對每個 questKind 做 map::insert({kind, 0})（重複則不更新）
+// 設定 warQuestPlaying_=true、warQuestMapKind_=mapKind
+unsigned int CMeritoriousSystem::StartWarMeritoriousQuest(std::uint16_t mapKind, int count,
+                                                          const std::uint16_t* questKinds) {
+    const auto n = static_cast<std::uint16_t>(count);
+    for (std::uint16_t i = 0; i < n; ++i) {
+        monsterKillMap_.insert({questKinds[i], 0});
     }
     warQuestPlaying_ = true;
-    warQuestDifficulty_ = mapKind;
+    warQuestMapKind_ = mapKind;
     return 0;
 }
 
-unsigned int CMeritoriousSystem::CanStartWarMeritoriousQuest(int minLv, int maxLv, std::uint16_t needClass, std::uint16_t needNation,
-                                                             std::uint16_t monsterKind, stMonsterKind*) {
-    if (CanStartWarMeritoriousQuest()) return 1;
-    if (!monsterKind) return 1;
+// CanStartWarMeritoriousQuest（6 參）:
+// 1. warQuestPlaying_ 為 true → return 1
+// 2. VerifyingMonsterKinds 失敗 → return 1
+// 3. 成功時對 outMonsterInfo 3 個條目套用 emblem advantage 調整後 return 0
+unsigned int CMeritoriousSystem::CanStartWarMeritoriousQuest(int minLv, int maxLv,
+                                                              std::uint16_t needClass,
+                                                              std::uint16_t needNation,
+                                                              std::uint16_t monsterKind,
+                                                              stMonsterKind* outMonsterInfo) {
+    if (warQuestPlaying_) return 1;
+    if (!m_clMonsterGroupPerLevel.VerifyingMonsterKinds(minLv, maxLv, needClass, needNation,
+                                                        monsterKind, outMonsterInfo))
+        return 1;
 
-    if (minLv > maxLv) return 1;
-    if (needClass == 0 || needNation == 0) return 1;
-
+    const int adv = emblemSystem_->GetWarMetoriousMonsterKillNumAdvantage();
+    for (int i = 0; i < 3; ++i) {
+        if (outMonsterInfo[i].kind) {
+            int cnt = outMonsterInfo[i].count;
+            cnt -= static_cast<std::uint16_t>(cnt) * adv / 1000;
+            outMonsterInfo[i].count = static_cast<std::uint16_t>(cnt);
+        }
+    }
     return 0;
 }
 
+// CanStartWarMeritoriousQuest（0 參）: warQuestPlaying_ == 1
 int CMeritoriousSystem::CanStartWarMeritoriousQuest() {
     return warQuestPlaying_ ? 1 : 0;
 }
 
-void CMeritoriousSystem::PlayWarMeritoriousQuest(int playing) {
+// PlayWarMeritoriousQuest:
+// 1. GetRealCharID 解析實際怪物 ID
+// 2. 條件: warQuestPlaying_ && IsExistWarQuestMonsterKind && !IsQuestMonster
+// 3. find-or-create map entry
+// 4. 若 CMonsterGroupPerLevel 的外部 kill count > 目前已記錄 → 遞增記錄值
+void CMeritoriousSystem::PlayWarMeritoriousQuest(int monsterID) {
+    const std::uint16_t kind = m_pclCharKindInfo->GetRealCharID(
+        static_cast<std::uint16_t>(monsterID));
     if (!warQuestPlaying_) return;
+    if (!IsExistWarQuestMonsterKind(kind)) return;
+    if (questSystem_->IsQuestMonster(kind)) return;
 
-    const auto kind = static_cast<std::uint16_t>(playing);
-    for (std::uint16_t i = 0; i < warQuestMonCount_; ++i) {
-        if (warQuestMonKinds_[i] == kind) {
-            ++warQuestMonKills_[i];
-            return;
-        }
+    auto it = monsterKillMap_.insert({kind, 0}).first;
+    const std::uint16_t externalCount =
+        m_clMonsterGroupPerLevel.GetMonsterKillCount(warQuestMapKind_, kind);
+    if (externalCount > it->second) {
+        ++it->second;
     }
 }
 
-unsigned int CMeritoriousSystem::CompleteWarMeritoriousQuest(unsigned int seed, std::int64_t* outExp, int* outMoney,
-                                                             std::uint16_t* outQuestKinds, unsigned int* outQuestValues) {
-    if (outExp) *outExp = 0;
+// CompleteWarMeritoriousQuest（ground truth 執行順序）:
+// 1. 初始化輸出為 0
+// 2. CanCompleteWarMeritoriousQuest 檢查
+// 3. GetRewardWarMeritoriousExp
+// 4. 第一次呼叫 GetMeritoriousAdvantage → IncreaseMeritoriousPoint(adv+10)
+// 5. InitCompleteWarMeritoriousQuest
+// 6. 設定 *outExp
+// 7. 第二次呼叫 GetMeritoriousAdvantage → 設定 *outMoney = adv+10
+// 8. OnEvent_CompleteMeritous, CompleteFunctionQuest
+unsigned int CMeritoriousSystem::CompleteWarMeritoriousQuest(unsigned int seed, std::int64_t* outExp,
+                                                              int* outMoney,
+                                                              std::uint16_t* outQuestKinds,
+                                                              unsigned int* outQuestValues) {
+    if (outExp)   *outExp   = 0;
     if (outMoney) *outMoney = 0;
 
     if (CanCompleteWarMeritoriousQuest()) return 1;
 
     const unsigned int rewardExp = GetRewardWarMeritoriousExp();
-    const int rewardPt = (emblemSystem_ ? emblemSystem_->GetMeritoriousAdvantage() : 0) + static_cast<int>(kWarPointRewardBase);
-
-    if (outExp) *outExp = rewardExp;
-    if (outMoney) *outMoney = rewardPt;
-
-    if (outQuestKinds && outQuestValues) {
-        for (std::uint16_t i = 0; i < warQuestMonCount_; ++i) {
-            outQuestKinds[i] = warQuestMonKinds_[i];
-            outQuestValues[i] = warQuestMonKills_[i];
-        }
-    }
-
-    IncreaseMeritoriousPoint(static_cast<std::uint16_t>(std::clamp(rewardPt, 0, 65535)));
-
+    const int adv1 = emblemSystem_->GetMeritoriousAdvantage();
+    IncreaseMeritoriousPoint(static_cast<std::uint16_t>(adv1 + 10));
     InitCompleteWarMeritoriousQuest();
-    if (emblemSystem_) emblemSystem_->OnEvent_CompleteMeritous(seed);
-    if (questSystem_) questSystem_->CompleteFunctionQuest(24, outQuestKinds, outQuestValues);
+
+    if (outExp)   *outExp   = rewardExp;
+    if (outMoney) *outMoney = emblemSystem_->GetMeritoriousAdvantage() + 10;
+
+    emblemSystem_->OnEvent_CompleteMeritous(seed);
+    questSystem_->CompleteFunctionQuest(24, outQuestKinds, outQuestValues);
     return 0;
 }
 
 unsigned int CMeritoriousSystem::GetRewardWarMeritoriousExp() {
     if (!m_pclExpRewardParser) return 0;
-    return m_pclExpRewardParser->GetMeritoriousRewardExp(static_cast<int>(warQuestDifficulty_));
+    return m_pclExpRewardParser->GetMeritoriousRewardExp(
+        static_cast<int>(warQuestMapKind_));
 }
 
 unsigned int CMeritoriousSystem::GetRewardWarMeritoriousPoint() {
-    return kWarPointRewardBase;
+    return 10;
 }
 
+// GetRewardSupplyMeritoriousLibi/Point/ItemCount:
+// ground truth 直接呼叫 map::operator[]（key 不存在時插入 default entry）
 unsigned int CMeritoriousSystem::GetRewardSupplyMeritoriousLibi() {
-    CSupplyMeritoriousInfo info{};
-    if (!GetSupplyInfo(m_pclSupplyMeritoriousParser, supplyQuestKind_, &info)) return 0;
-    return info.rewardLibi;
+    return (*m_pclSupplyMeritoriousParser)[supplyQuestKind_].rewardLibi;
 }
 
 unsigned int CMeritoriousSystem::GetRewardSupplyMeritoriousPoint() {
-    CSupplyMeritoriousInfo info{};
-    if (!GetSupplyInfo(m_pclSupplyMeritoriousParser, supplyQuestKind_, &info)) return 0;
-    return info.rewardPoint;
+    return (*m_pclSupplyMeritoriousParser)[supplyQuestKind_].rewardPoint;
 }
 
 unsigned int CMeritoriousSystem::GetSupplyMeritoriousItemCount() {
-    CSupplyMeritoriousInfo info{};
-    if (!GetSupplyInfo(m_pclSupplyMeritoriousParser, supplyQuestKind_, &info)) return 0;
-    return info.itemCount;
+    return (*m_pclSupplyMeritoriousParser)[supplyQuestKind_].itemCount;
 }
 
 void CMeritoriousSystem::SetMeritoriousUpGrade(std::uint16_t grade, std::uint16_t gradePoint) {
     grade_ = grade;
-    if (specialtySystem_) specialtySystem_->IncreaseSpecialtyPt(gradePoint);
+    specialtySystem_->IncreaseSpecialtyPt(gradePoint);
 }
 
+// CanCompleteWarMeritoriousQuest:
+// map 為空 → return 0（可完成）
+// 對每個 entry: 若 kills < GetMonsterKillCount(mapKind,kind) * emblem_adjustment → return 1（不可完成）
+// 全部通過 → return 0
 unsigned int CMeritoriousSystem::CanCompleteWarMeritoriousQuest() {
-    if (!warQuestMonCount_) return 0;
-    for (std::uint16_t i = 0; i < warQuestMonCount_; ++i) {
-        if (warQuestMonGoals_[i] == 0) continue;
-        if (warQuestMonGoals_[i] > warQuestMonKills_[i]) return 1;
+    if (monsterKillMap_.empty()) return 0;
+
+    const int adv = emblemSystem_
+        ? emblemSystem_->GetWarMetoriousMonsterKillNumAdvantage()
+        : 0;
+
+    for (const auto& [kind, kills] : monsterKillMap_) {
+        const int goal = m_clMonsterGroupPerLevel.GetMonsterKillCount(warQuestMapKind_, kind);
+        if (kills < goal - goal * adv / 1000) return 1;
     }
     return 0;
 }
 
+// InitCompleteWarMeritoriousQuest:
+// warQuestMapKind_=0, warQuestPlaying_=false, 清空 map（等同 GT 的 Free 操作）
 void CMeritoriousSystem::InitCompleteWarMeritoriousQuest() {
+    warQuestMapKind_ = 0;
     warQuestPlaying_ = false;
-    warQuestMonKills_.fill(0);
-    warQuestDifficulty_ = 0;
+    monsterKillMap_.clear();
 }
 
 std::uint16_t CMeritoriousSystem::GetWarMeritoriousQuestMonsterSize() {
-    return warQuestMonCount_;
+    return static_cast<std::uint16_t>(monsterKillMap_.size());
 }
 
+// GetWarMeritoriousMonsterKillCount: 回傳 map 中該 kind 的 value（已記錄擊殺數）
 std::uint16_t CMeritoriousSystem::GetWarMeritoriousMonsterKillCount(std::uint16_t kind) {
-    for (std::uint16_t i = 0; i < warQuestMonCount_; ++i) {
-        if (warQuestMonKinds_[i] == kind) return warQuestMonKills_[i];
-    }
-    return 0;
+    if (IsExistWarQuestMonsterKind(kind) != 1) return 0;
+    return monsterKillMap_.insert({kind, 0}).first->second;
 }
 
+// GetWarMeritoriousMonsterGoalKillCount: 動態從 CMonsterGroupPerLevel 取得目標值，套用 emblem 調整
 std::uint16_t CMeritoriousSystem::GetWarMeritoriousMonsterGoalKillCount(std::uint16_t kind) {
-    for (std::uint16_t i = 0; i < warQuestMonCount_; ++i) {
-        if (warQuestMonKinds_[i] == kind) return warQuestMonGoals_[i];
-    }
-    return 0;
+    if (IsExistWarQuestMonsterKind(kind) != 1) return 0;
+    const int goal = m_clMonsterGroupPerLevel.GetMonsterKillCount(warQuestMapKind_, kind);
+    const int adv = emblemSystem_
+        ? emblemSystem_->GetWarMetoriousMonsterKillNumAdvantage()
+        : 0;
+    return static_cast<std::uint16_t>(goal - goal * adv / 1000);
 }
 
+// GetWarMeritoriousMonsterKind: 收集 map 所有 key → outKinds，設 *outSize，固定 return 1
 int CMeritoriousSystem::GetWarMeritoriousMonsterKind(std::uint16_t* outSize, std::uint16_t* outKinds) {
     if (!warQuestPlaying_) return 0;
-    if (outSize) *outSize = warQuestMonCount_;
-
-    if (outKinds) {
-        for (std::uint16_t i = 0; i < warQuestMonCount_; ++i) {
-            outKinds[i] = warQuestMonKinds_[i];
-        }
+    std::uint16_t count = 0;
+    for (const auto& [kind, kills] : monsterKillMap_) {
+        outKinds[count++] = kind;
     }
-
-    return warQuestMonCount_ > 0;
+    *outSize = count;
+    return 1;
 }
 
+// IncreaseMeritoriousPoint: point_ 與 totalPoint_ 均增加
 void CMeritoriousSystem::IncreaseMeritoriousPoint(std::uint16_t point) {
-    point_ += point;
+    point_      += point;
     totalPoint_ += point;
 }
 
+// DecreaseMeritoriousPoint: ground truth 只減 totalPoint_（offset 4）
 void CMeritoriousSystem::DecreaseMeritoriousPoint(std::uint16_t point) {
-    point_ -= point;
+    totalPoint_ -= point;
 }
 
 int CMeritoriousSystem::IsExistWarQuestMonsterKind(std::uint16_t kind) {
-    for (std::uint16_t i = 0; i < warQuestMonCount_; ++i) {
-        if (warQuestMonKinds_[i] == kind) return 1;
-    }
-    return 0;
+    return monsterKillMap_.count(kind) ? 1 : 0;
 }
 
+// CanGiveUpWarMeritorious: warQuestPlaying_ != 1（可以放棄）
 int CMeritoriousSystem::CanGiveUpWarMeritorious() {
     return warQuestPlaying_ ? 0 : 1;
 }
 
+// GiveUpWarMeritorious: 清除整個戰鬥功績狀態（InitCompleteWarMeritoriousQuest 已清空 map）
 void CMeritoriousSystem::GiveUpWarMeritorious() {
     InitCompleteWarMeritoriousQuest();
-    warQuestMonKinds_.fill(0);
-    warQuestMonGoals_.fill(0);
-    warQuestMonCount_ = 0;
 }
 
+// CanGiveUpSupplyMeritorious: supplyQuestKind_ == 0 → 可放棄
 int CMeritoriousSystem::CanGiveUpSupplyMeritorious() {
     return supplyQuestKind_ == 0 ? 1 : 0;
 }
@@ -287,30 +266,43 @@ unsigned int CMeritoriousSystem::StartSupplyMeritoriousQuest(std::uint16_t suppl
 }
 
 int CMeritoriousSystem::CanStartSupplyMeritoriousQuest() {
-    return supplyQuestKind_ != 0;
+    return supplyQuestKind_ != 0 ? 1 : 0;
 }
 
-void CMeritoriousSystem::CompleteSupplyMeritoriousQuest(int count, cltItemList* itemList, std::uint8_t* outChangedSlots,
-                                                        int* outMoney, std::uint16_t* outQuestKinds, unsigned int* outQuestValues) {
-    (void)count;
-    CSupplyMeritoriousInfo info{};
-    if (!GetSupplyInfo(m_pclSupplyMeritoriousParser, supplyQuestKind_, &info) || !inventory_) return;
-    inventory_->DelInventoryItemKind(info.itemKind, info.itemCount, itemList, outChangedSlots);
-    IncreaseMeritoriousPoint(info.rewardPoint);
-    if (outMoney) *outMoney = static_cast<int>(info.rewardLibi);
-    if (moneySystem_) moneySystem_->IncreaseMoney(static_cast<int>(info.rewardLibi));
+// CompleteSupplyMeritoriousQuest: 使用 operator[]（與 GT 的 map::operator[] 行為一致）
+void CMeritoriousSystem::CompleteSupplyMeritoriousQuest(int count, cltItemList* itemList,
+                                                         std::uint8_t* outChangedSlots,
+                                                         int* outMoney,
+                                                         std::uint16_t* outQuestKinds,
+                                                         unsigned int* outQuestValues) {
+    const std::uint16_t itemKind  = (*m_pclSupplyMeritoriousParser)[supplyQuestKind_].itemKind;
+    const std::uint16_t itemCount = (*m_pclSupplyMeritoriousParser)[supplyQuestKind_].itemCount;
+    inventory_->DelInventoryItemKind(itemKind, itemCount, itemList, outChangedSlots);
+
+    const std::uint16_t rewardPoint = (*m_pclSupplyMeritoriousParser)[supplyQuestKind_].rewardPoint;
+    const std::uint32_t rewardLibi  = (*m_pclSupplyMeritoriousParser)[supplyQuestKind_].rewardLibi;
+
+    IncreaseMeritoriousPoint(rewardPoint);
+    if (outMoney) *outMoney = static_cast<int>(rewardLibi);
+    moneySystem_->IncreaseMoney(static_cast<int>(rewardLibi));
     InitCompleteSupplyMeritoriousQuest();
-    if (questSystem_) questSystem_->CompleteFunctionQuest(25, outQuestKinds, outQuestValues);
+    questSystem_->CompleteFunctionQuest(25, outQuestKinds, outQuestValues);
 }
 
+// CanCompleteSupplyMeritoriousQuest: 使用 operator[]（GT 行為）
 unsigned int CMeritoriousSystem::CanCompleteSupplyMeritoriousQuest(int count) {
-    (void)count;
     if (!supplyQuestKind_) return 1;
-    CSupplyMeritoriousInfo info{};
-    if (!GetSupplyInfo(m_pclSupplyMeritoriousParser, supplyQuestKind_, &info)) return 1;
-    if (!info.itemKind || !info.itemCount) return 1;
-    if (!inventory_ || !inventory_->CanDelInventoryItemByKindNQty(info.itemKind, info.itemCount)) return 1;
-    if (!info.rewardLibi || (moneySystem_ && moneySystem_->CanIncreaseMoney(static_cast<int>(info.rewardLibi)))) return 0;
+
+    const std::uint16_t itemKind  = (*m_pclSupplyMeritoriousParser)[supplyQuestKind_].itemKind;
+    if (!itemKind) return 1;
+
+    const std::uint16_t itemCount = (*m_pclSupplyMeritoriousParser)[supplyQuestKind_].itemCount;
+    if (!itemCount) return 1;
+
+    if (!inventory_->CanDelInventoryItemByKindNQty(itemKind, itemCount)) return 1;
+
+    const std::uint32_t rewardLibi = (*m_pclSupplyMeritoriousParser)[supplyQuestKind_].rewardLibi;
+    if (!rewardLibi || moneySystem_->CanIncreaseMoney(static_cast<int>(rewardLibi))) return 0;
     return 106;
 }
 
@@ -318,112 +310,101 @@ void CMeritoriousSystem::InitCompleteSupplyMeritoriousQuest() {
     supplyQuestKind_ = 0;
 }
 
+// RewardMeritoriousItem（2 參）: GT 不檢查 AddInventoryItem 回傳值，直接 DecreaseMeritoriousPoint
 int CMeritoriousSystem::RewardMeritoriousItem(std::uint16_t itemKind, unsigned int qty) {
-    const int can = CanRewardMeritoriousItem(itemKind);
-    if (can != 0) return can;
-    if (!inventory_) return 1;
+    const int result = CanRewardMeritoriousItem(itemKind);
+    if (result) return result;
+
+    const std::uint16_t requirePoint = m_pclMeritoriousRewardParser
+        ? static_cast<std::uint16_t>(
+              m_pclMeritoriousRewardParser->GetMeritoriousRewardItemRequirePoint(itemKind))
+        : 0;
 
     strInventoryItem it{};
     it.itemKind = itemKind;
-    it.itemQty = static_cast<std::uint16_t>(std::clamp<unsigned int>(qty, 1, 1));
-
-    const auto requirePoint = static_cast<std::uint16_t>(
-        m_pclMeritoriousRewardParser
-            ? m_pclMeritoriousRewardParser->GetMeritoriousRewardItemRequirePoint(itemKind)
-            : 0);
-
-    const int ret = inventory_->AddInventoryItem(&it, nullptr, nullptr);
-    if (ret == 0) {
-        DecreaseMeritoriousPoint(requirePoint);
-        return 0;
-    }
-
-    return ret;
+    it.itemQty  = 1;
+    inventory_->AddInventoryItem(&it, nullptr, nullptr);
+    DecreaseMeritoriousPoint(requirePoint);
+    return 0;
 }
 
-int CMeritoriousSystem::RewardMeritoriousItem(std::uint16_t itemKind, unsigned int* outPos, std::uint8_t* outChangedSlots) {
-    const int can = CanRewardMeritoriousItem(itemKind);
-    if (can != 0) return can;
-    if (!inventory_) return 1;
+// RewardMeritoriousItem（3 參）: *outPos = requirePoint（GT 語義，非庫存位置）
+// AddInventoryItem 第 4 參傳 nullptr（GT 傳 0，不取位置）
+// GT 不檢查 AddInventoryItem 回傳值
+int CMeritoriousSystem::RewardMeritoriousItem(std::uint16_t itemKind, unsigned int* outPos,
+                                               std::uint8_t* outChangedSlots) {
+    const int result = CanRewardMeritoriousItem(itemKind);
+    if (result) return result;
+
+    const std::uint16_t requirePoint = m_pclMeritoriousRewardParser
+        ? static_cast<std::uint16_t>(
+              m_pclMeritoriousRewardParser->GetMeritoriousRewardItemRequirePoint(itemKind))
+        : 0;
+
+    if (outPos) *outPos = requirePoint;  // GT: *outPos = requirePoint（不是庫存位置）
 
     strInventoryItem it{};
     it.itemKind = itemKind;
-    it.itemQty = 1;
-
-    std::uint16_t pos = 0;
-    const auto requirePoint = static_cast<std::uint16_t>(
-        m_pclMeritoriousRewardParser
-            ? m_pclMeritoriousRewardParser->GetMeritoriousRewardItemRequirePoint(itemKind)
-            : 0);
-
-    const int ret = inventory_->AddInventoryItem(&it, outChangedSlots, &pos);
-    if (outPos) *outPos = pos;
-    if (ret == 0) {
-        DecreaseMeritoriousPoint(requirePoint);
-        return 0;
-    }
-    return ret;
+    it.itemQty  = 1;
+    inventory_->AddInventoryItem(&it, outChangedSlots, nullptr);  // outPos 傳 nullptr，與 GT 一致
+    DecreaseMeritoriousPoint(requirePoint);
+    return 0;
 }
 
+// CanRewardMeritoriousItem: 檢查 totalPoint_（GT 用 offset 4 = totalPoint_）
 int CMeritoriousSystem::CanRewardMeritoriousItem(std::uint16_t itemKind) {
-    if (!inventory_) return 1;
-    const auto requirePoint = m_pclMeritoriousRewardParser
-                                  ? m_pclMeritoriousRewardParser->GetMeritoriousRewardItemRequirePoint(itemKind)
-                                  : 0;
-    if (point_ < requirePoint) return 107;
+    const unsigned int requirePoint = m_pclMeritoriousRewardParser
+        ? m_pclMeritoriousRewardParser->GetMeritoriousRewardItemRequirePoint(itemKind)
+        : 0;
+    if (totalPoint_ < requirePoint) return 107;
     return inventory_->CanAddInventoryItem(itemKind, 1);
 }
 
+// SetMeritoriousInfo: 嚴格對齊 GT 欄位賦值順序，不額外歸零其他欄位
+// GT offset mapping:
+//   point_         ← point  (DWORD offset 0)
+//   totalPoint_    ← totalPoint (DWORD offset 4)
+//   warQuestPlaying_ ← warQuestPlaying (BYTE offset 32)
+//   warQuestMapKind_ ← gradePoint (WORD offset 10)
+//   grade_         ← (uint8_t)supplyQuestPlaying (WORD offset 12)
+//   supplyQuestKind_ ← grade (WORD offset 36)
 void CMeritoriousSystem::SetMeritoriousInfo(unsigned int point, unsigned int totalPoint,
-                                            std::uint16_t grade, std::uint16_t gradePoint,
-                                            bool warQuestPlaying, char supplyQuestPlaying,
-                                            std::uint16_t warQuestMonCount,
-                                            const std::uint16_t* warQuestMonKinds,
-                                            const std::uint16_t* warQuestMonGoals) {
-    point_ = point;
-    totalPoint_ = totalPoint;
-    warQuestPlaying_ = warQuestPlaying;
-    warQuestDifficulty_ = gradePoint;
-    grade_ = static_cast<std::uint8_t>(supplyQuestPlaying);
-    supplyQuestKind_ = grade;
-    gradePoint_ = 0;
-    supplyQuestPlaying_ = 0;
+                                             std::uint16_t grade, std::uint16_t gradePoint,
+                                             bool warQuestPlaying, char supplyQuestPlaying,
+                                             std::uint16_t warQuestMonCount,
+                                             const std::uint16_t* warQuestMonKinds,
+                                             const std::uint16_t* warQuestMonGoals) {
+    point_            = point;
+    totalPoint_       = totalPoint;
+    warQuestPlaying_  = warQuestPlaying;
+    warQuestMapKind_  = gradePoint;
+    grade_            = static_cast<std::uint8_t>(supplyQuestPlaying);
+    supplyQuestKind_  = grade;
 
-    warQuestMonCount_ = std::min<std::uint16_t>(warQuestMonCount, kMaxQuestMonster);
-    warQuestMonKinds_.fill(0);
-    warQuestMonGoals_.fill(0);
-    warQuestMonKills_.fill(0);
-
-    for (std::uint16_t i = 0; i < warQuestMonCount_; ++i) {
-        SetWarMeritoriousQuest(warQuestMonKinds ? warQuestMonKinds[i] : 0,
-                               warQuestMonGoals ? warQuestMonGoals[i] : 0);
-    }
-
-}
-
-void CMeritoriousSystem::SetWarMeritoriousQuest(int playing, int difficulty) {
-    const auto kind = static_cast<std::uint16_t>(playing);
-    const auto goal = static_cast<std::uint16_t>(max(difficulty, 0));
-    if (kind == 0) return;
-
-    for (std::uint16_t i = 0; i < warQuestMonCount_; ++i) {
-        if (warQuestMonKinds_[i] == kind) {
-            if (goal > warQuestMonGoals_[i]) warQuestMonGoals_[i] = goal;
-            return;
-        }
-        if (warQuestMonKinds_[i] == 0) {
-            warQuestMonKinds_[i] = kind;
-            warQuestMonGoals_[i] = goal;
-            warQuestMonKills_[i] = 0;
-            return;
+    if (warQuestMonCount) {
+        for (std::uint16_t i = 0; i < warQuestMonCount; ++i) {
+            const int kind = warQuestMonKinds ? warQuestMonKinds[i] : 0;
+            const int goal = warQuestMonGoals ? warQuestMonGoals[i] : 0;
+            SetWarMeritoriousQuest(kind, goal);
         }
     }
 }
 
+// SetWarMeritoriousQuest: 標準 map::insert（key 已存在時不更新）
+// GT 使用 std::map::insert 語義，不做「若目標更高則更新」的邏輯
+void CMeritoriousSystem::SetWarMeritoriousQuest(int kind, int killCount) {
+    const auto k = static_cast<std::uint16_t>(kind);
+    const auto v = static_cast<std::uint16_t>(killCount < 0 ? 0 : killCount);
+    monsterKillMap_.insert({k, v});
+}
+
+// CalcMeritoriousGrade: 傳入 (uint16_t)point_（GT 用 low WORD of point_）
 int CMeritoriousSystem::CalcMeritoriousGrade(std::uint16_t* outGrade, std::uint16_t* outGradePoint) {
     if (!m_pclMeritoriousGradeParser) return 0;
-    if (m_pclMeritoriousGradeParser->CalcMeritoriousGrade(point_, grade_, outGrade, outGradePoint) != 1) return 0;
-    if (outGrade) grade_ = *outGrade;
-    if (specialtySystem_ && outGradePoint) specialtySystem_->IncreaseSpecialtyPt(*outGradePoint);
+    if (m_pclMeritoriousGradeParser->CalcMeritoriousGrade(
+            static_cast<std::uint16_t>(point_), grade_, outGrade, outGradePoint) != 1)
+        return 0;
+    grade_ = *outGrade;
+    specialtySystem_->IncreaseSpecialtyPt(*outGradePoint);
     return 1;
 }

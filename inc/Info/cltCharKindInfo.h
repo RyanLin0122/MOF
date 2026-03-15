@@ -8,4 +8,5 @@ public:
 
     // 保持與 IDA 還原呼叫面一致；具體資料版型由原始客戶端定義。
     void* GetCharKindInfo(uint16_t kindCode);
+    uint16_t GetRealCharID(uint16_t charKind);
 };

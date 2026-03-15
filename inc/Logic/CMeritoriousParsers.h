@@ -48,6 +48,7 @@ public:
                               std::uint16_t rewardPoint, std::uint32_t rewardLibi);
     std::uint16_t TranslateKindCode(char* kindCode);
 
+    CSupplyMeritoriousInfo& operator[](std::uint16_t id) { return infos_[id]; }
     const std::map<std::uint16_t, CSupplyMeritoriousInfo>& GetMap() const { return infos_; }
 
 private:

@@ -1,13 +1,12 @@
 #pragma once
 
-#include <array>
 #include <cstdint>
-#include <algorithm>
-#include <cstring>
+#include <map>
 
 #include "Logic/cltBaseInventory.h"
 #include "Logic/cltItemList.h"
 #include "Logic/CMeritoriousParsers.h"
+#include "Logic/CMonsterGroupPerLevel.h"
 #include "System/cltMoneySystem.h"
 #include "Info/cltCharKindInfo.h"
 #include "System/cltQuestSystem.h"
@@ -20,15 +19,13 @@ class CMeritoriousGradeParser;
 class CMeritoriousRewardParser;
 class CSupplyMeritoriousParser;
 
-struct stMonsterKind;
-
 class CMeritoriousSystem {
 public:
     static void InitializeStaticVariable(cltCharKindInfo*, CSupplyMeritoriousParser*, CMeritoriousRewardParser*,
                                          CMeritoriousGradeParser*, CExpRewardParser*);
 
-    CMeritoriousSystem();
-    ~CMeritoriousSystem();
+    CMeritoriousSystem() = default;
+    ~CMeritoriousSystem() = default;
 
     void Free();
     int Initialize(cltQuestSystem* questSystem, cltBaseInventory* inventory, cltSpecialtySystem* specialty,
@@ -40,11 +37,11 @@ public:
                    const std::uint16_t* warQuestMonKinds,
                    const std::uint16_t* warQuestMonGoals);
 
-    unsigned int StartWarMeritoriousQuest(std::uint16_t mapKind, int difficulty, std::uint16_t* outQuestKinds);
+    unsigned int StartWarMeritoriousQuest(std::uint16_t mapKind, int count, const std::uint16_t* questKinds);
     unsigned int CanStartWarMeritoriousQuest(int minLv, int maxLv, std::uint16_t needClass, std::uint16_t needNation,
                                              std::uint16_t monsterKind, stMonsterKind* outMonsterInfo);
     int CanStartWarMeritoriousQuest();
-    void PlayWarMeritoriousQuest(int playing);
+    void PlayWarMeritoriousQuest(int monsterID);
     unsigned int CompleteWarMeritoriousQuest(unsigned int seed, std::int64_t* outExp, int* outMoney,
                                              std::uint16_t* outQuestKinds, unsigned int* outQuestValues);
     unsigned int GetRewardWarMeritoriousExp();
@@ -87,7 +84,7 @@ public:
                             std::uint16_t warQuestMonCount,
                             const std::uint16_t* warQuestMonKinds,
                             const std::uint16_t* warQuestMonGoals);
-    void SetWarMeritoriousQuest(int playing, int difficulty);
+    void SetWarMeritoriousQuest(int kind, int killCount);
     int CalcMeritoriousGrade(std::uint16_t* outGrade, std::uint16_t* outGradePoint);
 
 private:
@@ -96,6 +93,7 @@ private:
     static CMeritoriousGradeParser* m_pclMeritoriousGradeParser;
     static CMeritoriousRewardParser* m_pclMeritoriousRewardParser;
     static CSupplyMeritoriousParser* m_pclSupplyMeritoriousParser;
+    static CMonsterGroupPerLevel m_clMonsterGroupPerLevel;
 
     cltQuestSystem* questSystem_{};
     cltBaseInventory* inventory_{};
@@ -106,15 +104,10 @@ private:
     unsigned int point_{};
     unsigned int totalPoint_{};
     std::uint16_t grade_{};
-    std::uint16_t gradePoint_{};
 
     bool warQuestPlaying_{};
-    char supplyQuestPlaying_{};
-    int warQuestDifficulty_{};
+    std::uint16_t warQuestMapKind_{};
     std::uint16_t supplyQuestKind_{};
 
-    std::array<std::uint16_t, 16> warQuestMonKinds_{};
-    std::array<std::uint16_t, 16> warQuestMonGoals_{};
-    std::array<std::uint16_t, 16> warQuestMonKills_{};
-    std::uint16_t warQuestMonCount_{};
+    std::map<std::uint16_t, std::uint16_t> monsterKillMap_;
 };
