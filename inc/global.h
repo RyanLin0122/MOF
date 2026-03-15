@@ -76,6 +76,29 @@ extern DWORD g_dwHeartBeatTime;
 extern unsigned int g_dwMyAccountID;
 extern ClientCharacterManager& g_ClientCharMgr;
 
+// Character-select slot data (filled from server packets; 3 slots × 96 bytes).
+// Slot layout (byte offset from slot base = 96 * slotIndex):
+//   0x00  char[32]   name           (byte_23158C8)
+//   0x20  short      charKind       (word_23158E8)  — AddCharacter
+//   0x22  char       nation         (byte_23158EA)
+//   0x24  short      charKindInit   (word_23158EC)  — cltMyCharData::Initialize
+//   0x26  char       sex            (byte_23158EE)
+//   0x27  char       hair           (byte_23158EF)
+//   0x28  int        mapKind        (dword_23158F0)
+//   0x2C  char       classKind      (byte_23158F4)
+//   0x30  uint16[11] equipKind1     (&word_23158F8)
+//   0x46  uint16[11] equipKind2     (&word_231590E)
+extern char           byte_23158C8[];   // name × 3 slots
+extern short          word_23158E8[];   // charKind × 3 slots       (stride: 48 shorts)
+extern char           byte_23158EA[];   // nation × 3 slots
+extern short          word_23158EC[];   // charKindInit × 3 slots   (stride: 48 shorts)
+extern char           byte_23158EE[];   // sex × 3 slots
+extern char           byte_23158EF[];   // hair × 3 slots
+extern int            dword_23158F0[];  // mapKind × 3 slots        (stride: 24 ints)
+extern char           byte_23158F4[];   // classKind × 3 slots
+extern unsigned short word_23158F8[];   // equipKind1 array start   (base of 3×11 shorts, stride 96 bytes)
+extern unsigned short word_231590E[];   // equipKind2 array start   (base of 3×11 shorts, stride 96 bytes)
+
 // Tutorial globals
 // (full class definitions are in their respective headers)
 extern int g_nTutorialState;

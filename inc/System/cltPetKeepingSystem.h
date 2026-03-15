@@ -12,14 +12,18 @@ class cltPetSystem;
 struct strPetKindInfo;
 
 struct strKeepingPetInfo {
+    struct ItemSlot {
+        std::uint16_t kind{};
+        std::uint16_t qty{};
+    };
+
     int petId{};
     std::uint16_t petKind{};
     char petName[32]{};
     int petExp{};
     int petSatiety{};
     std::uint8_t bagNum{};
-    std::array<std::uint16_t, 255> itemKinds{};
-    std::array<std::uint16_t, 255> itemQtys{};
+    std::array<ItemSlot, 255> items{};
     std::array<std::uint16_t, 100> skills{};
     std::array<std::uint16_t, 4> usingSkills{};
     int keepingStartTime{};
@@ -64,10 +68,10 @@ private:
     cltMoneySystem* moneySystem_{};
     cltPetSystem* petSystem_{};
     std::uint16_t* owner_{};
+    std::array<strKeepingPetInfo, 20> keepings_{};
     int nowTime_{};
     int lock_{};
-
-    std::array<strKeepingPetInfo, 20> keepings_{};
+    int keepingCount_{};
 
     static cltPetKindInfo* m_pclPetKindInfo;
 };

@@ -58,6 +58,18 @@ extern DWORD g_dwHeartBeatTime = 0;
 extern unsigned int g_dwMyAccountID = 0;
 extern ClientCharacterManager& g_ClientCharMgr = *ClientCharacterManager::GetInstance();
 
+// Character-select slot data (3 slots × 96 bytes; filled by server packets)
+extern char           byte_23158C8[288]  = {};  // name[32] × 3 slots
+extern short          word_23158E8[144]  = {};  // charKind × 3 slots       (stride: 48 shorts)
+extern char           byte_23158EA[288]  = {};  // nation × 3 slots
+extern short          word_23158EC[144]  = {};  // charKindInit × 3 slots   (stride: 48 shorts)
+extern char           byte_23158EE[288]  = {};  // sex × 3 slots
+extern char           byte_23158EF[288]  = {};  // hair × 3 slots
+extern int            dword_23158F0[72]  = {};  // mapKind × 3 slots        (stride: 24 ints)
+extern char           byte_23158F4[288]  = {};  // classKind × 3 slots
+extern unsigned short word_23158F8[144]  = {};  // equipKind1 × 3 slots     (stride: 48 shorts)
+extern unsigned short word_231590E[144]  = {};  // equipKind2 × 3 slots     (stride: 48 shorts)
+
 // Tutorial globals
 extern int g_nTutorialState = 0;
 

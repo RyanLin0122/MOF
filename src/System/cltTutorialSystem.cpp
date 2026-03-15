@@ -32,63 +32,7 @@
 #include <map>
 #include <string>
 
-// ---------------------------------------------------------------------------
-// Tutorial data tables
-// ---------------------------------------------------------------------------
-namespace {
-
-// One entry per tutorial type; stride matches the ground-truth 96-byte blocks
-// starting at word_23158E8 / byte_23158C8.
-struct TutorialTypeData {
-    std::uint16_t charKindAddChar; // word_23158E8 (+0x20) — passed to AddCharacter
-    std::uint16_t charKindInit;    // word_23158EC (+0x24) — passed to cltMyCharData::Initialize
-    std::uint8_t  nation;          // byte_23158EA
-    std::uint8_t  sex;             // byte_23158EE
-    std::uint8_t  hair;            // byte_23158EF
-    std::uint8_t  classKind;       // byte_23158F4
-    std::uint32_t mapKind;         // dword_23158F0
-    std::uint16_t equipKind1[11];  // word_23158F8
-    std::uint16_t equipKind2[11];  // word_231590E
-    char          name[32];        // byte_23158C8
-};
-
-static const TutorialTypeData kTutorialData[] = {
-    // type 0 – Warrior
-    {
-        0x1001,           // charKindAddChar (word_23158E8)
-        0x1001,           // charKindInit    (word_23158EC) — TODO: verify from binary
-        0,                // nation
-        0,                // sex
-        0,                // hair
-        1,                // classKind
-        0x5001,           // mapKind
-        { 1001, 1002, 0, 0, 0, 0, 0, 0, 0, 0, 0 },  // equipKind1
-        { 2001, 0,    0, 0, 0, 0, 0, 0, 0, 0, 0 },  // equipKind2
-        "TutorialWarrior"
-    },
-    // type 1 – Archer
-    {
-        0x1002,           // charKindAddChar (word_23158E8)
-        0x1002,           // charKindInit    (word_23158EC) — TODO: verify from binary
-        1,                // nation
-        1,                // sex
-        0,                // hair
-        2,                // classKind
-        0x5001,           // mapKind
-        { 1101, 1102, 0, 0, 0, 0, 0, 0, 0, 0, 0 },  // equipKind1
-        { 2101, 0,    0, 0, 0, 0, 0, 0, 0, 0, 0 },  // equipKind2
-        "TutorialArcher"
-    },
-};
-
-static const int kTutorialDataCount =
-    static_cast<int>(sizeof(kTutorialData) / sizeof(kTutorialData[0]));
-
-} // namespace
-
-// ---------------------------------------------------------------------------
 // g_nTutorialState – global, NOT a member
-// ---------------------------------------------------------------------------
 // Declared extern in global.h; defined in global.cpp.
 
 // ---------------------------------------------------------------------------
@@ -96,13 +40,7 @@ static const int kTutorialDataCount =
 // ---------------------------------------------------------------------------
 
 cltTutorialSystem::cltTutorialSystem()
-    : m_pMyCharacter(nullptr)
-    , m_nTimerID(0)
-    , m_fStartX(0.0f)
-    , m_fStartY(0.0f)
-    , m_nMonsterHP(0)
-    , m_nLastAttackTime(0)
-    , m_nWaitingUseItemResult(0)
+    : m_nTimerID(0)
 {
 }
 
@@ -134,21 +72,26 @@ int cltTutorialSystem::InitalizeTutorialSystem(std::uint8_t tutorialType) {
     stEquipItemInfo equip1[11] = {};
     stEquipItemInfo equip2[11] = {};
 
-    // 6. Look up tutorial type data (no bounds check — matches ground truth direct 96*a2 offset)
-    const TutorialTypeData& td = kTutorialData[tutorialType];
+    // 6. Compute byte stride into global slot arrays (matches GT: v11 = 96 * a2)
+    const int stride = 96 * tutorialType;
+    const unsigned short* eq1data = reinterpret_cast<const unsigned short*>(
+        reinterpret_cast<const char*>(word_23158F8) + stride);
+    const unsigned short* eq2data = reinterpret_cast<const unsigned short*>(
+        reinterpret_cast<const char*>(word_231590E) + stride);
 
-    // 7. Fill equip arrays from data table
+    // 7. Fill equip arrays from slot data
     for (int i = 0; i < 11; ++i) {
-        equip1[i].itemKind = td.equipKind1[i];
+        equip1[i].itemKind = eq1data[i];
     }
     for (int i = 0; i < 11; ++i) {
-        equip2[i].itemKind = td.equipKind2[i];
+        equip2[i].itemKind = eq2data[i];
     }
 
     // 8. cltMyCharData::Initialize
     cltMyCharData::Initialize(
         &g_clMyCharData,
-        td.charKindInit, td.classKind,
+        word_23158EC[48 * tutorialType],
+        static_cast<std::uint8_t>(byte_23158F4[stride]),
         /*a3*/0LL,
         /*hp*/100, /*maxHp*/100,
         0,0,0,0,0,
@@ -157,8 +100,10 @@ int cltTutorialSystem::InitalizeTutorialSystem(std::uint8_t tutorialType) {
         0,0,0,
         equip1, equip2,
         0,0,0,0,0,0,0,0,0,0,0,0,
-        td.nation, td.sex, td.hair,
-        /*mapKind*/static_cast<int>(td.mapKind),
+        static_cast<std::uint8_t>(byte_23158EA[stride]),
+        static_cast<std::uint8_t>(byte_23158EE[stride]),
+        static_cast<std::uint8_t>(byte_23158EF[stride]),
+        dword_23158F0[24 * tutorialType],
         0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0
     );
 
@@ -170,15 +115,17 @@ int cltTutorialSystem::InitalizeTutorialSystem(std::uint8_t tutorialType) {
     g_ClientCharMgr.AddCharacter(
         reinterpret_cast<ClientCharacter*>(10),
         642, 507,
-        td.charKindAddChar, 0x5001,
-        25, td.name,
+        static_cast<std::uint16_t>(word_23158E8[48 * tutorialType]), 0x5001,
+        25, &byte_23158C8[stride],
         "", 0,
         "", "",
         0,0,0,0,0,0,
         0,0,0,0,
         "", "",
         0, 0,0,0,0,
-        td.nation, td.sex, td.hair,
+        static_cast<std::uint8_t>(byte_23158EA[stride]),
+        static_cast<std::uint8_t>(byte_23158EE[stride]),
+        static_cast<std::uint8_t>(byte_23158EF[stride]),
         0, 0
     );
 
@@ -191,16 +138,14 @@ int cltTutorialSystem::InitalizeTutorialSystem(std::uint8_t tutorialType) {
     // 13. Set byte at offset 11524 = 2
     *(reinterpret_cast<char*>(m_pMyCharacter) + 11524) = 2;
 
-    // 14. Set equipped items on character manager
+    // 14. Set equipped items on character manager (iterate raw slot data, matches GT)
     for (int i = 0; i < 11; ++i) {
-        if (equip1[i].itemKind != 0) {
-            g_ClientCharMgr.SetItem(10, equip1[i].itemKind, 1);
-        }
+        if (eq1data[i])
+            g_ClientCharMgr.SetItem(10, eq1data[i], 1);
     }
     for (int i = 0; i < 11; ++i) {
-        if (equip2[i].itemKind != 0) {
-            g_ClientCharMgr.SetItem(10, equip2[i].itemKind, 1);
-        }
+        if (eq2data[i])
+            g_ClientCharMgr.SetItem(10, eq2data[i], 1);
     }
 
     // 15. Disable help overlay
@@ -563,10 +508,9 @@ void cltTutorialSystem::SendTutorialMsg(std::uint8_t msgType) {
 void cltTutorialSystem::MoveCharacterMission(std::uint8_t missionType) {
     switch (missionType) {
     case 0:
-        if (m_fStartX - static_cast<float>(
-                *(reinterpret_cast<int*>(
+        if (m_fStartX - (double)(*(reinterpret_cast<int*>(
                     reinterpret_cast<char*>(m_pMyCharacter) + 4384)))
-            > 240.0f)
+            > 240.0)
         {
             g_pUITutorial->AddTutorial(4);
             ++g_nTutorialState;
@@ -574,10 +518,9 @@ void cltTutorialSystem::MoveCharacterMission(std::uint8_t missionType) {
         break;
 
     case 1:
-        if (static_cast<float>(
-                *(reinterpret_cast<int*>(
+        if ((double)(*(reinterpret_cast<int*>(
                     reinterpret_cast<char*>(m_pMyCharacter) + 4384)))
-            - m_fStartX > 240.0f)
+            - m_fStartX > 240.0)
         {
             g_pUITutorial->AddTutorial(3);
             ++g_nTutorialState;
@@ -585,10 +528,9 @@ void cltTutorialSystem::MoveCharacterMission(std::uint8_t missionType) {
         break;
 
     case 2:
-        if (m_fStartY - static_cast<float>(
-                *(reinterpret_cast<int*>(
+        if (m_fStartY - (double)(*(reinterpret_cast<int*>(
                     reinterpret_cast<char*>(m_pMyCharacter) + 4388)))
-            > 140.0f)
+            > 140.0)
         {
             g_pUITutorial->AddTutorial(5);
             ++g_nTutorialState;
@@ -596,13 +538,11 @@ void cltTutorialSystem::MoveCharacterMission(std::uint8_t missionType) {
         break;
 
     case 3:
-        if (static_cast<float>(
-                *(reinterpret_cast<int*>(
+        if ((double)(*(reinterpret_cast<int*>(
                     reinterpret_cast<char*>(m_pMyCharacter) + 4388)))
-            - m_fStartY > 140.0f)
+            - m_fStartY > 140.0)
         {
             g_pUITutorial->AddTutorial(6);
-            // NO ++g_nTutorialState here (matches ground truth)
         }
         break;
 
