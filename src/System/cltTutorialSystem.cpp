@@ -7,6 +7,8 @@
 #include "Character/ClientCharacter.h"
 #include "Character/ClientCharacterManager.h"
 #include "Info/cltCharKindInfo.h"
+#include "Info/cltItemKindInfo.h"
+#include "Logic/Map.h"
 #include "Logic/CMessageBoxManager.h"
 #include "Logic/CObjectManager.h"
 #include "Logic/CShortKey.h"
@@ -19,12 +21,16 @@
 #include "Logic/cltNPCManager.h"
 #include "Logic/cltSystemMessage.h"
 #include "Util/cltTimer.h"
+#include "Util/ScriptParameter.h"
+#include "Util/StringStream.h"
 #include "System/CMeritoriousSystem.h"
 #include "System/cltQuestSystem.h"
 #include "Text/DCTTextManager.h"
 #include "UI/CUIManager.h"
 #include "UI/CUITutorial.h"
 #include "global.h"
+#include <map>
+#include <string>
 
 // ---------------------------------------------------------------------------
 // Tutorial data tables
@@ -125,8 +131,8 @@ int cltTutorialSystem::InitalizeTutorialSystem(std::uint8_t tutorialType) {
     stEquipItemInfo equip1[11] = {};
     stEquipItemInfo equip2[11] = {};
 
-    // 6. Look up tutorial type data
-    const TutorialTypeData& td = kTutorialData[tutorialType % kTutorialDataCount];
+    // 6. Look up tutorial type data (no bounds check — matches ground truth direct 96*a2 offset)
+    const TutorialTypeData& td = kTutorialData[tutorialType];
 
     // 7. Fill equip arrays from data table
     for (int i = 0; i < 11; ++i) {
@@ -206,8 +212,10 @@ int cltTutorialSystem::InitalizeTutorialSystem(std::uint8_t tutorialType) {
     g_clNPCManager.AddAllNPC(0x5001);
 
     // 18. Create map
-    // Map::CreateMap(&g_Map, 0x5001, pChar)  — g_Map is cltMapInfo here (stub)
-    // (cltMapInfo does not expose CreateMap; left as stub comment per spec)
+    {
+        ClientCharacter* v22 = g_ClientCharMgr.GetMyCharacterPtr();
+        g_Map.CreateMap(0x5001u, v22);
+    }
 
     // 19. Set map ID on character
     if (m_pMyCharacter) {
@@ -270,9 +278,7 @@ int cltTutorialSystem::InitalizeTutorialSystem(std::uint8_t tutorialType) {
     m_nWaitingUseItemResult = 1;
 
     // 29. Advance tutorial UI to step 1 (no state increment)
-    if (g_pUITutorial) {
-        g_pUITutorial->AddTutorial(1);
-    }
+    g_pUITutorial->AddTutorial(1);
 
     // 30. Clear timer ID
     m_nTimerID = 0;
@@ -371,9 +377,7 @@ void cltTutorialSystem::AttackMonster() {
                             if (m_nMonsterHP == 0) {
                                 g_clFieldItemMgr.PushBuffer(
                                     targetAccount, 0x64, 0, 0x292E, 1, 0);
-                                if (g_pUITutorial) {
-                                    g_pUITutorial->AddTutorial(8);
-                                }
+                                g_pUITutorial->AddTutorial(8);
                                 ++g_nTutorialState;
                             }
                         }
@@ -404,6 +408,31 @@ void cltTutorialSystem::PickUpItem() {
         g_clFieldItemMgr.GetNearItemInfo(px, py, &nearKind, &nearX, &nearY, 0, 0, 0);
 
         if (nearKind != 0) {
+            // Build parameter map for script substitution
+            std::map<std::string, std::string> paramMap;
+
+            stItemKindInfo* pItemInfo = g_clItemKindInfo.GetItemKindInfo(0x292Eu);
+            const char* itemNameText = g_DCTTextManager.GetText(pItemInfo->m_wTextCode);
+            paramMap["Parameter0"] = itemNameText ? itemNameText : "";
+
+            StringStream ss;
+            ss << 1;
+            paramMap["Parameter1"] = ss.c_str();
+
+            // Substitute parameters into message template (DCT 4462)
+            const char* msgTemplate = g_DCTTextManager.GetText(4462);
+            std::string substituted = getScriptParameter(msgTemplate, paramMap);
+
+            char Buffer[1024];
+            if (substituted == (msgTemplate ? msgTemplate : "")) {
+                // No substitution occurred
+                sprintf(Buffer, msgTemplate);
+            } else {
+                std::strcpy(Buffer, substituted.c_str());
+            }
+
+            cltSystemMessage::SetSystemMessage(&g_clSysemMessage, Buffer, 0, 0, 0);
+
             strInventoryItem inv;
             inv.itemKind = 10542;
             inv.itemQty  = 1;
@@ -415,9 +444,7 @@ void cltTutorialSystem::PickUpItem() {
 
             g_clFieldItemMgr.DelItem(10, 0x64, 1, 0);
 
-            if (g_pUITutorial) {
-                g_pUITutorial->AddTutorial(10);
-            }
+            g_pUITutorial->AddTutorial(10);
             // Note: NO ++g_nTutorialState here (matches ground truth).
         }
     }
@@ -465,18 +492,15 @@ int cltTutorialSystem::ExitTutorialMap() {
 
     g_ClientCharMgr.DeleteAllChar();
 
-    if (g_pUITutorial) {
-        g_pUITutorial->OnCancel(-1, 0, 0, 0, px, py);
-    }
+    // ground truth: qmemcpy zeroes v6 before call, so exitX/exitY are 0
+    g_pUITutorial->OnCancel(-1, 0, 0, 0, 0, 0);
     g_pUITutorial = nullptr;
 
     g_clMyInventory.EmptyInventoryItem(0);
     g_clMyInventory.EmptyInventoryItem(1);
 
     int helpState = 0;
-    if (g_clConfig) {
-        g_clConfig->GetHelpState(&helpState);
-    }
+    g_clConfig->GetHelpState(&helpState);
     g_clHelpMessage.IsShow(helpState);
 
     return 1;
@@ -492,7 +516,7 @@ void cltTutorialSystem::SendTutorialMsg(std::uint8_t msgType) {
         stCharKindInfo* ki = g_clCharKindInfo.GetMonsterNameByKind(0x4801);
         const char* nameFmt = g_DCTTextManager.GetText(reinterpret_cast<int>(ki));
         char monName[128];
-        _snprintf(monName, sizeof(monName), nameFmt ? nameFmt : "", 100);
+        wsprintfA(monName, nameFmt, 100);
 
         g_ClientCharMgr.AddCharacter(
             reinterpret_cast<ClientCharacter*>(100),
@@ -553,7 +577,7 @@ void cltTutorialSystem::MoveCharacterMission(std::uint8_t missionType) {
                     reinterpret_cast<char*>(m_pMyCharacter) + 4384)))
             > 240.0f)
         {
-            if (g_pUITutorial) g_pUITutorial->AddTutorial(4);
+            g_pUITutorial->AddTutorial(4);
             ++g_nTutorialState;
         }
         break;
@@ -564,7 +588,7 @@ void cltTutorialSystem::MoveCharacterMission(std::uint8_t missionType) {
                     reinterpret_cast<char*>(m_pMyCharacter) + 4384)))
             - m_fStartX > 240.0f)
         {
-            if (g_pUITutorial) g_pUITutorial->AddTutorial(3);
+            g_pUITutorial->AddTutorial(3);
             ++g_nTutorialState;
         }
         break;
@@ -575,7 +599,7 @@ void cltTutorialSystem::MoveCharacterMission(std::uint8_t missionType) {
                     reinterpret_cast<char*>(m_pMyCharacter) + 4388)))
             > 140.0f)
         {
-            if (g_pUITutorial) g_pUITutorial->AddTutorial(5);
+            g_pUITutorial->AddTutorial(5);
             ++g_nTutorialState;
         }
         break;
@@ -586,7 +610,7 @@ void cltTutorialSystem::MoveCharacterMission(std::uint8_t missionType) {
                     reinterpret_cast<char*>(m_pMyCharacter) + 4388)))
             - m_fStartY > 140.0f)
         {
-            if (g_pUITutorial) g_pUITutorial->AddTutorial(6);
+            g_pUITutorial->AddTutorial(6);
             // NO ++g_nTutorialState here (matches ground truth)
         }
         break;
@@ -601,14 +625,10 @@ void cltTutorialSystem::MoveCharacterMission(std::uint8_t missionType) {
 // ---------------------------------------------------------------------------
 
 void cltTutorialSystem::OnTimer_EndUseItem() {
-    if (g_pUITutorial) {
-        g_pUITutorial->AddTutorial(12);
-    }
+    g_pUITutorial->AddTutorial(12);
 }
 
 void cltTutorialSystem::OnTimer_StartExitMap() {
-    if (g_pUITutorial) {
-        g_pUITutorial->AddTutorial(15);
-    }
+    g_pUITutorial->AddTutorial(15);
     ++g_nTutorialState;
 }

@@ -5,24 +5,8 @@ constexpr int kFunctionQuestSetTeacher = 13;
 constexpr int kFunctionQuestAddStudent = 26;
 constexpr int kStudentMax = 10;
 constexpr int kClassMateMax = 10;
-constexpr std::uint8_t kDefaultClass = 0;
-
-static bool IsEmptyName(const std::array<char, 32>& n) {
-    return n[0] == '\0';
-}
-
-static bool NameEqual(const std::array<char, 32>& a, const char* b) {
-    return b && std::strcmp(a.data(), b) == 0;
-}
-
-static void AssignName(std::array<char, 32>& out, const char* in) {
-    out.fill(0);
-    if (!in) return;
-    std::strncpy(out.data(), in, out.size() - 1);
-}
 
 static int FindByName(const std::array<strTASMemberInfo, kStudentMax>& arr, int n, const char* name) {
-    if (!name || !name[0]) return -1;
     for (int i = 0; i < n; ++i) {
         if (std::strcmp(arr[i].name.data(), name) == 0) return i;
     }
@@ -36,16 +20,11 @@ static void EraseAt(std::array<strTASMemberInfo, N>& arr, int& n, int idx) {
     arr[n - 1] = {};
     --n;
 }
-
-static std::int64_t ClampAdd64(std::int64_t a, std::int64_t b) {
-    if (b > 0 && a > (INT64_MAX - b)) return INT64_MAX;
-    if (b < 0 && a < (INT64_MIN - b)) return INT64_MIN;
-    return a + b;
-}
 } // namespace
 
 cltTASSystem::cltTASSystem() { Free(); }
 
+// Ground truth: direct memcpy of full arrays, no clamping
 void cltTASSystem::Initialize(cltLevelSystem* levelSystem, cltMoneySystem* moneySystem, cltQuestSystem* questSystem,
                               strTASMemberInfo* teacher, char teacherLevel, std::int64_t gatherExp,
                               int classMateCount, const strTASMemberInfo* classMates,
@@ -54,21 +33,14 @@ void cltTASSystem::Initialize(cltLevelSystem* levelSystem, cltMoneySystem* money
     moneySystem_ = moneySystem;
     questSystem_ = questSystem;
 
-    teacher_ = teacher ? *teacher : strTASMemberInfo{};
+    std::memcpy(&teacher_, teacher, sizeof(teacher_));
+    std::memcpy(classMates_.data(), classMates, sizeof(classMates_));
+    std::memcpy(students_.data(), students, sizeof(students_));
+
     myTeacherLevel_ = static_cast<std::uint8_t>(teacherLevel);
-    gatherExp_ = std::max<std::int64_t>(0, gatherExp);
-
-    classMates_.fill({});
-    classMateCount_ = std::clamp(classMateCount, 0, kClassMateMax);
-    for (int i = 0; i < classMateCount_; ++i) {
-        classMates_[i] = classMates ? classMates[i] : strTASMemberInfo{};
-    }
-
-    students_.fill({});
-    studentCount_ = std::clamp(studentCount, 0, kStudentMax);
-    for (int i = 0; i < studentCount_; ++i) {
-        students_[i] = students ? students[i] : strTASMemberInfo{};
-    }
+    gatherExp_ = gatherExp;
+    classMateCount_ = classMateCount;
+    studentCount_ = studentCount;
 }
 
 void cltTASSystem::Initialize(cltLevelSystem* levelSystem, cltMoneySystem* moneySystem, cltQuestSystem* questSystem, CMofMsg* msg) {
@@ -85,13 +57,13 @@ void cltTASSystem::Initialize(cltLevelSystem* levelSystem, cltMoneySystem* money
         msg->Get_Z1(teacher.name.data(), 0, 0, nullptr);
 
         msg->Get_BYTE(&classMateCount);
-        for (std::uint8_t i = 0; i < classMateCount && i < classMates.size(); ++i) {
+        for (std::uint8_t i = 0; i < classMateCount; ++i) {
             msg->Get_Z1(classMates[i].name.data(), 0, 0, nullptr);
             msg->Get_BYTE(&classMates[i].level);
         }
 
         msg->Get_BYTE(&studentCount);
-        for (std::uint8_t i = 0; i < studentCount && i < students.size(); ++i) {
+        for (std::uint8_t i = 0; i < studentCount; ++i) {
             msg->Get_Z1(students[i].name.data(), 0, 0, nullptr);
             msg->Get_BYTE(&students[i].level);
             msg->Get_BYTE(&students[i].classKind);
@@ -103,15 +75,14 @@ void cltTASSystem::Initialize(cltLevelSystem* levelSystem, cltMoneySystem* money
     }
 
     Initialize(levelSystem, moneySystem, questSystem,
-               &teacher, static_cast<char>(teacherLevel), gatherExp,
+               &teacher, static_cast<char>(teacherLevel), static_cast<std::int64_t>(gatherExp),
                classMateCount, classMates.data(),
                studentCount, students.data());
 }
 
+// Ground truth: only clears levelSystem_; moneySystem_ and questSystem_ are NOT cleared
 void cltTASSystem::Free() {
     levelSystem_ = nullptr;
-    moneySystem_ = nullptr;
-    questSystem_ = nullptr;
 
     teacher_ = {};
     classMates_.fill({});
@@ -123,33 +94,28 @@ void cltTASSystem::Free() {
     studentCount_ = 0;
 }
 
+// Ground truth: no null guard on levelSystem_
 int cltTASSystem::CanSetTeacher(std::uint8_t teacherLevel) {
     if (IsThereTeacher()) return 1501;
-    if (!levelSystem_) return 1500;
-
-    const auto myLv = levelSystem_->GetLevel();
-    return (myLv + 10 <= teacherLevel) ? 0 : 1500;
+    return (levelSystem_->GetLevel() + 10 <= teacherLevel) ? 0 : 0x5DC;
 }
 
+// Ground truth: stores classKind param into teacher_.level (struct offset 34), not teacher_.classKind
 void cltTASSystem::SetTeacher(char* teacherName, char classKind, char level, CMofMsg* msg,
                               std::uint16_t* questKinds, unsigned int* questValues) {
-    AssignName(teacher_.name, teacherName);
-    teacher_.classKind = static_cast<std::uint8_t>(classKind);
+    std::strcpy(teacher_.name.data(), teacherName);
+    teacher_.level = static_cast<std::uint8_t>(classKind);
     myTeacherLevel_ = static_cast<std::uint8_t>(level);
 
     std::uint8_t count = 0;
-    if (msg) {
-        msg->Get_BYTE(&count);
-        classMateCount_ = std::min<int>(count, kClassMateMax);
-        for (int i = 0; i < classMateCount_; ++i) {
-            msg->Get_Z1(classMates_[i].name.data(), 0, 0, nullptr);
-            msg->Get_BYTE(&classMates_[i].level);
-        }
+    msg->Get_BYTE(&count);
+    classMateCount_ = count;
+    for (int i = 0; i < classMateCount_; ++i) {
+        msg->Get_Z1(classMates_[i].name.data(), 0, 0, nullptr);
+        msg->Get_BYTE(&classMates_[i].level);
     }
 
-    if (questSystem_) {
-        questSystem_->CompleteFunctionQuest(kFunctionQuestSetTeacher, questKinds, questValues);
-    }
+    questSystem_->CompleteFunctionQuest(kFunctionQuestSetTeacher, questKinds, questValues);
 }
 
 void cltTASSystem::DelTeacher() {
@@ -159,16 +125,12 @@ void cltTASSystem::DelTeacher() {
     myTeacherLevel_ = 0;
 }
 
+// Ground truth: only checks count < 10, no null/duplicate check
 void cltTASSystem::AddClassMate(char* name, std::uint8_t level) {
-    if (!name || !name[0]) return;
     if (classMateCount_ >= kClassMateMax) return;
-    if (FindByName(classMates_, classMateCount_, name) >= 0) return;
-
-    auto& m = classMates_[classMateCount_++];
-    AssignName(m.name, name);
-    m.level = level;
-    m.classKind = kDefaultClass;
-    m.grade = 0;
+    std::strncpy(classMates_[classMateCount_].name.data(), name, 31);
+    classMates_[classMateCount_].level = level;
+    ++classMateCount_;
 }
 
 void cltTASSystem::DelClassMate(char* name) {
@@ -176,127 +138,125 @@ void cltTASSystem::DelClassMate(char* name) {
     EraseAt(classMates_, classMateCount_, idx);
 }
 
+// Ground truth: checks count >= 10 first, then teacher name (no empty check), then students
 int cltTASSystem::CanAddStudent(char* name) {
-    if (!name) return 0;
     if (studentCount_ >= kStudentMax) return 0;
-
-    if (FindByName(students_, studentCount_, name) >= 0) return 0;
-    if (teacher_.name[0] && std::strcmp(teacher_.name.data(), name) == 0) return 0;
-
+    if (std::strcmp(teacher_.name.data(), name) == 0) return 0;
+    for (int i = 0; i < studentCount_; ++i) {
+        if (std::strcmp(students_[i].name.data(), name) == 0) return 0;
+    }
     return 1;
 }
 
+// Ground truth: direct count check, grade = classKind (not 0)
 void cltTASSystem::AddStudent(char* name, char level, char classKind,
                               std::uint16_t* questKinds, unsigned int* questValues) {
-    if (!CanAddStudent(name)) return;
-
-    auto& s = students_[studentCount_++];
-    AssignName(s.name, name);
-    s.level = static_cast<std::uint8_t>(level);
-    s.classKind = static_cast<std::uint8_t>(classKind);
-    s.grade = 0;
-
-    if (questSystem_) {
-        questSystem_->CompleteFunctionQuest(kFunctionQuestAddStudent, questKinds, questValues);
-    }
+    if (studentCount_ >= kStudentMax) return;
+    int i = studentCount_;
+    std::strncpy(students_[i].name.data(), name, 31);
+    students_[i].level    = static_cast<std::uint8_t>(level);
+    students_[i].classKind = static_cast<std::uint8_t>(classKind);
+    students_[i].grade    = static_cast<std::uint8_t>(classKind);  // ground truth: grade = classKind
+    ++studentCount_;
+    questSystem_->CompleteFunctionQuest(kFunctionQuestAddStudent, questKinds, questValues);
 }
 
 int cltTASSystem::CanDelStudent(char* name, int needCost, int* outCost) {
-    if (outCost) *outCost = 0;
-
     const int idx = FindByName(students_, studentCount_, name);
-    if (idx < 0) return 0;
+    if (idx < 0) {
+        if (outCost) *outCost = 0;
+        return 0;
+    }
 
     const int cost = GetDelStudentCost(students_[idx].level);
     if (outCost) *outCost = cost;
 
     if (!needCost) return 1;
-    return moneySystem_ ? moneySystem_->CanDecreaseMoney(cost) : 0;
+    return moneySystem_->CanDecreaseMoney(cost);
 }
 
+// Ground truth: returns cost (not 1); zeroes gatherExp_ when last student removed
 int cltTASSystem::DelStudent(char* name, int needCost) {
-    int cost = 0;
-    if (!CanDelStudent(name, needCost, &cost)) return 0;
-
-    if (needCost && moneySystem_) moneySystem_->DecreaseMoney(cost);
-
     const int idx = FindByName(students_, studentCount_, name);
     if (idx < 0) return 0;
 
+    int cost = 0;
+    if (needCost) {
+        cost = GetDelStudentCost(students_[idx].level);
+        moneySystem_->DecreaseMoney(cost);
+    }
+
     EraseAt(students_, studentCount_, idx);
-    return 1;
+
+    if (studentCount_ == 0) {
+        gatherExp_ = 0;
+    }
+
+    return cost;
 }
 
 strTASMemberInfo* cltTASSystem::GetTeacher() { return &teacher_; }
 
+// Ground truth: always memcpy full 350 bytes, no null check on outMembers
 void cltTASSystem::GetClassMate(int* outCount, strTASMemberInfo* outMembers) {
-    if (outCount) *outCount = classMateCount_;
-    if (!outMembers) return;
-
-    for (int i = 0; i < classMateCount_; ++i) outMembers[i] = classMates_[i];
+    *outCount = classMateCount_;
+    std::memcpy(outMembers, classMates_.data(), sizeof(classMates_));
 }
 
 void cltTASSystem::GetStudent(int* outCount, strTASMemberInfo* outMembers) {
-    if (outCount) *outCount = studentCount_;
-    if (!outMembers) return;
-
-    for (int i = 0; i < studentCount_; ++i) outMembers[i] = students_[i];
+    *outCount = studentCount_;
+    std::memcpy(outMembers, students_.data(), sizeof(students_));
 }
 
+// Ground truth: returns raw value, no clamping
 std::int64_t cltTASSystem::GetGatherExpByStudents() {
-    return std::max<std::int64_t>(0, gatherExp_);
+    return gatherExp_;
 }
 
 std::int64_t cltTASSystem::GetMaxGatherableExpByStudents() {
-    if (!levelSystem_) return 0;
-    // ground-truth: return 5% of total exp at current level
-    return (levelSystem_->GetTotalExpOfLevel() * 5) / 100;
+    return 5 * levelSystem_->GetTotalExpOfLevel() / 100;
 }
 
+// Ground truth: passes struct[32] and struct[33] — after reorder: classKind and grade
 int cltTASSystem::GetMaxGatherExpPercent(strTASMemberInfo* member) {
-    if (!member) return 0;
-    return GetMaxGatherExpPercent(member->level, member->classKind);
+    return GetMaxGatherExpPercent(member->classKind, member->grade);
 }
 
 int cltTASSystem::GetMaxGatherExpPercent(std::uint8_t teacherLevel, std::uint8_t myLevel) {
-    // ground-truth:
-    // if teacherLevel >= myLevel => 5
-    // else ((myLevel - teacherLevel) / 2) + 5, capped at 25
     if (teacherLevel >= myLevel) return 5;
     int value = (static_cast<int>(myLevel) - static_cast<int>(teacherLevel)) / 2 + 5;
     if (value > 25) value = 25;
     return value;
 }
 
+// Ground truth: only writes to *outGatherExp and *outMoney; does NOT modify gatherExp_
 void cltTASSystem::OnLevelUp(std::uint8_t oldLevel, std::int64_t* outGatherExp, int* outMoney) {
-    if (outGatherExp) *outGatherExp = 0;
-    if (outMoney) *outMoney = 0;
+    *outGatherExp = 0;
+    *outMoney = 0;
 
-    if (!AmIStudent() || !levelSystem_) return;
+    if (!AmIStudent()) return;
+
+    if (myTeacherLevel_ + 20 > oldLevel && myTeacherLevel_ + 20 <= levelSystem_->GetLevel())
+        *outMoney += 100000;
+    if (myTeacherLevel_ + 30 > oldLevel && myTeacherLevel_ + 30 <= levelSystem_->GetLevel())
+        *outMoney += 500000;
 
     const std::uint8_t curLv = levelSystem_->GetLevel();
-    if (oldLevel >= curLv) return;
-
-    std::int64_t gathered = 0;
-    int money = 0;
-
-    for (std::uint8_t lv = oldLevel; lv < curLv; ++lv) {
-        const std::int64_t p = GetMaxGatherExpPercent(myTeacherLevel_, lv);
-        const std::int64_t add = (p * cltLevelSystem::GetExpByLevel(static_cast<std::uint8_t>(lv + 1))) / 100;
-        gathered = ClampAdd64(gathered, add);
+    if (oldLevel < curLv) {
+        std::uint8_t v5 = oldLevel;
+        std::uint8_t v9 = oldLevel;
+        do {
+            ++v5;
+            const std::int64_t p = GetMaxGatherExpPercent(myTeacherLevel_, v9);
+            const std::int64_t add = p * cltLevelSystem::GetExpByLevel(v5) / 100;
+            v9 = v5;
+            *outGatherExp += add;
+        } while (v5 < curLv);
     }
-
-    if (myTeacherLevel_ + 20 > oldLevel && myTeacherLevel_ + 20 <= curLv) money += 100000;
-    if (myTeacherLevel_ + 30 > oldLevel && myTeacherLevel_ + 30 <= curLv) money += 500000;
-
-    gatherExp_ = ClampAdd64(gatherExp_, gathered);
-
-    if (outGatherExp) *outGatherExp = gathered;
-    if (outMoney) *outMoney = money;
 }
 
 int cltTASSystem::IsThereTeacher() {
-    return !IsEmptyName(teacher_.name);
+    return teacher_.name[0] != 0;
 }
 
 int cltTASSystem::AmITeacher() {
@@ -308,8 +268,8 @@ int cltTASSystem::AmIStudent() {
 }
 
 int cltTASSystem::GetMyGatherExpForTeacher() {
-    if (!levelSystem_) return 0;
-    return GetMaxGatherExpPercent(myTeacherLevel_, levelSystem_->GetLevel());
+    const std::uint8_t myLv = levelSystem_->GetLevel();
+    return GetMaxGatherExpPercent(myTeacherLevel_, myLv);
 }
 
 int cltTASSystem::GetDelStudentCost(std::uint8_t level) {
@@ -317,8 +277,6 @@ int cltTASSystem::GetDelStudentCost(std::uint8_t level) {
 }
 
 void cltTASSystem::FillOutClassMateInfo(CMofMsg* msg) {
-    if (!msg) return;
-
     msg->Put_BYTE(static_cast<std::uint8_t>(classMateCount_));
     for (int i = 0; i < classMateCount_; ++i) {
         msg->Put_Z1(classMates_[i].name.data());
@@ -327,8 +285,6 @@ void cltTASSystem::FillOutClassMateInfo(CMofMsg* msg) {
 }
 
 void cltTASSystem::Refresh(CMofMsg* msg) {
-    if (!msg) return;
-
     std::uint8_t type = 0;
     std::uint8_t count = 0;
     msg->Get_BYTE(&type);
@@ -336,48 +292,65 @@ void cltTASSystem::Refresh(CMofMsg* msg) {
 
     if (type == 1) {
         classMateCount_ = 0;
+        int v3 = 0;
+        if (count != 0) {
+            do {
+                char name[32]{};
+                std::uint8_t byteVal = 0;
+                msg->Get_Z1(name, 0, 0, nullptr);
+                msg->Get_BYTE(&byteVal);
 
-        for (std::uint8_t i = 0; i < count; ++i) {
-            strTASMemberInfo row{};
-            msg->Get_Z1(row.name.data(), 0, 0, nullptr);
-            msg->Get_BYTE(&row.level);
-
-            if (i == 0) {
-                if (row.name[0]) {
-                    myTeacherLevel_ = row.level;
-                } else if (IsThereTeacher()) {
-                    DelTeacher();
+                if (v3 == 0) {
+                    // Ground truth: byte goes to teacher_.level (struct[34] = offset 46), NOT myTeacherLevel_
+                    if (name[0]) {
+                        teacher_.level = byteVal;
+                    } else if (IsThereTeacher()) {
+                        DelTeacher();
+                    }
+                } else {
+                    std::strcpy(classMates_[classMateCount_].name.data(), name);
+                    classMates_[classMateCount_].level = byteVal;
+                    ++classMateCount_;
                 }
-                continue;
-            }
-
-            if (classMateCount_ < kClassMateMax) {
-                classMates_[classMateCount_++] = row;
-            }
+                ++v3;
+            } while (v3 < count);
         }
     } else if (type == 2) {
         studentCount_ = 0;
-
-        for (std::uint8_t i = 0; i < count && studentCount_ < kStudentMax; ++i) {
-            auto& s = students_[studentCount_++];
-            msg->Get_Z1(s.name.data(), 0, 0, nullptr);
-            msg->Get_BYTE(&s.level);
-            msg->Get_BYTE(&s.classKind);
-            msg->Get_BYTE(&s.grade);
+        if (count != 0) {
+            int v11 = 0;
+            do {
+                char name[32]{};
+                std::uint8_t v6 = 0, v9 = 0, v8 = 0;
+                msg->Get_Z1(name, 0, 0, nullptr);
+                msg->Get_BYTE(&v6);   // → student.level  (struct[34])
+                msg->Get_BYTE(&v9);   // → student.classKind (struct[32])
+                msg->Get_BYTE(&v8);   // → student.grade  (struct[33])
+                std::strcpy(students_[studentCount_].name.data(), name);
+                students_[studentCount_].level    = v6;
+                students_[studentCount_].classKind = v9;
+                students_[studentCount_].grade    = v8;
+                ++studentCount_;
+                ++v11;
+            } while (v11 < count);
         }
-
-        msg->Get_INT64(&gatherExp_);
-        gatherExp_ = std::max<std::int64_t>(0, gatherExp_);
+        // Ground truth: Get_LONG (4 bytes), then assign to gatherExp_ directly (no clamp)
+        int rawExp = 0;
+        msg->Get_LONG(&rawExp);
+        gatherExp_ = static_cast<std::int64_t>(rawExp);
     }
 }
 
 int cltTASSystem::CanSendPostit(char* target) {
-    if (!target || !target[0]) return 0;
-
-    if (NameEqual(teacher_.name, target)) return 1;
-
-    for (int i = 0; i < studentCount_; ++i) {
-        if (NameEqual(students_[i].name, target)) return 1;
+    if (!target) return 0;
+    int found = 0;
+    if (std::strlen(target)) {
+        if (std::strcmp(teacher_.name.data(), target) == 0) found = 1;
+        if (studentCount_ > 0) {
+            for (int i = 0; i < studentCount_; ++i) {
+                if (std::strcmp(students_[i].name.data(), target) == 0) found = 1;
+            }
+        }
     }
-    return 0;
+    return found;
 }

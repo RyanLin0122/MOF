@@ -12,6 +12,7 @@
 class cltClassKindInfo;
 class cltItemKindInfo;
 class cltMapInfo;
+class Map;
 class ClientCharacterManager;
 class cltQuestSystem;
 class CMeritoriousSystem;
@@ -59,7 +60,7 @@ extern MoFFont g_MoFFont;
 extern DCTIMMList g_IMMList;
 extern cltClassKindInfo g_clClassKindInfo;
 extern cltItemKindInfo g_clItemKindInfo;
-extern cltMapInfo g_Map;
+extern Map g_Map;
 
 extern short kGlyphIndexByStyleChar[]; //word_6C6B6C
 extern int   kDotGlyphIndexByStyle[]; //dword_6C6C54

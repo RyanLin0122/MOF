@@ -28,7 +28,8 @@ FORCE_MISSING_CLASSES = [
     "CUIManager",
     "CUITutorial",
     "cltCharKindInfo",
-    "cltMyCharData"
+    "cltMyCharData",
+    "Map"
 
 ]
 

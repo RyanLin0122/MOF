@@ -579,6 +579,7 @@ int cltMapInfo::GetMapKindCountByDungeonNameCode(int dungeon_name_code) {
 	return map_ids.size();
 }
 
+
 unsigned int cltMapInfo::GetMiniMapPosX(unsigned short map_id) {
 	stMapInfo* info = GetMapInfoByID(map_id);
 	// 返回小地圖 UI 元素的 X 座標

@@ -2,18 +2,18 @@
 
 #include <array>
 #include <cstdint>
-#include <algorithm>
 #include <cstring>
 #include "Network/CMofMsg.h"
 #include "System/cltLevelSystem.h"
 #include "System/cltMoneySystem.h"
 #include "System/cltQuestSystem.h"
 
+// Ground truth field order: classKind @ offset 32, grade @ offset 33, level @ offset 34
 struct strTASMemberInfo {
     std::array<char, 32> name{};
-    std::uint8_t level{};
     std::uint8_t classKind{};
     std::uint8_t grade{};
+    std::uint8_t level{};
 };
 
 class cltTASSystem {

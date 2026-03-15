@@ -1,7 +1,7 @@
 #include "global.h"
 #include "Info/cltClassKindInfo.h"
 #include "Info/cltItemKindInfo.h"
-#include "Info/cltMapInfo.h"
+#include "Logic/Map.h"
 #include "Character/ClientCharacterManager.h"
 #include "System/cltQuestSystem.h"
 #include "System/CMeritoriousSystem.h"
@@ -40,7 +40,7 @@ extern MoFFont g_MoFFont = *(new MoFFont());
 extern DCTIMMList g_IMMList = *(new DCTIMMList());
 extern cltClassKindInfo g_clClassKindInfo = *(new cltClassKindInfo());
 extern cltItemKindInfo g_clItemKindInfo = *(new cltItemKindInfo());
-extern cltMapInfo g_Map = *(new cltMapInfo());
+Map g_Map;
 
 extern HWND             g_hWnd = NULL;
 

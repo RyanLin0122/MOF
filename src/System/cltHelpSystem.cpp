@@ -1,6 +1,6 @@
 #include "System/cltHelpSystem.h"
 
-#include "Info/cltMapInfo.h"
+#include "Logic/Map.h"
 #include "Info/cltNPCInfo.h"
 #include "Info/cltQuestKindInfo.h"
 #include "Info/cltSkillKindInfo.h"
