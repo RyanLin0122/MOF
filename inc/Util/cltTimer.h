@@ -108,3 +108,5 @@ private:
     cltTimer* m_pCurrentPollTimer = nullptr;
 };
 
+extern cltTimerManager g_clTimerManager;
+

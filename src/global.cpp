@@ -3,6 +3,18 @@
 #include "Info/cltItemKindInfo.h"
 #include "Info/cltMapInfo.h"
 #include "Character/ClientCharacterManager.h"
+#include "System/cltQuestSystem.h"
+#include "System/CMeritoriousSystem.h"
+#include "Logic/cltBaseInventory.h"
+#include "Info/cltCharKindInfo.h"
+#include "Util/cltTimer.h"
+#include "Logic/cltFieldItemManager.h"
+#include "Logic/cltHelpMessage.h"
+#include "Logic/cltConfiguration.h"
+#include "UI/CUITutorial.h"
+#include "UI/CUIManager.h"
+#include "Logic/cltNPCManager.h"
+#include "Logic/CObjectManager.h"
 
 //-----------------------------------------------------------------------------
 // 全域變數
@@ -45,3 +57,20 @@ extern DWORD g_dwHeartBeatTime = 0;
 
 extern unsigned int g_dwMyAccountID = 0;
 extern ClientCharacterManager& g_ClientCharMgr = *ClientCharacterManager::GetInstance();
+
+// Tutorial globals
+extern int g_nTutorialState = 0;
+
+cltQuestSystem       g_clQuestSystem;
+CMeritoriousSystem   g_clMeritoriousSystem;
+cltBaseInventory     g_clMyInventory;
+cltTimerManager      g_clTimerManager;
+cltFieldItemManager  g_clFieldItemMgr;
+cltHelpMessage       g_clHelpMessage;
+cltNPCManager        g_clNPCManager;
+CObjectManager       g_ObjectManager;
+
+extern int           g_nFieldItemPickupFlag = 0;
+extern cltConfiguration* g_clConfig        = nullptr;
+extern CUITutorial*  g_pUITutorial          = nullptr;
+extern CUIManager*   g_UIMgr                = nullptr;

@@ -78,6 +78,12 @@ public:
 
     bool GetSustainSkillState(unsigned short a);
 
+    // Tutorial helpers
+    unsigned int GetSearchMonster();
+    void SetOrderAttack(stCharOrder* pOrder, unsigned int targetAccount,
+                        int a3, int damage, int remainHP, int a6, int a7);
+    static void SetCurPosition(ClientCharacter* pChar, int x, int y);
+
     int GetPetPosX();
 
     int GetPetPosY();

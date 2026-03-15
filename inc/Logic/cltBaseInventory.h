@@ -129,3 +129,6 @@ int comp_arry_string_down(const void* a1, const void* a2);
 int comp_arry_rare_up(const void* a1, const void* a2);
 int comp_arry_rare_down(const void* a1, const void* a2);
 
+// Player's main inventory (unk_21B8F04 in binary)
+extern cltBaseInventory g_clMyInventory;
+

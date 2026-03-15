@@ -111,3 +111,5 @@ private:
 
     std::map<std::uint16_t, std::uint16_t> monsterKillMap_;
 };
+
+extern CMeritoriousSystem g_clMeritoriousSystem;

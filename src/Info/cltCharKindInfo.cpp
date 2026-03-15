@@ -29,3 +29,12 @@ uint16_t cltCharKindInfo::GetRealCharID(uint16_t charKind)
     // stub：資料表未建立，直接回傳輸入值。
     return charKind;
 }
+
+stCharKindInfo* cltCharKindInfo::GetMonsterNameByKind(unsigned short /*kind*/)
+{
+    // Stub: real implementation looks up the monster name/info record.
+    return nullptr;
+}
+
+// Global instance definition
+cltCharKindInfo g_clCharKindInfo;

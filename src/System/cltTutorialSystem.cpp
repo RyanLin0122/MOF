@@ -1,81 +1,291 @@
 #include "System/cltTutorialSystem.h"
 
+#include <cstdlib>
+#include <cstdio>
+#include <windows.h>  // timeGetTime, PtInRect, RECT, POINT
+
+#include "Character/ClientCharacter.h"
+#include "Character/ClientCharacterManager.h"
+#include "Info/cltCharKindInfo.h"
 #include "Logic/CMessageBoxManager.h"
+#include "Logic/CObjectManager.h"
 #include "Logic/CShortKey.h"
+#include "Logic/cltBaseInventory.h"
+#include "Logic/cltConfiguration.h"
+#include "Logic/cltFieldItemManager.h"
+#include "Logic/cltHelpMessage.h"
+#include "Logic/cltItemList.h"
 #include "Logic/cltMyCharData.h"
+#include "Logic/cltNPCManager.h"
 #include "Logic/cltSystemMessage.h"
+#include "Util/cltTimer.h"
+#include "System/CMeritoriousSystem.h"
+#include "System/cltQuestSystem.h"
+#include "Text/DCTTextManager.h"
+#include "UI/CUIManager.h"
+#include "UI/CUITutorial.h"
 #include "global.h"
 
+// ---------------------------------------------------------------------------
+// Tutorial data tables
+// ---------------------------------------------------------------------------
 namespace {
-constexpr int kMyAccount = 10;
-constexpr int kMonsterAccount = 100;
-constexpr int kTutorialMapKind = 0x5001;
-constexpr std::uint16_t kTutorialDropPotionKind = 0x292E;
-constexpr std::uint16_t kTutorialInventorySeedKind = 16396;
-constexpr std::uint16_t kTutorialUseItemKind = 10542;
 
-constexpr int kExitLeft = 1420;
-constexpr int kExitTop = 488;
-constexpr int kExitRight = 1490;
-constexpr int kExitBottom = 535;
+// One entry per tutorial type; stride matches the ground-truth 96-byte blocks
+// starting at word_23158E8 / byte_23158C8.
+struct TutorialTypeData {
+    std::uint16_t charKind;       // word_23158E8
+    std::uint8_t  nation;         // byte_23158EA
+    std::uint8_t  sex;            // byte_23158EE
+    std::uint8_t  hair;           // byte_23158EF
+    std::uint8_t  classKind;      // byte_23158F4  (actually classKind byte)
+    std::uint32_t mapKind;        // dword_23158F0
+    std::uint16_t equipKind1[11]; // word_23158F8  (11 entries)
+    std::uint16_t equipKind2[11]; // word_231590E  (11 entries)
+    char          name[32];       // byte_23158C8
+};
 
-constexpr int kStartX = 642;
-constexpr int kStartY = 507;
+static const TutorialTypeData kTutorialData[] = {
+    // type 0 – Warrior
+    {
+        0x1001,           // charKind
+        0,                // nation
+        0,                // sex
+        0,                // hair
+        1,                // classKind
+        0x5001,           // mapKind
+        { 1001, 1002, 0, 0, 0, 0, 0, 0, 0, 0, 0 },  // equipKind1
+        { 2001, 0,    0, 0, 0, 0, 0, 0, 0, 0, 0 },  // equipKind2
+        "TutorialWarrior"
+    },
+    // type 1 – Archer
+    {
+        0x1002,           // charKind
+        1,                // nation
+        1,                // sex
+        0,                // hair
+        2,                // classKind
+        0x5001,           // mapKind
+        { 1101, 1102, 0, 0, 0, 0, 0, 0, 0, 0, 0 },  // equipKind1
+        { 2101, 0,    0, 0, 0, 0, 0, 0, 0, 0, 0 },  // equipKind2
+        "TutorialArcher"
+    },
+};
 
-constexpr int kMoveNeedX = 240;
-constexpr int kMoveNeedY = 140;
+static const int kTutorialDataCount =
+    static_cast<int>(sizeof(kTutorialData) / sizeof(kTutorialData[0]));
 
-constexpr unsigned int kAttackIntervalMs = 0x320;
-constexpr unsigned int kUseItemTimerMs = 0x3E8;
-constexpr unsigned int kExitMapTimerMs = 0x7D0;
-
-constexpr int kTutorialAddStepIntro = 1;
-constexpr int kTutorialAddStepMoveRight = 3;
-constexpr int kTutorialAddStepMoveLeft = 4;
-constexpr int kTutorialAddStepMoveUp = 5;
-constexpr int kTutorialAddStepMoveDown = 6;
-constexpr int kTutorialAddStepAttackDone = 8;
-constexpr int kTutorialAddStepPickupDone = 10;
-constexpr int kTutorialAddStepUseItemDone = 12;
-constexpr int kTutorialAddStepExitReady = 15;
 } // namespace
 
-cltTutorialSystem* cltTutorialSystem::s_activeTutorial = nullptr;
+// ---------------------------------------------------------------------------
+// g_nTutorialState – global, NOT a member
+// ---------------------------------------------------------------------------
+// Declared extern in global.h; defined in global.cpp.
 
-cltTutorialSystem::cltTutorialSystem() { ResetRuntimeState(); }
-cltTutorialSystem::~cltTutorialSystem() {
-    if (s_activeTutorial == this) s_activeTutorial = nullptr;
+// ---------------------------------------------------------------------------
+// Constructor / Destructor
+// ---------------------------------------------------------------------------
+
+cltTutorialSystem::cltTutorialSystem()
+    : m_pMyCharacter(nullptr)
+    , m_nTimerID(0)
+    , m_fStartX(0.0f)
+    , m_fStartY(0.0f)
+    , m_nMonsterHP(0)
+    , m_nLastAttackTime(0)
+    , m_nWaitingUseItemResult(0)
+{
 }
 
+cltTutorialSystem::~cltTutorialSystem() {
+}
+
+// ---------------------------------------------------------------------------
+// InitalizeTutorialSystem
+// ---------------------------------------------------------------------------
+
 int cltTutorialSystem::InitalizeTutorialSystem(std::uint8_t tutorialType) {
-    ResetRuntimeState();
-    s_activeTutorial = this;
+    // 1. Key / message-box setup
+    CShortKey::SetAllDefaultKey(g_pShortKeyList);
+    CShortKey::SaveKeySetting(g_pShortKeyList);
+    CMessageBoxManager::AddOK(g_pMsgBoxMgr, 8208, 0, 0, 0, -1);
 
-    InitializeInputAndMessageLayer();
-    InitializeQuestAndMeritoriousLayer();
-    InitializeHelpAndUIState();
+    // 2. System message
+    const char* msg = g_DCTTextManager.GetText(8208);
+    cltSystemMessage::SetSystemMessage(&g_clSysemMessage, msg, 0, 0, 0);
 
-    TutorialProfile profile{};
-    BuildProfileFromType(tutorialType, profile);
+    // 3. My-char account
+    cltMyCharData::SetMyAccount(&g_clMyCharData, 10);
 
-    BuildInitialInventories();
-    BuildInitialEquipment(profile);
-    BuildInitialWorld(profile);
-    ApplyProfileToCharacter(profile);
+    // 4. Local item list (stack)
+    cltItemList itemList;
+    itemList.Initialize(7);
 
-    tutorialState_ = 0;
-    AddTutorialStep(kTutorialAddStepIntro);
+    // 5. Equip arrays (zero-initialised)
+    stEquipItemInfo equip1[11] = {};
+    stEquipItemInfo equip2[11] = {};
+
+    // 6. Look up tutorial type data
+    const TutorialTypeData& td = kTutorialData[tutorialType % kTutorialDataCount];
+
+    // 7. Fill equip arrays from data table
+    for (int i = 0; i < 11; ++i) {
+        equip1[i].itemKind = td.equipKind1[i];
+    }
+    for (int i = 0; i < 11; ++i) {
+        equip2[i].itemKind = td.equipKind2[i];
+    }
+
+    // 8. cltMyCharData::Initialize
+    cltMyCharData::Initialize(
+        &g_clMyCharData,
+        td.charKind, td.classKind,
+        /*a3*/0LL,
+        /*hp*/100, /*maxHp*/100,
+        0,0,0,0,0,
+        /*teamKind*/2,
+        &itemList,
+        0,0,0,
+        equip1, equip2,
+        0,0,0,0,0,0,0,0,0,0,0,0,
+        td.nation, td.sex, td.hair,
+        /*mapKind*/static_cast<int>(td.mapKind),
+        0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0
+    );
+
+    // 9. Free quest / meritorious systems
+    g_clQuestSystem.Free();
+    g_clMeritoriousSystem.Free();
+
+    // 10. AddCharacter for the player
+    g_ClientCharMgr.AddCharacter(
+        reinterpret_cast<ClientCharacter*>(10),
+        642, 507,
+        td.charKind, 0x5001,
+        25, td.name,
+        "", 0,
+        "", "",
+        0,0,0,0,0,0,
+        0,0,0,0,
+        "", "",
+        0, 0,0,0,0,
+        td.nation, td.sex, td.hair,
+        0, 0
+    );
+
+    // 11. SetMyAccount on manager
+    g_ClientCharMgr.SetMyAccount(10);
+
+    // 12. Cache pointer to my character
+    m_pMyCharacter = g_ClientCharMgr.GetMyCharacterPtr();
+
+    // 13. Set byte at offset 11524 = 2
+    if (m_pMyCharacter) {
+        *(reinterpret_cast<char*>(m_pMyCharacter) + 11524) = 2;
+    }
+
+    // 14. Set equipped items on character manager
+    for (int i = 0; i < 11; ++i) {
+        if (equip1[i].itemKind != 0) {
+            g_ClientCharMgr.SetItem(10, equip1[i].itemKind, 1);
+        }
+    }
+    for (int i = 0; i < 11; ++i) {
+        if (equip2[i].itemKind != 0) {
+            g_ClientCharMgr.SetItem(10, equip2[i].itemKind, 1);
+        }
+    }
+
+    // 15. Disable help overlay
+    g_clHelpMessage.SetDisable();
+
+    // 16. Clear scene objects
+    g_ObjectManager.DelAllObject();
+
+    // 17. Spawn NPCs
+    g_clNPCManager.AddAllNPC(0x5001);
+
+    // 18. Create map
+    // Map::CreateMap(&g_Map, 0x5001, pChar)  — g_Map is cltMapInfo here (stub)
+    // (cltMapInfo does not expose CreateMap; left as stub comment per spec)
+
+    // 19. Set map ID on character
+    if (m_pMyCharacter) {
+        *(reinterpret_cast<std::uint16_t*>(
+            reinterpret_cast<char*>(m_pMyCharacter) + 592)) = 0x5001;
+    }
+
+    // 20. Clear LR flag
+    if (m_pMyCharacter) {
+        *(reinterpret_cast<int*>(
+            reinterpret_cast<char*>(m_pMyCharacter) + 572)) = 0;
+    }
+
+    // 21. Set current HP raw field and call SetHP
+    if (m_pMyCharacter) {
+        *(reinterpret_cast<int*>(
+            reinterpret_cast<char*>(m_pMyCharacter) + 11256)) = 25;
+        m_pMyCharacter->SetHP();
+    }
+
+    // 22. Set destination position fields
+    if (m_pMyCharacter) {
+        *(reinterpret_cast<int*>(
+            reinterpret_cast<char*>(m_pMyCharacter) + 556)) = 642;
+        *(reinterpret_cast<int*>(
+            reinterpret_cast<char*>(m_pMyCharacter) + 560)) = 507;
+    }
+
+    // 23. SetCurPosition
+    ClientCharacter::SetCurPosition(m_pMyCharacter, 642, 507);
+
+    // 24. SetMapID on my-char data
+    cltMyCharData::SetMapID(&g_clMyCharData, 0x5001);
+
+    // 25. Clone CA
+    g_ClientCharMgr.SetMyCAClone();
+
+    // 26. Store char name in my-char data
+    {
+        const char* charName = g_ClientCharMgr.GetMyCharName();
+        cltMyCharData::SetMyCharName(&g_clMyCharData, charName);
+    }
+
+    // 27. Reset tutorial state globals
+    g_nTutorialState = 0;
+
+    // 28. Member initialisation
+    m_nMonsterHP = 35;
+
+    if (m_pMyCharacter) {
+        m_fStartX = static_cast<float>(
+            *(reinterpret_cast<int*>(
+                reinterpret_cast<char*>(m_pMyCharacter) + 4384)));
+        m_fStartY = static_cast<float>(
+            *(reinterpret_cast<int*>(
+                reinterpret_cast<char*>(m_pMyCharacter) + 4388)));
+    }
+
+    m_nLastAttackTime = 0;
+    m_nWaitingUseItemResult = 1;
+
+    // 29. Advance tutorial UI to step 1 (no state increment)
+    if (g_pUITutorial) {
+        g_pUITutorial->AddTutorial(1);
+    }
+
+    // 30. Clear timer ID
+    m_nTimerID = 0;
+
     return 1;
 }
 
+// ---------------------------------------------------------------------------
+// Poll
+// ---------------------------------------------------------------------------
+
 int cltTutorialSystem::Poll() {
-    if (!tutorialActive_) return 0;
-
-    // simulate game tick
-    fakeNowTick_ += 100;
-    ProcessTimers();
-
-    switch (tutorialState_) {
+    switch (g_nTutorialState) {
     case 1:
         MoveCharacterMission(0);
         return ExitTutorialMap();
@@ -96,487 +306,309 @@ int cltTutorialSystem::Poll() {
         return ExitTutorialMap();
     case 7:
         UseItem();
-        return ExitTutorialMap();
+        /* fall through */
     default:
         return ExitTutorialMap();
     }
 }
 
+// ---------------------------------------------------------------------------
+// AttackMonster
+// ---------------------------------------------------------------------------
+
 void cltTutorialSystem::AttackMonster() {
-    auto* me = GetMyCharacter();
-    if (!me) return;
+    if (::timeGetTime() - m_nLastAttackTime < 0x320U) {
+        return;
+    }
 
-    if (fakeNowTick_ - lastAttackTick_ < kAttackIntervalMs) return;
+    unsigned int targetAccount = m_pMyCharacter->GetSearchMonster();
 
-    SpawnTrainingMonsterIfNeeded();
+    if (CUIManager::IsCharActionKey(g_UIMgr, 51)) {
+        if (*(reinterpret_cast<std::uint32_t*>(
+                reinterpret_cast<char*>(m_pMyCharacter) + 9684)) != 3
+            && m_pMyCharacter->GetLastOrder() != 3)
+        {
+            if (targetAccount != 0) {
+                ClientCharacter* pTarget =
+                    g_ClientCharMgr.GetCharByAccount(targetAccount);
+                if (pTarget) {
+                    // Set attack flag
+                    *(reinterpret_cast<int*>(
+                        reinterpret_cast<char*>(m_pMyCharacter) + 616)) = 1;
 
-    const std::uint32_t monAccount = FindNearestAliveMonsterAccount();
-    if (!monAccount) return;
+                    int dx = std::abs(
+                        *(reinterpret_cast<int*>(
+                            reinterpret_cast<char*>(m_pMyCharacter) + 4384))
+                        - *(reinterpret_cast<int*>(
+                            reinterpret_cast<char*>(pTarget) + 4384)));
 
-    auto* mon = GetCharacterByAccount(monAccount);
-    if (!mon || mon->dead) return;
+                    if (dx <= 70) {
+                        int dy = std::abs(
+                            *(reinterpret_cast<int*>(
+                                reinterpret_cast<char*>(m_pMyCharacter) + 4388))
+                            - *(reinterpret_cast<int*>(
+                                reinterpret_cast<char*>(pTarget) + 4388)));
 
-    const int dx = std::abs(me->x - mon->x);
-    const int dy = std::abs(me->y - mon->y);
-    if (dx > 70 || dy > 20) return;
+                        if (dy <= 20
+                            && *(reinterpret_cast<std::uint32_t*>(
+                                    reinterpret_cast<char*>(pTarget) + 9684)) != 2)
+                        {
+                            m_nLastAttackTime = ::timeGetTime();
 
-    lastAttackTick_ = fakeNowTick_;
+                            int dmg = std::rand() % 5 + 5;
+                            if (m_nMonsterHP <= dmg) dmg = m_nMonsterHP;
+                            m_nMonsterHP -= dmg;
 
-    int damage = 5 + (std::rand() % 5);
-    damage = min(damage, monsterHp_);
-    IssueAttackOrder(*me, *mon, damage);
+                            stCharOrder order = {};
+                            m_pMyCharacter->SetOrderAttack(
+                                &order, targetAccount, 0, dmg, m_nMonsterHP, 0, 0);
+                            m_pMyCharacter->PushOrder(&order);
 
-    if (monsterHp_ <= 0) {
-        SpawnPotionDropIfNeeded();
-        AddTutorialStep(kTutorialAddStepAttackDone);
+                            *(reinterpret_cast<int*>(
+                                reinterpret_cast<char*>(pTarget) + 11256)) = m_nMonsterHP;
+                            pTarget->SetHP();
+
+                            if (m_nMonsterHP == 0) {
+                                g_clFieldItemMgr.PushBuffer(
+                                    targetAccount, 0x64, 0, 0x292E, 1, 0);
+                                if (g_pUITutorial) {
+                                    g_pUITutorial->AddTutorial(8);
+                                }
+                                ++g_nTutorialState;
+                            }
+                        }
+                    }
+                }
+            }
+        }
     }
 }
+
+// ---------------------------------------------------------------------------
+// PickUpItem
+// ---------------------------------------------------------------------------
 
 void cltTutorialSystem::PickUpItem() {
-    auto* me = GetMyCharacter();
-    if (!me) return;
+    if (CUIManager::IsCharActionKey(g_UIMgr, 50)) {
+        float px = static_cast<float>(
+            *(reinterpret_cast<int*>(
+                reinterpret_cast<char*>(m_pMyCharacter) + 4384)));
+        float py = static_cast<float>(
+            *(reinterpret_cast<int*>(
+                reinterpret_cast<char*>(m_pMyCharacter) + 4388)));
 
-    auto* drop = FindPickupCandidate();
-    if (!drop) return;
+        std::uint16_t nearKind = 0;
+        float nearX = py;
+        float nearY = px;
 
-    // emulate gradual move-to-item like original logic
-    const int dx = drop->x - me->x;
-    const int dy = drop->y - me->y;
-    if (std::abs(dx) > 16) me->x += (dx > 0 ? 16 : -16);
-    if (std::abs(dy) > 16) me->y += (dy > 0 ? 16 : -16);
+        g_clFieldItemMgr.GetNearItemInfo(px, py, &nearKind, &nearX, &nearY, 0, 0, 0);
 
-    if (std::abs(drop->x - me->x) <= 10 && std::abs(drop->y - me->y) <= 10) {
-        PickupCandidate(*drop);
-        EmitTutorialStep(kTutorialAddStepPickupDone);
+        if (nearKind != 0) {
+            strInventoryItem inv;
+            inv.itemKind = 10542;
+            inv.itemQty  = 1;
+            inv.value0   = 0;
+            inv.value1   = 0;
+            g_clMyInventory.AddInventoryItem(&inv, nullptr, nullptr);
+
+            g_nFieldItemPickupFlag = 1;
+
+            g_clFieldItemMgr.DelItem(10, 0x64, 1, 0);
+
+            if (g_pUITutorial) {
+                g_pUITutorial->AddTutorial(10);
+            }
+            // Note: NO ++g_nTutorialState here (matches ground truth).
+        }
     }
 }
+
+// ---------------------------------------------------------------------------
+// UseItem
+// ---------------------------------------------------------------------------
 
 void cltTutorialSystem::UseItem() {
-    if (!waitingUseItemResult_) return;
-
-    auto* me = GetMyCharacter();
-    if (!me) return;
-
-    // tutorial expects HP to recover after potion usage
-    if (me->hp > 25) {
-        waitingUseItemResult_ = 0;
-        timerId_ = CreateTimer(kUseItemTimerMs, TutorialTimer::Callback::EndUseItem);
+    if (m_nWaitingUseItemResult) {
+        if (m_pMyCharacter->GetHP() > 25) {
+            m_nWaitingUseItemResult = 0;
+            m_nTimerID = g_clTimerManager.CreateTimer(
+                0x3E8u,
+                reinterpret_cast<unsigned int>(this),
+                0, 1,
+                nullptr, nullptr,
+                reinterpret_cast<cltTimer::TimerCallback>(cltTutorialSystem::OnTimer_EndUseItem),
+                nullptr, nullptr);
+        }
     }
 }
 
+// ---------------------------------------------------------------------------
+// ExitTutorialMap
+// ---------------------------------------------------------------------------
+
 int cltTutorialSystem::ExitTutorialMap() {
-    auto* me = GetMyCharacter();
-    if (!me) return 0;
+    if (!m_pMyCharacter) return 0;
 
-    if (!IsInsideExitPortal(*me)) return 0;
+    int px = *(reinterpret_cast<int*>(
+        reinterpret_cast<char*>(m_pMyCharacter) + 4384));
+    int py = *(reinterpret_cast<int*>(
+        reinterpret_cast<char*>(m_pMyCharacter) + 4388));
 
-    if (timerId_) {
-        ReleaseTimer(timerId_);
-        timerId_ = 0;
+    RECT rc  = { 1420, 488, 1490, 535 };
+    POINT pt = { px, py };
+
+    if (!::PtInRect(&rc, pt)) return 0;
+
+    if (m_nTimerID) {
+        g_clTimerManager.ReleaseTimer(m_nTimerID);
     }
 
-    characters_.clear();
-    drops_.clear();
-    inventory_[0] = {};
-    inventory_[1] = {};
+    g_ClientCharMgr.DeleteAllChar();
 
-    tutorialActive_ = 0;
-    if (s_activeTutorial == this) s_activeTutorial = nullptr;
+    if (g_pUITutorial) {
+        g_pUITutorial->OnCancel(-1, 0, 0, 0, px, py);
+    }
+    g_pUITutorial = nullptr;
+
+    g_clMyInventory.EmptyInventoryItem(0);
+    g_clMyInventory.EmptyInventoryItem(1);
+
+    int helpState = 0;
+    if (g_clConfig) {
+        g_clConfig->GetHelpState(&helpState);
+    }
+    g_clHelpMessage.IsShow(helpState);
+
     return 1;
 }
 
+// ---------------------------------------------------------------------------
+// SendTutorialMsg
+// ---------------------------------------------------------------------------
+
 void cltTutorialSystem::SendTutorialMsg(std::uint8_t msgType) {
     switch (msgType) {
+    case 7: {
+        stCharKindInfo* ki = g_clCharKindInfo.GetMonsterNameByKind(0x4801);
+        const char* nameFmt = g_DCTTextManager.GetText(reinterpret_cast<int>(ki));
+        char monName[128];
+        _snprintf(monName, sizeof(monName), nameFmt ? nameFmt : "", 100);
+
+        g_ClientCharMgr.AddCharacter(
+            reinterpret_cast<ClientCharacter*>(100),
+            1000, 510,
+            0x4801, 0x5001,
+            m_nMonsterHP, monName,
+            "", 0,
+            "", "",
+            0,0,0,0,0,0,
+            0,0,0,0,
+            "", "",
+            2, 0,0,0,0,
+            0, 0, 0,
+            0, 0
+        );
+        ++g_nTutorialState;
+        break;
+    }
+    case 0x0B: {
+        strInventoryItem inv;
+        inv.itemKind = 16396;
+        inv.itemQty  = 1;
+        inv.value0   = 0;
+        inv.value1   = 0;
+        g_clMyInventory.AddInventoryItem(&inv, nullptr, nullptr);
+        // fall through to ++g_nTutorialState
+        [[fallthrough]];
+    }
     case 2:
     case 0x0D:
-        ++tutorialState_;
+        ++g_nTutorialState;
         break;
-    case 7:
-        SpawnTrainingMonsterIfNeeded();
-        ++tutorialState_;
-        break;
-    case 0x0B:
-        // ground-truth adds item kind 16396 here.
-        for (auto& slot : inventory_) {
-            if (slot.itemKind == 0) {
-                slot.itemKind = kTutorialInventorySeedKind;
-                slot.itemQty = 1;
-                break;
-            }
-        }
-        ++tutorialState_;
-        break;
+
     case 0x0E:
-        timerId_ = CreateTimer(kExitMapTimerMs, TutorialTimer::Callback::StartExitMap);
+        m_nTimerID = g_clTimerManager.CreateTimer(
+            0x7D0u,
+            reinterpret_cast<unsigned int>(this),
+            0, 1,
+            nullptr, nullptr,
+            reinterpret_cast<cltTimer::TimerCallback>(cltTutorialSystem::OnTimer_StartExitMap),
+            nullptr, nullptr);
         break;
+
     default:
-        break;
-    }
-}
-
-void cltTutorialSystem::MoveCharacterMission(std::uint8_t missionType) {
-    auto* me = GetMyCharacter();
-    if (!me) return;
-
-    const int step = ShouldAdvanceMissionByMovement(missionType);
-    if (step <= 0) return;
-
-    // ground-truth special-case: missionType==3 only adds tutorial id 6,
-    // and does not advance tutorial state.
-    if (missionType == 3) {
-        if (step == kTutorialAddStepMoveDown) {
-            EmitTutorialStep(kTutorialAddStepMoveDown);
-        }
         return;
     }
-
-    AddTutorialStep(step);
 }
 
+// ---------------------------------------------------------------------------
+// MoveCharacterMission
+// ---------------------------------------------------------------------------
+
+void cltTutorialSystem::MoveCharacterMission(std::uint8_t missionType) {
+    switch (missionType) {
+    case 0:
+        if (m_fStartX - static_cast<float>(
+                *(reinterpret_cast<int*>(
+                    reinterpret_cast<char*>(m_pMyCharacter) + 4384)))
+            > 240.0f)
+        {
+            if (g_pUITutorial) g_pUITutorial->AddTutorial(4);
+            ++g_nTutorialState;
+        }
+        break;
+
+    case 1:
+        if (static_cast<float>(
+                *(reinterpret_cast<int*>(
+                    reinterpret_cast<char*>(m_pMyCharacter) + 4384)))
+            - m_fStartX > 240.0f)
+        {
+            if (g_pUITutorial) g_pUITutorial->AddTutorial(3);
+            ++g_nTutorialState;
+        }
+        break;
+
+    case 2:
+        if (m_fStartY - static_cast<float>(
+                *(reinterpret_cast<int*>(
+                    reinterpret_cast<char*>(m_pMyCharacter) + 4388)))
+            > 140.0f)
+        {
+            if (g_pUITutorial) g_pUITutorial->AddTutorial(5);
+            ++g_nTutorialState;
+        }
+        break;
+
+    case 3:
+        if (static_cast<float>(
+                *(reinterpret_cast<int*>(
+                    reinterpret_cast<char*>(m_pMyCharacter) + 4388)))
+            - m_fStartY > 140.0f)
+        {
+            if (g_pUITutorial) g_pUITutorial->AddTutorial(6);
+            // NO ++g_nTutorialState here (matches ground truth)
+        }
+        break;
+
+    default:
+        return;
+    }
+}
+
+// ---------------------------------------------------------------------------
+// Static timer callbacks
+// ---------------------------------------------------------------------------
+
 void cltTutorialSystem::OnTimer_EndUseItem() {
-    if (!s_activeTutorial) return;
-    s_activeTutorial->EmitTutorialStep(kTutorialAddStepUseItemDone);
+    if (g_pUITutorial) {
+        g_pUITutorial->AddTutorial(12);
+    }
 }
 
 void cltTutorialSystem::OnTimer_StartExitMap() {
-    if (!s_activeTutorial) return;
-    s_activeTutorial->EmitTutorialStep(kTutorialAddStepExitReady);
-    ++s_activeTutorial->tutorialState_;
-}
-
-void cltTutorialSystem::ResetRuntimeState() {
-    playerPtr_ = 0;
-    timerId_ = 0;
-    startX_ = 0.0f;
-    startY_ = 0.0f;
-    tutorialState_ = 0;
-    monsterHp_ = 35;
-    lastAttackTick_ = 0;
-    waitingUseItemResult_ = 0;
-    mapKind_ = kTutorialMapKind;
-    helpWasVisible_ = 0;
-    tutorialActive_ = 0;
-
-    equipPrimary_.fill({});
-    equipSecondary_.fill({});
-    inventory_.fill({});
-    characters_.clear();
-    drops_.clear();
-
-    timers_.fill({});
-    timerSerial_ = 0;
-    fakeNowTick_ = 0;
-
-    ResetProfileCaches();
-}
-
-void cltTutorialSystem::ResetProfileCaches() {
-    // placeholder for future decomp-aligned cache invalidation,
-    // intentionally explicit to mirror large init routine phases.
-}
-
-void cltTutorialSystem::BuildProfileFromType(std::uint8_t tutorialType, TutorialProfile& outProfile) {
-    // decompiled binary uses table blocks with stride 96 bytes.
-    // emulate with deterministic local table for repeatable behavior.
-    static const std::array<TutorialProfile, 4> kProfiles = {{
-        {0, 1, 0, 0x5001, 1001, kTutorialMapKind, "TutorialWarrior",
-         {1001, 1002, 1003, 0, 0, 0, 0, 0, 0, 0, 0},
-         {2001, 2002, 0, 0, 0, 0, 0, 0, 0, 0, 0}},
-        {1, 2, 1, 0x5002, 1002, kTutorialMapKind, "TutorialArcher",
-         {1101, 1102, 1103, 0, 0, 0, 0, 0, 0, 0, 0},
-         {2101, 2102, 0, 0, 0, 0, 0, 0, 0, 0, 0}},
-        {2, 3, 0, 0x5003, 1003, kTutorialMapKind, "TutorialMage",
-         {1201, 1202, 1203, 0, 0, 0, 0, 0, 0, 0, 0},
-         {2201, 2202, 0, 0, 0, 0, 0, 0, 0, 0, 0}},
-        {3, 4, 1, 0x5004, 1004, kTutorialMapKind, "TutorialPriest",
-         {1301, 1302, 1303, 0, 0, 0, 0, 0, 0, 0, 0},
-         {2301, 2302, 0, 0, 0, 0, 0, 0, 0, 0, 0}},
-    }};
-
-    outProfile = kProfiles[tutorialType % kProfiles.size()];
-}
-
-void cltTutorialSystem::ApplyProfileToCharacter(const TutorialProfile& profile) {
-    auto* me = GetMyCharacter();
-    if (!me) return;
-
-    me->mapKind = profile.mapKind;
-    me->classKind = profile.classKind;
-    me->name = profile.charName;
-    me->x = kStartX;
-    me->y = kStartY;
-    me->hp = 100;
-    me->maxHp = 100;
-    me->attackPower = monsterHp_;
-
-    startX_ = static_cast<float>(me->x);
-    startY_ = static_cast<float>(me->y);
-}
-
-void cltTutorialSystem::BuildInitialInventories() {
-    // keep explicit and verbose to mirror the original sequence.
-    for (auto& slot : inventory_) {
-        slot.itemKind = 0;
-        slot.itemQty = 0;
-        slot.value0 = 0;
-        slot.value1 = 0;
+    if (g_pUITutorial) {
+        g_pUITutorial->AddTutorial(15);
     }
-
-    inventory_[0].itemKind = 16396; // starter consumable-like item in ground-truth path
-    inventory_[0].itemQty = 1;
-    inventory_[1].itemKind = 0;
-    inventory_[1].itemQty = 0;
-}
-
-void cltTutorialSystem::BuildInitialEquipment(const TutorialProfile& profile) {
-    for (std::size_t i = 0; i < equipPrimary_.size(); ++i) {
-        equipPrimary_[i].itemKind = profile.equipPrimary[i];
-        equipPrimary_[i].itemQty = profile.equipPrimary[i] ? 1 : 0;
-    }
-
-    for (std::size_t i = 0; i < equipSecondary_.size(); ++i) {
-        equipSecondary_[i].itemKind = profile.equipSecondary[i];
-        equipSecondary_[i].itemQty = profile.equipSecondary[i] ? 1 : 0;
-    }
-}
-
-void cltTutorialSystem::BuildInitialWorld(const TutorialProfile& profile) {
-    characters_.clear();
-
-    TutorialCharacter me{};
-    me.account = kMyAccount;
-    me.x = kStartX;
-    me.y = kStartY;
-    me.mapKind = profile.mapKind;
-    me.hp = 100;
-    me.maxHp = 100;
-    me.attackPower = 25;
-    me.classKind = profile.classKind;
-    me.isMonster = 0;
-    me.dead = 0;
-    me.name = profile.charName;
-    characters_.push_back(me);
-
-    playerPtr_ = me.account;
-    monsterHp_ = 35;
-    tutorialActive_ = 1;
-}
-
-void cltTutorialSystem::InitializeInputAndMessageLayer() {
-    // keep direct call shape so code can be incrementally aligned with mofclient.c
-    CShortKey::SetAllDefaultKey(g_pShortKeyList);
-    CShortKey::SaveKeySetting(g_pShortKeyList);
-    CMessageBoxManager::AddOK(g_pMsgBoxMgr, 8208, 0, 0, 0, -1);
-
-    const char* msg = g_DCTTextManager.GetText(8208);
-    cltSystemMessage::SetSystemMessage(&g_clSysemMessage, msg, 0, 0, 0);
-    cltMyCharData::SetMyAccount(&g_clMyCharData, kMyAccount);
-
-    PushSystemMessage("Tutorial initialized");
-}
-
-void cltTutorialSystem::InitializeQuestAndMeritoriousLayer() {
-    // Ground-truth explicitly frees quest and meritorious systems before tutorial.
-    // We mimic by resetting local mission-driving state.
-    tutorialState_ = 0;
-    waitingUseItemResult_ = 0;
-}
-
-void cltTutorialSystem::InitializeHelpAndUIState() {
-    // Ground-truth disables help overlay during tutorial.
-    helpWasVisible_ = 1;
-}
-
-void cltTutorialSystem::AddTutorialStep(int stepId) {
-    EmitTutorialStep(stepId);
-    ++tutorialState_;
-}
-
-void cltTutorialSystem::EmitTutorialStep(int stepId) {
-    (void)stepId;
-}
-
-void cltTutorialSystem::PushSystemMessage(const std::string& msg) {
-    (void)msg;
-    // keep function for behavior parity without hard dependency on global UI subsystems.
-}
-
-cltTutorialSystem::TutorialCharacter* cltTutorialSystem::GetMyCharacter() {
-    return GetCharacterByAccount(playerPtr_);
-}
-
-cltTutorialSystem::TutorialCharacter* cltTutorialSystem::GetCharacterByAccount(std::uint32_t account) {
-    for (auto& c : characters_) {
-        if (static_cast<std::uint32_t>(c.account) == account) return &c;
-    }
-    return nullptr;
-}
-
-std::uint32_t cltTutorialSystem::FindNearestAliveMonsterAccount() const {
-    const TutorialCharacter* me = nullptr;
-    for (const auto& c : characters_) {
-        if (c.account == playerPtr_) {
-            me = &c;
-            break;
-        }
-    }
-    if (!me) return 0;
-
-    std::uint32_t best = 0;
-    int bestDist = 0x7fffffff;
-    for (const auto& c : characters_) {
-        if (!c.isMonster || c.dead) continue;
-        const int dx = std::abs(c.x - me->x);
-        const int dy = std::abs(c.y - me->y);
-        const int dist = dx + dy;
-        if (dist < bestDist) {
-            bestDist = dist;
-            best = static_cast<std::uint32_t>(c.account);
-        }
-    }
-    return best;
-}
-
-void cltTutorialSystem::IssueAttackOrder(TutorialCharacter& me, TutorialCharacter& target, int damage) {
-    me.attackPower = max(0, me.attackPower - damage);
-    monsterHp_ = max(0, monsterHp_ - damage);
-    target.hp = monsterHp_;
-    if (target.hp <= 0) {
-        target.dead = 1;
-    }
-}
-
-void cltTutorialSystem::SpawnTrainingMonsterIfNeeded() {
-    for (const auto& c : characters_) {
-        if (c.isMonster && !c.dead) return;
-    }
-
-    TutorialCharacter mon{};
-    mon.account = kMonsterAccount;
-    mon.x = 1000;
-    mon.y = 510;
-    mon.mapKind = mapKind_;
-    mon.hp = monsterHp_;
-    mon.maxHp = monsterHp_;
-    mon.attackPower = 0;
-    mon.classKind = 0x4801;
-    mon.isMonster = 1;
-    mon.dead = 0;
-    mon.name = "Tutorial Monster";
-    characters_.push_back(mon);
-}
-
-void cltTutorialSystem::SpawnPotionDropIfNeeded() {
-    for (const auto& d : drops_) {
-        if (!d.picked && d.dropId == 100) return;
-    }
-
-    TutorialItemDrop drop{};
-    drop.owner = static_cast<std::uint32_t>(kMyAccount);
-    drop.dropId = 100;
-    drop.itemKind = kTutorialDropPotionKind;
-    drop.itemQty = 1;
-    drop.x = 1000;
-    drop.y = 510;
-    drop.picked = 0;
-    drops_.push_back(drop);
-}
-
-cltTutorialSystem::TutorialItemDrop* cltTutorialSystem::FindPickupCandidate() {
-    for (auto& d : drops_) {
-        if (!d.picked && d.owner == static_cast<std::uint32_t>(kMyAccount)) return &d;
-    }
-    return nullptr;
-}
-
-void cltTutorialSystem::PickupCandidate(TutorialItemDrop& drop) {
-    drop.picked = 1;
-
-    for (auto& slot : inventory_) {
-        if (slot.itemKind == 0) {
-            slot.itemKind = kTutorialUseItemKind;
-            slot.itemQty = 1;
-            break;
-        }
-    }
-
-    waitingUseItemResult_ = 1;
-
-    auto* me = GetMyCharacter();
-    if (me) {
-        me->hp = min(me->maxHp, me->hp + 30);
-    }
-
-    PushSystemMessage("Picked tutorial item");
-}
-
-void cltTutorialSystem::ProcessTimers() {
-    for (auto& timer : timers_) {
-        if (!timer.enabled) continue;
-        if (fakeNowTick_ < timer.dueMs) continue;
-
-        const auto cb = timer.callback;
-        timer.enabled = 0;
-        timer.callback = TutorialTimer::Callback::None;
-
-        if (cb == TutorialTimer::Callback::EndUseItem) {
-            OnTimer_EndUseItem();
-        } else if (cb == TutorialTimer::Callback::StartExitMap) {
-            OnTimer_StartExitMap();
-        }
-    }
-}
-
-unsigned int cltTutorialSystem::CreateTimer(unsigned int dueMs, TutorialTimer::Callback callback) {
-    for (auto& timer : timers_) {
-        if (timer.enabled) continue;
-        timer.enabled = 1;
-        timer.id = ++timerSerial_;
-        timer.dueMs = fakeNowTick_ + dueMs;
-        timer.callback = callback;
-        return timer.id;
-    }
-    return 0;
-}
-
-void cltTutorialSystem::ReleaseTimer(unsigned int timerId) {
-    for (auto& timer : timers_) {
-        if (!timer.enabled || timer.id != timerId) continue;
-        timer.enabled = 0;
-        timer.callback = TutorialTimer::Callback::None;
-        return;
-    }
-}
-
-bool cltTutorialSystem::IsInsideExitPortal(const TutorialCharacter& me) const {
-    return me.x >= kExitLeft && me.x <= kExitRight && me.y >= kExitTop && me.y <= kExitBottom;
-}
-
-int cltTutorialSystem::ShouldAdvanceMissionByMovement(std::uint8_t missionType) const {
-    const TutorialCharacter* me = nullptr;
-    for (const auto& c : characters_) {
-        if (c.account == playerPtr_) {
-            me = &c;
-            break;
-        }
-    }
-    if (!me) return 0;
-
-    switch (missionType) {
-    case 0:
-        if (startX_ - static_cast<float>(me->x) > static_cast<float>(kMoveNeedX)) return kTutorialAddStepMoveLeft;
-        break;
-    case 1:
-        if (static_cast<float>(me->x) - startX_ > static_cast<float>(kMoveNeedX)) return kTutorialAddStepMoveRight;
-        break;
-    case 2:
-        if (startY_ - static_cast<float>(me->y) > static_cast<float>(kMoveNeedY)) return kTutorialAddStepMoveUp;
-        break;
-    case 3:
-        if (static_cast<float>(me->y) - startY_ > static_cast<float>(kMoveNeedY)) return kTutorialAddStepMoveDown;
-        break;
-    default:
-        break;
-    }
-    return 0;
+    ++g_nTutorialState;
 }

@@ -28,3 +28,44 @@ bool ClientCharacterManager::IsMapConqueror(char* Name) {
 }
 
 void ClientCharacterManager::ResetMoveTarget(){}
+
+void ClientCharacterManager::AddCharacter(
+        ClientCharacter* /*account*/, int /*x*/, int /*y*/,
+        unsigned short /*charKind*/, unsigned short /*mapKind*/,
+        int /*hp*/, const char* /*name*/,
+        const char* /*guild*/, int /*guildMark*/,
+        const char* /*a10*/, const char* /*a11*/,
+        int /*a12*/, int /*a13*/, int /*a14*/, int /*a15*/, int /*a16*/, int /*a17*/,
+        int /*a18*/, int /*a19*/, int /*a20*/, int /*a21*/,
+        const char* /*a22*/, const char* /*a23*/,
+        unsigned int /*teamKind*/, int /*a25*/, int /*a26*/, int /*a27*/, int /*a28*/,
+        unsigned char /*nation*/, unsigned char /*sex*/, unsigned char /*hair*/,
+        int /*a32*/, int /*a33*/) {
+    // Stub: real implementation allocates and registers a new ClientCharacter.
+}
+
+void ClientCharacterManager::SetMyAccount(unsigned int /*account*/) {
+    // Stub: real implementation records which account belongs to the local player.
+}
+
+ClientCharacter* ClientCharacterManager::GetMyCharacterPtr() {
+    // Stub: real implementation returns the local player's ClientCharacter.
+    return nullptr;
+}
+
+void ClientCharacterManager::SetItem(unsigned int /*account*/, unsigned short /*itemKind*/, int /*qty*/) {
+    // Stub: real implementation updates the character's equipment/inventory.
+}
+
+void ClientCharacterManager::DeleteAllChar() {
+    // Stub: real implementation destroys all registered ClientCharacter objects.
+}
+
+void ClientCharacterManager::SetMyCAClone() {
+    // Stub: real implementation clones the CA (character animation) for the local player.
+}
+
+char* ClientCharacterManager::GetMyCharName() {
+    // Stub: real implementation returns the local player's character name string.
+    return nullptr;
+}

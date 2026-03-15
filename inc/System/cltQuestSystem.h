@@ -11,5 +11,9 @@ public:
     int IsGiveupQuestPermanently(); // TODO: real quest state logic
     int IsQuestMonster(std::uint16_t monsterKind);
     void CompleteFunctionQuest(int functionType, std::uint16_t* questKinds, unsigned int* questValues);
+
+    void Free();
 };
+
+extern cltQuestSystem g_clQuestSystem;
 

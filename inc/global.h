@@ -13,6 +13,18 @@ class cltClassKindInfo;
 class cltItemKindInfo;
 class cltMapInfo;
 class ClientCharacterManager;
+class cltQuestSystem;
+class CMeritoriousSystem;
+class cltBaseInventory;
+class cltCharKindInfo;
+#include "Util/cltTimer.h"
+class cltFieldItemManager;
+class cltHelpMessage;
+class cltConfiguration;
+class CUITutorial;
+class CUIManager;
+class cltNPCManager;
+class CObjectManager;
 
 //-----------------------------------------------------------------------------
 // 全域變數
@@ -62,6 +74,14 @@ extern DWORD g_dwHeartBeatTime;
 
 extern unsigned int g_dwMyAccountID;
 extern ClientCharacterManager& g_ClientCharMgr;
+
+// Tutorial globals
+// (full class definitions are in their respective headers)
+extern int g_nTutorialState;
+extern int g_nFieldItemPickupFlag;
+extern cltConfiguration* g_clConfig;
+extern CUITutorial* g_pUITutorial;
+extern CUIManager* g_UIMgr;
 
 enum Direction : uint8_t {
     DirUp = 0,        // 氣球箭頭朝上（置中）

@@ -352,6 +352,11 @@
     <ClCompile Include="src\Logic\CMessageBoxManager.cpp" />
     <ClCompile Include="src\Logic\cltSystemMessage.cpp" />
     <ClCompile Include="src\Logic\cltMyCharData.cpp" />
+    <ClCompile Include="src\Logic\cltFieldItemManager.cpp" />
+    <ClCompile Include="src\Logic\cltHelpMessage.cpp" />
+    <ClCompile Include="src\Logic\cltConfiguration.cpp" />
+    <ClCompile Include="src\Logic\cltNPCManager.cpp" />
+    <ClCompile Include="src\Logic\CObjectManager.cpp" />
     <ClCompile Include="src\Network\DCTNetwork.cpp" />
     <ClCompile Include="src\Network\CMoFNetwork.cpp" />
     <ClCompile Include="src\Network\CMofMsg.cpp" />
@@ -378,6 +383,8 @@
     <ClCompile Include="src\Text\DCTIMM.cpp" />
     <ClCompile Include="src\Text\DCTIMMList.cpp" />
     <ClCompile Include="src\Text\Huffman.cpp" />
+    <ClCompile Include="src\UI\CUITutorial.cpp" />
+    <ClCompile Include="src\UI\CUIManager.cpp" />
     <ClCompile Include="src\UI\CControlAlphaBox.cpp" />
     <ClCompile Include="src\UI\CControlBoxAbility.cpp" />
     <ClCompile Include="src\UI\CControlBoxBase.cpp" />

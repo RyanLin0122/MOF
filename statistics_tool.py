@@ -12,8 +12,24 @@ FORCE_MISSING_CLASSES = [
     "ClientCharacterManager",
     "cltQuestSystem",
     "cltUsingSkillSystem",
-    "cltMyItemSystem",
-    "cltPetSkillSystem"
+    "cltPetSkillSystem",
+    "CMeritoriousSystem",
+    "cltTutorialSystem",
+    "cltTASSystem",
+    "cltCashshopSystem",
+    "cltPetKeepingSystem",
+    "cltCharKindInfo",
+    "CMonsterGroupPerLevel",
+    "CObjectManager",
+    "cltConfiguration",
+    "cltFieldItemManager",
+    "cltHelpMessage",
+    "cltNPCManager",
+    "CUIManager",
+    "CUITutorial",
+    "cltCharKindInfo",
+    "cltMyCharData"
+
 ]
 
 # 例外清單：放 class 名稱字串，這些 class 會被跳過
