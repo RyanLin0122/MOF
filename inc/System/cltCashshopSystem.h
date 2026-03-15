@@ -30,9 +30,13 @@ struct strVerifiedCharInfo {
     int value1{};
 };
 
+// GT layout: shopType at +0 (DWORD store, BYTE read), buyCount at +4, itemIds at +8
+// Total size: 1+3+1+3+4000 = 4008 bytes (matches memset 0xFA8)
 struct strBuyingCashItemsInfo {
     std::uint8_t shopType{};
+    std::uint8_t _pad0[3]{};
     std::uint8_t buyCount{};
+    std::uint8_t _pad1[3]{};
     std::array<int, 1000> itemIds{};
 };
 

@@ -38,17 +38,6 @@ static bool AppendBought(std::array<strBoughtCashshopItemInfo, kMaxBoughtItem>& 
 static bool HasName(const strVerifiedCharInfo& v) {
     return v.name[0] != '\0';
 }
-
-static unsigned int ComputeExtraValue(std::uint16_t itemKind, unsigned int extraArg) {
-    auto* info = g_clItemKindInfo.GetItemKindInfo(itemKind);
-    if (!info) return 0;
-    // Ground-truth (mofclient.c) gates this by the WORD at offset +0x3C in stItemKindInfo,
-    // which maps to m_wUseTerm in our reconstructed struct.
-    if (info->m_wUseTerm != 0) {
-        return extraArg;
-    }
-    return 0;
-}
 } // namespace
 
 cltItemKindInfo* cltCashshopSystem::m_pclItemKindInfo = nullptr;
@@ -59,31 +48,37 @@ void cltCashshopSystem::InitializeStaticVariable(cltItemKindInfo* itemKindInfo, 
     m_pclCashShopItem = cashShopItem;
 }
 
-cltCashshopSystem::cltCashshopSystem() { Free(); }
+// GT constructor explicitly zeroes each region; does NOT call Free() (which omits boughtCount_)
+cltCashshopSystem::cltCashshopSystem() {
+    inventory_ = nullptr;
+    cashMoney_ = 0;
+    boughtCount_ = 0;
+    bought_.fill({});
+    verified_ = {};
+    buying_ = {};
+}
 
+// GT: clears only verified_ and buying_ (preserves bought_/boughtCount_);
+// sets inventory_/cashMoney_ first, then reads boughtCount_ directly from msg.
+// On failure: calls Free() (which does NOT clear boughtCount_) then returns 0.
 int cltCashshopSystem::Initialize(cltBaseInventory* inventory, int cashMoney, CMofMsg* msg) {
-    Free();
+    verified_ = {};
+    buying_ = {};
 
     inventory_ = inventory;
     cashMoney_ = cashMoney;
 
-    std::uint16_t count = 0;
-    if (!msg->Get_WORD(&count) || count >= kMaxBoughtItem) {
+    if (!msg->Get_WORD(&boughtCount_) || boughtCount_ >= kMaxBoughtItem) {
         Free();
         return 0;
     }
 
-    for (std::uint16_t i = 0; i < count; ++i) {
-        std::int64_t id = 0;
-        std::uint16_t itemKind = 0;
-        std::uint16_t qty = 0;
+    if (boughtCount_ == 0) return 1;
 
-        if (!msg->Get_INT64(&id) || !msg->Get_WORD(&itemKind) || !msg->Get_WORD(&qty)) {
-            Free();
-            return 0;
-        }
-
-        if (!AppendBought(bought_, boughtCount_, id, itemKind, qty)) {
+    for (std::uint16_t i = 0; i < boughtCount_; ++i) {
+        if (!msg->Get_INT64(&bought_[i].id) ||
+            !msg->Get_WORD(&bought_[i].itemKind) ||
+            !msg->Get_WORD(&bought_[i].qty)) {
             Free();
             return 0;
         }
@@ -92,20 +87,20 @@ int cltCashshopSystem::Initialize(cltBaseInventory* inventory, int cashMoney, CM
     return 1;
 }
 
+// GT Free() clears inventory_, cashMoney_, bought_, verified_, buying_
+// but does NOT clear boughtCount_
 void cltCashshopSystem::Free() {
     inventory_ = nullptr;
     cashMoney_ = 0;
+    bought_.fill({});
     verified_ = {};
     buying_ = {};
-    bought_.fill({});
-    boughtCount_ = 0;
 }
 
 cltBaseInventory* cltCashshopSystem::GetInventorySystem() { return inventory_; }
 
+// GT: no null check on inventory_
 int cltCashshopSystem::CanMoveBoughtCashItemToInventory(std::int64_t itemId) {
-    if (!inventory_) return 0;
-
     const int idx = FindBoughtIndex(bought_, boughtCount_, itemId);
     if (idx < 0) return 0;
 
@@ -113,91 +108,103 @@ int cltCashshopSystem::CanMoveBoughtCashItemToInventory(std::int64_t itemId) {
     return inventory_->CanAddInventoryItem(b.itemKind, b.qty) == 0;
 }
 
+// GT: checks only itemCount == 0 (not <= 0); no null checks on itemIds or inventory_
 int cltCashshopSystem::CanMoveBoughtCashItemToInventory(int itemCount, std::int64_t* itemIds) {
-    if (!itemIds || itemCount <= 0) return 0;
-    if (!inventory_) return 0;
+    if (!itemCount) return 0;
 
     cltItemList itemList;
     itemList.Initialize(1000);
 
-    for (int i = 0; i < itemCount; ++i) {
-        const int idx = FindBoughtIndex(bought_, boughtCount_, itemIds[i]);
-        if (idx < 0) return 0;
-        itemList.AddItem(bought_[idx].itemKind, bought_[idx].qty, 0, 0, 0xFFFF, 0);
+    if (itemCount > 0) {
+        for (int i = 0; i < itemCount; ++i) {
+            const int idx = FindBoughtIndex(bought_, boughtCount_, itemIds[i]);
+            if (idx < 0) return 0;
+            itemList.AddItem(bought_[idx].itemKind, bought_[idx].qty, 0, 0, 0xFFFF, 0);
+        }
     }
     return inventory_->CanAddInventoryItems(&itemList) == 0;
 }
 
+// GT: uses m_pclItemKindInfo; sets *outHasExtra=1 when useTerm!=0 without null check;
+// no outHasExtra initialisation to 0; no null check on inventory_.
+// Safe deviation: keep early return when item not found (GT has OOB access bug there).
 void cltCashshopSystem::MoveBoughtCashItemToInventory(std::int64_t itemId, unsigned int extraArg,
                                                        int* outHasExtra, std::uint8_t* changedSlots) {
-    if (outHasExtra) *outHasExtra = 0;
-
     const int idx = FindBoughtIndex(bought_, boughtCount_, itemId);
-    if (idx < 0 || !inventory_) return;
+    if (idx < 0) return;
 
     const auto b = bought_[idx];
+
+    unsigned int extraVal = 0;
+    auto* info = m_pclItemKindInfo->GetItemKindInfo(b.itemKind);
+    if (info->m_wUseTerm != 0) {
+        extraVal = extraArg;
+        *outHasExtra = 1;
+    }
 
     strInventoryItem inv{};
     inv.itemKind = b.itemKind;
     inv.itemQty = b.qty;
-    inv.value0 = ComputeExtraValue(b.itemKind, extraArg);
+    inv.value0 = extraVal;
     inv.value1 = 0;
-
-    if (inv.value0 && outHasExtra) *outHasExtra = 1;
 
     inventory_->AddInventoryItem(&inv, changedSlots, nullptr);
     RemoveBoughtAt(bought_, boughtCount_, idx);
 }
 
+// GT: itemCount > 0 gates loop (no null checks on itemIds/inventory_); uses m_pclItemKindInfo;
+// passes outPos=nullptr when useTerm==0, &pos when useTerm!=0;
+// sprintf directly into buffer (no tmp, no size limit) only when useTerm!=0.
 void cltCashshopSystem::MoveBoughtCashItemToInventory(int itemCount, std::int64_t* itemIds,
                                                        unsigned int extraArg, std::uint8_t* changedSlots,
                                                        char* buffer) {
-    if (!itemIds || itemCount <= 0) return;
+    if (itemCount > 0) {
+        for (int i = 0; i < itemCount; ++i) {
+            const int idx = FindBoughtIndex(bought_, boughtCount_, itemIds[i]);
+            if (idx < 0) continue;
 
-    std::uint16_t pos = 0;
-    if (buffer) buffer[0] = '\0';
+            const auto b = bought_[idx];
 
-    for (int i = 0; i < itemCount; ++i) {
-        const int idx = FindBoughtIndex(bought_, boughtCount_, itemIds[i]);
-        if (idx < 0 || !inventory_) continue;
+            auto* info = m_pclItemKindInfo->GetItemKindInfo(b.itemKind);
+            const bool hasExtra = info->m_wUseTerm != 0;
 
-        const auto b = bought_[idx];
+            strInventoryItem inv{};
+            inv.itemKind = b.itemKind;
+            inv.itemQty = b.qty;
+            inv.value0 = hasExtra ? extraArg : 0u;
+            inv.value1 = 0;
 
-        strInventoryItem inv{};
-        inv.itemKind = b.itemKind;
-        inv.itemQty = b.qty;
-        inv.value0 = ComputeExtraValue(b.itemKind, extraArg);
-        inv.value1 = 0;
+            if (!hasExtra) {
+                inventory_->AddInventoryItem(&inv, changedSlots, nullptr);
+            } else {
+                std::uint16_t pos = 0;
+                inventory_->AddInventoryItem(&inv, changedSlots, &pos);
+                if (buffer)
+                    std::sprintf(buffer, "%s%lld, %d, ", buffer, static_cast<long long>(b.id), static_cast<int>(pos));
+            }
 
-        inventory_->AddInventoryItem(&inv, changedSlots, &pos);
-
-        if (buffer && inv.value0) {
-            char tmp[128]{};
-            std::snprintf(tmp, sizeof(tmp), "%s%lld, %u, ", buffer, static_cast<long long>(b.id), pos);
-            std::strncpy(buffer, tmp, 1023);
-            buffer[1023] = '\0';
+            RemoveBoughtAt(bought_, boughtCount_, idx);
         }
-
-        RemoveBoughtAt(bought_, boughtCount_, idx);
     }
 }
 
 void cltCashshopSystem::SetCashMoney(int money) { cashMoney_ = money; }
 int cltCashshopSystem::GetCashMoney() { return cashMoney_; }
 
+// GT: no null check on name, uses strcpy (no size limit)
 void cltCashshopSystem::SetVerifiedCharInfo(char* name, char age, std::uint16_t unk,
                                             char gender, char nation, char* account,
                                             int value0, int value1) {
     ResetVerifiedCharInfo();
 
-    if (name) std::strncpy(verified_.name.data(), name, verified_.name.size() - 1);
+    std::strcpy(verified_.name.data(), name);
     verified_.age = static_cast<std::uint8_t>(age);
     verified_.unk = unk;
     verified_.gender = static_cast<std::uint8_t>(gender);
     verified_.nation = static_cast<std::uint8_t>(nation);
 
     if (account) {
-        std::strncpy(verified_.account.data(), account, verified_.account.size() - 1);
+        std::strcpy(verified_.account.data(), account);
         verified_.value0 = value0;
         verified_.value1 = value1;
     }
@@ -207,11 +214,12 @@ void cltCashshopSystem::ResetVerifiedCharInfo() {
     verified_ = {};
 }
 
+// GT: no null check on name or age; direct access (callers must pass valid pointers)
 int cltCashshopSystem::GetVerifiedCharInfo(char* name, std::uint8_t* age, char* account, int* value0, int* value1) {
     if (!HasName(verified_)) return 0;
 
-    if (name) std::strcpy(name, verified_.name.data());
-    if (age) *age = verified_.age;
+    std::strcpy(name, verified_.name.data());
+    *age = verified_.age;
     if (account) std::strcpy(account, verified_.account.data());
     if (value0) *value0 = verified_.value0;
     if (value1) *value1 = verified_.value1;
@@ -223,24 +231,21 @@ strVerifiedCharInfo* cltCashshopSystem::GetVerifiedCharInfo() {
 }
 
 int cltCashshopSystem::IsVerifiedCharInfo(char* name) {
-    return HasName(verified_) && name && std::strcmp(verified_.name.data(), name) == 0;
+    return HasName(verified_) && std::strcmp(verified_.name.data(), name) == 0;
 }
 
 int cltCashshopSystem::IsThereVerifiedChar() {
     return HasName(verified_);
 }
 
+// GT: no null check on ids; direct qmemcpy
 int cltCashshopSystem::SetBuyingCashItemsInfo(std::uint8_t shopType, std::uint8_t buyCount, int* ids) {
     if (!buyCount) return 0;
     if (buyCount + boughtCount_ >= kMaxBoughtItem) return 0;
-    if (!ids) return 0;
 
     buying_.shopType = shopType;
     buying_.buyCount = buyCount;
-
-    for (std::uint8_t i = 0; i < buyCount; ++i) {
-        buying_.itemIds[i] = ids[i];
-    }
+    std::memcpy(buying_.itemIds.data(), ids, 4 * buyCount);
 
     return 1;
 }
@@ -249,22 +254,25 @@ void cltCashshopSystem::ResetBuyingCashItemsInfo() {
     buying_ = {};
 }
 
+// GT: if allPrice != 0, return allPrice <= cashMoney_ (negative prices pass through)
 int cltCashshopSystem::CanBuyCashItems() {
     const int allPrice = GetBuyingItemAllPrices();
-    if (allPrice <= 0) return 0;
+    if (!allPrice) return 0;
     return allPrice <= cashMoney_;
 }
 
+// GT: no null check on m_pclCashShopItem
 int cltCashshopSystem::GetBuyingItemAllPrices() {
-    if (!m_pclCashShopItem) return 0;
     return m_pclCashShopItem->GetTotalPrice(buying_.itemIds.data(), buying_.buyCount, buying_.shopType);
 }
 
+// GT: no null checks
 void cltCashshopSystem::GetBuyingItemStringForWeb(char* out, int outSize) {
-    if (!out || outSize <= 0 || !m_pclCashShopItem) return;
     m_pclCashShopItem->GetCompositionItemData(out, buying_.itemIds.data(), buying_.buyCount, buying_.shopType, outSize);
 }
 
+// GT: when verified char present and outVerifiedValue set, strcpy outVerifiedName without null check;
+// no null checks on itemKinds/itemQtys/itemIds arrays; loop condition is itemCount > 0
 void cltCashshopSystem::BoughtCashItems(int cashMoney, int itemCount,
                                         std::uint16_t* itemKinds, std::uint16_t* itemQtys,
                                         std::int64_t* itemIds,
@@ -272,17 +280,17 @@ void cltCashshopSystem::BoughtCashItems(int cashMoney, int itemCount,
     SetCashMoney(cashMoney);
 
     if (IsThereVerifiedChar()) {
-        if (outVerifiedValue) *outVerifiedValue = verified_.value1;
-        if (outVerifiedName) std::strcpy(outVerifiedName, verified_.name.data());
+        if (outVerifiedValue) {
+            *outVerifiedValue = verified_.value1;
+            std::strcpy(outVerifiedName, verified_.name.data());
+        }
     } else {
         if (outVerifiedValue) *outVerifiedValue = 0;
 
-        for (int i = 0; i < itemCount; ++i) {
-            const std::int64_t id = itemIds ? itemIds[i] : 0;
-            const std::uint16_t kind = itemKinds ? itemKinds[i] : 0;
-            const std::uint16_t qty = itemQtys ? itemQtys[i] : 0;
-
-            if (!AppendBought(bought_, boughtCount_, id, kind, qty)) break;
+        if (itemCount > 0) {
+            for (int i = 0; i < itemCount; ++i) {
+                if (!AppendBought(bought_, boughtCount_, itemIds[i], itemKinds[i], itemQtys[i])) break;
+            }
         }
     }
 

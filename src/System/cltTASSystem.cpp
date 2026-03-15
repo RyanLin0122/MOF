@@ -17,7 +17,6 @@ template <std::size_t N>
 static void EraseAt(std::array<strTASMemberInfo, N>& arr, int& n, int idx) {
     if (idx < 0 || idx >= n) return;
     for (int i = idx; i + 1 < n; ++i) arr[i] = arr[i + 1];
-    arr[n - 1] = {};
     --n;
 }
 } // namespace
@@ -198,13 +197,13 @@ strTASMemberInfo* cltTASSystem::GetTeacher() { return &teacher_; }
 
 // Ground truth: always memcpy full 350 bytes, no null check on outMembers
 void cltTASSystem::GetClassMate(int* outCount, strTASMemberInfo* outMembers) {
-    *outCount = classMateCount_;
     std::memcpy(outMembers, classMates_.data(), sizeof(classMates_));
+    *outCount = classMateCount_;
 }
 
 void cltTASSystem::GetStudent(int* outCount, strTASMemberInfo* outMembers) {
-    *outCount = studentCount_;
     std::memcpy(outMembers, students_.data(), sizeof(students_));
+    *outCount = studentCount_;
 }
 
 // Ground truth: returns raw value, no clamping
