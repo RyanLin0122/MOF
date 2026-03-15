@@ -161,17 +161,16 @@ void cltTASSystem::AddStudent(char* name, char level, char classKind,
     questSystem_->CompleteFunctionQuest(kFunctionQuestAddStudent, questKinds, questValues);
 }
 
+// Ground truth: *outCost only written when needCost!=0 AND student found; never written on not-found
 int cltTASSystem::CanDelStudent(char* name, int needCost, int* outCost) {
     const int idx = FindByName(students_, studentCount_, name);
-    if (idx < 0) {
-        if (outCost) *outCost = 0;
-        return 0;
-    }
-
-    const int cost = GetDelStudentCost(students_[idx].level);
-    if (outCost) *outCost = cost;
+    if (idx < 0) return 0;
 
     if (!needCost) return 1;
+
+    // GT uses struct[33] = grade for cost, not level
+    const int cost = GetDelStudentCost(students_[idx].grade);
+    *outCost = cost;
     return moneySystem_->CanDecreaseMoney(cost);
 }
 
@@ -182,7 +181,7 @@ int cltTASSystem::DelStudent(char* name, int needCost) {
 
     int cost = 0;
     if (needCost) {
-        cost = GetDelStudentCost(students_[idx].level);
+        cost = GetDelStudentCost(students_[idx].grade);  // GT: struct[33] = grade
         moneySystem_->DecreaseMoney(cost);
     }
 

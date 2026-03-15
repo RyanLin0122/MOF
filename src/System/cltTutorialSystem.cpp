@@ -40,21 +40,23 @@ namespace {
 // One entry per tutorial type; stride matches the ground-truth 96-byte blocks
 // starting at word_23158E8 / byte_23158C8.
 struct TutorialTypeData {
-    std::uint16_t charKind;       // word_23158E8
-    std::uint8_t  nation;         // byte_23158EA
-    std::uint8_t  sex;            // byte_23158EE
-    std::uint8_t  hair;           // byte_23158EF
-    std::uint8_t  classKind;      // byte_23158F4  (actually classKind byte)
-    std::uint32_t mapKind;        // dword_23158F0
-    std::uint16_t equipKind1[11]; // word_23158F8  (11 entries)
-    std::uint16_t equipKind2[11]; // word_231590E  (11 entries)
-    char          name[32];       // byte_23158C8
+    std::uint16_t charKindAddChar; // word_23158E8 (+0x20) — passed to AddCharacter
+    std::uint16_t charKindInit;    // word_23158EC (+0x24) — passed to cltMyCharData::Initialize
+    std::uint8_t  nation;          // byte_23158EA
+    std::uint8_t  sex;             // byte_23158EE
+    std::uint8_t  hair;            // byte_23158EF
+    std::uint8_t  classKind;       // byte_23158F4
+    std::uint32_t mapKind;         // dword_23158F0
+    std::uint16_t equipKind1[11];  // word_23158F8
+    std::uint16_t equipKind2[11];  // word_231590E
+    char          name[32];        // byte_23158C8
 };
 
 static const TutorialTypeData kTutorialData[] = {
     // type 0 – Warrior
     {
-        0x1001,           // charKind
+        0x1001,           // charKindAddChar (word_23158E8)
+        0x1001,           // charKindInit    (word_23158EC) — TODO: verify from binary
         0,                // nation
         0,                // sex
         0,                // hair
@@ -66,7 +68,8 @@ static const TutorialTypeData kTutorialData[] = {
     },
     // type 1 – Archer
     {
-        0x1002,           // charKind
+        0x1002,           // charKindAddChar (word_23158E8)
+        0x1002,           // charKindInit    (word_23158EC) — TODO: verify from binary
         1,                // nation
         1,                // sex
         0,                // hair
@@ -145,7 +148,7 @@ int cltTutorialSystem::InitalizeTutorialSystem(std::uint8_t tutorialType) {
     // 8. cltMyCharData::Initialize
     cltMyCharData::Initialize(
         &g_clMyCharData,
-        td.charKind, td.classKind,
+        td.charKindInit, td.classKind,
         /*a3*/0LL,
         /*hp*/100, /*maxHp*/100,
         0,0,0,0,0,
@@ -167,7 +170,7 @@ int cltTutorialSystem::InitalizeTutorialSystem(std::uint8_t tutorialType) {
     g_ClientCharMgr.AddCharacter(
         reinterpret_cast<ClientCharacter*>(10),
         642, 507,
-        td.charKind, 0x5001,
+        td.charKindAddChar, 0x5001,
         25, td.name,
         "", 0,
         "", "",
@@ -186,9 +189,7 @@ int cltTutorialSystem::InitalizeTutorialSystem(std::uint8_t tutorialType) {
     m_pMyCharacter = g_ClientCharMgr.GetMyCharacterPtr();
 
     // 13. Set byte at offset 11524 = 2
-    if (m_pMyCharacter) {
-        *(reinterpret_cast<char*>(m_pMyCharacter) + 11524) = 2;
-    }
+    *(reinterpret_cast<char*>(m_pMyCharacter) + 11524) = 2;
 
     // 14. Set equipped items on character manager
     for (int i = 0; i < 11; ++i) {
@@ -218,31 +219,23 @@ int cltTutorialSystem::InitalizeTutorialSystem(std::uint8_t tutorialType) {
     }
 
     // 19. Set map ID on character
-    if (m_pMyCharacter) {
-        *(reinterpret_cast<std::uint16_t*>(
-            reinterpret_cast<char*>(m_pMyCharacter) + 592)) = 0x5001;
-    }
+    *(reinterpret_cast<std::uint16_t*>(
+        reinterpret_cast<char*>(m_pMyCharacter) + 592)) = 0x5001;
 
     // 20. Clear LR flag
-    if (m_pMyCharacter) {
-        *(reinterpret_cast<int*>(
-            reinterpret_cast<char*>(m_pMyCharacter) + 572)) = 0;
-    }
+    *(reinterpret_cast<int*>(
+        reinterpret_cast<char*>(m_pMyCharacter) + 572)) = 0;
 
     // 21. Set current HP raw field and call SetHP
-    if (m_pMyCharacter) {
-        *(reinterpret_cast<int*>(
-            reinterpret_cast<char*>(m_pMyCharacter) + 11256)) = 25;
-        m_pMyCharacter->SetHP();
-    }
+    *(reinterpret_cast<int*>(
+        reinterpret_cast<char*>(m_pMyCharacter) + 11256)) = 25;
+    m_pMyCharacter->SetHP();
 
     // 22. Set destination position fields
-    if (m_pMyCharacter) {
-        *(reinterpret_cast<int*>(
-            reinterpret_cast<char*>(m_pMyCharacter) + 556)) = 642;
-        *(reinterpret_cast<int*>(
-            reinterpret_cast<char*>(m_pMyCharacter) + 560)) = 507;
-    }
+    *(reinterpret_cast<int*>(
+        reinterpret_cast<char*>(m_pMyCharacter) + 556)) = 642;
+    *(reinterpret_cast<int*>(
+        reinterpret_cast<char*>(m_pMyCharacter) + 560)) = 507;
 
     // 23. SetCurPosition
     ClientCharacter::SetCurPosition(m_pMyCharacter, 642, 507);
@@ -265,14 +258,12 @@ int cltTutorialSystem::InitalizeTutorialSystem(std::uint8_t tutorialType) {
     // 28. Member initialisation
     m_nMonsterHP = 35;
 
-    if (m_pMyCharacter) {
-        m_fStartX = static_cast<float>(
-            *(reinterpret_cast<int*>(
-                reinterpret_cast<char*>(m_pMyCharacter) + 4384)));
-        m_fStartY = static_cast<float>(
-            *(reinterpret_cast<int*>(
-                reinterpret_cast<char*>(m_pMyCharacter) + 4388)));
-    }
+    m_fStartX = static_cast<float>(
+        *(reinterpret_cast<int*>(
+            reinterpret_cast<char*>(m_pMyCharacter) + 4384)));
+    m_fStartY = static_cast<float>(
+        *(reinterpret_cast<int*>(
+            reinterpret_cast<char*>(m_pMyCharacter) + 4388)));
 
     m_nLastAttackTime = 0;
     m_nWaitingUseItemResult = 1;

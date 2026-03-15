@@ -6,7 +6,7 @@ class ClientCharacter;
 class cltTutorialSystem {
 public:
     cltTutorialSystem();
-    ~cltTutorialSystem();
+    virtual ~cltTutorialSystem();
 
     int  InitalizeTutorialSystem(std::uint8_t tutorialType);
     int  Poll();
