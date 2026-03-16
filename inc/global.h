@@ -1,7 +1,14 @@
 #pragma once
 #include <iostream>
 #include <stdio.h>     // 用於 printf
+
+#ifndef WIN32_LEAN_AND_MEAN
+#define WIN32_LEAN_AND_MEAN
+#endif
+
+
 #include <windows.h>   // 用於 HWND, GetConsoleWindow, Sleep
+#include <mmsystem.h>  // 用於 timeGetTime
 #include <conio.h>     // 用於 _kbhit, _getch (檢查鍵盤輸入)
 #include <d3d9.h>
 #include "Text/cltTextFileManager.h"
