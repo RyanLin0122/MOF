@@ -26,7 +26,7 @@ public:
     void AddEmoticonItem(std::uint16_t kind);
     void DelEmoticonItem(std::uint16_t kind);
 
-private:
+protected:
     std::array<std::uint16_t, 120> m_kindSlots{};
     std::uint8_t m_ownedSetCount = 0;
     std::array<int, 5> m_shortCut{};
