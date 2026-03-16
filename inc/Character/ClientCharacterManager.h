@@ -1,4 +1,5 @@
 #pragma once
+#include <cstdint>
 #include "Character/ClientCharacter.h"
 
 class ClientCharacterManager {
@@ -26,6 +27,11 @@ public:
 	void DeleteAllChar();
 	void SetMyCAClone();
 	char* GetMyCharName();
+
+	// Emoticon support
+	ClientCharacter* GetCharByName(char* name);
+	void SetEmoticonKind(char* name, std::uint32_t emoticonKind);
+	void ReleaseEmoticon(ClientCharacter* pChar);
 
 private:
 	ClientCharacterManager();
