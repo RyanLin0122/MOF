@@ -127,11 +127,10 @@ int cltCashshopSystem::CanMoveBoughtCashItemToInventory(int itemCount, std::int6
 
 // GT: uses m_pclItemKindInfo; sets *outHasExtra=1 when useTerm!=0 without null check;
 // no outHasExtra initialisation to 0; no null check on inventory_.
-// Safe deviation: keep early return when item not found (GT has OOB access bug there).
+// GT does not early-return when item not found; idx may equal boughtCount_ (OOB in original).
 void cltCashshopSystem::MoveBoughtCashItemToInventory(std::int64_t itemId, unsigned int extraArg,
                                                        int* outHasExtra, std::uint8_t* changedSlots) {
     const int idx = FindBoughtIndex(bought_, boughtCount_, itemId);
-    if (idx < 0) return;
 
     const auto b = bought_[idx];
 
@@ -311,7 +310,7 @@ void cltCashshopSystem::BoughtCashItems(CMofMsg* msg) {
     msg->Get_LONG(&cashMoney);
     msg->Get_BYTE(&count);
 
-    count = std::min<std::uint8_t>(count, kMaxMsgBoughtItem);
+    // GT does not clamp count; raw packet value used directly (may exceed array bounds).
     for (std::uint8_t i = 0; i < count; ++i) {
         msg->Get_INT64(&ids[i]);
         msg->Get_WORD(&kinds[i]);
