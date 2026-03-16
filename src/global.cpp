@@ -15,6 +15,7 @@
 #include "UI/CUIManager.h"
 #include "Logic/cltNPCManager.h"
 #include "Logic/CObjectManager.h"
+#include "Network/CMoFNetwork.h"
 
 //-----------------------------------------------------------------------------
 // 全域變數
@@ -57,6 +58,7 @@ extern DWORD g_dwHeartBeatTime = 0;
 
 extern unsigned int g_dwMyAccountID = 0;
 extern ClientCharacterManager& g_ClientCharMgr = *ClientCharacterManager::GetInstance();
+CMoFNetwork g_Network;
 
 // Character-select slot data (3 slots × 96 bytes; filled by server packets)
 extern char           byte_23158C8[288]  = {};  // name[32] × 3 slots

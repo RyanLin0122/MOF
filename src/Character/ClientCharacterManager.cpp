@@ -69,3 +69,17 @@ char* ClientCharacterManager::GetMyCharName() {
     // Stub: real implementation returns the local player's character name string.
     return nullptr;
 }
+
+
+ClientCharacter* ClientCharacterManager::GetCharByName(char* name) {
+    (void)name;
+    return nullptr;
+}
+
+void ClientCharacterManager::SetEmoticonKind(char* /*name*/, std::uint32_t /*emoticonKind*/) {
+    // Stub: emoticon visual state is not modeled in this reduced client implementation.
+}
+
+void ClientCharacterManager::ReleaseEmoticon(ClientCharacter* /*pChar*/) {
+    // Stub: emoticon visual state is not modeled in this reduced client implementation.
+}

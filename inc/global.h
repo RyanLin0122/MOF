@@ -26,6 +26,7 @@ class CUITutorial;
 class CUIManager;
 class cltNPCManager;
 class CObjectManager;
+class CMoFNetwork;
 
 //-----------------------------------------------------------------------------
 // 全域變數
@@ -75,6 +76,7 @@ extern DWORD g_dwHeartBeatTime;
 
 extern unsigned int g_dwMyAccountID;
 extern ClientCharacterManager& g_ClientCharMgr;
+extern CMoFNetwork g_Network;
 
 // Character-select slot data (filled from server packets; 3 slots × 96 bytes).
 // Slot layout (byte offset from slot base = 96 * slotIndex):

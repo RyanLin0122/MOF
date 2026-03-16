@@ -1,15 +1,13 @@
 #include "System/cltMoFC_EmoticonSystem.h"
 
 #include <cstring>
-#include <windows.h>
 
+#include "Network/CMoFNetwork.h"
 #include "Info/cltEmoticonKindInfo.h"
 #include "Logic/cltBaseInventory.h"
-#include "Network/CMoFNetwork.h"
 #include "Character/ClientCharacterManager.h"
 #include "global.h"
 
-extern CMoFNetwork g_Network;
 
 cltMoFC_EmoticonSystem::cltMoFC_EmoticonSystem() : cltEmoticonSystem() {
 }

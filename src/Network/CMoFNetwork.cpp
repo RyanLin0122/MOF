@@ -1,6 +1,7 @@
 #include "Network/CMoFNetwork.h"
 #include <cstring>
 
+
 namespace {
 int SendRaw(CMoFNetwork *network, unsigned __int16 opcode) {
   CMofMsg msg(opcode, 0);
