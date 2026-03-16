@@ -12,7 +12,6 @@ FORCE_MISSING_CLASSES = [
     "ClientCharacterManager",
     "cltQuestSystem",
     "cltUsingSkillSystem",
-    "cltPetSkillSystem",
     "cltCharKindInfo",
     "CMonsterGroupPerLevel",
     "CObjectManager",

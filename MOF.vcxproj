@@ -321,6 +321,7 @@
     <ClCompile Include="src\System\cltLevelSystem.cpp" />
     <ClCompile Include="src\System\cltMarriageSystem.cpp" />
     <ClCompile Include="src\System\cltMoFC_EmoticonSystem.cpp" />
+    <ClCompile Include="src\System\cltMoF_CharacterActionStateSystem.cpp" />
     <ClCompile Include="src\System\cltMoneySystem.cpp" />
     <ClCompile Include="src\Logic\cltBaseInventory.cpp" />
     <ClCompile Include="src\Logic\cltItemList.cpp" />
@@ -329,6 +330,7 @@
     <ClCompile Include="src\System\cltMyItemSystem.cpp" />
     <ClCompile Include="src\System\cltMakingItemSystem.cpp" />
     <ClCompile Include="src\System\cltEmoticonSystem.cpp" />
+    <ClCompile Include="src\System\cltStorageSystem.cpp" />
     <ClCompile Include="src\System\cltTradeSystem.cpp" />
     <ClCompile Include="src\System\CPrivateMarketSystem.cpp" />
     <ClCompile Include="src\System\CSpiritSystem.cpp" />
@@ -632,12 +634,14 @@
     <ClInclude Include="inc\System\cltLevelSystem.h" />
     <ClInclude Include="inc\System\cltMarriageSystem.h" />
     <ClInclude Include="inc\System\cltMoFC_EmoticonSystem.h" />
+    <ClInclude Include="inc\System\cltMoF_CharacterActionStateSystem.h" />
     <ClInclude Include="inc\System\cltMoneySystem.h" />
     <ClInclude Include="inc\System\cltLessonSystem.h" />
     <ClInclude Include="inc\System\cltMonsterToleranceSystem.h" />
     <ClInclude Include="inc\System\cltMyItemSystem.h" />
     <ClInclude Include="inc\System\cltMakingItemSystem.h" />
     <ClInclude Include="inc\System\cltEmoticonSystem.h" />
+    <ClInclude Include="inc\System\cltStorageSystem.h" />
     <ClInclude Include="inc\System\cltTradeSystem.h" />
     <ClInclude Include="inc\System\CPrivateMarketSystem.h" />
     <ClInclude Include="inc\System\CSpiritSystem.h" />
