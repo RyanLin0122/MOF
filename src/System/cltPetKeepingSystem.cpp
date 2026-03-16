@@ -171,7 +171,7 @@ int cltPetKeepingSystem::GetKeepingCost(int petId) {
     if (!k) return 0;
     auto* kindInfo = m_pclPetKindInfo->GetPetKindInfo(k->petKind);
     if (!kindInfo) return 0;
-    return 100 * kindInfo->levelComputed * GetKeepingDay(petId);
+    return 100 * kindInfo->wPetLevel * GetKeepingDay(petId);
 }
 
 strKeepingPetInfo* cltPetKeepingSystem::GetKeepingPetInfo(int petId) {
@@ -208,7 +208,7 @@ strPetKindInfo* cltPetKeepingSystem::GetReleaseKeepingPetCost(int petId) {
         if (!k->skills[i]) break;
         ++skillCount;
     }
-    return m_pclPetKindInfo->GetPetReleaseCost(k->petKind, skillCount);
+    return reinterpret_cast<strPetKindInfo*>(static_cast<std::uintptr_t>(m_pclPetKindInfo->GetPetReleaseCost(k->petKind, skillCount)));
 }
 
 int cltPetKeepingSystem::CanTakeKeepingPet(int petId) {
