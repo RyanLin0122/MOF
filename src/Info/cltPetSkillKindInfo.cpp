@@ -1,209 +1,320 @@
+#include <cctype>
+#include <cstdlib>
+#include <cstring>
 #include "Info/cltPetSkillKindInfo.h"
+#include "global.h"
 
-bool cltPetSkillKindInfo::IsDigitString(const char* s)
+
+namespace
 {
-    if (!s || !*s) return false;
-    for (const unsigned char* p = reinterpret_cast<const unsigned char*>(s); *p; ++p)
-        if (!std::isdigit(*p)) return false;
-    return true;
-}
+    bool IsDigit(const char* text)
+    {
+        if (text == nullptr || *text == '\0')
+        {
+            return false;
+        }
 
-int cltPetSkillKindInfo::ToHexU32(const char* s, uint32_t& out)
-{
-    unsigned int tmp = 0;
-    if (!s) return 0;
-    if (std::sscanf(s, "%x", &tmp) != 1) return 0;
-    out = static_cast<uint32_t>(tmp);
-    return 1;
-}
-
-uint16_t cltPetSkillKindInfo::TranslateKindCode(char* a1)
-{
-    if (!a1) return 0;
-    if (std::strlen(a1) != 6) return 0;
-    int c = std::toupper(static_cast<unsigned char>(a1[0]));
-    uint16_t hi = (c == 'A') ? 0x8000u : (c == 'P' ? 0x0000u : 0xFFFFu);
-    if (hi == 0xFFFFu) return 0;
-    uint16_t lo = static_cast<uint16_t>(std::atoi(a1 + 1));
-    return (lo < 0x8000u) ? (hi | lo) : 0;
-}
-
-uint16_t cltPetSkillKindInfo::TranslateEffectKindCode(char* a2)
-{
-    if (!a2) return 0;
-    if (std::strlen(a2) != 5) return 0;
-    int hi = (std::toupper(static_cast<unsigned char>(a2[0])) + 31) << 11;
-    int lo = std::atoi(a2 + 1);
-    if (lo < 0x800) return static_cast<uint16_t>(hi | lo);
-    return 0;
-}
-
-int cltPetSkillKindInfo::Initialize(char* filename)
-{
-    Free();
-
-    const char* Delim = "\t\n";
-    FILE* fp = g_clTextFileManager.fopen(filename);
-    if (!fp) return 0;
-
-    int ok = 0;                 // 成功旗標（對齊反編譯 v53）
-    char line[1024] = { 0 };
-
-    // 跳過前三行表頭/註解
-    if (!std::fgets(line, sizeof(line), fp) ||
-        !std::fgets(line, sizeof(line), fp) ||
-        !std::fgets(line, sizeof(line), fp)) {
-        g_clTextFileManager.fclose(fp);
-        return 0;
+        for (const unsigned char* p = reinterpret_cast<const unsigned char*>(text); *p != '\0'; ++p)
+        {
+            if (!std::isdigit(*p))
+            {
+                return false;
+            }
+        }
+        return true;
     }
+}
 
-    // 預先計算資料行數
-    fpos_t pos{};
-    std::fgetpos(fp, &pos);
-    while (std::fgets(line, sizeof(line), fp)) ++count_;
-
-    if (count_ <= 0) { g_clTextFileManager.fclose(fp); return 0; }
-
-    table_ = static_cast<strPetSkillKindInfo*>(std::malloc(sizeof(strPetSkillKindInfo) * count_));
-    if (!table_) { g_clTextFileManager.fclose(fp); return 0; }
-    std::memset(table_, 0, sizeof(strPetSkillKindInfo) * count_);
-
-    // 回到資料起點
-    std::fsetpos(fp, &pos);
-
-    int idx = 0;
-    while (idx < count_ && std::fgets(line, sizeof(line), fp)) {
-        strPetSkillKindInfo& rec = table_[idx];
-        std::memset(&rec, 0, sizeof(rec));
-
-        // 1) 스킬 ID
-        char* tok = std::strtok(line, Delim);
-        if (!tok) goto FAIL;
-        rec.SkillID = TranslateKindCode(tok);
-        if (!rec.SkillID) goto FAIL;
-
-        // 2) 스킬 이름(기획자용) → 僅跳過
-        if (!std::strtok(nullptr, Delim)) goto FAIL;
-
-        // 3) 스킬명 text ID
-        tok = std::strtok(nullptr, Delim);
-        if (!tok || !IsDigitString(tok)) goto FAIL;
-        rec.NameTextID = static_cast<uint16_t>(std::atoi(tok));
-
-        // 4) 스킬설명 text ID
-        tok = std::strtok(nullptr, Delim);
-        if (!tok || !IsDigitString(tok)) goto FAIL;
-        rec.DescTextID = static_cast<uint16_t>(std::atoi(tok));
-
-        // 5) 아이콘 파일명(HEX)
-        tok = std::strtok(nullptr, Delim);
-        if (!ToHexU32(tok, rec.IconResHex)) goto FAIL;
-
-        // 6) 블록명
-        tok = std::strtok(nullptr, Delim);
-        if (!tok || !IsDigitString(tok)) goto FAIL;
-        rec.BlockNameID = static_cast<uint16_t>(std::atoi(tok));
-
-        // 7) 필요레벨
-        tok = std::strtok(nullptr, Delim);
-        if (!tok || !IsDigitString(tok)) goto FAIL;
-        rec.RequiredLevel = static_cast<uint16_t>(std::atoi(tok));
-
-        // 8) 스킬공격력 상승
-        tok = std::strtok(nullptr, Delim);
-        if (!tok || !IsDigitString(tok)) goto FAIL;
-        rec.SkillAtkAdd = static_cast<uint32_t>(std::atoi(tok));
-
-        // 9~13) 攻擊/防禦/命中/HP自回/MP自回(皆整數)
-        tok = std::strtok(nullptr, Delim);
-        if (!tok || !IsDigitString(tok)) goto FAIL;
-        rec.AtkPermille = static_cast<uint32_t>(std::atoi(tok));
-
-        tok = std::strtok(nullptr, Delim);
-        if (!tok || !IsDigitString(tok)) goto FAIL;
-        rec.DefPermille = static_cast<uint32_t>(std::atoi(tok));
-
-        tok = std::strtok(nullptr, Delim);
-        if (!tok || !IsDigitString(tok)) goto FAIL;
-        rec.AccPermille = static_cast<uint32_t>(std::atoi(tok));
-
-        tok = std::strtok(nullptr, Delim);
-        if (!tok || !IsDigitString(tok)) goto FAIL;
-        rec.HpAutoPermille = static_cast<uint32_t>(std::atoi(tok));
-
-        tok = std::strtok(nullptr, Delim);
-        if (!tok || !IsDigitString(tok)) goto FAIL;
-        rec.MpAutoPermille = static_cast<uint32_t>(std::atoi(tok));
-
-        // 14) 아이템 드랍율 상승
-        tok = std::strtok(nullptr, Delim);
-        if (!tok || !IsDigitString(tok)) goto FAIL;
-        rec.DropRatePermille = static_cast<uint32_t>(std::atoi(tok));
-
-        // 15~18) STR / VIT / DEX / INT
-        tok = std::strtok(nullptr, Delim);
-        if (!tok || !IsDigitString(tok)) goto FAIL;
-        rec.STR = static_cast<uint32_t>(std::atoi(tok));
-
-        tok = std::strtok(nullptr, Delim);
-        if (!tok || !IsDigitString(tok)) goto FAIL;
-        rec.VIT = static_cast<uint32_t>(std::atoi(tok));  // 反編譯：先寫 +60
-
-        tok = std::strtok(nullptr, Delim);
-        if (!tok || !IsDigitString(tok)) goto FAIL;
-        rec.DEX = static_cast<uint32_t>(std::atoi(tok));  // 反編譯：後寫 +56
-
-        tok = std::strtok(nullptr, Delim);
-        if (!tok || !IsDigitString(tok)) goto FAIL;
-        rec.INT = static_cast<uint32_t>(std::atoi(tok));
-
-        // 19) 공격 속도
-        tok = std::strtok(nullptr, Delim);
-        if (!tok || !IsDigitString(tok)) goto FAIL;
-        rec.AttackSpeed = static_cast<uint32_t>(std::atoi(tok));
-
-        // 20) 줍기（WORD）
-        tok = std::strtok(nullptr, Delim);
-        if (!tok || !IsDigitString(tok)) goto FAIL;
-        rec.Pickup = static_cast<uint16_t>(std::atoi(tok));
-
-        // 21) 시전자-바닥（效果KindCode 5碼）
-        tok = std::strtok(nullptr, Delim);
-        if (!tok) goto FAIL;
-        rec.EffectCasterGround = TranslateEffectKindCode(tok);
-
-        // 22) 시전자-위（效果KindCode 5碼）
-        tok = std::strtok(nullptr, Delim);
-        if (!tok) goto FAIL;
-        rec.EffectCasterUp = TranslateEffectKindCode(tok);
-
-        ++idx;
-        continue;
-
-    FAIL:
-        std::fclose(fp);
-        Free();
-        return 0;
-    }
-
-    ok = 1;       // 成功
-    std::fclose(fp);
-    count_ = idx; // 實際成功筆數
-    return ok;
+cltPetSkillKindInfo::cltPetSkillKindInfo()
+    : m_pInfo(nullptr)
+    , m_nCount(0)
+{
 }
 
 void cltPetSkillKindInfo::Free()
 {
-    if (table_) { std::free(table_); table_ = nullptr; }
-    count_ = 0;
+    if (m_pInfo != nullptr)
+    {
+        ::operator delete(m_pInfo);
+        m_pInfo = nullptr;
+    }
+
+    m_nCount = 0;
 }
 
-strPetSkillKindInfo* cltPetSkillKindInfo::GetPetSkillKindInfo(uint16_t a2)
+int cltPetSkillKindInfo::Initialize(char* fileName)
 {
-    if (!table_ || count_ <= 0) return nullptr;
-    // 反編譯：以 WORD 指針逐筆掃描，步距 36 WORD（=72 bytes）
-    for (int i = 0; i < count_; ++i) {
-        if (table_[i].SkillID == a2) return &table_[i];
+    char buffer[1024] = {};
+    char delimiter[] = "\t\n";
+    std::fpos_t position{};
+    int result = 0;
+
+    std::FILE* stream = g_clTextFileManager.fopen(fileName);
+    std::FILE* file = stream;
+    if (file == nullptr)
+    {
+        return 0;
     }
+
+    if (std::fgets(buffer, 1023, file) != nullptr &&
+        std::fgets(buffer, 1023, file) != nullptr &&
+        std::fgets(buffer, 1023, file) != nullptr)
+    {
+        std::fgetpos(file, &position);
+        for (; std::fgets(buffer, 1023, file) != nullptr; ++m_nCount)
+        {
+        }
+
+        m_pInfo = static_cast<strPetSkillKindInfo*>(
+            ::operator new(sizeof(strPetSkillKindInfo) * static_cast<std::size_t>(m_nCount)));
+        std::memset(m_pInfo, 0, sizeof(strPetSkillKindInfo) * static_cast<std::size_t>(m_nCount));
+
+        std::fsetpos(file, &position);
+
+        auto* cursor = reinterpret_cast<std::uint8_t*>(m_pInfo);
+        if (std::fgets(buffer, 1023, file) == nullptr)
+        {
+            result = 1;
+            g_clTextFileManager.fclose(file);
+            return result;
+        }
+
+        while (true)
+        {
+            auto* entry = reinterpret_cast<strPetSkillKindInfo*>(cursor);
+
+            char* token = std::strtok(buffer, delimiter); // 1. 技能ID
+            if (token == nullptr)
+            {
+                break;
+            }
+
+            const std::uint16_t skillId = TranslateKindCode(token);
+            entry->wSkillId = skillId;
+            if (skillId == 0)
+            {
+                break;
+            }
+
+            if (std::strtok(nullptr, delimiter) == nullptr) // 2. 技能名稱(企劃者用)，只跳過不存
+            {
+                break;
+            }
+
+            token = std::strtok(nullptr, delimiter); // 3. 技能名稱文字ID
+            if (token == nullptr || !IsDigit(token))
+            {
+                break;
+            }
+            entry->wSkillNameTextId = static_cast<std::uint16_t>(std::atoi(token));
+
+            token = std::strtok(nullptr, delimiter); // 4. 技能說明文字ID
+            if (token == nullptr || !IsDigit(token))
+            {
+                break;
+            }
+            entry->wSkillDescriptionTextId = static_cast<std::uint16_t>(std::atoi(token));
+
+            token = std::strtok(nullptr, delimiter); // 5. 圖示檔案名稱
+            if (token == nullptr)
+            {
+                break;
+            }
+            unsigned int iconValue = 0;
+            (void)std::sscanf(token, "%x", &iconValue);
+            entry->IconFileName = static_cast<std::uint32_t>(iconValue);
+
+            token = std::strtok(nullptr, delimiter); // 6. 區塊名稱
+            if (token == nullptr || !IsDigit(token))
+            {
+                break;
+            }
+            entry->wBlockName = static_cast<std::uint16_t>(std::atoi(token));
+
+            token = std::strtok(nullptr, delimiter); // 7. 所需等級
+            if (token == nullptr || !IsDigit(token))
+            {
+                break;
+            }
+            entry->wRequiredLevel = static_cast<std::uint16_t>(std::atoi(token));
+
+            token = std::strtok(nullptr, delimiter); // 8. 技能攻擊力上升
+            if (token == nullptr || !IsDigit(token))
+            {
+                break;
+            }
+            entry->dwSkillAttackPowerIncrease = static_cast<std::uint32_t>(std::atoi(token));
+
+            token = std::strtok(nullptr, delimiter); // 9. 攻擊力上升(千分率)
+            if (token == nullptr || !IsDigit(token))
+            {
+                break;
+            }
+            entry->dwAttackPowerIncreasePerThousand = static_cast<std::uint32_t>(std::atoi(token));
+
+            token = std::strtok(nullptr, delimiter); // 10. 防禦力上升(千分率)
+            if (token == nullptr || !IsDigit(token))
+            {
+                break;
+            }
+            entry->dwDefensePowerIncreasePerThousand = static_cast<std::uint32_t>(std::atoi(token));
+
+            token = std::strtok(nullptr, delimiter); // 11. 命中率上升(千分率)
+            if (token == nullptr || !IsDigit(token))
+            {
+                break;
+            }
+            entry->dwHitRateIncreasePerThousand = static_cast<std::uint32_t>(std::atoi(token));
+
+            token = std::strtok(nullptr, delimiter); // 12. HP自動回復量變化率(千分率)
+            if (token == nullptr || !IsDigit(token))
+            {
+                break;
+            }
+            entry->dwHpAutoRecoveryRateChangePerThousand = static_cast<std::uint32_t>(std::atoi(token));
+
+            token = std::strtok(nullptr, delimiter); // 13. MP自動回復量變化率(千分率)
+            if (token == nullptr || !IsDigit(token))
+            {
+                break;
+            }
+            entry->dwMpAutoRecoveryRateChangePerThousand = static_cast<std::uint32_t>(std::atoi(token));
+
+            token = std::strtok(nullptr, delimiter); // 14. 物品掉落率上升(千分率)
+            if (token == nullptr || !IsDigit(token))
+            {
+                break;
+            }
+            entry->dwItemDropRateIncreasePerThousand = static_cast<std::uint32_t>(std::atoi(token));
+
+            token = std::strtok(nullptr, delimiter); // 15. 力量(攻擊)
+            if (token == nullptr || !IsDigit(token))
+            {
+                break;
+            }
+            entry->dwStr = static_cast<std::uint32_t>(std::atoi(token));
+
+            token = std::strtok(nullptr, delimiter); // 16. 體力(生命)
+            if (token == nullptr || !IsDigit(token))
+            {
+                break;
+            }
+            entry->dwVit = static_cast<std::uint32_t>(std::atoi(token));
+
+            token = std::strtok(nullptr, delimiter); // 17. 敏捷(靈巧)
+            if (token == nullptr || !IsDigit(token))
+            {
+                break;
+            }
+            entry->dwDex = static_cast<std::uint32_t>(std::atoi(token));
+
+            token = std::strtok(nullptr, delimiter); // 18. 智力(智慧)
+            if (token == nullptr || !IsDigit(token))
+            {
+                break;
+            }
+            entry->dwInt = static_cast<std::uint32_t>(std::atoi(token));
+
+            token = std::strtok(nullptr, delimiter); // 19. 攻擊速度
+            if (token == nullptr || !IsDigit(token))
+            {
+                break;
+            }
+            entry->dwAttackSpeed = static_cast<std::uint32_t>(std::atoi(token));
+
+            token = std::strtok(nullptr, delimiter); // 20. 撿取
+            if (token == nullptr || !IsDigit(token))
+            {
+                break;
+            }
+            entry->wPickup = static_cast<std::uint16_t>(std::atoi(token));
+
+            token = std::strtok(nullptr, delimiter); // 21. 施法者-地面
+            if (token == nullptr)
+            {
+                break;
+            }
+            entry->wCasterGround = TranslateEffectKindCode(token);
+
+            token = std::strtok(nullptr, delimiter); // 22. 施法者-上方
+            if (token == nullptr)
+            {
+                break;
+            }
+            entry->wCasterAbove = TranslateEffectKindCode(token);
+
+            cursor += sizeof(strPetSkillKindInfo);
+            if (std::fgets(buffer, 1023, file) == nullptr)
+            {
+                result = 1;
+                g_clTextFileManager.fclose(file);
+                return result;
+            }
+        }
+    }
+
+    g_clTextFileManager.fclose(file);
+    return result;
+}
+
+strPetSkillKindInfo* cltPetSkillKindInfo::GetPetSkillKindInfo(std::uint16_t skillId)
+{
+    if (m_nCount <= 0)
+    {
+        return nullptr;
+    }
+
+    for (int i = 0; i < m_nCount; ++i)
+    {
+        if (m_pInfo[i].wSkillId == skillId)
+        {
+            return &m_pInfo[i];
+        }
+    }
+
     return nullptr;
+}
+
+std::uint16_t cltPetSkillKindInfo::TranslateKindCode(char* text)
+{
+    if (std::strlen(text) != 6)
+    {
+        return 0;
+    }
+
+    std::uint16_t high = 0;
+    const int lead = std::toupper(static_cast<unsigned char>(*text));
+    if (lead == 'A')
+    {
+        high = 0x8000;
+    }
+    else if (lead != 'P')
+    {
+        return 0;
+    }
+
+    const std::uint16_t low = static_cast<std::uint16_t>(std::atoi(text + 1));
+    if (low < 0x8000u)
+    {
+        return static_cast<std::uint16_t>(high | low);
+    }
+
+    return 0;
+}
+
+std::uint16_t cltPetSkillKindInfo::TranslateEffectKindCode(char* text)
+{
+    if (std::strlen(text) != 5)
+    {
+        return 0;
+    }
+
+    const int high = (std::toupper(static_cast<unsigned char>(*text)) + 31) << 11;
+    const std::uint16_t low = static_cast<std::uint16_t>(std::atoi(text + 1));
+    if (low < 0x800u)
+    {
+        return static_cast<std::uint16_t>(high | low);
+    }
+
+    return 0;
 }

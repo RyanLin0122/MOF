@@ -243,7 +243,7 @@ unsigned int cltPetSystem::CanAddPetSkill(std::uint16_t a2) {
     if (!petKindInfo_->dwSkillAcquisitionStatus) return 1902;
     auto* skillKind = m_pclPetSkillKindInfo->GetPetSkillKindInfo(a2);
     if (!skillKind) return 1;
-    if (petKindInfo_->wPetLevel < skillKind->RequiredLevel) return 1;
+    if (petKindInfo_->wPetLevel < skillKind->wRequiredLevel) return 1;
     return petSkillSystem_.CanAddPetSkill(a2) == 0;
 }
 
