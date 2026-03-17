@@ -97,7 +97,7 @@ private:
 
     cltBaseInventory* m_pInventory = nullptr;
     cltMoneySystem* m_pMoney = nullptr;
-    cltQuestSystem* m_pQuest = nullptr;
+    cltQuestSystem* m_pQuest;  // GT 不在 constructor 中初始化此欄位
     std::uint8_t m_bagNum = 0;
     std::uint8_t m_padding[3]{};
     strStorageItem m_items[MAX_STORAGE_SLOTS]{};

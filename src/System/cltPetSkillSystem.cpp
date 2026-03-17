@@ -15,29 +15,31 @@ void cltPetSkillSystem::InitializeStaticVariable(cltPetSkillKindInfo* petSkillKi
 
 // 反編譯對應：cltPetSkillSystem::cltPetSkillSystem
 // 原始碼 mofclient.c:321397
+// GT: memset(this, 0, 0xC8u); *(DWORD+50)=0; *(DWORD+51)=0; *(DWORD+52)=0;
 cltPetSkillSystem::cltPetSkillSystem() {
-    skillKinds_.fill(0);
+    std::memset(skillKinds_.data(), 0, 0xC8u);
     skillCount_ = 0;
-    usingSkills_.fill(0);
+    std::memset(usingSkills_.data(), 0, sizeof(usingSkills_));
 }
 
 // 反編譯對應：cltPetSkillSystem::~cltPetSkillSystem
 // 原始碼 mofclient.c:321407
+// GT: memset(this, 0, 0xC8u); *(DWORD+50)=0; *(DWORD+51)=0; *(DWORD+52)=0;
 cltPetSkillSystem::~cltPetSkillSystem() {
-    skillKinds_.fill(0);
+    std::memset(skillKinds_.data(), 0, 0xC8u);
     skillCount_ = 0;
-    usingSkills_.fill(0);
+    std::memset(usingSkills_.data(), 0, sizeof(usingSkills_));
 }
 
 // 反編譯對應：cltPetSkillSystem::Initialize
 // 原始碼 mofclient.c:321416
 void cltPetSkillSystem::Initialize(CMofMsg* msg) {
-    skillKinds_.fill(0);
+    std::memset(skillKinds_.data(), 0, 0xC8u);
     int count = 0;
     msg->Get_LONG(&count);
     skillCount_ = count;
     msg->Get(reinterpret_cast<std::uint8_t*>(skillKinds_.data()), 2 * count);
-    usingSkills_.fill(0);
+    std::memset(usingSkills_.data(), 0, sizeof(usingSkills_));
 
     int usingCount = 0;
     msg->Get_LONG(&usingCount);
@@ -52,9 +54,9 @@ void cltPetSkillSystem::Initialize(CMofMsg* msg) {
 // 反編譯對應：cltPetSkillSystem::Free
 // 原始碼 mofclient.c:321444
 void cltPetSkillSystem::Free() {
-    skillKinds_.fill(0);
+    std::memset(skillKinds_.data(), 0, 0xC8u);
     skillCount_ = 0;
-    usingSkills_.fill(0);
+    std::memset(usingSkills_.data(), 0, sizeof(usingSkills_));
 }
 
 namespace {
@@ -221,7 +223,7 @@ void cltPetSkillSystem::ResetPetSkill(std::uint8_t slot) {
 
 // 反編譯對應：cltPetSkillSystem::CanAddPetSkill
 // 原始碼 mofclient.c:321901
-unsigned int cltPetSkillSystem::CanAddPetSkill(std::uint16_t skillKind) {
+int cltPetSkillSystem::CanAddPetSkill(std::uint16_t skillKind) {
     if (skillCount_ >= kMaxSkills)
         return 0;
     for (int i = 0; i < skillCount_; ++i) {
@@ -240,17 +242,17 @@ void cltPetSkillSystem::AddPetSkill(std::uint16_t skillKind) {
 // 反編譯對應：cltPetSkillSystem::OnPetCreated
 // 原始碼 mofclient.c:321931
 void cltPetSkillSystem::OnPetCreated() {
-    skillKinds_.fill(0);
+    std::memset(skillKinds_.data(), 0, 0xC8u);
     skillCount_ = 0;
-    usingSkills_.fill(0);
+    std::memset(usingSkills_.data(), 0, sizeof(usingSkills_));
 }
 
 // 反編譯對應：cltPetSkillSystem::OnPetDeleted
 // 原始碼 mofclient.c:321940
 void cltPetSkillSystem::OnPetDeleted() {
-    skillKinds_.fill(0);
+    std::memset(skillKinds_.data(), 0, 0xC8u);
     skillCount_ = 0;
-    usingSkills_.fill(0);
+    std::memset(usingSkills_.data(), 0, sizeof(usingSkills_));
 }
 
 // 反編譯對應：cltPetSkillSystem::GetPetUsingSkillKind
