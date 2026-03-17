@@ -12,16 +12,25 @@ namespace {
     constexpr const char* kMagRoot = "MAG";
     constexpr const char* kClaRoot = "CLA";
 
-    // 注意：輸入的 IDA 片段有多個 `string` 遺失，以下以 nullptr 保留未知槽位，
-    // 已知代碼照原樣還原；未知代碼可在拿到更完整字串後直接補上。
-    constexpr const char* kFigFamily[8] = { kFigRoot, nullptr, "KNI", "SWO", "GEN", "HER", nullptr, nullptr };
-    constexpr const char* kArcFamily[8] = { kArcRoot, nullptr, "SNI", "ASS", nullptr, "SPE", nullptr, "LLC" };
-    constexpr const char* kMagFamily[8] = { kMagRoot, nullptr, "MOL", "BAT", "SAG", nullptr, "SPM", "BTM" };
-    constexpr const char* kClaFamily[8] = { kClaRoot, "PRI", nullptr, "PAL", nullptr, "BIS", nullptr, nullptr };
+    // 職業家族：根據 cltClassKindInfo 的職業繼承表還原全部職業碼。
+    constexpr const char* kFigFamily[8] = { kFigRoot, "GRA", "KNI", "SWO", "GEN", "HER", "UTW", "GWM" };
+    constexpr const char* kArcFamily[8] = { kArcRoot, "HUN", "SNI", "ASS", "SHA", "SPE", "RYS", "LLC" };
+    constexpr const char* kMagFamily[8] = { kMagRoot, "WIZ", "MOL", "BAT", "SAG", "WAR", "SPM", "BTM" };
+    constexpr const char* kClaFamily[8] = { kClaRoot, "PRI", "SAI", "PAL", "HOL", "BIS", "PRP", "ACB" };
+
+    std::uint16_t TranslateClassCode(const char* code) {
+        if (std::strlen(code) != 3) {
+            return 0;
+        }
+
+        const std::uint16_t a = static_cast<std::uint16_t>(std::toupper(static_cast<unsigned char>(code[0])) - 'A');
+        const std::uint16_t b = static_cast<std::uint16_t>(std::toupper(static_cast<unsigned char>(code[1])) - 'A');
+        return static_cast<std::uint16_t>((32 * (b | (32 * a))) | (std::toupper(static_cast<unsigned char>(code[2])) - 'A'));
+    }
 
     bool MatchesFamily(std::uint16_t classCode, const char* const (&family)[8]) {
         for (const char* code : family) {
-            if (code != nullptr && classCode == cltQuestKindInfo::TranslateClassCode(code)) {
+            if (classCode == TranslateClassCode(code)) {
                 return true;
             }
         }
@@ -31,19 +40,19 @@ namespace {
 } // namespace
 
 std::uint16_t stQuestKindInfo::IsFig(std::uint16_t classCode) const {
-    return MatchesFamily(classCode, kFigFamily) ? cltQuestKindInfo::TranslateClassCode(kFigRoot) : 0;
+    return MatchesFamily(classCode, kFigFamily) ? TranslateClassCode(kFigRoot) : 0;
 }
 
 std::uint16_t stQuestKindInfo::IsARC(std::uint16_t classCode) const {
-    return MatchesFamily(classCode, kArcFamily) ? cltQuestKindInfo::TranslateClassCode(kArcRoot) : 0;
+    return MatchesFamily(classCode, kArcFamily) ? TranslateClassCode(kArcRoot) : 0;
 }
 
 std::uint16_t stQuestKindInfo::IsMAG(std::uint16_t classCode) const {
-    return MatchesFamily(classCode, kMagFamily) ? cltQuestKindInfo::TranslateClassCode(kMagRoot) : 0;
+    return MatchesFamily(classCode, kMagFamily) ? TranslateClassCode(kMagRoot) : 0;
 }
 
 std::uint16_t stQuestKindInfo::IsCLA(std::uint16_t classCode) const {
-    return MatchesFamily(classCode, kClaFamily) ? cltQuestKindInfo::TranslateClassCode(kClaRoot) : 0;
+    return MatchesFamily(classCode, kClaFamily) ? TranslateClassCode(kClaRoot) : 0;
 }
 
 std::uint16_t stQuestKindInfo::GetRewardItem(std::uint16_t classCode, char groupIndex) const {
@@ -80,10 +89,34 @@ cltQuestKindInfo::cltQuestKindInfo() {
 }
 
 cltQuestKindInfo::~cltQuestKindInfo() {
-    for (stQuestKindInfo*& info : m_infos) {
-        delete info;
-        info = nullptr;
+    for (stQuestKindInfo* info : m_infos) {
+        if (info) {
+            delete info;
+        }
     }
+}
+
+int cltQuestKindInfo::Initialize(char* questFile, char* collectionFile, char* deliveryFile,
+                                 char* huntFile, char* oneWayFile, char* playIndunFile) {
+    int result = LoadQuestInfo(questFile);
+    if (result) {
+        result = LoadCollectionQuestInfo(collectionFile);
+        if (result) {
+            result = LoadDeliveryQuestInfo(deliveryFile);
+            if (result) {
+                result = LoadHuntQuestInfo(huntFile);
+                if (result) {
+                    result = LoadOneWayDeliveryQuestInfo(oneWayFile);
+                    if (result) {
+                        result = LoadBuyEmblem();
+                        if (result)
+                            result = LoadPlayIndun(playIndunFile) != 0;
+                    }
+                }
+            }
+        }
+    }
+    return result;
 }
 
 bool cltQuestKindInfo::IsDigitString(const char* s) {
@@ -507,9 +540,6 @@ int cltQuestKindInfo::LoadCollectionQuestInfo(char* filePath) {
 
                 const std::uint16_t questCode = TranslateKindCode(token);
                 stQuestKindInfo* info = GetQuestKindInfo(questCode);
-                if (info == nullptr) {
-                    break;
-                }
 
                 token = std::strtok(nullptr, delimiter);
                 if (token == nullptr) {
@@ -609,9 +639,6 @@ int cltQuestKindInfo::LoadDeliveryQuestInfo(char* filePath) {
 
                 const std::uint16_t questCode = TranslateKindCode(token);
                 stQuestKindInfo* info = GetQuestKindInfo(questCode);
-                if (info == nullptr) {
-                    break;
-                }
 
                 token = std::strtok(nullptr, delimiter); // 2 道具ID
                 if (token == nullptr) {
@@ -666,9 +693,6 @@ int cltQuestKindInfo::LoadHuntQuestInfo(char* filePath) {
                 if (token != nullptr) {
                     const std::uint16_t questCode = TranslateKindCode(token);
                     stQuestKindInfo* info = GetQuestKindInfo(questCode);
-                    if (info == nullptr) {
-                        goto EXIT_LOAD_HUNT;
-                    }
 
                     token = std::strtok(nullptr, delimiter); // 2 目標_ID_1
                     if (token == nullptr) {
@@ -723,9 +747,6 @@ int cltQuestKindInfo::LoadOneWayDeliveryQuestInfo(char* filePath) {
 
                 const std::uint16_t questCode = TranslateKindCode(token);
                 stQuestKindInfo* info = GetQuestKindInfo(questCode);
-                if (info == nullptr) {
-                    break;
-                }
 
                 token = std::strtok(nullptr, delimiter); // 2 物品ID
                 if (token == nullptr) {
@@ -770,10 +791,6 @@ EXIT_LOAD_ONEWAY:
 int cltQuestKindInfo::LoadBuyEmblem() {
     const std::uint16_t questCode = TranslateKindCode("Q0248");
     stQuestKindInfo* info = GetQuestKindInfo(questCode);
-    if (info == nullptr) {
-        return 0;
-    }
-
     info->extra.buyEmblem.wEmblemItemId = TranslateKindCode("E0001");
     info->extra.buyEmblem.wEmblemNpcId = 23704;
     return 1;
@@ -838,7 +855,7 @@ EXIT_LOAD_PLAYINDUN:
 }
 
 std::uint16_t cltQuestKindInfo::TranslateKindCode(const char* code) {
-    if (code == nullptr || std::strlen(code) != 5) {
+    if (std::strlen(code) != 5) {
         return 0;
     }
 
@@ -851,36 +868,22 @@ std::uint16_t cltQuestKindInfo::TranslateKindCode(const char* code) {
     return static_cast<std::uint16_t>(high | low);
 }
 
-std::uint16_t cltQuestKindInfo::TranslateClassCode(const char* code) {
-    if (code == nullptr || std::strlen(code) != 3) {
-        return 0;
-    }
-
-    const std::uint16_t a = static_cast<std::uint16_t>(std::toupper(static_cast<unsigned char>(code[0])) - 'A');
-    const std::uint16_t b = static_cast<std::uint16_t>(std::toupper(static_cast<unsigned char>(code[1])) - 'A');
-    return static_cast<std::uint16_t>((32 * (b | (32 * a))) | (std::toupper(static_cast<unsigned char>(code[2])) - 'A'));
-}
-
 stQuestKindInfo* cltQuestKindInfo::GetQuestKindInfo(std::uint16_t questCode) {
     return m_infos[questCode];
 }
 
-const stQuestKindInfo* cltQuestKindInfo::GetQuestKindInfo(std::uint16_t questCode) const {
-    return m_infos[questCode];
-}
-
-std::uint8_t cltQuestKindInfo::GetQuestPlayType(std::uint16_t questCode) const {
-    const stQuestKindInfo* info = GetQuestKindInfo(questCode);
+std::uint8_t cltQuestKindInfo::GetQuestPlayType(std::uint16_t questCode) {
+    stQuestKindInfo* info = GetQuestKindInfo(questCode);
     return info ? info->bPlayType : 0;
 }
 
-std::uint8_t cltQuestKindInfo::GetDemandLevel(std::uint16_t questCode) const {
-    const stQuestKindInfo* info = GetQuestKindInfo(questCode);
+std::uint8_t cltQuestKindInfo::GetDemandLevel(std::uint16_t questCode) {
+    stQuestKindInfo* info = GetQuestKindInfo(questCode);
     return info ? info->bConditionLevel : 0;
 }
 
-std::uint8_t cltQuestKindInfo::GetDemandFame(std::uint16_t questCode) const {
-    const stQuestKindInfo* info = GetQuestKindInfo(questCode);
+std::uint8_t cltQuestKindInfo::GetDemandFame(std::uint16_t questCode) {
+    stQuestKindInfo* info = GetQuestKindInfo(questCode);
     return info ? info->bConditionReputation : 0;
 }
 
