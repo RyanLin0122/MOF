@@ -12,12 +12,11 @@ namespace {
     constexpr const char* kMagRoot = "MAG";
     constexpr const char* kClaRoot = "CLA";
 
-    // 注意：輸入的 IDA 片段有多個 `string` 遺失，以下以 nullptr 保留未知槽位，
-    // 已知代碼照原樣還原；未知代碼可在拿到更完整字串後直接補上。
-    constexpr const char* kFigFamily[8] = { kFigRoot, nullptr, "KNI", "SWO", "GEN", "HER", nullptr, nullptr };
-    constexpr const char* kArcFamily[8] = { kArcRoot, nullptr, "SNI", "ASS", nullptr, "SPE", nullptr, "LLC" };
-    constexpr const char* kMagFamily[8] = { kMagRoot, nullptr, "MOL", "BAT", "SAG", nullptr, "SPM", "BTM" };
-    constexpr const char* kClaFamily[8] = { kClaRoot, "PRI", nullptr, "PAL", nullptr, "BIS", nullptr, nullptr };
+    // 職業家族：根據 cltClassKindInfo 的職業繼承表還原全部職業碼。
+    constexpr const char* kFigFamily[8] = { kFigRoot, "GRA", "KNI", "SWO", "GEN", "HER", "UTW", "GWM" };
+    constexpr const char* kArcFamily[8] = { kArcRoot, "HUN", "SNI", "ASS", "SHA", "SPE", "RYS", "LLC" };
+    constexpr const char* kMagFamily[8] = { kMagRoot, "WIZ", "MOL", "BAT", "SAG", "WAR", "SPM", "BTM" };
+    constexpr const char* kClaFamily[8] = { kClaRoot, "PRI", "SAI", "PAL", "HOL", "BIS", "PRP", "ACB" };
 
     std::uint16_t TranslateClassCode(const char* code) {
         if (std::strlen(code) != 3) {
@@ -31,7 +30,7 @@ namespace {
 
     bool MatchesFamily(std::uint16_t classCode, const char* const (&family)[8]) {
         for (const char* code : family) {
-            if (code != nullptr && classCode == TranslateClassCode(code)) {
+            if (classCode == TranslateClassCode(code)) {
                 return true;
             }
         }
