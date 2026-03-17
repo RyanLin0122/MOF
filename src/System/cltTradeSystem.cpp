@@ -386,7 +386,7 @@ unsigned int cltTradeSystem::SucceedTrade() {
     }
 
     // Validate money transfers
-    if (myChangeMoney) {
+    if (myMoney) {
         if ((otherMoney && !otherMoney->CanDecreaseMoney(otherChangeMoney))
             || !myMoney->CanIncreaseMoney(otherChangeMoney)) {
             unsigned int errCode = 501;
@@ -395,7 +395,7 @@ unsigned int cltTradeSystem::SucceedTrade() {
             return errCode;
         }
     }
-    if (otherChangeMoney) {
+    if (otherMoney) {
         if ((myMoney && !myMoney->CanDecreaseMoney(myChangeMoney))
             || !otherMoney->CanIncreaseMoney(myChangeMoney)) {
             unsigned int errCode = 501;
@@ -416,9 +416,9 @@ unsigned int cltTradeSystem::SucceedTrade() {
         otherInv->AddInventoryItem(&myItemList, otherChangeSlots);
 
     // Execute money trade
-    if (myChangeMoney)
+    if (myMoney)
         SuccedTradeMoney(myAccount);
-    if (otherChangeMoney)
+    if (otherMoney)
         SuccedTradeMoney(otherAccount);
 
     if (m_pOnTradeCompletedFuncPtr) {
