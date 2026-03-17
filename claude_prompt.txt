@@ -1,0 +1,17 @@
+檔案檢查:
+mofclient.c是最正確的程式碼實作，也就是ground truth，其他所有檔案都是從mofclient.c還原回C++的。
+我要你從mofclient.c找到cltTutorialSystem相關實作碼，從202557行開始。
+比較目前版本(/inc/System/cltTutorialSystem.h、/src/System/cltTutorialSystem.cpp)和ground truth之間的實作是否一致，
+嚴格檢查，把所有差異列出來，先不改檔案，下一個步驟再修正。我要的是邏輯行為等價的還原
+
+修檔案:
+根據你這次找到的差異項目，把cltTutorialSystem程式碼修正，對齊mofclient.c實作。我要邏輯行為和mofclient.c等價，如果用到其他class的函式，就直接呼叫使用。
+還不存在的class，可以新增檔案，做成stub，回傳假的輸出，以後再實作。
+
+Codex檢查完:
+我用Chatgpt codex Review你的實作，他給你的審查是這樣，你參考一下覺得有道理嗎? 真的是你做錯的地方你就改
+
+Codex直接重建:
+mofclient.c是ground truth，我要你按照mofclient.c的cltQuestSystem實作內容，還原出行為相同且可以執行的C++，生成檔案放在/inc/System和/src/System。
+include路徑可以參考其他檔案，像是/Info資料夾就有很多KindInfo可以直接用。
+有一些全域變數定義在global.h可以直接使用。這幾個類別所有函式都必須實作出來，我要的是邏輯行為等價的實作，不要用模擬行為，mofclient.c call了甚麼function，照做就是了。
