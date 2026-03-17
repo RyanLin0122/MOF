@@ -19,13 +19,14 @@ void cltStorageSystem::InitializeStaticVariable(cltItemKindInfo* pItemKindInfo) 
 
 // 反編譯對應：cltStorageSystem::cltStorageSystem
 // 原始碼 mofclient.c:336265
+// GT: 先逐項清零 items，再清 depositMoney、bagNum、m_pInventory、m_pMoney
+// 注意：GT 不清 m_pQuest（offset +8），保留未初始化狀態
 cltStorageSystem::cltStorageSystem() {
     std::memset(m_items, 0, sizeof(m_items));
     m_depositMoney = 0;
     m_bagNum = 0;
     m_pInventory = nullptr;
     m_pMoney = nullptr;
-    m_pQuest = nullptr;
 }
 
 // 反編譯對應：cltStorageSystem::Initialize (cltItemList 版)

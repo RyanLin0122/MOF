@@ -42,7 +42,7 @@ public:
     int CanResetPetSkill(std::uint8_t slot);
     void ResetPetSkill(std::uint8_t slot);
 
-    unsigned int CanAddPetSkill(std::uint16_t skillKind);
+    int CanAddPetSkill(std::uint16_t skillKind);
     void AddPetSkill(std::uint16_t skillKind);
 
     int GetPetSkillNum();
