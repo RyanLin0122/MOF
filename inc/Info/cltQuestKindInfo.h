@@ -128,6 +128,9 @@ public:
     cltQuestKindInfo();
     virtual ~cltQuestKindInfo();
 
+    int Initialize(char* questFile, char* collectionFile, char* deliveryFile,
+                   char* huntFile, char* oneWayFile, char* playIndunFile);
+
     int LoadQuestInfo(char* filePath);
     int LoadCollectionQuestInfo(char* filePath);
     int LoadDeliveryQuestInfo(char* filePath);
@@ -137,14 +140,12 @@ public:
     int LoadPlayIndun(char* filePath);
 
     static std::uint16_t TranslateKindCode(const char* code);
-    static std::uint16_t TranslateClassCode(const char* code);
 
     stQuestKindInfo* GetQuestKindInfo(std::uint16_t questCode);
-    const stQuestKindInfo* GetQuestKindInfo(std::uint16_t questCode) const;
 
-    std::uint8_t GetQuestPlayType(std::uint16_t questCode) const;
-    std::uint8_t GetDemandLevel(std::uint16_t questCode) const;
-    std::uint8_t GetDemandFame(std::uint16_t questCode) const;
+    std::uint8_t GetQuestPlayType(std::uint16_t questCode);
+    std::uint8_t GetDemandLevel(std::uint16_t questCode);
+    std::uint8_t GetDemandFame(std::uint16_t questCode);
 
 
     bool IsValidRewardExpByLevel(std::uint8_t level, std::int64_t exp) const;
