@@ -10,7 +10,6 @@ START_LINE = 26022
 FORCE_MISSING_CLASSES = [
     "ClientCharacter",
     "ClientCharacterManager",
-    "cltQuestSystem",
     "cltUsingSkillSystem",
     "cltCharKindInfo",
     "CMonsterGroupPerLevel",
