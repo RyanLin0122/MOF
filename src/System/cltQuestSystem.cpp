@@ -44,35 +44,18 @@ void (*cltQuestSystem::m_pQuestMarkRefreshFuncPtr)(std::uint16_t) = nullptr;
 
 cltQuestSystem::cltQuestSystem()
 {
-    std::memset(m_quests, 0, sizeof(m_quests));
+    // GT: loop 清 quest 區 + memset + playingCount + giveupPermanently
+    for (int i = 0; i < MAX_QUEST_SLOTS; i++) {
+        m_quests[i].wNPCID = 0;
+        m_quests[i].wQuestID = 0;
+        m_quests[i].bStatus = 0;
+        m_quests[i].dwValue = 0;
+        m_quests[i].dwStartTime = 0;
+        m_quests[i].dwTimeLimit = 0;
+    }
     m_bPlayingQuestCount = 0;
-    std::memset(m_runningQuestIndices, 0, sizeof(m_runningQuestIndices));
-    m_pInventory = nullptr;
-    m_pMoneySystem = nullptr;
-    m_pPlayerAbility = nullptr;
-    m_pLevelSystem = nullptr;
-    m_pLessonSystem = nullptr;
-    m_pSkillSystem = nullptr;
-    m_pClassSystem = nullptr;
-    m_pEmblemSystem = nullptr;
-    m_pTitleSystem = nullptr;
-    m_pPetInventorySystem = nullptr;
-    m_pTASSystem = nullptr;
-    m_pSpecialtySystem = nullptr;
-    m_pMeritoriousSystem = nullptr;
-    m_pPKRankSystem = nullptr;
-    m_pGradeSystem = nullptr;
-    m_pMyItemSystem = nullptr;
-    m_wPendingNPCID = 0;
-    m_wPendingQuestID = 0;
-    m_wDeliveryItemKind = 0;
-    _padding1 = 0;
-    m_pDeliveryQuestInfo = nullptr;
-    m_wRewardNPCID = 0;
-    m_wRewardItemKind = 0;
-    m_pRewardQuestInfo = nullptr;
+    std::memset(m_quests, 0, sizeof(m_quests));
     m_bGiveupPermanently = 0;
-    m_dwAccountID = 0;
 }
 
 cltQuestSystem::~cltQuestSystem()
@@ -345,8 +328,6 @@ std::uint16_t cltQuestSystem::UpdateHuntQuest(std::uint16_t monsterKind)
 std::uint16_t cltQuestSystem::UpdateHuntQuest(std::uint16_t monsterKind, std::uint16_t* outNPCID, unsigned int* outValue)
 {
     void* charInfo = m_pclCharKindInfo->GetCharKindInfo(monsterKind);
-    if (!charInfo)
-        return 0;
 
     // stCharKindInfo offset 6 = 怪物族群代碼
     std::uint16_t tribeCode = *reinterpret_cast<std::uint16_t*>(
@@ -429,16 +410,14 @@ std::uint16_t cltQuestSystem::CanReward(int npcID, std::uint16_t* outDeliveryNPC
             case 1: { // COLLECT
                 if (m_pInventory->IsLock())
                     break;
-                std::uint16_t qty1_inv = static_cast<std::uint16_t>(
-                    m_pInventory->GetInventoryItemQuantity(pQuest->extra.collection.wQuestItem1));
                 std::uint16_t qty1_pet =
                     m_pPetInventorySystem->GetInventoryItemQuantity(pQuest->extra.collection.wQuestItem1);
-                std::uint16_t total1 = qty1_inv + qty1_pet;
-                std::uint16_t qty2_inv = static_cast<std::uint16_t>(
-                    m_pInventory->GetInventoryItemQuantity(pQuest->extra.collection.wQuestItem2));
+                std::uint16_t total1 = static_cast<std::uint16_t>(
+                    m_pInventory->GetInventoryItemQuantity(pQuest->extra.collection.wQuestItem1)) + qty1_pet;
                 std::uint16_t qty2_pet =
                     m_pPetInventorySystem->GetInventoryItemQuantity(pQuest->extra.collection.wQuestItem2);
-                std::uint16_t total2 = qty2_inv + qty2_pet;
+                std::uint16_t total2 = static_cast<std::uint16_t>(
+                    m_pInventory->GetInventoryItemQuantity(pQuest->extra.collection.wQuestItem2)) + qty2_pet;
                 if (total1 >= pQuest->extra.collection.wQuestItemCount1
                     && total2 >= pQuest->extra.collection.wQuestItemCount2)
                 {
@@ -543,7 +522,7 @@ std::uint16_t cltQuestSystem::CanReward(int npcID, std::uint16_t* outDeliveryNPC
                 }
                 break;
             case 30: // JOINCICLE
-                if (m_pExternIsJoinedCircleFuncPtr && m_pExternIsJoinedCircleFuncPtr(m_dwAccountID)) {
+                if (m_pExternIsJoinedCircleFuncPtr(m_dwAccountID)) {
                     CompleteFunctionQuest(30);
                     result = pQuest->wEndDialogue;
                 }
@@ -867,7 +846,7 @@ bool cltQuestSystem::CanIncreaseRewardMoney(std::uint16_t npcID)
 int cltQuestSystem::GetPrecedenceQuestInfo(std::uint16_t npcID, std::uint16_t* outPrereqNPC, std::uint16_t* outPrereqQuest)
 {
     stNPCInfo* pNPC = m_pclNPCInfo->GetNPCInfoByID(npcID);
-    if (!pNPC || !pNPC->m_wQuestIDs[0])
+    if (!pNPC->m_wQuestIDs[0])
         return 0;
 
     stPlayingQuestInfo* pInfo = GetPlayingQuestInfoByNPCID(npcID);
@@ -1369,8 +1348,6 @@ std::uint8_t cltQuestSystem::GetRewardItemNum(std::uint16_t /*npcID*/, std::uint
 int cltQuestSystem::IsQuestMonster(std::uint16_t monsterKind)
 {
     void* charInfo = m_pclCharKindInfo->GetCharKindInfo(monsterKind);
-    if (!charInfo)
-        return 0;
 
     std::uint16_t tribeCode = *reinterpret_cast<std::uint16_t*>(
         reinterpret_cast<char*>(charInfo) + 6);
