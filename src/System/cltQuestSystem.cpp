@@ -937,7 +937,7 @@ std::uint16_t cltQuestSystem::CanAccept(std::uint16_t npcID)
 
             if (pInfo->bStatus == 1) {
                 // 已完成，尋找任務鏈中的下一個
-                int foundNext = 0;
+                bool restartOuter = false;
                 for (int i = 0; i < 70; i++) {
                     if (pInfo->wQuestID == pNPC->m_wQuestIDs[i] && pNPC->m_wQuestIDs[i + 1]) {
                         std::uint16_t nextQuestID = pNPC->m_wQuestIDs[i + 1];
@@ -976,12 +976,14 @@ std::uint16_t cltQuestSystem::CanAccept(std::uint16_t npcID)
                                 return 606;
                         }
 
-                        // 職業檢查
+                        // 職業檢查 — GT: 若不符合則 FinishQuest 並 goto LABEL_33
+                        // 重新抓 NPC 資料，回到外層 while 繼續找後續任務
                         std::uint16_t myClass = m_pClassSystem->GetClass();
                         if (!pNextQuest->CanAcceptQuestByClass(myClass)) {
                             FinishQuest(static_cast<std::uint16_t>(i + 1), nextQuestID, npcID);
-                            foundNext = 0;
-                            break; // 重新進入迴圈
+                            currentNPC = npcID;
+                            restartOuter = true;
+                            break; // 跳出 for，回到外層 while 重新檢查
                         }
 
                         if (GetRunningQuestCount() >= MAX_RUNNING_QUESTS)
@@ -1007,9 +1009,10 @@ std::uint16_t cltQuestSystem::CanAccept(std::uint16_t npcID)
                         return 604;
                     }
                 }
+                if (restartOuter)
+                    continue; // 回到外層 while(true) 重新檢查，與 GT 的 goto LABEL_33 一致
                 // 沒找到下一個任務
-                if (!foundNext)
-                    return 600;
+                return 600;
             }
             return 600;
         }
