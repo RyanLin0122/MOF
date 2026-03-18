@@ -11,12 +11,6 @@
 #include "System/cltLessonSystem.h"
 #include "global.h"
 
-class stPlayingQuestInfo {
-public:
-    std::uint16_t questKind;
-    std::uint8_t completed;
-};
-
 void (*cltHelpSystem::m_pPopupMessagePtr)(HelpKind) = nullptr;
 cltCharKindInfo* cltHelpSystem::m_pclCharKindInfo = nullptr;
 cltSkillKindInfo* cltHelpSystem::m_pclSkillKindInfo = nullptr;
@@ -124,8 +118,8 @@ void cltHelpSystem::Check_GoTo_Curuno(std::uint16_t questKind) {
 
 void cltHelpSystem::Check_GoTo_Rora_For_Reward(std::uint16_t questKind) {
     if (questKind == cltQuestKindInfo::TranslateKindCode("Q1501") && m_pPopupMessagePtr && m_pQuestSystem) {
-        auto* info = reinterpret_cast<stPlayingQuestInfo*>(m_pQuestSystem->GetPlayingQuestInfoByQuestID(questKind));
-        if (info && !info->completed) {
+        auto* info = m_pQuestSystem->GetPlayingQuestInfoByQuestID(questKind);
+        if (info && !info->bStatus) {
             m_pPopupMessagePtr(static_cast<HelpKind>(15));
         }
     }
@@ -217,8 +211,8 @@ void cltHelpSystem::Check_SetScheduleQuestComplete(std::uint16_t) {
         return;
     }
     const auto q = cltQuestKindInfo::TranslateKindCode("Q0001");
-    auto* info = reinterpret_cast<stPlayingQuestInfo*>(m_pQuestSystem->GetPlayingQuestInfoByQuestID(q));
-    if (info && m_pQuestSystem->CanReward(static_cast<int>(info->questKind))) {
+    auto* info = m_pQuestSystem->GetPlayingQuestInfoByQuestID(q);
+    if (info && m_pQuestSystem->CanReward(static_cast<int>(info->wNPCID))) {
         m_pPopupMessagePtr(static_cast<HelpKind>(17));
     }
 }
@@ -229,8 +223,8 @@ void cltHelpSystem::Check_DoLessonEachSubject(std::uint16_t mapKind) {
     }
     if (mapKind == cltMapInfo::TranslateKindCode("T0004") || mapKind == cltMapInfo::TranslateKindCode("V0032")) {
         const auto q = cltQuestKindInfo::TranslateKindCode("Q0002");
-        auto* info = reinterpret_cast<stPlayingQuestInfo*>(m_pQuestSystem->GetPlayingQuestInfoByQuestID(q));
-        if (!info || info->completed) {
+        auto* info = m_pQuestSystem->GetPlayingQuestInfoByQuestID(q);
+        if (!info || info->bStatus) {
             return;
         }
         if (m_pLessonSystem->CanTraningLesson(10) && m_pLessonSystem->CanTraningLesson(11)) {
@@ -256,8 +250,8 @@ void cltHelpSystem::Check_GoToRoraForRewar() {
         return;
     }
     const auto q = cltQuestKindInfo::TranslateKindCode("Q0002");
-    auto* info = reinterpret_cast<stPlayingQuestInfo*>(m_pQuestSystem->GetPlayingQuestInfoByQuestID(q));
-    if (info && !info->completed
+    auto* info = m_pQuestSystem->GetPlayingQuestInfoByQuestID(q);
+    if (info && !info->bStatus
         && m_pLessonSystem->GetTotalSwordLessonPt()
         && m_pLessonSystem->GetTotalBowLessonPt()
         && m_pLessonSystem->GetTotalTheologyLessonPt()
