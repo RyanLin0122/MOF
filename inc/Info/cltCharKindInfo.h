@@ -2,8 +2,10 @@
 #include <cstdint>
 
 struct stCharKindInfo {
-    // Opaque; actual layout defined by original client binary.
-    char data[1];
+    // Partial reconstruction. TODO: verify exact offsets from binary analysis.
+    char _unknown_prefix[8]; // placeholder; actual offset unknown
+    int moneyRule;            // TODO: verify offset
+    int levelOrRankBase;      // TODO: verify offset
 };
 
 class cltCharKindInfo {
@@ -17,6 +19,11 @@ public:
 
     // Returns monster name/info block for the given kind code.
     stCharKindInfo* GetMonsterNameByKind(unsigned short kind);
+
+    // Returns all char kind infos that reference the given drop item kind code.
+    // outChars must point to an array of at least 65535 stCharKindInfo* elements.
+    // Returns the number of entries written.
+    int GetCharKindInfoByDropItemKind(uint16_t dropItemKindCode, stCharKindInfo** outChars);
 };
 
 extern cltCharKindInfo g_clCharKindInfo;

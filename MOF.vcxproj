@@ -260,6 +260,7 @@
     <ClCompile Include="src\Info\cltClimateKindInfo.cpp" />
     <ClCompile Include="src\Info\cltCoupleRingKindInfo.cpp" />
     <ClCompile Include="src\Info\cltDebuffKindInfo.cpp" />
+    <ClCompile Include="src\Info\cltDropItemKindInfo.cpp" />
     <ClCompile Include="src\Info\cltEmblemKindInfo.cpp" />
     <ClCompile Include="src\Info\cltEmoticonKindInfo.cpp" />
     <ClCompile Include="src\Info\cltEnchantKindInfo.cpp" />
@@ -564,6 +565,7 @@
     <ClInclude Include="inc\Info\cltClimateKindInfo.h" />
     <ClInclude Include="inc\Info\cltCoupleRingKindInfo.h" />
     <ClInclude Include="inc\Info\cltDebuffKindInfo.h" />
+    <ClInclude Include="inc\Info\cltDropItemKindInfo.h" />
     <ClInclude Include="inc\Info\cltEmblemKindInfo.h" />
     <ClInclude Include="inc\Info\cltEmoticonKindInfo.h" />
     <ClInclude Include="inc\Info\cltEnchantKindInfo.h" />

@@ -36,5 +36,13 @@ stCharKindInfo* cltCharKindInfo::GetMonsterNameByKind(unsigned short /*kind*/)
     return nullptr;
 }
 
+int cltCharKindInfo::GetCharKindInfoByDropItemKind(uint16_t /*dropItemKindCode*/, stCharKindInfo** /*outChars*/)
+{
+    // Stub: real implementation searches the char kind table for entries
+    // whose drop item kind code matches dropItemKindCode and writes them
+    // into outChars, returning the count found.
+    return 0;
+}
+
 // Global instance definition
 cltCharKindInfo g_clCharKindInfo;
