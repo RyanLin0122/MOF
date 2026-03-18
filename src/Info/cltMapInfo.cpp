@@ -523,8 +523,7 @@ bool cltMapInfo::CanUseReturnItem(unsigned short map_id) {
 }
 
 void cltMapInfo::SetPKMapKindAll() {
-	if (m_wPKMapCount == 0) return;
-
+	// 不檢查 m_wPKMapCount == 0，直接 operator new(2 * count)
 	m_pPKMapKindArray = reinterpret_cast<unsigned short*>(operator new(sizeof(unsigned short) * m_wPKMapCount));
 	if (m_pPKMapKindArray) {
 		int pk_index = 0;
