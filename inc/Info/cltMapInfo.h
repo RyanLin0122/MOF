@@ -193,5 +193,5 @@ private:
 
     // --- 靜態成員變數 ---
     static DCTTextManager* m_pclTextManager;
-    static unsigned int* m_dwMapTypeAtb; // 地圖類型屬性表
+    static unsigned char* m_dwMapTypeAtb; // 地圖類型屬性表 (byte array)
 };

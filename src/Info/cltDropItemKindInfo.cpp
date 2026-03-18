@@ -232,10 +232,8 @@ int cltDropItemKindInfo::Initialize(char* fileName) {
                                             relatedChars.data());
 
                                         for (int i = 0; i < charCount; ++i) {
+                                            // ground truth: 不檢查 null，直接使用
                                             const stCharKindInfo* charInfo = relatedChars[static_cast<std::size_t>(i)];
-                                            if (!charInfo) {
-                                                continue;
-                                            }
 
                                             if (charInfo->moneyRule == 0) {
                                                 if (record->moneyDropAmount != 2 * charInfo->levelOrRankBase + 10) {
@@ -459,7 +457,6 @@ int cltDropItemKindInfo::GenerateFieldDropItem(stMapInfo* mapInfo,
                                                std::uint16_t,
                                                std::uint16_t* outItemKind,
                                                std::uint16_t* outItemCount) const {
-    (void)premiumBonusPerMille;
 
     if (!mapInfo) {
         return 0;
@@ -650,8 +647,9 @@ int cltDropItemKindInfo::GenerateDropItem(stMapInfo* mapInfo,
                                   eventMoneyBonusFlag,
                                   dropKindCode);
     *outMoney = money;
-    if (mapInfo && mapInfo->m_byIsPKArea) { // mofclient.c: *((_BYTE *)a2 + 302) == m_byIsPKArea
-        *outMoney = money * 2;
+    // ground truth: 不檢查 mapInfo 是否為 null，直接解參考
+    if (mapInfo->m_byIsPKArea) {
+        *outMoney = 2 * money;
     }
 
     int count = GenerateRareDropItem(playerLevel,

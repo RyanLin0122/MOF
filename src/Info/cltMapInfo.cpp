@@ -7,7 +7,7 @@
 
 // 靜態和全局變數初始化
 DCTTextManager* cltMapInfo::m_pclTextManager = nullptr;
-unsigned int* cltMapInfo::m_dwMapTypeAtb = nullptr; // 應由其他部分初始化
+unsigned char* cltMapInfo::m_dwMapTypeAtb = nullptr; // 應由其他部分初始化 (byte array)
 cltMapInfo* g_pcltMapInfo = nullptr;
 
 
@@ -26,18 +26,20 @@ cltMapInfo::~cltMapInfo() {
 }
 
 void cltMapInfo::Free() {
+	// ground truth: 使用 operator delete (非 delete[])
 	if (m_pMapInfoArray) {
-		delete[] m_pMapInfoArray;
+		operator delete(m_pMapInfoArray);
 		m_pMapInfoArray = nullptr;
 	}
 	if (m_pPKMapKindArray) {
-		delete[] m_pPKMapKindArray;
+		operator delete(m_pPKMapKindArray);
 		m_pPKMapKindArray = nullptr;
 	}
-	m_wTotalMapNum = 0;
 	m_wPKMapCount = 0;
+	m_wTotalMapNum = 0;
 
-	if (g_pcltMapInfo == this) {
+	// ground truth: 只要 g_pcltMapInfo 非空就清空，不檢查是不是 this
+	if (g_pcltMapInfo) {
 		g_pcltMapInfo = nullptr;
 	}
 }
@@ -56,20 +58,18 @@ void cltMapInfo::Free() {
  * @return bool 如果初始化成功則為 true，否則為 false。
  */
 bool cltMapInfo::Initialize(char* filename) {
-	// 釋放舊資料
-	Free();
-
 	FILE* file = g_clTextFileManager.fopen(filename);
 	if (!file) {
 		return false;
 	}
 
-	char buffer[2048]; // 增加緩衝區大小以應對長行
+	char buffer[1024];
+	buffer[0] = '\0';
 
 	// 跳過前 3 行標頭
-	if (!fgets(buffer, sizeof(buffer), file) ||
-		!fgets(buffer, sizeof(buffer), file) ||
-		!fgets(buffer, sizeof(buffer), file)) {
+	if (!fgets(buffer, 1023, file) ||
+		!fgets(buffer, 1023, file) ||
+		!fgets(buffer, 1023, file)) {
 		g_clTextFileManager.fclose(file);
 		return false;
 	}
@@ -77,22 +77,15 @@ bool cltMapInfo::Initialize(char* filename) {
 	fpos_t start_pos;
 	fgetpos(file, &start_pos);
 
-	// 第一次遍歷：計算地圖總數
-	m_wTotalMapNum = 0;
-	while (fgets(buffer, sizeof(buffer), file)) {
-		// 確保不是空行
-		if (strlen(buffer) > 1 && buffer[0] != '\n') {
+	// 第一次遍歷：計算地圖總數 (ground truth: 計算所有行，不過濾空行)
+	if (fgets(buffer, 1023, file)) {
+		do {
 			m_wTotalMapNum++;
-		}
+		} while (fgets(buffer, 1023, file));
 	}
 
-	if (m_wTotalMapNum == 0) {
-		g_clTextFileManager.fclose(file);
-		return true; // 檔案為空但處理成功
-	}
-
-	// 分配儲存所有地圖資訊的記憶體
-	m_pMapInfoArray = new stMapInfo[m_wTotalMapNum];
+	// 分配儲存所有地圖資訊的記憶體 (ground truth: 即使 0 筆也配置)
+	m_pMapInfoArray = reinterpret_cast<stMapInfo*>(operator new(sizeof(stMapInfo) * m_wTotalMapNum));
 	memset(m_pMapInfoArray, 0, sizeof(stMapInfo) * m_wTotalMapNum);
 
 	// 回到資料起始位置進行第二次遍歷以解析資料
@@ -101,10 +94,21 @@ bool cltMapInfo::Initialize(char* filename) {
 	bool success = true;
 	const char* delimiters = "\t\n";
 
+	if (!fgets(buffer, 1023, file)) {
+		// 沒有資料行 → 成功路徑 (ground truth: LABEL_245)
+		SetPKMapKindAll();
+		g_clTextFileManager.fclose(file);
+		return true;
+	}
+
 	for (int i = 0; i < m_wTotalMapNum; ++i) {
-		if (!fgets(buffer, sizeof(buffer), file)) {
-			success = false;
-			break;
+		if (i > 0) {
+			if (!fgets(buffer, 1023, file)) {
+				// 所有行都已成功解析
+				SetPKMapKindAll();
+				g_clTextFileManager.fclose(file);
+				return true;
+			}
 		}
 
 		// 指向當前要填充的地圖結構
@@ -136,9 +140,15 @@ bool cltMapInfo::Initialize(char* filename) {
 			NEXT_TOKEN(token); if (!IsDigit(token)) { success = false; break; }
 			current_info->m_wExtRegionCode = atoi(token);
 
-			// 背景 
+			// 背景 (ground truth: 只接受 Y/y → 1, N/n → 0, 其他失敗)
 			NEXT_TOKEN(token);
-			if (toupper(*token) == 'Y') current_info->m_BG = 1; else current_info->m_BG = 0;
+			if (toupper(*token) == 'Y') {
+				current_info->m_BG = 1;
+			} else if (toupper(*token) == 'N') {
+				current_info->m_BG = 0;
+			} else {
+				success = false; break;
+			}
 
 			// 固定背景 
 			NEXT_TOKEN(token); if (!IsAlphaNumeric(token)) { success = false; break; }
@@ -172,7 +182,7 @@ bool cltMapInfo::Initialize(char* filename) {
 			else if (strcmp(token, "WEDDINGHALL") == 0) current_info->m_wRegionType = MAP_CAPS_WEDDINGHALL;
 			else if (strcmp(token, "SKYCASTLE") == 0) current_info->m_wRegionType = MAP_CAPS_SKYCASTLE;
 			else if (strcmp(token, "SKYCASTLESTART") == 0) current_info->m_wRegionType = MAP_CAPS_SKYCASTLESTART;
-			else current_info->m_wRegionType = MAP_CAPS_FIELD; // 預設值
+			else { success = false; break; } // ground truth: 不認識的類型直接失敗
 
 			// 地城名稱 
 			NEXT_TOKEN(token); if (!IsDigit(token)) { success = false; break; }
@@ -226,26 +236,26 @@ bool cltMapInfo::Initialize(char* filename) {
 			NEXT_TOKEN(token); if (!IsDigit(token)) { success = false; break; }
 			current_info->m_dwShipMovePosY = atoi(token);
 
-			// 24: 區域類型 
+			// 24: 區域類型 (ground truth: else if 鏈，含 NONE，不認識時不覆蓋)
 			NEXT_TOKEN(token);
 			if (strcmp(token, "LIBITOWN") == 0) current_info->m_byAreaType = MAP_TILE_LIBITOWN;
-			if (strcmp(token, "GOLDYLAN") == 0) current_info->m_byAreaType = MAP_TILE_GOLDYLAN;
-			if (strcmp(token, "LAWN") == 0) current_info->m_byAreaType = MAP_TILE_LAWN;
-			if (strcmp(token, "GLENN_WOOD") == 0) current_info->m_byAreaType = MAP_TILE_GLENN_WOOD;
-			if (strcmp(token, "CREMBILL") == 0) current_info->m_byAreaType = MAP_TILE_CREMBILL;
-			if (strcmp(token, "DARK_PILLAR") == 0) current_info->m_byAreaType = MAP_TILE_DARK_PILLAR;
-			if (strcmp(token, "GREENSTAR") == 0) current_info->m_byAreaType = MAP_TILE_GREENSTAR;
-			if (strcmp(token, "PAPIRION") == 0) current_info->m_byAreaType = MAP_TILE_PAPIRION;
-			if (strcmp(token, "WESTENPA") == 0) current_info->m_byAreaType = MAP_TILE_WESTENPA;
-			if (strcmp(token, "NORTHENPA") == 0) current_info->m_byAreaType = MAP_TILE_NORTHENPA;
-			if (strcmp(token, "NABAHORN") == 0) current_info->m_byAreaType = MAP_TILE_NABAHORN;
-			if (strcmp(token, "CORULMATIN") == 0) current_info->m_byAreaType = MAP_TILE_CORULMATIN;
-			if (strcmp(token, "EASTNPA") == 0) current_info->m_byAreaType = MAP_TILE_EASTNPA;
-			if (strcmp(token, "LESTIN") == 0) current_info->m_byAreaType = MAP_TILE_LESTIN;
-			if (strcmp(token, "PAPERONPLAIN") == 0) current_info->m_byAreaType = MAP_TILE_PAPERONPLAIN;
-			if (strcmp(token, "INDUN") == 0) current_info->m_byAreaType = MAP_TILE_INDUN;
-			if (strcmp(token, "CIRCLEROOM") == 0) current_info->m_byAreaType = MAP_TILE_CIRCLEROOM;
-			else current_info->m_byAreaType = MAP_TILE_NONE; // 預設值
+			else if (strcmp(token, "GOLDYLAN") == 0) current_info->m_byAreaType = MAP_TILE_GOLDYLAN;
+			else if (strcmp(token, "LAWN") == 0) current_info->m_byAreaType = MAP_TILE_LAWN;
+			else if (strcmp(token, "GLENN_WOOD") == 0) current_info->m_byAreaType = MAP_TILE_GLENN_WOOD;
+			else if (strcmp(token, "CREMBILL") == 0) current_info->m_byAreaType = MAP_TILE_CREMBILL;
+			else if (strcmp(token, "DARK_PILLAR") == 0) current_info->m_byAreaType = MAP_TILE_DARK_PILLAR;
+			else if (strcmp(token, "GREENSTAR") == 0) current_info->m_byAreaType = MAP_TILE_GREENSTAR;
+			else if (strcmp(token, "PAPIRION") == 0) current_info->m_byAreaType = MAP_TILE_PAPIRION;
+			else if (strcmp(token, "WESTENPA") == 0) current_info->m_byAreaType = MAP_TILE_WESTENPA;
+			else if (strcmp(token, "NORTHENPA") == 0) current_info->m_byAreaType = MAP_TILE_NORTHENPA;
+			else if (strcmp(token, "NABAHORN") == 0) current_info->m_byAreaType = MAP_TILE_NABAHORN;
+			else if (strcmp(token, "CORULMATIN") == 0) current_info->m_byAreaType = MAP_TILE_CORULMATIN;
+			else if (strcmp(token, "EASTNPA") == 0) current_info->m_byAreaType = MAP_TILE_EASTNPA;
+			else if (strcmp(token, "LESTIN") == 0) current_info->m_byAreaType = MAP_TILE_LESTIN;
+			else if (strcmp(token, "PAPERONPLAIN") == 0) current_info->m_byAreaType = MAP_TILE_PAPERONPLAIN;
+			else if (strcmp(token, "INDUN") == 0) current_info->m_byAreaType = MAP_TILE_INDUN;
+			else if (strcmp(token, "CIRCLEROOM") == 0) current_info->m_byAreaType = MAP_TILE_CIRCLEROOM;
+			else if (strcmp(token, "NONE") == 0) current_info->m_byAreaType = MAP_TILE_NONE;
 
 			// 25: 資源 ID 
 			NEXT_TOKEN(token); if (!IsAlphaNumeric(token)) { success = false; break; }
@@ -295,9 +305,13 @@ bool cltMapInfo::Initialize(char* filename) {
 			NEXT_TOKEN(token); if (!IsDigit(token)) { success = false; break; }
 			current_info->m_wLevelRequired = atoi(token);
 
-			// 是否為市場 
+			// 是否為市場 (ground truth: 只接受小寫 "y" → 1, "n" → 0)
 			NEXT_TOKEN(token);
-			if (toupper(*token) == 'Y') current_info->m_dwIsMarket = 1; else current_info->m_dwIsMarket = 0;
+			if (strcmp(token, "y") == 0) {
+				current_info->m_dwIsMarket = 1;
+			} else if (strcmp(token, "n") == 0) {
+				current_info->m_dwIsMarket = 0;
+			}
 
 			// 氣候 
 			NEXT_TOKEN(token);
@@ -307,9 +321,12 @@ bool cltMapInfo::Initialize(char* filename) {
 			NEXT_TOKEN(token); if (!IsDigit(token)) { success = false; break; }
 			current_info->m_byIsPKArea = (unsigned char)atoi(token);
 
-			// 是否可開啟對抗戰 
+			// 是否可開啟對抗戰 (ground truth: 兩個獨立 if，只接受小寫 "y"/"n")
 			NEXT_TOKEN(token);
-			if (toupper(*token) == 'Y') current_info->m_dwCanOpenPK = 1; else current_info->m_dwCanOpenPK = 0;
+			if (strcmp(token, "y") == 0)
+				current_info->m_dwCanOpenPK = 1;
+			if (strcmp(token, "n") == 0)
+				current_info->m_dwCanOpenPK = 0;
 
 			// 區域制霸 
 			NEXT_TOKEN(token); if (!IsDigit(token)) { success = false; break; }
@@ -386,82 +403,42 @@ bool cltMapInfo::Initialize(char* filename) {
 			NEXT_TOKEN(token); if (!IsDigit(token)) { success = false; break; }
 			current_info->m_wDropItemMax2 = atoi(token);
 
+			// --- 內聯驗證 (ground truth: 在每筆記錄解析後立即驗證) ---
+			if (current_info->m_wDropItemMin1 > current_info->m_wDropItemMax1 ||
+				current_info->m_wDropItemMin2 > current_info->m_wDropItemMax2 ||
+				(current_info->m_dwDropRate1 && !current_info->m_byteDropItemCount1) ||
+				(current_info->m_dwDropRate2 && !current_info->m_byteDropItemCount2)) {
+				success = false; break;
+			}
+
+			unsigned char cnt1 = current_info->m_byteDropItemCount1;
+			if (cnt1) {
+				if (!current_info->m_wDropItemID1[0]) { success = false; break; }
+			}
+			if (cnt1 >= 2 && !current_info->m_wDropItemID1[1]) { success = false; break; }
+			if (cnt1 >= 3 && !current_info->m_wDropItemID1[2]) { success = false; break; }
+			if (cnt1 >= 4 && !current_info->m_wDropItemID1[3]) { success = false; break; }
+			if (cnt1 >= 5 && !current_info->m_wDropItemID1[4]) { success = false; break; }
+
+			unsigned char cnt2 = current_info->m_byteDropItemCount2;
+			if (cnt2) {
+				if (!current_info->m_wDropItemID2[0]) { success = false; break; }
+			}
+			if (cnt2 >= 2 && !current_info->m_wDropItemID2[1]) { success = false; break; }
+			if (cnt2 >= 3 && !current_info->m_wDropItemID2[2]) { success = false; break; }
+			if (cnt2 >= 4 && !current_info->m_wDropItemID2[3]) { success = false; break; }
+			if (cnt2 >= 5 && !current_info->m_wDropItemID2[4]) { success = false; break; }
+
 		} while (false);
 
 		if (!success) break;
 	}
 
+	// ground truth: 成功解析所有記錄後呼叫 SetPKMapKindAll
 	if (success) {
-		// 解析成功後，進行最後的資料完整性檢查
-		for (int i = 0; i < m_wTotalMapNum; ++i) {
-			stMapInfo* current_info = &m_pMapInfoArray[i];
-
-			// 檢查1: 掉落物品數量與掉落機率的邏輯一致性
-			if (current_info->m_wDropItemMin1 > current_info->m_wDropItemMax1) {
-				success = false;
-			}
-
-			// 檢查2: 掉落物品數量與掉落機率的邏輯一致性 (第二組)
-			if (current_info->m_wDropItemMin2 > current_info->m_wDropItemMax2) {
-				success = false;
-			}
-
-			// 檢查3: 如果有設定掉落機率，但沒有對應的掉落物品，則為錯誤
-			if (current_info->m_dwDropRate1 && !current_info->m_byteDropItemCount1) {
-				success = false;
-			}
-			if (current_info->m_dwDropRate2 && !current_info->m_byteDropItemCount2) {
-				success = false;
-			}
-
-			// 檢查4: 如果掉落物品數量大於0，對應的第一個物品ID不能為0
-			// 反組譯碼中的判斷邏輯是：如果 byteDropItemCount1 不為0，但 m_wDropItemID1[0] 為0，則為錯誤。
-			if (current_info->m_byteDropItemCount1 && !current_info->m_wDropItemID1[0]) {
-				success = false;
-			}
-			if (current_info->m_byteDropItemCount2 && !current_info->m_wDropItemID2[0]) {
-				success = false;
-			}
-
-			// 檢查5: 確保每個掉落物品ID都有效
-			// 反組譯碼中有一系列基於 byteDropItemCount 的 if 判斷，來檢查每個可能存在的物品ID是否為0
-			if (current_info->m_byteDropItemCount1 >= 2 && !current_info->m_wDropItemID1[1]) {
-				success = false;
-			}
-			if (current_info->m_byteDropItemCount1 >= 3 && !current_info->m_wDropItemID1[2]) {
-				success = false;
-			}
-			if (current_info->m_byteDropItemCount1 >= 4 && !current_info->m_wDropItemID1[3]) {
-				success = false;
-			}
-			if (current_info->m_byteDropItemCount1 >= 5 && !current_info->m_wDropItemID1[4]) {
-				success = false;
-			}
-
-			if (current_info->m_byteDropItemCount2 >= 2 && !current_info->m_wDropItemID2[1]) {
-				success = false;
-			}
-			if (current_info->m_byteDropItemCount2 >= 3 && !current_info->m_wDropItemID2[2]) {
-				success = false;
-			}
-			if (current_info->m_byteDropItemCount2 >= 4 && !current_info->m_wDropItemID2[3]) {
-				success = false;
-			}
-			if (current_info->m_byteDropItemCount2 >= 5 && !current_info->m_wDropItemID2[4]) {
-				success = false;
-			}
-
-			if (!success) break;
-		}
-		if (success) {
-			// 如果所有地圖都解析成功，則建立 PK 地圖的索引
-			SetPKMapKindAll();
-		}
-		else {
-			// 如果解析失敗，釋放資源
-			Free();
-		}
+		SetPKMapKindAll();
 	}
+	// ground truth: 失敗時不呼叫 Free()
 
 	g_clTextFileManager.fclose(file);
 	return success;
@@ -548,7 +525,7 @@ bool cltMapInfo::CanUseReturnItem(unsigned short map_id) {
 void cltMapInfo::SetPKMapKindAll() {
 	if (m_wPKMapCount == 0) return;
 
-	m_pPKMapKindArray = new unsigned short[m_wPKMapCount];
+	m_pPKMapKindArray = reinterpret_cast<unsigned short*>(operator new(sizeof(unsigned short) * m_wPKMapCount));
 	if (m_pPKMapKindArray) {
 		int pk_index = 0;
 		for (int i = 0; i < m_wTotalMapNum; ++i) {
@@ -560,6 +537,9 @@ void cltMapInfo::SetPKMapKindAll() {
 }
 
 int cltMapInfo::GetMapKindCountByDungeonNameCode(int dungeon_name_code) {
+	// ground truth: 先清空 m_DungeonMapKinds (memset 100 bytes = 50 * sizeof(uint16))
+	memset(m_DungeonMapKinds, 0, sizeof(m_DungeonMapKinds));
+
 	std::list<unsigned short> map_ids;
 	for (int i = 0; i < m_wTotalMapNum; ++i) {
 		if (m_pMapInfoArray[i].m_wDungeonNameCode == dungeon_name_code) {
@@ -567,16 +547,16 @@ int cltMapInfo::GetMapKindCountByDungeonNameCode(int dungeon_name_code) {
 		}
 	}
 
+	if (map_ids.empty()) {
+		return 0;
+	}
+
 	int count = 0;
 	for (unsigned short id : map_ids) {
-		if (count < 50) {
-			m_DungeonMapKinds[count++] = id;
-		}
-		else {
-			break;
-		}
+		if (count > 50) break; // ground truth: if (v11 > 50) break; 最多寫入 51 筆
+		m_DungeonMapKinds[count++] = id;
 	}
-	return map_ids.size();
+	return static_cast<int>(map_ids.size());
 }
 
 
@@ -646,14 +626,13 @@ unsigned short cltMapInfo::GetProvideMapID() {
 
 bool cltMapInfo::IsProvideMatch(unsigned short map_id) {
 	stMapInfo* info = GetMapInfoByID(map_id);
-	// 檢查該地圖是否提供競賽
-	return info ? (info->m_byIsPKArea != 0) : false;
+	// ground truth: 回傳 offset 304 的 m_dwCanOpenPK，不是 m_byIsPKArea
+	return info ? (info->m_dwCanOpenPK != 0) : false;
 }
 
 bool cltMapInfo::IsMatchMap(unsigned short map_id) {
-	stMapInfo* info = GetMapInfoByID(map_id);
-	// 檢查該地圖是否為競賽地圖
-	return info ? (info->m_byIsPKArea != 0) : false;
+	// ground truth: 直接解參考，不檢查 null
+	return GetMapInfoByID(map_id)->m_byIsPKArea != 0;
 }
 
 // --- 補上的靜態函數實作 ---
