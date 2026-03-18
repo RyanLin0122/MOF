@@ -38,7 +38,7 @@ cltInstantDungeonKindInfo*  cltQuestSystem::m_pclInstantDungeonKindInfo = nullpt
 int  (*cltQuestSystem::m_pExternIsJoinedCircleFuncPtr)(unsigned int) = nullptr;
 void (*cltQuestSystem::m_pQuestMarkRefreshFuncPtr)(std::uint16_t) = nullptr;
 
-cltQuestSystem g_clQuestSystem;
+// g_clQuestSystem 定義在 global.cpp
 
 // ---- 建構 / 解構 ----
 
