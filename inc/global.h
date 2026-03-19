@@ -33,6 +33,7 @@ class CUITutorial;
 class CUIManager;
 class cltNPCManager;
 class CObjectManager;
+class CObjectResourceManager;
 class CMoFNetwork;
 
 //-----------------------------------------------------------------------------
@@ -74,6 +75,10 @@ extern short kGlyphIndexByStyleChar[]; //word_6C6B6C
 extern int   kDotGlyphIndexByStyle[]; //dword_6C6C54
 extern int   kAdvanceByStyle[]; //dword_6C6C58
 extern int   kAtlasIdByStyle[]; //dword_6C6C5C
+
+// Camera/scroll offset (world coordinate of the top-left screen corner)
+extern int dword_A73088;  // camera scroll X
+extern int dword_A7308C;  // camera scroll Y
 
 extern unsigned int D3DRS_BLENDOP_TYPE[8];
 extern unsigned int D3DRS_SRCBLEND_TYPE[8];

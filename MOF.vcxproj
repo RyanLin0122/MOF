@@ -305,7 +305,14 @@
     <ClCompile Include="src\Other\CAttendanceBookParser.cpp" />
     <ClCompile Include="src\Other\cltAttackAtb.cpp" />
     <ClCompile Include="src\Other\cltBaseAbility.cpp" />
-    <ClCompile Include="src\Pet\cltPetObject.cpp" />
+    <ClCompile Include="src\Object\cltPetObject.cpp" />
+    <ClCompile Include="src\Object\CBaseObject.cpp" />
+    <ClCompile Include="src\Object\CStaticObject.cpp" />
+    <ClCompile Include="src\Object\CPortalObject.cpp" />
+    <ClCompile Include="src\Object\CEffectObject.cpp" />
+    <ClCompile Include="src\Object\cltAniObject.cpp" />
+    <ClCompile Include="src\Object\CObjectResourceManager.cpp" />
+    <ClCompile Include="src\Object\CObjectManager.cpp" />
     <ClCompile Include="src\Sound\COgg.cpp" />
     <ClCompile Include="src\Sound\CSoundSystem.cpp" />
     <ClCompile Include="src\Sound\CWaveFile.cpp" />
@@ -365,7 +372,7 @@
     <ClCompile Include="src\Logic\cltHelpMessage.cpp" />
     <ClCompile Include="src\Logic\cltConfiguration.cpp" />
     <ClCompile Include="src\Logic\cltNPCManager.cpp" />
-    <ClCompile Include="src\Logic\CObjectManager.cpp" />
+    <!-- Removed: CObjectManager is now in src\Object\CObjectManager.cpp -->
     <ClCompile Include="src\Network\DCTNetwork.cpp" />
     <ClCompile Include="src\Network\CMoFNetwork.cpp" />
     <ClCompile Include="src\Network\CMofMsg.cpp" />
@@ -619,7 +626,15 @@
     <ClInclude Include="inc\Other\CAttendanceBookParser.h" />
     <ClInclude Include="inc\Other\cltAttackAtb.h" />
     <ClInclude Include="inc\Other\cltBaseAbility.h" />
-    <ClInclude Include="inc\Pet\cltPetObject.h" />
+    <ClInclude Include="inc\Object\cltPetObject.h" />
+    <ClInclude Include="inc\Object\stObjectInfo.h" />
+    <ClInclude Include="inc\Object\CBaseObject.h" />
+    <ClInclude Include="inc\Object\CStaticObject.h" />
+    <ClInclude Include="inc\Object\CPortalObject.h" />
+    <ClInclude Include="inc\Object\CEffectObject.h" />
+    <ClInclude Include="inc\Object\cltAniObject.h" />
+    <ClInclude Include="inc\Object\CObjectResourceManager.h" />
+    <ClInclude Include="inc\Object\CObjectManager.h" />
     <ClInclude Include="inc\Sound\COgg.h" />
     <ClInclude Include="inc\Sound\CSoundSystem.h" />
     <ClInclude Include="inc\Sound\CWaveFile.h" />
