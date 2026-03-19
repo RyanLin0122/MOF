@@ -15,6 +15,7 @@
 #include "Text/DCTTextManager.h"
 #include "Font/MoFFont.h"
 #include "Text/DCTIMMList.h"
+#include "Util/cltTimer.h"
 
 class cltClassKindInfo;
 class cltItemKindInfo;
@@ -23,10 +24,11 @@ class Map;
 class ClientCharacterManager;
 class cltQuestSystem;
 class CMeritoriousSystem;
+class cltLevelSystem;
+class cltLevelSystem;
 class CSpiritSystem;
 class cltBaseInventory;
 class cltCharKindInfo;
-#include "Util/cltTimer.h"
 class cltFieldItemManager;
 class cltHelpMessage;
 class cltConfiguration;
@@ -84,6 +86,8 @@ extern cltHelpMessage           g_clHelpMessage;
 extern ClientCharacterManager   g_ClientCharMgr;
 extern DrawObject_All           g_DrawObject_ALL;
 extern CSpiritSystem            g_clSpiritSystem;
+extern cltLevelSystem           g_clLevelSystem;
+extern cltClassSystem           g_clClassSystem;
 extern CMoFNetwork              g_Network;
 
 extern short kGlyphIndexByStyleChar[]; //word_6C6B6C

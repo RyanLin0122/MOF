@@ -14,10 +14,6 @@
 extern int dword_A73088;
 extern int dword_A7308C;
 
-// 前向宣告 — 尚未還原的全域物件
-// cltLevelSystem 實例 (在 cltMyCharData 中)
-extern cltLevelSystem g_clLevelSystem;
-extern cltClassSystem g_clClassSystem;
 
 // CSpiritSpeechMgr — 精靈對話管理器 (尚未還原)
 class CSpiritSpeechMgr {

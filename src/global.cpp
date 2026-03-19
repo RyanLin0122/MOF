@@ -5,7 +5,9 @@
 #include "Character/ClientCharacterManager.h"
 #include "System/cltQuestSystem.h"
 #include "System/CMeritoriousSystem.h"
-#include "System//CSpiritSystem.h"
+#include "System/CSpiritSystem.h"
+#include "System/cltLevelSystem.h"
+#include "System/cltClassSystem.h"
 #include "Logic/cltBaseInventory.h"
 #include "Info/cltCharKindInfo.h"
 #include "Util/cltTimer.h"
@@ -90,6 +92,8 @@ int g_nTutorialState = 0;
 CSpiritSystem        g_clSpiritSystem;
 cltQuestSystem       g_clQuestSystem;
 CMeritoriousSystem   g_clMeritoriousSystem;
+cltLevelSystem       g_clLevelSystem;
+cltClassSystem       g_clClassSystem;
 cltBaseInventory     g_clMyInventory;
 cltTimerManager      g_clTimerManager;
 cltFieldItemManager  g_clFieldItemMgr;
