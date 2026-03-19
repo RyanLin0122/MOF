@@ -7,14 +7,8 @@ extern int dword_A7308C;
 
 cltAniObject::cltAniObject()
     : CBaseObject()
-    , m_pGameImage(nullptr)
-    , m_wCurrentFrame(0)
-    , m_fAniFrame(0.0f)
-    , m_dwResourceID(0)
-    , m_wMaxFrames(0)
-    , m_byAlphaVal(0)
-    , m_byFlag(0)
 {
+    // Ground truth constructor only sets vftable, does not initialize derived fields
 }
 
 cltAniObject::~cltAniObject()
@@ -49,11 +43,11 @@ void cltAniObject::Process()
     float screenY = (float)(m_nPosY - dword_A7308C);
     m_pGameImage->SetPosition(screenX, screenY);
 
-    // Set flip from alpha value field
-    m_pGameImage->m_bFlipX = (m_byAlphaVal != 0);
+    // Write flip flag value to GameImage+392 (ground truth writes raw byte as DWORD)
+    m_pGameImage->m_bFlipX = (unsigned char)m_byFlipFlag;
 
-    // If flag is set, apply custom scale/rotation parameters
-    if (m_byFlag)
+    // If transform flag is set, apply custom vertex parameters
+    if (m_byTransformFlag)
     {
         m_pGameImage->m_fScaleX = -10.0f;
         m_pGameImage->m_fScaleY = 0.0f;
@@ -74,20 +68,21 @@ void cltAniObject::Process()
 
 void cltAniObject::Draw()
 {
-    if (m_pGameImage && m_pGameImage->GetGIDataPtr())
+    // Ground truth does NOT null-check m_pGameImage, only checks GameImage+8 (m_pGIData)
+    if (m_pGameImage->GetGIDataPtr())
         m_pGameImage->Draw();
 }
 
 void cltAniObject::InitInfo(unsigned int dwResourceID, unsigned short wMaxFrames,
-                            int nPosX, int nPosY, char byAlphaVal,
-                            unsigned char byVisible, unsigned char byFlag)
+                            int nPosX, int nPosY, char byFlipFlag,
+                            unsigned char byVisible, unsigned char byTransformFlag)
 {
     m_nPosX = nPosX;
     m_nPosY = nPosY;
     m_dwResourceID = dwResourceID;
     m_wMaxFrames = wMaxFrames;
-    m_byAlphaVal = byAlphaVal;
-    m_byFlag = byFlag;
+    m_byFlipFlag = byFlipFlag;
+    m_byTransformFlag = byTransformFlag;
     m_dwValid = byVisible;
     m_fAniFrame = 0.0f;
 }

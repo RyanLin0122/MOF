@@ -27,9 +27,9 @@ CBaseObject::CBaseObject()
     , m_byField7(0)
     , _pad5(0)
     , m_bInitialized(0)
-    , m_nNameWidth(0)
-    , m_nTitleWidth(0)
 {
+    // Ground truth constructor does NOT initialize m_nNameWidth / m_nTitleWidth
+    // Those are zeroed in InitNameBackBox instead
 }
 
 CBaseObject::~CBaseObject()
