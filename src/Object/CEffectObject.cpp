@@ -5,8 +5,9 @@
 
 CEffectObject::CEffectObject()
     : CBaseObject()
-    , m_pEffect(nullptr)
 {
+    // Ground truth constructor only sets vftable, does not initialize m_pEffect
+    // m_pEffect is zeroed in InitEffectObject before use
 }
 
 CEffectObject::~CEffectObject()

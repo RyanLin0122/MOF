@@ -3,6 +3,7 @@
 #include "Object/CStaticObject.h"
 #include "Object/CEffectObject.h"
 #include "Object/CObjectResourceManager.h"
+#include "Logic/CMessageBoxManager.h"
 #include "Info/cltItemKindInfo.h"
 #include "Text/cltTextFileManager.h"
 #include "Character/ClientCharacter.h"
@@ -16,11 +17,8 @@ CObjectManager::CObjectManager()
     : m_pHead(nullptr)
     , m_pTail(nullptr)
     , m_wObjectCount(0)
-    , _pad1(0)
-    , m_pCharacter(nullptr)
-    , m_pEffectObjectInfos(nullptr)
-    , m_wEffectObjectCount(0)
 {
+    // Ground truth only initializes m_pHead, m_pTail, m_wObjectCount
 }
 
 CObjectManager::~CObjectManager()
@@ -75,10 +73,11 @@ CBaseObject* CObjectManager::AddObject(unsigned short wObjectID)
     else
     {
         // Invalid object kind (>= 3)
+        // Ground truth uses CMessageBoxManager::AddOK, not MessageBoxA
+        // Ground truth does NOT delete pNode here (memory leak in original)
         char szBuffer[100];
         sprintf(szBuffer, "%d Object kind is incorrect.", (unsigned short)pInfo->m_wKind);
-        MessageBoxA(0, szBuffer, "Object Kind Error", 0);
-        delete pNode;
+        CMessageBoxManager::AddOK(g_pMsgBoxMgr, szBuffer, 0, 0, 0, -1);
         return nullptr;
     }
 
@@ -379,7 +378,26 @@ int CObjectManager::InitMapEffectObject(char* szFileName)
 
     // Allocate array
     int count = m_wEffectObjectCount;
-    m_pEffectObjectInfos = (EffectObjectInfo*)new char[16 * count];
+    char* pRawBuffer = (char*)operator new(16 * count);
+    if (pRawBuffer)
+    {
+        // Ground truth manually zeroes each 16-byte entry before memset
+        char* pEntry = pRawBuffer + 4;
+        for (int i = count; i > 0; --i)
+        {
+            *(unsigned short*)(pEntry - 4) = 0;
+            *(unsigned short*)(pEntry - 2) = 0;
+            *(unsigned short*)pEntry = 0;
+            *(int*)(pEntry + 4) = 0;
+            *(int*)(pEntry + 8) = 0;
+            pEntry += 16;
+        }
+    }
+    else
+    {
+        pRawBuffer = nullptr;
+    }
+    m_pEffectObjectInfos = (EffectObjectInfo*)pRawBuffer;
     memset(m_pEffectObjectInfos, 0, 16 * m_wEffectObjectCount);
 
     // Seek back and parse
