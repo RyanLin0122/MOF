@@ -16,6 +16,7 @@
 #include "Logic/cltNPCManager.h"
 #include "Logic/CObjectManager.h"
 #include "Object/CObjectResourceManager.h"
+#include "Object/DrawObject_All.h"
 #include "Network/CMoFNetwork.h"
 
 //-----------------------------------------------------------------------------
@@ -95,6 +96,9 @@ cltHelpMessage       g_clHelpMessage;
 cltNPCManager        g_clNPCManager;
 CObjectManager       g_ObjectManager;
 CObjectResourceManager g_ObjectResourceManager;
+cltHelpMessage g_clHelpMessage;
+ClientCharacterManager g_ClientCharMgr;
+DrawObject_All g_DrawObject_ALL;
 
 int g_nFieldItemPickupFlag = 0;
 cltConfiguration* g_clConfig = nullptr;

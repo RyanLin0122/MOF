@@ -11,13 +11,6 @@
 #include <cstdlib>
 #include <cstring>
 
-extern CObjectManager g_ObjectManager;
-extern cltFieldItemManager g_clFieldItemMgr;
-extern cltHelpMessage g_clHelpMessage;
-extern ClientCharacterManager& g_ClientCharMgr;
-
-DrawObject_All g_DrawObject_ALL;
-
 // -------------------------------------------------------------------------
 // 前向宣告 — 尚未還原的全域物件和管理器
 // -------------------------------------------------------------------------

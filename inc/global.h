@@ -34,6 +34,7 @@ class CUIManager;
 class cltNPCManager;
 class CObjectManager;
 class CObjectResourceManager;
+class DrawObject_All;
 class CMoFNetwork;
 
 //-----------------------------------------------------------------------------
@@ -71,12 +72,17 @@ extern DCTTextManager g_DCTTextManager;
 
 extern MoFFont g_MoFFont;
 
-extern DCTIMMList g_IMMList;
-extern cltClassKindInfo g_clClassKindInfo;
-extern cltItemKindInfo g_clItemKindInfo;
-extern Map g_Map;
-extern CObjectManager       g_ObjectManager;
-extern CObjectResourceManager g_ObjectResourceManager;
+extern DCTIMMList               g_IMMList;
+extern cltClassKindInfo         g_clClassKindInfo;
+extern cltItemKindInfo          g_clItemKindInfo;
+extern Map                      g_Map;
+extern CObjectManager           g_ObjectManager;
+extern CObjectResourceManager   g_ObjectResourceManager;
+extern cltFieldItemManager      g_clFieldItemMgr;
+extern cltHelpMessage           g_clHelpMessage;
+extern ClientCharacterManager   g_ClientCharMgr;
+extern DrawObject_All           g_DrawObject_ALL;
+extern CMoFNetwork              g_Network;
 
 extern short kGlyphIndexByStyleChar[]; //word_6C6B6C
 extern int   kDotGlyphIndexByStyle[]; //dword_6C6C54
@@ -94,8 +100,6 @@ extern unsigned int D3DRS_DESTBLEND_TYPE[8];
 extern DWORD g_dwHeartBeatTime;
 
 extern unsigned int g_dwMyAccountID;
-extern ClientCharacterManager& g_ClientCharMgr;
-extern CMoFNetwork g_Network;
 
 // Character-select slot data (filled from server packets; 3 slots × 96 bytes).
 // Slot layout (byte offset from slot base = 96 * slotIndex):

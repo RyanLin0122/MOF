@@ -64,8 +64,7 @@ void cltNPC_Object::Process()
     if (m_byChatCount && (timeGetTime() - m_dwLastChatTime > 10000))
     {
         // 從 DCTTextManager 取得聊天文字
-        char* text = DCTTextManager::GetText(
-            (DCTTextManager*)&g_DCTTextManager,
+        char* text = g_DCTTextManager.GetText(
             m_wChatTextIDs[m_byChatIndex]);
         m_ChatBallon.SetString(text, 0, 0, 0, 0, (Direction)(DirLeft | DirRight));
 
@@ -165,12 +164,12 @@ void cltNPC_Object::Initialize(float posX, float posY,
     m_fAniFrame = 0.0f;
 
     // 複製 NPC 名稱
-    strcpy(m_szName, DCTTextManager::GetText((DCTTextManager*)&g_DCTTextManager, nameTextCode));
+    strcpy(m_szName, g_DCTTextManager.GetText(nameTextCode));
 
     // 如果有頭銜，加上括弧
     if (titleTextCode)
     {
-        const char* title = DCTTextManager::GetText((DCTTextManager*)&g_DCTTextManager, titleTextCode);
+        const char* title = g_DCTTextManager.GetText(titleTextCode);
         sprintf(m_szTitle, "[%s]", title);
     }
 
