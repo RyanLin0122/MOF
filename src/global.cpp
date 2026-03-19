@@ -3,41 +3,41 @@
 #include "Info/cltItemKindInfo.h"
 #include "Info/cltNPCInfo.h"
 #include "Info/cltCharKindInfo.h"
-
+#include "Character/ClientCharacter.h"
 #include "Character/ClientCharacterManager.h"
 #include "System/cltQuestSystem.h"
 #include "System/CMeritoriousSystem.h"
 #include "System/CSpiritSystem.h"
 #include "System/cltLevelSystem.h"
 #include "System/cltClassSystem.h"
-
 #include "Util/cltTimer.h"
-
 #include "Logic/Map.h"
+#include "Logic/cltFieldItem.h"
 #include "Logic/cltFieldItemManager.h"
 #include "Logic/cltHelpMessage.h"
-#include "Logic/cltConfiguration.h"
 #include "Logic/cltBaseInventory.h"
+#include "Logic/cltConfiguration.h"
 #include "Logic/cltNPCManager.h"
 #include "Logic/CObjectManager.h"
-
+#include "Logic/cltMapTitle.h"
+#include "Logic/cltMoF_MineManager.h"
+#include "Logic/cltMatchManager.h"
+#include "Logic/cltPKFlagManager.h"
+#include "Logic/CSpiritSpeechMgr.h"
+#include "Logic/clTransportKindInfo.h"
+#include "Logic/clClientTransportKindInfo.h"
 #include "UI/CUITutorial.h"
 #include "UI/CUIManager.h"
-
 #include "Object/CObjectResourceManager.h"
 #include "Object/DrawObject_All.h"
 #include "Network/CMoFNetwork.h"
-
-//-----------------------------------------------------------------------------
-// 全域變數
-//-----------------------------------------------------------------------------
+#include "Effect/CEffectManager.h"
 
 LPDIRECT3D9 g_pD3D = NULL;
 LPDIRECT3DDEVICE9 g_pd3dDevice = NULL;
 D3DPRESENT_PARAMETERS g_d3dpp = {};
 LPDIRECT3DDEVICE9 Device = NULL;
 HWND g_hWnd = NULL;
-
 
 int SETTING_FRAME = 1;
 int IsInMemory = 1;
@@ -50,12 +50,11 @@ bool DontDraw = false;
 unsigned char NationCode = 4;
 bool g_bRenderStateLocked = false;
 
-short kGlyphIndexByStyleChar[] = { 51 }; //word_6C6B6C
-int   kDotGlyphIndexByStyle[] = { -1 }; //dword_6C6C54
-int   kAdvanceByStyle[] = { 0 }; //dword_6C6C58
-int   kAtlasIdByStyle[] = { 570425345 }; //dword_6C6C5C
+short kGlyphIndexByStyleChar[] = { 51 };
+int   kDotGlyphIndexByStyle[] = { -1 };
+int   kAdvanceByStyle[] = { 0 };
+int   kAtlasIdByStyle[] = { 570425345 };
 
-// Camera/scroll offset
 int dword_A73088 = 0;
 int dword_A7308C = 0;
 
@@ -66,64 +65,62 @@ unsigned int D3DRS_DESTBLEND_TYPE[8] = { 6u, 2u, 1u, 2u, 2u, 2u, 2u, 5u };
 DWORD g_dwHeartBeatTime = 0;
 int g_nFieldItemPickupFlag = 0;
 unsigned int g_dwMyAccountID = 0;
-
-// Tutorial globals
 int g_nTutorialState = 0;
 
-// Character-select slot data (3 slots × 96 bytes; filled by server packets)
-char           byte_23158C8[288]  = {};  // name[32] × 3 slots
-short          word_23158E8[144]  = {};  // charKind × 3 slots       (stride: 48 shorts)
-char           byte_23158EA[288]  = {};  // nation × 3 slots
-short          word_23158EC[144]  = {};  // charKindInit × 3 slots   (stride: 48 shorts)
-char           byte_23158EE[288]  = {};  // sex × 3 slots
-char           byte_23158EF[288]  = {};  // hair × 3 slots
-int            dword_23158F0[72]  = {};  // mapKind × 3 slots        (stride: 24 ints)
-char           byte_23158F4[288]  = {};  // classKind × 3 slots
-unsigned short word_23158F8[144]  = {};  // equipKind1 × 3 slots     (stride: 48 shorts)
-unsigned short word_231590E[144]  = {};  // equipKind2 × 3 slots     (stride: 48 shorts)
+char           byte_23158C8[288]  = {};
+short          word_23158E8[144]  = {};
+char           byte_23158EA[288]  = {};
+short          word_23158EC[144]  = {};
+char           byte_23158EE[288]  = {};
+char           byte_23158EF[288]  = {};
+int            dword_23158F0[72]  = {};
+char           byte_23158F4[288]  = {};
+unsigned short word_23158F8[144]  = {};
+unsigned short word_231590E[144]  = {};
 
-
-//------- Global Oject Definition ------
-
-// Text & Font
 cltTextFileManager g_clTextFileManager;
 DCTTextManager g_DCTTextManager;
 MoFFont g_MoFFont;
 DCTIMMList g_IMMList;
-
-// Map
 Map g_Map;
-
-// Network
 CMoFNetwork g_Network;
+cltClassKindInfo g_clClassKindInfo;
+cltItemKindInfo g_clItemKindInfo;
+cltNPCInfo g_clNPCInfo;
+CSpiritSystem g_clSpiritSystem;
+cltQuestSystem g_clQuestSystem;
+CMeritoriousSystem g_clMeritoriousSystem;
+cltLevelSystem g_clLevelSystem;
+cltClassSystem g_clClassSystem;
+cltBaseInventory g_clMyInventory;
+cltTimerManager g_clTimerManager;
+cltFieldItemManager g_clFieldItemMgr;
+cltHelpMessage g_clHelpMessage;
+cltNPCManager g_clNPCManager;
+ClientCharacterManager g_ClientCharMgr;
+cltConfiguration* g_clConfig = nullptr;
+CObjectManager g_ObjectManager;
+CObjectResourceManager g_ObjectResourceManager;
+DrawObject_All g_DrawObject_ALL;
+CUITutorial* g_pUITutorial = nullptr;
+CUIManager* g_UIMgr = nullptr;
 
-// Info
-cltClassKindInfo		g_clClassKindInfo;
-cltItemKindInfo			g_clItemKindInfo;
-cltNPCInfo				g_clNPCInfo;
+cltMapTitle g_clMapTitle;
+cltMoF_MineManager g_clMineMgr;
+cltMatchManager g_clMatchManager;
+cltPKFlagManager g_clPKFlagManager;
+CSpiritSpeechMgr g_clSpiritSpeechMgr;
+clTransportKindInfo g_clTransportKindInfo;
+clClientTransportKindInfo g_clClientTransportKindInfo;
+CEffectManager* g_pEffectManager_Before_Chr = nullptr;
+CEffectManager* g_pEffectManager_After_Chr = nullptr;
 
-// System
-CSpiritSystem			g_clSpiritSystem;
-cltQuestSystem			g_clQuestSystem;
-CMeritoriousSystem		g_clMeritoriousSystem;
-cltLevelSystem			g_clLevelSystem;
-cltClassSystem			g_clClassSystem;
-
-// Logic
-cltBaseInventory		g_clMyInventory;
-cltTimerManager			g_clTimerManager;
-cltFieldItemManager		g_clFieldItemMgr;
-cltHelpMessage			g_clHelpMessage;
-cltNPCManager			g_clNPCManager;
-
-ClientCharacterManager  g_ClientCharMgr;
-cltConfiguration*		g_clConfig = nullptr;
-
-// Object
-CObjectManager			g_ObjectManager;
-CObjectResourceManager  g_ObjectResourceManager;
-DrawObject_All			g_DrawObject_ALL;
-
-// UI
-CUITutorial*			g_pUITutorial = nullptr;
-CUIManager*				g_UIMgr = nullptr;
+int dword_73D154 = 0;
+int dword_B4BAB4 = 0;
+char byte_21CB35D = 0;
+cltFieldItem* unk_73D15C[1024] = {};
+void* unk_813AA8[1024] = {};
+void* unk_B4B924[1024] = {};
+ClientCharacter unk_1409D80[1000] = {};
+ClientCharacter* dword_1843F78[1000] = {};
+size_t NumOfElements = 0;

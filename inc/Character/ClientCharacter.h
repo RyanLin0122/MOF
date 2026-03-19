@@ -28,6 +28,7 @@ public:
     int Poll(int a2);
     void PrepareDrawingPlayer();
     void PrepareDrawingMonster();
+    void PrepareDrawingChar();
     void DrawChar(int a2);
     void DrawPlayer(int a2);
     void DrawMonster(int a2);

@@ -6,7 +6,6 @@
 #define WIN32_LEAN_AND_MEAN
 #endif
 
-
 #include <windows.h>   // 用於 HWND, GetConsoleWindow, Sleep
 #include <mmsystem.h>  // 用於 timeGetTime
 #include <conio.h>     // 用於 _kbhit, _getch (檢查鍵盤輸入)
@@ -22,6 +21,7 @@ class cltItemKindInfo;
 class cltNPCInfo;
 class cltMapInfo;
 class Map;
+class ClientCharacter;
 class ClientCharacterManager;
 class cltQuestSystem;
 class CMeritoriousSystem;
@@ -30,7 +30,9 @@ class cltClassSystem;
 class CSpiritSystem;
 class cltBaseInventory;
 class cltCharKindInfo;
+class cltFieldItem;
 class cltFieldItemManager;
+class cltTimerManager;
 class cltHelpMessage;
 class cltConfiguration;
 class CUITutorial;
@@ -40,6 +42,14 @@ class CObjectManager;
 class CObjectResourceManager;
 class DrawObject_All;
 class CMoFNetwork;
+class CEffectManager;
+class cltMapTitle;
+class cltMoF_MineManager;
+class cltMatchManager;
+class cltPKFlagManager;
+class CSpiritSpeechMgr;
+class clClientTransportKindInfo;
+class clTransportKindInfo;
 
 //-----------------------------------------------------------------------------
 // 全域變數
@@ -59,14 +69,13 @@ struct GameSystemInfo {
     int ScreenWidth;
     int ScreenHeight;
     float ScreenX;
-	float ScreenY;
+    float ScreenY;
 };
 
 extern GameSystemInfo g_Game_System_Info;
 
 extern bool DontDraw;
 extern unsigned char NationCode;
-
 extern bool g_bRenderStateLocked;
 
 extern short kGlyphIndexByStyleChar[]; //word_6C6B6C
@@ -116,9 +125,9 @@ extern int g_nFieldItemPickupFlag;
 
 enum Direction : uint8_t {
     DirUp = 0,        // 氣球箭頭朝上（置中）
-    DirLeft = 1,        // 箭頭朝左（垂直置中）
-    DirRight = 2,        // 箭頭朝右（垂直置中）
-    DirDown = 3         // 箭頭朝下（置中）== (DirLeft | DirRight)
+    DirLeft = 1,      // 箭頭朝左（垂直置中）
+    DirRight = 2,     // 箭頭朝右（垂直置中）
+    DirDown = 3       // 箭頭朝下（置中）== (DirLeft | DirRight)
 };
 
 // Class Object
@@ -131,6 +140,7 @@ extern DCTIMMList               g_IMMList;
 
 // Map
 extern Map                      g_Map;
+extern cltMapTitle              g_clMapTitle;
 
 // Network
 extern CMoFNetwork              g_Network;
@@ -142,12 +152,23 @@ extern cltNPCInfo               g_clNPCInfo;
 
 // System
 extern CSpiritSystem            g_clSpiritSystem;
+extern cltQuestSystem           g_clQuestSystem;
+extern CMeritoriousSystem       g_clMeritoriousSystem;
 extern cltLevelSystem           g_clLevelSystem;
 extern cltClassSystem           g_clClassSystem;
 
 // Logic
+extern cltBaseInventory         g_clMyInventory;
+extern cltTimerManager          g_clTimerManager;
 extern cltFieldItemManager      g_clFieldItemMgr;
 extern cltHelpMessage           g_clHelpMessage;
+extern cltNPCManager            g_clNPCManager;
+extern cltMoF_MineManager       g_clMineMgr;
+extern cltMatchManager          g_clMatchManager;
+extern cltPKFlagManager         g_clPKFlagManager;
+extern CSpiritSpeechMgr         g_clSpiritSpeechMgr;
+extern clTransportKindInfo      g_clTransportKindInfo;
+extern clClientTransportKindInfo g_clClientTransportKindInfo;
 
 extern ClientCharacterManager   g_ClientCharMgr;
 extern cltConfiguration*        g_clConfig;
@@ -156,7 +177,20 @@ extern cltConfiguration*        g_clConfig;
 extern CObjectManager           g_ObjectManager;
 extern CObjectResourceManager   g_ObjectResourceManager;
 extern DrawObject_All           g_DrawObject_ALL;
+extern CEffectManager*          g_pEffectManager_Before_Chr;
+extern CEffectManager*          g_pEffectManager_After_Chr;
 
 // UI
 extern CUITutorial*             g_pUITutorial;
 extern CUIManager*              g_UIMgr;
+
+// DrawObject_All / rendering globals restored from mofclient.c
+extern int                      dword_73D154;
+extern int                      dword_B4BAB4;
+extern char                     byte_21CB35D;
+extern cltFieldItem*            unk_73D15C[1024];
+extern void*                    unk_813AA8[1024];
+extern void*                    unk_B4B924[1024];
+extern ClientCharacter          unk_1409D80[1000];
+extern ClientCharacter*         dword_1843F78[1000];
+extern size_t                   NumOfElements;

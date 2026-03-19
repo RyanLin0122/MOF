@@ -63,15 +63,13 @@ void cltNPC_Object::Process()
     // 聊天氣泡邏輯
     if (m_byChatCount && (timeGetTime() - m_dwLastChatTime > 10000))
     {
-        // Ground truth: 當 CControlChatBallon 內部欄位 (byte offset 48) 非零時，
-        // 呼叫 vtable offset 44 的方法 (可能是 AdvanceBubble 之類)，
-        // 而非 SetString。目前無法判定該欄位何時被設置，先走 SetString 路徑。
-        // TODO: 還原 CControlChatBallon 內部欄位後補上分支邏輯
-
-        // 從 DCTTextManager 取得聊天文字
-        char* text = g_DCTTextManager.GetText(
-            m_wChatTextIDs[m_byChatIndex]);
-        m_ChatBallon.SetString(text, 0, 0, 0, 0, (Direction)(DirLeft | DirRight));
+        if (m_ChatBallon.IsVisible())
+            m_ChatBallon.Show();
+        else
+        {
+            char* text = g_DCTTextManager.GetText(m_wChatTextIDs[m_byChatIndex]);
+            m_ChatBallon.SetString(text, 0, 0, 0, 0, (Direction)(DirLeft | DirRight));
+        }
 
         // 輪播到下一句
         ++m_byChatIndex;
