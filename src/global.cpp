@@ -87,6 +87,7 @@ cltFieldItemManager  g_clFieldItemMgr;
 cltHelpMessage       g_clHelpMessage;
 cltNPCManager        g_clNPCManager;
 CObjectManager       g_ObjectManager;
+CObjectResourceManager g_ObjectResourceManager;
 
 extern int           g_nFieldItemPickupFlag = 0;
 extern cltConfiguration* g_clConfig        = nullptr;

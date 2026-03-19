@@ -23,7 +23,8 @@ FORCE_MISSING_CLASSES = [
     "cltCharKindInfo",
     "cltMyCharData",
     "cltWorkingPassiveSkillSystem",
-    "Map"
+    "Map",
+    "cltPetObject"
 
 ]
 

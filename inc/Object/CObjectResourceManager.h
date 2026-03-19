@@ -1,6 +1,7 @@
 #pragma once
 
 #include "Object/stObjectInfo.h"
+#include "global.h"
 
 class CObjectResourceManager {
 public:
@@ -17,5 +18,3 @@ private:
     stObjectInfo* m_pObjectInfos[0xFFFF]; // array of pointers indexed by object ID
     int m_nCount;                          // number of loaded objects
 };
-
-extern CObjectResourceManager g_ObjectResourceManager;

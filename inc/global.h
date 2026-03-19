@@ -70,6 +70,8 @@ extern DCTIMMList g_IMMList;
 extern cltClassKindInfo g_clClassKindInfo;
 extern cltItemKindInfo g_clItemKindInfo;
 extern Map g_Map;
+extern CObjectManager       g_ObjectManager;
+extern CObjectResourceManager g_ObjectResourceManager;
 
 extern short kGlyphIndexByStyleChar[]; //word_6C6B6C
 extern int   kDotGlyphIndexByStyle[]; //dword_6C6C54

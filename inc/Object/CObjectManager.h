@@ -1,6 +1,7 @@
 #pragma once
 
 #include <windows.h>
+#include "global.h"
 
 class CBaseObject;
 class ClientCharacter;
@@ -88,5 +89,3 @@ private:
     EffectObjectInfo* m_pEffectObjectInfos;    // offset 20
     unsigned short   m_wEffectObjectCount;     // offset 24
 };
-
-extern CObjectManager g_ObjectManager;

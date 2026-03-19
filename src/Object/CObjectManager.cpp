@@ -11,7 +11,6 @@
 #include <cstdlib>
 #include <windows.h>
 
-extern cltTextFileManager g_clTextFileManager;
 
 CObjectManager::CObjectManager()
     : m_pHead(nullptr)

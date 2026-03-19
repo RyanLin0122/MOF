@@ -6,10 +6,6 @@
 #include <cstdlib>
 #include <windows.h>
 
-extern cltTextFileManager g_clTextFileManager;
-
-CObjectResourceManager g_ObjectResourceManager;
-
 CObjectResourceManager::CObjectResourceManager()
     : m_nCount(0)
 {
