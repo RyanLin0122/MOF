@@ -69,7 +69,6 @@ unsigned int D3DRS_DESTBLEND_TYPE[8] = { 6u, 2u, 1u, 2u, 2u, 2u, 2u, 5u };
 DWORD g_dwHeartBeatTime = 0;
 
 unsigned int g_dwMyAccountID = 0;
-ClientCharacterManager& g_ClientCharMgr = *ClientCharacterManager::GetInstance();
 CMoFNetwork g_Network;
 
 // Character-select slot data (3 slots × 96 bytes; filled by server packets)
@@ -96,7 +95,6 @@ cltHelpMessage       g_clHelpMessage;
 cltNPCManager        g_clNPCManager;
 CObjectManager       g_ObjectManager;
 CObjectResourceManager g_ObjectResourceManager;
-cltHelpMessage g_clHelpMessage;
 ClientCharacterManager g_ClientCharMgr;
 DrawObject_All g_DrawObject_ALL;
 
