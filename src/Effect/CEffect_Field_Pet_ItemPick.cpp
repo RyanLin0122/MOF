@@ -45,7 +45,7 @@ bool CEffect_Field_Pet_ItemPick::FrameProcess(float fElapsedTime)
     }
     float fFrameCount = static_cast<float>(frameCount);
 
-    m_pOwnerPet = ClientCharacterManager::GetInstance()->GetCharByAccount(m_dwOwnerAccountID);
+    m_pOwnerPet = g_ClientCharMgr.GetCharByAccount(m_dwOwnerAccountID);
     if (!m_pOwnerPet) return true; // 目標消失，特效結束
 
     m_dwTotalFrame += frameCount;

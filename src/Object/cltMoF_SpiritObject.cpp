@@ -13,8 +13,6 @@
 
 extern int dword_A73088;
 extern int dword_A7308C;
-extern CSpiritSystem g_clSpiritSystem;
-extern ClientCharacterManager& g_ClientCharMgr;
 
 // 前向宣告 — 尚未還原的全域物件
 // cltLevelSystem 實例 (在 cltMyCharData 中)

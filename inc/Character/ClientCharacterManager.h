@@ -4,7 +4,9 @@
 
 class ClientCharacterManager {
 public:
-	static ClientCharacterManager* GetInstance();
+	ClientCharacterManager();
+	~ClientCharacterManager();
+
 	ClientCharacter* GetCharByAccount(unsigned int);
 	bool IsMapConqueror(char* Name);
 	void ResetMoveTarget();
@@ -32,9 +34,4 @@ public:
 	ClientCharacter* GetCharByName(char* name);
 	void SetEmoticonKind(char* name, std::uint32_t emoticonKind);
 	void ReleaseEmoticon(ClientCharacter* pChar);
-
-private:
-	ClientCharacterManager();
-	~ClientCharacterManager();
-	static ClientCharacterManager* s_pInstance;
 };

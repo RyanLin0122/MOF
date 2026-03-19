@@ -5,6 +5,7 @@
 #include "Character/ClientCharacterManager.h"
 #include "System/cltQuestSystem.h"
 #include "System/CMeritoriousSystem.h"
+#include "System//CSpiritSystem.h"
 #include "Logic/cltBaseInventory.h"
 #include "Info/cltCharKindInfo.h"
 #include "Util/cltTimer.h"
@@ -86,6 +87,7 @@ unsigned short word_231590E[144]  = {};  // equipKind2 × 3 slots     (stride: 4
 // Tutorial globals
 int g_nTutorialState = 0;
 
+CSpiritSystem        g_clSpiritSystem;
 cltQuestSystem       g_clQuestSystem;
 CMeritoriousSystem   g_clMeritoriousSystem;
 cltBaseInventory     g_clMyInventory;

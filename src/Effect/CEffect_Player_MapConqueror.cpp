@@ -46,7 +46,7 @@ bool CEffect_Player_MapConqueror::FrameProcess(float fElapsedTime)
 
     // --- 核心生命週期判斷 ---
     // 原始碼: result = !ClientCharacterManager::IsMapConqueror(&g_ClientCharMgr, (char *)(v3 + 460));
-    if (ClientCharacterManager::GetInstance()->IsMapConqueror(m_pOwnerCharacter->GetName())) {
+    if (g_ClientCharMgr.IsMapConqueror(m_pOwnerCharacter->GetName())) {
         // 如果角色仍然是地圖佔領者，特效繼續存在
         return false;
     }

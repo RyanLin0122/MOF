@@ -214,7 +214,7 @@ bool CEffectManager::DeleteEffect(CEffectBase* pEffect)
 // 對應反組譯碼: 0x0053B820
 void CEffectManager::AddEtcEffect(unsigned short type, unsigned int accountID)
 {
-    ClientCharacter* pChar = ClientCharacterManager::GetInstance()->GetCharByAccount(accountID);
+    ClientCharacter* pChar = g_ClientCharMgr.GetCharByAccount(accountID);
     if (pChar) {
         if (type == 0) { // 假設 0 代表 OverMind 效果
             m_OverMindScreenEffect.SetActive(pChar);

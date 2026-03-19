@@ -2,15 +2,6 @@
 #include <new>
 
 
-ClientCharacterManager* ClientCharacterManager::s_pInstance = nullptr;
-
-ClientCharacterManager* ClientCharacterManager::GetInstance() {
-    if (!s_pInstance) {
-        s_pInstance = new (std::nothrow) ClientCharacterManager();
-    }
-    return s_pInstance;
-}
-
 ClientCharacterManager::ClientCharacterManager() {
 
 }

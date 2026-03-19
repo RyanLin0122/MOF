@@ -23,6 +23,7 @@ class Map;
 class ClientCharacterManager;
 class cltQuestSystem;
 class CMeritoriousSystem;
+class CSpiritSystem;
 class cltBaseInventory;
 class cltCharKindInfo;
 #include "Util/cltTimer.h"
@@ -82,6 +83,7 @@ extern cltFieldItemManager      g_clFieldItemMgr;
 extern cltHelpMessage           g_clHelpMessage;
 extern ClientCharacterManager   g_ClientCharMgr;
 extern DrawObject_All           g_DrawObject_ALL;
+extern CSpiritSystem            g_clSpiritSystem;
 extern CMoFNetwork              g_Network;
 
 extern short kGlyphIndexByStyleChar[]; //word_6C6B6C

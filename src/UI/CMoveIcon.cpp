@@ -1,5 +1,6 @@
 #include "UI/CMoveIcon.h"
 #include "Image/cltImageManager.h" // 只為了與 CControlImage 一致，無直接使用
+#include "global.h"
 
 // ------------------------------------------------------------
 // 建構 / 解構（依照反編譯初始化 + 文字控制建立）
@@ -134,7 +135,7 @@ unsigned int CMoveIcon::GetData(uint8_t idx)
     if (idx >= 64)   return 0;
     if (!m_slots[idx].isSet) return 0;
 
-    ClientCharacterManager::GetInstance()->ResetMoveTarget(); // 對齊反編譯副作用
+    g_ClientCharMgr.ResetMoveTarget(); // 對齊反編譯副作用
     return m_slots[idx].value;
 }
 
