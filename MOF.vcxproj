@@ -313,6 +313,12 @@
     <ClCompile Include="src\Object\cltAniObject.cpp" />
     <ClCompile Include="src\Object\CObjectResourceManager.cpp" />
     <ClCompile Include="src\Object\CObjectManager.cpp" />
+    <ClCompile Include="src\Object\cltAnimationObjectManager.cpp" />
+    <ClCompile Include="src\Object\cltNPC_Object.cpp" />
+    <ClCompile Include="src\Object\clTransportObject.cpp" />
+    <ClCompile Include="src\Object\CNPCObject.cpp" />
+    <ClCompile Include="src\Object\DrawObject_All.cpp" />
+    <ClCompile Include="src\Object\cltMoF_SpiritObject.cpp" />
     <ClCompile Include="src\Sound\COgg.cpp" />
     <ClCompile Include="src\Sound\CSoundSystem.cpp" />
     <ClCompile Include="src\Sound\CWaveFile.cpp" />
@@ -635,6 +641,12 @@
     <ClInclude Include="inc\Object\cltAniObject.h" />
     <ClInclude Include="inc\Object\CObjectResourceManager.h" />
     <ClInclude Include="inc\Object\CObjectManager.h" />
+    <ClInclude Include="inc\Object\cltAnimationObjectManager.h" />
+    <ClInclude Include="inc\Object\cltNPC_Object.h" />
+    <ClInclude Include="inc\Object\clTransportObject.h" />
+    <ClInclude Include="inc\Object\CNPCObject.h" />
+    <ClInclude Include="inc\Object\DrawObject_All.h" />
+    <ClInclude Include="inc\Object\cltMoF_SpiritObject.h" />
     <ClInclude Include="inc\Sound\COgg.h" />
     <ClInclude Include="inc\Sound\CSoundSystem.h" />
     <ClInclude Include="inc\Sound\CWaveFile.h" />
