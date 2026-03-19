@@ -1,4 +1,5 @@
 #include "Character/ClientCharacterManager.h"
+#include "global.h"
 #include <new>
 
 
@@ -10,8 +11,14 @@ ClientCharacterManager::~ClientCharacterManager() {
 
 }
 
-ClientCharacter* ClientCharacterManager::GetCharByAccount(unsigned int) {
-	return new ClientCharacter(); // 假設這裡返回一個新的 ClientCharacter 實例
+ClientCharacter* ClientCharacterManager::GetCharByAccount(unsigned int account) {
+    for (int i = 0; i < 300; ++i)
+    {
+        ClientCharacter* pChar = &unk_1409D80[i];
+        if (reinterpret_cast<unsigned int*>(pChar)[1109] && pChar->m_dwAccountID == account)
+            return pChar;
+    }
+    return nullptr;
 }
 
 bool ClientCharacterManager::IsMapConqueror(char* Name) {
@@ -35,13 +42,12 @@ void ClientCharacterManager::AddCharacter(
     // Stub: real implementation allocates and registers a new ClientCharacter.
 }
 
-void ClientCharacterManager::SetMyAccount(unsigned int /*account*/) {
-    // Stub: real implementation records which account belongs to the local player.
+void ClientCharacterManager::SetMyAccount(unsigned int account) {
+    m_dwMyAccount = account;
 }
 
 ClientCharacter* ClientCharacterManager::GetMyCharacterPtr() {
-    // Stub: real implementation returns the local player's ClientCharacter.
-    return nullptr;
+    return GetCharByAccount(m_dwMyAccount);
 }
 
 void ClientCharacterManager::SetItem(unsigned int /*account*/, unsigned short /*itemKind*/, int /*qty*/) {

@@ -13,6 +13,14 @@ extern int dword_A7308C;
 extern DCTTextManager g_DCTTextManager;
 extern MoFFont g_MoFFont;
 
+namespace {
+bool ChatBalloonVFunc44Ready(const CControlChatBallon& balloon)
+{
+    return *reinterpret_cast<const int*>(reinterpret_cast<const char*>(&balloon) + 48) != 0;
+}
+
+}
+
 // -------------------------------------------------------------------------
 // Constructor — ground truth 對應 005A2AA0
 // -------------------------------------------------------------------------
@@ -76,8 +84,8 @@ void cltNPC_Taxi::Process()
     // 聊天氣泡
     if (m_byChatCount && (timeGetTime() - m_dwLastChatTime > 10000))
     {
-        if (m_ChatBallon.IsVisible())
-            m_ChatBallon.Show();
+        if (ChatBalloonVFunc44Ready(m_ChatBallon))
+            m_ChatBallon.Hide();
         else
         {
             char* text = g_DCTTextManager.GetText(m_wChatTextIDs[m_byChatIndex]);

@@ -28,7 +28,7 @@ int compareCharYpos(const void* a1, const void* a2)
     int y2 = (*(ClientCharacter* const*)a2)->m_iPosY;
     double diff = static_cast<double>(y1 - y2);
     if (diff == 0.0)
-        return 1;
+        return 0;
     return (diff > 0.0) ? 1 : -1;
 }
 
@@ -161,7 +161,7 @@ void DrawObject_All::DrawObject()
             g_ClientCharMgr.DrawEtcMark();
             g_clMapTitle.Draw();
             g_Map.DrawClimate();
-            CEffectManager::GetInstance()->Draw();
+            g_EffectManager.Draw();
             g_clHelpMessage.Draw();
             return;
         }
@@ -323,7 +323,7 @@ void DrawObject_All::DrawObject()
             g_ClientCharMgr.DrawEtcMark();
             g_clMapTitle.Draw();
             g_Map.DrawClimate();
-            CEffectManager::GetInstance()->Draw();
+            g_EffectManager.Draw();
             g_clHelpMessage.Draw();
             return;
         }
