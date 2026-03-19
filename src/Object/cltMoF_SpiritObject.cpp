@@ -14,7 +14,6 @@
 extern int dword_A73088;
 extern int dword_A7308C;
 
-
 // CSpiritSpeechMgr — 精靈對話管理器 (尚未還原)
 class CSpiritSpeechMgr {
 public:
@@ -23,7 +22,7 @@ public:
 static CSpiritSpeechMgr g_clSpiritSpeechMgr;
 
 // -------------------------------------------------------------------------
-// Constructor
+// Constructor — ground truth 004E81A0
 // -------------------------------------------------------------------------
 cltMoF_SpiritObject::cltMoF_SpiritObject()
     : m_nActive(0)
@@ -42,46 +41,47 @@ cltMoF_SpiritObject::cltMoF_SpiritObject()
     , m_pGameImage(nullptr)
     , m_pOwnerChar(nullptr)
     , m_pCharMgr(nullptr)
-    , m_nPatrolDir(1)
-    , m_nOffsetX(0)
-    , m_nCharHeight(0)
-    , m_nAcceleration(0)
-    , m_fTraceScale(1.0f)  // 1065353216 = 1.0f in IEEE 754
-    , m_nTraceFlag(1)
-    , m_fPatrolScale(0.0f)
-    , m_nPatrolReturn(0)
+    , m_nPatrolDir(1)       // DWORD 683 = 1
+    , m_nOffsetX(0)         // DWORD 684 = 0
+    , m_nCharHeight(0)      // DWORD 685
+    , m_nAcceleration(0)    // DWORD 686
+    , m_fTraceScale(1.0f)   // DWORD 687 = 1065353216 (1.0f)
+    , m_nTraceFlag(1)       // DWORD 688 = 1
+    , m_fPatrolScale(0.0f)  // DWORD 689
+    , m_nPatrolReturn(0)    // DWORD 690
 {
-    // CControlChatBallon 由其自己的建構函式初始化
 }
 
 // -------------------------------------------------------------------------
-// Destructor
+// Destructor — ground truth 004E8210
 // -------------------------------------------------------------------------
 cltMoF_SpiritObject::~cltMoF_SpiritObject()
 {
-    // CControlChatBallon 由其自己的解構函式清理
 }
 
 // -------------------------------------------------------------------------
-// SetActive — 設定精靈啟動狀態
+// SetActive — ground truth 004E8220
+// Ground truth: 檢查角色的 accountID 是否與玩家帳號匹配
 // -------------------------------------------------------------------------
 void cltMoF_SpiritObject::SetActive(ClientCharacter* pChar, int active)
 {
-    // Ground truth: 檢查角色的 accountID 是否匹配
-    // *((_DWORD *)a2 + 114) == *(_DWORD *)((char *)&loc_43E090 + *((_DWORD *)this + 15))
-    // 這裡簡化為直接設定
-    if (pChar)
-    {
-        m_nOffsetX = 0;
-        m_nActive = active;
-        m_nPatrolDir = 1;
-        m_fTraceScale = 1.0f;
-        m_nTraceFlag = 1;
-    }
+    if (!pChar)
+        return;
+
+    // Ground truth: *((_DWORD *)a2 + 114) == *(_DWORD *)((char *)&loc_43E090 + *((_DWORD *)this + 15))
+    // 比較角色的 accountID (offset 456) 與玩家帳號
+    if (pChar->m_dwAccountID != g_dwMyAccountID)
+        return;
+
+    m_nOffsetX = 0;
+    m_nActive = active;
+    m_nPatrolDir = 1;
+    m_fTraceScale = 1.0f;
+    m_nTraceFlag = 1;
 }
 
 // -------------------------------------------------------------------------
-// GetActive
+// GetActive — ground truth 004E8270
 // -------------------------------------------------------------------------
 int cltMoF_SpiritObject::GetActive()
 {
@@ -89,14 +89,17 @@ int cltMoF_SpiritObject::GetActive()
 }
 
 // -------------------------------------------------------------------------
-// Initialize — 初始化精靈物件
+// Initialize — ground truth 004E8280
 // -------------------------------------------------------------------------
 void cltMoF_SpiritObject::Initialize(ClientCharacterManager* pMgr)
 {
     m_pCharMgr = pMgr;
     m_wBlockCount = 0;
 
-    // 重設聊天氣泡
+    // Ground truth: 使用 CControlChatBallon vtable offset 80 方法
+    // (*(void (__thiscall **)(char *, _DWORD, _DWORD, int, _DWORD))(v3 + 80))((char *)this + 64, 0, 0, -1, 0);
+    // 這是 CControlChatBallon 的某個初始化方法，接受 4 個 int 參數
+    // 目前以 SetString 近似
     m_ChatBallon.SetString((char*)"", 0, 0, 0, 0, (Direction)(DirLeft | DirRight));
 
     m_nOffsetX = 0;
@@ -107,7 +110,7 @@ void cltMoF_SpiritObject::Initialize(ClientCharacterManager* pMgr)
 }
 
 // -------------------------------------------------------------------------
-// GetFront — 檢查巡邏方向是否為正向
+// GetFront — ground truth 004E82E0
 // -------------------------------------------------------------------------
 int cltMoF_SpiritObject::GetFront()
 {
@@ -115,11 +118,15 @@ int cltMoF_SpiritObject::GetFront()
 }
 
 // -------------------------------------------------------------------------
-// SetChar — 設定精靈所屬角色和精靈資訊
+// SetChar — ground truth 004E82F0
+// Ground truth: 檢查角色 accountID，設定方向為 owner offset 572 的值
 // -------------------------------------------------------------------------
 void cltMoF_SpiritObject::SetChar(ClientCharacter* pChar, std::uint16_t param)
 {
+    // Ground truth: 先檢查 accountID 匹配，再檢查 pChar 非空
     if (!pChar)
+        return;
+    if (pChar->m_dwAccountID != g_dwMyAccountID)
         return;
 
     m_pOwnerChar = pChar;
@@ -127,10 +134,10 @@ void cltMoF_SpiritObject::SetChar(ClientCharacter* pChar, std::uint16_t param)
     m_byLevel = (std::uint8_t)g_clLevelSystem.GetLevel();
     m_wClassCode = g_clClassSystem.GetClass();
 
+    // Ground truth: m_nDirection = *(DWORD*)(owner + 572) = m_dwLR_Flag
     m_nDirection = pChar->m_dwLR_Flag;
     m_nActive = 0;
 
-    // 根據等級取得精靈資訊
     std::uint16_t spiritKind = g_clSpiritSystem.GetSpiritKind(m_byLevel);
     stSpiritInfo* pInfo = g_clSpiritSystem.GetSpiritInfo(spiritKind);
 
@@ -154,17 +161,15 @@ void cltMoF_SpiritObject::SetChar(ClientCharacter* pChar, std::uint16_t param)
 }
 
 // -------------------------------------------------------------------------
-// UpdateSpirit — 更新精靈資訊 (當等級變化時)
+// UpdateSpirit — ground truth 004E83E0
 // -------------------------------------------------------------------------
 void cltMoF_SpiritObject::UpdateSpirit(std::uint8_t level)
 {
-    if (!m_nActive)
-    {
-        m_byLevel = level;
-        return;
-    }
-
     m_byLevel = level;
+
+    if (!m_nActive)
+        return;
+
     m_nActive = 0;
 
     std::uint16_t spiritKind = g_clSpiritSystem.GetSpiritKind(level);
@@ -177,16 +182,18 @@ void cltMoF_SpiritObject::UpdateSpirit(std::uint8_t level)
         m_wBlockCount = pInfo->wBlockCount;
 
         m_nActive = 1;
+        // Ground truth: direction = owner offset 572
         if (m_pOwnerChar)
             m_nDirection = m_pOwnerChar->m_dwLR_Flag;
         m_fTraceScale = 1.0f;
         m_nTraceFlag = 1;
+        // Ground truth: currentBlock = 0
         m_dwCurrentBlock = 0;
     }
 }
 
 // -------------------------------------------------------------------------
-// Poll — 更新聊天氣泡內容
+// Poll — ground truth 004E8470
 // -------------------------------------------------------------------------
 void cltMoF_SpiritObject::Poll()
 {
@@ -202,16 +209,16 @@ void cltMoF_SpiritObject::Poll()
 }
 
 // -------------------------------------------------------------------------
-// PrepareDrawing — 準備精靈繪製
+// PrepareDrawing — ground truth 004E84B0
 // -------------------------------------------------------------------------
 void cltMoF_SpiritObject::PrepareDrawing(int showSpeech)
 {
     if (!m_nActive)
         return;
 
-    // 變身時不顯示精靈
-    // if (ClientCharacterManager::GetMyTransformationed(&g_ClientCharMgr))
-    //     return;
+    // Ground truth: 變身時不顯示精靈
+    if (g_ClientCharMgr.GetMyTransformationed())
+        return;
 
     m_nShowSpeech = showSpeech;
 
@@ -246,49 +253,73 @@ void cltMoF_SpiritObject::PrepareDrawing(int showSpeech)
     m_pGameImage->m_bVertexAnimation = false;
     m_pGameImage->SetPosition(screenX, screenY);
 
-    // 方向
-    m_pGameImage->m_bFlipX = (m_nDirection != 0);
+    // Ground truth: image flip = this->direction (直接賦值，不是布林轉換)
+    // *(DWORD*)(image + 392) = m_nDirection
+    m_pGameImage->m_bFlipX = m_nDirection;
 
     // 推進動畫
+    int startBlock = m_dwStartBlockID;
     m_fFrameAccum += 0.2f;
-    m_dwCurrentBlock = m_dwStartBlockID + (int)(std::int64_t)m_fFrameAccum;
+    m_dwCurrentBlock = startBlock + (int)(std::int64_t)m_fFrameAccum;
 
     // 聊天氣泡位置
     if (m_nShowSpeech)
     {
         if (m_pGameImage->m_pGIData && m_pOwnerChar)
         {
-            // 設定聊天氣泡位置
+            // Ground truth: 從 GIData 讀 block 高度偏移
+            // v10 = *(DWORD*)(pGameImage + 8) = GIData
+            // v11 = owner
+            // v12 = *(int*)(*(DWORD*)(v10 + 32) + 52 * startBlock + 32) = block offset32
+            // abs(v12) 用於計算 Y 偏移
             int ballonX = m_nOffsetX + m_pOwnerChar->m_iPosX - dword_A73088;
-            int ballonY = (int)(m_fPosY - (float)dword_A7308C);
-            // Ground truth: 使用 block 資訊計算 Y 偏移
+
+            // 計算 Y 偏移：從 GIData 的 block 資料讀取高度
+            int blockHeightOffset = 0;
+            int* pGIDataDwords = (int*)m_pGameImage->m_pGIData;
+            if (pGIDataDwords)
+            {
+                int* pBlockArray = (int*)(*(pGIDataDwords + 8));
+                if (pBlockArray)
+                {
+                    int blockOff32 = *(int*)((char*)pBlockArray + 52 * startBlock + 32);
+                    // Ground truth: abs via ((HIDWORD(v12) ^ v12) - HIDWORD(v12))
+                    blockHeightOffset = abs(blockOff32);
+                }
+            }
+
+            int ballonY = (int)(m_fPosY - (float)dword_A7308C - (float)blockHeightOffset);
+
+            // Ground truth: 使用 vtable offset 84 的 SetPos 方法
             m_ChatBallon.SetPos(ballonX, ballonY);
+            // Ground truth: 使用 vtable offset 24 的 Show 方法
             m_ChatBallon.Show();
         }
     }
 }
 
 // -------------------------------------------------------------------------
-// Draw — 繪製精靈
+// Draw — ground truth 004E8620
 // -------------------------------------------------------------------------
 void cltMoF_SpiritObject::Draw()
 {
     if (!m_nActive)
         return;
 
-    // 變身時不繪製
-    // if (ClientCharacterManager::GetMyTransformationed(&g_ClientCharMgr))
-    //     return;
+    // Ground truth: 變身時不繪製
+    if (g_ClientCharMgr.GetMyTransformationed())
+        return;
 
     if (m_pGameImage)
         m_pGameImage->Draw();
 
+    // Ground truth: 使用 vtable offset 28 的 Draw 方法
     if (m_nShowSpeech)
         m_ChatBallon.Draw();
 }
 
 // -------------------------------------------------------------------------
-// MoveTrace — 追蹤角色移動
+// MoveTrace — ground truth 004E8660
 // -------------------------------------------------------------------------
 void cltMoF_SpiritObject::MoveTrace()
 {
@@ -307,11 +338,12 @@ void cltMoF_SpiritObject::MoveTrace()
         {
             m_fPosY = (float)(m_pOwnerChar->m_iPosY - m_nCharHeight);
             m_nOffsetX = (int)(std::int64_t)(m_fPosX - (float)m_pOwnerChar->m_iPosX);
+            // Ground truth: 近距離 return 時不更新方向 — 保持現有方向
             return;
         }
     }
 
-    // 追蹤模式：使用縮放因子接近角色
+    // 追蹤模式
     m_nTraceFlag = 0;
 
     if (m_fTraceScale > 0.0f)
@@ -322,25 +354,31 @@ void cltMoF_SpiritObject::MoveTrace()
 
     // 更新面向方向
     int lr = m_pOwnerChar->m_dwLR_Flag;
+    // Ground truth: direction = (lr == 0) ? 1 : 0
     m_nDirection = (lr == 0) ? 1 : 0;
 
     // 根據角色面向調整 X 偏移
+    int offsetX = m_nOffsetX;
     if (lr)
     {
-        if (m_nOffsetX < 35)
+        if (offsetX < 35)
         {
-            m_nOffsetX += m_nAcceleration;
-            if (m_nOffsetX >= 35)
-                m_nOffsetX = 35;
+            offsetX += m_nAcceleration;
+            m_nOffsetX = offsetX;
+            if (offsetX >= 35)
+                offsetX = 35;
+            m_nOffsetX = offsetX;
         }
     }
     else
     {
-        if (m_nOffsetX > -35)
+        if (offsetX > -35)
         {
-            m_nOffsetX -= m_nAcceleration;
-            if (m_nOffsetX <= -35)
-                m_nOffsetX = -35;
+            offsetX -= m_nAcceleration;
+            m_nOffsetX = offsetX;
+            if (offsetX <= -35)
+                offsetX = -35;
+            m_nOffsetX = offsetX;
         }
     }
 
@@ -352,7 +390,7 @@ void cltMoF_SpiritObject::MoveTrace()
 }
 
 // -------------------------------------------------------------------------
-// MovePatrol — 巡邏移動
+// MovePatrol — ground truth 004E87C0
 // -------------------------------------------------------------------------
 void cltMoF_SpiritObject::MovePatrol()
 {
@@ -376,6 +414,7 @@ void cltMoF_SpiritObject::MovePatrol()
                 m_fPatrolScale -= 0.02f;
                 m_fPosX = (float)(m_nOffsetX + m_pOwnerChar->m_iPosX);
                 m_fPosY = (float)(m_pOwnerChar->m_iPosY - m_nCharHeight);
+                // Ground truth: direction = (owner LR == 0) ? 1 : 0
                 m_nDirection = (m_pOwnerChar->m_dwLR_Flag == 0) ? 1 : 0;
             }
             return;
@@ -386,6 +425,7 @@ void cltMoF_SpiritObject::MovePatrol()
     m_nPatrolReturn = 0;
     m_fTraceScale = 1.0f;
     m_nTraceFlag = 1;
+    // Ground truth: direction = 1
     m_nDirection = 1;
 
     int newOffset = m_nPatrolDir + m_nOffsetX;
@@ -397,6 +437,7 @@ void cltMoF_SpiritObject::MovePatrol()
         m_nPatrolDir = -m_nPatrolDir;
     }
 
+    // Ground truth: 若巡邏方向為負，direction = 0
     if (m_nPatrolDir < 0)
         m_nDirection = 0;
 

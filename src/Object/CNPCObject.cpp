@@ -2,6 +2,8 @@
 #include "Object/CObjectManager.h"
 #include "Object/CBaseObject.h"
 #include "Object/cltNPC_Object.h"
+#include "Object/cltNPC_Taxi.h"
+#include "Object/cltQuestMark.h"
 #include "Info/cltNPCInfo.h"
 #include "Logic/cltNPCManager.h"
 #include "global.h"
@@ -12,18 +14,6 @@ extern cltNPCManager g_clNPCManager;
 extern CObjectManager g_ObjectManager;
 
 CNPCObject g_clNPCObject;
-
-// -------------------------------------------------------------------------
-// 前向宣告 — cltNPC_Taxi (計程車 NPC，尚未還原)
-// -------------------------------------------------------------------------
-// cltNPC_Taxi 是 cltNPC_Object 的衍生類別，當 NPC 為計程車類型時使用。
-// 目前尚未還原，AddNPC 中走一般 cltNPC_Object 路徑。
-// 當 cltNPC_Taxi 被還原後，取消下方的條件判斷即可。
-
-// 前向宣告 — cltQuestMark / cltRewardMark (任務/獎勵標記物件，尚未還原)
-// 這兩個類別繼承自 CBaseObject，分別顯示任務和獎勵的標記圖示。
-// AddQuestMark / AddRewardMark 會建立這些物件並加入到 ObjectManager。
-// 由於目前缺少完整定義，相關功能暫時以 stub 實作。
 
 // -------------------------------------------------------------------------
 // Constructor / Destructor
@@ -38,6 +28,7 @@ CNPCObject::~CNPCObject()
 
 // -------------------------------------------------------------------------
 // AddNPC — 建立 NPC 物件並加入到 ObjectManager
+// Ground truth: 根據 stNPCInfo 判斷是否為 Taxi NPC
 // -------------------------------------------------------------------------
 void CNPCObject::AddNPC(std::uint16_t npcID, unsigned int resourceID, std::uint16_t maxFrames,
                          float posX, float posY,
@@ -48,29 +39,44 @@ void CNPCObject::AddNPC(std::uint16_t npcID, unsigned int resourceID, std::uint1
     if (!pInfo)
         return;
 
-    // Ground truth: 檢查 NPC 是否為計程車類型
-    // if (pInfo 的 byte+105 == 1 || pInfo 的 WORD+1 == 26759)
-    //   建立 cltNPC_Taxi
-    // else
-    //   建立 cltNPC_Object
+    CBaseObject* pNPC = nullptr;
 
-    // 目前統一建立 cltNPC_Object
-    cltNPC_Object* pNPC = new cltNPC_Object();
-    // chatTextIDs = (unsigned __int16*)pInfo + 20 = byte offset 40 from stNPCInfo
-    std::uint16_t* chatTextIDs = (std::uint16_t*)((char*)pInfo + 40);
-    pNPC->Initialize(posX, posY, nameTextCode, titleTextCode,
-                     resourceID, maxFrames, flipFlag, toggleFlag,
-                     chatTextIDs);
+    // Ground truth: 檢查 NPC 是否為計程車類型
+    // byte +105 == 1 (在 _reserved 區域) 或 WORD +1 == 26759
+    unsigned char byteAt105 = *((unsigned char*)pInfo + 105);
+    std::uint16_t wordAt1 = ((std::uint16_t*)pInfo)[1];
+
+    if (byteAt105 == 1 || wordAt1 == 26759)
+    {
+        // Taxi NPC — 使用 cltNPC_Taxi
+        cltNPC_Taxi* pTaxi = new cltNPC_Taxi();
+        // Taxi 的 Initialize 參數組合不同: 沒有 maxFrames 和 toggleFlag
+        std::uint16_t* chatTextIDs = (std::uint16_t*)((char*)pInfo + 40);
+        pTaxi->Initialize(posX, posY, nameTextCode, titleTextCode,
+                          resourceID, flipFlag, chatTextIDs);
+        pNPC = pTaxi;
+    }
+    else
+    {
+        // 一般 NPC — 使用 cltNPC_Object
+        cltNPC_Object* pObj = new cltNPC_Object();
+        std::uint16_t* chatTextIDs = (std::uint16_t*)((char*)pInfo + 40);
+        pObj->Initialize(posX, posY, nameTextCode, titleTextCode,
+                         resourceID, maxFrames, flipFlag, toggleFlag,
+                         chatTextIDs);
+        pNPC = pObj;
+    }
 
     g_ObjectManager.AddObject(pNPC);
 }
 
 // -------------------------------------------------------------------------
 // AddQuestMark — 為 NPC 加入任務標記
+// Ground truth: 建立 cltQuestMark 物件，取得 NPC 座標，加入 ObjectManager
 // -------------------------------------------------------------------------
 void CNPCObject::AddQuestMark(std::uint16_t npcID)
 {
-    // 檢查是否已存在相同 NPC 的任務標記
+    // 檢查是否已存在相同 NPC 的任務標記 (type 101)
     int count = g_ObjectManager.GetObjectCount();
     for (int i = 0; i < count; ++i)
     {
@@ -79,21 +85,22 @@ void CNPCObject::AddQuestMark(std::uint16_t npcID)
             return;  // 已存在，不重複新增
     }
 
-    // TODO: 建立 cltQuestMark 物件
-    // 當 cltQuestMark 被還原後實作：
-    // cltQuestMark* pMark = new cltQuestMark();
-    // float posY = (float)cltNPCManager::GetPosYByID(&g_clNPCManager, npcID);
-    // float posX = (float)cltNPCManager::GetPosXByID(&g_clNPCManager, npcID);
-    // pMark->Initialize(npcID, posX, posY, 0x65);
-    // g_ObjectManager.AddObject(pMark);
+    // 建立 cltQuestMark 物件
+    cltQuestMark* pMark = new cltQuestMark();
+    float posY = (float)g_clNPCManager.GetPosYByID(npcID);
+    float posX = (float)g_clNPCManager.GetPosXByID(npcID);
+    pMark->Initialize(npcID, posX, posY, 0x65u);
+    g_ObjectManager.AddObject(pMark);
 }
 
 // -------------------------------------------------------------------------
 // AddRewardMark — 為 NPC 加入獎勵標記
+// Ground truth: 建立 cltRewardMark 物件，取得 NPC 座標，加入 ObjectManager
+// 注意：ground truth 的重複檢查也是用 type 101 (非 102)
 // -------------------------------------------------------------------------
 void CNPCObject::AddRewardMark(std::uint16_t npcID)
 {
-    // 檢查是否已存在相同 NPC 的獎勵標記
+    // Ground truth: 重複檢查使用 type 101 (與 AddQuestMark 相同)
     int count = g_ObjectManager.GetObjectCount();
     for (int i = 0; i < count; ++i)
     {
@@ -102,13 +109,12 @@ void CNPCObject::AddRewardMark(std::uint16_t npcID)
             return;  // 已存在
     }
 
-    // TODO: 建立 cltRewardMark 物件
-    // 當 cltRewardMark 被還原後實作：
-    // cltRewardMark* pMark = new cltRewardMark();
-    // float posY = (float)cltNPCManager::GetPosYByID(&g_clNPCManager, npcID);
-    // float posX = (float)cltNPCManager::GetPosXByID(&g_clNPCManager, npcID);
-    // pMark->Initialize(npcID, posX, posY, 0x66);
-    // g_ObjectManager.AddObject(pMark);
+    // 建立 cltRewardMark 物件
+    cltRewardMark* pMark = new cltRewardMark();
+    float posY = (float)g_clNPCManager.GetPosYByID(npcID);
+    float posX = (float)g_clNPCManager.GetPosXByID(npcID);
+    pMark->Initialize(npcID, posX, posY, 0x66u);
+    g_ObjectManager.AddObject(pMark);
 }
 
 // -------------------------------------------------------------------------
@@ -122,7 +128,7 @@ void CNPCObject::DelQuestMark(std::uint16_t npcID)
         CBaseObject* pObj = g_ObjectManager.GetObjectA((unsigned short)i);
         if (pObj && pObj->m_siField4 == npcID && pObj->m_siField5 == 101)
         {
-            pObj->m_dwField3 = 0;  // DWORD offset 6 = 0
+            pObj->m_dwField3 = 0;
             g_ObjectManager.DelObject(i);
             return;
         }
@@ -140,7 +146,7 @@ void CNPCObject::DelRewardMark(std::uint16_t npcID)
         CBaseObject* pObj = g_ObjectManager.GetObjectA((unsigned short)i);
         if (pObj && pObj->m_siField4 == npcID && pObj->m_siField5 == 102)
         {
-            pObj->m_dwField3 = 0;  // DWORD offset 6 = 0
+            pObj->m_dwField3 = 0;
             g_ObjectManager.DelObject(i);
             return;
         }

@@ -9,23 +9,29 @@
 extern int dword_A73088;
 extern int dword_A7308C;
 
-// clTransportAniInfo 和 stTransportKindInfo 尚未還原為獨立模組。
-// 這裡提供最小定義讓程式碼可以編譯。
+// 前向宣告：clTransportKindInfo / clClientTransportKindInfo 尚未還原為獨立模組。
 // 當這些類別被還原後，應替換為正確的 #include。
 
+// clTransportAniInfo 方法存根 (未還原)
+// struct clTransportAniInfo {
+//     void GetFrameInfo(unsigned int action, unsigned short curFrame,
+//                       unsigned int* outRes, unsigned short* outFrame);
+//     unsigned short GetTotalFrameNum(unsigned int action);
+// };
+
 // -------------------------------------------------------------------------
-// Constructor
+// Constructor — ground truth 004EFBE0
 // -------------------------------------------------------------------------
 clTransportObject::clTransportObject()
-    : m_pImageUp(nullptr)
-    , m_pImageDown(nullptr)
-    , m_pOwner(nullptr)
-    , m_pAniInfoUp(nullptr)
-    , m_pAniInfoDown(nullptr)
-    , m_pKindInfo(nullptr)
-    , m_pCCA(nullptr)
-    , _reserved8(0)
-    , m_nActive(0)
+    : m_pImageUp(nullptr)      // DWORD 1
+    , m_pImageDown(nullptr)    // DWORD 2
+    , m_pOwner(nullptr)        // DWORD 3
+    , m_pAniInfoUp(nullptr)    // DWORD 4
+    , m_pAniInfoDown(nullptr)  // DWORD 5
+    , m_pKindInfo(nullptr)     // DWORD 6
+    , m_pCCA(nullptr)          // DWORD 7
+    , _reserved8(0)            // DWORD 8
+    , m_nActive(0)             // DWORD 9
     , m_wTotalFrameUp(0)
     , m_wTotalFrameDown(0)
     , m_wCurFrameUp(0)
@@ -37,7 +43,7 @@ clTransportObject::clTransportObject()
 }
 
 // -------------------------------------------------------------------------
-// Destructor
+// Destructor — ground truth 004EFC30
 // -------------------------------------------------------------------------
 clTransportObject::~clTransportObject()
 {
@@ -45,26 +51,22 @@ clTransportObject::~clTransportObject()
 }
 
 // -------------------------------------------------------------------------
-// Release — 重設所有成員
+// Release — ground truth 004EFC40
+// 重設 DWORD 1,2,3,4,5,6,9 = 0
 // -------------------------------------------------------------------------
 void clTransportObject::Release()
 {
-    m_nActive = 0;
-    m_pOwner = nullptr;
-    m_pKindInfo = nullptr;
-    m_pAniInfoUp = nullptr;
-    m_pAniInfoDown = nullptr;
-    m_pImageUp = nullptr;
-    m_pImageDown = nullptr;
+    m_nActive = 0;       // DWORD 9
+    m_pOwner = nullptr;  // DWORD 3
+    m_pKindInfo = nullptr;  // DWORD 6
+    m_pAniInfoUp = nullptr;  // DWORD 4
+    m_pAniInfoDown = nullptr;  // DWORD 5
+    m_pImageUp = nullptr;  // DWORD 1
+    m_pImageDown = nullptr;  // DWORD 2
 }
 
 // -------------------------------------------------------------------------
-// InitTransport — 初始化交通工具
-// Ground truth 呼叫:
-//   clTransportKindInfo::GetTransportKindInfo
-//   clClientTransportKindInfo::GetTransportAniInfoUp
-//   clClientTransportKindInfo::GetTransportAniInfoDown
-//   cltMyCharData::GetMyAccount
+// InitTransport — ground truth 004EFC60
 // -------------------------------------------------------------------------
 void clTransportObject::InitTransport(ClientCharacter* pOwner, CCA* pCCA, std::uint16_t transportKind)
 {
@@ -74,7 +76,7 @@ void clTransportObject::InitTransport(ClientCharacter* pOwner, CCA* pCCA, std::u
     m_pOwner = pOwner;
     m_pCCA = pCCA;
 
-    // TODO: 當 clTransportKindInfo / clClientTransportKindInfo 被還原後啟用:
+    // Ground truth:
     // m_pKindInfo = clTransportKindInfo::GetTransportKindInfo(&g_clTransportKindInfo, transportKind);
     // if (m_pKindInfo) {
     //     m_pAniInfoUp = clClientTransportKindInfo::GetTransportAniInfoUp(&g_clTransportKindInfo, transportKind);
@@ -83,28 +85,80 @@ void clTransportObject::InitTransport(ClientCharacter* pOwner, CCA* pCCA, std::u
     //         cltMyCharData::GetMyAccount(&g_clMyCharData);
     //     }
     // }
+    // TODO: 當 clTransportKindInfo / clClientTransportKindInfo 被還原後啟用上述程式碼
     m_pKindInfo = nullptr;
     m_pAniInfoUp = nullptr;
     m_pAniInfoDown = nullptr;
 }
 
 // -------------------------------------------------------------------------
-// SetActive / GetActive
+// SetActive — ground truth 004EFCD0
+// Ground truth: 直接讀取 owner 的 action state (offset 9684)，不做 null check
 // -------------------------------------------------------------------------
 void clTransportObject::SetActive(int active)
 {
     m_nActive = active;
+    // Ground truth 不檢查 m_pOwner 是否為 null，直接讀取
     if (m_pOwner)
         SetActionState(m_pOwner->GetActionState());
 }
 
+// -------------------------------------------------------------------------
+// GetActive — ground truth 004EFCF0
+// -------------------------------------------------------------------------
 int clTransportObject::GetActive()
 {
     return m_nActive;
 }
 
 // -------------------------------------------------------------------------
-// PrepareDrawing — 準備繪製交通工具
+// 位置更新輔助函式 — ground truth TransportMove/Stop/Hitted 三者邏輯完全相同
+// Ground truth: 若 CCA 存在，座標來自 CCA float offset 128/132
+//               否則使用 owner 的 m_iPosX/m_iPosY (offset 4384/4388)
+// -------------------------------------------------------------------------
+void clTransportObject::UpdatePosition()
+{
+    if (!m_pOwner)
+        return;
+
+    int ownerPosX = m_pOwner->m_iPosX;
+    int ownerPosY = m_pOwner->m_iPosY;
+
+    if (m_pCCA)
+    {
+        // Ground truth: 使用 CCA 的 float 座標 (offset 128, 132)
+        float ccaPosX = *(float*)((char*)m_pCCA + 128);
+        float ccaPosY = *(float*)((char*)m_pCCA + 132);
+        m_nPosX = (int)(std::int64_t)ccaPosX;
+        m_nPosY = (int)(std::int64_t)ccaPosY;
+    }
+    else
+    {
+        m_nPosX = ownerPosX;
+        m_nPosY = ownerPosY;
+    }
+}
+
+// -------------------------------------------------------------------------
+// TransportMove / TransportStop / TransportHitted — ground truth 004EFF80/004EFFD0/004F0020
+// -------------------------------------------------------------------------
+void clTransportObject::TransportMove()
+{
+    UpdatePosition();
+}
+
+void clTransportObject::TransportStop()
+{
+    UpdatePosition();
+}
+
+void clTransportObject::TransportHitted()
+{
+    UpdatePosition();
+}
+
+// -------------------------------------------------------------------------
+// PrepareDrawing — ground truth 004EFD00
 // -------------------------------------------------------------------------
 void clTransportObject::PrepareDrawing(int param)
 {
@@ -116,19 +170,19 @@ void clTransportObject::PrepareDrawing(int param)
     unsigned int resUp = 0, resDown = 0;
     std::uint16_t frameUp = 0, frameDown = 0;
 
-    // 根據動作狀態更新位置
+    // 根據 owner 的 action state 更新位置
     unsigned int actionState = m_pOwner->GetActionState();
-    switch (actionState)
+    if (actionState == 0)
     {
-    case 0:
         TransportStop();
-        break;
-    case 1:
+    }
+    else if (actionState == 1)
+    {
         TransportMove();
-        break;
-    case 4:
+    }
+    else if (actionState == 4)
+    {
         TransportHitted();
-        break;
     }
 
     // 決定繪製格
@@ -142,6 +196,8 @@ void clTransportObject::PrepareDrawing(int param)
         return;
 
     // 計算螢幕座標
+    // Ground truth: 若 CCA 存在，直接使用 m_nPosX/m_nPosY (已由 UpdatePosition 設為 CCA 座標)
+    //               否則減去相機偏移
     int screenX = m_nPosX;
     int screenY = m_nPosY;
     if (!m_pCCA)
@@ -159,6 +215,7 @@ void clTransportObject::PrepareDrawing(int param)
     m_pImageUp->m_bFlag_446 = true;
     m_pImageUp->SetPosition(fScreenX, fScreenY);
     m_pImageUp->m_bVertexAnimation = false;
+    // Ground truth: flip = (owner LR_Flag == 0)
     m_pImageUp->m_bFlipX = (m_pOwner->m_dwLR_Flag == 0);
 
     // 設定下層圖像
@@ -169,23 +226,45 @@ void clTransportObject::PrepareDrawing(int param)
     m_pImageDown->m_bVertexAnimation = false;
     m_pImageDown->m_bFlipX = (m_pOwner->m_dwLR_Flag == 0);
 
-    // 上層圖像: 調整 hotspot 和啟用繪製
+    // Ground truth: 上層圖像 hotspot/offset 修正
+    // 從 GIData 讀取 block 資料，依 block 尺寸/偏移修正 fAngleY (offset +352)
     if (m_pImageUp->m_pGIData)
     {
-        // Ground truth: 根據 block 資訊調整 fAngleY
-        // 具體邏輯依賴 ImageResourceListData 的內部佈局
+        int* pBlockData = (int*)(*((int*)m_pImageUp->m_pGIData + 8));  // GIData DWORD+8 = block array ptr
+        if (pBlockData)
+        {
+            // Ground truth: block stride = 52 bytes = 13 DWORDs
+            // block[frameUp].offset24 = DWORD at 52*frameUp + 24
+            // block[frameUp].offset32 = DWORD at 52*frameUp + 32
+            int blockOff24 = *(int*)((char*)pBlockData + 52 * frameUp + 24);
+            int blockOff32 = *(int*)((char*)pBlockData + 52 * frameUp + 32);
+            if ((double)blockOff24 < fabs((double)blockOff32))
+            {
+                *(float*)((char*)m_pImageUp + 352) = (float)(-(blockOff32 + blockOff24));
+            }
+        }
         m_pImageUp->m_bDrawPart2 = true;
     }
 
-    // 下層圖像: 調整 hotspot 和啟用繪製
+    // Ground truth: 下層圖像 hotspot/offset 修正 (公式不同)
     if (m_pImageDown->m_pGIData)
     {
+        int* pBlockData = (int*)(*((int*)m_pImageDown->m_pGIData + 8));
+        if (pBlockData)
+        {
+            int blockOff24 = *(int*)((char*)pBlockData + 52 * frameDown + 24);
+            int blockOff32 = *(int*)((char*)pBlockData + 52 * frameDown + 32);
+            if ((double)blockOff24 < fabs((double)blockOff32))
+            {
+                *(float*)((char*)m_pImageDown + 352) = 15.0f - (float)(blockOff32 + blockOff24);
+            }
+        }
         m_pImageDown->m_bDrawPart2 = true;
     }
 }
 
 // -------------------------------------------------------------------------
-// DrawUp / DrawDown — 繪製上下層圖像
+// DrawUp / DrawDown — ground truth 004EFF40 / 004EFF60
 // -------------------------------------------------------------------------
 void clTransportObject::DrawUp(int param)
 {
@@ -200,49 +279,8 @@ void clTransportObject::DrawDown(int param)
 }
 
 // -------------------------------------------------------------------------
-// TransportMove / TransportStop / TransportHitted — 位置更新
-// Ground truth: 三者邏輯完全相同
-// -------------------------------------------------------------------------
-static void UpdateTransportPosition(clTransportObject* self,
-                                     int& posX, int& posY,
-                                     ClientCharacter* pOwner, CCA* pCCA)
-{
-    if (pCCA)
-    {
-        // Ground truth: 使用 CCA 的 float 座標 (offset 128, 132)
-        // posX = (int)(*(float*)((char*)pCCA + 128));
-        // posY = (int)(*(float*)((char*)pCCA + 132));
-        // CCA 類別尚未完整定義，先使用角色座標
-        posX = pOwner->m_iPosX;
-        posY = pOwner->m_iPosY;
-    }
-    else
-    {
-        posX = pOwner->m_iPosX;
-        posY = pOwner->m_iPosY;
-    }
-}
-
-void clTransportObject::TransportMove()
-{
-    if (m_pOwner)
-        UpdateTransportPosition(this, m_nPosX, m_nPosY, m_pOwner, m_pCCA);
-}
-
-void clTransportObject::TransportStop()
-{
-    if (m_pOwner)
-        UpdateTransportPosition(this, m_nPosX, m_nPosY, m_pOwner, m_pCCA);
-}
-
-void clTransportObject::TransportHitted()
-{
-    if (m_pOwner)
-        UpdateTransportPosition(this, m_nPosX, m_nPosY, m_pOwner, m_pCCA);
-}
-
-// -------------------------------------------------------------------------
-// DecideDrawFrame — 根據動作狀態決定繪製資源和幀
+// DecideDrawFrame — ground truth 004F0070
+// 根據 m_dwActionState 呼叫 clTransportAniInfo::GetFrameInfo
 // -------------------------------------------------------------------------
 void clTransportObject::DecideDrawFrame(unsigned int* outResUp, unsigned int* outResDown,
                                          std::uint16_t* outFrameUp, std::uint16_t* outFrameDown)
@@ -258,16 +296,18 @@ void clTransportObject::DecideDrawFrame(unsigned int* outResUp, unsigned int* ou
     case 0:  action = 0; break;
     case 1:  action = 1; break;
     case 4:  action = 4; break;
-    default: action = 0; break;
+    default: return;
     }
 
-    // TODO: 當 clTransportAniInfo 被還原後啟用:
-    // m_pAniInfoUp->GetFrameInfo(action, m_wCurFrameUp, outResUp, outFrameUp);
-    // m_pAniInfoDown->GetFrameInfo(action, m_wCurFrameDown, outResDown, outFrameDown);
+    // Ground truth:
+    // clTransportAniInfo::GetFrameInfo(m_pAniInfoUp, action, m_wCurFrameUp, outResUp, outFrameUp);
+    // clTransportAniInfo::GetFrameInfo(m_pAniInfoDown, action, m_wCurFrameDown, outResDown, outFrameDown);
+    // TODO: 當 clTransportAniInfo 被還原後取消註解
+    (void)action;
 }
 
 // -------------------------------------------------------------------------
-// Poll — 推進動畫幀
+// Poll — ground truth 004F0130
 // -------------------------------------------------------------------------
 void clTransportObject::Poll()
 {
@@ -284,7 +324,7 @@ void clTransportObject::Poll()
 }
 
 // -------------------------------------------------------------------------
-// SetActionState — 設定動作狀態並重算幀數
+// SetActionState — ground truth 004F0160
 // -------------------------------------------------------------------------
 void clTransportObject::SetActionState(unsigned int actionState)
 {
@@ -292,9 +332,9 @@ void clTransportObject::SetActionState(unsigned int actionState)
     m_wTotalFrameUp = 0;
     m_wTotalFrameDown = 0;
 
+    // Ground truth: 根據 actionState 呼叫 GetTotalFrameNum
     if (m_pAniInfoUp && m_pAniInfoDown)
     {
-        // TODO: 當 clTransportAniInfo 被還原後啟用:
         // switch (actionState) {
         // case 0:
         //     m_wTotalFrameUp = m_pAniInfoUp->GetTotalFrameNum(0);
@@ -309,6 +349,7 @@ void clTransportObject::SetActionState(unsigned int actionState)
         //     m_wTotalFrameDown = m_pAniInfoDown->GetTotalFrameNum(4);
         //     break;
         // }
+        // TODO: 當 clTransportAniInfo 被還原後取消註解
     }
 
     m_wCurFrameUp = 0;

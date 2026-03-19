@@ -19,6 +19,7 @@ void Map::SetViewChar(ClientCharacter* /*pChar*/) {}
 void Map::Poll() {}
 void Map::PrepareDrawing() {}
 void Map::DrawMap() {}
+void Map::DrawClip() {}
 void Map::PrepareDrawingClimate() {}
 void Map::DrawClimate() {}
 
