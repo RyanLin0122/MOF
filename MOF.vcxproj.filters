@@ -795,6 +795,12 @@
     <ClCompile Include="src\System\cltNPCRecallSystem.cpp">
       <Filter>來源檔案</Filter>
     </ClCompile>
+    <ClCompile Include="src\Object\cltNPC_Taxi.cpp">
+      <Filter>來源檔案</Filter>
+    </ClCompile>
+    <ClCompile Include="src\Object\cltQuestMark.cpp">
+      <Filter>來源檔案</Filter>
+    </ClCompile>
     <ClCompile Include="src\System\cltTestingSystem.cpp">
       <Filter>來源檔案</Filter>
     </ClCompile>
