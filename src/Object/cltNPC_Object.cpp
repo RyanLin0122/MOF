@@ -14,6 +14,14 @@ extern int SETTING_FRAME;
 extern DCTTextManager g_DCTTextManager;
 extern MoFFont g_MoFFont;
 
+namespace {
+bool ChatBalloonVFunc44Ready(const CControlChatBallon& balloon)
+{
+    return *reinterpret_cast<const int*>(reinterpret_cast<const char*>(&balloon) + 48) != 0;
+}
+
+}
+
 // -------------------------------------------------------------------------
 // Constructor
 // -------------------------------------------------------------------------
@@ -63,8 +71,8 @@ void cltNPC_Object::Process()
     // 聊天氣泡邏輯
     if (m_byChatCount && (timeGetTime() - m_dwLastChatTime > 10000))
     {
-        if (m_ChatBallon.IsVisible())
-            m_ChatBallon.Show();
+        if (ChatBalloonVFunc44Ready(m_ChatBallon))
+            m_ChatBallon.Hide();
         else
         {
             char* text = g_DCTTextManager.GetText(m_wChatTextIDs[m_byChatIndex]);

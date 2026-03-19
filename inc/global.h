@@ -177,6 +177,7 @@ extern cltConfiguration*        g_clConfig;
 extern CObjectManager           g_ObjectManager;
 extern CObjectResourceManager   g_ObjectResourceManager;
 extern DrawObject_All           g_DrawObject_ALL;
+extern CEffectManager           g_EffectManager;
 extern CEffectManager*          g_pEffectManager_Before_Chr;
 extern CEffectManager*          g_pEffectManager_After_Chr;
 

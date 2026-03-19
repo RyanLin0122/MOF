@@ -102,6 +102,7 @@ cltConfiguration* g_clConfig = nullptr;
 CObjectManager g_ObjectManager;
 CObjectResourceManager g_ObjectResourceManager;
 DrawObject_All g_DrawObject_ALL;
+CEffectManager g_EffectManager;
 CUITutorial* g_pUITutorial = nullptr;
 CUIManager* g_UIMgr = nullptr;
 

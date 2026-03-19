@@ -24,6 +24,7 @@ public:
 	                  unsigned char nation, unsigned char sex, unsigned char hair,
 	                  int a32, int a33);
 	void SetMyAccount(unsigned int account);
+	unsigned int GetMyAccount() const { return m_dwMyAccount; }
 	ClientCharacter* GetMyCharacterPtr();
 	void SetItem(unsigned int account, unsigned short itemKind, int qty);
 	void DeleteAllChar();
@@ -39,4 +40,7 @@ public:
 	ClientCharacter* GetCharByName(char* name);
 	void SetEmoticonKind(char* name, std::uint32_t emoticonKind);
 	void ReleaseEmoticon(ClientCharacter* pChar);
+
+private:
+	unsigned int m_dwMyAccount{ 0 };
 };

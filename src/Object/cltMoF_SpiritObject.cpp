@@ -15,6 +15,14 @@
 extern int dword_A73088;
 extern int dword_A7308C;
 
+namespace {
+unsigned int ResolveManagerAccountID(ClientCharacterManager* pMgr)
+{
+    return pMgr ? pMgr->GetMyAccount() : 0;
+}
+
+}
+
 // -------------------------------------------------------------------------
 // Constructor — ground truth 004E81A0
 // -------------------------------------------------------------------------
@@ -64,9 +72,7 @@ void cltMoF_SpiritObject::SetActive(ClientCharacter* pChar, int active)
     if (!pChar)
         return;
 
-    // Ground truth: *((_DWORD *)a2 + 114) == *(_DWORD *)((char *)&loc_43E090 + *((_DWORD *)this + 15))
-    // 比較角色的 accountID (offset 456) 與玩家帳號
-    if (pChar->m_dwAccountID != g_dwMyAccountID)
+    if (pChar->m_dwAccountID != ResolveManagerAccountID(m_pCharMgr))
         return;
 
     m_nOffsetX = 0;
@@ -92,11 +98,7 @@ void cltMoF_SpiritObject::Initialize(ClientCharacterManager* pMgr)
     m_pCharMgr = pMgr;
     m_wBlockCount = 0;
 
-    // Ground truth: 使用 CControlChatBallon vtable offset 80 方法
-    // (*(void (__thiscall **)(char *, _DWORD, _DWORD, int, _DWORD))(v3 + 80))((char *)this + 64, 0, 0, -1, 0);
-    // 這是 CControlChatBallon 的某個初始化方法，接受 4 個 int 參數
-    // 目前以 SetString 近似
-    m_ChatBallon.SetString((char*)"", 0, 0, 0, 0, (Direction)(DirLeft | DirRight));
+    m_ChatBallon.Create(nullptr, 0, static_cast<unsigned int>(-1), 0);
 
     m_nOffsetX = 0;
     m_nPatrolDir = 1;
@@ -122,7 +124,7 @@ void cltMoF_SpiritObject::SetChar(ClientCharacter* pChar, std::uint16_t param)
     // Ground truth: 先檢查 accountID 匹配，再檢查 pChar 非空
     if (!pChar)
         return;
-    if (pChar->m_dwAccountID != g_dwMyAccountID)
+    if (pChar->m_dwAccountID != ResolveManagerAccountID(m_pCharMgr))
         return;
 
     m_pOwnerChar = pChar;

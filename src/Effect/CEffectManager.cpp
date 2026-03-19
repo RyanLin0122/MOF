@@ -12,15 +12,15 @@
 #include "Effect/CEffect_Battle_GunShoot.h"
 #include "Effect/CEffect_Item_Type_Once.h"
 #include "Character/ClientCharacterManager.h"
+#include "global.h"
 
 
 // 靜態實例初始化
 CEffectManager* CEffectManager::s_pInstance = nullptr;
 
 CEffectManager* CEffectManager::GetInstance() {
-    if (!s_pInstance) {
-        s_pInstance = new (std::nothrow) CEffectManager();
-    }
+    if (!s_pInstance)
+        s_pInstance = &g_EffectManager;
     return s_pInstance;
 }
 

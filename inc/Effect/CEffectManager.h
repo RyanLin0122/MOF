@@ -23,6 +23,7 @@ struct EffectInfo {
  */
 class CEffectManager {
 public:
+    CEffectManager();
     /// @brief 取得唯一的管理器實例。
     static CEffectManager* GetInstance();
 
@@ -74,8 +75,6 @@ public:
 private:
     // --- 私有成員 ---
 
-    // 私有建構函式，確保單例模式
-    CEffectManager();
     CEffectManager(const CEffectManager&) = delete;
     CEffectManager& operator=(const CEffectManager&) = delete;
     static CEffectManager* s_pInstance;
