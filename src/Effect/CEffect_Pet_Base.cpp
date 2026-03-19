@@ -1,6 +1,6 @@
 #include "Effect/CEffect_Pet_Base.h"
 #include "Effect/CEAManager.h"
-#include "Pet/cltPetObject.h" // 假設寵物物件的定義在此
+#include "Object/cltPetObject.h" // 寵物物件已移至 Object 資料夾
 #include "global.h"
 
 // 對應反組譯碼: 0x00539090

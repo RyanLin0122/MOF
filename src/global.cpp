@@ -50,6 +50,10 @@ extern int   kDotGlyphIndexByStyle[] = { -1 }; //dword_6C6C54
 extern int   kAdvanceByStyle[] = { 0 }; //dword_6C6C58
 extern int   kAtlasIdByStyle[] = { 570425345 }; //dword_6C6C5C
 
+// Camera/scroll offset
+int dword_A73088 = 0;
+int dword_A7308C = 0;
+
 extern unsigned int D3DRS_BLENDOP_TYPE[8] = { 1u, 1u, 1u, 5u, 4u, 1u, 2u, 1u };
 extern unsigned int D3DRS_SRCBLEND_TYPE[8] = { 5u, 10u, 9u, 2u, 2u, 2u, 2u, 9u };
 extern unsigned int D3DRS_DESTBLEND_TYPE[8] = { 6u, 2u, 1u, 2u, 2u, 2u, 2u, 5u };
