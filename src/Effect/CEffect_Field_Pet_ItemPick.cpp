@@ -7,7 +7,7 @@
 
 // 假設的全域變數
 extern GameSystemInfo g_Game_System_Info;
-extern int SETTING_FRAME = 1;
+extern int SETTING_FRAME;
 
 // 對應反組譯碼: 0x00536650
 CEffect_Field_Pet_ItemPick::CEffect_Field_Pet_ItemPick()

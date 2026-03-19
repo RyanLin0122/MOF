@@ -1,4 +1,4 @@
-﻿#pragma once
+#pragma once
 #include <iostream>
 #include <stdio.h>     // 用於 printf
 #include <windows.h>   // 用於 HWND, GetConsoleWindow, Sleep
@@ -18,10 +18,6 @@
 #include "conf.h"
 
 
-LPDIRECT3D9             g_pD3D = NULL;
-LPDIRECT3DDEVICE9       g_pd3dDevice = NULL;
-D3DPRESENT_PARAMETERS   g_d3dpp;
-LPDIRECT3DDEVICE9       Device = NULL;
 
 extern cltTextFileManager g_clTextFileManager;
 
