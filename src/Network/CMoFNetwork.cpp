@@ -148,13 +148,13 @@ int CMoFNetwork::UseItem(unsigned __int16 a2, char *a3, char *a4, char *a5, unsi
   return SetSendData(reinterpret_cast<char *>(msg.GetMsg()), static_cast<unsigned __int16>(msg.GetLength()));
 }
 
-int CMoFNetwork::BuyItem(unsigned __int16 a2, struct cltItemList *a3) {
+int CMoFNetwork::BuyItem(unsigned __int16 a2, class cltItemList *a3) {
   CMofMsg msg(9u, 0);
   msg.Put_WORD(a2);
   return SetSendData(reinterpret_cast<char *>(msg.GetMsg()), static_cast<unsigned __int16>(msg.GetLength()));
 }
 
-int CMoFNetwork::SellItem(unsigned __int16 a2, struct cltItemList *a3) {
+int CMoFNetwork::SellItem(unsigned __int16 a2, class cltItemList *a3) {
   CMofMsg msg(0xBu, 0);
   msg.Put_WORD(a2);
   return SetSendData(reinterpret_cast<char *>(msg.GetMsg()), static_cast<unsigned __int16>(msg.GetLength()));
@@ -1600,7 +1600,7 @@ int CMoFNetwork::PKSetSupport(int a2, char *a3) {
   return SetSendData(reinterpret_cast<char *>(msg.GetMsg()), static_cast<unsigned __int16>(msg.GetLength()));
 }
 
-int CMoFNetwork::PvPBuyItem(unsigned __int16 a2, struct cltItemList *a3) {
+int CMoFNetwork::PvPBuyItem(unsigned __int16 a2, class cltItemList *a3) {
   CMofMsg msg(0x552u, 0);
   msg.Put_WORD(a2);
   return SetSendData(reinterpret_cast<char *>(msg.GetMsg()), static_cast<unsigned __int16>(msg.GetLength()));

@@ -24,8 +24,8 @@ public:
   int DropItem(unsigned __int16 a2, unsigned __int16 a3);
   int MoveItem(unsigned __int8 a2, unsigned __int8 a3);
   int UseItem(unsigned __int16 a2, char *a3, char *a4, char *a5, unsigned int a6, unsigned int a7, unsigned int a8, unsigned int a9, unsigned int a10);
-  int BuyItem(unsigned __int16 a2, struct cltItemList *a3);
-  int SellItem(unsigned __int16 a2, struct cltItemList *a3);
+  int BuyItem(unsigned __int16 a2, class cltItemList *a3);
+  int SellItem(unsigned __int16 a2, class cltItemList *a3);
   int SysCommand(char *a2);
   int ApplyAbility(unsigned __int16 a2, unsigned __int16 a3, unsigned __int16 a4, unsigned __int16 a5);
   int AddToQuickSlot(unsigned __int8 a2, unsigned __int8 a3, unsigned __int8 a4, unsigned int a5);
@@ -263,7 +263,7 @@ public:
   int PKStart();
   int PKMoveTeam(int a2);
   int PKSetSupport(int a2, char *a3);
-  int PvPBuyItem(unsigned __int16 a2, struct cltItemList *a3);
+  int PvPBuyItem(unsigned __int16 a2, class cltItemList *a3);
   int ExpendCircleMembers(unsigned __int8 a2);
   int RequestLogin(char *a2, char *a3);
   int ShoutEventAnswer(char *a2);

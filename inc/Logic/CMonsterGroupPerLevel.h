@@ -2,7 +2,7 @@
 
 #include <cstdint>
 
-struct cltCharKindInfo;
+class cltCharKindInfo;
 
 struct stMonsterKind {
     std::uint16_t kind;
