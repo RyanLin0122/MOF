@@ -15,6 +15,15 @@ ClientCharacter::~ClientCharacter() {
 
 }
 
+
+void ClientCharacter::PrepareDrawingPlayer() {
+	// Stub: real implementation prepares player render state.
+}
+
+void ClientCharacter::PrepareDrawingMonster() {
+	// Stub: real implementation prepares monster render state.
+}
+
 /// @brief 取得角色的 X 座標
 int ClientCharacter::GetPosX() {
 	return m_iPosX;
@@ -33,6 +42,17 @@ void ClientCharacter::SetPosY(float y) {
 /// @brief 取得角色的高度
 int ClientCharacter::GetCharHeight() {
 	return 100;
+}
+
+
+void ClientCharacter::PrepareDrawingChar() {
+	const bool isMonsterLike = (m_dwAccountID == 0);
+	if (isMonsterLike) {
+		PrepareDrawingMonster();
+	}
+	else {
+		PrepareDrawingPlayer();
+	}
 }
 
 void ClientCharacter::DrawChar(int a2) {

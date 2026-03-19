@@ -74,8 +74,13 @@ void cltNPC_Taxi::Process()
     // 聊天氣泡
     if (m_byChatCount && (timeGetTime() - m_dwLastChatTime > 10000))
     {
-        char* text = g_DCTTextManager.GetText(m_wChatTextIDs[m_byChatIndex]);
-        m_ChatBallon.SetString(text, 0, 0, 0, 0, (Direction)(DirLeft | DirRight));
+        if (m_ChatBallon.IsVisible())
+            m_ChatBallon.Show();
+        else
+        {
+            char* text = g_DCTTextManager.GetText(m_wChatTextIDs[m_byChatIndex]);
+            m_ChatBallon.SetString(text, 0, 0, 0, 0, (Direction)(DirLeft | DirRight));
+        }
 
         ++m_byChatIndex;
         if (m_byChatIndex >= m_byChatCount)

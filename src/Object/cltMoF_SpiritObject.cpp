@@ -7,19 +7,13 @@
 #include "System/cltLevelSystem.h"
 #include "System/cltClassSystem.h"
 #include "global.h"
+#include "Logic/CSpiritSpeechMgr.h"
 #include <cstring>
 #include <cstdlib>
 #include <cmath>
 
 extern int dword_A73088;
 extern int dword_A7308C;
-
-// CSpiritSpeechMgr — 精靈對話管理器 (尚未還原)
-class CSpiritSpeechMgr {
-public:
-    char* GetSpiritSpeechScript() { return (char*)""; }
-};
-static CSpiritSpeechMgr g_clSpiritSpeechMgr;
 
 // -------------------------------------------------------------------------
 // Constructor — ground truth 004E81A0
