@@ -43,7 +43,12 @@ class CMoFNetwork;
 extern int IsInMemory;
 extern bool IsDialogBoxMode;
 extern int g_LButtonUp;
-extern HWND             g_hWnd;
+extern HWND g_hWnd;
+extern LPDIRECT3D9 g_pD3D;
+extern LPDIRECT3DDEVICE9 g_pd3dDevice;
+extern D3DPRESENT_PARAMETERS g_d3dpp;
+extern LPDIRECT3DDEVICE9 Device;
+extern int SETTING_FRAME;
 
 struct GameSystemInfo {
     int ScreenWidth;

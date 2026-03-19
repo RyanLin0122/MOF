@@ -82,20 +82,20 @@ int CObjectResourceManager::Initialize(char* szFileName)
         pToken = strtok(nullptr, szDelimiter);
         if (!pToken) break;
         if (strstr(pToken, "+")) break;
-        sscanf(pToken, "%x", &pInfo->m_dwResourceID);
+        sscanf_s(pToken, "%x", &pInfo->m_dwResourceID);
 
         // Parse block ID
         pToken = strtok(nullptr, szDelimiter);
         if (!pToken) break;
         unsigned int tempBlockID = 0;
-        sscanf(pToken, "%u", &tempBlockID);
+        sscanf_s(pToken, "%u", &tempBlockID);
         pInfo->m_wBlockID = (unsigned short)tempBlockID;
 
         // Parse kind
         pToken = strtok(nullptr, szDelimiter);
         if (!pToken) break;
         unsigned int tempKind = 0;
-        sscanf(pToken, "%u", &tempKind);
+        sscanf_s(pToken, "%u", &tempKind);
         pInfo->m_wKind = (unsigned short)tempKind;
 
         // Parse flip X (Y/N)
@@ -112,7 +112,7 @@ int CObjectResourceManager::Initialize(char* szFileName)
         pToken = strtok(nullptr, szDelimiter);
         if (!pToken) break;
         unsigned int tempScale = 0;
-        sscanf(pToken, "%u", &tempScale);
+        sscanf_s(pToken, "%u", &tempScale);
         pInfo->m_wScale = (unsigned short)tempScale;
 
         // Parse alpha (Y/N)

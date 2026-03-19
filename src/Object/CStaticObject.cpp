@@ -133,9 +133,12 @@ void CStaticObject::Draw()
 
 int CStaticObject::GetSXtoD(const char* pStr)
 {
+    if (!pStr)
+        return 0;
+
     int result = 0;
-    char szBuffer[8];
+    char szBuffer[9] = {};
     memcpy(szBuffer, pStr, 8);
-    sscanf(szBuffer, "%X", &result);
+    sscanf_s(szBuffer, "%X", &result);
     return result;
 }
