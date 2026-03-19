@@ -323,6 +323,8 @@
     <ClCompile Include="src\Object\CObjectManager.cpp" />
     <ClCompile Include="src\Object\cltAnimationObjectManager.cpp" />
     <ClCompile Include="src\Object\cltNPC_Object.cpp" />
+    <ClCompile Include="src\Object\cltNPC_Taxi.cpp" />
+    <ClCompile Include="src\Object\cltQuestMark.cpp" />
     <ClCompile Include="src\Object\clTransportObject.cpp" />
     <ClCompile Include="src\Object\CNPCObject.cpp" />
     <ClCompile Include="src\Object\DrawObject_All.cpp" />
