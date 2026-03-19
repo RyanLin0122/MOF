@@ -35,6 +35,24 @@ int ClientCharacter::GetCharHeight() {
 	return 100;
 }
 
+void ClientCharacter::DrawChar(int a2) {
+	const bool isMonsterLike = (m_dwAccountID == 0);
+	if (isMonsterLike) {
+		DrawMonster(a2);
+	}
+	else {
+		DrawPlayer(a2);
+	}
+}
+
+void ClientCharacter::DrawPlayer(int /*a2*/) {
+	// Stub: rendering path has not been fully restored yet.
+}
+
+void ClientCharacter::DrawMonster(int /*a2*/) {
+	// Stub: rendering path has not been fully restored yet.
+}
+
 void ClientCharacter::SetHited(int a, int b)
 {
 	return;

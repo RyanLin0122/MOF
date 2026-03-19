@@ -19,13 +19,14 @@
 
 class cltClassKindInfo;
 class cltItemKindInfo;
+class cltNPCInfo;
 class cltMapInfo;
 class Map;
 class ClientCharacterManager;
 class cltQuestSystem;
 class CMeritoriousSystem;
 class cltLevelSystem;
-class cltLevelSystem;
+class cltClassSystem;
 class CSpiritSystem;
 class cltBaseInventory;
 class cltCharKindInfo;
@@ -61,34 +62,12 @@ struct GameSystemInfo {
 	float ScreenY;
 };
 
-
 extern GameSystemInfo g_Game_System_Info;
 
 extern bool DontDraw;
 extern unsigned char NationCode;
 
 extern bool g_bRenderStateLocked;
-
-extern cltTextFileManager g_clTextFileManager;
-
-extern DCTTextManager g_DCTTextManager;
-
-extern MoFFont g_MoFFont;
-
-extern DCTIMMList               g_IMMList;
-extern cltClassKindInfo         g_clClassKindInfo;
-extern cltItemKindInfo          g_clItemKindInfo;
-extern Map                      g_Map;
-extern CObjectManager           g_ObjectManager;
-extern CObjectResourceManager   g_ObjectResourceManager;
-extern cltFieldItemManager      g_clFieldItemMgr;
-extern cltHelpMessage           g_clHelpMessage;
-extern ClientCharacterManager   g_ClientCharMgr;
-extern DrawObject_All           g_DrawObject_ALL;
-extern CSpiritSystem            g_clSpiritSystem;
-extern cltLevelSystem           g_clLevelSystem;
-extern cltClassSystem           g_clClassSystem;
-extern CMoFNetwork              g_Network;
 
 extern short kGlyphIndexByStyleChar[]; //word_6C6B6C
 extern int   kDotGlyphIndexByStyle[]; //dword_6C6C54
@@ -134,9 +113,6 @@ extern unsigned short word_231590E[];   // equipKind2 array start   (base of 3×
 // (full class definitions are in their respective headers)
 extern int g_nTutorialState;
 extern int g_nFieldItemPickupFlag;
-extern cltConfiguration* g_clConfig;
-extern CUITutorial* g_pUITutorial;
-extern CUIManager* g_UIMgr;
 
 enum Direction : uint8_t {
     DirUp = 0,        // 氣球箭頭朝上（置中）
@@ -144,3 +120,43 @@ enum Direction : uint8_t {
     DirRight = 2,        // 箭頭朝右（垂直置中）
     DirDown = 3         // 箭頭朝下（置中）== (DirLeft | DirRight)
 };
+
+// Class Object
+
+// Text & Font
+extern cltTextFileManager       g_clTextFileManager;
+extern DCTTextManager           g_DCTTextManager;
+extern MoFFont                  g_MoFFont;
+extern DCTIMMList               g_IMMList;
+
+// Map
+extern Map                      g_Map;
+
+// Network
+extern CMoFNetwork              g_Network;
+
+// Info
+extern cltClassKindInfo         g_clClassKindInfo;
+extern cltItemKindInfo          g_clItemKindInfo;
+extern cltNPCInfo               g_clNPCInfo;
+
+// System
+extern CSpiritSystem            g_clSpiritSystem;
+extern cltLevelSystem           g_clLevelSystem;
+extern cltClassSystem           g_clClassSystem;
+
+// Logic
+extern cltFieldItemManager      g_clFieldItemMgr;
+extern cltHelpMessage           g_clHelpMessage;
+
+extern ClientCharacterManager   g_ClientCharMgr;
+extern cltConfiguration*        g_clConfig;
+
+// Object
+extern CObjectManager           g_ObjectManager;
+extern CObjectResourceManager   g_ObjectResourceManager;
+extern DrawObject_All           g_DrawObject_ALL;
+
+// UI
+extern CUITutorial*             g_pUITutorial;
+extern CUIManager*              g_UIMgr;
