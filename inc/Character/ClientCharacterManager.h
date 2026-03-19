@@ -30,6 +30,11 @@ public:
 	void SetMyCAClone();
 	char* GetMyCharName();
 
+	// 繪製相關
+	void PrepareDrawingEtcMark();
+	void DrawEtcMark();
+	bool GetMyTransformationed();
+
 	// Emoticon support
 	ClientCharacter* GetCharByName(char* name);
 	void SetEmoticonKind(char* name, std::uint32_t emoticonKind);

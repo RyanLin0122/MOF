@@ -25,6 +25,7 @@ public:
     void TransportMove();
     void TransportStop();
     void TransportHitted();
+    void UpdatePosition();
     void DecideDrawFrame(unsigned int* outResUp, unsigned int* outResDown,
                          std::uint16_t* outFrameUp, std::uint16_t* outFrameDown);
     void Poll();

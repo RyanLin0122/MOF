@@ -74,3 +74,16 @@ void ClientCharacterManager::SetEmoticonKind(char* /*name*/, std::uint32_t /*emo
 void ClientCharacterManager::ReleaseEmoticon(ClientCharacter* /*pChar*/) {
     // Stub: emoticon visual state is not modeled in this reduced client implementation.
 }
+
+void ClientCharacterManager::PrepareDrawingEtcMark() {
+    // Stub: ground truth 遍歷所有角色，準備名牌/標記繪製
+}
+
+void ClientCharacterManager::DrawEtcMark() {
+    // Stub: ground truth 繪製所有角色的名牌/標記
+}
+
+bool ClientCharacterManager::GetMyTransformationed() {
+    // Stub: ground truth 檢查自己的角色是否處於變身狀態
+    return false;
+}

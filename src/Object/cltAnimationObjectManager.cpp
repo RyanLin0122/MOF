@@ -5,6 +5,21 @@
 #include <cstdio>
 #include <cctype>
 
+// Ground truth 使用 IsAlphaNumeric() 判斷 hex 欄位合法性
+// IsAlphaNumeric 檢查字串中每個字元是否都是英數字元 (isalnum)
+static bool IsAlphaNumeric(const char* s)
+{
+    if (!*s)
+        return true;
+    while (*s)
+    {
+        if (!isalnum((unsigned char)*s))
+            return false;
+        ++s;
+    }
+    return true;
+}
+
 extern cltTextFileManager g_clTextFileManager;
 
 cltAnimationObjectManager g_clAniObjectMgr;
@@ -105,20 +120,10 @@ int cltAnimationObjectManager::Initialize(char* filename)
         if (!token) break;
         pCurrent->m_dwMaxFrames = (std::uint32_t)atoi(token);
 
-        // HexParam
+        // HexParam — ground truth 使用 IsAlphaNumeric() 檢查合法性
         token = strtok(nullptr, delimiter);
         if (!token) break;
-        // 檢查是否為十六進位字串
-        bool isHex = false;
-        for (const char* p = token; *p; ++p)
-        {
-            if (isalpha((unsigned char)*p))
-            {
-                isHex = true;
-                break;
-            }
-        }
-        if (!isHex)
+        if (!IsAlphaNumeric(token))
             break;
         sscanf(token, "%x", &pCurrent->m_dwHexParam);
 

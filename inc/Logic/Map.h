@@ -32,6 +32,7 @@ public:
     void Poll();
     void PrepareDrawing();
     void DrawMap();
+    void DrawClip();
     void PrepareDrawingClimate();
     void DrawClimate();
 
