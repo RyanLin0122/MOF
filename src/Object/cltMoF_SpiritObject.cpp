@@ -20,9 +20,11 @@ extern int dword_A7308C;
 // -------------------------------------------------------------------------
 cltMoF_SpiritObject::cltMoF_SpiritObject()
     : m_nActive(0)
+    , m_byLevel(0)
+    , _padByte9(0)
     , m_wClassCode(0)
     , m_wCharKind(0)
-    , m_byLevel(0)
+    , _padWord7(0)
     , m_fPosX(0.0f)
     , m_fPosY(0.0f)
     , m_dwResourceID(0)

@@ -27,11 +27,13 @@ public:
     void MovePatrol();
 
 private:
-    int                     m_nActive;          // 是否啟動
-    std::uint16_t           m_wClassCode;       // 職業碼
-    std::uint16_t           m_wCharKind;        // 角色種類
-    std::uint8_t            m_byLevel;          // 等級
-    float                   m_fPosX;            // 世界座標 X
+    int                     m_nActive;          // DWORD 1 (byte 4): 是否啟動
+    std::uint8_t            m_byLevel;          // BYTE 8: 等級
+    std::uint8_t            _padByte9;          // BYTE 9: padding
+    std::uint16_t           m_wClassCode;       // WORD 5 (byte 10): 職業碼
+    std::uint16_t           m_wCharKind;        // WORD 6 (byte 12): 角色種類
+    std::uint16_t           _padWord7;          // byte 14-15: padding for float alignment
+    float                   m_fPosX;            // float 4 (byte 16): 世界座標 X
     float                   m_fPosY;            // 世界座標 Y
     unsigned int            m_dwResourceID;     // 精靈圖像資源 ID
     unsigned int            m_dwStartBlockID;   // 起始 block ID

@@ -9,6 +9,11 @@ int cltMyCharData::SetMyAccount(cltMyCharData* self, int account) {
     return 0;
 }
 
+unsigned int cltMyCharData::GetMyAccount(cltMyCharData* self) {
+    // Ground truth: return *((_DWORD *)this + 21)
+    return *reinterpret_cast<unsigned int*>(reinterpret_cast<char*>(self) + 84);
+}
+
 void cltMyCharData::Initialize(cltMyCharData* /*self*/,
                                unsigned short /*charKind*/, unsigned char /*classKind*/,
                                long long /*a3*/,

@@ -21,7 +21,9 @@ cltNPC_Taxi::cltNPC_Taxi()
     , m_pGameImage(nullptr)
     , m_wCurrentFrame(0)
     , m_fAniFrame(0.0f)
+    , _reserved1(0)
     , m_nFlipFlag(0)
+    , _reserved2(0)
     , m_byState(0)
     , m_byMaxFrame(3)
     , m_dwLastChatTime(0)
@@ -171,7 +173,7 @@ void cltNPC_Taxi::Initialize(float posX, float posY,
 {
     m_nPosX = (int)(std::int64_t)posX;
     m_nPosY = (int)(std::int64_t)posY;
-    m_siField5 = 100;
+    m_siType = 100;
     m_byState = 0;
     m_nFlipFlag = flipFlag;
     m_byChatIndex = 0;

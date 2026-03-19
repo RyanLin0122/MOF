@@ -81,7 +81,7 @@ void CNPCObject::AddQuestMark(std::uint16_t npcID)
     for (int i = 0; i < count; ++i)
     {
         CBaseObject* pObj = g_ObjectManager.GetObjectA((unsigned short)i);
-        if (pObj && pObj->m_siField4 == npcID && pObj->m_siField5 == 101)
+        if (pObj && pObj->m_siField4 == npcID && pObj->m_siType == 101)
             return;  // 已存在，不重複新增
     }
 
@@ -105,7 +105,7 @@ void CNPCObject::AddRewardMark(std::uint16_t npcID)
     for (int i = 0; i < count; ++i)
     {
         CBaseObject* pObj = g_ObjectManager.GetObjectA((unsigned short)i);
-        if (pObj && pObj->m_siField4 == npcID && pObj->m_siField5 == 101)
+        if (pObj && pObj->m_siField4 == npcID && pObj->m_siType == 101)
             return;  // 已存在
     }
 
@@ -126,7 +126,7 @@ void CNPCObject::DelQuestMark(std::uint16_t npcID)
     for (int i = 0; i < count; ++i)
     {
         CBaseObject* pObj = g_ObjectManager.GetObjectA((unsigned short)i);
-        if (pObj && pObj->m_siField4 == npcID && pObj->m_siField5 == 101)
+        if (pObj && pObj->m_siField4 == npcID && pObj->m_siType == 101)
         {
             pObj->m_dwField3 = 0;
             g_ObjectManager.DelObject(i);
@@ -144,7 +144,7 @@ void CNPCObject::DelRewardMark(std::uint16_t npcID)
     for (int i = 0; i < count; ++i)
     {
         CBaseObject* pObj = g_ObjectManager.GetObjectA((unsigned short)i);
-        if (pObj && pObj->m_siField4 == npcID && pObj->m_siField5 == 102)
+        if (pObj && pObj->m_siField4 == npcID && pObj->m_siType == 102)
         {
             pObj->m_dwField3 = 0;
             g_ObjectManager.DelObject(i);

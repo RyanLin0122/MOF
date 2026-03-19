@@ -647,6 +647,8 @@
     <ClInclude Include="inc\Logic\CQuizEventParser.h" />
     <ClInclude Include="inc\Logic\CSpiritSpeechMgr.h" />
     <ClInclude Include="inc\Logic\Map.h" />
+    <ClInclude Include="inc\Object\cltNPC_Taxi.h" />
+    <ClInclude Include="inc\Object\cltQuestMark.h" />
     <ClInclude Include="inc\Other\CAttendanceBookParser.h" />
     <ClInclude Include="inc\Other\cltAttackAtb.h" />
     <ClInclude Include="inc\Other\cltBaseAbility.h" />
@@ -776,6 +778,8 @@
     <ClInclude Include="inc\UI\CControlTabMgr.h" />
     <ClInclude Include="inc\UI\CListMgr.h" />
     <ClInclude Include="inc\UI\CControlBase.h" />
+    <ClInclude Include="inc\UI\CUIManager.h" />
+    <ClInclude Include="inc\UI\CUITutorial.h" />
     <ClInclude Include="inc\UI\stToolTipData.h" />
     <ClInclude Include="inc\UI\CControlImage.h" />
     <ClInclude Include="inc\UI\CControlText.h" />

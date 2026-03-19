@@ -5,6 +5,7 @@
 #include "Logic/clTransportKindInfo.h"
 #include "Logic/clClientTransportKindInfo.h"
 #include "Logic/clTransportAniInfo.h"
+#include "Logic/cltMyCharData.h"
 #include "global.h"
 #include <cmath>
 
@@ -62,7 +63,8 @@ void clTransportObject::InitTransport(ClientCharacter* pOwner, CCA* pCCA, std::u
         m_pAniInfoDown = g_clClientTransportKindInfo.GetTransportAniInfoDown(transportKind);
         if (m_pAniInfoUp && m_pAniInfoDown)
         {
-            // Ground truth 僅觸發 cltMyCharData::GetMyAccount 的副作用；目前缺少可用實作，保留路徑。
+            // Ground truth: 觸發 cltMyCharData::GetMyAccount 的副作用
+            cltMyCharData::GetMyAccount(&g_clMyCharData);
         }
     }
 }

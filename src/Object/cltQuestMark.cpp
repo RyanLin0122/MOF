@@ -59,8 +59,8 @@ void cltQuestMark::Initialize(std::uint16_t npcID, float posX, float posY, unsig
     m_siField4 = npcID;
     m_nPosX = static_cast<int>(static_cast<std::int64_t>(posX));
     m_nPosY = static_cast<int>(static_cast<std::int64_t>(posY - 95.0f));
-    m_siField5 = static_cast<unsigned short>(type);
-    m_dwValid = 1;
+    m_siType = static_cast<unsigned short>(type);
+    m_dwField3 = 1;
     m_dwResourceID = 184550646;
     if (npcID == 26780)
         m_dwResourceID = 486539698;
@@ -118,8 +118,8 @@ void cltRewardMark::Initialize(std::uint16_t npcID, float posX, float posY, unsi
     m_siField4 = npcID;
     m_nPosX = static_cast<int>(static_cast<std::int64_t>(posX));
     m_nPosY = static_cast<int>(static_cast<std::int64_t>(posY - 95.0f));
-    m_siField5 = static_cast<unsigned short>(type);
-    m_dwValid = 1;
+    m_siType = static_cast<unsigned short>(type);
+    m_dwField3 = 1;
     m_dwResourceID = 184550647;
     if (npcID == 26780)
         m_dwResourceID = 486539699;

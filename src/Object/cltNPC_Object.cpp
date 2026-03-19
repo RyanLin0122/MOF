@@ -160,7 +160,7 @@ void cltNPC_Object::Initialize(float posX, float posY,
     m_wMaxFrames = maxFrames;
     m_nPosY = (int)(std::int64_t)posY;
     m_dwResourceID = resourceID;
-    m_siField5 = 100;  // WORD offset 20 = 100
+    m_siType = 100;  // WORD 10 (byte 20) = 100
     m_nFlipFlag = flipFlag;
     m_nToggleFlag = toggleFlag;
     m_szTitle[0] = '\0';

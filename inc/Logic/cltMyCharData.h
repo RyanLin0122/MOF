@@ -14,6 +14,7 @@ struct stEquipItemInfo {
 class cltMyCharData {
 public:
     static int SetMyAccount(cltMyCharData* self, int account);
+    static unsigned int GetMyAccount(cltMyCharData* self);
 
     static void Initialize(cltMyCharData* self,
                            unsigned short charKind, unsigned char classKind,
