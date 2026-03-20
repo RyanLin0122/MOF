@@ -1,23 +1,46 @@
 # MOF 程式碼導覽
 
-這份 README 只整理 `inc/` 與 `src/` 內的一般程式碼，聚焦在專案的核心模組、資料流與目錄對應關係；根目錄的工具、額外文件與測試程式不在本文範圍內。
+這份 README 聚焦在專案的核心模組、資料流與目錄對應關係；根目錄的工具、額外文件與測試程式不在本文範圍內。
 
 ## 專案定位
 
-MOF 是一個以 Windows 平台為目標的 MMORPG 用戶端程式碼庫。從 `global.h` / `global.cpp` 可以看出整體架構以全域單例與管理器為核心，串接角色、地圖、網路、UI、特效、音效、字型與資源管理等子系統。`inc/` 放置對外介面與型別宣告，`src/` 則提供對應實作。這種一對一的資料夾布局，讓每個模組都能用相同命名快速對照標頭與實作檔。
+MOF 是一個以 Windows 平台為目標的 MMORPG 用戶端程式碼庫。程式進入點為`main.c`。`global.h` / `global.cpp` 為全域單例與管理器核心，串接角色、地圖、網路、UI、特效、音效、字型與資源管理等子系統。資料夾`inc/` 放置對外介面與型別宣告，`src/` 則提供對應實作。這種一對一的資料夾布局，讓每個模組都能用相同命名快速對照標頭與實作檔。
 
 ## 目錄原則
 
 - `inc/`：標頭檔、資料結構、類別宣告、跨模組共用介面。
 - `src/`：各模組的 `.cpp` 實作。
 - 多數子目錄在 `inc/` 與 `src/` 之間是成對存在，例如 `Character`、`System`、`UI`、`Effect`、`Image` 等。
-- 主要進入點不是本文重點，但從全域定義可判斷，執行期會由全域管理器統籌所有子系統生命週期與互動。
+- 執行期會由遊戲主循環調用所有子系統生命週期與互動。
+- 目前開發總進度為 34%，
+- 剩餘部分為:
+  - 35% UI
+  - 8% 小遊戲
+  - 21% 主遊戲邏輯 (Character、Monster、NPC、CharacterAnimation、Map、Skill)
+
+## Quick Start
+
+### Dependency
+1. fmod: 負責音效播放，library已經附在程式碼裡。
+2. d3dx9: 需要安裝舊版DirectX SDK，安裝方法參考:
+	- 下載網址: https://www.microsoft.com/en-us/download/details.aspx?id=6812
+	- 安裝前要先解除安裝: Microsoft Visual C++ 2010 x64 Redistribute
+
+### 遊戲資源下載
+1. 第一次執行要先把遊戲資源打包成mof.pak和mof.paki
+	- 先把mofdata.zip解壓縮，放入專案根目錄。
+	- 下載網址:https://drive.google.com/file/d/1ju1TbYRCycJYOiEkXaXSy9MshcT1ANUA/view?usp=sharing
+	- 把 create_vfs_archive(); 解除註解。
+	- 執行一次打包流程，建立.pak資源檔。
+
 
 ## 核心架構概觀
 
 ### 1. 全域狀態與主幹管理器
+以下為目前版本的實作。
+未來會補齊 `main.c` 的遊戲主循環。
 
-`inc/global.h` 與 `src/global.cpp` 是整個專案的中樞：
+`inc/global.h` 與 `src/global.cpp` 宣告了整個專案的全域變數：
 
 - 定義 Direct3D 裝置、視窗控制、畫面尺寸、輸入旗標與渲染狀態。
 - 集中宣告並實體化主要全域物件，例如：
@@ -228,5 +251,3 @@ UI 是另一個大型模組，涵蓋畫面互動與介面元件組裝。
 - 本文件**只說明 `inc/` 與 `src/` 的一般程式碼**。
 - **不涵蓋測試內容**，也不整理 `src/Test` / `inc/Test`。
 - **不介紹根目錄工具鏈、外部文件或其他附帶檔案**。
-
-如果後續要再擴充文件，建議也維持這種「依模組責任拆解」的方式，避免把編譯工具、封裝流程與程式本體混在一起。
