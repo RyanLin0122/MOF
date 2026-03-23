@@ -16,6 +16,7 @@ public:
     cltPetObject();
     virtual ~cltPetObject();
 
+    void Release();
     void SetActive(int active);
     int  GetActive();
 

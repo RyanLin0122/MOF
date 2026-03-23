@@ -11,7 +11,6 @@
 
 #include "Character/ClientCharacter.h"
 #include "Character/ClientCharacterManager.h"
-#include "Effect/CEffectManager.h"
 #include "Effect/CEffect_Pet_Base.h"
 #include "Image/GameImage.h"
 #include "Image/cltImageManager.h"
@@ -114,7 +113,17 @@ cltPetObject::cltPetObject()
 }
 
 cltPetObject::~cltPetObject() {
+    Release();
+}
+
+void cltPetObject::Release() {
     DeleteEffect();
+    m_nActive = 0;
+    m_pGameImage = nullptr;
+    m_pOwnerChar = nullptr;
+    m_pAniInfo = nullptr;
+    m_pCCA = nullptr;
+    m_pPetKindInfo = nullptr;
 }
 
 void cltPetObject::SetActive(int active) {
@@ -234,20 +243,13 @@ void cltPetObject::CreatePetEffect() {
     auto* effect = new CEffect_Pet_Base();
     effect->SetEffect(this, m_pPetKindInfo->wPetEffect, effectInfo->eaFile);
     m_pEffect = effect;
-    if (g_pEffectManager_Before_Chr) {
-        g_pEffectManager_Before_Chr->BulletAdd(effect);
-    }
 }
 
 void cltPetObject::DeleteEffect() {
     if (!m_pEffect) {
         return;
     }
-    if (g_pEffectManager_Before_Chr) {
-        g_pEffectManager_Before_Chr->DeleteEffect(m_pEffect);
-    } else {
-        delete m_pEffect;
-    }
+    delete m_pEffect;
     m_pEffect = nullptr;
 }
 
@@ -263,7 +265,7 @@ void cltPetObject::SetPetName(char* name) {
     g_MoFFont.GetTextLength(&textWidth, &textHeight, "CharacterName", m_szPetName);
     m_nNameWidth = textWidth + 8;
     m_nNameHalfWidth = m_nNameWidth >> 1;
-    m_wNameBoxW2 = static_cast<std::uint16_t>(m_nNameWidth);
+    m_alphaBox.SetSize(static_cast<std::uint16_t>(m_nNameWidth), 15);
 }
 
 void cltPetObject::Poll() {
@@ -354,9 +356,7 @@ void cltPetObject::PrepareDrawing(int speechFlag, int forceShow) {
                 int giData = *reinterpret_cast<int*>(reinterpret_cast<char*>(m_pGameImage->m_pGIData) + 8);
                 if (giData) {
                     const int* block = reinterpret_cast<const int*>(*reinterpret_cast<int*>(reinterpret_cast<char*>(giData) + 32) + 52 * frame);
-                    const int a = block[8];
-                    const int b = block[6];
-                    textOffsetY = abs32(a) + 40 - (a < 0 ? a : 0);
+                    textOffsetY = abs32(block[8]) + 40;
                 }
             }
 
@@ -389,7 +389,7 @@ void cltPetObject::Draw(int forceShow) {
 
     if (std::strcmp(m_szPetName, kEmptyString) != 0) {
         m_alphaBox.Draw();
-        if (m_pNameBgLeft) m_pNameBgLeft->Draw();
+        if (m_pNameBgRight) m_pNameBgRight->Draw();
         if (m_pNameBgCenter) m_pNameBgCenter->Draw();
         if (m_pNameBgExtra) m_pNameBgExtra->Draw();
 
