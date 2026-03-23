@@ -337,7 +337,7 @@ void cltPetObject::Draw(int forceShow) {
     if (m_pGameImage) {
         if (m_pEffect && m_nDrawMode != 1) {
             m_pEffect->Draw();
-            g_clDeviceManager.ResetRenderState();
+            CDeviceManager::GetInstance()->ResetRenderState();
         }
         m_pGameImage->Draw();
     }
