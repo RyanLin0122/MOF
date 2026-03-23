@@ -12,7 +12,7 @@ public:
 
     void Process() override;
     void Draw() override;
-    void Initialize(std::uint16_t npcID, float posX, float posY, unsigned int type);
+    void Initialize(std::uint16_t npcID, float posX, float posY, std::uint8_t type);
 
 protected:
     GameImage*    m_pGameImage;
@@ -29,7 +29,7 @@ public:
 
     void Process() override;
     void Draw() override;
-    void Initialize(std::uint16_t npcID, float posX, float posY, unsigned int type);
+    void Initialize(std::uint16_t npcID, float posX, float posY, std::uint8_t type);
 
 protected:
     GameImage*    m_pGameImage;

@@ -202,6 +202,9 @@ std::uint16_t cltAnimationObjectManager::GetIndexInMap(std::uint16_t index)
 // -------------------------------------------------------------------------
 std::uint16_t cltAnimationObjectManager::TranslateKindCode(char* code)
 {
+    if (strlen(code) != 5)
+        return 0;
+
     int high = (toupper((unsigned char)code[0]) + 31) << 11;
     std::uint16_t low = (std::uint16_t)atoi(code + 1);
 
