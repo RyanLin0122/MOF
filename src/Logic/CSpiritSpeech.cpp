@@ -190,9 +190,7 @@ char* CSpiritSpeech::CheckSpiritSpeech()
             ReleaseSpiritSpeech(spiritId, selectedScript.scriptId);
 
             int textRoll = std::rand() % selectedScript.textCount;
-            char* text = DCTTextManager::GetText(
-                &g_DCTTextManager,
-                selectedScript.textIds[textRoll]);
+            char* text = g_DCTTextManager.GetText(selectedScript.textIds[textRoll]);
             return text;
         }
     }

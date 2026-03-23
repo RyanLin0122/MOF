@@ -42,6 +42,6 @@ char* CSpiritGossip::CheckSpiritGossip()
         return nullptr;
 
     int textIdx = std::rand() % info.count;
-    char* text = DCTTextManager::GetText(&g_DCTTextManager, info.textIds[textIdx]);
+    char* text = g_DCTTextManager.GetText(info.textIds[textIdx]);
     return text;
 }

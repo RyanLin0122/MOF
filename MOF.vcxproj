@@ -306,6 +306,10 @@
     <ClCompile Include="src\Logic\cltPKFlagManager.cpp" />
     <ClCompile Include="src\Logic\clTransportAniInfo.cpp" />
     <ClCompile Include="src\Logic\clTransportKindInfo.cpp" />
+    <ClCompile Include="src\Logic\CPlayerSpirit.cpp" />
+    <ClCompile Include="src\Logic\CSpiritGossip.cpp" />
+    <ClCompile Include="src\Logic\CSpiritQuestSpeech.cpp" />
+    <ClCompile Include="src\Logic\CSpiritSpeech.cpp" />
     <ClCompile Include="src\Logic\CSpiritSpeechMgr.cpp" />
     <ClCompile Include="src\Logic\Map.cpp" />
     <ClCompile Include="src\Logic\cltCashShopItem.cpp" />
@@ -645,11 +649,15 @@
     <ClInclude Include="inc\Logic\CMeritoriousParsers.h" />
     <ClInclude Include="inc\Logic\CMonsterGroupPerLevel.h" />
     <ClInclude Include="inc\Logic\CObjectManager.h" />
+    <ClInclude Include="inc\Logic\CPlayerSpirit.h" />
     <ClInclude Include="inc\Logic\CShortKey.h" />
     <ClInclude Include="inc\Logic\CMessageBoxManager.h" />
     <ClInclude Include="inc\Logic\cltSystemMessage.h" />
     <ClInclude Include="inc\Logic\cltMyCharData.h" />
     <ClInclude Include="inc\Logic\CQuizEventParser.h" />
+    <ClInclude Include="inc\Logic\CSpiritGossip.h" />
+    <ClInclude Include="inc\Logic\CSpiritQuestSpeech.h" />
+    <ClInclude Include="inc\Logic\CSpiritSpeech.h" />
     <ClInclude Include="inc\Logic\CSpiritSpeechMgr.h" />
     <ClInclude Include="inc\Logic\Map.h" />
     <ClInclude Include="inc\Logic\SpiritGossipParser.h" />

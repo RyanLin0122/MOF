@@ -50,7 +50,7 @@ char* CSpiritQuestSpeech::UpdateQuestHunt(std::uint16_t questId)
     {
         std::uint16_t targetCount = questInfo->extra.hunt.wCount;
         std::uint16_t currentCount = static_cast<std::uint16_t>(playingInfo->dwValue);
-        const char* questName = DCTTextManager::GetText(&g_DCTTextManager, questInfo->wQuestNameCode);
+        const char* questName = g_DCTTextManager.GetText(questInfo->wQuestNameCode);
 
         std::sprintf(m_szBuffer, "%s %d/%d", questName, currentCount, targetCount);
         return m_szBuffer;
@@ -99,12 +99,12 @@ char* CSpiritQuestSpeech::UpdateQuestCollection(std::uint16_t itemKind)
                 if (totalQty2 > needCount2)
                     totalQty2 = needCount2;
 
-                const char* questName = DCTTextManager::GetText(&g_DCTTextManager, qi->wQuestNameCode);
+                const char* questName = g_DCTTextManager.GetText(qi->wQuestNameCode);
                 std::sprintf(m_szBuffer, "%s %d/%d %d/%d", questName, totalQty1, needCount1, totalQty2, needCount2);
             }
             else
             {
-                const char* questName = DCTTextManager::GetText(&g_DCTTextManager, qi->wQuestNameCode);
+                const char* questName = g_DCTTextManager.GetText(qi->wQuestNameCode);
                 std::sprintf(m_szBuffer, "%s %d/%d", questName, totalQty1, needCount1);
             }
             return m_szBuffer;
@@ -138,14 +138,14 @@ char* CSpiritQuestSpeech::CheckCompleteQuest()
 
                 // NPC name is at byte offset 4 in stNPCInfo (low 16 bits of _reserved[0])
                 std::uint16_t npcNameCode = static_cast<std::uint16_t>(npcInfo->_reserved[0]);
-                char* npcName = DCTTextManager::GetText(&g_DCTTextManager, npcNameCode);
+                char* npcName = g_DCTTextManager.GetText(npcNameCode);
 
                 std::uint16_t mapNameCode = g_clNPCManager.GetMapName(npcId);
-                char* mapName = DCTTextManager::GetText(&g_DCTTextManager, mapNameCode);
+                char* mapName = g_DCTTextManager.GetText(mapNameCode);
 
-                char* questName = DCTTextManager::GetText(&g_DCTTextManager, questInfo->wQuestNameCode);
+                char* questName = g_DCTTextManager.GetText(questInfo->wQuestNameCode);
 
-                const char* formatText = DCTTextManager::GetText(&g_DCTTextManager, 4679);
+                const char* formatText = g_DCTTextManager.GetText(4679);
 
                 std::sprintf(m_szBuffer, formatText, questName, mapName, npcName);
             }
