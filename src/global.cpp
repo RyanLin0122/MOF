@@ -29,6 +29,9 @@
 #include "Logic/cltMatchManager.h"
 #include "Logic/cltPKFlagManager.h"
 #include "Logic/CSpiritSpeechMgr.h"
+#include "Logic/SpiritSpeechParser.h"
+#include "Logic/SpiritGossipParser.h"
+#include "Info/cltQuestKindInfo.h"
 #include "Logic/clTransportKindInfo.h"
 #include "Logic/clClientTransportKindInfo.h"
 #include "Logic/cltMyCharData.h"
@@ -95,6 +98,7 @@ CMoFNetwork g_Network;
 cltClassKindInfo g_clClassKindInfo;
 cltItemKindInfo g_clItemKindInfo;
 cltNPCInfo g_clNPCInfo;
+cltQuestKindInfo g_clQuestKindInfo;
 CSpiritSystem g_clSpiritSystem;
 cltQuestSystem g_clQuestSystem;
 CMeritoriousSystem g_clMeritoriousSystem;
@@ -119,6 +123,8 @@ cltMoF_MineManager g_clMineMgr;
 cltMatchManager g_clMatchManager;
 cltPKFlagManager g_clPKFlagManager;
 CSpiritSpeechMgr g_clSpiritSpeechMgr;
+CSpiritSpeechParser g_clSpiritSpeechParser;
+CSpiritGossipParser g_clSpiritGossipParser;
 clTransportKindInfo g_clTransportKindInfo;
 clClientTransportKindInfo g_clClientTransportKindInfo;
 CEffectManager* g_pEffectManager_Before_Chr = nullptr;
