@@ -57,6 +57,7 @@ class cltMoneySystem;
 class cltMoFC_EffectKindInfo;
 class cltMyCharData;
 class cltSystemMessage;
+class CDeviceManager;
 
 //-----------------------------------------------------------------------------
 // 全域變數
@@ -200,6 +201,9 @@ extern cltMoneySystem           g_clMoneySystem;
 extern cltMoFC_EffectKindInfo   g_clEffectKindInfo;
 extern cltMyCharData            g_clMyCharData;
 extern cltSystemMessage         g_clSysemMessage;
+
+// Device
+extern CDeviceManager           g_clDeviceManager;
 
 // DrawObject_All / rendering globals restored from mofclient.c
 extern int                      dword_73D154;

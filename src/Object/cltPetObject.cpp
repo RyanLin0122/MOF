@@ -12,6 +12,7 @@
 #include "Character/ClientCharacter.h"
 #include "Character/ClientCharacterManager.h"
 #include "Effect/CEffect_Pet_Base.h"
+#include "Image/CDeviceManager.h"
 #include "Image/GameImage.h"
 #include "Image/cltImageManager.h"
 #include "Info/cltClientPetKindInfo.h"
@@ -41,18 +42,10 @@ inline int abs32(int value) {
     return value < 0 ? -value : value;
 }
 
-inline int ResolveOwnerActionState(const ClientCharacter* owner) {
-    return owner ? static_cast<int>(owner->GetActionState()) : 0;
-}
-
 inline bool IsOwnerOnTransport(const ClientCharacter* owner) {
     if (!owner) return false;
     auto* transport = reinterpret_cast<const clTransportObject*>(reinterpret_cast<const char*>(owner) + 14616);
     return const_cast<clTransportObject*>(transport)->GetActive() != 0;
-}
-
-inline std::uint8_t ResolveOwnerMotionFlags(const ClientCharacter* owner) {
-    return owner ? *reinterpret_cast<const std::uint8_t*>(reinterpret_cast<const char*>(owner) + 11548) : 0;
 }
 
 inline unsigned int ResolveMyAccount() {
@@ -62,54 +55,13 @@ inline unsigned int ResolveMyAccount() {
 } // namespace
 
 cltPetObject::cltPetObject()
-    : m_pGameImage(nullptr)
+    : m_nActive(0)
     , m_pOwnerChar(nullptr)
-    , m_pAniInfo(nullptr)
-    , m_pCCA(nullptr)
     , m_pPetKindInfo(nullptr)
-    , m_pNameBgLeft(nullptr)
-    , m_pNameBgCenter(nullptr)
-    , m_pNameBgRight(nullptr)
-    , m_pNameBgExtra(nullptr)
     , m_pEffect(nullptr)
-    , m_nActive(0)
-    , m_nDyeFlag(0)
-    , m_wNameBoxW(0)
-    , m_wNameBoxW2(0)
-    , m_nNameWidth(0)
-    , m_nNameHalfWidth(0)
-    , m_nPosX(0)
-    , m_nPosY(0)
-    , m_wNameHeight(0)
-    , m_wNameHeightPad(0)
-    , m_nFacing(0)
-    , m_nSpeechFlag(0)
-    , m_nPatrolDir(0)
-    , m_nOffsetX(0)
-    , m_nPatrolStep(0)
     , m_fTraceRatio(1.0f)
     , m_nTraceReady(1)
-    , m_fPatrolRatio(0.0f)
-    , m_nPatrolActive(0)
-    , m_bIsMyPet(0)
-    , m_nReserved751(0)
-    , m_nNearItemCount(0)
-    , m_nReserved753(0)
-    , m_nCanPickup(0)
-    , m_dwLastPickupTime(0)
-    , m_dwLastInvFullMsg(0)
-    , m_nLastSatiety(0)
-    , m_nPatrolState(0)
-    , m_nAlpha(255)
-    , m_nDrawMode(0)
-    , m_nPickupInterval(0)
-    , m_nTransportInit(0)
-    , m_wTotalFrames(0)
-    , m_wCurrentFrame(0)
-    , m_wNearItemKind(0)
-    , m_wNearItemQty(0)
-    , m_wNearItemGrade(0) {
-    m_szPetName[0] = '\0';
+    , m_nAlpha(255) {
 }
 
 cltPetObject::~cltPetObject() {
@@ -138,11 +90,11 @@ void cltPetObject::SetActive(int active) {
         m_nOffsetX = -100;
         m_nPatrolDir = 1;
         m_fTraceRatio = 1.0f;
-        m_nFacing = m_pOwnerChar ? (m_pOwnerChar->m_dwLR_Flag == 0) : 0;
+        m_nFacing = (m_pOwnerChar->m_dwLR_Flag == 0);
         m_nTraceReady = 1;
         if (m_pCCA) {
             m_nPosX = static_cast<int>(*reinterpret_cast<float*>(reinterpret_cast<char*>(m_pCCA) + 128));
-        } else if (m_pOwnerChar) {
+        } else {
             m_nPosX = m_pOwnerChar->m_iPosX;
         }
         m_dwLastPickupTime = 0;
@@ -231,7 +183,7 @@ void cltPetObject::InitPet(ClientCharacter* owner, CCA* cca, uint16_t petKind, i
 
 void cltPetObject::CreatePetEffect() {
     m_pEffect = nullptr;
-    if (!m_pPetKindInfo || m_pPetKindInfo->wPetEffect == 0) {
+    if (m_pPetKindInfo->wPetEffect == 0) {
         return;
     }
 
@@ -258,7 +210,7 @@ void cltPetObject::DyePet(uint16_t petKind, int hiddenFlag) {
 }
 
 void cltPetObject::SetPetName(char* name) {
-    std::strcpy(m_szPetName, name ? name : const_cast<char*>(kEmptyString));
+    std::strcpy(m_szPetName, name);
     g_MoFFont.SetFont("CharacterName");
     int textWidth = 0;
     int textHeight = 0;
@@ -291,15 +243,15 @@ void cltPetObject::Poll() {
         m_chatBallon.SetString(speech, 0, 0, 0, 0, static_cast<Direction>(DirLeft | DirRight));
 
         if (m_pPetKindInfo) {
-            const int satiety = g_clPetSystem.GetPetSatiety();
-            if (m_nLastSatiety > satiety) {
-                m_nLastSatiety = satiety;
+            const float satietyF = static_cast<float>(g_clPetSystem.GetPetSatiety());
+            if (static_cast<double>(m_nLastSatiety) > static_cast<double>(satietyF)) {
+                m_nLastSatiety = g_clPetSystem.GetPetSatiety();
                 if (!m_pPetKindInfo->wSaturation) {
                     SetActive(0);
                     return;
                 }
 
-                const double ratio = static_cast<double>(satiety) / static_cast<double>(m_pPetKindInfo->wSaturation);
+                const double ratio = static_cast<double>(satietyF) / static_cast<double>(m_pPetKindInfo->wSaturation);
                 if (ratio <= 0.1) {
                     SetActive(1);
                     cltSystemMessage::SetSystemMessage(&g_clSysemMessage, g_DCTTextManager.GetText(6727), 0, 0xFFFFFFFF, 0xFFFF0000);
@@ -318,7 +270,7 @@ void cltPetObject::PrepareDrawing(int speechFlag, int forceShow) {
     }
 
     m_nSpeechFlag = speechFlag;
-    m_nDrawMode = ResolveOwnerActionState(m_pOwnerChar);
+    m_nDrawMode = static_cast<int>(m_pOwnerChar->GetActionState());
     if (m_nDrawMode == 1) {
         MoveTrace();
     } else {
@@ -329,7 +281,7 @@ void cltPetObject::PrepareDrawing(int speechFlag, int forceShow) {
     std::uint16_t frame = 0;
     DecideDrawFrame(&resourceId, &frame);
     m_pGameImage = cltImageManager::GetInstance()->GetGameImage(1u, resourceId, 0, 1);
-    if (!m_pGameImage || !m_pPetKindInfo) {
+    if (!m_pGameImage) {
         return;
     }
 
@@ -351,13 +303,15 @@ void cltPetObject::PrepareDrawing(int speechFlag, int forceShow) {
 
     if (!m_pCCA) {
         if (m_bIsMyPet && m_nSpeechFlag) {
-            int textOffsetY = 40;
-            if (m_pGameImage->m_pGIData) {
-                int giData = *reinterpret_cast<int*>(reinterpret_cast<char*>(m_pGameImage->m_pGIData) + 8);
-                if (giData) {
-                    const int* block = reinterpret_cast<const int*>(*reinterpret_cast<int*>(reinterpret_cast<char*>(giData) + 32) + 52 * frame);
-                    textOffsetY = abs32(block[8]) + 40;
-                }
+            auto* pGIData = m_pGameImage->m_pGIData;
+            if (!pGIData) {
+                return;
+            }
+            int value = *reinterpret_cast<int*>(*reinterpret_cast<int*>(reinterpret_cast<char*>(pGIData) + 32) + 32);
+            int textOffsetY = abs32(value) + 40;
+
+            if (!m_pOwnerChar) {
+                return;
             }
 
             int balloonX = m_nOffsetX + m_pOwnerChar->m_iPosX - dword_A73088;
@@ -383,6 +337,7 @@ void cltPetObject::Draw(int forceShow) {
     if (m_pGameImage) {
         if (m_pEffect && m_nDrawMode != 1) {
             m_pEffect->Draw();
+            g_clDeviceManager.ResetRenderState();
         }
         m_pGameImage->Draw();
     }
@@ -409,7 +364,7 @@ void cltPetObject::Draw(int forceShow) {
 }
 
 void cltPetObject::MoveTrace() {
-    if (m_pCCA || !m_pOwnerChar) {
+    if (m_pCCA) {
         return;
     }
 
@@ -456,10 +411,6 @@ void cltPetObject::MoveTrace() {
 }
 
 void cltPetObject::MovePatrol() {
-    if (!m_pOwnerChar) {
-        return;
-    }
-
     int ownerX = m_pOwnerChar->m_iPosX;
     int ownerY = m_pOwnerChar->m_iPosY;
     if (m_pCCA) {
@@ -537,13 +488,7 @@ void cltPetObject::MovePatrol() {
 }
 
 void cltPetObject::DecideDrawFrame(unsigned int* outResId, uint16_t* outFrame) {
-    if (!m_pAniInfo || !m_pOwnerChar) {
-        if (outResId) *outResId = 0;
-        if (outFrame) *outFrame = 0;
-        return;
-    }
-
-    const std::uint8_t motionFlags = ResolveOwnerMotionFlags(m_pOwnerChar);
+    const std::uint8_t motionFlags = *reinterpret_cast<std::uint8_t*>(reinterpret_cast<char*>(m_pOwnerChar) + 11548);
     m_wTotalFrames = m_pAniInfo->GetTotalFrameNum(0);
     m_pAniInfo->GetFrameInfo(0, m_wCurrentFrame, outResId, outFrame);
 
@@ -579,13 +524,13 @@ void cltPetObject::SetNearItemInfo(int itemCount, uint16_t itemKind, uint16_t it
 }
 
 void cltPetObject::RequestPickUpItem() {
-    if (!m_nCanPickup || !m_pPetKindInfo) {
+    if (!m_nCanPickup) {
         return;
     }
 
     const int satiety = g_clPetSystem.GetPetSatiety();
-    const int maxSatiety = m_pPetKindInfo->wSaturation;
-    if (maxSatiety == 0 || static_cast<double>(satiety) / static_cast<double>(maxSatiety) < 0.1) {
+    const std::uint16_t maxSatiety = m_pPetKindInfo->wSaturation;
+    if (static_cast<double>(satiety) / static_cast<double>(maxSatiety) < 0.1) {
         return;
     }
 
@@ -619,7 +564,7 @@ void cltPetObject::RequestPickUpItem() {
     }
 
     cltPetInventorySystem* petInventory = g_clPetSystem.GetPetInventorySystem();
-    const int canAdd = petInventory ? petInventory->CanAddItem(itemKind, itemInfo) : 6800;
+    const int canAdd = petInventory->CanAddItem(itemKind, itemInfo);
     if (canAdd == 0) {
         SetNearItemInfo(itemCount, itemKind, itemInfo);
         g_Network.PetPickUpItem(fieldItemId, itemInfo);
@@ -629,7 +574,7 @@ void cltPetObject::RequestPickUpItem() {
 
     if (timeGetTime() - m_dwLastInvFullMsg > 0xFA0) {
         m_dwLastInvFullMsg = timeGetTime();
-        const unsigned int color = (canAdd == 1904) ? 0 : 0xFFFF1600u;
+        const unsigned int color = (canAdd == 1904) ? 0 : static_cast<unsigned int>(-71168);
         const int textId = (canAdd == 1904) ? 6834 : 6800;
         cltSystemMessage::SetSystemMessage(&g_clSysemMessage, g_DCTTextManager.GetText(textId), 0, color, 0);
     }
@@ -644,21 +589,20 @@ void cltPetObject::PickUpItem() {
         ss << m_wNearItemQty;
 
         stItemKindInfo* itemInfo = g_clItemKindInfo.GetItemKindInfo(m_wNearItemKind);
-        const char* itemName = itemInfo ? g_DCTTextManager.GetText(itemInfo->m_wTextCode) : kEmptyString;
-        params.emplace("Parameter0", itemName ? itemName : kEmptyString);
+        const char* itemName = g_DCTTextManager.GetText(itemInfo->m_wTextCode);
+        params.emplace("Parameter0", itemName);
         params.emplace("Parameter1", ss.c_str());
 
         const char* tmpl = g_DCTTextManager.GetText(6735);
         std::string msg = getScriptParameter(tmpl, params);
         if (msg == tmpl) {
-            std::snprintf(buffer, sizeof(buffer), tmpl, itemName ? itemName : kEmptyString, m_wNearItemQty);
+            std::snprintf(buffer, sizeof(buffer), tmpl, itemName, m_wNearItemQty);
         } else {
             std::snprintf(buffer, sizeof(buffer), "%s", msg.c_str());
         }
 
-        if (cltPetInventorySystem* petInventory = g_clPetSystem.GetPetInventorySystem()) {
-            petInventory->AddItem(m_wNearItemKind, static_cast<int>(m_wNearItemQty), nullptr);
-        }
+        cltPetInventorySystem* petInventory = g_clPetSystem.GetPetInventorySystem();
+        petInventory->AddItem(m_wNearItemKind, static_cast<int>(m_wNearItemQty), nullptr);
         g_clSpiritSpeechMgr.UpdateQuestCollection(m_wNearItemKind);
     } else {
         std::snprintf(buffer, sizeof(buffer), g_DCTTextManager.GetText(6736), m_nNearItemCount);
