@@ -12,9 +12,7 @@ FORCE_MISSING_CLASSES = [
     "ClientCharacterManager",
     "cltUsingSkillSystem",
     "cltCharKindInfo",
-    "CMonsterGroupPerLevel",
     "cltConfiguration",
-    "cltFieldItemManager",
     "cltHelpMessage",
     "cltNPCManager",
     "CUIManager",
@@ -22,8 +20,20 @@ FORCE_MISSING_CLASSES = [
     "cltMyCharData",
     "cltWorkingPassiveSkillSystem",
     "Map",
-    "cltPetObject"
-
+    "clClientTransportKindInfo",
+    "clTransportAnilInfo",
+    "clTransportKindInfo",
+    "clTMapTitle",
+    "clTMatchManager",
+    "clTMoF_MineManager",
+    "clTPKFlagManager",
+    "cltPetObject",
+    "CMonsterGroupPerLevel",
+    "CSpiritSpeechMgr",
+    "CSpiritGossip",
+    "CSpiritQuestSpeech",
+    "CSpiritSpeech"
+    
 ]
 
 # 例外清單：放 class 名稱字串，這些 class 會被跳過
