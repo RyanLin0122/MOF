@@ -54,7 +54,7 @@ void cltQuestMark::Draw()
         m_pGameImage->Draw();
 }
 
-void cltQuestMark::Initialize(std::uint16_t npcID, float posX, float posY, unsigned int type)
+void cltQuestMark::Initialize(std::uint16_t npcID, float posX, float posY, std::uint8_t type)
 {
     m_siField4 = npcID;
     m_nPosX = static_cast<int>(static_cast<std::int64_t>(posX));
@@ -113,7 +113,7 @@ void cltRewardMark::Draw()
         m_pGameImage->Draw();
 }
 
-void cltRewardMark::Initialize(std::uint16_t npcID, float posX, float posY, unsigned int type)
+void cltRewardMark::Initialize(std::uint16_t npcID, float posX, float posY, std::uint8_t type)
 {
     m_siField4 = npcID;
     m_nPosX = static_cast<int>(static_cast<std::int64_t>(posX));

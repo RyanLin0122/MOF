@@ -77,13 +77,14 @@ DrawObject_All::~DrawObject_All() {}
 
 void DrawObject_All::PrepareDrawing()
 {
+    // Ground truth: do-while 迴圈結構
     ClientCharacter* pChar = &unk_1409D80[0];
-    while (pChar < reinterpret_cast<ClientCharacter*>(&dword_1843F78))
+    do
     {
         if (reinterpret_cast<unsigned int*>(pChar)[1109])
             pChar->PrepareDrawingChar();
         pChar = reinterpret_cast<ClientCharacter*>(reinterpret_cast<char*>(pChar) + 14824);
-    }
+    } while (pChar < reinterpret_cast<ClientCharacter*>(&dword_1843F78));
 
     g_ObjectManager.Process();
     g_clFieldItemMgr.PrepareDrawing();

@@ -250,19 +250,20 @@ void clTransportObject::SetActionState(unsigned int actionState)
     m_dwActionState = actionState;
     m_wTotalFrameUp = 0;
     m_wTotalFrameDown = 0;
+    // Ground truth: 直接呼叫，不做 null 保護
     switch (actionState)
     {
     case 0:
-        m_wTotalFrameUp = m_pAniInfoUp ? m_pAniInfoUp->GetTotalFrameNum(0) : 0;
-        m_wTotalFrameDown = m_pAniInfoDown ? m_pAniInfoDown->GetTotalFrameNum(0) : 0;
+        m_wTotalFrameUp = m_pAniInfoUp->GetTotalFrameNum(0);
+        m_wTotalFrameDown = m_pAniInfoDown->GetTotalFrameNum(0);
         break;
     case 1:
-        m_wTotalFrameUp = m_pAniInfoUp ? m_pAniInfoUp->GetTotalFrameNum(1) : 0;
-        m_wTotalFrameDown = m_pAniInfoDown ? m_pAniInfoDown->GetTotalFrameNum(1) : 0;
+        m_wTotalFrameUp = m_pAniInfoUp->GetTotalFrameNum(1);
+        m_wTotalFrameDown = m_pAniInfoDown->GetTotalFrameNum(1);
         break;
     case 4:
-        m_wTotalFrameUp = m_pAniInfoUp ? m_pAniInfoUp->GetTotalFrameNum(4) : 0;
-        m_wTotalFrameDown = m_pAniInfoDown ? m_pAniInfoDown->GetTotalFrameNum(4) : 0;
+        m_wTotalFrameUp = m_pAniInfoUp->GetTotalFrameNum(4);
+        m_wTotalFrameDown = m_pAniInfoDown->GetTotalFrameNum(4);
         break;
     default:
         break;

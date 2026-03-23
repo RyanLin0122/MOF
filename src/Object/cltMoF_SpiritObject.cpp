@@ -69,9 +69,7 @@ cltMoF_SpiritObject::~cltMoF_SpiritObject()
 // -------------------------------------------------------------------------
 void cltMoF_SpiritObject::SetActive(ClientCharacter* pChar, int active)
 {
-    if (!pChar)
-        return;
-
+    // Ground truth: 直接存取 a2 的 accountID，不做 null 檢查
     if (pChar->m_dwAccountID != ResolveManagerAccountID(m_pCharMgr))
         return;
 
@@ -121,10 +119,8 @@ int cltMoF_SpiritObject::GetFront()
 // -------------------------------------------------------------------------
 void cltMoF_SpiritObject::SetChar(ClientCharacter* pChar, std::uint16_t param)
 {
-    // Ground truth: 先檢查 accountID 匹配，再檢查 pChar 非空
-    if (!pChar)
-        return;
-    if (pChar->m_dwAccountID != ResolveManagerAccountID(m_pCharMgr))
+    // Ground truth: if (a2->accountID == managerAccountID && a2)
+    if (pChar->m_dwAccountID != ResolveManagerAccountID(m_pCharMgr) || !pChar)
         return;
 
     m_pOwnerChar = pChar;
@@ -180,9 +176,8 @@ void cltMoF_SpiritObject::UpdateSpirit(std::uint8_t level)
         m_wBlockCount = pInfo->wBlockCount;
 
         m_nActive = 1;
-        // Ground truth: direction = owner offset 572
-        if (m_pOwnerChar)
-            m_nDirection = m_pOwnerChar->m_dwLR_Flag;
+        // Ground truth: direction = owner offset 572 (無 null 保護)
+        m_nDirection = m_pOwnerChar->m_dwLR_Flag;
         m_fTraceScale = 1.0f;
         m_nTraceFlag = 1;
         // Ground truth: currentBlock = 0
