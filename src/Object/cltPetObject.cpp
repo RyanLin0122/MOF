@@ -1,3 +1,4 @@
+#include "Network/CMoFNetwork.h"
 #include "Object/cltPetObject.h"
 
 #include <algorithm>
@@ -24,7 +25,6 @@
 #include "Logic/CSpiritSpeechMgr.h"
 #include "Logic/cltMyCharData.h"
 #include "Logic/cltSystemMessage.h"
-#include "Network/CMoFNetwork.h"
 #include "Object/clTransportObject.h"
 #include "System/cltMoneySystem.h"
 #include "System/cltPetInventorySystem.h"

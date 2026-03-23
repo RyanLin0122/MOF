@@ -44,5 +44,24 @@ int cltCharKindInfo::GetCharKindInfoByDropItemKind(uint16_t /*dropItemKindCode*/
     return 0;
 }
 
+int cltCharKindInfo::GetMonsterCharKinds(int /*a2*/, int /*a3*/, int /*a4*/, int /*a5*/, uint16_t* /*a6*/)
+{
+    // Stub: the reconstructed client does not have the original monster kind
+    // table wired up yet, so report "no matching monsters".
+    return 0;
+}
+
+int cltCharKindInfo::IsMonsterChar(uint16_t /*kindCode*/)
+{
+    // Stub: without the original char kind table, default to "not a monster".
+    return 0;
+}
+
+void* cltCharKindInfo::GetBossInfoByKind(uint16_t /*kindCode*/)
+{
+    // Stub: no boss metadata is available in the reconstructed client yet.
+    return nullptr;
+}
+
 // Global instance definition
 cltCharKindInfo g_clCharKindInfo;
