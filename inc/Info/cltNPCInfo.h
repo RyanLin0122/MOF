@@ -23,6 +23,7 @@ public:
     int GetTotalNPCNum() const;
     stNPCInfo* GetNPCInfoByIndex(int index);
     stNPCInfo* GetNPCInfoByID(std::uint16_t npcKind);
+    std::uint16_t GetMapID(std::uint16_t npcKind);
     std::uint16_t GetNPCIDByQuestID(int questID, int* outNPCIndex);
 
     void SetNPCList(std::vector<stNPCInfo> list);

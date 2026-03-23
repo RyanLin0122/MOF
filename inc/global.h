@@ -58,6 +58,12 @@ class cltMoFC_EffectKindInfo;
 class cltMyCharData;
 class cltSystemMessage;
 class CDeviceManager;
+class CSpiritSpeechParser;
+class CSpiritGossipParser;
+class cltQuestKindInfo;
+class cltLessonSystem;
+class cltSkillSystem;
+class cltPlayerAbility;
 
 //-----------------------------------------------------------------------------
 // 全域變數
@@ -157,6 +163,7 @@ extern CMoFNetwork              g_Network;
 extern cltClassKindInfo         g_clClassKindInfo;
 extern cltItemKindInfo          g_clItemKindInfo;
 extern cltNPCInfo               g_clNPCInfo;
+extern cltQuestKindInfo         g_clQuestKindInfo;
 
 // System
 extern CSpiritSystem            g_clSpiritSystem;
@@ -175,6 +182,8 @@ extern cltMoF_MineManager       g_clMineMgr;
 extern cltMatchManager          g_clMatchManager;
 extern cltPKFlagManager         g_clPKFlagManager;
 extern CSpiritSpeechMgr         g_clSpiritSpeechMgr;
+extern CSpiritSpeechParser      g_clSpiritSpeechParser;
+extern CSpiritGossipParser      g_clSpiritGossipParser;
 extern clTransportKindInfo      g_clTransportKindInfo;
 extern clClientTransportKindInfo g_clClientTransportKindInfo;
 

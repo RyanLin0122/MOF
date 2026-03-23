@@ -52,6 +52,14 @@ std::uint16_t cltNPCInfo::GetNPCIDByQuestID(int questID, int* outNPCIndex) {
     return 0;
 }
 
+std::uint16_t cltNPCInfo::GetMapID(std::uint16_t npcKind) {
+    stNPCInfo* info = GetNPCInfoByID(npcKind);
+    if (!info)
+        return 0;
+    // Map ID is stored at byte offset 12 of stNPCInfo = _reserved[2] low 16 bits
+    return static_cast<std::uint16_t>(info->_reserved[2]);
+}
+
 void cltNPCInfo::SetNPCList(std::vector<stNPCInfo> list) {
     m_npcs = std::move(list);
 }
