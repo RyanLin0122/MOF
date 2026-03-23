@@ -43,9 +43,9 @@ struct stSpeechCondition
 struct stSpeechScript
 {
     std::uint16_t scriptId;
+    std::uint16_t conditionCount;
     std::int32_t outputMode;
     std::int32_t onceChecked;
-    std::uint16_t conditionCount;
     stSpeechCondition conditions[3];
     std::uint16_t probability;
     std::uint16_t textCount;

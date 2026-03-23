@@ -12,7 +12,6 @@
 
 namespace
 {
-constexpr std::size_t kMaxScripts = 100;
 constexpr std::size_t kMaxConditions = 3;
 constexpr std::size_t kMaxTexts = 5;
 }
@@ -23,7 +22,7 @@ stSpeechCondition::stSpeechCondition()
 }
 
 stSpeechScript::stSpeechScript()
-    : scriptId(0), outputMode(0), onceChecked(0), conditionCount(0),
+    : scriptId(0), conditionCount(0), outputMode(0), onceChecked(0),
       conditions{}, probability(0), textCount(0), textIds{}
 {
 }
@@ -60,8 +59,6 @@ int CSpiritSpeechParser::Initialize(char* filePath)
         std::fgets(buffer, 1023, stream) != nullptr &&
         std::fgets(buffer, 1023, stream) != nullptr)
     {
-        stSpeechScript overflowScript;
-
 parse_line:
         char* token = std::strtok(buffer, delimiter);
         if (token != nullptr)
@@ -74,7 +71,7 @@ parse_line:
             {
                 stSpeechInfo& info = m_speechMap[spiritId];
                 const std::uint16_t speechIndex = info.speechCount;
-                stSpeechScript* script = (speechIndex < kMaxScripts) ? &info.scripts[speechIndex] : &overflowScript;
+                stSpeechScript* script = &info.scripts[speechIndex];
                 *script = stSpeechScript();
 
                 script->scriptId = TranslateKindCode(stringToken);
@@ -99,8 +96,8 @@ parse_line:
                                 break;
                             }
 
-                            char conditionName[32] = {};
-                            std::strncpy(conditionName, conditionToken, sizeof(conditionName) - 1);
+                            char conditionName[32];
+                            std::strcpy(conditionName, conditionToken);
 
                             char* valueToken = std::strtok(nullptr, delimiter);
                             if (valueToken == nullptr)
@@ -108,8 +105,8 @@ parse_line:
                                 break;
                             }
 
-                            char valueText[32] = {};
-                            std::strncpy(valueText, valueToken, sizeof(valueText) - 1);
+                            char valueText[32];
+                            std::strcpy(valueText, valueToken);
 
                             SetSpiritSpeechCondition(spiritId,
                                                      speechIndex,
@@ -139,10 +136,7 @@ parse_line:
                                                 break;
                                             }
 
-                                            if (textIndex < kMaxTexts)
-                                            {
-                                                script->textIds[textIndex] = static_cast<std::uint16_t>(std::atoi(stringToken));
-                                            }
+                                            script->textIds[textIndex] = static_cast<std::uint16_t>(std::atoi(stringToken));
 
                                             const bool hasMore = (++textIndex < kMaxTexts);
                                             if (!hasMore)
@@ -187,11 +181,6 @@ void CSpiritSpeechParser::SetSpiritSpeechCondition(std::uint16_t spiritId,
                                                    char* valueToken)
 {
     stSpeechInfo& info = m_speechMap[spiritId];
-    if (speechIndex >= kMaxScripts || conditionIndex >= kMaxConditions)
-    {
-        return;
-    }
-
     stSpeechCondition& cond = info.scripts[speechIndex].conditions[conditionIndex];
 
     if (strcasecmp(conditionToken, "LOWLEVEL") == 0)
@@ -359,15 +348,12 @@ bool CSpiritSpeechParser::IsExistSpiritID(std::uint16_t spiritId) const
 void CSpiritSpeechParser::CheckOnceCondition(std::uint16_t spiritId, std::uint16_t speechIndex)
 {
     AddSpiritID(spiritId);
-    if (speechIndex < kMaxScripts)
-    {
-        m_speechMap[spiritId].scripts[speechIndex].onceChecked = 1;
-    }
+    m_speechMap[spiritId].scripts[speechIndex].onceChecked = 1;
 }
 
 std::uint16_t CSpiritSpeechParser::TranslateKindCode(const char* token) const
 {
-    if (token == nullptr || std::strlen(token) != 5)
+    if (std::strlen(token) != 5)
     {
         return 0;
     }
@@ -384,7 +370,7 @@ std::uint16_t CSpiritSpeechParser::TranslateKindCode(const char* token) const
 
 std::uint16_t CSpiritSpeechParser::TranslateKindCodeBySkillID(const char* token) const
 {
-    if (token == nullptr || std::strlen(token) != 6)
+    if (std::strlen(token) != 6)
     {
         return 0;
     }

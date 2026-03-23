@@ -59,11 +59,7 @@ int CSpiritGossipParser::Initialize(char* filePath)
             const std::uint16_t textId = static_cast<std::uint16_t>(std::atoi(textToken));
             const std::uint16_t index = info.count;
 
-            // 原始碼未做越界保護，這裡保留同樣容量假設，但避免寫爆陣列。
-            if (index < 100)
-            {
-                info.textIds[index] = textId;
-            }
+            info.textIds[index] = textId;
             ++info.count;
         }
         while (std::fgets(buffer, 1023, stream) != nullptr);
@@ -100,11 +96,6 @@ bool CSpiritGossipParser::IsExistSpiritID(std::uint16_t spiritId) const
 
 std::uint16_t CSpiritGossipParser::TranslateKindCode(const char* token) const
 {
-    if (token == nullptr)
-    {
-        return 0;
-    }
-
     if (std::strlen(token) != 5)
     {
         return 0;
