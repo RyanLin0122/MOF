@@ -312,6 +312,8 @@
     <ClCompile Include="src\Logic\CMeritoriousParsers.cpp" />
     <ClCompile Include="src\Logic\CMonsterGroupPerLevel.cpp" />
     <ClCompile Include="src\Logic\CQuizEventParser.cpp" />
+    <ClCompile Include="src\Logic\SpiritGossipParser.cpp" />
+    <ClCompile Include="src\Logic\SpiritSpeechParser.cpp" />
     <ClCompile Include="src\Other\CAttendanceBookParser.cpp" />
     <ClCompile Include="src\Other\cltAttackAtb.cpp" />
     <ClCompile Include="src\Other\cltBaseAbility.cpp" />
@@ -650,6 +652,8 @@
     <ClInclude Include="inc\Logic\CQuizEventParser.h" />
     <ClInclude Include="inc\Logic\CSpiritSpeechMgr.h" />
     <ClInclude Include="inc\Logic\Map.h" />
+    <ClInclude Include="inc\Logic\SpiritGossipParser.h" />
+    <ClInclude Include="inc\Logic\SpiritSpeechParser.h" />
     <ClInclude Include="inc\Object\cltNPC_Taxi.h" />
     <ClInclude Include="inc\Object\cltQuestMark.h" />
     <ClInclude Include="inc\Other\CAttendanceBookParser.h" />
