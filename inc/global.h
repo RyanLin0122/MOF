@@ -50,6 +50,13 @@ class cltPKFlagManager;
 class CSpiritSpeechMgr;
 class clClientTransportKindInfo;
 class clTransportKindInfo;
+class cltPetKindInfo;
+class cltClientPetKindInfo;
+class cltPetSystem;
+class cltMoneySystem;
+class cltMoFC_EffectKindInfo;
+class cltMyCharData;
+class cltSystemMessage;
 
 //-----------------------------------------------------------------------------
 // 全域變數
@@ -184,6 +191,15 @@ extern CEffectManager*          g_pEffectManager_After_Chr;
 // UI
 extern CUITutorial*             g_pUITutorial;
 extern CUIManager*              g_UIMgr;
+
+// Pet / Monster / Money
+extern cltPetKindInfo           g_clPetKindInfoBase;
+extern cltClientPetKindInfo     g_clClientPetKindInfo;
+extern cltPetSystem             g_clPetSystem;
+extern cltMoneySystem           g_clMoneySystem;
+extern cltMoFC_EffectKindInfo   g_clEffectKindInfo;
+extern cltMyCharData            g_clMyCharData;
+extern cltSystemMessage         g_clSysemMessage;
 
 // DrawObject_All / rendering globals restored from mofclient.c
 extern int                      dword_73D154;

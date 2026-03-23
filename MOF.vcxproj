@@ -257,6 +257,7 @@
     <ClCompile Include="src\Info\cltBasicAppearKindInfo.cpp" />
     <ClCompile Include="src\Info\cltCharKindInfo.cpp" />
     <ClCompile Include="src\Info\cltClassKindInfo.cpp" />
+    <ClCompile Include="src\Info\cltClientPetKindInfo.cpp" />
     <ClCompile Include="src\Info\cltClimateKindInfo.cpp" />
     <ClCompile Include="src\Info\cltCoupleRingKindInfo.cpp" />
     <ClCompile Include="src\Info\cltDebuffKindInfo.cpp" />
@@ -585,6 +586,7 @@
     <ClInclude Include="inc\Info\cltBasicAppearKindInfo.h" />
     <ClInclude Include="inc\Info\cltCharKindInfo.h" />
     <ClInclude Include="inc\Info\cltClassKindInfo.h" />
+    <ClInclude Include="inc\Info\cltClientPetKindInfo.h" />
     <ClInclude Include="inc\Info\cltClimateKindInfo.h" />
     <ClInclude Include="inc\Info\cltCoupleRingKindInfo.h" />
     <ClInclude Include="inc\Info\cltDebuffKindInfo.h" />

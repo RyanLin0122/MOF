@@ -3,6 +3,9 @@
 #include "Info/cltItemKindInfo.h"
 #include "Info/cltNPCInfo.h"
 #include "Info/cltCharKindInfo.h"
+#include "Info/cltPetKindInfo.h"
+#include "Info/cltClientPetKindInfo.h"
+#include "Info/cltMoFC_EffectKindInfo.h"
 #include "Character/ClientCharacter.h"
 #include "Character/ClientCharacterManager.h"
 #include "System/cltQuestSystem.h"
@@ -10,6 +13,8 @@
 #include "System/CSpiritSystem.h"
 #include "System/cltLevelSystem.h"
 #include "System/cltClassSystem.h"
+#include "System/cltPetSystem.h"
+#include "System/cltMoneySystem.h"
 #include "Util/cltTimer.h"
 #include "Logic/Map.h"
 #include "Logic/cltFieldItem.h"
@@ -26,12 +31,15 @@
 #include "Logic/CSpiritSpeechMgr.h"
 #include "Logic/clTransportKindInfo.h"
 #include "Logic/clClientTransportKindInfo.h"
+#include "Logic/cltMyCharData.h"
+#include "Logic/cltSystemMessage.h"
 #include "UI/CUITutorial.h"
 #include "UI/CUIManager.h"
 #include "Object/CObjectResourceManager.h"
 #include "Object/DrawObject_All.h"
 #include "Network/CMoFNetwork.h"
 #include "Effect/CEffectManager.h"
+
 
 LPDIRECT3D9 g_pD3D = NULL;
 LPDIRECT3DDEVICE9 g_pd3dDevice = NULL;
@@ -115,6 +123,14 @@ clTransportKindInfo g_clTransportKindInfo;
 clClientTransportKindInfo g_clClientTransportKindInfo;
 CEffectManager* g_pEffectManager_Before_Chr = nullptr;
 CEffectManager* g_pEffectManager_After_Chr = nullptr;
+
+cltPetKindInfo g_clPetKindInfoBase;
+cltClientPetKindInfo g_clClientPetKindInfo;
+cltPetSystem g_clPetSystem;
+cltMoneySystem g_clMoneySystem;
+cltMoFC_EffectKindInfo g_clEffectKindInfo;
+// cltMyCharData g_clMyCharData is defined in Logic/cltMyCharData.cpp
+// cltSystemMessage g_clSysemMessage is defined in Logic/cltSystemMessage.cpp
 
 int dword_73D154 = 0;
 int dword_B4BAB4 = 0;
