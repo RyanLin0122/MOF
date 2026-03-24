@@ -12,9 +12,6 @@
 #include "System/cltPetInventorySystem.h"
 
 CSpiritQuestSpeech::CSpiritQuestSpeech()
-    : m_pQuestSystem(nullptr)
-    , m_pInventory(nullptr)
-    , m_pPetInventory(nullptr)
 {
     std::strcpy(m_szBuffer, "");
 }
