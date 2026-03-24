@@ -12,8 +12,6 @@ FORCE_MISSING_CLASSES = [
     "ClientCharacterManager",
     "cltUsingSkillSystem",
     "cltCharKindInfo",
-    "cltConfiguration",
-    "cltHelpMessage",
     "cltNPCManager",
     "CUIManager",
     "CUITutorial",
@@ -23,13 +21,14 @@ FORCE_MISSING_CLASSES = [
     "clClientTransportKindInfo",
     "clTransportAnilInfo",
     "clTransportKindInfo",
-    "clTMapTitle",
-    "clTMatchManager",
-    "clTMoF_MineManager",
-    "clTPKFlagManager",
-    "cltPetObject",
-    "CSpiritSpeechParser",
-    "CSpiritGossipParser"
+    
+    "cltConfiguration",
+    "DirectInputManager",
+    "cltHelpMessage",
+    "cltMapTitle",
+    "cltMatchManager",
+    "cltMoF_MineManager",
+    "cltPKFlagManager"
 ]
 
 # 例外清單：放 class 名稱字串，這些 class 會被跳過
