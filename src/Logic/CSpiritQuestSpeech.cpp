@@ -93,14 +93,12 @@ char* CSpiritQuestSpeech::UpdateQuestCollection(std::uint16_t itemKind)
 
             if (needCount2)
             {
-                std::int16_t invQty2 = m_pInventory->GetInventoryItemQuantity(static_cast<int>(item2));
-                std::uint16_t petQty2 = m_pPetInventory->GetInventoryItemQuantity(item2);
-                std::uint16_t totalQty2 = static_cast<std::uint16_t>(invQty2 + petQty2);
-                if (totalQty2 > needCount2)
-                    totalQty2 = needCount2;
+                // Ground truth calls these but discards the results
+                m_pPetInventory->GetInventoryItemQuantity(item2);
+                m_pInventory->GetInventoryItemQuantity(static_cast<int>(item2));
 
                 const char* questName = g_DCTTextManager.GetText(qi->wQuestNameCode);
-                std::sprintf(m_szBuffer, "%s %d/%d %d/%d", questName, totalQty1, needCount1, totalQty2, needCount2);
+                std::sprintf(m_szBuffer, "%s %d/%d %d/%d", questName, totalQty1, needCount1, needCount2, needCount2);
             }
             else
             {
