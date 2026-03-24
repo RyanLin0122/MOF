@@ -15,6 +15,7 @@
 
 CSpiritSpeech::CSpiritSpeech()
     : m_checkFuncs{}
+    , m_releaseFuncs{}
     , m_wMapId(0)
     , m_wMapKind(0)
     , m_wMonsterKind(0)
@@ -46,14 +47,12 @@ void CSpiritSpeech::Free()
     m_wMapKind = 0;
     m_wMonsterKind = 0;
     m_bMonsterKillFlag = 0;
-    m_bAllMonsterKillFlag = 0;
     m_nEquipFlag = 0;
     m_wLowExpLevel = 0;
     m_wLevelUpLevel = 0;
     m_bLevelUpFlag = 0;
     m_bAddSkillFlag = 0;
     m_bLowExpFlag = 0;
-    m_wPetEatItemKind = 0;
     m_pLevelSystem = nullptr;
     m_pQuestSystem = nullptr;
     m_pLessonSystem = nullptr;
@@ -87,16 +86,23 @@ void CSpiritSpeech::SetCheckFunc()
     m_checkFuncs[21] = &CSpiritSpeech::CheckPetEatBone;
 }
 
+void CSpiritSpeech::SetReleaseFunc()
+{
+    m_releaseFuncs[SSC_MONSTERKILL]    = &CSpiritSpeech::ReleaseMonsterKill;
+    m_releaseFuncs[SSC_LOWEXP]         = &CSpiritSpeech::ReleaseLowExpUp;
+    m_releaseFuncs[SSC_LEVELUP]        = &CSpiritSpeech::ReleaseLevelUp;
+    m_releaseFuncs[SSC_ADDACTIVESKILL] = &CSpiritSpeech::ReleaseAddSkill;
+    m_releaseFuncs[SSC_ALLMONSTERKILL]  = &CSpiritSpeech::ReleaseAllMonsterKill;
+}
+
+void CSpiritSpeech::CallReleaseFunc(std::uint16_t condType)
+{
+    (this->*m_releaseFuncs[condType])();
+}
+
 int CSpiritSpeech::CallCheckFunc(std::uint16_t condType, std::uint16_t value)
 {
-    if (condType == 0 || condType >= kMaxCheckFuncs)
-        return 0;
-
-    CheckFunc func = m_checkFuncs[condType];
-    if (!func)
-        return 0;
-
-    return (this->*func)(value);
+    return (this->*m_checkFuncs[condType])(value);
 }
 
 int CSpiritSpeech::SetSpiritSpeech(cltLevelSystem* levelSys, cltQuestSystem* questSys,

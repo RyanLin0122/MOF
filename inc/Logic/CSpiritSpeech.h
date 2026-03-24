@@ -11,14 +11,17 @@ class cltPlayerAbility;
 class CSpiritSpeech {
 public:
     typedef int (CSpiritSpeech::*CheckFunc)(std::uint16_t);
+    typedef void (CSpiritSpeech::*ReleaseFunc)();
 
     CSpiritSpeech();
     ~CSpiritSpeech();
 
     void Free();
     void SetCheckFunc();
+    void SetReleaseFunc();
 
     int CallCheckFunc(std::uint16_t condType, std::uint16_t value);
+    void CallReleaseFunc(std::uint16_t condType);
 
     int SetSpiritSpeech(cltLevelSystem* levelSys, cltQuestSystem* questSys,
                         cltLessonSystem* lessonSys, cltSkillSystem* skillSys,
@@ -70,8 +73,10 @@ public:
 
 private:
     static constexpr int kMaxCheckFuncs = 22;
+    static constexpr int kMaxReleaseFuncs = 22;
 
     CheckFunc m_checkFuncs[kMaxCheckFuncs];
+    ReleaseFunc m_releaseFuncs[kMaxReleaseFuncs];
 
     std::uint16_t m_wMapId;
     std::uint16_t m_wMapKind;
