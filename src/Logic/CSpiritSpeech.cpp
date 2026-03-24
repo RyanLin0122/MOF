@@ -28,12 +28,14 @@ void CSpiritSpeech::Free()
     m_wMapKind = 0;
     m_wMonsterKind = 0;
     m_bMonsterKillFlag = 0;
+    m_bAllMonsterKillFlag = 0;
     m_nEquipFlag = 0;
     m_wLowExpLevel = 0;
     m_wLevelUpLevel = 0;
     m_bLevelUpFlag = 0;
     m_bAddSkillFlag = 0;
     m_bLowExpFlag = 0;
+    m_wPetEatItemKind = 0;
     m_pLevelSystem = nullptr;
     m_pQuestSystem = nullptr;
     m_pLessonSystem = nullptr;

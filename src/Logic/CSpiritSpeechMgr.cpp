@@ -44,10 +44,9 @@ int CSpiritSpeechMgr::SetSpiritSpeech(cltLevelSystem* levelSys, cltQuestSystem* 
     return 1;
 }
 
-void CSpiritSpeechMgr::SetSpiritID(std::uint16_t /*spiritId*/)
+void CSpiritSpeechMgr::SetSpiritID(std::uint16_t spiritId)
 {
-    // Original implementation not found in IDA output.
-    // Spirit identity is determined at runtime from g_clPetSystem.GetPetKind().
+    (void)spiritId;
 }
 
 int CSpiritSpeechMgr::PlaySpiritSpeech()
