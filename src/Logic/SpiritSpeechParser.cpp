@@ -169,7 +169,6 @@ void CSpiritSpeechParser::GetSpiritSpeechInfo(CSpiritSpeechParser& out) const
 {
     out.m_flag0 = m_flag0;
     out.m_flag1 = m_flag1;
-    std::memcpy(out.m_padding, m_padding, sizeof(m_padding));
     out.m_forceInsertPath = m_forceInsertPath;
     out.m_speechMap = m_speechMap;
 }
