@@ -28,12 +28,8 @@ FORCE_MISSING_CLASSES = [
     "clTMoF_MineManager",
     "clTPKFlagManager",
     "cltPetObject",
-    "CMonsterGroupPerLevel",
-    "CSpiritSpeechMgr",
-    "CSpiritGossip",
-    "CSpiritQuestSpeech",
-    "CSpiritSpeech"
-    
+    "CSpiritSpeechParser",
+    "CSpiritGossipParser"
 ]
 
 # 例外清單：放 class 名稱字串，這些 class 會被跳過
