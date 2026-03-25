@@ -189,7 +189,7 @@ int DirectInputManager::hrReadInput() {
 
     // Process joystick if available and nation code matches (2, 3, 4, or 5)
     if (m_pJoyStick) {
-        unsigned char nationCode = MoFFont::GetNationCode(reinterpret_cast<MoFFont*>(&g_MoFFont));
+        unsigned char nationCode = static_cast<unsigned char>(g_MoFFont.GetNationCode());
         if (nationCode == 2 || nationCode == 3 || nationCode == 4 || nationCode == 5) {
             m_pJoyStick->Acquire();
             m_pJoyStick->Update();
