@@ -39,4 +39,8 @@ public:
     // Coord conversion
     int MapXtoScreenX(int x);
     int MapYtoScreenY(int y);
+
+    // Map title resource (從 stMapInfo 取得地圖區域標題資源)
+    unsigned int   GetMapAreaTitleResourceID(unsigned short mapID);
+    unsigned short GetMapAreaTitleBlockID(unsigned short mapID);
 };

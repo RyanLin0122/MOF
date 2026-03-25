@@ -214,6 +214,9 @@ extern cltSystemMessage         g_clSysemMessage;
 // Device
 extern CDeviceManager           g_clDeviceManager;
 
+// cltHelpMessage 使用的全域旗標
+extern int                      dword_AFD344;
+
 // DrawObject_All / rendering globals restored from mofclient.c
 extern int                      dword_73D154;
 extern int                      dword_B4BAB4;

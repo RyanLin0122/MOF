@@ -1,4 +1,5 @@
 #include "Logic/Map.h"
+#include "Info/cltMapInfo.h"
 
 Map::Map() {}
 Map::~Map() {}
@@ -25,3 +26,21 @@ void Map::DrawClimate() {}
 
 int Map::MapXtoScreenX(int x) { return x; }
 int Map::MapYtoScreenY(int y) { return y; }
+
+// --- 地圖區域標題資源 (從 mofclient.c 還原) ---
+
+unsigned int Map::GetMapAreaTitleResourceID(unsigned short mapID)
+{
+    stMapInfo* info = GetMapInfoByID(mapID);
+    if (info)
+        return info->m_dwResourceID;
+    return 0;
+}
+
+unsigned short Map::GetMapAreaTitleBlockID(unsigned short mapID)
+{
+    stMapInfo* info = GetMapInfoByID(mapID);
+    if (info)
+        return info->m_wBlockID;
+    return 0;
+}
