@@ -436,7 +436,7 @@ int cltTutorialSystem::ExitTutorialMap() {
     g_clMyInventory.EmptyInventoryItem(1);
 
     int helpState = 0;
-    g_clConfig->GetHelpState(&helpState);
+    g_clConfig->GetHelpState(reinterpret_cast<LPCSTR>(g_clConfig), &helpState);
     g_clHelpMessage.IsShow(helpState);
 
     return 1;
