@@ -64,6 +64,7 @@ class cltQuestKindInfo;
 class cltLessonSystem;
 class cltSkillSystem;
 class cltPlayerAbility;
+class DirectInputManager;
 
 //-----------------------------------------------------------------------------
 // 全域變數
