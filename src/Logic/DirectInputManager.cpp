@@ -1,20 +1,7 @@
 #include "Logic/DirectInputManager.h"
+#include "Logic/XJoyStick.h"
 #include "global.h"
 #include <cstring>
-
-// ---- Gamemare::XJoyStick forward declarations ----
-// These are defined in the original binary's joystick library.
-// Declared here so DirectInputManager can call them.
-namespace Gamemare {
-    class XJoyStick {
-    public:
-        static XJoyStick* GetInstance();
-        HRESULT Init(HWND hWnd, bool useJoystick);
-        void Acquire();
-        void Update();
-        void Free();
-    };
-}
 
 // ======== Keyboard ========
 

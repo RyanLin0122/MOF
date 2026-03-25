@@ -1014,6 +1014,9 @@
     <ClCompile Include="src\Logic\DirectInputManager.cpp">
       <Filter>來源檔案</Filter>
     </ClCompile>
+    <ClCompile Include="src\Logic\XJoyStick.cpp">
+      <Filter>來源檔案</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="inc\Sound\COgg.h">
@@ -2028,6 +2031,9 @@
       <Filter>標頭檔</Filter>
     </ClInclude>
     <ClInclude Include="inc\Logic\DirectInputManager.h">
+      <Filter>標頭檔</Filter>
+    </ClInclude>
+    <ClInclude Include="inc\Logic\XJoyStick.h">
       <Filter>標頭檔</Filter>
     </ClInclude>
   </ItemGroup>
