@@ -306,8 +306,8 @@ void cltHelpMessage::Draw()
     if (!m_bActive || !m_bCanShow)
         return;
 
-    g_clDeviceManager.SetRenderState(D3DRS_SRCBLEND, 5u);   // D3DBLEND_SRCALPHA
-    g_clDeviceManager.SetRenderState(D3DRS_DESTBLEND, 6u);   // D3DBLEND_INVSRCALPHA
+    CDeviceManager::GetInstance()->SetRenderState(D3DRS_SRCBLEND, 5u);   // D3DBLEND_SRCALPHA
+    CDeviceManager::GetInstance()->SetRenderState(D3DRS_DESTBLEND, 6u);   // D3DBLEND_INVSRCALPHA
 
     if (m_pBgImage)
         m_pBgImage->Draw();

@@ -139,8 +139,6 @@ cltMoFC_EffectKindInfo g_clEffectKindInfo;
 // cltMyCharData g_clMyCharData is defined in Logic/cltMyCharData.cpp
 // cltSystemMessage g_clSysemMessage is defined in Logic/cltSystemMessage.cpp
 
-CDeviceManager g_clDeviceManager;
-
 int dword_AFD344 = 0;
 
 int dword_73D154 = 0;

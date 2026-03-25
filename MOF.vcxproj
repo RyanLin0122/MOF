@@ -643,6 +643,8 @@
     <ClInclude Include="inc\Logic\cltHelpMessage.h" />
     <ClInclude Include="inc\Logic\cltMapTitle.h" />
     <ClInclude Include="inc\Logic\cltMatchManager.h" />
+    <ClInclude Include="inc\Logic\cltMiniGame_Button.h" />
+    <ClInclude Include="inc\Logic\cltMoF_ClientMine.h" />
     <ClInclude Include="inc\Logic\cltMoF_MineManager.h" />
     <ClInclude Include="inc\Logic\cltNPCManager.h" />
     <ClInclude Include="inc\Logic\cltPKFlagManager.h" />
