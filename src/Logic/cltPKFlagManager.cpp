@@ -18,7 +18,6 @@ stPKFlag::stPKFlag()
     handleID    = 0;
     posX        = 0;
     posY        = 0;
-    _reserved1  = 0;
     userNum     = 0;
     maxUserNum  = 0;
     roomLevel   = 0;
@@ -46,7 +45,6 @@ stPKFlag::~stPKFlag()
 cltPKFlagManager::cltPKFlagManager()
     : m_nRoomNum(0)
 {
-    std::memset(m_sortedPtrs, 0, sizeof(m_sortedPtrs));
 }
 
 cltPKFlagManager::~cltPKFlagManager()
@@ -331,7 +329,7 @@ int cltPKFlagManager::IsCreateMatchRoom(int x, int y)
     for (int i = 0; i < m_nRoomNum; ++i)
     {
         stPKFlag* p = m_sortedPtrs[i];
-        if (!p || p->handleID == 0)
+        if (p->handleID == 0)
             continue;
 
         if (std::abs(p->posX - x) < 100)
@@ -354,7 +352,7 @@ unsigned int cltPKFlagManager::IsJoinMatchRoom(int mouseX, int mouseY)
     for (int i = 0; i < m_nRoomNum; ++i)
     {
         stPKFlag* p = m_sortedPtrs[i];
-        if (!p || p->handleID == 0)
+        if (p->handleID == 0)
             continue;
 
         if (std::abs(p->posX - dword_A73088 - mouseX) < 100)

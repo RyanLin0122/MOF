@@ -12,11 +12,11 @@ struct stMatchInfo {
     uint8_t  userNum = 0;          // 1
     uint8_t  maxUserNum = 0;       // 2
     uint8_t  roomLevel = 0;        // 3
-    char     masterName[16] = {};  // 4  (原 15 bytes)
-    char     roomTitle[48] = {};   // 19 (原 41 bytes，餘留 padding)
+    char     masterName[15] = {};  // 4  (15 bytes, GT copy loop < 0xF)
+    char     roomTitle[41] = {};   // 19 (41 bytes, GT copy loop < 0x29)
     int      posX = 0;             // 60
     int      posY = 0;             // 64
-    char     tag[14] = {};         // 68
+    char     tag[13] = {};         // 68 (13 bytes, GT copy loop < 0xD)
     uint16_t betMoney = 0;         // 82
     char     infoText[128] = {};   // 84
     int      textPosX = 0;         // 212
