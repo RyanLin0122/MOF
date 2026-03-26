@@ -298,9 +298,9 @@ HRESULT DirectInputManager::hrInitDirectInput(LPVOID* ppvOut) {
         if (hr < 0)
             return -2130706431; // custom error code from original
     }
-    // The original stores HKL at ppvOut[135] — since ppvOut == (LPVOID*)this,
-    // ppvOut[135] == byte offset 540 == m_hkl.
-    m_hkl = GetKeyboardLayout(0);
+    // Ground truth writes HKL through ppvOut pointer at index 135,
+    // NOT through this->m_hkl directly.
+    ppvOut[135] = reinterpret_cast<LPVOID>(GetKeyboardLayout(0));
     return hr;
 }
 
