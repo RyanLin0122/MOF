@@ -19,8 +19,9 @@ stMatchInfo::stMatchInfo()
     userNum     = 0;
     maxUserNum  = 0;
     roomLevel   = 0;
-    std::memset(masterName, 0, sizeof(masterName));
-    std::memset(roomTitle, 0, sizeof(roomTitle));
+    // GT: 使用 strcpy 初始化字串
+    std::strcpy(masterName, "");
+    std::strcpy(roomTitle, "");
     posX        = 0;
     posY        = 0;
     std::memset(tag, 0, sizeof(tag));
@@ -79,7 +80,7 @@ void cltMatchManager::Poll()
 // ---------------------------------------------------------------------------
 void cltMatchManager::PrepareDrawing()
 {
-    for (int i = 0; i < MAX_ROOMS - 1; ++i)    // 前 20 筆 (ground truth: v7=20)
+    for (int i = 1; i < MAX_ROOMS; ++i)    // GT: 從 m_matches[1] 起跑，迭代 20 筆 (1..20)
     {
         stMatchInfo& info = m_matches[i];
         if (info.roomID == 0)
@@ -117,8 +118,8 @@ void cltMatchManager::PrepareDrawing()
                                 info.nameScreenY - dword_A7308C);
         info.chatBallon.PrepareDrawing();
 
-        // 會議室專屬圖片（有 roomTitle 時顯示）
-        if (std::strcmp(info.roomTitle, "") != 0)
+        // GT: 依 tag 欄位 (offset 68) 判斷是否顯示副圖片
+        if (std::strcmp(info.tag, "") != 0)
         {
             GameImage* subImg = cltImageManager::GetInstance()->GetGameImage(
                 6u, 0xD00008Au, 0, 1);
@@ -142,12 +143,8 @@ void cltMatchManager::PrepareDrawing()
 // ---------------------------------------------------------------------------
 void cltMatchManager::Draw(uint8_t index)
 {
-    if (index >= m_nRoomNum)
-        return;
-
+    // GT: 直接取 sortedPtrs，不做 index 範圍/空指標檢查
     stMatchInfo* pInfo = m_sortedPtrs[index];
-    if (!pInfo)
-        return;
 
     // 繪製旗幟
     if (pInfo->pFlagImage)
@@ -166,7 +163,7 @@ void cltMatchManager::Draw(uint8_t index)
                 (int)pInfo->maxUserNum,
                 (int)pInfo->roomLevel,
                 (int)pInfo->betMoney,
-                suffix ? suffix : "");
+                suffix);
 
         g_MoFFont.SetTextLineA(
             pInfo->textPosX - dword_A73088,
@@ -176,8 +173,8 @@ void cltMatchManager::Draw(uint8_t index)
             0, -1, -1);
     }
 
-    // 副圖片
-    if (std::strcmp(pInfo->roomTitle, "") != 0)
+    // 副圖片 — GT: 比對 tag 欄位 (offset 68)
+    if (std::strcmp(pInfo->tag, "") != 0)
     {
         if (pInfo->pSubImage)
             pInfo->pSubImage->Draw();
@@ -253,28 +250,33 @@ void cltMatchManager::AddMatchInfo(stMatchInfo* pInfo)
     if (pInfo->roomID == 0)
         return;
 
+    // GT: 不做 MAX_ROOMS 範圍檢查，由呼叫端保證
     uint8_t idx = pInfo->roomID;
-    if (idx >= MAX_ROOMS)
-        return;
 
     stMatchInfo& dst = m_matches[idx];
 
-    // 複製基本欄位
+    // GT: 整筆複製基本欄位 + 控件狀態 (operator=)
     dst.roomID      = pInfo->roomID;
     dst.userNum     = pInfo->userNum;
     dst.maxUserNum  = pInfo->maxUserNum;
     dst.roomLevel   = pInfo->roomLevel;
-    std::strncpy(dst.masterName, pInfo->masterName, sizeof(dst.masterName) - 1);
-    std::strncpy(dst.roomTitle,  pInfo->roomTitle,  sizeof(dst.roomTitle) - 1);
+    std::strcpy(dst.masterName, pInfo->masterName);
+    std::strcpy(dst.roomTitle,  pInfo->roomTitle);
     dst.posX        = pInfo->posX;
     dst.posY        = pInfo->posY;
     std::memcpy(dst.tag, pInfo->tag, sizeof(dst.tag));
     dst.betMoney    = pInfo->betMoney;
+    std::memcpy(dst.infoText, pInfo->infoText, sizeof(dst.infoText));
     dst.textPosX    = pInfo->textPosX;
     dst.textPosY    = pInfo->textPosY;
     dst.nameScreenX = pInfo->nameScreenX;
     dst.nameScreenY = pInfo->nameScreenY;
     dst.animFrame   = pInfo->animFrame;
+    dst.pFlagImage  = pInfo->pFlagImage;
+    dst.pSubImage   = pInfo->pSubImage;
+    // GT: CControlBase::operator= + CControlChatBallon::operator= 複製控件狀態
+    dst.alphaBox    = pInfo->alphaBox;
+    dst.chatBallon  = pInfo->chatBallon;
 
     // 格式化資訊文字
     g_MoFFont.SetFont("MatchInfo");
@@ -286,7 +288,7 @@ void cltMatchManager::AddMatchInfo(stMatchInfo* pInfo)
             (int)dst.maxUserNum,
             (int)dst.roomLevel,
             (int)dst.betMoney,
-            suffix ? suffix : "");
+            suffix);
 
     // 計算文字長度，設定顯示座標
     int textWidth = 0, textHeight = 0;
@@ -309,7 +311,8 @@ void cltMatchManager::AddMatchInfo(stMatchInfo* pInfo)
     dst.nameScreenX = dst.posX;
     dst.nameScreenY = dst.posY - 110;
 
-    // 設定 chatBallon
+    // GT: 先呼叫 chatBallon.Create 設定外觀，再 SetString
+    dst.chatBallon.Create(nullptr, 1, 0xFF000000u, 0);
     dst.chatBallon.SetString(dst.roomTitle, 0, 0, 0, 0, DirDown);
 }
 
@@ -318,16 +321,15 @@ void cltMatchManager::AddMatchInfo(stMatchInfo* pInfo)
 // ---------------------------------------------------------------------------
 void cltMatchManager::DelMatchInfo(uint8_t index)
 {
-    if (index >= MAX_ROOMS)
-        return;
-
+    // GT: 不做範圍檢查，由呼叫端保證
     stMatchInfo& dst = m_matches[index];
     dst.roomID      = 0;
     dst.userNum     = 0;
     dst.maxUserNum  = 0;
     dst.roomLevel   = 0;
-    std::memset(dst.masterName, 0, sizeof(dst.masterName));
-    std::memset(dst.roomTitle,  0, sizeof(dst.roomTitle));
+    // GT: 使用 strcpy 清空字串（而非 memset）
+    std::strcpy(dst.masterName, "");
+    std::strcpy(dst.roomTitle,  "");
     dst.posX        = 0;
     dst.posY        = 0;
     dst.betMoney    = 0;
@@ -354,9 +356,8 @@ void cltMatchManager::UpdateMatchUserSize(uint8_t roomID, uint8_t newUserNum)
 // ---------------------------------------------------------------------------
 stMatchInfo* cltMatchManager::GetMatchInfo(uint8_t roomID)
 {
+    // GT: 只檢查 roomID != 0 和 slot 是否有效，不做 MAX_ROOMS 範圍檢查
     if (roomID == 0)
-        return nullptr;
-    if (roomID >= MAX_ROOMS)
         return nullptr;
     if (m_matches[roomID].roomID == 0)
         return nullptr;
