@@ -23,12 +23,7 @@ FORCE_MISSING_CLASSES = [
     "clTransportKindInfo",
     
     "cltConfiguration",
-    "DirectInputManager",
-    "cltHelpMessage",
-    "cltMapTitle",
-    "cltMatchManager",
-    "cltMoF_MineManager",
-    "cltPKFlagManager"
+    "DirectInputManager"
 ]
 
 # 例外清單：放 class 名稱字串，這些 class 會被跳過
