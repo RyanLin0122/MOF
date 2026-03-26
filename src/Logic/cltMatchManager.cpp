@@ -24,16 +24,12 @@ stMatchInfo::stMatchInfo()
     std::strcpy(roomTitle, "");
     posX        = 0;
     posY        = 0;
-    std::memset(tag, 0, sizeof(tag));
-    betMoney    = 0;
-    std::memset(infoText, 0, sizeof(infoText));
     textPosX    = 0;
     textPosY    = 0;
     nameScreenX = 0;
     nameScreenY = 0;
     animFrame   = 0;
     pFlagImage  = nullptr;
-    pSubImage   = nullptr;
     // alphaBox 與 chatBallon 由各自的建構函式初始化
     alphaBox.NoneActive();
     chatBallon.NoneActive();
@@ -50,7 +46,6 @@ stMatchInfo::~stMatchInfo()
 cltMatchManager::cltMatchManager()
     : m_nRoomNum(0)
 {
-    std::memset(m_sortedPtrs, 0, sizeof(m_sortedPtrs));
 }
 
 cltMatchManager::~cltMatchManager()
@@ -193,7 +188,7 @@ int cltMatchManager::IsCreateMatchRoom(int x, int y)
     for (int i = 0; i < count; ++i)
     {
         stMatchInfo* p = m_sortedPtrs[i];
-        if (!p || p->roomID == 0)
+        if (p->roomID == 0)
             continue;
 
         if (std::abs(p->posX - x) < 100)
@@ -216,7 +211,7 @@ uint8_t cltMatchManager::IsJoinMatchRoom(int mouseX, int mouseY)
     for (int i = 0; i < (int)m_nRoomNum; ++i)
     {
         stMatchInfo* p = m_sortedPtrs[i];
-        if (!p || p->roomID == 0)
+        if (p->roomID == 0)
             continue;
 
         if (std::abs(p->posX - dword_A73088 - mouseX) < 100)
@@ -332,12 +327,12 @@ void cltMatchManager::DelMatchInfo(uint8_t index)
     std::strcpy(dst.roomTitle,  "");
     dst.posX        = 0;
     dst.posY        = 0;
-    dst.betMoney    = 0;
     dst.textPosX    = 0;
     dst.textPosY    = 0;
     dst.nameScreenX = 0;
     dst.nameScreenY = 0;
     dst.animFrame   = 0;
+    dst.pFlagImage  = nullptr;
     dst.alphaBox.NoneActive();
     dst.chatBallon.NoneActive();
 }
@@ -347,8 +342,7 @@ void cltMatchManager::DelMatchInfo(uint8_t index)
 // ---------------------------------------------------------------------------
 void cltMatchManager::UpdateMatchUserSize(uint8_t roomID, uint8_t newUserNum)
 {
-    if (roomID < MAX_ROOMS)
-        m_matches[roomID].userNum = newUserNum;
+    m_matches[roomID].userNum = newUserNum;
 }
 
 // ---------------------------------------------------------------------------
