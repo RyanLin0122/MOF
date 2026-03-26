@@ -26,8 +26,9 @@ stPKFlag::stPKFlag()
     textPosY    = 0;
     nameScreenX = 0;
     nameScreenY = 0;
-    std::memset(masterName, 0, sizeof(masterName));
-    std::memset(infoText, 0, sizeof(infoText));
+    // GT: 使用 strcpy 初始化字串
+    std::strcpy(masterName, "");
+    std::strcpy(infoText, "");
     animFrame   = 0;
     pFlagImage  = nullptr;
     // alphaBox 由建構函式初始化
@@ -50,8 +51,9 @@ cltPKFlagManager::cltPKFlagManager()
 
 cltPKFlagManager::~cltPKFlagManager()
 {
-    for (int i = 0; i < MAX_PK_ROOMS; ++i)
-        std::memset(&m_rooms[i], 0, sizeof(stPKFlag));
+    // GT: memset 整塊清零 (0xE100 bytes)，再由 eh vector destructor iterator 逐一解構
+    std::memset(m_rooms, 0, sizeof(m_rooms));
+    // C++ 編譯器會自動對 m_rooms[] 陣列元素呼叫 ~stPKFlag()
 }
 
 // ---------------------------------------------------------------------------
@@ -88,16 +90,10 @@ void cltPKFlagManager::AddPKRoom(stPKFlag* pFlag)
     if (idx < 0)
         return;
 
-    stPKFlag& dst = m_rooms[idx];
+    // GT: qmemcpy 整筆複製 stPKFlag (0x240 bytes)
+    std::memcpy(&m_rooms[idx], pFlag, sizeof(stPKFlag));
 
-    // 複製全部欄位
-    dst.handleID    = pFlag->handleID;
-    dst.posX        = pFlag->posX;
-    dst.posY        = pFlag->posY;
-    dst.userNum     = pFlag->userNum;
-    dst.maxUserNum  = pFlag->maxUserNum;
-    dst.roomLevel   = pFlag->roomLevel;
-    std::strncpy(dst.masterName, pFlag->masterName, sizeof(dst.masterName) - 1);
+    stPKFlag& dst = m_rooms[idx];
 
     // 格式化資訊文字
     g_MoFFont.SetFont("MatchInfo");
@@ -108,7 +104,7 @@ void cltPKFlagManager::AddPKRoom(stPKFlag* pFlag)
             (int)dst.userNum,
             (int)dst.maxUserNum,
             (int)dst.roomLevel,
-            suffix ? suffix : "");
+            suffix);
 
     // 計算文字長度
     int textWidth = 0, textHeight = 0;
@@ -153,15 +149,8 @@ void cltPKFlagManager::UpdatePKRoomInfo(unsigned int handleID, stPKFlag* pNewInf
     if (idx < 0)
         return;
 
-    stPKFlag& dst = m_rooms[idx];
-    dst.handleID    = pNewInfo->handleID;
-    dst.posX        = pNewInfo->posX;
-    dst.posY        = pNewInfo->posY;
-    dst.userNum     = pNewInfo->userNum;
-    dst.maxUserNum  = pNewInfo->maxUserNum;
-    dst.roomLevel   = pNewInfo->roomLevel;
-    std::strncpy(dst.masterName, pNewInfo->masterName, sizeof(dst.masterName) - 1);
-
+    // GT: qmemcpy 整筆覆寫 stPKFlag (0x240 bytes)
+    std::memcpy(&m_rooms[idx], pNewInfo, sizeof(stPKFlag));
     UpdatePKRoomInfoText(idx);
 }
 
@@ -173,7 +162,8 @@ void cltPKFlagManager::SetMasterName(unsigned int handleID, char* name)
     int idx = FindRoomIndex(handleID);
     if (idx < 0)
         return;
-    std::strncpy(m_rooms[idx].masterName, name, sizeof(m_rooms[idx].masterName) - 1);
+    // GT: 使用 strcpy（非 strncpy）
+    std::strcpy(m_rooms[idx].masterName, name);
     UpdatePKRoomInfoText(idx);
 }
 
@@ -218,9 +208,7 @@ void cltPKFlagManager::SetRoomLevel(unsigned int handleID, uint8_t level)
 // ---------------------------------------------------------------------------
 void cltPKFlagManager::UpdatePKRoomInfoText(int index)
 {
-    if (index < 0 || index >= MAX_PK_ROOMS)
-        return;
-
+    // GT: 不做範圍檢查，由呼叫端保證
     stPKFlag& room = m_rooms[index];
 
     g_MoFFont.SetFont("MatchInfo");
@@ -231,7 +219,7 @@ void cltPKFlagManager::UpdatePKRoomInfoText(int index)
             (int)room.userNum,
             (int)room.maxUserNum,
             (int)room.roomLevel,
-            suffix ? suffix : "");
+            suffix);
 
     int textWidth = 0, textHeight = 0;
     g_MoFFont.GetTextLength(&textWidth, &textHeight, "MatchInfo", room.infoText);
@@ -314,25 +302,22 @@ void cltPKFlagManager::PrepareDrawing()
 // ---------------------------------------------------------------------------
 void cltPKFlagManager::Draw(uint8_t index)
 {
-    if (index >= m_nRoomNum)
-        return;
-
+    // GT: 直接取 sortedPtrs，只檢查 pFlagImage
     stPKFlag* pRoom = m_sortedPtrs[index];
-    if (!pRoom)
-        return;
-    if (!pRoom->pFlagImage)
-        return;
 
-    pRoom->pFlagImage->Draw();
-    pRoom->alphaBox.Draw();
+    if (pRoom->pFlagImage)
+    {
+        pRoom->pFlagImage->Draw();
+        pRoom->alphaBox.Draw();
 
-    g_MoFFont.SetFont("MatchInfo");
-    g_MoFFont.SetTextLineA(
-        pRoom->textPosX - dword_A73088,
-        pRoom->textPosY - dword_A7308C,
-        0xFFFFFFFF,
-        pRoom->infoText,
-        0, -1, -1);
+        g_MoFFont.SetFont("MatchInfo");
+        g_MoFFont.SetTextLineA(
+            pRoom->textPosX - dword_A73088,
+            pRoom->textPosY - dword_A7308C,
+            0xFFFFFFFF,
+            pRoom->infoText,
+            0, -1, -1);
+    }
 }
 
 // ---------------------------------------------------------------------------

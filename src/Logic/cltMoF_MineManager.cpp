@@ -26,9 +26,8 @@ int cltMoF_MineManager::Initialize(const char* filename)
     int result = m_mineKindInfo.Initialize(filename);
     if (result)
     {
-        // 清空所有地雷 slot
-        for (int i = 0; i < MAX_MINES; ++i)
-            m_mines[i].DeleteMine();
+        // GT: memset 整塊清零 (0x1450 bytes)，而非逐一呼叫 DeleteMine
+        std::memset(m_mines, 0, sizeof(m_mines));
         return 1;
     }
     return 0;
@@ -113,15 +112,15 @@ void cltMoF_MineManager::DeleteMineByHandle(unsigned int handle, uint16_t effect
     {
         if (m_mines[i].GetHandle() == handle)
         {
+            // GT: 先 DeleteMine，再讀取座標（v6[10], v6[11]）
+            m_mines[i].DeleteMine();
             float sx = m_mines[i].GetScreenX();
             float sy = m_mines[i].GetScreenY();
-            m_mines[i].DeleteMine();
 
-            // 建立爆炸特效
+            // GT: 建立爆炸特效並直接加入 effect manager（無 null guard）
             CEffect_Skill_Trap_Explosion* fx = new CEffect_Skill_Trap_Explosion();
             fx->SetEffect(sx, sy, (unsigned char)effectKind);
-            if (g_pEffectManager_After_Chr)
-                g_pEffectManager_After_Chr->BulletAdd(fx);
+            g_pEffectManager_After_Chr->BulletAdd(fx);
             return;
         }
     }
