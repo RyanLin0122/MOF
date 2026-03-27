@@ -9,49 +9,41 @@ CControlBoxEquip::CControlBoxEquip()
     , m_SealImg6()
     , m_SealImg7()
 {
-    // vftable 由編譯器處理
-    CreateChildren();  // 對齊反編譯：建完立刻建子件
+    CreateChildren();
     CControlBoxBase::Init();
-
-    // 對齊反編譯：三個欄位清 0（語意未知）
-    m_ReservedA = 0;
-    m_ReservedB = 0;
-    m_ReservedC = 0;
+    // 反編譯：*(this+92)=0, *(this+144)=0, *(this+192)=0
+    // 這三個寫入對應子物件內部的初始化，C++ 建構子已處理。
+    m_SealStatus = 0;
 }
 
 CControlBoxEquip::~CControlBoxEquip()
 {
-    // 子物件自動解構；順序與反編譯一致即可
+    // 子物件自動解構
 }
 
 //--------------------------------------------------
-// 建立子件（對齊 00418560）
+// 建立子件（對齊反編譯 00418560）
 //--------------------------------------------------
 void CControlBoxEquip::CreateChildren()
 {
-    // 基底會建立底圖（+120）
     CControlBoxBase::CreateChildren();
 
     // +312 高亮框
     m_Highlight.Create(this);
-    m_Highlight.SetSize(32, 32);                            // *((WORD*)this + 172/173) = 32
-    m_Highlight.SetColor(1.0f, 0.0f, 0.0f, 0.3921569f);     // 預設紅色半透明
+    m_Highlight.SetSize(32, 32);
+    m_Highlight.SetColor(1.0f, 0.0f, 0.0f, 0.3921569f);
 
-    // +520 疊加圖（block 6）
-    m_SealImg6.Create(this);
-    m_SealImg6.SetPos(-3, -3);
-    m_SealImg6.SetImage(570425419u, 6);
+    // +520 疊加圖（block 6）— 使用 5 參數 Create
+    m_SealImg6.Create(-3, -3, 570425419u, 6, this);
 
     // +712 疊加圖（block 7）
-    m_SealImg7.Create(this);
-    m_SealImg7.SetPos(-3, -3);
-    m_SealImg7.SetImage(570425419u, 7);
+    m_SealImg7.Create(-3, -3, 570425419u, 7, this);
 }
 
 //--------------------------------------------------
-// 設定封印狀態（對齊 004185F0 邏輯）
+// 設定封印狀態（對齊 004185F0）
 //--------------------------------------------------
-int CControlBoxEquip::SetSealStatus(int status)
+void CControlBoxEquip::SetSealStatus(int status)
 {
     m_SealStatus = status;
 
@@ -61,7 +53,6 @@ int CControlBoxEquip::SetSealStatus(int status)
         m_Highlight.Show();
         m_SealImg6.Show();
         m_SealImg7.Hide();
-        m_DrawState = 1;
     }
     else if (status == 2) {
         // 綠色
@@ -69,17 +60,13 @@ int CControlBoxEquip::SetSealStatus(int status)
         m_Highlight.Show();
         m_SealImg6.Hide();
         m_SealImg7.Show();
-        m_DrawState = 2;
     }
     else {
         // 全隱藏
         m_Highlight.Hide();
         m_SealImg6.Hide();
         m_SealImg7.Hide();
-        m_DrawState = 0;
     }
-
-    return status;
 }
 
 //--------------------------------------------------
@@ -91,7 +78,7 @@ void CControlBoxEquip::ShowChildren()
     m_Highlight.Hide();
     m_SealImg6.Hide();
     m_SealImg7.Hide();
-    m_DrawState = 0; // *((DWORD*)this + 226) = 0
+    m_SealStatus = 0;
 }
 
 void CControlBoxEquip::HideChildren()
@@ -100,19 +87,19 @@ void CControlBoxEquip::HideChildren()
     m_Highlight.Hide();
     m_SealImg6.Hide();
     m_SealImg7.Hide();
-    m_DrawState = 0; // 同 ShowChildren
+    m_SealStatus = 0;
 }
 
 //--------------------------------------------------
-// 供渲染管線：當狀態為 1..2 時，確保相關子件被推繪
-//（反編譯會在狀態 1/2 時對 +120/+520/+712 呼叫 PD/Draw）
+// 渲染（對齊 00418790 / 004187D0）
+// 當 m_SealStatus 為 1 或 2 時，額外繪製底圖與兩張疊加圖
 //--------------------------------------------------
 void CControlBoxEquip::PrepareDrawing()
 {
     CControlBoxBase::PrepareDrawing();
 
-    if (m_DrawState > 0 && m_DrawState <= 2) {
-        // 基底的 +120 會由 CControlBoxBase 處理；補齊兩張疊加圖的 PD
+    if (m_SealStatus > 0 && m_SealStatus <= 2) {
+        GetBackground()->PrepareDrawing();
         m_SealImg6.PrepareDrawing();
         m_SealImg7.PrepareDrawing();
     }
@@ -122,8 +109,8 @@ void CControlBoxEquip::Draw()
 {
     CControlBoxBase::Draw();
 
-    if (m_DrawState > 0 && m_DrawState <= 2) {
-        // 同上，補齊兩張疊加圖的 Draw
+    if (m_SealStatus > 0 && m_SealStatus <= 2) {
+        GetBackground()->Draw();
         m_SealImg6.Draw();
         m_SealImg7.Draw();
     }
