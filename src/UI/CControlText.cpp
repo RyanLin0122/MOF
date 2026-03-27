@@ -226,13 +226,17 @@ DWORD* CControlText::GetTextLength(DWORD* a2)
     if (!m_Text.empty())
     {
         const char* v3 = m_Text.c_str();
+        if (!v3)
+            v3 = "";
 
-        // 對齊反編譯：直接傳 LPCSTR fontFace，不轉 wchar_t
-        int w = 0, h = 0;
-        g_MoFFont.GetTextLength(&w, &h, m_FontHeight, m_FontFaceA, v3, m_FontWeight);
-
-        // 對齊反編譯：回傳 packed {WORD width, WORD height}
-        a2[0] = (static_cast<DWORD>(h & 0xFFFF) << 16) | static_cast<DWORD>(w & 0xFFFF);
+        // 對齊反編譯：MoFFont::GetTextLength 直接填入 a2[0]=width, a2[1]=height
+        g_MoFFont.GetTextLength(
+            reinterpret_cast<int*>(&a2[0]),
+            reinterpret_cast<int*>(&a2[1]),
+            m_FontHeight,
+            m_FontFaceA,
+            v3,
+            m_FontWeight);
     }
     else
     {
@@ -307,8 +311,8 @@ BOOL CControlText::PtInCtrl(int pt, int pt_4)
 
     DWORD v5[2] = { 0, 0 };
     GetTextLength(v5);
-    int w = v5[0] & 0xFFFF;
-    int h = (v5[0] >> 16) & 0xFFFF;
+    int w = static_cast<int>(v5[0]);
+    int h = static_cast<int>(v5[1]);
     if (!w || !h)
         return FALSE;
 

@@ -213,8 +213,10 @@ void CControlTab::SetText(char* a2)
     if (m_bTextTabType == 1)
     {
         DWORD v5[2], v6[2];
-        short v3 = static_cast<short>(*reinterpret_cast<WORD*>(reinterpret_cast<char*>(m_Text.GetTextLength(v5)) + 2));
-        short v4 = static_cast<short>(*reinterpret_cast<WORD*>(m_Text.GetTextLength(v6)));
+        m_Text.GetTextLength(v5);
+        short v3 = static_cast<short>(v5[1]);  // height from a2[1]
+        m_Text.GetTextLength(v6);
+        short v4 = static_cast<short>(v6[0]);  // width from a2[0]
         m_usHeight = static_cast<uint16_t>(v3);
         m_usWidth = static_cast<uint16_t>(v4);
     }
@@ -227,8 +229,10 @@ void CControlTab::SetText(int a2)
     if (m_bTextTabType == 1)
     {
         DWORD v5[2], v6[2];
-        short v3 = static_cast<short>(*reinterpret_cast<WORD*>(reinterpret_cast<char*>(m_Text.GetTextLength(v5)) + 2));
-        short v4 = static_cast<short>(*reinterpret_cast<WORD*>(m_Text.GetTextLength(v6)));
+        m_Text.GetTextLength(v5);
+        short v3 = static_cast<short>(v5[1]);  // height from a2[1]
+        m_Text.GetTextLength(v6);
+        short v4 = static_cast<short>(v6[0]);  // width from a2[0]
         m_usHeight = static_cast<uint16_t>(v3);
         m_usWidth = static_cast<uint16_t>(v4);
     }

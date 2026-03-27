@@ -103,7 +103,7 @@ void CControlPageScroll::SetPageRange(uint16_t itemsPerPage, uint16_t totalItems
     if (resetToMin)
         m_curPage = m_minPage;
 
-    if (m_curPage > m_maxPage)
+    if (m_curPage >= m_maxPage)
         m_curPage = m_maxPage;
 
     DecideButtonActive();
