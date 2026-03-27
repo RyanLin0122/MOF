@@ -53,7 +53,8 @@ void CControlScrollText::Create(int a2, int a3, unsigned short a4, unsigned shor
     m_nShadowFlag = a15;
     strcpy(m_szFontFace, a14);
 
-    if (a16 && strcmp(a16, "") != 0)
+    // 對齊反編譯：if (a16 && !strcmp(a16, "")) SetText(a16, 0); else SetText("", 0);
+    if (a16 && !strcmp(a16, ""))
         SetText(a16, 0);
     else
         SetText((char*)"", 0);
@@ -75,38 +76,41 @@ void CControlScrollText::Show()
 // ========================================
 void CControlScrollText::Draw()
 {
+    // 對齊反編譯：直接檢查 this[12]（IsVisible）
     if (!IsVisible())
         return;
 
-    if (!m_pText || strlen(m_pText) == 0)
+    // 對齊反編譯：直接 strlen，無 nullptr guard
+    if (strlen(m_pText))
+    {
+        // 計算絕對座標
+        CControlBase* v2 = GetParent();
+        int v3 = m_nTextOffsetX;
+        int i = m_nTextOffsetY;
+        while (v2)
+        {
+            v3 += v2->GetX();
+            i += v2->GetY();
+            v2 = v2->GetParent();
+        }
+
+        // 畫陰影
+        if (m_bHasShadow)
+        {
+            m_TextBox.TextBoxDraw(v3 + 1, i + 1, m_ShadowColor2, 5,
+                                   static_cast<unsigned char>(m_nShadowFlag), 400);
+        }
+
+        // 對齊反編譯：第 6 參數取自 *((_BYTE *)this + 3120) = (unsigned char)m_nShadowFlag
+        m_TextBox.TextBoxDraw(v3, i, m_TextColor, 5,
+                               static_cast<unsigned char>(m_nShadowFlag), 400);
+
+        CControlBase::Draw();
+    }
+    else
     {
         CControlBase::Draw();
-        return;
     }
-
-    // 計算絕對座標
-    CControlBase* v2 = GetParent();
-    int v3 = m_nTextOffsetX;
-    int i = m_nTextOffsetY;
-    while (v2)
-    {
-        v3 += v2->GetX();
-        i += v2->GetY();
-        v2 = v2->GetParent();
-    }
-
-    // 畫陰影
-    if (m_bHasShadow)
-    {
-        m_TextBox.TextBoxDraw(v3 + 1, i + 1, m_ShadowColor2, 5,
-                               0, 400);
-    }
-
-    // 畫主文字
-    m_TextBox.TextBoxDraw(v3, i, m_TextColor, 5,
-                           0, 400);
-
-    CControlBase::Draw();
 }
 
 // ========================================
@@ -196,7 +200,8 @@ void CControlScrollText::ScrollTextSetLine()
 // ========================================
 void CControlScrollText::SetScrollPosBottom()
 {
-    int v2 = GetScrollMax();
+    // 對齊反編譯：使用 this[31]（m_scrollMax），不是 GetScrollMax()
+    int v2 = m_scrollMax;
     if (v2 > 0)
     {
         Scroll(4, v2, 1);

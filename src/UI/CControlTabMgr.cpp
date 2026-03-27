@@ -259,21 +259,20 @@ uint8_t CControlTabMgr::GetFocusTabIndex()
 
 void CControlTabMgr::ActiveTab(uint8_t a2)
 {
-    if (a2 < 20)
-        m_Tabs[a2].Active();
+    // 對齊反編譯：無邊界檢查，直接以 a2 索引呼叫
+    m_Tabs[a2].Active();
 }
 
 int CControlTabMgr::IsActiveTab(uint8_t a2)
 {
-    if (a2 < 20)
-        return m_Tabs[a2].IsActive();
-    return 0;
+    // 對齊反編譯：無邊界檢查
+    return m_Tabs[a2].IsActive();
 }
 
 void CControlTabMgr::NoneActiveTab(uint8_t a2)
 {
-    if (a2 < 20)
-        m_Tabs[a2].NoneActive();
+    // 對齊反編譯：無邊界檢查
+    m_Tabs[a2].NoneActive();
 }
 
 void CControlTabMgr::Draw()

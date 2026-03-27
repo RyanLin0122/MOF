@@ -67,6 +67,13 @@ public:
     // 事件處理
     virtual int* ControlKeyInputProcess(int msg, int key, int x, int y, int a6, int a7) override;
 
+    // 對齊反編譯：取得 pressed 態圖像資訊（供 CControlScrollBar::ProcessMoveThumb 使用）
+    void GetPressedImageState(unsigned int& group, unsigned int& id, uint16_t& block) const {
+        group = m_imgPressed.group;
+        id = m_imgPressed.id;
+        block = m_imgPressed.block;
+    }
+
 private:
     struct StateImg {
         uint32_t group{ 5 };     // 反編譯預設 5

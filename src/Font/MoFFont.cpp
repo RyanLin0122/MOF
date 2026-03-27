@@ -209,16 +209,8 @@ bool MoFFont::InitFontInfo(const char* fileName) {
 
             tok = strtok_s(nullptr, "\t\r\n", &context); // token3: Font -> FaceName
             if (tok) {
-                // tok 現在包含的是韓文的位元組序列 (CP949)
-                // 我們要將它轉換為 Unicode (UTF-16) 並存入 wszFaceName
-                MultiByteToWideChar(
-                    949,       // 來源字串的編碼頁 (949 代表韓文)
-                    0,         // 預設旗標
-                    tok,       // 來源 char* 字串
-                    -1,        // -1 表示來源字串以 null 結尾
-                    m_pFontInfoArray[idx].wszFaceName, // 目標 wchar_t 緩衝區
-                    128        // 緩衝區大小
-                );
+                // 對齊反編譯：stFontInfo 以 char[128] 儲存字型名稱
+                strncpy_s(m_pFontInfoArray[idx].szFaceName, tok, _TRUNCATE);
             }
             tok = strtok_s(nullptr, "\t\r\n", &context); // token4: Thick -> Weight
             if (tok) m_pFontInfoArray[idx].nWeight = atoi(tok);
@@ -301,7 +293,10 @@ bool MoFFont::CreateMoFFont(IDirect3DDevice9* pDevice, int height, int width, co
 bool MoFFont::CreateMoFFont(IDirect3DDevice9* pDevice, const char* fontKey) {
     stFontInfo* pInfo = GetFontInfo(fontKey);
     if (pInfo) {
-        return CreateMoFFont(pDevice, pInfo->nHeight, 0, pInfo->wszFaceName, pInfo->nWeight);
+        // 從 char* 轉成 wchar_t* 呼叫底層
+        wchar_t faceW[128];
+        MultiByteToWideChar(CP_ACP, 0, pInfo->szFaceName, -1, faceW, 128);
+        return CreateMoFFont(pDevice, pInfo->nHeight, 0, faceW, pInfo->nWeight);
     }
     return false;
 }
@@ -310,7 +305,7 @@ bool MoFFont::CreateMoFFont(IDirect3DDevice9* pDevice, const char* fontKey) {
 void MoFFont::SetFont(const char* fontKey) {
     stFontInfo* pInfo = GetFontInfo(fontKey);
     if (pInfo) {
-        SetFont(pInfo->nHeight, pInfo->wszFaceName, pInfo->nWeight);
+        SetFont(pInfo->nHeight, pInfo->szFaceName, pInfo->nWeight);
     }
 }
 
@@ -330,6 +325,17 @@ void MoFFont::SetFont(int height, const wchar_t* faceName, int weight) {
 
     // 從快取或 GDI 取得 HFONT 控制代碼
     m_hFont = GetCachedOrCreateFont(height, 0, faceName, weight);
+}
+
+// 對齊反編譯：char* 版本的 SetFont（原始 API 使用 ANSI 字串）
+void MoFFont::SetFont(int height, const char* faceNameA, int weight) {
+    wchar_t faceW[128];
+    if (faceNameA && faceNameA[0]) {
+        MultiByteToWideChar(CP_ACP, 0, faceNameA, -1, faceW, 128);
+    } else {
+        faceW[0] = L'\0';
+    }
+    SetFont(height, faceW, weight);
 }
 
 // 對應反編譯碼: 0x0051BE30
@@ -522,7 +528,7 @@ void MoFFont::SetTextBoxA(RECT* pRect, DWORD color, const char* text, int lineSp
 void MoFFont::GetTextLength(int* pWidth, int* pHeight, const char* fontKey, const char* text) {
     stFontInfo* pInfo = GetFontInfo(fontKey);
     if (pInfo) {
-        GetTextLength(pWidth, pHeight, pInfo->nHeight, pInfo->wszFaceName, text, pInfo->nWeight);
+        GetTextLength(pWidth, pHeight, pInfo->nHeight, pInfo->szFaceName, text, pInfo->nWeight);
     }
     else {
         if (pWidth) *pWidth = 0;
@@ -545,6 +551,28 @@ void MoFFont::GetTextLength(int* pWidth, int* pHeight, int height, const wchar_t
 
     if (pWidth) *pWidth = size.cx;
     if (pHeight) *pHeight = size.cy;
+}
+
+// 對齊反編譯：char* 版本的 GetTextLength（原始 API 使用 ANSI 字串）
+void MoFFont::GetTextLength(int* pWidth, int* pHeight, int height, const char* faceNameA, const char* text, int weight) {
+    wchar_t faceW[128];
+    if (faceNameA && faceNameA[0]) {
+        MultiByteToWideChar(CP_ACP, 0, faceNameA, -1, faceW, 128);
+    } else {
+        faceW[0] = L'\0';
+    }
+    GetTextLength(pWidth, pHeight, height, faceW, text, weight);
+}
+
+// 對齊反編譯：MoFFont::GetLineCountByWidth
+unsigned char MoFFont::GetLineCountByWidth(unsigned short width, const char* text, const char* faceNameA, int fontHeight, int fontWeight) {
+    if (!text || !text[0]) return 0;
+    SetFont(fontHeight, faceNameA, fontWeight);
+    unsigned char lineBreaks[512];
+    int lineCount = GetCharByteByLine(width, text, lineBreaks, 512);
+    if (lineCount < 0) lineCount = 0;
+    if (lineCount > 255) lineCount = 255;
+    return static_cast<unsigned char>(lineCount);
 }
 
 // 對應反編譯碼: 0x0051CCC0

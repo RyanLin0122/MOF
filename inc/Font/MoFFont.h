@@ -32,6 +32,7 @@ public:
     bool CreateMoFFont(IDirect3DDevice9* pDevice, int height, int width, const wchar_t* faceName, int weight);
     void SetFont(const char* fontKey);
     void SetFont(int height, const wchar_t* faceName, int weight);
+    void SetFont(int height, const char* faceNameA, int weight);
     void ResetFont();
 
     // --- 渲染 API ---
@@ -45,7 +46,9 @@ public:
     // --- 資訊查詢 ---
     void GetTextLength(int* pWidth, int* pHeight, const char* fontKey, const char* text);
     void GetTextLength(int* pWidth, int* pHeight, int height, const wchar_t* faceName, const char* text, int weight);
+    void GetTextLength(int* pWidth, int* pHeight, int height, const char* faceNameA, const char* text, int weight);
     int GetCharByteByLine(unsigned short lineWidth, const char* text, unsigned char* lineBreakBytes, int maxLines);
+    unsigned char GetLineCountByWidth(unsigned short width, const char* text, const char* faceNameA, int fontHeight, int fontWeight);
     stFontInfo* GetFontInfo(const char* keyName);
     int GetNationCode();
     bool IsAnsiCharSet();
