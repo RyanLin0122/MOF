@@ -1,5 +1,6 @@
 #include "UI/CControlPosButton.h"
 #include "global.h"
+#include "Sound/GameSound.h"
 
 // 反編譯：建構 → CControlImage::CControlImage; vftable 指向本類；strcpy(this+193, "J0003"); *((BYTE*)this+192)=0
 CControlPosButton::CControlPosButton()

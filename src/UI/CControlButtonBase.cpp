@@ -1,5 +1,6 @@
 #include "UI/CControlButtonBase.h"
 #include "global.h"
+#include "Sound/GameSound.h"
 #include <cstring>
 
 // ==========================
@@ -54,7 +55,7 @@ void CControlButtonBase::Init()
 // ==========================
 // 文字
 // ==========================
-void CControlButtonBase::SetText(char* a2)
+void CControlButtonBase::SetText(const char* a2)
 {
     m_Text.SetText(a2);
 }

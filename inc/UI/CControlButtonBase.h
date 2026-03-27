@@ -19,7 +19,7 @@ public:
     virtual ~CControlButtonBase();
 
     // ---- 文字 ----
-    void SetText(char* a2);
+    void SetText(const char* a2);
     void SetText(int stringId);
 
     // 取得內建文字控制
