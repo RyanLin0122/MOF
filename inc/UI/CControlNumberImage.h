@@ -34,7 +34,7 @@ public:
     void SetScale(float s);
 
 private:
+    int           m_StyleIndex{ 2 };  // *((DWORD*)this + 31)  — 在 m_Digits 之前
     CControlImage m_Digits[20];       // +128 起 20 張 (每張 0xC0 = 192 bytes)
-    int           m_StyleIndex{ 2 };  // *((DWORD*)this + 31)
     float         m_Scale{ 1.0f };    // *((float*)this + 992)
 };
