@@ -321,9 +321,6 @@ void MoFFont::SetFont(int height, const wchar_t* faceName, int weight) {
         return;
     }
 
-    // [DEBUG] 在此處加入 debug code
-    wprintf(L"[MOFFONT DEBUG] Font changed to: FaceName=%s, Height=%d, Weight=%d\n", faceName, height, weight);
-
     m_nFontHeight = height;
     m_nFontWeight = weight;
     wcsncpy_s(m_wszFaceName, faceName, _TRUNCATE);
@@ -734,7 +731,6 @@ void MoFFont::DrawSegments(int x, int y, DWORD color, int align, int clipL, int 
     CDeviceManager::GetInstance()->SetSamplerState(0, D3DSAMP_ADDRESSV, D3DTADDRESS_CLAMP);
 
     // 走訪每個 TLILInfo 片段，套用裁切並畫
-    int segment_index = 0;
     for (TLILInfo* seg = pLine->m_LineMgr.m_pHead; seg; seg = seg->m_pNext) {
         if (!seg->m_pFTInfo || !seg->m_pFTInfo->m_pTexture) continue;
         // 片段螢幕座標（左上）
@@ -773,6 +769,17 @@ void MoFFont::DrawSegments(int x, int y, DWORD color, int align, int clipL, int 
             // 規格：此旗標為真時，不進行任何狀態變更與繪製
             return;
         }
+
+        // 確保 alpha test 不會擋掉我們的字型 pixel
+        CDeviceManager::GetInstance()->SetRenderState(D3DRS_ALPHATESTENABLE, FALSE);
+
+        // 確保 texture stage 正確：Color = Texture * Diffuse, Alpha = Texture
+        CDeviceManager::GetInstance()->SetTextureStageState(0, D3DTSS_COLOROP, D3DTOP_MODULATE);
+        CDeviceManager::GetInstance()->SetTextureStageState(0, D3DTSS_COLORARG1, D3DTA_TEXTURE);
+        CDeviceManager::GetInstance()->SetTextureStageState(0, D3DTSS_COLORARG2, D3DTA_DIFFUSE);
+        CDeviceManager::GetInstance()->SetTextureStageState(0, D3DTSS_ALPHAOP, D3DTOP_MODULATE);
+        CDeviceManager::GetInstance()->SetTextureStageState(0, D3DTSS_ALPHAARG1, D3DTA_TEXTURE);
+        CDeviceManager::GetInstance()->SetTextureStageState(0, D3DTSS_ALPHAARG2, D3DTA_DIFFUSE);
 
         // 1) 計算四個頂點的座標與 UV（此時 sx/sy/sw、u1/v1/u2/v2 已含對齊與裁切修正）
         float left = sx - 0.5f;
@@ -983,6 +990,34 @@ void MoFFont::SetTextLine(int x, int y, DWORD color, const char* text, char alig
     seg->m_fWidth = float(usedW - seg->m_fPosX);
 
     pPage->m_pSurface->ReleaseDC(hdc);
+
+    // GDI TextOut 不會寫入 alpha channel（A8R8G8B8 的 A 恆為 0），
+    // 導致 alpha test 或 alpha blend 時 pixel 全部透明。
+    // 修正：掃描 surface，將有內容的 pixel 的 alpha 設為 0xFF。
+    {
+        D3DLOCKED_RECT lr = {};
+        HRESULT hrLock = pPage->m_pSurface->LockRect(&lr, nullptr, 0);
+        if (SUCCEEDED(hrLock)) {
+            DWORD* pixels = (DWORD*)lr.pBits;
+            int pitch = lr.Pitch / 4; // in DWORDs
+            for (int cy = 0; cy < ATLAS_H; cy++) {
+                for (int cx = 0; cx < ATLAS_W; cx++) {
+                    DWORD& p = pixels[cy * pitch + cx];
+                    if (p & 0x00FFFFFF) {
+                        // 取 RGB 中的最大值作為 alpha（保留 anti-aliasing 邊緣）
+                        unsigned r = (p >> 16) & 0xFF;
+                        unsigned g = (p >> 8) & 0xFF;
+                        unsigned b = p & 0xFF;
+                        unsigned a = r;
+                        if (g > a) a = g;
+                        if (b > a) a = b;
+                        p = (a << 24) | (p & 0x00FFFFFF);
+                    }
+                }
+            }
+            pPage->m_pSurface->UnlockRect();
+        }
+    }
 
     // 更新快取項的總寬度
     pLine->m_nTextWidth = usedW;
