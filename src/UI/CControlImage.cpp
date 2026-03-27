@@ -45,27 +45,23 @@ CControlImage::~CControlImage()
 void CControlImage::Create(CControlBase* pParent)
 {
     CControlBase::Create(pParent);
-    m_pGameImage = nullptr;
     m_fadeCurA = 0;
-    SetAlpha(0); // 基準 Create() 會把 alpha 設 0，配合後續淡入
+    SetAlpha(0);
 }
 
 void CControlImage::Create(int x, int y, CControlBase* pParent)
 {
     CControlBase::Create(x, y, pParent);
-    m_pGameImage = nullptr;
     m_fadeCurA = 0;
     SetAlpha(0);
 }
 
-// 這個多載對應基準：Create(x, y, giid, block, parent)
 void CControlImage::Create(int x, int y, unsigned int giid, unsigned short block, CControlBase* pParent)
 {
     m_usBlockID = block;
     m_nGIID = static_cast<int>(giid);
-    SetImageSize(); // 先以資源尺寸回填自身寬高
+    SetImageSize();
     CControlBase::Create(x, y, pParent);
-    m_pGameImage = nullptr;
     m_fadeCurA = 0;
     SetAlpha(0);
 }

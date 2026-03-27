@@ -1,191 +1,290 @@
 #include <cstdio>
 #include <cstring>
-#include <algorithm>
-#include "Ui/CControlNumberImage.h"
+#include "UI/CControlNumberImage.h"
 #include "global.h"
 
+// ============================================================================
+// 建構 — 對齊 00421C50
+// ============================================================================
 CControlNumberImage::CControlNumberImage()
     : CControlBase()
 {
-    // 建立 20 張子圖並附掛到本控制
-    for (int i = 0; i < 20; ++i) {
+    // m_Digits[20] 由 C++ 自動建構 (對應 eh vector constructor iterator)
+    // 將每張 digit Create 到本控制之下
+    for (int i = 0; i < 20; ++i)
+    {
         m_Digits[i].Create(this);
     }
-    // 反編譯：預設 styleIndex = 2
     m_StyleIndex = 2;
 }
 
+// ============================================================================
+// 解構 — 對齊 00421D00
+// ============================================================================
 CControlNumberImage::~CControlNumberImage()
 {
-    // 成員自動解構
+    // m_Digits[20] 由 C++ 自動解構 (對應 eh vector destructor iterator)
 }
 
+// ============================================================================
+// Create — 對齊 00421D70
+// ============================================================================
 void CControlNumberImage::Create(int x, int y, int styleIndex, CControlBase* parent)
 {
     m_StyleIndex = styleIndex;
     CControlBase::Create(x, y, parent);
-    m_Scale = 1.0f;  // *((float*)this + 992) = 1065353216
+    m_Scale = 1.0f;
 }
 
+// ============================================================================
+// SetScale — 對齊 00422150
+// ============================================================================
 void CControlNumberImage::SetScale(float s)
 {
     m_Scale = s;
 }
 
-void CControlNumberImage::PlaceGlyph(int renderIndex, int texId, int block, int xOffset)
-{
-    if (renderIndex < 0 || renderIndex >= 20) return;
-    CControlImage& img = m_Digits[renderIndex];
-    img.SetImage(static_cast<unsigned int>(texId), static_cast<unsigned short>(block));
-    img.SetPos(xOffset, 0);
-    // 若 CControlImage 提供縮放 API，套用與反編譯一致的等比例縮放
-    // （反編譯直接寫入子圖之 m_fScaleX/Y）
-#if defined(HAS_CCONTROLIMAGE_SET_SCALE) || 1
-    img.SetScale(m_Scale, m_Scale);
-#endif
-}
-
+// ============================================================================
+// SetNumber — 對齊 00421DA0
+// ============================================================================
 void CControlNumberImage::SetNumber(long long value)
 {
-    // 反編譯：_sprintf(Buffer, "%I64d", a2)
+    char Buffer[256];
+    std::memset(Buffer, 0, sizeof(Buffer));
+    m_usWidth = 0;
+
 #if defined(_WIN32) || defined(_WIN64)
-    constexpr const char* kFmt = "%I64d";
+    std::sprintf(Buffer, "%I64d", value);
 #else
-    constexpr const char* kFmt = "%lld";
+    std::sprintf(Buffer, "%lld", value);
 #endif
-    char buf[256]{};
-    std::snprintf(buf, sizeof(buf), kFmt, value);
 
-    m_TotalW = 0;
-    m_TotalH = 0;
+    int strLen = static_cast<int>(std::strlen(Buffer));
+    if (strLen > 20) return;
 
-    const int base = 13 * m_StyleIndex;
-    const int advance = kAdvanceByStyle[base];
-    const int texId = kAtlasIdByStyle[base];
+    int digitIdx = 0;
+    if (strLen > 0)
+    {
+        CControlImage* pDigit = &m_Digits[0];
+        for (int i = 0; i < strLen; ++i)
+        {
+            int mapIdx = 13 * m_StyleIndex + static_cast<unsigned char>(Buffer[i]);
+            unsigned short block = static_cast<unsigned short>(kGlyphIndexByStyleChar[2 * mapIdx]);
 
-    const int len = static_cast<int>(std::min<size_t>(std::strlen(buf), 20));
-    int x = 0;
-    int out = 0;
+            // SetImage 通過虛表 (vtable offset 84 對應 SetImage)
+            pDigit->SetImage(
+                static_cast<unsigned int>(kAtlasIdByStyle[13 * m_StyleIndex]),
+                block);
 
-    for (int i = 0; i < len; ++i) {
-        unsigned char ch = static_cast<unsigned char>(buf[i]);
-        // 反編譯：LOWORD(v7) = word_6C6B6C[2 * (13*style + ch)]
-        const int mapIdx = base + static_cast<int>(ch);
-        const int block = static_cast<unsigned short>(kGlyphIndexByStyleChar[2 * mapIdx]);
+            // 從第二張起，依前一張的位置 + 寬度 + advance 設定絕對位置
+            if (i)
+            {
+                CControlImage* pPrev = pDigit - 1;
+                uint16_t prevW = pPrev->GetWidth();
+                int prevAbsX = pPrev->GetAbsX();
+                pDigit->SetAbsX(kAdvanceByStyle[13 * m_StyleIndex] + prevAbsX + prevW);
+            }
 
-        PlaceGlyph(out, texId, block, x);
+            // 設定縮放
+            pDigit->SetScale(m_Scale, m_Scale);
 
-        // 寬度累計（以本張圖原始寬 * scale + advance）
-        const int w = m_Digits[out].GetWidth();
-        x += advance + static_cast<int>(w * m_Scale);
-        m_TotalW = static_cast<uint16_t>(x);
+            // 累加總寬：width * scale + advance + 目前 totalW
+            long long v9 = static_cast<long long>(
+                static_cast<double>(pDigit->GetWidth()) * static_cast<double>(m_Scale)
+                + static_cast<double>(kAdvanceByStyle[13 * m_StyleIndex])
+                + static_cast<double>(m_usWidth));
+            m_usWidth = static_cast<uint16_t>(v9);
 
-        ++out;
-        if (out >= 20) break;
+            ++digitIdx;
+            ++pDigit;
+        }
     }
 
-    // 設定高度（反編譯：height = firstDigitHeight * scale）
-    if (out > 0) {
-        const int h0 = m_Digits[0].GetHeight();
-        m_TotalH = static_cast<uint16_t>(h0 * m_Scale);
-    }
-    else {
-        m_TotalH = 0;
-    }
+    // 高度 = 第一張 digit 的高度 * scale
+    m_usHeight = static_cast<uint16_t>(
+        static_cast<long long>(
+            static_cast<double>(m_Digits[0].GetHeight()) * static_cast<double>(m_Scale)));
 
-    // 清餘下未使用格（反編譯：(-1, 0xFFFF)）
-    for (int i = out; i < 20; ++i) {
-        m_Digits[i].SetImage(static_cast<unsigned int>(-1), 0xFFFF);
+    // 清除未使用的 digit
+    if (strLen < 20)
+    {
+        for (int i = strLen; i < 20; ++i)
+        {
+            m_Digits[i].SetImage(static_cast<unsigned int>(-1), 0xFFFF);
+        }
     }
 }
 
+// ============================================================================
+// SetNumberFloat — 對齊 00421F60
+// ============================================================================
 void CControlNumberImage::SetNumberFloat(float value, int decimals, int forceFixed)
 {
-    // 反編譯使用 `_sprintf(Buffer, `string', a2)`；此處採常見格式 "%f"
-    // 後續會裁切到所需小數位
-    char buf[256]{};
-    std::snprintf(buf, sizeof(buf), "%f", value);
+    int digitIdx = 0;
+    char Buffer[256];
+    std::memset(Buffer, 0, sizeof(Buffer));
+    m_usWidth = 0;
 
-    // 找到 '.' 位置
-    const size_t n = std::strlen(buf);
-    int dotIdx = -1;
-    for (size_t i = 0; i < n; ++i) {
-        if (buf[i] == '.') { dotIdx = static_cast<int>(i); break; }
-    }
+    std::sprintf(Buffer, "%f", value);
 
-    int cutLen = static_cast<int>(n); // 預設全列
-    if (dotIdx >= 0) {
-        if (forceFixed) {
-            // 強制固定 decimals 位
-            cutLen = min(dotIdx + 1 + max(decimals, 0), static_cast<int>(n));
+    int strLen = static_cast<int>(std::strlen(Buffer));
+    int dotIdx = 0;
+
+    // 找到小數點位置
+    int searchIdx = 0;
+    while (searchIdx < strLen)
+    {
+        if (Buffer[searchIdx] == '.')
+        {
+            dotIdx = searchIdx;
+            break;
         }
-        else {
-            // 若小數點後前 decimals 位皆為 '0'，省略小數
-            bool allZero = true;
-            for (int k = 0; k < decimals && dotIdx + 1 + k < static_cast<int>(n); ++k) {
-                if (buf[dotIdx + 1 + k] != '0') { allZero = false; break; }
-            }
-            if (allZero) {
-                cutLen = dotIdx; // 直接砍到小數點前（不包含 '.')
-            }
-            else {
-                cutLen = min(dotIdx + 1 + max(decimals, 0), static_cast<int>(n));
-            }
+        ++searchIdx;
+        if (searchIdx >= strLen)
+            goto LABEL_4;
+    }
+
+    if (forceFixed)
+        goto LABEL_16;
+
+    // 檢查小數部分是否全為 '0'
+    {
+        int checkIdx = 0;
+        if (decimals <= 0)
+            goto LABEL_4;
+        while (Buffer[searchIdx + 1 + checkIdx] == '0')
+        {
+            if (++checkIdx >= decimals)
+                goto LABEL_4;
         }
     }
-    cutLen = max(0, min(cutLen, 20)); // 最多 20
 
-    m_TotalW = 0;
-    m_TotalH = 0;
+LABEL_16:
+    {
+        int cutLen = searchIdx + decimals + 1;
+        if (cutLen > 20) return;
 
-    const int base = 13 * m_StyleIndex;
-    const int advance = kAdvanceByStyle[base];
-    const int texId = kAtlasIdByStyle[base];
-    const int dotBlk = kDotGlyphIndexByStyle[base]; // -1 代表沒有小數點圖
+        CControlImage* pDigit = &m_Digits[0];
+        while (digitIdx < cutLen)
+        {
+            int styleBase = 13 * m_StyleIndex;
 
-    int x = 0;
-    int out = 0;
-
-    for (int i = 0; i < cutLen; ++i) {
-        unsigned char ch = static_cast<unsigned char>(buf[i]);
-
-        if (dotIdx >= 0 && i == dotIdx) {
-            // 小數點
-            if (dotBlk != -1) {
-                PlaceGlyph(out, texId, dotBlk, x);
-                const int w = m_Digits[out].GetWidth();
-                x += advance + static_cast<int>(w * m_Scale);
-                m_TotalW = static_cast<uint16_t>(x);
-                ++out;
-                if (out >= 20) break;
+            if (digitIdx != dotIdx)
+            {
+                // 一般數字字元
+                int mapIdx = styleBase + static_cast<unsigned char>(Buffer[digitIdx]);
+                unsigned short block = static_cast<unsigned short>(kGlyphIndexByStyleChar[2 * mapIdx]);
+                pDigit->SetImage(
+                    static_cast<unsigned int>(kAtlasIdByStyle[styleBase]),
+                    block);
             }
-            continue; // 若無 dot 圖塊，跳過
+            else
+            {
+                // 小數點
+                int dotBlock = kDotGlyphIndexByStyle[styleBase];
+                if (dotBlock != -1)
+                {
+                    pDigit->SetImage(
+                        static_cast<unsigned int>(kAtlasIdByStyle[styleBase]),
+                        static_cast<unsigned short>(dotBlock));
+                }
+                else
+                {
+                    // 無小數點圖塊，跳過
+                    ++digitIdx;
+                    continue;
+                }
+            }
+
+            // 從第二張起定位
+            if (digitIdx)
+            {
+                CControlImage* pPrev = pDigit - 1;
+                uint16_t prevW = pPrev->GetWidth();
+                int prevAbsX = pPrev->GetAbsX();
+                pDigit->SetAbsX(kAdvanceByStyle[13 * m_StyleIndex] + prevAbsX + prevW);
+            }
+
+            // 累加寬度（不乘 scale，與 SetNumber 不同）
+            m_usWidth += static_cast<uint16_t>(
+                kAdvanceByStyle[13 * m_StyleIndex] + pDigit->GetWidth());
+
+            ++digitIdx;
+            ++pDigit;
         }
 
-        // 其他字元走一般映射
-        const int mapIdx = base + static_cast<int>(ch);
-        const int block = static_cast<unsigned short>(kGlyphIndexByStyleChar[2 * mapIdx]);
+        // 高度 = 第一張 digit 的高度（不乘 scale，與 SetNumber 不同）
+        m_usHeight = m_Digits[0].GetHeight();
 
-        PlaceGlyph(out, texId, block, x);
-
-        const int w = m_Digits[out].GetWidth();
-        x += advance + static_cast<int>(w * m_Scale);
-        m_TotalW = static_cast<uint16_t>(x);
-
-        ++out;
-        if (out >= 20) break;
+        // 清除未使用的 digit
+        if (cutLen < 20)
+        {
+            for (int i = cutLen; i < 20; ++i)
+            {
+                m_Digits[i].SetImage(static_cast<unsigned int>(-1), 0xFFFF);
+            }
+        }
+        return;
     }
 
-    // 反編譯：高度 = 第一張 digit 的 GetHeight()（注意：**未乘上 scale**）
-    if (out > 0) {
-        m_TotalH = static_cast<uint16_t>(m_Digits[0].GetHeight());
-    }
-    else {
-        m_TotalH = 0;
-    }
+LABEL_4:
+    {
+        // 無小數部分，只顯示整數
+        int cutLen = dotIdx;
+        if (cutLen > 20) return;
 
-    // 清餘下未使用格
-    for (int i = out; i < 20; ++i) {
-        m_Digits[i].SetImage(static_cast<unsigned int>(-1), 0xFFFF);
+        CControlImage* pDigit = &m_Digits[0];
+        while (digitIdx < cutLen)
+        {
+            int styleBase = 13 * m_StyleIndex;
+
+            if (digitIdx != dotIdx)
+            {
+                int mapIdx = styleBase + static_cast<unsigned char>(Buffer[digitIdx]);
+                unsigned short block = static_cast<unsigned short>(kGlyphIndexByStyleChar[2 * mapIdx]);
+                pDigit->SetImage(
+                    static_cast<unsigned int>(kAtlasIdByStyle[styleBase]),
+                    block);
+            }
+            else
+            {
+                int dotBlock = kDotGlyphIndexByStyle[styleBase];
+                if (dotBlock != -1)
+                {
+                    pDigit->SetImage(
+                        static_cast<unsigned int>(kAtlasIdByStyle[styleBase]),
+                        static_cast<unsigned short>(dotBlock));
+                }
+                else
+                {
+                    ++digitIdx;
+                    continue;
+                }
+            }
+
+            if (digitIdx)
+            {
+                CControlImage* pPrev = pDigit - 1;
+                uint16_t prevW = pPrev->GetWidth();
+                int prevAbsX = pPrev->GetAbsX();
+                pDigit->SetAbsX(kAdvanceByStyle[13 * m_StyleIndex] + prevAbsX + prevW);
+            }
+
+            m_usWidth += static_cast<uint16_t>(
+                kAdvanceByStyle[13 * m_StyleIndex] + pDigit->GetWidth());
+
+            ++digitIdx;
+            ++pDigit;
+        }
+
+        m_usHeight = m_Digits[0].GetHeight();
+
+        if (cutLen < 20)
+        {
+            for (int i = cutLen; i < 20; ++i)
+            {
+                m_Digits[i].SetImage(static_cast<unsigned int>(-1), 0xFFFF);
+            }
+        }
     }
 }
