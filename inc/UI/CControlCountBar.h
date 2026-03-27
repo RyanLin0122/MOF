@@ -57,7 +57,7 @@ private:
     int m_cur{ 0 };
     int m_max{ 0 };
     int m_min{ 0 };
-    char m_dragging{ 0 };
+    unsigned char m_dragging{ 0 };  // 反編譯：BYTE[2276]
 
-    float m_scale{ 0.0f };
+    float m_scale{ 0.0f };  // 反編譯中建構子不初始化此欄位
 };

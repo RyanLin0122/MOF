@@ -80,6 +80,7 @@ protected:
 
 private:
     // 內部工具（都對齊反編譯呼叫樣式）
+    void InitOpen();       // 對齊反編譯：建構子先呼叫 InitOpen 再 CreateChildren
     void CreateChildren();
     void DeleteBlockBox();
     void SetBlockShow(int on, int idx);

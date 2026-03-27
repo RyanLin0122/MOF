@@ -8,7 +8,8 @@ void CControlImageTriple::Create(CControlBase* pParent)
     CControlBase::Create(pParent);
     // 對齊反編譯：虛呼 +80 -> CreateChildren()
     CreateChildren();
-    // 對齊反編譯：*((DWORD*)this + 13) = 1; 視作建立完成（此處不再額外設旗標）
+    // 對齊反編譯：*((_DWORD *)this + 13) = 1;
+    reinterpret_cast<int*>(this)[13] = 1;
 }
 
 // -----------------------------------------------------------------------------
@@ -34,7 +35,8 @@ void CControlImageTriple::SetImage(unsigned int group,
     m_LeftOrTop.SetImage(group, idLeftOrTop);
     m_Mid.SetImage(group, idMid);
     m_RightOrBottom.SetImage(group, idRightOrBottom);
-    m_bHorizontal = horizontal ? 1 : 0;
+    // 對齊反編譯：直接存入 a6，不做布林正規化
+    m_bHorizontal = horizontal;
 }
 
 // -----------------------------------------------------------------------------

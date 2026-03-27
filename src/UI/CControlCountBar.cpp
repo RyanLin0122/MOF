@@ -32,17 +32,29 @@ CControlCountBar::CControlCountBar()
     , m_track()
 {
     m_btnLeft.Create(this);
+    // 對齊反編譯：*((_DWORD *)this + 45) = 1; → byte offset 60 within m_btnLeft
+    reinterpret_cast<int*>(&m_btnLeft)[15] = 1;
+
     m_btnRight.Create(this);
+    // 對齊反編譯：*((_DWORD *)this + 226) = 1; → byte offset 60 within m_btnRight
+    reinterpret_cast<int*>(&m_btnRight)[15] = 1;
+
     m_imgLeft.Create(this);
     m_imgMid.Create(this);
     m_imgRight.Create(this);
     m_track.Create(this);
 
+    // 對齊反編譯：*((_DWORD *)this + 406/454/502/550) = 0;
+    // → byte offset 56 within each image/track sub-control
+    reinterpret_cast<int*>(&m_imgLeft)[14] = 0;
+    reinterpret_cast<int*>(&m_imgMid)[14] = 0;
+    reinterpret_cast<int*>(&m_imgRight)[14] = 0;
+    reinterpret_cast<int*>(&m_track)[14] = 0;
+
     m_cur = 0;
     m_max = 0;
     m_min = 0;
     m_dragging = 0;
-    m_scale = 0.0f;
 }
 
 CControlCountBar::~CControlCountBar()
