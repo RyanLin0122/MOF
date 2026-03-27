@@ -1,183 +1,236 @@
 #include "UI/CControlTab.h"
 #include "UI/CControlBase.h"
+#include "global.h"
 
 CControlTab::CControlTab()
 {
-    // 對齊反編譯預設：四個圖組的 group=5、id=0、block=0xFFFF
-    m_imgFocused = StateImg{};
-    m_imgUnfocused = StateImg{};
-    m_imgHover = StateImg{};
-    m_imgNoneActive = StateImg{};
+    // 反編譯：CControlButtonBase::CControlButtonBase(this)
+    // 由 C++ 繼承自動呼叫
 
-    // 基底字控制
-    CControlButtonBase::CreateChildren();
+    // 對齊反編譯：四個圖組的預設值
+    // this[167]=5, this[168]=0, word this[169*2]=0xFFFF ...
+    // 已在欄位初始化完成
 
-    // 對齊：Init()
+    // CreateChildren + Init
+    CreateChildren();
     Init();
+
+    // 對齊反編譯：this[15] = 1（CControlBase 的某旗標）
+    m_bPassKeyInputToParent = true;
+
+    // 對齊反編譯：strcpy((char*)this + 208, "J0007")
+    // 這是 CControlButtonBase::m_Text 的某個屬性（字型key）
+    // offset 208 = CControlButtonBase 內的 m_Text.m_FontFaceA
+    strcpy(m_Text.m_FontFaceA, "J0007");
 }
 
-CControlTab::~CControlTab() = default;
+CControlTab::~CControlTab()
+{
+    // 對齊反編譯：
+    // CControlText::~CControlText(this + 224) → m_Text 解構
+    // CControlImage::~CControlImage(this) → 基底解構
+    // C++ 自動處理
+}
+
+void CControlTab::CreateChildren()
+{
+    // 反編譯中由 CControlButtonBase 處理
+    CControlButtonBase::CreateChildren();
+}
 
 void CControlTab::Init()
 {
-    // 反編譯：CControlButtonBase::Init(this); 這裡基底未提供 Init，直接維持預設
-    m_bFocused = true;
+    // 對齊反編譯：CControlButtonBase::Init(this); m_bFocused = 1
+    m_bFocused = 1;
 }
 
-void CControlTab::SetTabTextType()
+void CControlTab::SetImage(unsigned int a2, uint16_t a3, uint16_t a4, uint16_t a5, uint16_t a6)
 {
-    m_bTextTabType = true;
-    CControlImage::SetAlpha(0);
-    // 對齊反編譯的預設顏色
-    SetTextColor(0xFF000000, 0xFFFFFFFF, 0xFF000000, 0xFFC99273);
-    // 反編譯：SetChildMoveByClick(this,1,1) → 對應基底按壓位移方案
-    EnablePressShift(true);
-    SetPressShift(1, 1);
-}
+    // 對齊反編譯
+    m_imgFocusedBlock = a3;
+    m_imgFocusedId = a2;
+    m_imgUnfocusedId = a2;
+    m_imgUnfocusedBlock = a4;
 
-void CControlTab::SetImage(unsigned int giid,
-    uint16_t blockFocused,
-    uint16_t blockUnfocused,
-    uint16_t blockHover,
-    uint16_t blockNoneActive)
-{
-    m_imgFocused.group = 5;     m_imgFocused.id = giid;     m_imgFocused.block = blockFocused;
-    m_imgUnfocused.group = 5;   m_imgUnfocused.id = giid;   m_imgUnfocused.block = blockUnfocused;
-    if (blockHover != 0xFFFF) { m_imgHover.group = 5; m_imgHover.id = giid; m_imgHover.block = blockHover; }
-    if (blockNoneActive != 0xFFFF) { m_imgNoneActive.group = 5; m_imgNoneActive.id = giid; m_imgNoneActive.block = blockNoneActive; }
+    if (a5 != 0xFFFF)
+    {
+        m_imgHoverId = a2;
+        m_imgHoverBlock = a5;
+    }
+    if (a6 != 0xFFFF)
+    {
+        m_imgNoneActiveId = a2;
+        m_imgNoneActiveBlock = a6;
+    }
 
-    // 初始套用「焦點」圖（對齊反編譯 SetImage() 末端行為）
-    CControlImage::SetImageID(m_imgFocused.group, m_imgFocused.id, m_imgFocused.block);
+    // 對齊反編譯：CControlImage::SetImageID(this, group, id, block)
+    CControlImage::SetImageID(m_imgFocusedGroup, m_imgFocusedId, m_imgFocusedBlock);
 
-    // 文字位置：TextTab 則依反編譯固定 (0,0)；非 TextTab 置中到父控件
-    if (m_bTextTabType)
+    if (m_bTextTabType == 1)
         m_Text.SetPos(0, 0);
     else
         m_Text.SetTextPosToParentCenter();
 }
 
-void CControlTab::SetTextColor(uint32_t colFocused,
-    uint32_t colUnfocused,
-    uint32_t colHover,
-    uint32_t colNoneActive)
+void CControlTab::SetTextColor(uint32_t a2, uint32_t a3, uint32_t a4, uint32_t a5)
 {
-    m_colFocused = colFocused;
-    m_colUnfocused = colUnfocused;
-    m_colHover = colHover;
-    m_colNoneActive = colNoneActive;
-    m_curTextColor = colFocused;     // 對齊：this[93] = a2
-    m_Text.SetTextColor(m_curTextColor);
+    // 對齊反編譯
+    m_colUnfocused = a3;
+    m_colHover = a4;
+    m_colFocused = a2;
+    m_colNoneActive = a5;
+    m_Text.m_TextColor = a2; // this[93]
 }
 
-void CControlTab::SetTabAlpha(int a)
+void CControlTab::SetTabTextType()
+{
+    // 對齊反編譯
+    m_bTextTabType = 1;
+    CControlImage::SetAlpha(0);
+    SetTextColor(0xFF000000, 0xFFFFFFFF, 0xFF000000, 0xFFC99273);
+    // SetChildMoveByClick(this, 1, 1) → EnablePressShift + SetPressShift
+    EnablePressShift(true);
+    SetPressShift(1, 1);
+}
+
+uint8_t CControlTab::GetTabType()
+{
+    return m_bTextTabType;
+}
+
+void CControlTab::SetTabAlpha(int a2)
 {
     CControlImage::SetShadeMode(0);
-    CControlImage::SetAlpha(a);
+    CControlImage::SetAlpha(a2);
 }
 
-void CControlTab::SetFocus(bool focus)
+int* CControlTab::ControlKeyInputProcess(int msg, int key, int x, int y, int a6, int a7)
 {
-    if (m_bFocused == focus) return;
-    m_bFocused = focus;
+    // 對齊反編譯：先檢查 IsActive
+    if (!IsActive())
+        return nullptr;
 
-    if (m_bFocused)
+    switch (msg)
     {
-        CControlImage::SetImageID(m_imgFocused.group, m_imgFocused.id, m_imgFocused.block);
+    case 0: // Click
+        PlaySoundClick();
+        m_Text.m_TextColor = m_colFocused; // this[93] = this[179]
+        dword_AFD34C = 0;
+        break;
+
+    case 3: // MouseDown
+        if (m_bTextTabType == 1)
+            NoneActive();
+        dword_AFD34C = 1;
+        break;
+
+    case 4: // 恢復常態
+        if (m_bFocused)
+            m_Text.m_TextColor = m_colFocused;
+        else
+            m_Text.m_TextColor = m_colUnfocused;
+
+        // 對齊反編譯：如果當前 block 匹配 hover block，切回焦點/非焦點圖
+        if (static_cast<uint16_t>(m_usBlockID) == m_imgHoverBlock)
+        {
+            if (m_bFocused)
+                CControlImage::SetImageID(m_imgFocusedGroup, m_imgFocusedId, m_imgFocusedBlock);
+        }
+        break;
+
+    case 7: // Hover
+        if (!m_bFocused)
+        {
+            m_Text.m_TextColor = m_colHover;
+            if (m_imgHoverBlock != 0xFFFF)
+                CControlImage::SetImageID(m_imgHoverGroup, m_imgHoverId, m_imgHoverBlock);
+        }
+        break;
+
+    default:
+        break;
+    }
+
+    return CControlBase::ControlKeyInputProcess(msg, key, x, y, a6, a7);
+}
+
+void CControlTab::SetFocus(int a2)
+{
+    // 對齊反編譯
+    if (m_bFocused == a2)
+        return;
+    if (a2 && !IsActive())
+        return;
+
+    m_bFocused = a2;
+
+    if (!IsActive())
+        return;
+
+    if (a2)
+    {
+        CControlImage::SetImageID(m_imgFocusedGroup, m_imgFocusedId, m_imgFocusedBlock);
         Active();
-        ApplyTextColor(m_colFocused);
+        m_Text.m_TextColor = m_colFocused;
     }
     else
     {
-        CControlImage::SetImageID(m_imgUnfocused.group, m_imgUnfocused.id, m_imgUnfocused.block);
-        NoneActive(); // 對齊反編譯 vtbl+108（離開焦點時呼叫）
-        ApplyTextColor(m_colUnfocused);
+        CControlImage::SetImageID(m_imgUnfocusedGroup, m_imgUnfocusedId, m_imgUnfocusedBlock);
+        NoneActive();
+        m_Text.m_TextColor = m_colUnfocused;
     }
 }
 
 void CControlTab::Active()
 {
     CControlBase::Active();
-    ApplyTextColor(m_bFocused ? m_colFocused : m_colUnfocused);
+    if (m_bFocused)
+        m_Text.m_TextColor = m_colFocused;
+    else
+        m_Text.m_TextColor = m_colUnfocused;
 
-    // 若目前 block 與「未啟用」相同，改回依焦點狀態圖
-    if (m_imgNoneActive.block != 0xFFFF && m_imgNoneActive.block == CControlBase::GetHeight() /*不易取現值；此處無條件套用*/)
+    // 對齊反編譯：若目前 block 是 noneActive block，改回依焦點狀態圖
+    if (static_cast<uint16_t>(m_usBlockID) == m_imgNoneActiveBlock)
     {
-        // 由於難以無侵入地取到目前 block，改成無條件套用
-        CControlImage::SetImageID(m_bFocused ? m_imgFocused.group : m_imgUnfocused.group,
-            m_bFocused ? m_imgFocused.id : m_imgUnfocused.id,
-            m_bFocused ? m_imgFocused.block : m_imgUnfocused.block);
+        if (m_bFocused)
+            CControlImage::SetImageID(m_imgFocusedGroup, m_imgFocusedId, m_imgFocusedBlock);
+        else
+            CControlImage::SetImageID(m_imgUnfocusedGroup, m_imgUnfocusedId, m_imgUnfocusedBlock);
     }
 }
 
 void CControlTab::NoneActive()
 {
     CControlBase::NoneActive();
-    ApplyTextColor(m_colNoneActive);
-    if (m_imgNoneActive.block != 0xFFFF)
-        CControlImage::SetImageID(m_imgNoneActive.group, m_imgNoneActive.id, m_imgNoneActive.block);
+    m_Text.m_TextColor = m_colNoneActive;
+    if (m_imgNoneActiveBlock != 0xFFFF)
+        CControlImage::SetImageID(m_imgNoneActiveGroup, m_imgNoneActiveId, m_imgNoneActiveBlock);
 }
 
-int* CControlTab::ControlKeyInputProcess(int msg, int key, int x, int y, int a6, int a7)
+void CControlTab::SetText(char* a2)
 {
-    switch (msg)
+    // 對齊反編譯
+    CControlButtonBase::SetText(a2);
+    if (m_bTextTabType == 1)
     {
-    case 0: // Click / MouseUp
-        PlaySoundClick();
-        ApplyTextColor(m_colFocused); // 對齊：this[372] = this[716] 行為近似（以焦點色回填）
-        break;
-    case 3: // MouseDown
-        if (m_bTextTabType)
-            NoneActive();
-        break;
-    case 4: // 回復常態（含滑出）
-        ApplyTextColor(m_bFocused ? m_colFocused : m_colUnfocused);
-        // 若目前是未啟用圖塊，換成焦點/非焦點圖
-        if (m_bFocused)
-            ApplyStateImage(m_imgFocused);
-        else
-            ApplyStateImage(m_imgUnfocused);
-        break;
-    case 7: // Hover
-        if (!m_bFocused)
-            ApplyStateImage(m_imgHover);
-        break;
-    default:
-        break;
-    }
-
-    return CControlImage::ControlKeyInputProcess(msg, key, x, y, a6, a7);
-}
-
-void CControlTab::SetText(const char* text)
-{
-    CControlButtonBase::SetText(text);
-    if (m_bTextTabType)
-    {
-        int w = 0, h = 0;
-        m_Text.GetTextPixelSize(&w, &h);
-        SetSize(static_cast<uint16_t>(w), static_cast<uint16_t>(h));
+        DWORD v5[2], v6[2];
+        short v3 = static_cast<short>(*reinterpret_cast<WORD*>(reinterpret_cast<char*>(m_Text.GetTextLength(v5)) + 2));
+        short v4 = static_cast<short>(*reinterpret_cast<WORD*>(m_Text.GetTextLength(v6)));
+        m_usHeight = static_cast<uint16_t>(v3);
+        m_usWidth = static_cast<uint16_t>(v4);
     }
 }
 
-void CControlTab::SetText(int stringId)
+void CControlTab::SetText(int a2)
 {
-    CControlButtonBase::SetText(stringId);
-    if (m_bTextTabType)
+    // 對齊反編譯
+    CControlButtonBase::SetText(a2);
+    if (m_bTextTabType == 1)
     {
-        int w = 0, h = 0;
-        m_Text.GetTextPixelSize(&w, &h);
-        SetSize(static_cast<uint16_t>(w), static_cast<uint16_t>(h));
+        DWORD v5[2], v6[2];
+        short v3 = static_cast<short>(*reinterpret_cast<WORD*>(reinterpret_cast<char*>(m_Text.GetTextLength(v5)) + 2));
+        short v4 = static_cast<short>(*reinterpret_cast<WORD*>(m_Text.GetTextLength(v6)));
+        m_usHeight = static_cast<uint16_t>(v3);
+        m_usWidth = static_cast<uint16_t>(v4);
     }
-}
-
-void CControlTab::ApplyStateImage(const StateImg& st)
-{
-    if (st.block != 0xFFFF)
-        CControlImage::SetImageID(st.group, st.id, st.block);
-}
-
-void CControlTab::ApplyTextColor(uint32_t c)
-{
-    m_curTextColor = c;
-    m_Text.SetTextColor(c);
 }
