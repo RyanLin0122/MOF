@@ -34,8 +34,9 @@ public:
     virtual ~CControlEditBox();
 
     // --- 建立 ---
+    // 對齊反編譯參數順序：x, y, width, maxLen, mode, parent, writable, align, height, visibleLines
     void Create(int x, int y, int eboxWidth, uint16_t maxLen, int mode,
-        CControlBase* pParent, int align /*0:L,1:C,2:R*/, int multiLine /*0/1*/, int reserved /*未用*/, uint8_t visibleLines);
+        CControlBase* pParent, int writable, int align, int height, uint8_t visibleLines);
     void Create(int x, int y, int eboxWidth, CControlBase* pParent, int align /*0:L,1:C,2:R*/);
     void Create(CControlBase* pParent);
 
@@ -109,7 +110,6 @@ private:
     int       m_caretIndex{ 0 };         // +35
     int       m_caretX{ 0 };             // +39
     int       m_caretY{ 0 };             // +40
-    uint16_t  m_prefHeight{ 0 };         // +17（當多行時指定高度）
     int       m_align{ 0 };              // +800（0:L 1:C 2:R）
     int       m_password{ 0 };           // +41（本類別自管的密碼遮罩旗標）
 

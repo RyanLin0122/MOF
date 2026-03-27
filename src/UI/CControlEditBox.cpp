@@ -23,6 +23,8 @@ CControlEditBox::CControlEditBox()
 {
     // 反編譯：CControlBase::CControlBase(this)
     // 其餘欄位已在宣告處初始化
+    // 對齊反編譯：建構子呼叫 CreateChildren
+    CreateChildren();
 }
 
 CControlEditBox::~CControlEditBox()
@@ -42,8 +44,7 @@ CControlEditBox::~CControlEditBox()
 void CControlEditBox::Create(CControlBase* pParent)
 {
     CControlBase::Create(pParent);                     // 基底掛載
-    m_focus = 0;
-    CreateChildren();                                  // 建立子控制
+    m_password = 0;                                    // 對齊反編譯：*((_DWORD *)this + 41) = 0
 }
 
 void CControlEditBox::Create(int x, int y, int eboxWidth, CControlBase* pParent, int align)
@@ -55,12 +56,12 @@ void CControlEditBox::Create(int x, int y, int eboxWidth, CControlBase* pParent,
 }
 
 void CControlEditBox::Create(int x, int y, int eboxWidth, uint16_t maxLen, int mode,
-    CControlBase* pParent, int align, int multiLine, int /*reserved*/, uint8_t visibleLines)
+    CControlBase* pParent, int writable, int align, int height, uint8_t visibleLines)
 {
     CControlBase::Create(x, y, pParent);
-    SetEBoxSize(eboxWidth, multiLine ? max<int>(int(GetHeight()), 0) : 0, align);
-    SetWritable(1, maxLen, mode, (uint8_t)visibleLines);
-    m_password = 0;
+    SetEBoxSize(eboxWidth, height, align);             // 對齊反編譯：SetEBoxSize(a4, a10, a9)
+    SetWritable(writable, maxLen, mode, visibleLines); // 對齊反編譯：SetWritable(a8, a5, a6, a11)
+    m_password = 0;                                    // 對齊反編譯：*((_DWORD *)this + 41) = 0
 }
 
 // -----------------------------------------------------------------------------
@@ -100,34 +101,34 @@ void CControlEditBox::CreateChildren()
 // -----------------------------------------------------------------------------
 void CControlEditBox::SetEBoxSize(int width, int height, int align)
 {
-    // 反編譯：*((WORD*)this+16)=width，並呼叫背景的 SetSize
-    SetSize((uint16_t)width, GetHeight());
-    m_Back.SetSize((unsigned short)width, (unsigned short)height);   // :contentReference[oaicite:15]{index=15}
+    // 對齊反編譯：*((_WORD *)this + 16) = a2 (m_usWidth)
+    m_usWidth = static_cast<uint16_t>(width);
+    m_Back.SetSize(static_cast<unsigned short>(width), static_cast<unsigned short>(height));
 
     // 文字基準 Y 固定 +5
     m_Text.SetY(5);
 
     // X 對齊
-    if (align == 2) {            // 右
-        m_Text.SetX((uint16_t)width - 5);
-    }
-    else if (align == 1) {     // 中
-        m_Text.SetX((int)((double)(uint16_t)width * 0.5));
-    }
-    else {                     // 左
+    if (align == 0) {            // 左
         m_Text.SetX(5);
+    }
+    else if (align == 2) {       // 右
+        m_Text.SetX(static_cast<uint16_t>(width) - 5);
+    }
+    else if (align == 1) {       // 中
+        m_Text.SetX(static_cast<int>(static_cast<double>(static_cast<uint16_t>(width)) * 0.5));
     }
     m_align = align;
 
     // 多行高度/預設多行寬
-    if (height) {
-        m_prefHeight = (uint16_t)height;
-        m_Text.SetMultiLineSize((uint16_t)width, height);            // :contentReference[oaicite:16]{index=16}
+    if (static_cast<uint16_t>(height)) {
+        m_usHeight = static_cast<uint16_t>(height);
+        m_Text.SetMultiLineSize(static_cast<uint16_t>(width), height);
         m_Text.SetWantSpaceFirstByte(1);
     }
     else {
-        // 若未指定，以背景高度為準
-        m_prefHeight = m_Back.GetHeight();
+        // 對齊反編譯：若未指定，以背景高度為準
+        m_usHeight = m_Back.GetHeight();
     }
 }
 
@@ -142,7 +143,7 @@ void CControlEditBox::SetWritable(int writable, uint16_t maxLen, int mode, uint8
 
     if (m_writable) {
         if (m_imeIndex == 0xFFFF)
-            SetupIME(1, maxLen, mode, (uint8_t)(visibleLines > 1 ? 1 : 0));
+            SetupIME(writable, maxLen, mode, visibleLines); // 對齊反編譯：直接傳入原始參數
         TextClear();
     }
 }
@@ -182,7 +183,7 @@ void CControlEditBox::SetFocus(int on)
         if (on) {
             m_Caret.Show();
             g_IMMList.SetActive(m_imeIndex, 1, g_hWnd);
-            g_IMMList.ChangeLanguage(m_imeIndex, 1, g_hWnd); // 對齊反編譯「ChangeLanguage(1,hWnd)」 :contentReference[oaicite:20]{index=20}
+            g_IMMList.ChangeLanguage(1, g_hWnd); // 對齊反編譯：2-param overload
         }
         else {
             m_Caret.Hide();
@@ -243,8 +244,9 @@ unsigned int CControlEditBox::GetCurTextSize() const
 
 BOOL CControlEditBox::IsMultiLine() const
 {
-    // 對齊語意：使用目前文字寬度換行數是否大於 1（單行=0/1）
-    return (m_visibleLines > 1);
+    // 對齊反編譯：比較 EditBox 本身高度與背景高度，不同即為多行
+    unsigned short backH = const_cast<CEditBoxBackgroundImage&>(m_Back).GetHeight();
+    return const_cast<CControlEditBox*>(this)->GetHeight() != backH;
 }
 
 // -----------------------------------------------------------------------------
@@ -270,9 +272,9 @@ void CControlEditBox::PrepareDrawing()
         return;
     }
 
-    // 密碼模式：強制語系 0（對齊反編譯在密碼時呼叫 ChangeLanguage(0)）
+    // 密碼模式：強制語系 0（對齊反編譯：ChangeLanguage(0, hWnd)）
     if (m_password)
-        g_IMMList.ChangeLanguage(m_imeIndex, 0, g_hWnd);
+        g_IMMList.ChangeLanguage(0, g_hWnd);
 
     if (m_writable) {
         // 初始化閃爍時間
