@@ -3,6 +3,8 @@
 #include <string>
 #include <cstdint>
 #include <cstring>
+#include <cstdarg>
+#include <cwchar>
 #include <windows.h>
 
 #include "UI/CControlBase.h"
@@ -18,22 +20,32 @@ public:
 
     // ---- 文字 ----
     void SetText(char* text);
+    void SetText(const char* text);
     void SetText(int stringId);
     void SetParsedText(int stringId);
     void SetTextItoa(int value);
     void SetTextMoney(unsigned int value);
     void SetTextMoney(int textIdFmt, unsigned int value);
     void SetParsedTextMoney(int textIdFmt, unsigned int value);
+    void SetTextFmtW(const wchar_t* format, ...);
 
     char* GetText();
+    const char* GetText() const;
     void ClearText();
 
     // ---- 外觀設定 ----
     void SetFontHeight(int h);
     void SetFontWeight(int w);
-    void SetControlSetFont(char* fontKey);
+    int  GetFontWeight() const { return m_FontWeight; }
+    void SetControlSetFont(const char* fontKey);
     int  GetFontHeight();
     char* GetFontFace();
+
+    void SetTextColor(DWORD color) { m_TextColor = color; }
+    void SetShadowColor(DWORD color) { m_ShadowColor = color; }
+    void SetAlignment(int alignment) { m_isCentered = alignment; }
+
+    void GetTextPixelSize(int* pWidth, int* pHeight);
 
     void SetMultiLineSpace(int space);
     int  GetMultiLineSpace();

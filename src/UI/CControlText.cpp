@@ -122,7 +122,7 @@ void CControlText::SetFontWeight(int a2)
     m_FontWeight = a2;
 }
 
-void CControlText::SetControlSetFont(char* a2)
+void CControlText::SetControlSetFont(const char* a2)
 {
     stFontInfo* v3 = g_MoFFont.GetFontInfo(a2);
     if (v3)
@@ -428,4 +428,55 @@ unsigned char CControlText::GetMultiTextLineCount(unsigned short a2)
 
     m_CachedLineCount = static_cast<unsigned char>(lineCount);
     return m_CachedLineCount;
+}
+
+// ========================================
+// SetText(const char*)
+// ========================================
+void CControlText::SetText(const char* a2)
+{
+    SetText(const_cast<char*>(a2));
+}
+
+// ========================================
+// GetText() const
+// ========================================
+const char* CControlText::GetText() const
+{
+    return m_Text.c_str();
+}
+
+// ========================================
+// GetTextPixelSize
+// ========================================
+void CControlText::GetTextPixelSize(int* pWidth, int* pHeight)
+{
+    if (m_Text.empty())
+    {
+        if (pWidth)  *pWidth = 0;
+        if (pHeight) *pHeight = 0;
+        return;
+    }
+
+    wchar_t faceW[128];
+    FontFaceAToW(m_FontFaceA, faceW, 128);
+    g_MoFFont.GetTextLength(pWidth, pHeight, m_FontHeight, faceW, m_Text.c_str(), m_FontWeight);
+}
+
+// ========================================
+// SetTextFmtW
+// ========================================
+void CControlText::SetTextFmtW(const wchar_t* format, ...)
+{
+    wchar_t wBuf[2048];
+    va_list args;
+    va_start(args, format);
+    _vsnwprintf(wBuf, sizeof(wBuf) / sizeof(wBuf[0]) - 1, format, args);
+    va_end(args);
+    wBuf[sizeof(wBuf) / sizeof(wBuf[0]) - 1] = L'\0';
+
+    // wchar_t -> multibyte
+    char mbBuf[4096];
+    WideCharToMultiByte(CP_ACP, 0, wBuf, -1, mbBuf, sizeof(mbBuf), NULL, NULL);
+    SetText(mbBuf);
 }

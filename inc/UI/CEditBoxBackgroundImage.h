@@ -18,7 +18,7 @@ public:
 
     // 建立控制項的多載版本
     void Create(CControlBase* pParent);
-    void Create(int x, int y, int width, int height, CControlBase* pParent);
+    void Create(int x, int y, int width, CControlBase* pParent, int height);
 
     // 設定控制項的位置與尺寸
     void SetPos(int x, int y);
