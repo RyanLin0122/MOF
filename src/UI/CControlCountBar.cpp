@@ -1,130 +1,187 @@
 #include "UI/CControlCountBar.h"
+#include "global.h"
 
-//------------------------------------------------------------------------------
-// 建構 / 解構：建立所有子控制並掛在自己底下
-//------------------------------------------------------------------------------
+// ==========================
+// 建構
+// 反編譯：
+//   CControlBase::CControlBase(this);
+//   CControlButton::CControlButton((char*)this + 120);
+//   CControlButton::CControlButton((char*)this + 844);
+//   CControlImage::CControlImage((char*)this + 1568);
+//   CControlImage::CControlImage((char*)this + 1760);
+//   CControlImage::CControlImage((char*)this + 1952);
+//   CControlBase::CControlBase((char*)this + 2144);
+//   // Create children to this:
+//   ((char*)this + 120)->Create(this);  this[45] = 1;
+//   ((char*)this + 844)->Create(this);  this[226] = 1;
+//   ((char*)this + 1568)->Create(this);
+//   ((char*)this + 1760)->Create(this);
+//   ((char*)this + 1952)->Create(this);
+//   ((char*)this + 2144)->Create(this);
+//   this[406]=0; this[454]=0; this[502]=0; this[550]=0;
+//   this[566]=0; this[567]=0; this[568]=0;
+//   BYTE[2276] = 0;
+// ==========================
 CControlCountBar::CControlCountBar()
+    : CControlBase()
+    , m_btnLeft()
+    , m_btnRight()
+    , m_imgLeft()
+    , m_imgMid()
+    , m_imgRight()
+    , m_track()
 {
-    // 兩顆箭頭按鈕
     m_btnLeft.Create(this);
     m_btnRight.Create(this);
-
-    // 三段圖
     m_imgLeft.Create(this);
     m_imgMid.Create(this);
     m_imgRight.Create(this);
-
-    // 軌道區（僅作為命中/拖曳判定區）
     m_track.Create(this);
 
-    // 初始狀態
-    m_cur = m_max = m_min = 0;
-    m_dragging = false;
+    m_cur = 0;
+    m_max = 0;
+    m_min = 0;
+    m_dragging = 0;
     m_scale = 0.0f;
 }
 
 CControlCountBar::~CControlCountBar()
 {
-    // 成員自動解構（順序：m_track → m_imgRight → m_imgMid → m_imgLeft → m_btnRight → m_btnLeft → base）
+    // 反編譯：逆序解構
+    // CControlBase(track), CControlImage×3, CControlButton×2, CControlBase
 }
 
-//------------------------------------------------------------------------------
-// 事件處理（對照反編譯 ControlKeyInputProcess）
-// msg: 0=按下（在本系統中常見為鼠鍵觸發），2=移動，3=彈起，7=滑入（未用到）
-// x,y 為當前滑鼠座標（以螢幕/全域座標）
-//------------------------------------------------------------------------------
+// ==========================
+// ControlKeyInputProcess
+// 反編譯完全對照
+// ==========================
 int* CControlCountBar::ControlKeyInputProcess(int msg, int key, int x, int y, int a6, int a7)
 {
-    if (msg) {
-        if (msg == 2) {
+    if (msg)
+    {
+        if (msg == 2)
+        {
             // mouse move
-            if (m_dragging)
+            if (m_dragging == 1)
                 CalcCurCount(x);
         }
-        else if (msg == 3) {
+        else if (msg == 3)
+        {
             // mouse up
-            if (m_dragging)
-                m_dragging = false;
-            // g_LButtonUp = 1; // 全域旗標，對外觀無影響，略
+            if (m_dragging == 1)
+                m_dragging = 0;
+            dword_AFD34C = 1;
         }
     }
-    else {
-        // mouse down
-        if (m_track.PtInCtrl({ x, y })) {
-            m_dragging = true;
+    else
+    {
+        // mouse down (msg == 0)
+        if (m_track.PtInCtrl({ x, y }))
+        {
+            m_dragging = 1;
             CalcCurCount(x);
-            // g_LButtonUp = 0;
+            dword_AFD34C = 0;
         }
     }
 
     return CControlBase::ControlKeyInputProcess(msg, key, x, y, a6, a7);
 }
 
-//------------------------------------------------------------------------------
-// 子控制事件：左右箭頭按下（msg==3）觸發 +/-1（對照反編譯 ChildKeyInputProcess）
-//------------------------------------------------------------------------------
+// ==========================
+// ChildKeyInputProcess
+// 反編譯：
+//   if (a3 == (char*)this+120 && a2 == 3) {
+//     ArrowPosLeft(1);
+//     dword_AFD34C = 1;
+//   } else {
+//     if (a3 == (char*)this+844 && a2 == 3)
+//       ArrowPosRight(1);
+//     dword_AFD34C = 1;
+//   }
+// ==========================
 void CControlCountBar::ChildKeyInputProcess(int msg, CControlBase* child, int a4, int a5, int a6, int a7)
 {
-    if (child == &m_btnLeft && msg == 3) {
+    if (child == &m_btnLeft && msg == 3)
+    {
         ArrowPosLeft(1);
-        g_LButtonUp = 1;
+        dword_AFD34C = 1;
     }
-    else {
-        if (child == &m_btnRight && msg == 3) {
+    else
+    {
+        if (child == &m_btnRight && msg == 3)
             ArrowPosRight(1);
-        }
-        g_LButtonUp = 1;
+        dword_AFD34C = 1;
     }
 }
 
-//------------------------------------------------------------------------------
-// 反編譯 SetArrowPos：設定本控制大小、左/右箭頭相對位置
-//------------------------------------------------------------------------------ 
+// ==========================
+// SetArrowPos
+// 反編譯：
+//   SetPos(a2, a3);
+//   v11 = m_btnLeft.GetHeight();  // vtbl+60
+//   WORD[16] = a4 - a2 + m_btnRight.GetWidth();  // vtbl+56
+//   WORD[17] = v11;
+//   m_btnLeft.SetPos(0, 0);
+//   v7 = this.GetWidth();  // vtbl+56
+//   v10 = m_btnRight.GetWidth();
+//   m_btnRight.SetPos(v7 - v10, 0);
+// ==========================
 void CControlCountBar::SetArrowPos(int xLeft, int yTop, int xRight, int /*unused*/)
 {
-    // 設定自己左上
     CControlBase::SetPos(xLeft, yTop);
 
-    // 高度取左鍵高度；寬度 = (rightX - leftX) + 右鍵寬
-    const uint16_t hBtnL = m_btnLeft.GetHeight();
-    const uint16_t wBtnR = m_btnRight.GetWidth();
-    const uint16_t width = static_cast<uint16_t>((xRight - xLeft) + wBtnR);
-    const uint16_t height = hBtnL;
+    uint16_t hBtnL = m_btnLeft.GetHeight();
+    uint16_t wBtnR = m_btnRight.GetWidth();
 
-    CControlBase::SetSize(width, height);
+    SetSize(static_cast<uint16_t>(xRight - xLeft + wBtnR), hBtnL);
 
-    // 左鍵置於 (0,0)
     m_btnLeft.SetPos(0, 0);
 
-    // 右鍵置於 (本控制寬 - 右鍵寬, 0)
-    const uint16_t wSelf = GetWidth();
-    m_btnRight.SetPos(wSelf - wBtnR, 0);
+    uint16_t wSelf = GetWidth();
+    uint16_t wRight = m_btnRight.GetWidth();
+    m_btnRight.SetPos(wSelf - wRight, 0);
 }
 
-//------------------------------------------------------------------------------
-// 反編譯 SetCountLayer：設定軌道區與三段圖的佈局
-//------------------------------------------------------------------------------
+// ==========================
+// SetCountLayer
+// 反編譯：
+//   m_track.SetPos(a2, a3);
+//   WORD[1089] = a5;
+//   WORD[1088] = a4;
+//   m_imgLeft.SetPos(a2, a3);
+//   v6 = m_imgLeft.GetWidth();
+//   m_imgMid.SetPos(a2 + v6, a3);
+//   v7 = m_imgMid.GetWidth();
+//   v8 = m_imgMid.GetX();
+//   m_imgRight.SetPos(v8 + v7, a3);
+// ==========================
 void CControlCountBar::SetCountLayer(int x, int y, int16_t width, int height)
 {
-    // 軌道區位置與尺寸
+    // 反編譯：
+    //   m_track.SetPos(a2, a3);
+    //   WORD[1089] = a5;  → track.m_usHeight (byte offset 2144+34 = 2178, WORD idx 1089)
+    //   WORD[1088] = a4;  → track.m_usWidth  (byte offset 2144+32 = 2176, WORD idx 1088)
     m_track.SetPos(x, y);
     m_track.SetSize(static_cast<uint16_t>(width), static_cast<uint16_t>(height));
-    m_layerW = static_cast<uint16_t>(width);
-    m_layerH = static_cast<uint16_t>(height);
 
-    // 三段圖貼齊排列：Left | Mid | Right
     m_imgLeft.SetPos(x, y);
-    const uint16_t wL = m_imgLeft.GetWidth();
+    uint16_t wL = m_imgLeft.GetWidth();
 
     m_imgMid.SetPos(x + wL, y);
-    const uint16_t wM = m_imgMid.GetWidth();
+    uint16_t wM = m_imgMid.GetWidth();
+    int midX = m_imgMid.GetX();
 
-    m_imgRight.SetPos(x + wL + wM, y);
+    m_imgRight.SetPos(midX + wM, y);
 }
 
-//------------------------------------------------------------------------------
-// 反編譯 SetCountInfo：a2=max, a3=cur, a4=min，並立即重建
-//------------------------------------------------------------------------------
+// ==========================
+// SetCountInfo
+// 反編譯：
+//   this[566] = a3;  // cur
+//   this[567] = a2;  // max
+//   this[568] = a4;  // min
+//   ControlRebuild();
+// ==========================
 void CControlCountBar::SetCountInfo(int maxValue, int curValue, int minValue)
 {
     m_cur = curValue;
@@ -133,108 +190,132 @@ void CControlCountBar::SetCountInfo(int maxValue, int curValue, int minValue)
     ControlRebuild();
 }
 
-//------------------------------------------------------------------------------
-// 反編譯 ArrowPosLeft：cur != min 且 cur>0 時，cur -= step
-//------------------------------------------------------------------------------
+// ==========================
+// ArrowPosLeft
+// 反編譯：
+//   v2 = this[566];
+//   if (v2 != this[568]) {    // cur != min
+//     if (v2) {                // cur != 0
+//       this[566] = v2 - a2;
+//       ControlRebuild();
+//     }
+//   }
+// ==========================
 void CControlCountBar::ArrowPosLeft(int step)
 {
     int v = m_cur;
-    if (v != m_min) {
-        if (v) {
+    if (v != m_min)
+    {
+        if (v)
+        {
             m_cur = v - step;
-            if (m_cur < m_min) m_cur = m_min;
             ControlRebuild();
         }
     }
 }
 
-//------------------------------------------------------------------------------
-// 反編譯 ArrowPosRight：cur != max 時，cur += step
-//------------------------------------------------------------------------------
+// ==========================
+// ArrowPosRight
+// 反編譯：
+//   v2 = this[566];
+//   if (v2 != this[567]) {    // cur != max
+//     this[566] = a2 + v2;
+//     ControlRebuild();
+//   }
+// ==========================
 void CControlCountBar::ArrowPosRight(int step)
 {
     int v = m_cur;
-    if (v != m_max) {
-        m_cur = v + step;
-        if (m_cur > m_max) m_cur = m_max;
+    if (v != m_max)
+    {
+        m_cur = step + v;
         ControlRebuild();
     }
 }
 
-//------------------------------------------------------------------------------
-// 反編譯 ControlRebuild：依 cur/max 決定顯示與中段縮放，設定右帽 AbsX
-//------------------------------------------------------------------------------
+// ==========================
+// ControlRebuild
+// 反編譯完全對照
+// 計算：v6 = trackW * (cur/max) - caps
+//   if v6 > 1.0: Show, scale = v6
+//   elif cur < min: Hide
+//   else: Show, scale = 1.0
+//   rightAbsX = midAbsX + midW * scale
+// ==========================
 void CControlCountBar::ControlRebuild()
 {
-    // 夾制
-    if (m_max < m_min) std::swap(m_min, m_max);
-    if (m_cur < m_min) m_cur = m_min;
-    if (m_cur > m_max) m_cur = m_max;
+    uint16_t rightW = m_imgRight.GetWidth();
+    uint16_t leftW = m_imgLeft.GetWidth();
+    int caps = leftW + rightW;
 
-    const uint16_t capL = m_imgLeft.GetWidth();
-    const uint16_t capR = m_imgRight.GetWidth();
-    const int caps = int(capL) + int(capR);
+    int cur = m_cur;
+    double v6 = (double)m_track.GetWidth()
+        * ((double)cur / (double)m_max)
+        - (double)caps;
 
-    const uint16_t trackW = m_track.GetWidth();
-    const double desired = (m_max > 0)
-        ? double(trackW) * (double(m_cur) / double(m_max))
-        : 0.0;
-
-    if (desired > 1.0) {
-        // 顯示三段
+    if (v6 > 1.0)
+    {
         m_imgLeft.Show();
         m_imgMid.Show();
         m_imgRight.Show();
-
-        // 需要填滿的中段像素
-        double fillMidPixels = desired - double(caps);
-        if (fillMidPixels < 0.0) fillMidPixels = 0.0;
-
-        const uint16_t wM = m_imgMid.GetWidth();
-        m_scale = (wM > 0) ? float(fillMidPixels / double(wM)) : 0.0f;
+        m_scale = (float)v6;
     }
-    else if (m_cur < m_min) {
-        // 小於最小：隱藏
+    else if (cur < m_min)
+    {
         m_imgLeft.Hide();
         m_imgMid.Hide();
         m_imgRight.Hide();
-        m_scale = 0.0f;
     }
-    else {
-        // 最低顯示：三段皆顯示，中段縮放為 1.0（右帽緊接中段原寬）
+    else
+    {
         m_imgLeft.Show();
         m_imgMid.Show();
         m_imgRight.Show();
-        m_scale = 1.0f;
+        m_scale = 1.0f;  // 1065353216 = float 1.0
     }
 
-    // 右帽的絕對 X = mid.AbsX + mid.Width * scale
-    const int midAbsX = m_imgMid.GetAbsX();
-    const uint16_t wM = m_imgMid.GetWidth();
-    const int rightAbsX = midAbsX + int(double(wM) * double(m_scale));
-    m_imgRight.SetAbsX(rightAbsX);
+    // 反編譯：
+    //   v9 = float[449];  (m_scale)
+    //   v10 = (float)m_imgMid.GetWidth() * v9;
+    //   v8 = (double)m_imgMid.GetAbsX() + v10;
+    //   m_imgRight.SetAbsX((int)v8);
+    float scale = m_scale;
+    float advance = (float)m_imgMid.GetWidth() * scale;
+    double rightAbsX = (double)m_imgMid.GetAbsX() + (double)advance;
+    m_imgRight.SetAbsX((int)(int64_t)rightAbsX);
 }
 
-//------------------------------------------------------------------------------
-// 反編譯 CalcCurCount：把滑鼠在軌道中的 X 映射到 [1..max]，再夾到 max
-//------------------------------------------------------------------------------
+// ==========================
+// CalcCurCount
+// 反編譯：
+//   if (a2 >= m_track.GetAbsX()) {
+//     v4 = m_track.GetWidth();
+//     if (a2 <= m_track.GetAbsX() + v4) {
+//       v8 = a2 - m_track.GetAbsX();
+//       v5 = this[567];  // max
+//       v7 = (float)v8;
+//       v6 = (int)(v7 / ((double)m_track.GetWidth() / (double)v5) + 1.0);
+//       this[566] = v6;
+//       if (v6 >= v5) this[566] = v5;
+//       ControlRebuild();
+//     }
+//   }
+// ==========================
 void CControlCountBar::CalcCurCount(int mouseAbsX)
 {
-    const int trackAbsX = m_track.GetAbsX();
-    if (mouseAbsX < trackAbsX) return;
-
-    const uint16_t trackW = m_track.GetWidth();
-    if (mouseAbsX > trackAbsX + trackW) return;
-
-    const int dx = mouseAbsX - trackAbsX;
-    const int maxV = (m_max > 0) ? m_max : 0;
-
-    if (maxV > 0) {
-        // 反編譯：cur = ( dx / (trackW / max) ) + 1.0
-        const double unit = double(trackW) / double(maxV);
-        int cur = int(double(dx) / unit + 1.0);
-        if (cur >= maxV) cur = maxV;
-        m_cur = cur;
-        ControlRebuild();
+    if (mouseAbsX >= m_track.GetAbsX())
+    {
+        int trackW = m_track.GetWidth();
+        if (mouseAbsX <= m_track.GetAbsX() + trackW)
+        {
+            int dx = mouseAbsX - m_track.GetAbsX();
+            int maxV = m_max;
+            float fDx = (float)dx;
+            int cur = (int)(int64_t)(fDx / ((double)m_track.GetWidth() / (double)maxV) + 1.0);
+            m_cur = cur;
+            if (cur >= maxV)
+                m_cur = maxV;
+            ControlRebuild();
+        }
     }
 }

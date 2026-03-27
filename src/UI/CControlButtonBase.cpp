@@ -1,61 +1,62 @@
 #include "UI/CControlButtonBase.h"
+#include "global.h"
+#include <cstring>
 
 // ==========================
 // 建構 / 解構
+// 反編譯：CControlButtonBase::CControlButtonBase
+//   CControlImage::CControlImage(this);
+//   CControlText::CControlText((char*)this + 224);
+//   this[50] = 0;  // pressed
+//   this[48] = 0;  // childMoveByClick
+//   this[49] = 0;  // mouseOver
+//   this[51] = 2;  // shiftAmount
 // ==========================
 CControlButtonBase::CControlButtonBase()
+    : CControlImage()
+    , m_Text()
 {
-    // 預設就顯示與可按，位移開啟（視覺習慣）
-    m_bEnablePressShift = true;
-    m_pressShiftX = 1;
-    m_pressShiftY = 1;
+    m_bPressed = 0;
+    m_bChildMoveByClick = 0;
+    m_bMouseOver = 0;
+    m_nShiftAmount = 2;
+    memset(m_szSoundName, 0, sizeof(m_szSoundName));
 }
 
 CControlButtonBase::~CControlButtonBase()
 {
-    // m_Text 為成員，會自動解構；其父子鏈結由 CControlBase 維持
+    // 反編譯：~CControlText((char*)this + 224); ~CControlImage(this);
+    // C++ 自動按逆序解構成員
 }
 
 // ==========================
-// 建立
+// CreateChildren
+// 反編譯：呼叫 m_Text 的 virtual Create(this)
+//   (*(void (__thiscall **)(char*, this))(*((_DWORD*)this + 56) + 12))((char*)this + 224, this);
 // ==========================
-void CControlButtonBase::Create(CControlBase* pParent)
-{
-    CControlImage::Create(pParent);
-    CreateChildren();
-}
-
-void CControlButtonBase::Create(int x, int y, CControlBase* pParent)
-{
-    CControlImage::Create(x, y, pParent);
-    CreateChildren();
-}
-
-void CControlButtonBase::Create(int x, int y, uint16_t w, uint16_t h, CControlBase* pParent)
-{
-    CControlImage::Create(x, y, w, h, pParent);
-    CreateChildren();
-}
-
 void CControlButtonBase::CreateChildren()
 {
-    // 文字作為子控制掛載（相對於按鈕左上角）
-    // 預設放在(0,0)，通常會由 UI 版面或 SetCenterPos() 來置中
-    if (m_Text.GetParent() != this)
-    {
-        m_Text.Create(this);
-        // 常見預設：讓文字居中（你的 CControlText 若有置中 API，可在此設定）
-        // 例如：m_Text.SetAlign(CControlText::AlignCenter);
-        //      m_Text.SetCenterPos();  // 需要 CControlText 支援
-    }
+    m_Text.Create(this);
+}
+
+// ==========================
+// Init
+// 反編譯：
+//   (*(void (__thiscall **)(this))(*(_DWORD*)this + 68))(this);  // virtual Show()
+//   strcpy((char*)this + 208, "J0003");
+// ==========================
+void CControlButtonBase::Init()
+{
+    Show();
+    strcpy(m_szSoundName, "J0003");
 }
 
 // ==========================
 // 文字
 // ==========================
-void CControlButtonBase::SetText(const char* utf8Text)
+void CControlButtonBase::SetText(char* a2)
 {
-    m_Text.SetText(utf8Text);
+    m_Text.SetText(a2);
 }
 
 void CControlButtonBase::SetText(int stringId)
@@ -64,41 +65,75 @@ void CControlButtonBase::SetText(int stringId)
 }
 
 // ==========================
-// 按下位移效果
-// ==========================
-void CControlButtonBase::ButtonPosDown()
-{
-    if (m_bPressed) return;
-    m_bPressed = true;
-
-    if (m_bEnablePressShift)
-    {
-        // 位移所有子物件（包含文字等），營造壓下視覺
-        SetChildPosMove(m_pressShiftX, m_pressShiftY);
-    }
-
-    PlaySoundClick();
-}
-
-void CControlButtonBase::ButtonPosUp()
-{
-    if (!m_bPressed) return;
-    m_bPressed = false;
-
-    if (m_bEnablePressShift)
-    {
-        // 位移還原
-        SetChildPosMove(-m_pressShiftX, -m_pressShiftY);
-    }
-}
-
-// ==========================
-// 音效（可被覆寫）
+// PlaySoundClick
+// 反編譯：GameSound::PlaySoundA(&g_GameSoundManager, (char*)this + 208, 0, 0);
 // ==========================
 void CControlButtonBase::PlaySoundClick()
 {
-    // 預設不做事；專案若有音效管理（例如 CSoundMgr::Play("BtnClick")），
-    // 可在衍生類別覆寫，或在此直接呼叫。
-    // 例：
-    // CSoundMgr::Play("BtnClick");
+    g_GameSoundManager.PlaySoundA(m_szSoundName, 0, 0);
+}
+
+// ==========================
+// ButtonPosDown
+// 反編譯：
+//   if (this[48]) {            // childMoveByClick enabled
+//     if (!this[50]) {         // not already pressed
+//       SetChildPosMove(this[51], this[51]);
+//       this[50] = 1;
+//     }
+//   }
+// ==========================
+void CControlButtonBase::ButtonPosDown()
+{
+    if (m_bChildMoveByClick)
+    {
+        if (!m_bPressed)
+        {
+            CControlBase::SetChildPosMove(m_nShiftAmount, m_nShiftAmount);
+            m_bPressed = 1;
+        }
+    }
+}
+
+// ==========================
+// ButtonPosUp
+// 反編譯：
+//   if (this[48]) {
+//     if (this[50]) {
+//       SetChildPosMove(-this[51], -this[51]);
+//       this[50] = 0;
+//     }
+//   }
+// ==========================
+void CControlButtonBase::ButtonPosUp()
+{
+    if (m_bChildMoveByClick)
+    {
+        if (m_bPressed)
+        {
+            CControlBase::SetChildPosMove(-m_nShiftAmount, -m_nShiftAmount);
+            m_bPressed = 0;
+        }
+    }
+}
+
+// ==========================
+// SetChildMoveByClick
+// 反編譯：
+//   this[51] = a3;  // shiftAmount
+//   this[48] = a2;  // enable
+// ==========================
+void CControlButtonBase::SetChildMoveByClick(int a2, int a3)
+{
+    m_nShiftAmount = a3;
+    m_bChildMoveByClick = a2;
+}
+
+// ==========================
+// IsMouseOver
+// 反編譯：return this[49];
+// ==========================
+int CControlButtonBase::IsMouseOver()
+{
+    return m_bMouseOver;
 }
