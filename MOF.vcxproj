@@ -434,6 +434,7 @@
     <ClCompile Include="src\UI\CControlBoxBase.cpp" />
     <ClCompile Include="src\UI\CControlBoxBuyPetFeed.cpp" />
     <ClCompile Include="src\UI\CControlBoxBuySkill.cpp" />
+    <ClCompile Include="src\UI\CControlBoxCashShop.cpp" />
     <ClCompile Include="src\UI\CControlBoxCashShopStrgItem.cpp" />
     <ClCompile Include="src\UI\CControlBoxEquip.cpp" />
     <ClCompile Include="src\UI\CControlBoxInvenItem.cpp" />
@@ -772,6 +773,7 @@
     <ClInclude Include="inc\UI\CControlBoxBase.h" />
     <ClInclude Include="inc\UI\CControlBoxBuyPetFeed.h" />
     <ClInclude Include="inc\UI\CControlBoxBuySkill.h" />
+    <ClInclude Include="inc\UI\CControlBoxCashShop.h" />
     <ClInclude Include="inc\UI\CControlBoxCashShopStrgItem.h" />
     <ClInclude Include="inc\UI\CControlBoxEquip.h" />
     <ClInclude Include="inc\UI\CControlBoxInvenItem.h" />

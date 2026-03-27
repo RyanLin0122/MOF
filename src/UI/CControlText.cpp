@@ -5,7 +5,8 @@
 #include "UI/CControlText.h"
 
 // ---- 小工具：將數字轉為含逗號字串 ----
-static void Numeric2MoneyByComma(unsigned int value, char* out, int outSize, int /*flagUnused*/)
+// 非 static，供其他模組（如 CControlBoxCashShop）連結使用
+void Numeric2MoneyByComma(unsigned int value, char* out, int outSize, int /*flagUnused*/)
 {
 	char buf[64];
 #if defined(_MSC_VER)
