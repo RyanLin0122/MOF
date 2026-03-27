@@ -454,3 +454,9 @@ int CControlBase::IsActive() const
 {
     return m_bActive ? 1 : 0;
 }
+
+// 反編譯：*((_DWORD *)this + 17) = a2;
+void CControlBase::SetArrayIndex(int idx)
+{
+    m_nArrayIndex = idx;
+}

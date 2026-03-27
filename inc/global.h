@@ -65,6 +65,7 @@ class cltLessonSystem;
 class cltSkillSystem;
 class cltPlayerAbility;
 class DirectInputManager;
+class cltCashShopItem;
 
 //-----------------------------------------------------------------------------
 // 全域變數
@@ -211,6 +212,9 @@ extern cltMoneySystem           g_clMoneySystem;
 extern cltMoFC_EffectKindInfo   g_clEffectKindInfo;
 extern cltMyCharData            g_clMyCharData;
 extern cltSystemMessage         g_clSysemMessage;
+
+// CashShop
+extern cltCashShopItem          g_clCashShopItem;
 
 // Device
 extern CDeviceManager           g_clDeviceManager;

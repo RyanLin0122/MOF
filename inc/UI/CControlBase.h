@@ -98,6 +98,10 @@ public:
     void NoneActive();
     int  IsActive() const;
 
+    // 陣列索引（反編譯：SetArrayIndex 寫入 *((_DWORD *)this + 17)）
+    virtual void SetArrayIndex(int idx);
+    int  GetArrayIndex() const { return m_nArrayIndex; }
+
     // ---- ToolTip ----
     void InitLogIn();
     void ClearData();
@@ -143,4 +147,5 @@ protected:
 
     bool m_bActive{ false };   // 對應 *((DWORD*)this+11)
     int  m_nClassId{ 0 };      // 用於 FindScrollBarCtrlChild 比對（100=scrollbar）
+    int  m_nArrayIndex{ 0 };   // 對應 *((DWORD*)this+17)，由 SetArrayIndex 設定
 };

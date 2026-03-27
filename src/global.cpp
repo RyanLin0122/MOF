@@ -43,6 +43,7 @@
 #include "Network/CMoFNetwork.h"
 #include "Effect/CEffectManager.h"
 #include "Image/CDeviceManager.h"
+#include "Logic/cltCashShopItem.h"
 
 
 LPDIRECT3D9 g_pD3D = NULL;
@@ -138,6 +139,8 @@ cltMoneySystem g_clMoneySystem;
 cltMoFC_EffectKindInfo g_clEffectKindInfo;
 // cltMyCharData g_clMyCharData is defined in Logic/cltMyCharData.cpp
 // cltSystemMessage g_clSysemMessage is defined in Logic/cltSystemMessage.cpp
+
+cltCashShopItem g_clCashShopItem;
 
 int dword_AFD344 = 0;
 
