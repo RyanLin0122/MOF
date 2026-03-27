@@ -1,6 +1,3 @@
-// ================================
-// CControlTab.h
-// ================================
 #pragma once
 #include <cstdint>
 #include "UI/CControlButtonBase.h"
@@ -8,10 +5,10 @@
 #include "UI/CControlText.h"
 
 /**
- * 邏輯還原自 IDA Pro 反編譯：CControlTab
- * - 提供「焦點/非焦點/滑入/未啟用」四種圖組態（(group,id,block) 三元組）
- * - 提供四種文字色（焦點/非焦點/滑入/未啟用）
- * - 事件碼對齊：0=Click、3=MouseDown、4=恢復常態、7=Hover
+ * 對齊反編譯：CControlTab
+ * 繼承自 CControlButtonBase
+ * 包含四組圖態 (focused/unfocused/hover/noneActive)，四組文字色
+ * 事件碼：0=Click, 3=MouseDown, 4=恢復常態, 7=Hover
  */
 class CControlTab : public CControlButtonBase
 {
@@ -19,68 +16,67 @@ public:
     CControlTab();
     virtual ~CControlTab();
 
-    // 初始化（對齊反編譯：把焦點旗標預設為 1）
     void Init();
+    void CreateChildren();
 
-    // 文字 Tab 樣式（對齊：SetTabTextType）
+    // 圖像設定
+    void SetImage(unsigned int giid, uint16_t blockFocused, uint16_t blockUnfocused,
+                  uint16_t blockHover, uint16_t blockNoneActive);
+
+    // 文字色
+    void SetTextColor(uint32_t colFocused, uint32_t colUnfocused,
+                      uint32_t colHover, uint32_t colNoneActive);
+
+    // 文字 Tab 樣式
     void SetTabTextType();
-    uint8_t GetTabType() const { return m_bTextTabType ? 1u : 0u; }
+    uint8_t GetTabType();
 
-    // 設定圖像：使用同一 giid，分別指定四種 block（a5/a6=0xFFFF 表示無此狀態）
-    void SetImage(unsigned int giid,
-        uint16_t blockFocused,
-        uint16_t blockUnfocused,
-        uint16_t blockHover,
-        uint16_t blockNoneActive);
-
-    // 文字色（焦點/非焦點/滑入/未啟用）
-    void SetTextColor(uint32_t colFocused,
-        uint32_t colUnfocused,
-        uint32_t colHover,
-        uint32_t colNoneActive);
-
-    // 透明度（對齊：SetTabAlpha，且會關閉 ShadeMode）
+    // 透明度
     void SetTabAlpha(int a);
 
-    // 狀態切換
-    void SetFocus(bool focus);
+    // 事件
+    virtual int* ControlKeyInputProcess(int msg, int key, int x, int y, int a6, int a7) override;
+
+    // 狀態
+    void SetFocus(int focus);
     void Active();
     void NoneActive();
 
-    // 事件流程（維持與基底相同簽名與回傳語義）
-    virtual int* ControlKeyInputProcess(int msg, int key, int x, int y, int a6, int a7) override;
+    // 文字
+    void SetText(char* text);
+    void SetText(int stringId);
 
-    // 字串/字串ID 載入後，若是 TextTab 會以字寬高回填自身尺寸
-    void SetText(const char* text);  // 覆寫同名（以使用 m_Text）
-    void SetText(int stringId);      // 覆寫整數版本（資源字串）
-
-    // Tab 索引（供管理器設定/讀取）
+    // Tab 索引（供管理器用）
     void SetIndex(int idx) { m_index = idx; }
     int  GetIndex() const { return m_index; }
 
 private:
-    struct StateImg { uint32_t group{ 5 }; uint32_t id{ 0 }; uint16_t block{ 0xFFFF }; };
+    // 四狀態圖：每組 {group, id, block}
+    // 對齊反編譯 this[167..178]
+    uint32_t m_imgFocusedGroup{ 5 };       // this[167]
+    uint32_t m_imgFocusedId{ 0 };          // this[168]
+    uint16_t m_imgFocusedBlock{ 0xFFFF };  // this[169] (low word)
 
-    void ApplyStateImage(const StateImg& st);
-    void ApplyTextColor(uint32_t c);
+    uint32_t m_imgUnfocusedGroup{ 5 };     // this[170]
+    uint32_t m_imgUnfocusedId{ 0 };        // this[171]
+    uint16_t m_imgUnfocusedBlock{ 0xFFFF }; // this[172] (low word)
 
-private:
-    // 四狀態圖
-    StateImg m_imgFocused{};     // 反編譯索引 167..169
-    StateImg m_imgUnfocused{};   // 170..172
-    StateImg m_imgHover{};       // 173..175
-    StateImg m_imgNoneActive{};  // 176..178
+    uint32_t m_imgHoverGroup{ 5 };         // this[173]
+    uint32_t m_imgHoverId{ 0 };            // this[174]
+    uint16_t m_imgHoverBlock{ 0xFFFF };    // this[175] (low word)
 
-    // 文字色
-    uint32_t m_colFocused{ 0xFFFFFFFF };
-    uint32_t m_colUnfocused{ 0xFFFFFFFF };
-    uint32_t m_colHover{ 0xFFFFFFFF };
-    uint32_t m_colNoneActive{ 0xFFFFFFFF };
-    uint32_t m_curTextColor{ 0xFFFFFFFF }; // 對齊 this[93]
+    uint32_t m_imgNoneActiveGroup{ 5 };    // this[176]
+    uint32_t m_imgNoneActiveId{ 0 };       // this[177]
+    uint16_t m_imgNoneActiveBlock{ 0xFFFF }; // this[178] (low word)
 
-    // 樣式與狀態
-    bool m_bTextTabType{ false }; // 對齊 *((BYTE*)this+660)
-    bool m_bFocused{ true };      // 對齊 *((DWORD*)this+166)
+    // 四狀態文字色：this[179..182]
+    uint32_t m_colFocused{ 0xFFFFFFFF };    // this[179]
+    uint32_t m_colUnfocused{ 0xFFFFFFFF };  // this[180]
+    uint32_t m_colHover{ 0xFFFFFFFF };      // this[181]
+    uint32_t m_colNoneActive{ 0xFFFFFFFF }; // this[182]
 
-    int  m_index{ 0 };            // 供管理器透過事件帶回來
+    // 狀態
+    int      m_bFocused{ 1 };               // this[166]
+    uint8_t  m_bTextTabType{ 0 };           // byte at this+660
+    int      m_index{ 0 };                  // this[48] (array index for TabMgr)
 };

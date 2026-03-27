@@ -1,128 +1,167 @@
 #include "UI/CEditBoxBackgroundImage.h"
+#include "UI/CControlImage.h"
+#include "UI/CControlBase.h"
 
-// ======================================================================
-// 建構/解構
-// ======================================================================
-
+// ========================================
+// 建構 / 解構
+// ========================================
 CEditBoxBackgroundImage::CEditBoxBackgroundImage()
 {
-    // C++ 會自動呼叫 CControlBase 的建構函式
-    // m_Images 陣列的成員也會自動呼叫 CControlImage 的建構函式
     CreateChildren();
 }
 
 CEditBoxBackgroundImage::~CEditBoxBackgroundImage()
 {
-    // C++ 會自動呼叫成員和基底類別的解構函式，無需手動處理
 }
 
-// ======================================================================
-// 建立流程
-// ======================================================================
-
+// ========================================
+// CreateChildren
+// ========================================
 void CEditBoxBackgroundImage::CreateChildren()
 {
-    // GI_GROUP 536870931 (0x20000013) 是圖片資源的群組ID
-    const unsigned int GI_GROUP = 536870931;
-
-    // 建立並設定九個圖片子控制項
+    // 對齊反編譯：每個 image Create(this), SetImageID(536870931, i+67)
     for (int i = 0; i < 9; ++i)
     {
         m_Images[i].Create(this);
-        // BLOCK_ID 從 67 開始，對應九宮格的各個部分
-        m_Images[i].SetImageID(GI_GROUP, i + 67);
+        m_Images[i].SetImageID(536870931u, static_cast<unsigned short>(i + 67));
     }
 
-    // 根據左上角圖片的尺寸，初步設定其他圖片的位置
-    unsigned short cornerWidth = m_Images[0].GetWidth();
-    unsigned short cornerHeight = m_Images[0].GetHeight();
+    // 對齊反編譯：根據左上角尺寸設定子控制位置
+    unsigned short v5 = m_Images[0].GetWidth();
+    unsigned short v6 = m_Images[0].GetHeight();
 
-    // 設定第一行
-    m_Images[1].SetX(cornerWidth); // 中上
-
-    // 設定第二行
-    m_Images[3].SetY(cornerHeight); // 左中
-    m_Images[4].SetPos(cornerWidth, cornerHeight); // 中中
-
-    // 設定第三行
-    m_Images[7].SetX(cornerWidth); // 中下
-
-    // 右邊和底下的圖片位置會在 SetSize 中動態計算
+    // m_Images[1] (中上) → SetX(v5)
+    m_Images[1].SetX(v5);
+    // m_Images[3] (左中) → SetY(v6)
+    m_Images[3].SetY(v6);
+    // m_Images[4] (中中) → SetPos(v5, v6)
+    m_Images[4].SetPos(v5, v6);
+    // m_Images[5] (右中) → SetY(v6)
+    m_Images[5].SetY(v6);
+    // m_Images[7] (中下) → SetX(v5)
+    m_Images[7].SetX(v5);
 }
 
-void CEditBoxBackgroundImage::Create(CControlBase* pParent)
+// ========================================
+// Create (5 params)
+// ========================================
+void CEditBoxBackgroundImage::Create(int a2, int a3, int a4, CControlBase* a5, int a6)
 {
-    CControlBase::Create(pParent);
+    // 對齊反編譯：
+    // vtbl+88 → SetPos(a2, a3)
+    // vtbl+84 → SetSize(a4, a6)  (SetImageID in decompiled but actually SetSize context)
+    // vtbl+12 → Create(a5)
+    SetPos(a2, a3);
+    SetSize(static_cast<unsigned short>(a4), static_cast<unsigned short>(a6));
+    CControlBase::Create(a5);
 }
 
-void CEditBoxBackgroundImage::Create(int x, int y, int width, int height, CControlBase* pParent)
+// ========================================
+// Create (parent only)
+// ========================================
+void CEditBoxBackgroundImage::Create(CControlBase* a2)
 {
-    // 注意：IDA中的參數順序可能與直觀不同，此處遵循反編譯碼邏輯
-    // CEditBoxBackgroundImage::Create(this, x, y, width, pParent, height)
-    SetPos(x, y);
-    SetSize(static_cast<unsigned short>(width), static_cast<unsigned short>(height));
-    CControlBase::Create(pParent);
+    CControlBase::Create(a2);
 }
 
-// ======================================================================
-// 位置與尺寸
-// ======================================================================
-
-void CEditBoxBackgroundImage::SetPos(int x, int y)
+// ========================================
+// SetPos
+// ========================================
+void CEditBoxBackgroundImage::SetPos(int a2, int a3)
 {
-    CControlBase::SetPos(x, y);
+    CControlBase::SetPos(a2, a3);
 }
 
-void CEditBoxBackgroundImage::SetSize(unsigned short width, unsigned short height)
+// ========================================
+// SetSize
+// ========================================
+void CEditBoxBackgroundImage::SetSize(unsigned short a2, unsigned short a3)
 {
-    // 忽略無效的尺寸設定
-    if (width == 0 || height == 0)
-    {
+    // 對齊反編譯：完整的 SetSize 邏輯
+    unsigned short v3 = a2;
+    if (!a2)
         return;
-    }
 
-    // 根據反編譯碼，寬度似乎有+10的偏移
-    width += 10;
+    unsigned short v5 = a3;
+    if (a3)
+        v3 = a2 + 10;
 
-    // 獲取邊角和中間圖片的原始尺寸
+    // 取得角塊原始尺寸
     unsigned short cornerW = m_Images[0].GetWidth();
     unsigned short cornerH = m_Images[0].GetHeight();
-    unsigned short middleW = m_Images[4].GetWidth();
-    unsigned short middleH = m_Images[4].GetHeight();
 
-    // 如果原始尺寸無效，則無法進行縮放
-    if (middleW == 0 || middleH == 0) return;
+    // 中段目標寬度
+    unsigned short v7 = v3 - 2 * cornerW;
 
-    // 計算中間部分需要被拉伸的目標寬度和高度
-    unsigned short targetMiddleW = width - 2 * cornerW;
-    unsigned short targetMiddleH = height - 2 * cornerH;
+    // 取得中中塊原始尺寸
+    unsigned short origMidW = m_Images[4].GetWidth();
+    unsigned short origMidH = m_Images[4].GetHeight();
 
-    // 計算水平和垂直方向的縮放比例
-    float scaleX = static_cast<float>(targetMiddleW) / middleW;
-    float scaleY = static_cast<float>(targetMiddleH) / middleH;
+    if (!v5)
+        v5 = origMidH;
 
-    // 設定可拉伸圖片的縮放比例
-    m_Images[1].SetScale(scaleX, 1.0f); // 中上
-    m_Images[3].SetScale(1.0f, scaleY); // 左中
-    m_Images[4].SetScale(scaleX, scaleY); // 中中
-    m_Images[5].SetScale(1.0f, scaleY); // 右中
-    m_Images[7].SetScale(scaleX, 1.0f); // 中下
-    
-    // 根據縮放後的尺寸，更新右邊和底部圖片的位置
-    unsigned short scaledMiddleW = static_cast<unsigned short>(middleW * scaleX);
-    unsigned short scaledMiddleH = static_cast<unsigned short>(middleH * scaleY);
-    
-    // 右側列
-    m_Images[2].SetX(cornerW + scaledMiddleW); // 右上
-    m_Images[5].SetX(cornerW + scaledMiddleW); // 右中
-    m_Images[8].SetX(cornerW + scaledMiddleW); // 右下
+    if (!origMidW || !origMidH)
+        return;
 
-    // 底部行
-    m_Images[6].SetY(cornerH + scaledMiddleH); // 左下
-    m_Images[7].SetY(cornerH + scaledMiddleH); // 中下
-    m_Images[8].SetY(cornerH + scaledMiddleH); // 右下
+    // 計算縮放比
+    float scaleX = static_cast<float>(v7) / static_cast<float>(origMidW);
+    float scaleY = static_cast<float>(v5) / static_cast<float>(origMidH);
 
-    // 更新整個控制項的總尺寸
-    CControlBase::SetSize(width, height);
+    // 計算縮放後中段尺寸
+    unsigned short scaledMidW = static_cast<unsigned short>(
+        static_cast<float>(m_Images[4].GetWidth()) * scaleX);
+    unsigned short scaledMidH = static_cast<unsigned short>(
+        static_cast<float>(m_Images[4].GetHeight()) * scaleY);
+
+    // 設定整體大小
+    m_usWidth = scaledMidW + 2 * cornerW;
+    m_usHeight = scaledMidH + 2 * cornerH;
+
+    // m_Images[1] (中上) → 縮放 X
+    unsigned short img1W = m_Images[1].GetWidth();
+    if (img1W)
+    {
+        m_Images[1].SetScale(static_cast<float>(scaledMidW) / static_cast<float>(img1W), 1.0f);
+
+        // m_Images[2] (右上) → SetX
+        m_Images[2].SetX(cornerW + scaledMidW);
+
+        // m_Images[3] (左中) → 縮放 Y
+        unsigned short img3H = m_Images[3].GetHeight();
+        if (img3H)
+        {
+            m_Images[3].SetScale(1.0f, static_cast<float>(scaledMidH) / static_cast<float>(img3H));
+
+            // m_Images[5] (右中) → SetX, 縮放 Y
+            int rightX = m_Images[2].GetX();
+            m_Images[5].SetX(rightX);
+
+            unsigned short img5H = m_Images[5].GetHeight();
+            if (img5H)
+            {
+                m_Images[5].SetScale(1.0f, static_cast<float>(scaledMidH) / static_cast<float>(img5H));
+
+                // m_Images[6] (左下) → SetY
+                m_Images[6].SetY(scaledMidH + cornerH);
+
+                // m_Images[8] (右下) → SetPos
+                unsigned short scaledImg0H = static_cast<unsigned short>(
+                    static_cast<float>(m_Images[0].GetHeight()) * m_Images[3].GetScaleY());
+                m_Images[8].SetPos(rightX, scaledMidH + scaledImg0H);
+
+                // m_Images[7] (中下) → 縮放 X, SetY
+                unsigned short img7W = m_Images[7].GetWidth();
+                if (img7W)
+                {
+                    m_Images[7].SetScale(static_cast<float>(scaledMidW) / static_cast<float>(img7W), 1.0f);
+                    m_Images[7].SetY(
+                        scaledMidH + static_cast<unsigned short>(
+                            static_cast<float>(m_Images[0].GetHeight()) * m_Images[1].GetScaleY()));
+
+                    // 最終更新整體 size
+                    CControlBase::SetSize(m_usWidth, m_usHeight);
+                }
+            }
+        }
+    }
 }
-
