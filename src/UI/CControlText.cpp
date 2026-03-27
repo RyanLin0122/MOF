@@ -20,16 +20,6 @@ void Numeric2MoneyByComma(unsigned int value, char* out, int outSize, int /*flag
     out[outSize - 1] = '\0';
 }
 
-// ---- 內部 helper：char* -> wchar_t* 轉換 ----
-static void FontFaceAToW(const char* faceA, wchar_t* faceW, int maxLen)
-{
-    if (!faceA || !faceA[0]) {
-        faceW[0] = L'\0';
-        return;
-    }
-    MultiByteToWideChar(CP_ACP, 0, faceA, -1, faceW, maxLen);
-}
-
 // ========================================
 // 建構 / 解構
 // ========================================
@@ -130,9 +120,7 @@ void CControlText::SetControlSetFont(const char* a2)
         m_FontHeight = v3->nHeight;
         m_FontWeight = v3->nWeight;
         // 對齊反編譯：strcpy((char*)this + 176, (const char*)v3 + 128)
-        // stFontInfo offset 128 = font face name (char[128] in original)
-        // 現有 stFontInfo 用 wchar_t，所以轉換
-        WideCharToMultiByte(CP_ACP, 0, v3->wszFaceName, -1, m_FontFaceA, sizeof(m_FontFaceA), NULL, NULL);
+        strcpy(m_FontFaceA, v3->szFaceName);
     }
 }
 
@@ -163,10 +151,8 @@ void CControlText::Draw()
     int v2 = GetAbsX();
     int v3 = GetAbsY();
 
-    // 對齊反編譯：SetFont(fontHeight, fontFaceA, fontWeight)
-    wchar_t faceW[128];
-    FontFaceAToW(m_FontFaceA, faceW, 128);
-    g_MoFFont.SetFont(m_FontHeight, faceW, m_FontWeight);
+    // 對齊反編譯：SetFont(fontHeight, (LPCSTR)this+176, fontWeight)
+    g_MoFFont.SetFont(m_FontHeight, m_FontFaceA, m_FontWeight);
 
     const char* v4 = m_Text.c_str();
     int v5 = (static_cast<int>(m_usHeight) << 16) | m_usWidth; // packed size
@@ -240,11 +226,10 @@ DWORD* CControlText::GetTextLength(DWORD* a2)
     if (!m_Text.empty())
     {
         const char* v3 = m_Text.c_str();
-        wchar_t faceW[128];
-        FontFaceAToW(m_FontFaceA, faceW, 128);
 
+        // 對齊反編譯：直接傳 LPCSTR fontFace，不轉 wchar_t
         int w = 0, h = 0;
-        g_MoFFont.GetTextLength(&w, &h, m_FontHeight, faceW, v3, m_FontWeight);
+        g_MoFFont.GetTextLength(&w, &h, m_FontHeight, m_FontFaceA, v3, m_FontWeight);
 
         // 對齊反編譯：回傳 packed {WORD width, WORD height}
         a2[0] = (static_cast<DWORD>(h & 0xFFFF) << 16) | static_cast<DWORD>(w & 0xFFFF);
@@ -275,10 +260,10 @@ int CControlText::GetCalcedTextBoxHeight(unsigned short a2)
 // ========================================
 void CControlText::SetTextItoa(int Value)
 {
+    // 對齊反編譯：不設 m_LineCountDirty
     char Buffer[256];
     strcpy(Buffer, "");
     _itoa(Value, Buffer, 10);
-    m_LineCountDirty = 1;
     m_Text = Buffer;
 }
 
@@ -415,18 +400,8 @@ unsigned char CControlText::GetMultiTextLineCount(unsigned short a2)
 
     const char* v5 = m_Text.c_str();
 
-    // 對齊反編譯：MoFFont::GetLineCountByWidth
-    // 使用 GetCharByteByLine 來計算行數
-    wchar_t faceW[128];
-    FontFaceAToW(m_FontFaceA, faceW, 128);
-    g_MoFFont.SetFont(m_FontHeight, faceW, m_FontWeight);
-
-    unsigned char lineBreaks[512];
-    int lineCount = g_MoFFont.GetCharByteByLine(v4, v5, lineBreaks, 512);
-    if (lineCount < 0) lineCount = 0;
-    if (lineCount > 255) lineCount = 255;
-
-    m_CachedLineCount = static_cast<unsigned char>(lineCount);
+    // 對齊反編譯：MoFFont::GetLineCountByWidth(width, text, fontFace, fontH, fontW)
+    m_CachedLineCount = g_MoFFont.GetLineCountByWidth(v4, v5, m_FontFaceA, m_FontHeight, m_FontWeight);
     return m_CachedLineCount;
 }
 
@@ -458,9 +433,8 @@ void CControlText::GetTextPixelSize(int* pWidth, int* pHeight)
         return;
     }
 
-    wchar_t faceW[128];
-    FontFaceAToW(m_FontFaceA, faceW, 128);
-    g_MoFFont.GetTextLength(pWidth, pHeight, m_FontHeight, faceW, m_Text.c_str(), m_FontWeight);
+    // 對齊反編譯：直接傳 char* fontFace
+    g_MoFFont.GetTextLength(pWidth, pHeight, m_FontHeight, m_FontFaceA, m_Text.c_str(), m_FontWeight);
 }
 
 // ========================================

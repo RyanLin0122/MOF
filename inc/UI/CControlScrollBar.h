@@ -43,7 +43,7 @@ public:
 
     virtual void Show();
 
-private:
+protected:
     // 對齊反編譯 this[30..47] 等偏移
     int m_scrollMin{ 0 };         // this[30]
     int m_scrollMax{ 1 };         // this[31]
@@ -76,6 +76,6 @@ private:
     CControlButton m_ArrowDown;        // offset +1616
     CControlButton m_Thumb;            // offset +2340
 
-    // 啟用旗標（對齊 this[597]）
-    int m_bEnabled{ 0 };
+    // 注意：對齊反編譯中沒有獨立的 m_bEnabled 欄位
+    // 是否可捲動由 m_Thumb.IsVisible() (this[597]) 判斷
 };

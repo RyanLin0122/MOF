@@ -139,10 +139,11 @@ int CControlPageScroll::IsChangedCurPage()
 
 void CControlPageScroll::PrintTextPage()
 {
+    // 對齊反編譯：_sprintf(Buffer, "%d/%d", curPage, maxPage)
     char buf[256] = {};
-    std::snprintf(buf, sizeof(buf), "%u/%u",
-        static_cast<unsigned>(m_curPage),
-        static_cast<unsigned>(m_maxPage));
+    std::snprintf(buf, sizeof(buf), "%d/%d",
+        static_cast<int>(m_curPage),
+        static_cast<int>(m_maxPage));
     m_text.SetText(buf);
 }
 

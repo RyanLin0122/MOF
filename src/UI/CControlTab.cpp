@@ -41,6 +41,7 @@ void CControlTab::CreateChildren()
 void CControlTab::Init()
 {
     // 對齊反編譯：CControlButtonBase::Init(this); m_bFocused = 1
+    CControlButtonBase::Init();
     m_bFocused = 1;
 }
 
@@ -128,11 +129,10 @@ int* CControlTab::ControlKeyInputProcess(int msg, int key, int x, int y, int a6,
         else
             m_Text.m_TextColor = m_colUnfocused;
 
-        // 對齊反編譯：如果當前 block 匹配 hover block，切回焦點/非焦點圖
+        // 對齊反編譯：如果當前 block 匹配 hover block，切回焦點圖（不判斷 m_bFocused）
         if (static_cast<uint16_t>(m_usBlockID) == m_imgHoverBlock)
         {
-            if (m_bFocused)
-                CControlImage::SetImageID(m_imgFocusedGroup, m_imgFocusedId, m_imgFocusedBlock);
+            CControlImage::SetImageID(m_imgFocusedGroup, m_imgFocusedId, m_imgFocusedBlock);
         }
         break;
 

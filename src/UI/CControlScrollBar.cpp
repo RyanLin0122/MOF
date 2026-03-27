@@ -135,8 +135,7 @@ void CControlScrollBar::SetScrollRange(int a2, int a3, int a4, int a5, int a6)
         m_ArrowUp.NoneActive();
         m_ArrowDown.NoneActive();
         m_Thumb.Hide();
-        m_bEnabled = 0;
-        // 對齊反編譯：disable path → goto LABEL_9
+        // 對齊反編譯：disable path → goto LABEL_9（無獨立 m_bEnabled，靠 m_Thumb.IsVisible()）
         if (a6)
             ClearScroll();
         return;
@@ -146,7 +145,6 @@ void CControlScrollBar::SetScrollRange(int a2, int a3, int a4, int a5, int a6)
     m_ArrowUp.Active();
     m_ArrowDown.Active();
     m_Thumb.Show();
-    m_bEnabled = 1;
 
     int v12 = m_lineStep;
     if (v12)
@@ -177,7 +175,8 @@ void CControlScrollBar::SetScrollRange(int a2, int a3, int a4, int a5, int a6)
 // ========================================
 void CControlScrollBar::Scroll(int a2, int a3, int a4)
 {
-    if (!m_bEnabled)
+    // 對齊反編譯：檢查 this[597] = m_Thumb 的可見性
+    if (!m_Thumb.IsVisible())
         return;
 
     int v5;
@@ -223,6 +222,16 @@ void CControlScrollBar::Scroll(int a2, int a3, int a4)
 // ========================================
 void CControlScrollBar::ProcessMoveThumb(int a2)
 {
+    // 對齊反編譯：先重置 thumb 顯示影像狀態為 pressed 態
+    if (m_Thumb.m_usBlockID != 0xFFFF)
+    {
+        unsigned int group, id;
+        uint16_t block;
+        m_Thumb.GetPressedImageState(group, id, block);
+        m_Thumb.m_nGIGroup = static_cast<int>(group);
+        m_Thumb.m_nGIID = static_cast<int>(id);
+        m_Thumb.m_usBlockID = block;
+    }
     m_Thumb.SetAbsY(a2);
 
     int thumbY = m_Thumb.GetY();
@@ -312,7 +321,8 @@ BOOL CControlScrollBar::IsInViewLegion(unsigned short a2)
 // ========================================
 void CControlScrollBar::ClearScroll()
 {
-    if (m_bEnabled)
+    // 對齊反編譯：檢查 this[597] = m_Thumb 的可見性
+    if (m_Thumb.IsVisible())
     {
         Scroll(4, m_scrollMin, 1);
     }
@@ -331,7 +341,8 @@ int* CControlScrollBar::ControlKeyInputProcess(int a2, int a3, int a4, int a5, i
     if (a2 == 0)
     {
         // Click：check if click is above or below thumb for page scroll
-        if (!m_bEnabled)
+        // 對齊反編譯：檢查 this[597] = m_Thumb 的可見性
+        if (!m_Thumb.IsVisible())
             return nullptr;
 
         int thumbAbsY = m_Thumb.GetAbsY();
