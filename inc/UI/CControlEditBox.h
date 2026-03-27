@@ -20,7 +20,8 @@ extern DCTIMMList g_IMMList;
 struct stBlockStair {
     // 每一行的「該行起點的位元組數」與「該行選取長度（位元組）」。
     // 反編譯碼以 pair 陣列使用，這裡保留 10 行的空間（與 GetCharByteByLine 的 10 相呼應）。
-    size_t len[10 * 2]{}; // [pos0,len0, pos1,len1, ...]
+    // 對齊反編譯：ground truth 使用 _DWORD（32-bit），非 size_t（64-bit 時佈局不同）
+    unsigned int len[10 * 2]{}; // [pos0,len0, pos1,len1, ...]
 };
 
 /**
@@ -60,7 +61,7 @@ public:
     char* GetText();
 
     // 量測
-    uint16_t GetMaxTextSize() const;
+    int GetMaxTextSize() const;  // 對齊反編譯：回傳 int（非 uint16_t）
     unsigned int GetCurTextSize() const;
     BOOL IsMultiLine() const;
 
@@ -88,7 +89,8 @@ private:
     void DiscriminStairBlock(stBlockStair* stair); // 保留；單行不常用
 
     // caret 位置量測：outXY[0]=x, outXY[1]=y；a3=原字串（非遮罩）、Source=實際顯示（可能為遮罩）
-    void GetCaretPos(int outXY[2], const char* a3, const char* Source, int imeIndex, size_t Count /*0=用IME游標*/);
+    // 對齊反編譯：回傳 char*（即 a2 本身），ABI 與 ground truth 一致
+    char* GetCaretPos(int outXY[2], const char* a3, const char* Source, int imeIndex, size_t Count /*0=用IME游標*/);
 
     // 滑鼠點擊落在哪個區段，用以決定 caret 要前/後（對齊反編譯）
     BOOL SearchTextPos(uint32_t* pThisAlias, size_t* curCount, uint32_t* ptAbs /*[x,y]*/,

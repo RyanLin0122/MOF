@@ -174,7 +174,9 @@ void CControlCountBar::SetCountLayer(int x, int y, int16_t width, int height)
     //   WORD[1089] = a5;  → track.m_usHeight (byte offset 2144+34 = 2178, WORD idx 1089)
     //   WORD[1088] = a4;  → track.m_usWidth  (byte offset 2144+32 = 2176, WORD idx 1088)
     m_track.SetPos(x, y);
-    m_track.SetSize(static_cast<uint16_t>(width), static_cast<uint16_t>(height));
+    // 對齊反編譯：直接寫 WORD[1089] 再寫 WORD[1088]（height 先於 width），不經過 SetSize
+    reinterpret_cast<uint16_t*>(&m_track)[17] = static_cast<uint16_t>(height);  // WORD[1089] → track.m_usHeight
+    reinterpret_cast<uint16_t*>(&m_track)[16] = static_cast<uint16_t>(width);   // WORD[1088] → track.m_usWidth
 
     m_imgLeft.SetPos(x, y);
     uint16_t wL = m_imgLeft.GetWidth();
@@ -289,11 +291,12 @@ void CControlCountBar::ControlRebuild()
 
     // 反編譯：
     //   v9 = float[449];  → m_imgMid.m_fScaleX
-    //   v10 = (float)m_imgMid.GetWidth() * v9;
+    //   v10 = (double)m_imgMid.GetWidth() * v9;  // ground truth: double precision multiply, truncate to float
     //   v8 = (double)m_imgMid.GetAbsX() + v10;
     //   m_imgRight.SetAbsX((__int64)v8);
     float scale = m_imgMid.GetScaleX();
-    float advance = (float)m_imgMid.GetWidth() * scale;
+    // 對齊反編譯：ground truth 先轉 double 相乘，再截斷為 float
+    float advance = static_cast<float>(static_cast<double>(m_imgMid.GetWidth()) * scale);
     double rightAbsX = (double)m_imgMid.GetAbsX() + (double)advance;
     m_imgRight.SetAbsX(static_cast<int>(static_cast<long long>(rightAbsX)));
 }

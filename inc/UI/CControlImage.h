@@ -70,7 +70,8 @@ private:
     {
         if (v <= 0.0f) return 0;
         if (v >= 1.0f) return 255;
-        return static_cast<uint8_t>(v * 255.0f + 0.5f);
+        // 對齊反編譯：ground truth 使用 double 精度（255.0 / 0.5）並以 __int64 截斷
+        return static_cast<uint8_t>(static_cast<int64_t>(v * 255.0 + 0.5));
     }
 
 private:

@@ -372,8 +372,8 @@ int* CControlImage::ControlKeyInputProcess(int msg, int key, int x, int y, int a
 {
     // 反編譯顯示在 msg == 7 或 4（滑鼠相關）時，若座標未變且 a6 != 1，則直接略過處理
     // 原程式以靜態區域變數記錄上次座標；這裡沿用該設計（跨所有 CControlImage 實例共享）
-    static int s_lastX = 0x7FFFFFFF;
-    static int s_lastY = 0x7FFFFFFF;
+    static int s_lastX = 0;
+    static int s_lastY = 0;
 
     // 對齊反編譯：result = (int *)pt.y;
     int* pResult = reinterpret_cast<int*>(y);
