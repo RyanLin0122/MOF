@@ -16,7 +16,7 @@
 //   this[567]: m_max
 //   this[568]: m_min
 //   BYTE[2276]: m_dragging
-//   float[449]: m_scale
+//   float[449]: m_imgMid.m_fScaleX（不是獨立欄位）
 //   WORD[1088]: m_layerW
 //   WORD[1089]: m_layerH
 class CControlCountBar : public CControlBase
@@ -58,6 +58,5 @@ private:
     int m_max{ 0 };
     int m_min{ 0 };
     unsigned char m_dragging{ 0 };  // 反編譯：BYTE[2276]
-
-    float m_scale{ 0.0f };  // 反編譯中建構子不初始化此欄位
+    // 對齊反編譯：float[449] 實際上是 m_imgMid.m_fScaleX，不是獨立欄位
 };
