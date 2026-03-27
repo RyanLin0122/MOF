@@ -45,6 +45,7 @@
 #include "Image/CDeviceManager.h"
 #include "Logic/cltCashShopItem.h"
 #include "Info/cltBasicAppearKindInfo.h"
+#include "Sound/GameSound.h"
 
 
 LPDIRECT3D9 g_pD3D = NULL;
@@ -144,6 +145,8 @@ cltMoFC_EffectKindInfo g_clEffectKindInfo;
 cltCashShopItem g_clCashShopItem;
 cltBasicAppearKindInfo g_clBasicAppearKindInfo;
 
+GameSound g_GameSoundManager;
+int dword_AFD34C = 0;
 int dword_AFD344 = 0;
 
 int dword_73D154 = 0;

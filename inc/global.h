@@ -67,6 +67,7 @@ class cltPlayerAbility;
 class DirectInputManager;
 class cltCashShopItem;
 class cltBasicAppearKindInfo;
+class GameSound;
 
 //-----------------------------------------------------------------------------
 // 全域變數
@@ -245,6 +246,12 @@ inline void CircleLoopLower(int* val, int maxCount)
 
 // Device
 extern CDeviceManager           g_clDeviceManager;
+
+// Sound
+extern GameSound                g_GameSoundManager;
+
+// UI 輸入消耗旗標（對齊反編譯 dword_AFD34C）
+extern int                      dword_AFD34C;
 
 // cltHelpMessage 使用的全域旗標
 extern int                      dword_AFD344;
