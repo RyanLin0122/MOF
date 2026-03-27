@@ -119,8 +119,8 @@ void CControlText::SetControlSetFont(const char* a2)
     {
         m_FontHeight = v3->nHeight;
         m_FontWeight = v3->nWeight;
-        // 對齊反編譯：strcpy((char*)this + 176, (const char*)v3 + 128)
-        strcpy(m_FontFaceA, v3->szFaceName);
+        // stFontInfo 在 win64 使用 wchar_t，轉為 char 存入 m_FontFaceA
+        WideCharToMultiByte(CP_ACP, 0, v3->wszFaceName, -1, m_FontFaceA, sizeof(m_FontFaceA), NULL, NULL);
     }
 }
 
