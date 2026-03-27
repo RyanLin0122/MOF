@@ -488,11 +488,8 @@ public:
     // --- Utility ---
     void ExtractItemCodeToFile(char* FileName);
 
-    // Converts an item ID string (e.g., "A0001") to a numeric kind code.
-    static unsigned short TranslateKindCode(const char* code);
-
     // "A0000" 形式 → 16-bit 代碼；失敗回傳 0
-    static uint16_t TranslateKindCode(char* a1);
+    static uint16_t TranslateKindCode(const char* a1);
 
     // 16-bit 代碼 → "A0000" 形式（使用靜態緩衝區；非 thread-safe）
     static char* TranslateKindCode(uint16_t a1);

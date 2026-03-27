@@ -822,7 +822,7 @@ void cltItemKindInfo::CreateItemKindForMakingItemList() {
 	}
 }
 
-uint16_t cltItemKindInfo::TranslateKindCode(char* a1)
+uint16_t cltItemKindInfo::TranslateKindCode(const char* a1)
 {
 	if (!a1) return 0;
 
