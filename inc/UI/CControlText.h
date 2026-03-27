@@ -37,6 +37,7 @@ public:
     void SetFontWeight(int w);
     void SetControlSetFont(const char* fontKey);
     int  GetFontHeight() const { return m_FontHeight; }
+    int  GetFontWeight() const { return m_FontWeight; }
     const char* GetFontFace();
 
     void SetMultiLineSpace(int space);
