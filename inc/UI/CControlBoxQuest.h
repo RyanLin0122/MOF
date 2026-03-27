@@ -2,7 +2,6 @@
 #include "UI/CControlBoxBase.h"
 #include "UI/CControlText.h"
 #include "UI/CControlImage.h"
-#include "Text/DCTIMM.h"   // DCTTextManager / g_DCTTextManager
 
 class CControlBoxQuest : public CControlBoxBase
 {

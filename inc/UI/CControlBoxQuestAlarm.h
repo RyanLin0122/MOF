@@ -20,13 +20,14 @@ public:
 
     // helpers / accessors
     CControlButton* GetButtonRootTree();          // 0041B320
-    CControlText* GetTextRoot();                // 0041B330
+    CControlText*   GetTextRoot();                // 0041B330
     CControlButton* GetButtonChild(int idx);      // 0041B340
 
     // mutations
     void SetRootName(char* name);                 // 0041B360
     void SetChildText(int idx, char* text);       // 0041B3B0
     int  SetChildTextColor(int idx, float r, float g, float b, float a); // 0041B3E0
+    int  SetRootTextColor(float r, float g, float b, float a);          // 004CCF90
     void ClearTextData(int idx);                  // 0041B520
     void ClearTextData();                         // 0041B550
     int  GetMaxLength();                          // 0041B5B0
@@ -43,5 +44,5 @@ private:
 
     // 反編譯顯示的尾端旗標（+1812、+1813）
     int m_expandedFlag = 0; // 是否展開（1 展開 / 0 收起）
-    int m_reserved = 0; // 未使用，保留一致性
+    int m_reserved = 0;     // 未使用，保留一致性
 };
