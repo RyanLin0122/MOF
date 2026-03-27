@@ -24,6 +24,6 @@ private:
     CControlText     m_Text;   // +328
 
     // 反編譯中被設定的兩個欄位（+118、+119）；語義未出現於他處，保留以對齊行為
-    int m_FlagA{ 0 };            // *((DWORD*)this + 118) = 1
+    int m_FlagA{ 1 };            // *((DWORD*)this + 118) = 1
     int m_FlagB{ -1 };           // *((DWORD*)this + 119) = -1
 };
