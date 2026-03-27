@@ -129,10 +129,11 @@ int* CControlTab::ControlKeyInputProcess(int msg, int key, int x, int y, int a6,
         else
             m_Text.m_TextColor = m_colUnfocused;
 
-        // 對齊反編譯：如果當前 block 匹配 hover block，切回焦點圖（不判斷 m_bFocused）
+        // 對齊反編譯：如果當前 block 匹配 hover block，切回非焦點圖
+        // （hover 只對非焦點 tab 生效，所以恢復時應回到 unfocused 圖）
         if (static_cast<uint16_t>(m_usBlockID) == m_imgHoverBlock)
         {
-            CControlImage::SetImageID(m_imgFocusedGroup, m_imgFocusedId, m_imgFocusedBlock);
+            CControlImage::SetImageID(m_imgUnfocusedGroup, m_imgUnfocusedId, m_imgUnfocusedBlock);
         }
         break;
 

@@ -145,18 +145,20 @@ void CEditBoxBackgroundImage::SetSize(unsigned short a2, unsigned short a3)
                 m_Images[6].SetY(scaledMidH + cornerH);
 
                 // m_Images[8] (右下) → SetPos
-                unsigned short scaledImg0H = static_cast<unsigned short>(
-                    static_cast<float>(m_Images[0].GetHeight()) * m_Images[3].GetScaleY());
-                m_Images[8].SetPos(rightX, scaledMidH + scaledImg0H);
+                // 對齊反編譯：使用 m_Images[2] 的高度與縮放 Y
+                unsigned short scaledImg2H = static_cast<unsigned short>(
+                    static_cast<float>(m_Images[2].GetHeight()) * m_Images[2].GetScaleY());
+                m_Images[8].SetPos(rightX, scaledMidH + scaledImg2H);
 
                 // m_Images[7] (中下) → 縮放 X, SetY
                 unsigned short img7W = m_Images[7].GetWidth();
                 if (img7W)
                 {
                     m_Images[7].SetScale(static_cast<float>(scaledMidW) / static_cast<float>(img7W), 1.0f);
+                    // 對齊反編譯：使用 m_Images[1] 的高度與縮放 Y
                     m_Images[7].SetY(
                         scaledMidH + static_cast<unsigned short>(
-                            static_cast<float>(m_Images[0].GetHeight()) * m_Images[1].GetScaleY()));
+                            static_cast<float>(m_Images[1].GetHeight()) * m_Images[1].GetScaleY()));
 
                     // 最終更新整體 size
                     CControlBase::SetSize(m_usWidth, m_usHeight);

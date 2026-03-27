@@ -24,7 +24,7 @@ public:
     void SetThumbImage(unsigned int giid, int a3, int a4, int a5, int a6);
     void SetArrowDownImage(unsigned int giid, int a3, int a4, int a5, int a6);
 
-    void SetCallFunc(int obj, int funcPtr, int param1, int param2, int param3);
+    int  SetCallFunc(int obj, int funcPtr, int param1, int param2, int param3);
     void CallScrollFunc();
     void HideBackground();
 
