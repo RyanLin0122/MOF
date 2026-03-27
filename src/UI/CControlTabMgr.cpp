@@ -132,8 +132,8 @@ void CControlTabMgr::AddTab(int a2, int a3, unsigned int a4, uint16_t a5, uint16
     if (m_tabCount > 0)
         tab.SetFocus(0);
 
-    // 對齊反編譯：SetArrayIndex(tabCount)
-    tab.SetIndex(m_tabCount);
+    // 對齊反編譯：vtbl+64 → SetArrayIndex(tabCount)
+    tab.SetArrayIndex(m_tabCount);
 
     ++m_tabCount;
 }

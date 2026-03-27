@@ -21,6 +21,7 @@ void CControlPageScroll::CreateChildren()
     // 文字
     m_text.Create(this);
     m_text.SetControlSetFont("ScrollText");
+    m_text.m_isCentered = 1;  // 對齊反編譯：*((_DWORD *)this + 68) = 1
     m_text.SetPos(48, 7);
 
     // 左鍵（上一頁）— 對齊反編譯：SetImage(0x20000013, 25, 27, 29, 31)

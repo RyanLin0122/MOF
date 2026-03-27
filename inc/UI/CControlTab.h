@@ -46,10 +46,6 @@ public:
     void SetText(char* text);
     void SetText(int stringId);
 
-    // Tab 索引（供管理器用）
-    void SetIndex(int idx) { m_index = idx; }
-    int  GetIndex() const { return m_index; }
-
 private:
     // 四狀態圖：每組 {group, id, block}
     // 對齊反編譯 this[167..178]
@@ -78,5 +74,4 @@ private:
     // 狀態
     int      m_bFocused{ 1 };               // this[166]
     uint8_t  m_bTextTabType{ 0 };           // byte at this+660
-    int      m_index{ 0 };                  // this[48] (array index for TabMgr)
 };

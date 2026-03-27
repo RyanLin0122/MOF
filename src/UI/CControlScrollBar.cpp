@@ -88,13 +88,14 @@ void CControlScrollBar::SetArrowDownImage(unsigned int a2, int a3, int a4, int a
 // ========================================
 // 回呼
 // ========================================
-void CControlScrollBar::SetCallFunc(int obj, int funcPtr, int param1, int param2, int param3)
+int CControlScrollBar::SetCallFunc(int obj, int funcPtr, int param1, int param2, int param3)
 {
     m_callbackObj = obj;
     m_callbackFunc = funcPtr;
     m_callbackOffset = param1;
     m_callbackParam1 = param2;
     m_callbackParam2 = param3;
+    return param3;  // 對齊反編譯：回傳最後參數
 }
 
 void CControlScrollBar::CallScrollFunc()

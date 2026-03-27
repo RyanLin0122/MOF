@@ -170,10 +170,12 @@ void CControlScrollText::RefreshText(int a2)
 // ========================================
 int* CControlScrollText::ControlKeyInputProcess(int a2, int a3, int a4, int a5, int a6, int a7)
 {
-    CControlScrollBar::ControlKeyInputProcess(a2, a3, a4, a5, a6, a7);
+    // 對齊反編譯：GT 標記為 void，但因為是虛擬覆寫，保持 int* 簽名
+    // GT 中不使用回傳值，此處回傳基底的結果
+    int* result = CControlScrollBar::ControlKeyInputProcess(a2, a3, a4, a5, a6, a7);
     if (a2 != 7 && a2 != -1)
         ScrollTextSetLine();
-    return nullptr;
+    return result;
 }
 
 // ========================================
