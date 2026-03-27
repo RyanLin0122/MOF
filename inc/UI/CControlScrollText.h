@@ -28,7 +28,7 @@ public:
     void SetText(char* text, int startLine);
     void RefreshText(int startLine);
 
-    virtual void ControlKeyInputProcess(int msg, int key, int x, int y, int a6, int a7);
+    virtual int* ControlKeyInputProcess(int msg, int key, int x, int y, int a6, int a7) override;
     void ChildKeyInputProcess(int msg, int a3, int x, int y, int a6, int a7);
 
     void ScrollTextSetLine();
