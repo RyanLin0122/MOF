@@ -48,11 +48,10 @@ public:
     int GetCharByteByLine(unsigned short lineWidth, const char* text, unsigned char* lineBreakBytes, int maxLines);
     stFontInfo* GetFontInfo(const char* keyName);
     int GetNationCode();
-
+    bool IsAnsiCharSet();
 private:
     // --- 內部輔助函式 ---
     HFONT GetCachedOrCreateFont(int height, int width, const wchar_t* faceName, int weight);
-    bool IsAnsiCharSet();
 
     // --- 小工具：確保/釋放 Quad VB ---
     bool EnsureQuadVB();
