@@ -36,8 +36,9 @@ void CControlTabMgr::InitLogIn()
     if (m_Tabs[0].GetTabType() == 1)
     {
         // 對齊反編譯：在目前焦點 Tab 上觸發一次 msg=3 (MouseDown) 事件
+        // GT: v5[1] = (int)this + 732 * v2 + 128 → 傳該 tab 的指標作為第 2 參數
         uint8_t idx = m_focusIndex;
-        m_Tabs[idx].ControlKeyInputProcess(3, 0, 0, 0, 0, 0);
+        m_Tabs[idx].ControlKeyInputProcess(3, reinterpret_cast<int>(&m_Tabs[idx]), 0, 0, 0, 0);
     }
 }
 
@@ -81,17 +82,18 @@ void CControlTabMgr::SetTextTabPosition(int a2)
 
             // 取得 Tab 文字尺寸，設定 Tab 大小
             DWORD v12[2], v13[2];
-            short v8 = static_cast<short>(*reinterpret_cast<WORD*>(
-                reinterpret_cast<char*>(tab.GetTextCtrl()->GetTextLength(v12)) + 2));
-            short tabW = static_cast<short>(*reinterpret_cast<WORD*>(
-                tab.GetTextCtrl()->GetTextLength(v13)));
+            tab.GetTextCtrl()->GetTextLength(v12);
+            short v8 = static_cast<short>(v12[1]);  // height from a2[1]
+            tab.GetTextCtrl()->GetTextLength(v13);
+            short tabW = static_cast<short>(v13[0]);  // width from a2[0]
             tab.SetSize(static_cast<uint16_t>(tabW), static_cast<uint16_t>(v8));
 
             int v6 = v3 + tab.GetWidth() + 6;
             sep.SetAbsPos(v6, v10);
 
             DWORD v14[2];
-            int sepW = *reinterpret_cast<WORD*>(sep.GetTextLength(v14));
+            sep.GetTextLength(v14);
+            int sepW = static_cast<int>(v14[0]);
             v3 = v6 + sepW + 6;
 
             if (a2)
@@ -285,9 +287,8 @@ void CControlTabMgr::Draw()
             m_Tabs[i].Draw();
     }
 
-    // 畫焦點 Tab
-    if (m_tabCount > 0)
-        m_Tabs[m_focusIndex].Draw();
+    // 對齊反編譯：無條件畫焦點 Tab
+    m_Tabs[m_focusIndex].Draw();
 
     // 文字 Tab：畫分隔符
     if (m_Tabs[0].GetTabType() == 1)
