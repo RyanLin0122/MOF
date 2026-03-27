@@ -1,4 +1,6 @@
 #include "UI/CControlMoveText.h"
+#include "Font/MoFFont.h"
+#include "Text/DCTTextManager.h"
 #include <cstring>
 #include <cstdlib>
 #include <new>
@@ -239,7 +241,7 @@ void CControlMoveText::SetMoveText(
     }
 
     // 取得文字像素寬度
-    const char* fontKey = DCTTextManager::GetText(&g_DCTTextManager, 3264);
+    const char* fontKey = g_DCTTextManager.GetText(3264);
     int textSize[2] = { 0, 0 };
     g_MoFFont.GetTextLength(&textSize[0], &textSize[1],
         GetFontHeight(), reinterpret_cast<const wchar_t*>(fontKey),
@@ -314,7 +316,7 @@ MTSInfo* CControlMoveText::SetMoveTextReturnValue(
     std::memcpy(buf, lpString, len);
 
     // 取得文字像素寬度
-    const char* fontKey = DCTTextManager::GetText(&g_DCTTextManager, 3264);
+    const char* fontKey = g_DCTTextManager.GetText(3264);
     int textSize[2] = { 0, 0 };
     g_MoFFont.GetTextLength(&textSize[0], &textSize[1],
         GetFontHeight(), reinterpret_cast<const wchar_t*>(fontKey),
@@ -368,7 +370,7 @@ int CControlMoveText::SetCurrentMovePos(int x0, int y0, int x1, int y1, int useC
     if (!m_cur) return 0;
 
     // 取得目前節點文字寬度
-    const char* fontKey = DCTTextManager::GetText(&g_DCTTextManager, 3264);
+    const char* fontKey = g_DCTTextManager.GetText(3264);
     int textSize[2] = { 0, 0 };
     g_MoFFont.GetTextLength(&textSize[0], &textSize[1],
         GetFontHeight(), reinterpret_cast<const wchar_t*>(fontKey),
@@ -503,7 +505,7 @@ void CControlMoveText::Draw()
     if (!IsActive())  return;
 
     // 設定字型
-    const char* fontKey = DCTTextManager::GetText(&g_DCTTextManager, 3264);
+    const char* fontKey = g_DCTTextManager.GetText(3264);
     g_MoFFont.SetFont(GetFontHeight(),
         reinterpret_cast<const wchar_t*>(fontKey),
         GetFontWeight());
@@ -514,7 +516,7 @@ void CControlMoveText::Draw()
     int x = GetAbsX();
     int y = GetAbsY();
 
-    g_MoFFont.SetTextLineA(x, y, m_TextColor, lpString, m_Alignment, m_cutL, m_cutR);
+    g_MoFFont.SetTextLineA(x, y, m_TextColor, lpString, m_isCentered, m_cutL, m_cutR);
 
     char style = static_cast<char>(m_cur->style);
     unsigned int altColor = 0;
@@ -527,6 +529,6 @@ void CControlMoveText::Draw()
 
         g_MoFFont.SetTextLineA(x, y, altColor,
             m_cur->altText,
-            m_Alignment, m_cutL, m_cutR);
+            m_isCentered, m_cutL, m_cutR);
     }
 }
