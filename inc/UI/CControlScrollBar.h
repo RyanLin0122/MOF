@@ -51,6 +51,9 @@ private:
     int m_pageSize{ 1 };          // this[33]
     int m_lineStep{ 1 };          // this[34]
 
+    // Create 時傳入的 mode 旗標（對齊反編譯 *(BYTE*)this+140）
+    char m_mode{ 0 };
+
     // 滑軌邊界
     int m_thumbMinY{ 0 };         // this[36] (上箭頭高度)
     int m_thumbMaxY{ 0 };         // this[37] (下箭頭 Y - thumb H)

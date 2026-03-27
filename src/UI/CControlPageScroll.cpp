@@ -1,8 +1,6 @@
 #include "UI/CControlPageScroll.h"
+#include "global.h"
 #include <cstdio>
-
-// 來自其他模組的定義
-int g_MouseCaptureDirty = 0;
 
 CControlPageScroll::CControlPageScroll()
     : CControlBase()
@@ -10,14 +8,12 @@ CControlPageScroll::CControlPageScroll()
     , m_btnPrev()
     , m_btnNext()
 {
-    // vftable 由編譯器處理
     CreateChildren();
     Init();
 }
 
 CControlPageScroll::~CControlPageScroll()
 {
-    // 成員自動解構，呼叫順序與 IDA 列出的一致性不影響行為
 }
 
 void CControlPageScroll::CreateChildren()
@@ -25,21 +21,18 @@ void CControlPageScroll::CreateChildren()
     // 文字
     m_text.Create(this);
     m_text.SetControlSetFont("ScrollText");
-    // *((DWORD*)this + 68) = 1; // 反編譯寫到 this 的旗標—此處框架內部旗標，不特別外露
     m_text.SetPos(48, 7);
 
-    // 左鍵（上一頁）
+    // 左鍵（上一頁）— 對齊反編譯：SetImage(0x20000013, 25, 27, 29, 31)
     m_btnPrev.Create(this);
-    // ID: 0x20000003 (=536870931)，四態（normal/hover/press/disable）：25/27/29/31
-    m_btnPrev.SetImage(0x20000003u, 25, 0x20000003u, 27, 0x20000003u, 29, 0x20000003u, 31);
-    // *((DWORD*)this + 155) = 1;
+    m_btnPrev.SetImage(0x20000013u, 25, 27, 29, 31);
+    m_btnPrev.SetPassKeyInputToParent(true);
 
-    // 右鍵（下一頁）
+    // 右鍵（下一頁）— 對齊反編譯：SetImage(0x20000013, 26, 28, 30, 32)
     m_btnNext.Create(this);
     m_btnNext.SetX(69);
-    // 四態：26/28/30/32
-    m_btnNext.SetImage(0x20000003u, 26, 0x20000003u, 28, 0x20000003u, 30, 0x20000003u, 32);
-    // *((DWORD*)this + 336) = 1;
+    m_btnNext.SetImage(0x20000013u, 26, 28, 30, 32);
+    m_btnNext.SetPassKeyInputToParent(true);
 
     // 依兩側按鈕設定整體控件大小（寬=右鍵X+右鍵寬；高=右鍵高）
     SetHeight(static_cast<uint16_t>(m_btnNext.GetHeight()));
@@ -54,9 +47,8 @@ void CControlPageScroll::Init()
     m_minPage = 1;
 }
 
-void CControlPageScroll::ChildKeyInputProcess(int a2, CControlBase* a3, int a4, int /*a5*/, int /*a6*/, int /*a7*/)
+void CControlPageScroll::ChildKeyInputProcess(int a2, CControlBase* a3, int /*a4*/, int /*a5*/, int /*a6*/, int /*a7*/)
 {
-    // a2 == 3 : 放開（click-up）
     if (a2 == 3)
     {
         if (a3 == &m_btnPrev)
@@ -64,25 +56,20 @@ void CControlPageScroll::ChildKeyInputProcess(int a2, CControlBase* a3, int a4, 
             if (m_curPage > m_minPage)
             {
                 ChangeCurPage(-1);
-                g_MouseCaptureDirty = 1;
+                dword_AFD34C = 1;
                 return;
             }
         }
-        else if (a3 == &m_btnNext)
+        else if (a3 == &m_btnNext && m_curPage < m_maxPage)
         {
-            if (m_curPage < m_maxPage)
-            {
-                ChangeCurPage(+1);
-            }
-            g_MouseCaptureDirty = 1;
+            ChangeCurPage(+1);
         }
+        dword_AFD34C = 1;
     }
 }
 
 void CControlPageScroll::AutoKeyInput(int a2)
 {
-    // a2 != 0: 向右；到最大頁時回到最小頁
-    // a2 == 0: 向左；到最小頁時跳到最大頁
     if (a2)
     {
         if (m_curPage >= m_maxPage)
@@ -101,7 +88,6 @@ void CControlPageScroll::AutoKeyInput(int a2)
 
 void CControlPageScroll::SetPageRange(uint16_t itemsPerPage, uint16_t totalItems, int resetToMin)
 {
-    // 計算最大頁數（ceil(total / perPage)），錯誤輸入時退回 minPage
     if (itemsPerPage && totalItems && totalItems >= itemsPerPage)
     {
         uint8_t pages = static_cast<uint8_t>(totalItems / itemsPerPage);
@@ -137,11 +123,9 @@ void CControlPageScroll::ChangeCurPage(char delta)
 
 void CControlPageScroll::DecideButtonActive()
 {
-    // 右鍵：到最大頁就 NoneActive，否則 Active
     if (m_curPage == m_maxPage) m_btnNext.NoneActive();
     else                        m_btnNext.Active();
 
-    // 左鍵：到最小頁就 NoneActive，否則 Active
     if (m_curPage == m_minPage) m_btnPrev.NoneActive();
     else                        m_btnPrev.Active();
 }

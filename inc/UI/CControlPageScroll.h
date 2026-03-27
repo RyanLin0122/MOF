@@ -58,10 +58,4 @@ private:
     uint8_t m_curPage = 1;    // 預設 1
     uint8_t m_maxPage = 1;    // 預設 1
     int     m_changed = 0;    // 是否自上次查詢後變更頁面
-
-    // 反編譯碼中在 CreateChildren 內有幾個 this 上的旗標寫入（例如 +68、+155、+336），
-    // 這裡不特別外露行為（多半是 UI 框架內部用途），必要時可補齊為成員或轉為呼叫點行為。
 };
-
-// 全域輸入消耗旗標（對齊反編譯 dword_AFD34C）
-extern int g_MouseCaptureDirty;

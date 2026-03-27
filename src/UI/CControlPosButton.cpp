@@ -11,7 +11,6 @@ CControlPosButton::CControlPosButton()
 
 CControlPosButton::~CControlPosButton()
 {
-	// 交由基底正常解構即可
 }
 
 
@@ -36,22 +35,22 @@ int* CControlPosButton::ControlKeyInputProcess(int msg, int key, int x, int y, i
 	{
 		if (msg == 3)
 		{
-			// vtbl+92
+			// vtbl+92：ButtonPosUp
 			ButtonPosUp();
-			g_LButtonUp = 1;
+			dword_AFD34C = 1;
 		}
 		else if (msg == 4)
 		{
-			// vtbl+92
+			// vtbl+92：ButtonPosUp
 			ButtonPosUp();
 		}
 	}
 	else
 	{
-		// vtbl+88
+		// vtbl+88：ButtonPosDown
 		ButtonPosDown();
-		//GameSound::PlaySoundA(&g_GameSoundManager, m_szSoundKey, 0, 0);
-		g_LButtonUp = 0;
+		g_GameSoundManager.PlaySoundA(m_szSoundKey, 0, 0);
+		dword_AFD34C = 0;
 	}
 
 

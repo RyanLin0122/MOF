@@ -23,6 +23,7 @@ CControlScrollBar::~CControlScrollBar()
 void CControlScrollBar::Create(int a2, int a3, unsigned short a4, unsigned short a5,
                                  CControlBase* a6, char a7)
 {
+    m_mode = a7; // 對齊反編譯：*(BYTE*)this+140 = a7
     CControlBase::Create(a2, a3, a4, a5, a6);
     m_nClassId = 100; // 對齊反編譯：this[29] = 100
 
@@ -135,34 +136,40 @@ void CControlScrollBar::SetScrollRange(int a2, int a3, int a4, int a5, int a6)
         m_ArrowDown.NoneActive();
         m_Thumb.Hide();
         m_bEnabled = 0;
+        // 對齊反編譯：disable path → goto LABEL_9
+        if (a6)
+            ClearScroll();
+        return;
     }
-    else
-    {
-        // 啟用
-        m_ArrowUp.Active();
-        m_ArrowDown.Active();
-        m_Thumb.Show();
-        m_bEnabled = 1;
 
-        int v12 = m_lineStep;
-        if (v12)
+    // 啟用
+    m_ArrowUp.Active();
+    m_ArrowDown.Active();
+    m_Thumb.Show();
+    m_bEnabled = 1;
+
+    int v12 = m_lineStep;
+    if (v12)
+    {
+        int range = m_scrollMax - m_pageSize;
+        int v14 = range / v12;
+        if (range % v12)
+            ++v14;
+        if (v14)
         {
-            int range = m_scrollMax - m_pageSize;
-            int v14 = range / v12;
-            if (range % v12)
-                ++v14;
-            if (v14)
+            unsigned short tl = m_trackLen;
+            m_pixelsPerStep = static_cast<double>(tl) / static_cast<double>(v14);
+            if (tl)
             {
-                unsigned short tl = m_trackLen;
-                m_pixelsPerStep = static_cast<double>(tl) / static_cast<double>(v14);
-                if (tl)
-                    m_stepsPerPixel = static_cast<double>(v14) / static_cast<double>(tl);
+                m_stepsPerPixel = static_cast<double>(v14) / static_cast<double>(tl);
+                // 對齊反編譯：只有 lineStep!=0 && numSteps!=0 && trackLen!=0 時才 ClearScroll
+                if (a6)
+                    ClearScroll();
+                return;
             }
         }
     }
-
-    if (a6)
-        ClearScroll();
+    // 對齊反編譯：lineStep==0 || numSteps==0 || trackLen==0 時不呼叫 ClearScroll
 }
 
 // ========================================
