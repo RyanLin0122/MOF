@@ -433,6 +433,9 @@
     <ClCompile Include="src\UI\CControlBoxPrivateShop.cpp" />
     <ClCompile Include="src\UI\CControlBoxQSL.cpp" />
     <ClCompile Include="src\UI\CControlBoxSAReceiveItem.cpp" />
+    <ClCompile Include="src\UI\CControlScrollBar.cpp" />
+    <ClCompile Include="src\UI\CControlScrollText.cpp" />
+    <ClCompile Include="src\UI\CTextBoxScroll.cpp" />
     <ClCompile Include="src\UI\CUITutorial.cpp" />
     <ClCompile Include="src\UI\CUIManager.cpp" />
     <ClCompile Include="src\UI\CControlAlphaBox.cpp" />
@@ -811,10 +814,13 @@
     <ClInclude Include="inc\UI\CControlNumberImage.h" />
     <ClInclude Include="inc\UI\CControlPageScroll.h" />
     <ClInclude Include="inc\UI\CControlPosButton.h" />
+    <ClInclude Include="inc\UI\CControlScrollBar.h" />
+    <ClInclude Include="inc\UI\CControlScrollText.h" />
     <ClInclude Include="inc\UI\CControlTab.h" />
     <ClInclude Include="inc\UI\CControlTabMgr.h" />
     <ClInclude Include="inc\UI\CListMgr.h" />
     <ClInclude Include="inc\UI\CControlBase.h" />
+    <ClInclude Include="inc\UI\CTextBoxScroll.h" />
     <ClInclude Include="inc\UI\CUIManager.h" />
     <ClInclude Include="inc\UI\CUITutorial.h" />
     <ClInclude Include="inc\UI\stToolTipData.h" />
