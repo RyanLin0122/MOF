@@ -209,8 +209,16 @@ bool MoFFont::InitFontInfo(const char* fileName) {
 
             tok = strtok_s(nullptr, "\t\r\n", &context); // token3: Font -> FaceName
             if (tok) {
-                // 對齊反編譯：stFontInfo 以 char[128] 儲存字型名稱
-                strncpy_s(m_pFontInfoArray[idx].szFaceName, tok, _TRUNCATE);
+                // tok 包含的是 CP949 編碼的字型名稱，轉換為 wchar_t (Unicode)
+                // win64 使用 CreateFontW，必須以 wchar_t 儲存；不能用 CP_ACP，因為系統不一定是韓文
+                MultiByteToWideChar(
+                    949,       // 來源字串的編碼頁 (949 代表韓文)
+                    0,         // 預設旗標
+                    tok,       // 來源 char* 字串
+                    -1,        // -1 表示來源字串以 null 結尾
+                    m_pFontInfoArray[idx].wszFaceName, // 目標 wchar_t 緩衝區
+                    128        // 緩衝區大小
+                );
             }
             tok = strtok_s(nullptr, "\t\r\n", &context); // token4: Thick -> Weight
             if (tok) m_pFontInfoArray[idx].nWeight = atoi(tok);
@@ -293,10 +301,7 @@ bool MoFFont::CreateMoFFont(IDirect3DDevice9* pDevice, int height, int width, co
 bool MoFFont::CreateMoFFont(IDirect3DDevice9* pDevice, const char* fontKey) {
     stFontInfo* pInfo = GetFontInfo(fontKey);
     if (pInfo) {
-        // 從 char* 轉成 wchar_t* 呼叫底層
-        wchar_t faceW[128];
-        MultiByteToWideChar(CP_ACP, 0, pInfo->szFaceName, -1, faceW, 128);
-        return CreateMoFFont(pDevice, pInfo->nHeight, 0, faceW, pInfo->nWeight);
+        return CreateMoFFont(pDevice, pInfo->nHeight, 0, pInfo->wszFaceName, pInfo->nWeight);
     }
     return false;
 }
@@ -305,7 +310,7 @@ bool MoFFont::CreateMoFFont(IDirect3DDevice9* pDevice, const char* fontKey) {
 void MoFFont::SetFont(const char* fontKey) {
     stFontInfo* pInfo = GetFontInfo(fontKey);
     if (pInfo) {
-        SetFont(pInfo->nHeight, pInfo->szFaceName, pInfo->nWeight);
+        SetFont(pInfo->nHeight, pInfo->wszFaceName, pInfo->nWeight);
     }
 }
 
@@ -528,7 +533,7 @@ void MoFFont::SetTextBoxA(RECT* pRect, DWORD color, const char* text, int lineSp
 void MoFFont::GetTextLength(int* pWidth, int* pHeight, const char* fontKey, const char* text) {
     stFontInfo* pInfo = GetFontInfo(fontKey);
     if (pInfo) {
-        GetTextLength(pWidth, pHeight, pInfo->nHeight, pInfo->szFaceName, text, pInfo->nWeight);
+        GetTextLength(pWidth, pHeight, pInfo->nHeight, pInfo->wszFaceName, text, pInfo->nWeight);
     }
     else {
         if (pWidth) *pWidth = 0;
