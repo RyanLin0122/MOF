@@ -28,13 +28,13 @@ public:
     void SetImage(unsigned int giid, unsigned short block);
     void SetImageID(unsigned int giGroup, unsigned int giid, unsigned short block);
     void SetImageID(unsigned int giid, unsigned short block);
+    void SetImageID(int giGroup, int giid, short block);  // 對齊反編譯 00420A90：無條件版本
     void SetGIID(unsigned int giid) { m_nGIID = static_cast<int>(giid); }
     void SetBlockID(unsigned short blk) { m_usBlockID = blk; }
 
-    // 依資源尺寸回填控制寬高（對應基準的 SetImageSize）
-    bool SetImageSize();
-    // 同名別名，若你別處叫 SetImageSizeFromResource 也可直接呼叫它
-    bool SetImageSizeFromResource() { return SetImageSize(); }
+    // 依資源尺寸回填控制寬高（對齊反編譯 00420F90）
+    void SetImageSize();
+    void SetImageSizeFromResource() { SetImageSize(); }
 
     // ---- 視覺屬性 ----
     void SetAlpha(int a) { m_nAlpha = a; }   // 0~255（基準 [34]）

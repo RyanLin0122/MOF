@@ -1,7 +1,4 @@
 #include "UI/CControlImage.h"
-#undef max
-#undef min
-#include <algorithm>
 
 // ======================================================================
 // 建構 / 解構（完全對齊你提供的基準預設）
@@ -106,36 +103,67 @@ void CControlImage::SetImageID(unsigned int giid, unsigned short block)
     }
 }
 
+// 對齊反編譯 00420A90：無條件版本 SetImageID
+void CControlImage::SetImageID(int giGroup, int giid, short block)
+{
+    m_nGIGroup = giGroup;
+    m_nGIID = giid;
+    m_usBlockID = block;
+    SetImageSize();
+}
+
 // ======================================================================
-// 依資源大小回填控制寬高（基準 SetImageSize）
+// 依資源大小回填控制寬高（對齊反編譯 00420F90）
 // ======================================================================
-bool CControlImage::SetImageSize()
+void CControlImage::SetImageSize()
 {
     if (m_usBlockID == 0xFFFF)
     {
         m_usWidth = 0;
         m_usHeight = 0;
-        return false;
+        return;
     }
 
-    GameImage* gi = cltImageManager::GetInstance()->GetGameImage(m_nGIGroup, m_nGIID, 0, 1);
-    if (!gi)
+    GameImage* v2 = cltImageManager::GetInstance()->GetGameImage(m_nGIGroup, m_nGIID, 0, 1);
+    m_pGameImage = v2;  // 對齊反編譯：*((_DWORD *)this + 33) = v2;
+    if (!v2)
+        return;
+
+    // 對齊反編譯：從 GameImage 內部結構直接讀取 block 尺寸
+    // v4 = *((_DWORD *)v2 + 2);  → GameImage+8 = pBlockData
+    char* pGIRaw = reinterpret_cast<char*>(v2);
+    char* pBlockData = *reinterpret_cast<char**>(pGIRaw + 8);
+    uint16_t blockID = m_usBlockID;
+
+    int v10 = 0; // height
+    if (pBlockData)
     {
-        m_usWidth = m_usHeight = 0;
-        return false;
+        if (*reinterpret_cast<uint16_t*>(pBlockData + 28) > blockID)
+        {
+            // v10 = *(_DWORD *)(*(_DWORD *)(v4 + 32) + 52 * blockID + 24);
+            char* pEntries = *reinterpret_cast<char**>(pBlockData + 32);
+            v10 = *reinterpret_cast<int*>(pEntries + 52 * static_cast<unsigned short>(m_usBlockID) + 24);
+        }
     }
 
-    // 指定 block 後用 GetBlockRect 取寬高
-    gi->SetBlockID(m_usBlockID);
-    RECT rc{}; gi->GetBlockRect(&rc);
-    const int w = std::max(0, (int)(rc.right - rc.left));
-    const int h = std::max(0, (int)(rc.bottom - rc.top));
+    // 對齊反編譯：LABEL_8 起
+    char* pGI2 = reinterpret_cast<char*>(m_pGameImage);
+    uint16_t v7 = m_usBlockID;
+    char* v8 = *reinterpret_cast<char**>(pGI2 + 8);
+    int v9 = 0; // width
+    if (v8)
+    {
+        if (*reinterpret_cast<uint16_t*>(v8 + 28) > v7)
+        {
+            // v9 = *(_DWORD *)(*(_DWORD *)(v8 + 32) + 52 * blockID + 20);
+            char* pEntries2 = *reinterpret_cast<char**>(v8 + 32);
+            v9 = *reinterpret_cast<int*>(pEntries2 + 52 * static_cast<unsigned short>(m_usBlockID) + 20);
+        }
+    }
 
-    m_usWidth = static_cast<uint16_t>(w);
-    m_usHeight = static_cast<uint16_t>(h);
-
-    cltImageManager::GetInstance()->ReleaseGameImage(gi);
-    return (w | h) != 0;
+    m_usWidth = static_cast<uint16_t>(v9);
+    m_usHeight = static_cast<uint16_t>(v10);
+    cltImageManager::GetInstance()->ReleaseGameImage(m_pGameImage);
 }
 
 void CControlImage::SetShadeMode(int enable)
@@ -167,58 +195,87 @@ void CControlImage::PrepareDrawing()
     if (!IsVisible()) return;
     if (m_usBlockID == 0xFFFF) return;
 
-    // 向池取一個 GI；若你的引擎在別處已經持有，也可以只在第一次取
-    m_pGameImage = cltImageManager::GetInstance()->GetGameImage(m_nGIGroup, m_nGIID, 0, 1);
-    if (!m_pGameImage) return;
+    // 對齊反編譯：向池取 GameImage 並存入 m_pGameImage
+    GameImage* v3 = cltImageManager::GetInstance()->GetGameImage(m_nGIGroup, m_nGIID, 0, 1);
+    m_pGameImage = v3;  // *((_DWORD *)this + 33) = v3;
+    if (!v3) return;
 
-    // ---- 淡入邏輯（與基準相符）----
-    if (m_bFadeIn)
+    // ---- 淡入邏輯 ----
+    if (m_bFadeIn == 1)
     {
         float speedFactor = 1.0f;
-        const unsigned long now = timeGetTime();
-        const unsigned long dt = now - m_lastTick;
-        // 基準：若 (dt/0x23) >= 2，則用 SETTING_FRAME*2.5 當速度倍數
-        if (dt / 0x23 >= 2) speedFactor = static_cast<float>(SETTING_FRAME) * 2.5f;
-        m_lastTick = now;
+        if ((timeGetTime() - m_lastTick) / 0x23 >= 2)
+            speedFactor = static_cast<float>(SETTING_FRAME) * 2.5f;
+        m_lastTick = timeGetTime();
 
         if (m_fadeCurA < 255)
         {
-            // (__int64)((m_fadeStep * speedFactor * 30.0 / SETTING_FRAME) + m_fadeCurA)
-            const float add = (static_cast<float>(m_fadeStep) * speedFactor * 30.0f) / static_cast<float>(SETTING_FRAME);
-            m_fadeCurA = std::min(255, static_cast<int>(add + static_cast<float>(m_fadeCurA)));
+            long long v4 = static_cast<long long>(
+                static_cast<double>(m_fadeStep) * static_cast<double>(speedFactor) * 30.0
+                / static_cast<double>(SETTING_FRAME)
+                + static_cast<double>(m_fadeCurA));
+            m_fadeCurA = static_cast<int>(v4);
+            if (m_fadeCurA > 255)
+                m_fadeCurA = 255;
         }
     }
 
-    // ---- 把狀態寫回 GameImage ----
-    const int ax = GetAbsX();
-    const int ay = GetAbsY();
-
-    m_pGameImage->SetPosition(static_cast<float>(ax), static_cast<float>(ay));
-    m_pGameImage->SetRotation(m_nAngle);
-
-    // 縮放：沿用 CControlBase 的 Scale
-    m_pGameImage->SetScaleXY(GetScaleX(), GetScaleY());
-
-    // Alpha：若淡入啟用，用 m_fadeCurA；否則用 m_nAlpha
-    m_pGameImage->SetAlpha(static_cast<unsigned int>(m_bFadeIn ? m_fadeCurA : m_nAlpha));
-
-    // Block
-    m_pGameImage->SetBlockID(m_usBlockID);
-
-    // 旗標（對齊基準預設）
-    m_pGameImage->m_bVertexAnimation = false; // +444 = 0
-    m_pGameImage->m_bFlag_447 = true;         // +447 = 1
-    m_pGameImage->m_bFlag_448 = true;         // +448 = 1
-    m_pGameImage->m_bFlag_449 = true;         // +449 = 1
-    m_pGameImage->m_bFlag_450 = true;         // +450 = 1
-
-    // 輸出比例旗標（基準：+445 = *((BYTE*)this + 152)）
-    m_pGameImage->m_bFlag_445 = (m_outputPercentFromTop != 0);
-
-    // 其餘 drawFlag 在原版可能會影響 GI 內部不同模式；
-    // 這裡不亂動翻轉/顏色運算，維持 GameImage 預設。
-
+    // 對齊反編譯：m_bPrepared = 1 在 block check 之前
     m_bPrepared = 1;
+
+    // ---- 把狀態寫回 GameImage（對齊反編譯順序）----
+    char* pGI = reinterpret_cast<char*>(m_pGameImage);
+
+    // 對齊反編譯：*(_DWORD *)(v11 + 388) = *((_DWORD *)this + 35);  → rotation
+    *reinterpret_cast<int*>(pGI + 388) = m_nAngle;
+    // *(_BYTE *)(v11 + 448) = 1;
+    pGI[448] = 1;
+    // *(_BYTE *)(v11 + 444) = 0;
+    pGI[444] = 0;
+
+    // 對齊反編譯：position
+    float fAbsY = static_cast<float>(GetAbsY());
+    float fAbsX = static_cast<float>(GetAbsX());
+    pGI = reinterpret_cast<char*>(m_pGameImage);
+    *reinterpret_cast<float*>(pGI + 332) = fAbsX;
+    *reinterpret_cast<float*>(pGI + 336) = fAbsY;
+    // *(_BYTE *)(v13 + 447) = 1;
+    pGI[447] = 1;
+
+    // 對齊反編譯：scaleX
+    pGI = reinterpret_cast<char*>(m_pGameImage);
+    *reinterpret_cast<float*>(pGI + 424) = GetScaleX();
+    pGI[449] = 1;
+    pGI[444] = 0;
+
+    // 對齊反編譯：scaleY
+    pGI = reinterpret_cast<char*>(m_pGameImage);
+    *reinterpret_cast<float*>(pGI + 428) = GetScaleY();
+    pGI[449] = 1;
+    pGI[444] = 0;
+
+    // 對齊反編譯：alpha
+    pGI = reinterpret_cast<char*>(m_pGameImage);
+    if (m_bFadeIn)
+        *reinterpret_cast<int*>(pGI + 380) = m_fadeCurA;
+    else
+        *reinterpret_cast<int*>(pGI + 380) = m_nAlpha;
+    pGI[450] = 1;
+    pGI[444] = 0;
+
+    // 對齊反編譯：blockID
+    pGI = reinterpret_cast<char*>(m_pGameImage);
+    *reinterpret_cast<uint16_t*>(pGI + 372) = m_usBlockID;
+    // *(_BYTE *)(v17 + 446) = 1;
+    pGI[446] = 1;
+
+    // 對齊反編譯：drawFlag
+    char v18 = m_drawFlag;
+    if (v18 != 3)
+        *reinterpret_cast<int*>(reinterpret_cast<char*>(m_pGameImage) + 392) = (v18 != 0) ? 1 : 0;
+
+    // 對齊反編譯：*(_BYTE *)(... + 445) = *((_BYTE *)this + 152);
+    reinterpret_cast<char*>(m_pGameImage)[445] = static_cast<char>(m_outputPercentFromTop);
 
     // 遞迴子物件
     CControlBase::PrepareDrawing();
@@ -277,22 +334,21 @@ int* CControlImage::ControlKeyInputProcess(int msg, int key, int x, int y, int a
     static int s_lastX = 0x7FFFFFFF;
     static int s_lastY = 0x7FFFFFFF;
 
-    // 與你已修改的基底一致：預設回傳值為父物件指標（不轉交時維持與原版一致的非空語義）
-    int* pResult = reinterpret_cast<int*>(m_pParent);
+    // 對齊反編譯：result = (int *)pt.y;
+    int* pResult = reinterpret_cast<int*>(y);
 
     if (a6 != 1 && (msg == 7 || msg == 4))  // a6 != 1 時啟用去抖；7/4 為滑鼠移動/相關訊息
     {
         if (s_lastX == x && s_lastY == y)
         {
-            // 座標未變：略過後續處理與上拋，直接回傳父指標語義
             return pResult;
         }
         s_lastX = x;
         s_lastY = y;
     }
 
-    // 更新「是否滑入命中」快取（對應 this[47] = CControlBase::PtInCtrl(...)）
-    m_bHover = PtInCtrl(stPoint{ x, y }) ? 1 : 0;
+    // 對齊反編譯：this[47] = CControlBase::PtInCtrl((int)this, pt);
+    m_bHover = PtInCtrl(stPoint{ x, y });
 
     // 其餘交給基底流程（可能上拋給父）
     return reinterpret_cast<int*>(
