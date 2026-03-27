@@ -501,7 +501,7 @@ void CControlMoveText::Poll()
 void CControlMoveText::Draw()
 {
     if (!IsVisible()) return;
-    if (!IsActive())  return;
+    if (m_Text.empty()) return;  // 對齊反編譯：*((_DWORD *)this + 32) 即 m_Text.size()
 
     // 設定字型
     const char* fontKey = g_DCTTextManager.GetText(3264);

@@ -21,8 +21,8 @@ public:
     // 對齊反編譯：Create(this, parent); 之後呼叫一個虛函式（索引+80）= CreateChildren()
     void Create(CControlBase* pParent);
 
-    // 對齊反編譯：建立三個子圖片
-    void CreateChildren();
+    // 對齊反編譯：建立三個子圖片（虛呼叫，vtable+80）
+    virtual void CreateChildren();
 
     // 對齊反編譯：設定三張圖與方向（a6：1=水平三段、0=垂直三段）
     void SetImage(unsigned int group, uint16_t idLeftOrTop, uint16_t idMid, uint16_t idRightOrBottom, uint8_t horizontal);
@@ -40,5 +40,5 @@ private:
     CControlImage m_RightOrBottom;
 
     // 方向旗標：1=水平（X 軸拼接）、0=垂直（Y 軸拼接）
-    uint8_t m_bHorizontal{ 1 };
+    uint8_t m_bHorizontal{ 0 };
 };

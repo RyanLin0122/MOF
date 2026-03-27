@@ -84,6 +84,8 @@ public:
     bool GetCenterOrigin() const { return m_bCenterOrigin; }
 
     void SetScale(float sx, float sy) { m_fScaleX = sx; m_fScaleY = sy; }
+    void SetScaleX(float sx) { m_fScaleX = sx; }
+    void SetScaleY(float sy) { m_fScaleY = sy; }
     float GetScaleX() const { return m_fScaleX; }
     float GetScaleY() const { return m_fScaleY; }
 

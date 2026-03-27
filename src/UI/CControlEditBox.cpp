@@ -449,11 +449,84 @@ void CControlEditBox::SetBlockBox(CControlBase* /*unused*/, int x, int y, uint16
     box.SetColor(kSelR, kSelG, kSelB, kSelA);                    // 內部透明度 0.3137  :contentReference[oaicite:28]{index=28}
 }
 
-void CControlEditBox::DiscriminStairBlock(stBlockStair* stair)
+void CControlEditBox::DiscriminStairBlock(stBlockStair* a2)
 {
-    // 反編譯為多行選取拆段；此處僅保留接口（單行不使用）。
-    // 若需實作多行選取，可參考：m_Text.GetCharByteByLine(..., m_lineBreakBytes, 10) 與 g_IMMList 的 BlockStart/Len。
-    (void)stair;
+    // 對齊反編譯 0041E750：完整多行階梯選取拆段
+    int v3 = -1;              // endLine
+    int v14 = -1;             // startLine
+    int v12 = -1;             // endLine copy
+    int v4 = m_Text.GetCharByteByLine(m_lineBreakBytes, 10);
+    int v16 = v4;
+    unsigned int v10 = 0;     // endLen
+    int v17 = 0;              // startOffset
+
+    int v5 = v4 - 1;
+    if (v5 >= 0)
+    {
+        unsigned char* v6 = &m_lineBreakBytes[v5];
+        int v15 = v5 + 1;
+        do
+        {
+            int blockStart = g_IMMList.GetBlockStartPos(m_imeIndex);
+            if (*v6 <= static_cast<unsigned char>(blockStart) && v14 < 0)
+            {
+                v14 = static_cast<int>(v6 - m_lineBreakBytes);
+                v17 = blockStart - *v6;
+            }
+            int v8 = g_IMMList.GetBlockStartPos(m_imeIndex);
+            int blockLen = g_IMMList.GetSelectedBlockLen(m_imeIndex);
+            if (static_cast<int>(*v6) > (blockLen + v8) || v12 >= 0)
+            {
+                // v10 unchanged
+            }
+            else
+            {
+                int v9 = g_IMMList.GetBlockStartPos(m_imeIndex) - *v6;
+                v10 = g_IMMList.GetSelectedBlockLen(m_imeIndex) + v9;
+                v12 = static_cast<int>(v6 - m_lineBreakBytes);
+            }
+            --v6;
+            --v15;
+        } while (v15);
+        v4 = v16;
+        v3 = v12;
+    }
+
+    int v11 = 0;
+    if (v4 <= 0)
+        return;
+
+    for (;;)
+    {
+        if (v11 < v14)
+        {
+            reinterpret_cast<int*>(a2)[2 * v11 + 1] = 0;
+            reinterpret_cast<int*>(a2)[2 * v11] = 0;
+        }
+        if (v11 != v14)
+            break;
+        reinterpret_cast<int*>(a2)[2 * v11 + 1] = v17;
+        if (v11 == v3)
+            goto LABEL_25;
+        if (v11)
+        {
+            v3 = v12;
+            reinterpret_cast<int*>(a2)[2 * v11] =
+                static_cast<int>(m_lineBreakBytes[v11]) - static_cast<int>(m_lineBreakBytes[v11 - 1]);
+        }
+        else
+        {
+            reinterpret_cast<int*>(a2)[0] = static_cast<int>(m_lineBreakBytes[0]);
+        }
+    LABEL_22:
+        if (++v11 >= v4)
+            return;
+    }
+    if (v11 != v3)
+        goto LABEL_22;
+    reinterpret_cast<int*>(a2)[2 * v11 + 1] = 0;
+LABEL_25:
+    reinterpret_cast<int*>(a2)[2 * v11] = static_cast<int>(v10);
 }
 
 // caret 位置量測（對齊反編譯參數順序與計算路徑）

@@ -91,7 +91,7 @@ void CControlImageTriple::SetSize(uint16_t totalPrimary)
         double v7 = (double)(uint16_t)(v6 - v14 - v11) / (double)v13;
         if (m_bHorizontal)
         {
-            m_Mid.SetScale(static_cast<float>(v7), m_Mid.GetScaleY());
+            m_Mid.SetScaleX(static_cast<float>(v7));  // 對齊反編譯：僅寫 scaleX
             int v9 = static_cast<int>((double)m_Mid.GetWidth() * m_Mid.GetScaleX());
             m_RightOrBottom.SetX(v12 + static_cast<uint16_t>(v9));
             m_usWidth  = static_cast<uint16_t>(v11 + v14 + v9);
@@ -99,7 +99,7 @@ void CControlImageTriple::SetSize(uint16_t totalPrimary)
         }
         else
         {
-            m_Mid.SetScale(m_Mid.GetScaleX(), static_cast<float>(v7));
+            m_Mid.SetScaleY(static_cast<float>(v7));  // 對齊反編譯：僅寫 scaleY
             int v8 = static_cast<int>((double)m_Mid.GetHeight() * m_Mid.GetScaleY());
             m_RightOrBottom.SetY(v12 + static_cast<uint16_t>(v8));
             m_usWidth  = m_LeftOrTop.GetWidth();

@@ -1,4 +1,7 @@
 #include "UI/CControlImage.h"
+#include <cstdio>
+#include <io.h>       // _access
+#include <windows.h>  // MessageBoxA, wsprintfA
 
 // ======================================================================
 // 建構 / 解構（完全對齊你提供的基準預設）
@@ -140,13 +143,22 @@ void CControlImage::SetImageSize()
     {
         if (*reinterpret_cast<uint16_t*>(pBlockData + 28) > blockID)
         {
-            // v10 = *(_DWORD *)(*(_DWORD *)(v4 + 32) + 52 * blockID + 24);
             char* pEntries = *reinterpret_cast<char**>(pBlockData + 32);
             v10 = *reinterpret_cast<int*>(pEntries + 52 * static_cast<unsigned short>(m_usBlockID) + 24);
         }
+        else
+        {
+            // 對齊反編譯：block 超出範圍時的偵錯提示
+            if (_access("MofData/Local.dat", 0) != -1)
+            {
+                char Text[256];
+                wsprintfA(Text, "%s:%i", *reinterpret_cast<char**>(reinterpret_cast<char*>(v2) + 8) + 52, static_cast<int>(blockID));
+                MessageBoxA(0, Text, "Block Error", 0);
+            }
+        }
     }
 
-    // 對齊反編譯：LABEL_8 起
+    // 對齊反編譯：LABEL_8 起（width 路徑）
     char* pGI2 = reinterpret_cast<char*>(m_pGameImage);
     uint16_t v7 = m_usBlockID;
     char* v8 = *reinterpret_cast<char**>(pGI2 + 8);
@@ -155,9 +167,18 @@ void CControlImage::SetImageSize()
     {
         if (*reinterpret_cast<uint16_t*>(v8 + 28) > v7)
         {
-            // v9 = *(_DWORD *)(*(_DWORD *)(v8 + 32) + 52 * blockID + 20);
             char* pEntries2 = *reinterpret_cast<char**>(v8 + 32);
             v9 = *reinterpret_cast<int*>(pEntries2 + 52 * static_cast<unsigned short>(m_usBlockID) + 20);
+        }
+        else
+        {
+            // 對齊反編譯：block 超出範圍時的偵錯提示
+            if (_access("MofData/Local.dat", 0) != -1)
+            {
+                char v12[256];
+                wsprintfA(v12, "%s:%i", *reinterpret_cast<char**>(pGI2 + 8) + 52, static_cast<int>(v7));
+                MessageBoxA(0, v12, "Block Error", 0);
+            }
         }
     }
 
@@ -221,7 +242,27 @@ void CControlImage::PrepareDrawing()
     }
 
     // 對齊反編譯：m_bPrepared = 1 在 block check 之前
-    m_bPrepared = 1;
+    {
+        char* v5raw = reinterpret_cast<char*>(m_pGameImage);
+        uint16_t v6 = m_usBlockID;
+        m_bPrepared = 1;
+        char* v7ptr = *reinterpret_cast<char**>(v5raw + 8);
+        if (v7ptr && *reinterpret_cast<uint16_t*>(v7ptr + 28) <= v6 && _access("MofData/Local.dat", 0) != -1)
+        {
+            char Text[256];
+            wsprintfA(Text, "%s:%i", *reinterpret_cast<char**>(v5raw + 8) + 52, static_cast<int>(v6));
+            MessageBoxA(0, Text, "Block Error", 0);
+        }
+        char* v8raw = reinterpret_cast<char*>(m_pGameImage);
+        uint16_t v9 = m_usBlockID;
+        char* v10ptr = *reinterpret_cast<char**>(v8raw + 8);
+        if (v10ptr && *reinterpret_cast<uint16_t*>(v10ptr + 28) <= v9 && _access("MofData/Local.dat", 0) != -1)
+        {
+            char Text[256];
+            wsprintfA(Text, "%s:%i", *reinterpret_cast<char**>(v8raw + 8) + 52, static_cast<int>(v9));
+            MessageBoxA(0, Text, "Block Error", 0);
+        }
+    }
 
     // ---- 把狀態寫回 GameImage（對齊反編譯順序）----
     char* pGI = reinterpret_cast<char*>(m_pGameImage);

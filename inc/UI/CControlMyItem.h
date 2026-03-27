@@ -32,6 +32,5 @@ private:
     CControlText  m_TextB;  // 位移約 +936
     CControlText  m_TextC;  // 位移約 +1368
 
-    // 對應 *((_DWORD*)this + 16) 的狀態欄位（用途未知，依反編譯在 ShowChildren() 清 0）
-    int m_State16{ 0 };
+    // m_State16 繼承自 CControlBoxBase（對應 *((_DWORD*)this + 16)）
 };
