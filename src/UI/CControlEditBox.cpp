@@ -30,10 +30,9 @@ CControlEditBox::CControlEditBox()
 
 CControlEditBox::~CControlEditBox()
 {
-    // 對齊反編譯：釋放 IME slot
+    // 對齊反編譯：釋放 IME slot（不設回 0xFFFF）
     if (m_imeIndex != 0xFFFF) {
-        g_IMMList.DeleteIMMInfo(m_imeIndex); // :contentReference[oaicite:10]{index=10}
-        m_imeIndex = 0xFFFF;
+        g_IMMList.DeleteIMMInfo(m_imeIndex);
     }
 
     // 子控制用各自解構
@@ -103,7 +102,6 @@ void CControlEditBox::CreateChildren()
     // 密碼遮罩文字（位置微調：相對主文字 +5,+3）
     m_Mask.Create(this);
     m_Mask.SetPos(m_Text.GetX() + 5, m_Text.GetY() + 3);
-    m_Mask.SetTextColor(kTextColor);
 
     // 對齊反編譯：*((_DWORD *)this + 13) = 1;
     // CControlBase 區域的旗標，標記子控制已建立完成
@@ -166,8 +164,8 @@ void CControlEditBox::SetupIME(int enable, uint16_t maxLen, int mode, uint8_t mu
 {
     if (!enable) return;
 
-    int idx = g_IMMList.GetUsableIMEIndex();          // 反編譯：GetUsableIMEIndex  :contentReference[oaicite:17]{index=17}
-    m_imeIndex = (idx < 0) ? 0xFFFF : (uint16_t)idx;
+    // 對齊反編譯：直接賦值 unsigned __int16 回傳值，無負值檢查
+    m_imeIndex = static_cast<uint16_t>(g_IMMList.GetUsableIMEIndex());
     if (m_imeIndex != 0xFFFF) {
         RECT rc{ 0,0,0,0 };
         // SetIMMInfo(index, a3=0, a4=maxLen, a5=mode, a6=&rc, a7=multiLine, a8=0(lineSpace), a9=17(align))
@@ -177,8 +175,8 @@ void CControlEditBox::SetupIME(int enable, uint16_t maxLen, int mode, uint8_t mu
 
 void CControlEditBox::SetAlphaDigit(int flag)
 {
-    if (m_imeIndex != 0xFFFF)
-        g_IMMList.SetAlphaDigit(m_imeIndex, flag);    // 對應 DCTIMM +98（是否密碼/數字） :contentReference[oaicite:19]{index=19}
+    // 對齊反編譯：無條件呼叫（不檢查 m_imeIndex）
+    g_IMMList.SetAlphaDigit(m_imeIndex, flag);
 }
 
 // -----------------------------------------------------------------------------
@@ -214,14 +212,15 @@ void CControlEditBox::SetFocus(int on)
 // -----------------------------------------------------------------------------
 void CControlEditBox::SetText(int stringId)
 {
-    const char* s = g_DCTTextManager.GetText(stringId); // :contentReference[oaicite:21]{index=21}
-    SetText(s ? s : "");
+    // 對齊反編譯：無 null guard，直接傳入 GetText 結果
+    const char* s = g_DCTTextManager.GetText(stringId);
+    SetText(s);
 }
 
 void CControlEditBox::SetText(const char* s)
 {
-    if (m_imeIndex != 0xFFFF)
-        g_IMMList.SetIMMText(m_imeIndex, const_cast<char*>(s)); // 反編譯先丟給 IME buffer  :contentReference[oaicite:22]{index=22}
+    // 對齊反編譯：無條件呼叫（不檢查 m_imeIndex）
+    g_IMMList.SetIMMText(m_imeIndex, const_cast<char*>(s));
     m_Text.SetText(s);
 }
 
@@ -234,8 +233,9 @@ void CControlEditBox::SetTextItoa(int v)
 
 void CControlEditBox::TextClear()
 {
-    if (m_writable && m_imeIndex != 0xFFFF)
-        g_IMMList.SetIMMText(m_imeIndex, const_cast<char*>(""));     // 清 IME 文字 :contentReference[oaicite:23]{index=23}
+    // 對齊反編譯：只檢查 m_writable，不檢查 m_imeIndex
+    if (m_writable)
+        g_IMMList.SetIMMText(m_imeIndex, const_cast<char*>(""));
     m_Text.ClearText();
     SetFocus(0);
     if (m_password)
@@ -252,8 +252,8 @@ uint16_t CControlEditBox::GetMaxTextSize() const
 
 unsigned int CControlEditBox::GetCurTextSize() const
 {
-    const char* s = m_Text.GetText();
-    return s ? (unsigned int)strlen(s) : 0;
+    // 對齊反編譯：無 null guard
+    return (unsigned int)strlen(m_Text.GetText());
 }
 
 BOOL CControlEditBox::IsMultiLine() const
@@ -310,8 +310,8 @@ void CControlEditBox::PrepareDrawing()
         // 把 IME 文字拉回主文字
         char src[1024]{};           // Source
         char bak[1024]{};           // v32（備份原主文字）
-        if (m_imeIndex != 0xFFFF)
-            g_IMMList.GetIMMText(m_imeIndex, src, (int)m_maxLen);    // :contentReference[oaicite:24]{index=24}
+        // 對齊反編譯：無條件呼叫（不檢查 m_imeIndex）
+        g_IMMList.GetIMMText(m_imeIndex, src, (int)m_maxLen);
         const char* cur = m_Text.GetText();
         if (cur) std::strncpy(bak, cur, sizeof(bak) - 1);
         m_Text.SetText(src);
@@ -329,21 +329,22 @@ void CControlEditBox::PrepareDrawing()
             m_Mask.SetText(mask.c_str());
             m_Text.Hide();
 
+            // 對齊反編譯：strcpy(v32, Destination) → 用遮罩覆寫備份
+            std::strncpy(bak, mask.c_str(), sizeof(bak) - 1);
+
             // caret X = 遮罩長度像素 + 2；Y 由 GetCaretPos 計（+5）
             int w = 0, h = 0;
-            g_MoFFont.GetTextLength(&w, &h, "CharacterName", mask.c_str()); // :contentReference[oaicite:25]{index=25}
+            g_MoFFont.GetTextLength(&w, &h, "CharacterName", mask.c_str());
             int xy[2]{};
             GetCaretPos(xy, bak, mask.c_str(), m_imeIndex, 0);
             m_Caret.SetX(w + 2);
             m_Caret.SetY(xy[1] + 5);
         }
         else {
-            // 非密碼：以實字串量測 caret
+            // 非密碼：以實字串量測 caret（對齊反編譯：不呼叫 Show/Hide）
             int xy[2]{};
             GetCaretPos(xy, bak, src, m_imeIndex, 0);
             m_Caret.SetPos(xy[0] + 5, xy[1] + 5);
-            m_Text.Show();
-            m_Mask.Hide();
         }
 
         // 單行反白區塊
@@ -390,12 +391,11 @@ void CControlEditBox::PrepareDrawing()
 int CControlEditBox::RenewMousePos(int* ptAbs, int a3 /*imeIndex*/)
 {
     char src[1024]{};
-    if (m_imeIndex != 0xFFFF) {
-        g_IMMList.GetIMMText(m_imeIndex, src, (int)m_maxLen);
-    }
+    // 對齊反編譯：無條件呼叫（不檢查 m_imeIndex）
+    g_IMMList.GetIMMText(m_imeIndex, src, (int)m_maxLen);
 
     const size_t n = strlen(src);
-    if (n == 0) return -1;
+    if (n == 0) return 0;  // 對齊反編譯：回傳 0，不是 -1
 
     // 從 1 開始遞增地量測切片，直到點擊落在該切片範圍
     size_t curCount = 1;
@@ -431,18 +431,19 @@ int CControlEditBox::RenewMousePos(int* ptAbs, int a3 /*imeIndex*/)
 // -----------------------------------------------------------------------------
 void CControlEditBox::DeleteBlockBox()
 {
-    for (auto& box : m_Block) box.Hide();
+    // 對齊反編譯：呼叫 vtable+36 (ClearData)，非 Hide
+    for (auto& box : m_Block) box.ClearData();
 }
 
 void CControlEditBox::SetBlockShow(int on, int idx)
 {
-    if (idx < 0 || idx >= 5) return;
+    // 對齊反編譯：無 bounds check
     if (on) m_Block[idx].Show(); else m_Block[idx].Hide();
 }
 
 void CControlEditBox::SetBlockBox(CControlBase* /*unused*/, int x, int y, uint16_t w, uint16_t h, int which)
 {
-    if (which < 0 || which >= 5) return;
+    // 對齊反編譯：無 bounds check
     auto& box = m_Block[which];
     box.SetAttr(x, y, w, h, kSelR, kSelG, kSelB, 1.0f);          // 外框色
     box.SetColor(kSelR, kSelG, kSelB, kSelA);                    // 內部透明度 0.3137  :contentReference[oaicite:28]{index=28}
@@ -518,39 +519,44 @@ void CControlEditBox::GetCaretPos(int outXY[2], const char* a3, const char* Sour
 }
 
 BOOL CControlEditBox::SearchTextPos(uint32_t* pThisAlias, size_t* curCount, uint32_t* ptAbs,
-    int segL, int segT, int segR, int segB, const char* fullText)
+    int a4, int a5, int a6, int a7, const char* a8)
 {
-    // 對齊反編譯的決策（簡化版）：
-    // 落在垂直區段內，靠近左/右邊界者決定 caret 在前/後。
-    const size_t fullLen = strlen(fullText);
-    const bool atLineBreak = (*curCount == fullLen) || (fullText[*curCount] == '\n');
+    // 對齊反編譯 0041EB80
+    const size_t fullLen = strlen(a8);
 
-    const int px = (int)ptAbs[0];
-    const int py = (int)ptAbs[1];
-    const int fontH = m_Text.GetFontHeight();
+    if (fullLen == *curCount || a8[*curCount] == 10)
+    {
+        // 行尾或換行：只檢查左界
+        if ((int)ptAbs[0] < a4)
+            return FALSE;
+    }
+    else
+    {
+        // 一般字元：檢查左右界
+        if ((int)ptAbs[0] < a4 || (int)ptAbs[0] > a6)
+            return FALSE;
+    }
 
     // 垂直測試
-    if (py < segT || py >(segT + fontH)) {
-        return FALSE;
-    }
-
-    // 水平測試
-    if (!atLineBreak) {
-        if (px < segL || px > segR) return FALSE;
-    }
-    else {
-        if (px < segL) return FALSE;
+    int v11 = (int)ptAbs[1];
+    int fontH = m_Text.GetFontHeight();
+    if (v11 < a5 || v11 > a5 + fontH)
+    {
+        // 對齊反編譯：Y-range fallthrough — 檢查是否在下一段的 Y 範圍
+        return (v11 >= a7 && (int)ptAbs[1] <= a7 + m_Text.GetFontHeight()) ? TRUE : FALSE;
     }
 
     // 判斷靠左或靠右
-    const int dL = std::abs(px - segL);
-    const int dR = std::abs(px - segR);
-    if (dL >= dR) {
-        m_caretX = segR; m_caretY = segB;
+    if (abs((int)ptAbs[0] - a4) >= abs((int)ptAbs[0] - a6))
+    {
+        m_caretX = a6;
+        m_caretY = a7;
     }
-    else {
-        m_caretX = segL; m_caretY = segT;
-        if (*curCount > 0) --(*curCount);
+    else
+    {
+        m_caretX = a4;
+        m_caretY = a5;
+        --(*curCount);
     }
     return TRUE;
 }
