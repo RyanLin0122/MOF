@@ -7,6 +7,7 @@ UIBasicTest::UIBasicTest() :
     m_pTestControl1(nullptr),
     m_pTestControl2(nullptr),
     m_pStatusText(nullptr),
+    m_pTestEditBox(nullptr),
     m_fTotalTime(0.0f)
 {
 }
@@ -21,6 +22,7 @@ void UIBasicTest::Cleanup()
     // 依序安全地刪除所有 UI 物件
     // 由於父子關係僅是邏輯鏈結，記憶體需要手動管理
     if (m_pStatusText)  delete m_pStatusText;
+    if (m_pTestEditBox) delete m_pTestEditBox;
     if (m_pTestControl2) delete m_pTestControl2;
     if (m_pTestControl1) delete m_pTestControl1;
     if (m_pRootControl)  delete m_pRootControl;
@@ -29,6 +31,7 @@ void UIBasicTest::Cleanup()
     m_pTestControl1 = nullptr;
     m_pTestControl2 = nullptr;
     m_pStatusText = nullptr;
+    m_pTestEditBox = nullptr;
 }
 
 HRESULT UIBasicTest::Initialize()
@@ -56,8 +59,10 @@ HRESULT UIBasicTest::Initialize()
 
     // 4. 建立一個文字控制項，用於顯示狀態資訊
     m_pStatusText = new CControlText();
-    m_pStatusText->Create(10, 10, nullptr); // 掛在根底下 (nullptr)
+    // 掛在 Root 底下，避免以絕對座標貼在視窗左上角而不易察覺。
+    m_pStatusText->Create(10, 10, m_pRootControl);
     m_pStatusText->SetTextColor(0xFFFFFFFF); // 白色
+    m_pStatusText->SetShadowColor(0xFF000000); // 加陰影，避免淺色背景看不見
     m_pStatusText->SetFontHeight(16);
 
     printf("[DBG] root first child = %p\n", m_pRootControl->GetFirstChild());
@@ -109,7 +114,6 @@ void UIBasicTest::Update(float fElapsedTime)
     // 執行所有控制項的繪製準備
     // 從根節點呼叫，會遞迴更新所有子物件
     m_pRootControl->PrepareDrawing();
-    m_pStatusText->PrepareDrawing();
 }
 
 void UIBasicTest::Render()
@@ -119,8 +123,5 @@ void UIBasicTest::Render()
     // 繪製 UI 樹
     m_pRootControl->Draw();
 
-    // 繪製狀態文字
-    if (m_pStatusText) {
-        m_pStatusText->Draw();
-    }
+    // m_pStatusText 為 m_pRootControl 子項，會由樹狀遞迴繪製
 }
