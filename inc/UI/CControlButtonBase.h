@@ -1,58 +1,59 @@
-#ifndef CCONTROLBUTTONBASE_H
-#define CCONTROLBUTTONBASE_H
+#pragma once
 
 #include "CControlImage.h"
 #include "CControlText.h"
 
 // 基底按鈕：以圖片為背景 + 文字子控制，提供按下位移效果
+// 反編譯對照：
+//   this+0:     CControlImage 基底
+//   this+208:   char[16] 音效名稱 (預設 "J0003")
+//   this+224:   CControlText 內嵌子控制
+//   this[48]:   m_bChildMoveByClick (DWORD, 預設 0)
+//   this[49]:   m_bMouseOver (DWORD, 預設 0)
+//   this[50]:   m_bPressed (DWORD, 預設 0)
+//   this[51]:   m_nShiftAmount (DWORD, 預設 2)
 class CControlButtonBase : public CControlImage
 {
 public:
     CControlButtonBase();
     virtual ~CControlButtonBase();
 
-    // ---- 建立 ----
-    // 僅掛載到父控制
-    virtual void Create(CControlBase* pParent) override;
-    // 設定絕對座標 + 掛父
-    virtual void Create(int x, int y, CControlBase* pParent) override;
-    // 設定尺寸 + 絕對座標 + 掛父
-    virtual void Create(int x, int y, uint16_t w, uint16_t h, CControlBase* pParent) override;
-
     // ---- 文字 ----
-    // 若你的 CControlText 僅支援字串，可忽略整數版本
-    void SetText(const char* utf8Text);
+    void SetText(char* a2);
     void SetText(int stringId);
 
-    // 取得內建文字控制（可自訂對齊、字型、陰影等）
+    // 取得內建文字控制
     CControlText* GetTextCtrl() { return &m_Text; }
 
     // ---- 按下位移效果 ----
-    void EnablePressShift(bool enable) { m_bEnablePressShift = enable; }
-    void SetPressShift(int dx, int dy) { m_pressShiftX = dx; m_pressShiftY = dy; }
-    bool IsPressed() const { return m_bPressed; }
+    // 反編譯：SetChildMoveByClick(a2=enable, a3=shiftAmount)
+    void SetChildMoveByClick(int a2, int a3);
 
-    // 由事件流程呼叫（或手動呼叫）：
-    void ButtonPosDown(); // 進入按下狀態：子物件位移 + 播放音效（可覆寫）
-    void ButtonPosUp();   // 離開按下狀態：子物件位移復原
+    // 反編譯：IsMouseOver() => return this[49]
+    int IsMouseOver();
 
-    // 可覆寫：點擊音效（預設不做事，視專案接上音效管理）
+    virtual void ButtonPosDown();
+    virtual void ButtonPosUp();
+
+    // 音效（呼叫 g_GameSoundManager.PlaySoundA）
     virtual void PlaySoundClick();
-
-protected:
-    // 也可視需求覆寫 OnPrepareDrawing/OnDraw，但基底 CControlImage 已處理繪製
-    // virtual void OnPrepareDrawing() override {}
-    // virtual void OnDraw() override {}
 
     // 建立子控制（文字）
     void CreateChildren();
 
-protected:
-    CControlText m_Text;          // 內建一個文字子控制
-    int  m_pressShiftX{ 1 };        // 按下位移 X（預設 1px）
-    int  m_pressShiftY{ 1 };        // 按下位移 Y（預設 1px）
-    bool m_bEnablePressShift{ true };
-    bool m_bPressed{ false };
-};
+    // 初始化（呼叫 virtual Show，設定音效名稱）
+    void Init();
 
-#endif // CCONTROLBUTTONBASE_H
+protected:
+    // 音效名稱（offset +208, 反編譯：strcpy((char*)this + 208, "J0003")）
+    char m_szSoundName[16]{};          // +208
+
+    // 內建文字子控制（offset +224）
+    CControlText m_Text;               // +224
+
+    // 反編譯：this[48]=enable, this[49]=mouseOver, this[50]=pressed, this[51]=shiftAmount
+    int  m_bChildMoveByClick{ 0 };     // +192 (DWORD idx 48)
+    int  m_bMouseOver{ 0 };            // +196 (DWORD idx 49)
+    int  m_bPressed{ 0 };             // +200 (DWORD idx 50)
+    int  m_nShiftAmount{ 2 };          // +204 (DWORD idx 51, 預設 2)
+};

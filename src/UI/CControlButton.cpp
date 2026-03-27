@@ -1,108 +1,167 @@
 #include "UI/CControlButton.h"
 #include "UI/CControlImage.h"
 #include "UI/CControlText.h"
+#include "global.h"
+
+// 反編譯中 ControlKeyInputProcess 使用的靜態變數（座標去重）
+static int s_nLastX = 0;
+static int s_nLastY = 0;
 
 // ==========================
-// 建構 / 解構
+// 建構
+// 反編譯：CControlButton::CControlButton
+//   CControlButtonBase::CControlButtonBase(this);
+//   this[164]=5, this[165]=0, WORD[332]=-1  (normal)
+//   this[167]=5, this[168]=0, WORD[338]=-1  (hover)
+//   this[170]=5, this[171]=0, WORD[344]=-1  (pressed)
+//   WORD[350]=-1                             (disabled block)
+//   this[173]=5, this[174]=0                 (disabled group/id)
+//   this[48] = 1;  // enable childMoveByClick
+//   CreateChildren();
+//   Init();
+//   this[178] = -1376512;  // colHover
+//   this[179] = -1376512;  // colPressed
+//   this[177] = -1;        // colNormal
+//   this[180] = -3566989;  // colDisabled
 // ==========================
 CControlButton::CControlButton()
     : CControlButtonBase()
 {
-    // 對齊反編譯：預設各 state 的 group=5、id=0、block=0xFFFF
     m_imgNormal = StateImg{};
     m_imgHover = StateImg{};
     m_imgPressed = StateImg{};
     m_imgDisabled = StateImg{};
 
-    // 反編譯：*((DWORD*)this + 48) = 1;（此處不特別用到，僅維持按鈕可互動）
-    // 基底子控制
+    // 反編譯：this[48] = 1 (enable childMoveByClick)
+    m_bChildMoveByClick = 1;
+
     CControlButtonBase::CreateChildren();
-    // 若基底有 Init()，此處呼叫（對齊反編譯）
-    // CControlButtonBase::Init();
+    CControlButtonBase::Init();
 
-    // 預設四態文字色（對齊反編譯）
-    m_colNormal = 0xFFFFFFFF;
-    m_colHover = 0xFFEA5400; // -1376512
-    m_colPressed = 0xFFEA5400; // -1376512
+    m_colHover = 0xFFEB5400;    // -1376512
+    m_colPressed = 0xFFEB5400;  // -1376512
+    m_colNormal = 0xFFFFFFFF;   // -1
     m_colDisabled = 0xFFC98E33; // -3566989
-
-    m_curTextColor = m_colNormal;
 }
 
 CControlButton::~CControlButton()
 {
-    // 正常 C++ 會自動解構 m_Text 與基底 CControlImage / CControlBase
-    // 反編譯顯示在此手動呼叫 ~CControlText 與 ~CControlImage，實作上不需要手動做。
+    // 反編譯：
+    //   CControlText::~CControlText((char*)this + 224);
+    //   CControlImage::~CControlImage(this);
+    // C++ 自動處理
 }
 
 // ==========================
 // 建立
+// 反編譯：
+//   this[93] = -1;    // curTextColor
+//   this[92] = 1;     // unknown
+//   BYTE[704] = 1;    // unknown flag
+//   CControlBase::Create(this, a2);
 // ==========================
 void CControlButton::Create(CControlBase* pParent)
 {
-    // 反編譯：*((DWORD*)this + 93) = -1, *((DWORD*)this + 92)=1, *((BYTE*)this + 704)=1
     m_curTextColor = 0xFFFFFFFF;
-    CControlImage::Create(pParent);
+    CControlBase::Create(pParent);
 }
 
 void CControlButton::Create(int x, int y, CControlBase* pParent)
 {
     m_curTextColor = 0xFFFFFFFF;
-    CControlImage::Create(x, y, pParent);
+    CControlBase::Create(x, y, pParent);
 }
 
 // ==========================
-// 顯示/啟用/停用
+// 顯示
+// 反編譯：
+//   CControlBase::Show(this);
+//   if (IsActive()) {
+//     this[30] = this[164];  // group
+//     this[31] = this[165];  // id
+//     WORD[64] = this[166];  // block (actually stored at DWORD 166 lower word)
+//     this[93] = this[177];  // curTextColor = colNormal
+//   }
 // ==========================
 void CControlButton::Show()
 {
-    CControlImage::Show();
-    // 反編譯：若可顯示（vtbl+76 為 true），套用 normal 外觀與文字色
-    ApplyStateImage(m_imgNormal);
-    ApplyTextColor(m_colNormal);
+    CControlBase::Show();
+    if (IsActive())
+    {
+        CControlImage::SetImageID(m_imgNormal.group, m_imgNormal.id, m_imgNormal.block);
+        m_curTextColor = m_colNormal;
+    }
 }
 
+// ==========================
+// NoneActive
+// 反編譯：
+//   CControlBase::NoneActive(this);
+//   if (WORD[350] != 0xFFFF) {
+//     this[30] = this[173]; this[31] = this[174]; WORD[64] = this[175];
+//   }
+//   this[93] = this[180];
+// ==========================
 void CControlButton::NoneActive()
 {
-    CControlImage::NoneActive();
-    ApplyStateImage(m_imgDisabled);
-    ApplyTextColor(m_colDisabled);
+    CControlBase::NoneActive();
+    if (m_imgDisabled.block != 0xFFFF)
+    {
+        CControlImage::SetImageID(m_imgDisabled.group, m_imgDisabled.id, m_imgDisabled.block);
+    }
+    m_curTextColor = m_colDisabled;
 }
 
+// ==========================
+// Active
+// 反編譯：
+//   CControlBase::Active(this);
+//   this[30] = this[164]; this[31] = this[165]; WORD[64] = this[166];
+//   this[93] = this[177];
+// ==========================
 void CControlButton::Active()
 {
-    CControlImage::Active();
-    ApplyStateImage(m_imgNormal);
-    ApplyTextColor(m_colNormal);
+    CControlBase::Active();
+    CControlImage::SetImageID(m_imgNormal.group, m_imgNormal.id, m_imgNormal.block);
+    m_curTextColor = m_colNormal;
 }
 
 // ==========================
-// 設圖多載（對齊反編譯）
+// SetImage 多載
 // ==========================
+
+// 反編譯：5 參數版 → 呼叫 8 參數版，同一 imageId
 void CControlButton::SetImage(unsigned int imageIdAll,
     uint16_t blockNormal,
     uint16_t blockHover,
     uint16_t blockPressed,
     uint16_t blockDisabled)
 {
-    // 反編譯 5 參數版本：把同一 imageId 套給四態，僅 block 不同
     SetImage(imageIdAll, blockNormal,
         imageIdAll, blockHover,
         imageIdAll, blockPressed,
         imageIdAll, blockDisabled);
 }
 
+// 反編譯：2 參數版
+//   this[165] = a2;         // normal.id
+//   WORD[332] = a3;         // normal.block
+//   CControlImage::SetImageID(this, this[164], this[165], this[166]);
+//   CControlText::SetTextPosToParentCenter((char*)this + 224);
 void CControlButton::SetImage(unsigned int imageIdNormal, uint16_t blockNormal)
 {
-    // 僅設定「常態」圖塊；group 使用預設（反編譯：+164 初值 5）
     m_imgNormal.id = imageIdNormal;
     m_imgNormal.block = blockNormal;
-
-    // 立刻套到背景圖，並把文字置中（反編譯行為）
     CControlImage::SetImageID(m_imgNormal.group, m_imgNormal.id, m_imgNormal.block);
     m_Text.SetTextPosToParentCenter();
 }
 
+// 反編譯：6 參數版
+//   SetImage(a2, a3);  // 先設 normal
+//   this[168] = a4;    // hover.id
+//   WORD[338] = a5;    // hover.block
+//   this[171] = a6;    // pressed.id
+//   WORD[344] = a7;    // pressed.block
 void CControlButton::SetImage(unsigned int imageIdNormal, uint16_t blockNormal,
     unsigned int imageIdHover, uint16_t blockHover,
     unsigned int imageIdPressed, uint16_t blockPressed)
@@ -114,6 +173,10 @@ void CControlButton::SetImage(unsigned int imageIdNormal, uint16_t blockNormal,
     m_imgPressed.block = blockPressed;
 }
 
+// 反編譯：8 參數版
+//   SetImage(a2, a3, a4, a5, a6, a7);
+//   this[174] = a8;    // disabled.id
+//   WORD[350] = a9;    // disabled.block
 void CControlButton::SetImage(unsigned int imageIdNormal, uint16_t blockNormal,
     unsigned int imageIdHover, uint16_t blockHover,
     unsigned int imageIdPressed, uint16_t blockPressed,
@@ -141,59 +204,86 @@ void CControlButton::SetButtonTextColor(uint32_t colNormal,
 }
 
 // ==========================
-// 事件處理（對齊反編譯 switch-case）
+// 事件處理
+// 反編譯完全對照 CControlButton::ControlKeyInputProcess
 // ==========================
 int* CControlButton::ControlKeyInputProcess(int msg, int key, int x, int y, int a6, int a7)
 {
-    // 清除「剛點擊」旗標（對照 this[49]=0）；本還原不需要該旗標即可達成外觀行為
-    // 反編譯先檢查可互動（vtbl+76）；這裡假設可互動即走分支
+    int* result;
+
+    // 反編譯：座標去重（a6 != 1 且 msg 為 7 或 4 時）
+    if (a6 != 1 && (msg == 7 || msg == 4))
+    {
+        if (s_nLastX == x && s_nLastY == y)
+            return (int*)x;  // 反編譯：return a4 (即 x 指標語義)
+        s_nLastX = x;
+        s_nLastY = y;
+    }
+
+    // 反編譯：this[49] = 0; 清除 hover 旗標
+    m_bMouseOver = 0;
+
+    // 反編譯：result = IsActive(); if (!result) return result;
+    result = (int*)(intptr_t)IsActive();
+    if (!result)
+        return result;
+
     switch (msg)
     {
-    case 0: // Click / MouseUp on button
-        // 若有定義 pressed 狀態圖塊則套用
-        ApplyStateImage(m_imgPressed);
-        // 點擊回呼（反編譯 vtbl+104）+ 播放音效
-        PlaySoundClick();
-        ApplyTextColor(m_colPressed);
+    case 0: // Click
+        // 反編譯：if (WORD[344] != 0xFFFF) 套用 pressed 圖
+        if (m_imgPressed.block != 0xFFFF)
+        {
+            CControlImage::SetImageID(m_imgPressed.group, m_imgPressed.id, m_imgPressed.block);
+        }
+        // 反編譯：vtbl+104 = ButtonPosDown
+        ButtonPosDown();
+        CControlButtonBase::PlaySoundClick();
+        // 反編譯：this[93] = this[179] (pressed text color)
+        m_curTextColor = m_colPressed;
+        dword_AFD34C = 0;
         break;
 
     case 3: // MouseDown
-        ApplyStateImage(m_imgPressed);
-        // 反編譯：呼叫 vtbl+108（多半是「按下中」行為），之後把目前底圖還原成 normal
-        // 本還原僅維持「按下中」外觀，後續放開或滑出時會回復
-        ApplyTextColor(m_colNormal); // 對齊反編譯將當前色設回 normal
+        // 反編譯：if (WORD[338] != 0xFFFF) 套用 hover 圖
+        if (m_imgHover.block != 0xFFFF)
+        {
+            CControlImage::SetImageID(m_imgHover.group, m_imgHover.id, m_imgHover.block);
+        }
+        // 反編譯：vtbl+108 = ButtonPosUp
+        ButtonPosUp();
+        // 反編譯：恢復 normal 圖
+        CControlImage::SetImageID(m_imgNormal.group, m_imgNormal.id, m_imgNormal.block);
+        // 反編譯：this[93] = this[177] (normal text color)
+        m_curTextColor = m_colNormal;
+        dword_AFD34C = 1;
         break;
 
-    case 4: // Back to normal (e.g., MouseOut / Cancel press)
-        ApplyStateImage(m_imgNormal);
-        ApplyTextColor(m_colNormal);
+    case 4: // Recovery / MouseOut
+        // 反編譯：套用 normal 圖
+        CControlImage::SetImageID(m_imgNormal.group, m_imgNormal.id, m_imgNormal.block);
+        // 反編譯：vtbl+108 = ButtonPosUp
+        ButtonPosUp();
+        // 反編譯：this[93] = this[177] (normal text color)
+        m_curTextColor = m_colNormal;
         break;
 
     case 7: // Hover
-        // 標記事件來源為 Hover（反編譯 this[49]=1）
-        ApplyStateImage(m_imgHover);
-        ApplyTextColor(m_colHover);
+        // 反編譯：this[49] = 1
+        m_bMouseOver = 1;
+        // 反編譯：if (WORD[338] != 0xFFFF) 套用 hover 圖
+        if (m_imgHover.block != 0xFFFF)
+        {
+            CControlImage::SetImageID(m_imgHover.group, m_imgHover.id, m_imgHover.block);
+        }
+        // 反編譯：this[93] = this[178] (hover text color)
+        m_curTextColor = m_colHover;
         break;
 
     default:
         break;
     }
 
-    // 照反編譯最後仍會把事件往基底傳（帶原參數）
-    return CControlImage::ControlKeyInputProcess(msg, key, x, y, a6, a7);
-}
-
-// ==========================
-// 私有：套用狀態圖 / 文字色
-// ==========================
-void CControlButton::ApplyStateImage(const StateImg& st)
-{
-    if (st.block != 0xFFFF)
-        CControlImage::SetImageID(st.group, st.id, st.block);
-}
-
-void CControlButton::ApplyTextColor(uint32_t c)
-{
-    m_curTextColor = c;
-    m_Text.SetTextColor(c);
+    // 反編譯：最後呼叫 CControlBase::ControlKeyInputProcess
+    return CControlBase::ControlKeyInputProcess(msg, key, x, y, a6, a7);
 }

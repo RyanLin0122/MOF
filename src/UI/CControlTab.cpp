@@ -88,9 +88,7 @@ void CControlTab::SetTabTextType()
     m_bTextTabType = 1;
     CControlImage::SetAlpha(0);
     SetTextColor(0xFF000000, 0xFFFFFFFF, 0xFF000000, 0xFFC99273);
-    // SetChildMoveByClick(this, 1, 1) → EnablePressShift + SetPressShift
-    EnablePressShift(true);
-    SetPressShift(1, 1);
+    SetChildMoveByClick(1, 1);
 }
 
 uint8_t CControlTab::GetTabType()
