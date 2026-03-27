@@ -47,21 +47,15 @@ void CControlBoxInvenItem::CreateChildren()
 
     // 封印半透明色塊掛自己（對應：(*(this+268)+12)((this+1072), this)）
     m_sealBox.Create(this);
-    // 尺寸 32x32（反編譯以直接寫寬高欄位；這裡用 SetPos(0,0)+SetWH）
-    m_sealBox.SetPos(0, 0);
-    m_sealBox.SetAttr(0, 0, 32, 32, 0.0f, 0.0f, 0.0f, 0.0f);
+    // 尺寸 32x32（反編譯直接寫入 WORD 欄位）
+    m_sealBox.SetSize(32, 32);
 
-    // 主物件圖片（資源 536870933, idx=2；反編譯以 +80 呼叫，這裡用等價接口）
-    m_itemImage.Create(this);
-    m_itemImage.SetImage(536870933u, 2); // 具體圖集/索引：保持一致
-    // 外框（資源 570425419, idx=6/7，位置(-3,-3) 偏移）
-    m_frameYellow.Create(this);
-    m_frameYellow.SetImage(570425419u, 6);
-    m_frameYellow.SetPos(-3, -3);
+    // 主物件圖片（反編譯使用 5 參數 Create：pos=(-1,-1), imageId=536870933, block=2）
+    m_itemImage.Create(-1, -1, 536870933u, 2, this);
 
-    m_frameGreen.Create(this);
-    m_frameGreen.SetImage(570425419u, 7);
-    m_frameGreen.SetPos(-3, -3);
+    // 外框（反編譯使用 5 參數 Create：pos=(-3,-3), imageId=570425419, block=6/7）
+    m_frameYellow.Create(-3, -3, 570425419u, 6, this);
+    m_frameGreen.Create(-3, -3, 570425419u, 7, this);
 
     // 讓外框與數字盒先隱藏（ShowChildren/HideChildren 也會再處理一次）
     m_countBox.Hide();

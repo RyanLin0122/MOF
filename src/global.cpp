@@ -44,6 +44,7 @@
 #include "Effect/CEffectManager.h"
 #include "Image/CDeviceManager.h"
 #include "Logic/cltCashShopItem.h"
+#include "Info/cltBasicAppearKindInfo.h"
 
 
 LPDIRECT3D9 g_pD3D = NULL;
@@ -141,6 +142,7 @@ cltMoFC_EffectKindInfo g_clEffectKindInfo;
 // cltSystemMessage g_clSysemMessage is defined in Logic/cltSystemMessage.cpp
 
 cltCashShopItem g_clCashShopItem;
+cltBasicAppearKindInfo g_clBasicAppearKindInfo;
 
 int dword_AFD344 = 0;
 

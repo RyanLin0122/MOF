@@ -66,6 +66,7 @@ class cltSkillSystem;
 class cltPlayerAbility;
 class DirectInputManager;
 class cltCashShopItem;
+class cltBasicAppearKindInfo;
 
 //-----------------------------------------------------------------------------
 // 全域變數
@@ -215,6 +216,32 @@ extern cltSystemMessage         g_clSysemMessage;
 
 // CashShop
 extern cltCashShopItem          g_clCashShopItem;
+
+// BasicAppear
+extern cltBasicAppearKindInfo   g_clBasicAppearKindInfo;
+
+//-----------------------------------------------------------------------------
+// 工具函式（對齊反編譯 CircleLoopUpper / CircleLoopLower）
+//-----------------------------------------------------------------------------
+inline void CircleLoopUpper(int* val, int maxCount)
+{
+    if (maxCount) {
+        if (*val >= maxCount - 1)
+            *val = 0;
+        else
+            ++(*val);
+    }
+}
+
+inline void CircleLoopLower(int* val, int maxCount)
+{
+    if (maxCount) {
+        if (*val <= 0)
+            *val = maxCount - 1;
+        else
+            --(*val);
+    }
+}
 
 // Device
 extern CDeviceManager           g_clDeviceManager;
