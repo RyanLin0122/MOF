@@ -542,7 +542,7 @@ LABEL_25:
 }
 
 // caret 位置量測（對齊反編譯參數順序與計算路徑）
-void CControlEditBox::GetCaretPos(int outXY[2], const char* a3, const char* Source, int imeIndex, size_t Count)
+char* CControlEditBox::GetCaretPos(int outXY[2], const char* a3, const char* Source, int imeIndex, size_t Count)
 {
     // a3 = 未遮罩原字串（若有）；Source = 顯示字串（可能是遮罩）
     // Count==0 表示使用 IME 內部 caret 位置
@@ -601,6 +601,7 @@ void CControlEditBox::GetCaretPos(int outXY[2], const char* a3, const char* Sour
     }
 
     m_caretIndex = (int)caretPos;
+    return reinterpret_cast<char*>(outXY);  // 對齊反編譯：回傳 a2 本身
 }
 
 BOOL CControlEditBox::SearchTextPos(uint32_t* pThisAlias, size_t* curCount, uint32_t* ptAbs,
