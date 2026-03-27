@@ -96,8 +96,9 @@ void CControlEditBox::CreateChildren()
     m_Caret.Create(this);
     m_Caret.SetFontWeight(700);
     m_Caret.SetPos(5, 5);
+    // 對齊反編譯：ground truth 先設色再設文字（this[909]=-7590900 在 SetText 之前）
+    m_Caret.SetTextColor(kTextColor);                  // *((this)+909) = -7590900
     m_Caret.SetText("I");
-    m_Caret.SetTextColor(kTextColor);                  // *((this)+909) = -7590900  :contentReference[oaicite:14]{index=14}
 
     // 密碼遮罩文字（位置微調：相對主文字 +5,+3）
     m_Mask.Create(this);
@@ -245,7 +246,7 @@ void CControlEditBox::TextClear()
 // -----------------------------------------------------------------------------
 // 量測
 // -----------------------------------------------------------------------------
-uint16_t CControlEditBox::GetMaxTextSize() const
+int CControlEditBox::GetMaxTextSize() const
 {
     return m_maxLen;
 }
@@ -290,107 +291,110 @@ void CControlEditBox::PrepareDrawing()
     if (m_password)
         g_IMMList.ChangeLanguage(0, g_hWnd);
 
-    if (m_writable) {
-        // 初始化閃爍時間
-        if (!sBlinkInit) {
-            sBlinkInit = true;
-            sBlinkTick = timeGetTime();
+    // 對齊反編譯：只有 m_writable 時才執行完整邏輯並呼叫 CControlBase::PrepareDrawing
+    // ground truth 中 m_focus && !m_writable 時直接 return，不呼叫基底
+    if (!m_writable)
+        return;
+
+    // 初始化閃爍時間
+    if (!sBlinkInit) {
+        sBlinkInit = true;
+        sBlinkTick = timeGetTime();
+    }
+
+    // 每 ~300ms 切換 caret 顯示
+    DWORD now = timeGetTime();
+    if (now - sBlinkTick > 300) {
+        sBlinkTick = now;
+        if (m_Caret.IsVisible())
+            m_Caret.Hide();
+        else
+            m_Caret.Show();
+    }
+
+    // 把 IME 文字拉回主文字
+    char src[1024]{};           // Source
+    char bak[1024]{};           // v32（備份原主文字）
+    // 對齊反編譯：無條件呼叫（不檢查 m_imeIndex）
+    g_IMMList.GetIMMText(m_imeIndex, src, (int)m_maxLen);
+    const char* cur = m_Text.GetText();
+    if (cur) std::strncpy(bak, cur, sizeof(bak) - 1);
+    m_Text.SetText(src);
+
+    // 密碼遮罩
+    if (m_password) {
+        // 計算字元數（非位元組數）：DBCS lead byte 視為 1 字元
+        int nChars = 0;
+        for (int i = 0; src[i]; ++i) {
+            if (IsDBCSLeadByte((BYTE)src[i]) && src[i + 1]) ++i;
+            ++nChars;
         }
 
-        // 每 ~300ms 切換 caret 顯示
-        DWORD now = timeGetTime();
-        if (now - sBlinkTick > 300) {
-            sBlinkTick = now;
-            if (m_Caret.IsVisible())
-                m_Caret.Hide();
-            else
-                m_Caret.Show();
-        }
+        std::string mask(nChars, '*');
+        m_Mask.SetText(mask.c_str());
+        m_Text.Hide();
 
-        // 把 IME 文字拉回主文字
-        char src[1024]{};           // Source
-        char bak[1024]{};           // v32（備份原主文字）
-        // 對齊反編譯：無條件呼叫（不檢查 m_imeIndex）
-        g_IMMList.GetIMMText(m_imeIndex, src, (int)m_maxLen);
-        const char* cur = m_Text.GetText();
-        if (cur) std::strncpy(bak, cur, sizeof(bak) - 1);
-        m_Text.SetText(src);
+        // 對齊反編譯：strcpy(v32, Destination) → 用遮罩覆寫備份
+        std::strncpy(bak, mask.c_str(), sizeof(bak) - 1);
 
-        // 密碼遮罩
-        if (m_password) {
-            // 計算字元數（非位元組數）：DBCS lead byte 視為 1 字元
-            int nChars = 0;
-            for (int i = 0; src[i]; ++i) {
-                if (IsDBCSLeadByte((BYTE)src[i]) && src[i + 1]) ++i;
-                ++nChars;
-            }
+        // caret X = 遮罩長度像素 + 2；Y 由 GetCaretPos 計（+5）
+        int w = 0, h = 0;
+        g_MoFFont.GetTextLength(&w, &h, "CharacterName", mask.c_str());
+        int xy[2]{};
+        GetCaretPos(xy, bak, mask.c_str(), m_imeIndex, 0);
+        m_Caret.SetX(w + 2);
+        m_Caret.SetY(xy[1] + 5);
+    }
+    else {
+        // 非密碼：以實字串量測 caret（對齊反編譯：不呼叫 Show/Hide）
+        int xy[2]{};
+        GetCaretPos(xy, bak, src, m_imeIndex, 0);
+        m_Caret.SetPos(xy[0] + 5, xy[1] + 5);
+    }
 
-            std::string mask(nChars, '*');
-            m_Mask.SetText(mask.c_str());
-            m_Text.Hide();
-
-            // 對齊反編譯：strcpy(v32, Destination) → 用遮罩覆寫備份
-            std::strncpy(bak, mask.c_str(), sizeof(bak) - 1);
-
-            // caret X = 遮罩長度像素 + 2；Y 由 GetCaretPos 計（+5）
-            int w = 0, h = 0;
-            g_MoFFont.GetTextLength(&w, &h, "CharacterName", mask.c_str());
-            int xy[2]{};
-            GetCaretPos(xy, bak, mask.c_str(), m_imeIndex, 0);
-            m_Caret.SetX(w + 2);
-            m_Caret.SetY(xy[1] + 5);
+    // 對齊反編譯：反白區塊（含 DiscriminStairBlock）
+    if (m_writable && !IsMultiLine() && m_imeIndex != 0xFFFF) {
+        if ((int)g_IMMList.GetSelectedBlockLen(m_imeIndex) <= 0) {
+            SetBlockShow(0, 0);
         }
         else {
-            // 非密碼：以實字串量測 caret（對齊反編譯：不呼叫 Show/Hide）
-            int xy[2]{};
-            GetCaretPos(xy, bak, src, m_imeIndex, 0);
-            m_Caret.SetPos(xy[0] + 5, xy[1] + 5);
-        }
+            int v25 = g_IMMList.GetBlockStartPos(m_imeIndex);
+            int absX = m_Text.GetAbsX();
+            int absY = m_Text.GetAbsY();
 
-        // 對齊反編譯：反白區塊（含 DiscriminStairBlock）
-        if (m_writable && !IsMultiLine() && m_imeIndex != 0xFFFF) {
-            if ((int)g_IMMList.GetSelectedBlockLen(m_imeIndex) <= 0) {
-                SetBlockShow(0, 0);
-            }
-            else {
-                int v25 = g_IMMList.GetBlockStartPos(m_imeIndex);
-                int absX = m_Text.GetAbsX();
-                int absY = m_Text.GetAbsY();
+            // 對齊反編譯：零化內部欄位 this[36], this[37], WORD this[76]
+            reinterpret_cast<int*>(this)[36] = 0;
+            reinterpret_cast<int*>(this)[37] = 0;
+            reinterpret_cast<short*>(this)[76] = 0;
 
-                // 對齊反編譯：零化內部欄位 this[36], this[37], WORD this[76]
-                reinterpret_cast<int*>(this)[36] = 0;
-                reinterpret_cast<int*>(this)[37] = 0;
-                reinterpret_cast<short*>(this)[76] = 0;
+            int v9 = m_Text.GetCharByteByLine(m_lineBreakBytes, 10);
+            stBlockStair stair{};
+            DiscriminStairBlock(&stair);
 
-                int v9 = m_Text.GetCharByteByLine(m_lineBreakBytes, 10);
-                stBlockStair stair{};
-                DiscriminStairBlock(&stair);
+            if (v9 > 0) {
+                unsigned int* v10 = stair.len;
+                int remaining = v9;
+                const char* Source = m_Text.GetText();
+                if (!Source) Source = "";
+                uint16_t fontH = static_cast<uint16_t>(m_Text.GetFontHeight());
+                do {
+                    if (*v10) {
+                        char Dest[1024]{};
+                        std::strncpy(Dest, Source, v10[1]);
+                        int w1 = 0, h1 = 0;
+                        g_MoFFont.GetTextLength(&w1, &h1, "CharacterName", Dest);
 
-                if (v9 > 0) {
-                    size_t* v10 = stair.len;
-                    int remaining = v9;
-                    const char* Source = m_Text.GetText();
-                    if (!Source) Source = "";
-                    uint16_t fontH = static_cast<uint16_t>(m_Text.GetFontHeight());
-                    do {
-                        if (*v10) {
-                            char Dest[1024]{};
-                            std::strncpy(Dest, Source, v10[1]);
-                            int w1 = 0, h1 = 0;
-                            g_MoFFont.GetTextLength(&w1, &h1, "CharacterName", Dest);
+                        std::memset(Dest, 0, sizeof(Dest));
+                        std::strncpy(Dest, &Source[v25], *v10);
+                        int w2 = 0, h2 = 0;
+                        g_MoFFont.GetTextLength(&w2, &h2, "CharacterName", Dest);
 
-                            std::memset(Dest, 0, sizeof(Dest));
-                            std::strncpy(Dest, &Source[v25], *v10);
-                            int w2 = 0, h2 = 0;
-                            g_MoFFont.GetTextLength(&w2, &h2, "CharacterName", Dest);
-
-                            SetBlockShow(1, 0);
-                            SetBlockBox(nullptr, absX + w1, absY,
-                                static_cast<uint16_t>(w2), fontH, 0);
-                        }
-                        v10 += 2;
-                    } while (--remaining);
-                }
+                        SetBlockShow(1, 0);
+                        SetBlockBox(nullptr, absX + w1, absY,
+                            static_cast<uint16_t>(w2), fontH, 0);
+                    }
+                    v10 += 2;
+                } while (--remaining);
             }
         }
     }
@@ -586,6 +590,8 @@ char* CControlEditBox::GetCaretPos(int outXY[2], const char* a3, const char* Sou
             w += fontH;
 
         outXY[0] = w;
+        // 對齊反編譯：m_caretIndex 只在多行分支中設定（ground truth: this[35] = v7）
+        m_caretIndex = (int)caretPos;
         outXY[1] = baseY;
     }
     else {
@@ -600,7 +606,6 @@ char* CControlEditBox::GetCaretPos(int outXY[2], const char* a3, const char* Sou
         outXY[1] = 0;
     }
 
-    m_caretIndex = (int)caretPos;
     return reinterpret_cast<char*>(outXY);  // 對齊反編譯：回傳 a2 本身
 }
 
