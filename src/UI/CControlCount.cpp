@@ -19,7 +19,10 @@ CControlCount::CControlCount()
     m_Min = 0;
     m_Max = 0;
     m_Cur = 0;
-    m_MidScale = 0.0f;
+    // 反編譯中建構子不初始化 m_MidScale
+
+    // 對齊反編譯：*((_DWORD *)this + 13) = 1;
+    reinterpret_cast<int*>(this)[13] = 1;
 }
 
 CControlCount::~CControlCount()

@@ -66,7 +66,6 @@ MTSInfo* CControlMoveText::InsertCurrent()
         if (m_cur == m_tail)
         {
             // 插到尾巴等同 Add — 注意：此處 v3 洩漏（符合原始行為）
-            ::operator delete(v3);
             return Add();
         }
         else
@@ -215,7 +214,7 @@ void CControlMoveText::SetMoveText(
     MTSInfo* v11 = Add();
 
     size_t len = std::strlen(lpString) + 1;
-    v11->style = static_cast<int>(shadowStyle); // style 低位元組
+    *(reinterpret_cast<char*>(v11) + 40) = shadowStyle; // 反編譯：*((_BYTE *)v11 + 40) = a10
 
     // 設定字重
     SetFontWeight(700);

@@ -23,7 +23,8 @@ CControlEditBox::CControlEditBox()
 {
     // 反編譯：CControlBase::CControlBase(this)
     // 其餘欄位已在宣告處初始化
-    // 對齊反編譯：建構子呼叫 CreateChildren
+    // 對齊反編譯：建構子先呼叫 InitOpen 再 CreateChildren
+    InitOpen();
     CreateChildren();
 }
 
@@ -36,6 +37,16 @@ CControlEditBox::~CControlEditBox()
     }
 
     // 子控制用各自解構
+}
+
+// -----------------------------------------------------------------------------
+// InitOpen — 對齊反編譯：建構子中呼叫，在 CreateChildren 之前
+// （原始函式體在反編譯中僅為 idb 宣告，無完整函式體）
+// -----------------------------------------------------------------------------
+void CControlEditBox::InitOpen()
+{
+    // 反編譯中此函式體未被 IDA 完整還原（標記為 idb），
+    // 保留空實作以維持呼叫流程一致。
 }
 
 // -----------------------------------------------------------------------------
@@ -76,11 +87,10 @@ void CControlEditBox::CreateChildren()
     m_Text.Create(this);
     m_Text.SetTextColor(kTextColor);                   // *((this)+801) = -7590900  :contentReference[oaicite:12]{index=12}
 
-    // 選取區 Alpha 盒
+    // 選取區 Alpha 盒（反編譯：建立並設色，但 CreateChildren 中不 Hide）
     for (auto& box : m_Block) {
         box.Create(this);
         box.SetColor(kSelR, kSelG, kSelB, kSelA);      // 反編譯：SetColor(..., 0.3137)  :contentReference[oaicite:13]{index=13}
-        box.Hide();
     }
 
     // 游標（以字元 'I' 粗體顯示/隱藏達到閃爍效果）
@@ -94,6 +104,10 @@ void CControlEditBox::CreateChildren()
     m_Mask.Create(this);
     m_Mask.SetPos(m_Text.GetX() + 5, m_Text.GetY() + 3);
     m_Mask.SetTextColor(kTextColor);
+
+    // 對齊反編譯：*((_DWORD *)this + 13) = 1;
+    // CControlBase 區域的旗標，標記子控制已建立完成
+    reinterpret_cast<int*>(this)[13] = 1;
 }
 
 // -----------------------------------------------------------------------------

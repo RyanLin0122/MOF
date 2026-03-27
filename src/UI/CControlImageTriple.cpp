@@ -8,7 +8,8 @@ void CControlImageTriple::Create(CControlBase* pParent)
     CControlBase::Create(pParent);
     // 對齊反編譯：虛呼 +80 -> CreateChildren()
     CreateChildren();
-    // 對齊反編譯：*((DWORD*)this + 13) = 1; 視作建立完成（此處不再額外設旗標）
+    // 對齊反編譯：*((_DWORD *)this + 13) = 1;
+    reinterpret_cast<int*>(this)[13] = 1;
 }
 
 // -----------------------------------------------------------------------------

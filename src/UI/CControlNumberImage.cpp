@@ -53,11 +53,7 @@ void CControlNumberImage::SetNumber(long long value)
     std::memset(Buffer, 0, sizeof(Buffer));
     m_usWidth = 0;
 
-#if defined(_WIN32) || defined(_WIN64)
-    std::sprintf(Buffer, "%I64d", value);
-#else
-    std::sprintf(Buffer, "%lld", value);
-#endif
+    std::sprintf(Buffer, "%I64d", value);  // 對齊反編譯：固定使用 MSVC 格式
 
     int strLen = static_cast<int>(std::strlen(Buffer));
     if (strLen > 20) return;
