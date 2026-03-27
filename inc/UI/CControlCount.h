@@ -41,6 +41,5 @@ private:
     int64_t m_Min{ 0 };
     int64_t m_Cur{ 0 };
     int64_t m_Max{ 0 };
-
-    float m_MidScale{ 0.0f };
+    // 對齊反編譯：float[87] 實際上是 m_Mid.m_fScaleX，不是獨立欄位
 };

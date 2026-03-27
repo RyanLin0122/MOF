@@ -19,7 +19,6 @@ CControlCount::CControlCount()
     m_Min = 0;
     m_Max = 0;
     m_Cur = 0;
-    // 反編譯中建構子不初始化 m_MidScale
 
     // 對齊反編譯：*((_DWORD *)this + 13) = 1;
     reinterpret_cast<int*>(this)[13] = 1;
@@ -119,21 +118,25 @@ void CControlCount::SetupCurCount()
 
     if (m_Max)
     {
-        double desired = (double)ctrlW * ((double)m_Cur / (double)m_Max);
+        // 對齊反編譯：第二次呼叫 GetWidth()（ground truth 呼叫兩次）
+        double desired = (double)GetWidth() * ((double)m_Cur / (double)m_Max);
+        // 對齊反編譯：ground truth 截斷為 float 再比較
+        float v14 = static_cast<float>(desired);
 
         if (desired > 1.0)
         {
-            if ((double)ctrlW >= desired)
+            if ((double)ctrlW >= (double)v14)
             {
                 // 反編譯：Show 三張圖
                 m_Left.Show();
                 m_Mid.Show();
                 m_Right.Show();
 
-                double v12 = desired - (double)caps;
+                double v12 = (double)v14 - (double)caps;
                 if (v12 <= 0.0)
                     v12 = 0.0;
-                m_MidScale = (float)v12;
+                // 對齊反編譯：float[87] = m_Mid.m_fScaleX
+                m_Mid.SetScaleX((float)v12);
             }
             else
             {
@@ -143,7 +146,7 @@ void CControlCount::SetupCurCount()
                 m_Right.Show();
 
                 double v12 = (double)(ctrlW - caps);
-                m_MidScale = (float)v12;
+                m_Mid.SetScaleX((float)v12);
             }
         }
         else
@@ -155,13 +158,13 @@ void CControlCount::SetupCurCount()
         }
 
         // 反編譯：
-        //   v16 = float[87];  (m_MidScale)
+        //   v16 = float[87];  → m_Mid.m_fScaleX
         //   v17 = (float)(m_Mid.GetWidth()) * v16;
         //   v13 = (double)m_Mid.GetAbsX() + v17;
-        //   m_Right.SetAbsX((int)v13);
-        float scale = m_MidScale;
+        //   m_Right.SetAbsX((__int64)v13);
+        float scale = m_Mid.GetScaleX();
         float advance = (float)m_Mid.GetWidth() * scale;
         double rightAbsX = (double)m_Mid.GetAbsX() + (double)advance;
-        m_Right.SetAbsX((int)(int64_t)rightAbsX);
+        m_Right.SetAbsX(static_cast<int>(static_cast<long long>(rightAbsX)));
     }
 }

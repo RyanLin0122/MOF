@@ -84,6 +84,8 @@ public:
     bool GetCenterOrigin() const { return m_bCenterOrigin; }
 
     void SetScale(float sx, float sy) { m_fScaleX = sx; m_fScaleY = sy; }
+    void SetScaleX(float sx) { m_fScaleX = sx; }
+    void SetScaleY(float sy) { m_fScaleY = sy; }
     float GetScaleX() const { return m_fScaleX; }
     float GetScaleY() const { return m_fScaleY; }
 
@@ -93,10 +95,10 @@ public:
     // 尋找子樹中的 ScrollBar 控件（classId == 100），找不到回傳 nullptr
     CControlBase* FindScrollBarCtrlChild(int a2, int a3);
 
-    // Active 狀態
-    void Active();
-    void NoneActive();
-    int  IsActive() const;
+    // Active 狀態（ground truth 透過 vtable 呼叫，偏移 76/104/108）
+    virtual void Active();
+    virtual void NoneActive();
+    virtual int  IsActive() const;
 
     // 陣列索引（反編譯：SetArrayIndex 寫入 *((_DWORD *)this + 17)）
     virtual void SetArrayIndex(int idx);

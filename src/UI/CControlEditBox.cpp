@@ -347,37 +347,50 @@ void CControlEditBox::PrepareDrawing()
             m_Caret.SetPos(xy[0] + 5, xy[1] + 5);
         }
 
-        // 單行反白區塊
+        // 對齊反編譯：反白區塊（含 DiscriminStairBlock）
         if (m_writable && !IsMultiLine() && m_imeIndex != 0xFFFF) {
-            unsigned int selLen = g_IMMList.GetSelectedBlockLen(m_imeIndex); // <=0 表示無選取 :contentReference[oaicite:26]{index=26}
-            if ((int)selLen <= 0) {
+            if ((int)g_IMMList.GetSelectedBlockLen(m_imeIndex) <= 0) {
                 SetBlockShow(0, 0);
             }
             else {
-                int start = g_IMMList.GetBlockStartPos(m_imeIndex);
-                const char* full = m_Text.GetText();
-                if (!full) full = "";
+                int v25 = g_IMMList.GetBlockStartPos(m_imeIndex);
+                int absX = m_Text.GetAbsX();
+                int absY = m_Text.GetAbsY();
 
-                // 計算選取前綴寬 / 選取段寬（以 "CharacterName" 字型）
-                std::string prefix(full, full + min<int>(start, (int)strlen(full)));
-                std::string mid(full + min<int>(start, (int)strlen(full)),
-                    full + min<int>(start + (int)selLen, (int)strlen(full)));
+                // 對齊反編譯：零化內部欄位 this[36], this[37], WORD this[76]
+                reinterpret_cast<int*>(this)[36] = 0;
+                reinterpret_cast<int*>(this)[37] = 0;
+                reinterpret_cast<short*>(this)[76] = 0;
 
-                int w1 = 0, h1 = 0;
-                int w2 = 0, h2 = 0;
-                g_MoFFont.GetTextLength(&w1, &h1, "CharacterName", prefix.c_str()); // :contentReference[oaicite:27]{index=27}
-                g_MoFFont.GetTextLength(&w2, &h2, "CharacterName", mid.c_str());
+                int v9 = m_Text.GetCharByteByLine(m_lineBreakBytes, 10);
+                stBlockStair stair{};
+                DiscriminStairBlock(&stair);
 
-                // 反白盒（單段）
-                SetBlockShow(1, 0);
-                SetBlockBox(nullptr,
-                    m_Text.GetAbsX() + w1,
-                    m_Text.GetAbsY(),
-                    (uint16_t)w2,
-                    (uint16_t)m_Text.GetFontHeight(),
-                    0);
-                // 其餘隱藏
-                for (int i = 1; i < 5; ++i) SetBlockShow(0, i);
+                if (v9 > 0) {
+                    size_t* v10 = stair.len;
+                    int remaining = v9;
+                    const char* Source = m_Text.GetText();
+                    if (!Source) Source = "";
+                    uint16_t fontH = static_cast<uint16_t>(m_Text.GetFontHeight());
+                    do {
+                        if (*v10) {
+                            char Dest[1024]{};
+                            std::strncpy(Dest, Source, v10[1]);
+                            int w1 = 0, h1 = 0;
+                            g_MoFFont.GetTextLength(&w1, &h1, "CharacterName", Dest);
+
+                            std::memset(Dest, 0, sizeof(Dest));
+                            std::strncpy(Dest, &Source[v25], *v10);
+                            int w2 = 0, h2 = 0;
+                            g_MoFFont.GetTextLength(&w2, &h2, "CharacterName", Dest);
+
+                            SetBlockShow(1, 0);
+                            SetBlockBox(nullptr, absX + w1, absY,
+                                static_cast<uint16_t>(w2), fontH, 0);
+                        }
+                        v10 += 2;
+                    } while (--remaining);
+                }
             }
         }
     }
@@ -406,20 +419,19 @@ int CControlEditBox::RenewMousePos(int* ptAbs, int a3 /*imeIndex*/)
         std::strncpy(seg, src, curCount);
         int xy[2]{};
         GetCaretPos(xy, seg, seg, a3, curCount);
-        const int segL = prevX + 5;
-        const int segT = prevY + 5;
-        const int segR = xy[0] + 5;
-        const int segB = xy[1] + m_Text.GetFontHeight() + 5;
+        // 對齊反編譯：v9 = *ptr + 5, v10 = *(ptr+1) + 5
+        int v9 = xy[0] + 5;
+        int v10 = xy[1] + 5;
 
         // 對齊反編譯的 SearchTextPos 決策
-        uint32_t* thisAlias = reinterpret_cast<uint32_t*>(this); // 僅為對齊呼叫樣式
+        uint32_t* thisAlias = reinterpret_cast<uint32_t*>(this);
         if (SearchTextPos(thisAlias, &curCount, reinterpret_cast<uint32_t*>(ptAbs),
-            prevX, prevY, xy[0], xy[1], src)) {
+            prevX, prevY, v9, v10, src)) {
             return (int)curCount;
         }
 
-        prevX = xy[0];
-        prevY = xy[1];
+        prevX = v9;   // 對齊反編譯：v7 = v9（已 +5）
+        prevY = v10;  // 對齊反編譯：v14 = v10（已 +5）
         ++curCount;
     }
 
@@ -437,8 +449,8 @@ void CControlEditBox::DeleteBlockBox()
 
 void CControlEditBox::SetBlockShow(int on, int idx)
 {
-    // 對齊反編譯：無 bounds check
-    if (on) m_Block[idx].Show(); else m_Block[idx].Hide();
+    // 對齊反編譯：ground truth 檢查 a2 == 1，不是 truthy
+    if (on == 1) m_Block[idx].Show(); else m_Block[idx].Hide();
 }
 
 void CControlEditBox::SetBlockBox(CControlBase* /*unused*/, int x, int y, uint16_t w, uint16_t h, int which)
@@ -449,11 +461,84 @@ void CControlEditBox::SetBlockBox(CControlBase* /*unused*/, int x, int y, uint16
     box.SetColor(kSelR, kSelG, kSelB, kSelA);                    // 內部透明度 0.3137  :contentReference[oaicite:28]{index=28}
 }
 
-void CControlEditBox::DiscriminStairBlock(stBlockStair* stair)
+void CControlEditBox::DiscriminStairBlock(stBlockStair* a2)
 {
-    // 反編譯為多行選取拆段；此處僅保留接口（單行不使用）。
-    // 若需實作多行選取，可參考：m_Text.GetCharByteByLine(..., m_lineBreakBytes, 10) 與 g_IMMList 的 BlockStart/Len。
-    (void)stair;
+    // 對齊反編譯 0041E750：完整多行階梯選取拆段
+    int v3 = -1;              // endLine
+    int v14 = -1;             // startLine
+    int v12 = -1;             // endLine copy
+    int v4 = m_Text.GetCharByteByLine(m_lineBreakBytes, 10);
+    int v16 = v4;
+    unsigned int v10 = 0;     // endLen
+    int v17 = 0;              // startOffset
+
+    int v5 = v4 - 1;
+    if (v5 >= 0)
+    {
+        unsigned char* v6 = &m_lineBreakBytes[v5];
+        int v15 = v5 + 1;
+        do
+        {
+            int blockStart = g_IMMList.GetBlockStartPos(m_imeIndex);
+            if (*v6 <= static_cast<unsigned char>(blockStart) && v14 < 0)
+            {
+                v14 = static_cast<int>(v6 - m_lineBreakBytes);
+                v17 = blockStart - *v6;
+            }
+            int v8 = g_IMMList.GetBlockStartPos(m_imeIndex);
+            int blockLen = g_IMMList.GetSelectedBlockLen(m_imeIndex);
+            if (static_cast<int>(*v6) > (blockLen + v8) || v12 >= 0)
+            {
+                // v10 unchanged
+            }
+            else
+            {
+                int v9 = g_IMMList.GetBlockStartPos(m_imeIndex) - *v6;
+                v10 = g_IMMList.GetSelectedBlockLen(m_imeIndex) + v9;
+                v12 = static_cast<int>(v6 - m_lineBreakBytes);
+            }
+            --v6;
+            --v15;
+        } while (v15);
+        v4 = v16;
+        v3 = v12;
+    }
+
+    int v11 = 0;
+    if (v4 <= 0)
+        return;
+
+    for (;;)
+    {
+        if (v11 < v14)
+        {
+            reinterpret_cast<int*>(a2)[2 * v11 + 1] = 0;
+            reinterpret_cast<int*>(a2)[2 * v11] = 0;
+        }
+        if (v11 != v14)
+            break;
+        reinterpret_cast<int*>(a2)[2 * v11 + 1] = v17;
+        if (v11 == v3)
+            goto LABEL_25;
+        if (v11)
+        {
+            v3 = v12;
+            reinterpret_cast<int*>(a2)[2 * v11] =
+                static_cast<int>(m_lineBreakBytes[v11]) - static_cast<int>(m_lineBreakBytes[v11 - 1]);
+        }
+        else
+        {
+            reinterpret_cast<int*>(a2)[0] = static_cast<int>(m_lineBreakBytes[0]);
+        }
+    LABEL_22:
+        if (++v11 >= v4)
+            return;
+    }
+    if (v11 != v3)
+        goto LABEL_22;
+    reinterpret_cast<int*>(a2)[2 * v11 + 1] = 0;
+LABEL_25:
+    reinterpret_cast<int*>(a2)[2 * v11] = static_cast<int>(v10);
 }
 
 // caret 位置量測（對齊反編譯參數順序與計算路徑）

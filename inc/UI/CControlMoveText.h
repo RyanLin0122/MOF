@@ -25,7 +25,8 @@ struct MTSInfo {
     int      timerLeft{ 0 };    // +28
     char*    text{ nullptr };    // +32
     char*    altText{ nullptr }; // +36
-    int      style{ 0 };        // +40
+    uint8_t  style{ 0 };        // +40（ground truth 僅存取 BYTE）
+    char     _pad41[3]{};       // +41..43 padding
     int      retFlag{ 0 };      // +44
 };
 

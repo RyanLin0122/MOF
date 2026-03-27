@@ -186,8 +186,9 @@ LABEL_16:
                 }
                 else
                 {
-                    // 無小數點圖塊，跳過
+                    // 無小數點圖塊：對齊反編譯，仍推進 digitIdx 和 pDigit
                     ++digitIdx;
+                    ++pDigit;
                     continue;
                 }
             }
@@ -253,7 +254,9 @@ LABEL_4:
                 }
                 else
                 {
+                    // 對齊反編譯：仍推進 digitIdx 和 pDigit
                     ++digitIdx;
+                    ++pDigit;
                     continue;
                 }
             }

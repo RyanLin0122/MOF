@@ -270,7 +270,8 @@ void CControlCountBar::ControlRebuild()
         m_imgLeft.Show();
         m_imgMid.Show();
         m_imgRight.Show();
-        m_scale = (float)v6;
+        // 對齊反編譯：float[449] = m_imgMid.m_fScaleX
+        m_imgMid.SetScaleX((float)v6);
     }
     else if (cur < m_min)
     {
@@ -283,18 +284,18 @@ void CControlCountBar::ControlRebuild()
         m_imgLeft.Show();
         m_imgMid.Show();
         m_imgRight.Show();
-        m_scale = 1.0f;  // 1065353216 = float 1.0
+        m_imgMid.SetScaleX(1.0f);  // 1065353216 = float 1.0
     }
 
     // 反編譯：
-    //   v9 = float[449];  (m_scale)
+    //   v9 = float[449];  → m_imgMid.m_fScaleX
     //   v10 = (float)m_imgMid.GetWidth() * v9;
     //   v8 = (double)m_imgMid.GetAbsX() + v10;
-    //   m_imgRight.SetAbsX((int)v8);
-    float scale = m_scale;
+    //   m_imgRight.SetAbsX((__int64)v8);
+    float scale = m_imgMid.GetScaleX();
     float advance = (float)m_imgMid.GetWidth() * scale;
     double rightAbsX = (double)m_imgMid.GetAbsX() + (double)advance;
-    m_imgRight.SetAbsX((int)(int64_t)rightAbsX);
+    m_imgRight.SetAbsX(static_cast<int>(static_cast<long long>(rightAbsX)));
 }
 
 // ==========================
