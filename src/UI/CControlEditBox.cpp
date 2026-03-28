@@ -23,6 +23,10 @@ CControlEditBox::CControlEditBox()
 {
     // 反編譯：CControlBase::CControlBase(this)
     // 其餘欄位已在宣告處初始化
+
+    // 對齊反編譯：*((_DWORD *)this + 30) = -1
+    reinterpret_cast<int*>(this)[30] = -1;
+
     // 對齊反編譯：建構子先呼叫 InitOpen 再 CreateChildren
     InitOpen();
     CreateChildren();
@@ -228,7 +232,7 @@ void CControlEditBox::SetText(const char* s)
 void CControlEditBox::SetTextItoa(int v)
 {
     char buf[256]{};
-    _snprintf(buf, sizeof(buf), "%d", v);
+    sprintf(buf, "%d", v);
     m_Text.SetText(buf);
 }
 
@@ -317,32 +321,42 @@ void CControlEditBox::PrepareDrawing()
     char bak[1024]{};           // v32（備份原主文字）
     // 對齊反編譯：無條件呼叫（不檢查 m_imeIndex）
     g_IMMList.GetIMMText(m_imeIndex, src, (int)m_maxLen);
-    const char* cur = m_Text.GetText();
-    if (cur) std::strncpy(bak, cur, sizeof(bak) - 1);
+    // 對齊反編譯：strcpy，無 null guard
+    strcpy(bak, m_Text.GetText());
     m_Text.SetText(src);
 
     // 密碼遮罩
     if (m_password) {
-        // 計算字元數（非位元組數）：DBCS lead byte 視為 1 字元
-        int nChars = 0;
-        for (int i = 0; src[i]; ++i) {
-            if (IsDBCSLeadByte((BYTE)src[i]) && src[i + 1]) ++i;
-            ++nChars;
+        // 對齊反編譯：計算字元數（DBCS lead byte 視為 1 字元）
+        // ground truth 從 strlen 開始減，且不檢查 src[i+1]
+        int v4 = 0;
+        int strlenSrc = (int)strlen(src);
+        int nChars = strlenSrc;
+        if (strlenSrc > 0) {
+            do {
+                if (IsDBCSLeadByte((BYTE)src[v4])) {
+                    ++v4;
+                    --nChars;
+                }
+                ++v4;
+            } while (v4 < strlenSrc);
         }
 
-        std::string mask(nChars, '*');
-        m_Mask.SetText(mask.c_str());
+        char Destination[1024]{};
+        std::memset(Destination, 0x2A, nChars); // '*'
+        // 對齊反編譯：strcpy(v32, Destination)
+        strcpy(bak, Destination);
+        if (nChars)
+            src[nChars + 1023] = 0; // 對齊反編譯 ground truth 原始行為
+        m_Mask.SetText(Destination);
         m_Text.Hide();
 
-        // 對齊反編譯：strcpy(v32, Destination) → 用遮罩覆寫備份
-        std::strncpy(bak, mask.c_str(), sizeof(bak) - 1);
-
-        // caret X = 遮罩長度像素 + 2；Y 由 GetCaretPos 計（+5）
+        // 對齊反編譯：先設 caret X，再呼叫 GetCaretPos，最後設 Y
         int w = 0, h = 0;
-        g_MoFFont.GetTextLength(&w, &h, "CharacterName", mask.c_str());
-        int xy[2]{};
-        GetCaretPos(xy, bak, mask.c_str(), m_imeIndex, 0);
+        g_MoFFont.GetTextLength(&w, &h, "CharacterName", Destination);
         m_Caret.SetX(w + 2);
+        int xy[2]{};
+        GetCaretPos(xy, bak, Destination, m_imeIndex, 0);
         m_Caret.SetY(xy[1] + 5);
     }
     else {
@@ -359,6 +373,7 @@ void CControlEditBox::PrepareDrawing()
         }
         else {
             int v25 = g_IMMList.GetBlockStartPos(m_imeIndex);
+            int v8 = cHeight; // 對齊反編譯：使用全域 cHeight
             int absX = m_Text.GetAbsX();
             int absY = m_Text.GetAbsY();
 
@@ -375,23 +390,24 @@ void CControlEditBox::PrepareDrawing()
                 unsigned int* v10 = stair.len;
                 int remaining = v9;
                 const char* Source = m_Text.GetText();
-                if (!Source) Source = "";
-                uint16_t fontH = static_cast<uint16_t>(m_Text.GetFontHeight());
                 do {
                     if (*v10) {
                         char Dest[1024]{};
                         std::strncpy(Dest, Source, v10[1]);
+                        // 對齊反編譯：使用 6-param GetTextLength（DCTTextManager::GetText(3264)）
+                        const char* fontFace = g_DCTTextManager.GetText(3264);
                         int w1 = 0, h1 = 0;
-                        g_MoFFont.GetTextLength(&w1, &h1, "CharacterName", Dest);
+                        g_MoFFont.GetTextLength(&w1, &h1, v8, fontFace, Dest, 400);
 
                         std::memset(Dest, 0, sizeof(Dest));
                         std::strncpy(Dest, &Source[v25], *v10);
+                        const char* fontFace2 = g_DCTTextManager.GetText(3264);
                         int w2 = 0, h2 = 0;
-                        g_MoFFont.GetTextLength(&w2, &h2, "CharacterName", Dest);
+                        g_MoFFont.GetTextLength(&w2, &h2, v8, fontFace2, Dest, 400);
 
                         SetBlockShow(1, 0);
                         SetBlockBox(nullptr, absX + w1, absY,
-                            static_cast<uint16_t>(w2), fontH, 0);
+                            w2, static_cast<uint16_t>(v8), 0);
                     }
                     v10 += 2;
                 } while (--remaining);
@@ -545,68 +561,118 @@ LABEL_25:
     reinterpret_cast<int*>(a2)[2 * v11] = static_cast<int>(v10);
 }
 
-// caret 位置量測（對齊反編譯參數順序與計算路徑）
+// caret 位置量測（對齊反編譯完全對照 ground truth）
 char* CControlEditBox::GetCaretPos(int outXY[2], const char* a3, const char* Source, int imeIndex, size_t Count)
 {
-    // a3 = 未遮罩原字串（若有）；Source = 顯示字串（可能是遮罩）
-    // Count==0 表示使用 IME 內部 caret 位置
-    const int isComposition = (imeIndex != 0xFFFF) ? g_IMMList.IsComposition(imeIndex) : 0; // :contentReference[oaicite:29]{index=29}
-    const int fontH = m_Text.GetFontHeight();                                              // :contentReference[oaicite:30]{index=30}
+    char Destination[1024];
+    Destination[0] = '\0';
+    std::memset(Destination + 1, 0, sizeof(Destination) - 1);
 
-    size_t caretPos = Count ? Count : (size_t)g_IMMList.GetEditPosition(imeIndex);         // :contentReference[oaicite:31]{index=31}
-    const size_t srcLen = strlen(Source);
+    int fontH = m_Text.GetFontHeight();
+    // 對齊反編譯：無條件呼叫 IsComposition（不檢查 imeIndex != 0xFFFF）
+    int isComposition = g_IMMList.IsComposition(imeIndex);
 
-    // 多行處理（對齊語意）：依 m_visibleLines 與行寬切分
-    int baseY = 0;
-    int baseX = 0;
+    int v7 = Count ? (int)Count : g_IMMList.GetEditPosition(imeIndex);
+    int v8 = (int)strlen(Source);
+
+    int v10 = 0; // width result
+    int v11 = 0; // y result
 
     if (IsMultiLine()) {
-        // 使用 CControlText 的多行行距資訊來估計 Y
-        const int multiSpace = m_Text.GetMultiLineSpace();                                  // :contentReference[oaicite:32]{index=32}
+        int v26 = m_Text.GetMultiLineSpace();
+        // 對齊反編譯：零化內部欄位
+        reinterpret_cast<int*>(this)[36] = 0;
+        reinterpret_cast<int*>(this)[37] = 0;
+        reinterpret_cast<short*>(this)[76] = 0;
 
-        // 以行分割資訊找 caret 所在行
-        int lines = m_Text.GetCharByteByLine(m_lineBreakBytes, 10);                         // :contentReference[oaicite:33]{index=33}
-        int lineIdx = 0;
-        int acc = 0;
-        for (int i = 0; i < lines; ++i) {
-            int br = (i == 0) ? m_lineBreakBytes[0] : (m_lineBreakBytes[i] - m_lineBreakBytes[i - 1]);
-            if ((int)caretPos <= (acc + br)) { lineIdx = i; break; }
-            acc += br;
+        int v12 = m_Text.GetCharByteByLine(m_lineBreakBytes, 10);
+        int v13 = (int)(unsigned char)m_visibleLines;
+
+        // 對齊反編譯：當行數超過 visibleLines 時截斷文字
+        const char* v14;
+        if (v12 <= v13) {
+            v14 = Source;
+        } else {
+            std::strncpy(Destination, Source, (unsigned char)m_lineBreakBytes[v13 - 1]);
+            m_Text.SetText(Destination);
+            v14 = Destination;
+            Source = Destination;
         }
-        baseY = lineIdx * (fontH + multiSpace);
-        baseX = 0;
 
-        // 取該行起點到 caret 的子串
-        int lineStart = (lineIdx == 0) ? 0 : m_lineBreakBytes[lineIdx - 1];
-        int subLen = (int)caretPos - lineStart;
-        int min = min(subLen, (int)srcLen);
-        subLen = (0 > min) ? 0 : min;
+        int v15 = 0;   // lineIdx
+        int v16 = 0;
+        int v23 = 0;
+        if (v12 > 0) {
+            // 對齊反編譯：直接比較 caretPos > lineBreakBytes[lineIdx]
+            while (v7 > (int)(unsigned char)m_lineBreakBytes[v16] && v16 != v12 - 1) {
+                if (++v16 >= v12)
+                    goto LABEL_23;
+            }
+            // 對齊反編譯：換行字元檢查
+            if (v14[v7 - 1] == '\n')
+                ++v16;
+            v23 = v16;
+            v15 = v16;
+        }
 
-        std::string sub(Source + lineStart, Source + lineStart + subLen);
-        int w = 0, h = 0;
-        g_MoFFont.GetTextLength(&w, &h, "CharacterName", sub.c_str());                      // :contentReference[oaicite:34]{index=34}
-        // 若組字且 caret 現在在 DBCS lead 上，加一個字寬（以字高近似）
-        if (isComposition && caretPos < srcLen && IsDBCSLeadByte((BYTE)Source[caretPos]))
-            w += fontH;
+    LABEL_23:
+        // 對齊反編譯：組字狀態下的行推進
+        if (m_lineBreakBytes[v15 + 1] && v7 == (int)(unsigned char)m_lineBreakBytes[v15] && isComposition)
+            v23 = ++v15;
 
-        outXY[0] = w;
-        // 對齊反編譯：m_caretIndex 只在多行分支中設定（ground truth: this[35] = v7）
-        m_caretIndex = (int)caretPos;
-        outXY[1] = baseY;
+        // 對齊反編譯：visibleLines 上限夾制
+        int v17 = (int)(unsigned char)m_visibleLines;
+        if (v15 >= v17) {
+            v23 = v17 - 1;
+            v15 = v17 - 1;
+        }
+
+        // 對齊反編譯：取行起始位元組（LOBYTE）
+        int v18 = 0;
+        if (v15)
+            v18 = (unsigned char)m_lineBreakBytes[v15 - 1];
+
+        int v19 = v7 - v18;
+        std::strncpy(Destination, &v14[v18], v19);
+        Destination[v19] = '\0';
+
+        // 對齊反編譯：使用 6-param GetTextLength（DCTTextManager::GetText(3264) 取字型名稱）
+        const char* fontFace = g_DCTTextManager.GetText(3264);
+        int v27 = 0, h = 0;
+        g_MoFFont.GetTextLength(&v27, &h, fontH, fontFace, Destination, 400);
+        v10 = v27;
+
+        if (isComposition && IsDBCSLeadByte((BYTE)Source[v7]))
+            v10 += fontH;
+
+        // 對齊反編譯：m_caretIndex 只在多行分支中設定
+        m_caretIndex = v7;
+        v11 = v23 * (fontH + v26);
     }
     else {
-        // 單行：直接量測 [0..caretPos) 的寬度
-        std::string left(Source, Source + min(srcLen, caretPos));
-        int w = 0, h = 0;
-        g_MoFFont.GetTextLength(&w, &h, "CharacterName", left.c_str());                     // :contentReference[oaicite:35]{index=35}
-        if (isComposition && caretPos < srcLen && IsDBCSLeadByte((BYTE)Source[caretPos]))
-            w += fontH;
+        // 單行：對齊反編譯三種情況
+        if (v8 == v7) {
+            strcpy(Destination, Source);
+        } else if (v8 > v7) {
+            std::strncpy(Destination, Source, v7);
+        }
+        // else: Destination stays empty（ground truth 行為）
 
-        outXY[0] = w;
-        outXY[1] = 0;
+        // 對齊反編譯：使用 6-param GetTextLength
+        const char* fontFace = g_DCTTextManager.GetText(3264);
+        int v26 = 0, h = 0;
+        g_MoFFont.GetTextLength(&v26, &h, fontH, fontFace, Destination, 400);
+        v10 = v26;
+
+        if (isComposition && IsDBCSLeadByte((BYTE)Source[v7]))
+            v10 += fontH;
+
+        v11 = 0;
     }
 
-    return reinterpret_cast<char*>(outXY);  // 對齊反編譯：回傳 a2 本身
+    outXY[0] = v10;
+    outXY[1] = v11;
+    return reinterpret_cast<char*>(outXY);
 }
 
 BOOL CControlEditBox::SearchTextPos(uint32_t* pThisAlias, size_t* curCount, uint32_t* ptAbs,

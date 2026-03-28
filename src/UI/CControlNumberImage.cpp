@@ -202,9 +202,9 @@ LABEL_16:
                 pDigit->SetAbsX(kAdvanceByStyle[13 * m_StyleIndex] + prevAbsX + prevW);
             }
 
-            // 累加寬度（不乘 scale，與 SetNumber 不同）
-            m_usWidth += static_cast<uint16_t>(
-                kAdvanceByStyle[13 * m_StyleIndex] + pDigit->GetWidth());
+            // 對齊反編譯：累加寬度，LOWORD(advance) 先截斷再加 GetWidth
+            m_usWidth += static_cast<uint16_t>(kAdvanceByStyle[13 * m_StyleIndex])
+                       + pDigit->GetWidth();
 
             ++digitIdx;
             ++pDigit;
@@ -235,31 +235,13 @@ LABEL_4:
         {
             int styleBase = 13 * m_StyleIndex;
 
-            if (digitIdx != dotIdx)
-            {
-                int mapIdx = styleBase + static_cast<unsigned char>(Buffer[digitIdx]);
-                unsigned short block = static_cast<unsigned short>(kGlyphIndexByStyleChar[2 * mapIdx]);
-                pDigit->SetImage(
-                    static_cast<unsigned int>(kAtlasIdByStyle[styleBase]),
-                    block);
-            }
-            else
-            {
-                int dotBlock = kDotGlyphIndexByStyle[styleBase];
-                if (dotBlock != -1)
-                {
-                    pDigit->SetImage(
-                        static_cast<unsigned int>(kAtlasIdByStyle[styleBase]),
-                        static_cast<unsigned short>(dotBlock));
-                }
-                else
-                {
-                    // 對齊反編譯：仍推進 digitIdx 和 pDigit
-                    ++digitIdx;
-                    ++pDigit;
-                    continue;
-                }
-            }
+            // 對齊反編譯：LABEL_4 路徑中 digitIdx 不可能等於 dotIdx
+            // （因為 cutLen = dotIdx，迴圈 digitIdx < cutLen）
+            int mapIdx = styleBase + static_cast<unsigned char>(Buffer[digitIdx]);
+            unsigned short block = static_cast<unsigned short>(kGlyphIndexByStyleChar[2 * mapIdx]);
+            pDigit->SetImage(
+                static_cast<unsigned int>(kAtlasIdByStyle[styleBase]),
+                block);
 
             if (digitIdx)
             {
@@ -269,8 +251,9 @@ LABEL_4:
                 pDigit->SetAbsX(kAdvanceByStyle[13 * m_StyleIndex] + prevAbsX + prevW);
             }
 
-            m_usWidth += static_cast<uint16_t>(
-                kAdvanceByStyle[13 * m_StyleIndex] + pDigit->GetWidth());
+            // 對齊反編譯：LOWORD(advance) 先截斷再加 GetWidth
+            m_usWidth += static_cast<uint16_t>(kAdvanceByStyle[13 * m_StyleIndex])
+                       + pDigit->GetWidth();
 
             ++digitIdx;
             ++pDigit;

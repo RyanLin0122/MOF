@@ -253,6 +253,9 @@ extern GameSound                g_GameSoundManager;
 // UI 輸入消耗旗標（對齊反編譯 dword_AFD34C）
 extern int                      dword_AFD34C;
 
+// 全域字型高度（對齊反編譯 cHeight）
+extern int                      cHeight;
+
 // cltHelpMessage 使用的全域旗標
 extern int                      dword_AFD344;
 

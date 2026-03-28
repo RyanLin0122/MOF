@@ -114,7 +114,7 @@ void CControlCount::SetupCurCount()
     uint16_t leftW = m_Left.GetWidth();
     int caps = leftW + rightW;
 
-    uint16_t ctrlW = GetWidth();
+    unsigned int ctrlW = GetWidth();
 
     if (m_Max)
     {
