@@ -58,7 +58,6 @@ public:
     void SetText(const char* s);
     void SetTextItoa(int v);
     void TextClear();
-    char* GetText();
 
     // 量測
     int GetMaxTextSize() const;  // 對齊反編譯：回傳 int（非 uint16_t）
@@ -96,8 +95,10 @@ private:
     BOOL SearchTextPos(uint32_t* pThisAlias, size_t* curCount, uint32_t* ptAbs /*[x,y]*/,
         int segL, int segT, int segR, int segB, const char* fullText);
 
-private:
+public:
     // ---- 子控制 ----
+    // 對齊反編譯：ground truth 中其他類別（如 CControlBoxCreateChar、CControlBoxAbility）
+    // 直接以偏移存取內部 CControlText，因此設為 public 以模擬該行為。
     CControlAlphaBox        m_Block[5];    // 選取矩形（可疊 1~數個段）
     CEditBoxBackgroundImage m_Back;        // 背景（九宮格）
     CControlText            m_Text;        // 主文字（實際 IME 文字）

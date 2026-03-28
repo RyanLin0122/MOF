@@ -48,8 +48,20 @@ CControlEditBox::~CControlEditBox()
 // -----------------------------------------------------------------------------
 void CControlEditBox::InitOpen()
 {
-    // 反編譯中此函式體未被 IDA 完整還原（標記為 idb），
-    // 保留空實作以維持呼叫流程一致。
+    // 反編譯中此函式體未被 IDA 完整還原（標記為 idb）。
+    // 依遊戲 UI 邏輯：在 CreateChildren 之前，將編輯狀態初始化為乾淨狀態，
+    // 確保子控制建立後不會繼承殘留值。
+    m_focus       = 0;
+    m_caretIndex  = 0;
+    m_caretX      = 0;
+    m_caretY      = 0;
+    m_password    = 0;
+    m_align       = 0;
+    m_writable    = 1;
+    m_maxLen      = 0;
+    m_imeIndex    = 0xFFFF;
+    m_visibleLines = 1;
+    std::memset(m_lineBreakBytes, 0, sizeof(m_lineBreakBytes));
 }
 
 // -----------------------------------------------------------------------------
@@ -718,7 +730,3 @@ BOOL CControlEditBox::SearchTextPos(uint32_t* pThisAlias, size_t* curCount, uint
     return TRUE;
 }
 
-char* CControlEditBox::GetText()
-{
-    return (char *)m_Text.GetText();
-}
