@@ -62,13 +62,17 @@ CControlButton::~CControlButton()
 // ==========================
 void CControlButton::Create(CControlBase* pParent)
 {
-    m_curTextColor = 0xFFFFFFFF;
+    // 反編譯：this[93] = -1 → m_Text.m_TextColor = 白色
+    m_Text.SetTextColor(0xFFFFFFFF);
+    // 反編譯：this[92] = 1 → m_Text.m_isCentered = 1（置中）
+    m_Text.SetAlignment(1);
     CControlBase::Create(pParent);
 }
 
 void CControlButton::Create(int x, int y, CControlBase* pParent)
 {
-    m_curTextColor = 0xFFFFFFFF;
+    m_Text.SetTextColor(0xFFFFFFFF);
+    m_Text.SetAlignment(1);
     CControlBase::Create(x, y, pParent);
 }
 
@@ -89,7 +93,7 @@ void CControlButton::Show()
     if (IsActive())
     {
         CControlImage::SetImageID(m_imgNormal.group, m_imgNormal.id, m_imgNormal.block);
-        m_curTextColor = m_colNormal;
+        m_Text.SetTextColor(m_colNormal);
     }
 }
 
@@ -109,7 +113,7 @@ void CControlButton::NoneActive()
     {
         CControlImage::SetImageID(m_imgDisabled.group, m_imgDisabled.id, m_imgDisabled.block);
     }
-    m_curTextColor = m_colDisabled;
+    m_Text.SetTextColor(m_colDisabled);
 }
 
 // ==========================
@@ -123,7 +127,7 @@ void CControlButton::Active()
 {
     CControlBase::Active();
     CControlImage::SetImageID(m_imgNormal.group, m_imgNormal.id, m_imgNormal.block);
-    m_curTextColor = m_colNormal;
+    m_Text.SetTextColor(m_colNormal);
 }
 
 // ==========================
@@ -240,7 +244,7 @@ int* CControlButton::ControlKeyInputProcess(int msg, int key, int x, int y, int 
         ButtonPosDown();
         CControlButtonBase::PlaySoundClick();
         // 反編譯：this[93] = this[179] (pressed text color)
-        m_curTextColor = m_colPressed;
+        m_Text.SetTextColor(m_colPressed);
         dword_AFD34C = 0;
         break;
 
@@ -255,7 +259,7 @@ int* CControlButton::ControlKeyInputProcess(int msg, int key, int x, int y, int 
         // 反編譯：恢復 normal 圖
         CControlImage::SetImageID(m_imgNormal.group, m_imgNormal.id, m_imgNormal.block);
         // 反編譯：this[93] = this[177] (normal text color)
-        m_curTextColor = m_colNormal;
+        m_Text.SetTextColor(m_colNormal);
         dword_AFD34C = 1;
         break;
 
@@ -265,7 +269,7 @@ int* CControlButton::ControlKeyInputProcess(int msg, int key, int x, int y, int 
         // 反編譯：vtbl+108 = ButtonPosUp
         ButtonPosUp();
         // 反編譯：this[93] = this[177] (normal text color)
-        m_curTextColor = m_colNormal;
+        m_Text.SetTextColor(m_colNormal);
         break;
 
     case 7: // Hover
@@ -277,7 +281,7 @@ int* CControlButton::ControlKeyInputProcess(int msg, int key, int x, int y, int 
             CControlImage::SetImageID(m_imgHover.group, m_imgHover.id, m_imgHover.block);
         }
         // 反編譯：this[93] = this[178] (hover text color)
-        m_curTextColor = m_colHover;
+        m_Text.SetTextColor(m_colHover);
         break;
 
     default:

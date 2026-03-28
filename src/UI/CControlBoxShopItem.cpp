@@ -16,7 +16,6 @@ CControlBoxShopItem::CControlBoxShopItem()
 {
     CreateChildren();
     CControlBoxBase::Init();
-    m_noTrade = false;
     m_fxState = 0;
 }
 
@@ -79,7 +78,6 @@ void CControlBoxShopItem::SetBoxItemCountSetNumber(char flagShow, int count)
 //--------------------------------------------------
 void CControlBoxShopItem::NoTrade(bool yes)
 {
-    m_noTrade = yes;
     if (yes)
         m_noTradeIcon.Show();
     else
@@ -93,7 +91,7 @@ void CControlBoxShopItem::NoTrade(bool yes)
 //--------------------------------------------------
 bool CControlBoxShopItem::IsNoTrade() const
 {
-    return m_noTrade;
+    return m_noTradeIcon.IsVisible();
 }
 
 //--------------------------------------------------

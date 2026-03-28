@@ -66,15 +66,14 @@ void CControlAlphaBox::Create(int x, int y, unsigned short w, unsigned short h,
 	float r, float g, float b, float a, CControlBase* pParent)
 {
 	if (m_bCreated) return;
-
-	// 先掛到樹上（一定要）
-	SetColor(r, g, b, a);
-	CControlBase::Create(x, y, w, h, pParent);
-
-	// 再嘗試拿 VB；拿不到也沒關係，之後可再補
-	m_pVBData = CDeviceResetManager::GetInstance()->CreateVertexBuffer(4u, 1u);
-
 	m_bCreated = true;
+
+	m_pVBData = CDeviceResetManager::GetInstance()->CreateVertexBuffer(4u, 1u);
+	if (m_pVBData)
+	{
+		SetColor(r, g, b, a);
+		CControlBase::Create(x, y, w, h, pParent);
+	}
 }
 
 // ==== 幾何更新 =========================================================
@@ -152,8 +151,8 @@ void CControlAlphaBox::PrepareDrawing()
 	if (mgr && mgr->IsDeviceReady() && m_pVBData) {
 		UpdateVerticesFromRect();
 		mgr->UpdateVertexBuffer(m_pVBData, m_vtx, sizeof(m_vtx));
+		CControlBase::PrepareDrawing();
 	}
-	CControlBase::PrepareDrawing();
 }
 
 void CControlAlphaBox::Draw()
