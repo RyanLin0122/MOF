@@ -39,7 +39,6 @@ private:
     CControlText      m_descText;     // +2080 (位置 44,16, 顏色 -65536)
     CControlAlphaBox  m_sealOverlay;  // +2512 (32x32，顏色於 SetSealStatus 設定)
 
-    // 狀態
-    bool m_noTrade = false;   // 對應 IsNoTrade()
+    // 狀態（m_noTrade 由 m_noTradeIcon 的可見性代替，與 ground truth 一致）
     int  m_fxState = 0;       // 反編譯的 *((_DWORD*)this + 680)，用來決定是否額外繪邊框/背景
 };

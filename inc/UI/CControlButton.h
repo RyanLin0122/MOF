@@ -93,6 +93,5 @@ private:
     uint32_t m_colPressed{ 0xFFEB5400 };  // this[179] = -1376512
     uint32_t m_colDisabled{ 0xFFC98E33 }; // this[180] = -3566989
 
-    // 目前文字色（this[93]）
-    uint32_t m_curTextColor{ 0xFFFFFFFF };
+    // this[93] 對應 m_Text.m_TextColor（直接透過 m_Text.SetTextColor 操作，不再額外存副本）
 };

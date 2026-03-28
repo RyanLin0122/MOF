@@ -190,10 +190,15 @@ void CControlBase::SetChildPosMove(int dx, int dy)
 // ======================================================================
 void CControlBase::SetCenterPos(int centerAbsX, int centerAbsY)
 {
-    int newAbsX = static_cast<int>(centerAbsX - static_cast<int>(m_usWidth * 0.5f));
-    int newAbsY = static_cast<int>(centerAbsY - static_cast<int>(m_usHeight * 0.5f));
+    int newAbsX = static_cast<int>(centerAbsX - static_cast<int>(GetWidth() * 0.5));
+    int newAbsY = static_cast<int>(centerAbsY - static_cast<int>(GetHeight() * 0.5));
 
-    // 如需針對 m_bCenterOrigin 做特別微調，可在此加上專案規範
+    if (m_bCenterOrigin)
+    {
+        newAbsX += static_cast<int>(GetWidth() * 0.5);
+        newAbsY += GetHeight();
+    }
+
     SetAbsPos(newAbsX, newAbsY);
 }
 

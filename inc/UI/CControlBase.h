@@ -22,8 +22,8 @@ public:
     // ---- 顯示/隱藏 ----
     virtual void Show();
     virtual void Hide();
-    void ShowChildren();
-    void HideChildren();
+    virtual void ShowChildren();
+    virtual void HideChildren();
 
     // ---- 事件傳遞 ----
     virtual int* ControlKeyInputProcess(int msg, int key, int x, int y, int a6, int a7);
@@ -147,7 +147,7 @@ protected:
     // ToolTip
     stToolTipData m_ToolTip;
 
-    bool m_bActive{ false };   // 對應 *((DWORD*)this+11)
+    bool m_bActive{ true };    // 對應 *((DWORD*)this+11)，ground truth 預設為 1
     int  m_nClassId{ 0 };      // 用於 FindScrollBarCtrlChild 比對（100=scrollbar）
     int  m_nArrayIndex{ 0 };   // 對應 *((DWORD*)this+17)，由 SetArrayIndex 設定
 };

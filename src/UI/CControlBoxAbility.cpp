@@ -53,10 +53,10 @@ void CControlBoxAbility::CreateChildren()
     int editX = m_Edit.GetX();
     m_BtnA.SetPos(editX + editW + 3, editY);
     // 反編譯：SetImage(536870949, 79, 80, 81)（3 態：normal/hover/pressed）
-    m_BtnA.SetImage(536870949u, 79, 80, 81, 0xFFFF);
+    m_BtnA.SetImage(536870949u, 79, 536870949u, 80, 536870949u, 81);
 
     // 反編譯：strcpy((char *)this + 5544, "J0002") → 設定按鈕音效 ID
-    // 目前 CControlButtonBase 尚無 soundID 成員，功能性跳過
+    m_BtnA.SetSoundName("J0002");
 
     // +6060 按鈕 B（位於 A 的正下方，間隔 +1）
     m_BtnB.Create(this);
@@ -66,6 +66,7 @@ void CControlBoxAbility::CreateChildren()
     m_BtnB.SetImage(536870949u, 83, 84, 85, 86);
 
     // 反編譯：strcpy((char *)this + 6268, "J0002")
+    m_BtnB.SetSoundName("J0002");
 
     // +6784 右側文字
     m_Right.Create(this);

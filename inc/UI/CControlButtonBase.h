@@ -38,6 +38,9 @@ public:
     // 音效（呼叫 g_GameSoundManager.PlaySoundA）
     virtual void PlaySoundClick();
 
+    // 設定音效名稱（ground truth 以 strcpy 直接寫入）
+    void SetSoundName(const char* name);
+
     // 建立子控制（文字）
     void CreateChildren();
 

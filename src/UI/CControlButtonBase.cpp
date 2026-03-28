@@ -21,7 +21,6 @@ CControlButtonBase::CControlButtonBase()
     m_bChildMoveByClick = 0;
     m_bMouseOver = 0;
     m_nShiftAmount = 2;
-    memset(m_szSoundName, 0, sizeof(m_szSoundName));
 }
 
 CControlButtonBase::~CControlButtonBase()
@@ -137,4 +136,14 @@ void CControlButtonBase::SetChildMoveByClick(int a2, int a3)
 int CControlButtonBase::IsMouseOver()
 {
     return m_bMouseOver;
+}
+
+// ==========================
+// SetSoundName
+// ground truth: strcpy((char*)this + 208, name)
+// ==========================
+void CControlButtonBase::SetSoundName(const char* name)
+{
+    strncpy(m_szSoundName, name, sizeof(m_szSoundName) - 1);
+    m_szSoundName[sizeof(m_szSoundName) - 1] = '\0';
 }
