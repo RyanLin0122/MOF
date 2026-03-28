@@ -103,7 +103,8 @@ void CControlBoxAbility::Create(int x, int y, CControlBase* pParent, int kind, i
 // ====================================================================
 char* CControlBoxAbility::GetEditBoxText()
 {
-    return m_Edit.GetText();
+    // 對齊反編譯：直接存取內部 CControlText::GetText（ground truth 以偏移存取）
+    return (char*)m_Edit.m_Text.GetText();
 }
 
 // ====================================================================

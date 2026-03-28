@@ -29,16 +29,16 @@ public:
     void SetImageID(unsigned int giGroup, unsigned int giid, unsigned short block);
     void SetImageID(unsigned int giid, unsigned short block);
     void SetImageID(int giGroup, int giid, short block);  // 對齊反編譯 00420A90：無條件版本
-    void SetGIID(unsigned int giid) { m_nGIID = static_cast<int>(giid); }
-    void SetBlockID(unsigned short blk) { m_usBlockID = blk; }
+    void SetGIID(unsigned int giid);
+    void SetBlockID(unsigned short blk);
 
     // 依資源尺寸回填控制寬高（對齊反編譯 00420F90）
     void SetImageSize();
     void SetImageSizeFromResource() { SetImageSize(); }
 
     // ---- 視覺屬性 ----
-    void SetAlpha(int a) { m_nAlpha = a; }   // 0~255（基準 [34]）
-    void SetAngle(int deg) { m_nAngle = deg; } // （基準 [35]）
+    void SetAlpha(int a);   // 0~255（基準 [34]）
+    void SetAngle(int deg); // （基準 [35]）
 
     // 以 0~1 的顏色係數（基準 [43]~[46] 分別 R,G,B,A）
     void SetColorFactor(float r, float g, float b, float a)
@@ -47,7 +47,7 @@ public:
     }
 
     // 從頂端輸出比例（基準 [152]）
-    void SetOutputImagePercentFromTop(uint8_t v) { m_outputPercentFromTop = v; }
+    void SetOutputImagePercentFromTop(uint8_t v);
 
     // 0 = 關閉陰影/淡入（直接使用 m_nAlpha）
     // 1 = 開啟陰影/淡入（用 m_fadeCurA 從 0 開始）

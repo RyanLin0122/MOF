@@ -265,5 +265,6 @@ void CControlBoxCreateChar::SetAbilityData(int value)
 //-------------------------------------------------------------
 char* CControlBoxCreateChar::GetEditBoxText()
 {
-    return m_editBox.GetText();
+    // 對齊反編譯：直接存取內部 CControlText::GetText（ground truth 以偏移存取）
+    return (char*)m_editBox.m_Text.GetText();
 }

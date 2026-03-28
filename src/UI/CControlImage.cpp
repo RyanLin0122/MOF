@@ -115,6 +115,32 @@ void CControlImage::SetImageID(int giGroup, int giid, short block)
     SetImageSize();
 }
 
+// 對齊反編譯：獨立函式（非 inline）
+void CControlImage::SetGIID(unsigned int giid)
+{
+    m_nGIID = static_cast<int>(giid);
+}
+
+void CControlImage::SetBlockID(unsigned short blk)
+{
+    m_usBlockID = blk;
+}
+
+void CControlImage::SetAlpha(int a)
+{
+    m_nAlpha = a;
+}
+
+void CControlImage::SetAngle(int deg)
+{
+    m_nAngle = deg;
+}
+
+void CControlImage::SetOutputImagePercentFromTop(uint8_t v)
+{
+    m_outputPercentFromTop = v;
+}
+
 // ======================================================================
 // 依資源大小回填控制寬高（對齊反編譯 00420F90）
 // ======================================================================
