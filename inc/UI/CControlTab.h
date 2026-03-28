@@ -66,10 +66,11 @@ private:
     uint16_t m_imgNoneActiveBlock{ 0xFFFF }; // this[178] (low word)
 
     // 四狀態文字色：this[179..182]
-    uint32_t m_colFocused{ 0xFFFFFFFF };    // this[179]
-    uint32_t m_colUnfocused{ 0xFFFFFFFF };  // this[180]
-    uint32_t m_colHover{ 0xFFFFFFFF };      // this[181]
-    uint32_t m_colNoneActive{ 0xFFFFFFFF }; // this[182]
+    // 對齊反編譯：ground truth 建構子中未初始化這四個欄位
+    uint32_t m_colFocused;      // this[179]
+    uint32_t m_colUnfocused;    // this[180]
+    uint32_t m_colHover;        // this[181]
+    uint32_t m_colNoneActive;   // this[182]
 
     // 狀態
     int      m_bFocused{ 1 };               // this[166]

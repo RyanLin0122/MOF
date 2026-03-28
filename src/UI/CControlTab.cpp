@@ -212,11 +212,12 @@ void CControlTab::SetText(char* a2)
     CControlButtonBase::SetText(a2);
     if (m_bTextTabType == 1)
     {
+        // 對齊反編譯：ground truth 以 WORD 讀取 GetTextLength 回傳值
         DWORD v5[2], v6[2];
         m_Text.GetTextLength(v5);
-        short v3 = static_cast<short>(v5[1]);  // height from a2[1]
+        short v3 = *reinterpret_cast<short*>(reinterpret_cast<char*>(v5) + 4);  // height = WORD at +4 bytes
         m_Text.GetTextLength(v6);
-        short v4 = static_cast<short>(v6[0]);  // width from a2[0]
+        short v4 = *reinterpret_cast<short*>(v6);  // width = first WORD
         m_usHeight = static_cast<uint16_t>(v3);
         m_usWidth = static_cast<uint16_t>(v4);
     }
@@ -228,11 +229,12 @@ void CControlTab::SetText(int a2)
     CControlButtonBase::SetText(a2);
     if (m_bTextTabType == 1)
     {
+        // 對齊反編譯：ground truth 以 WORD 讀取 GetTextLength 回傳值
         DWORD v5[2], v6[2];
         m_Text.GetTextLength(v5);
-        short v3 = static_cast<short>(v5[1]);  // height from a2[1]
+        short v3 = *reinterpret_cast<short*>(reinterpret_cast<char*>(v5) + 4);  // height = WORD at +4 bytes
         m_Text.GetTextLength(v6);
-        short v4 = static_cast<short>(v6[0]);  // width from a2[0]
+        short v4 = *reinterpret_cast<short*>(v6);  // width = first WORD
         m_usHeight = static_cast<uint16_t>(v3);
         m_usWidth = static_cast<uint16_t>(v4);
     }
