@@ -45,15 +45,16 @@ public:
     void Init();
 
 protected:
-    // 音效名稱（offset +208, 反編譯：strcpy((char*)this + 208, "J0003")）
-    char m_szSoundName[16]{};          // +208
-
-    // 內建文字子控制（offset +224）
-    CControlText m_Text;               // +224
-
+    // 對齊反編譯佈局：ints 在前，音效名稱在中，文字控制在後
     // 反編譯：this[48]=enable, this[49]=mouseOver, this[50]=pressed, this[51]=shiftAmount
     int  m_bChildMoveByClick{ 0 };     // +192 (DWORD idx 48)
     int  m_bMouseOver{ 0 };            // +196 (DWORD idx 49)
     int  m_bPressed{ 0 };             // +200 (DWORD idx 50)
     int  m_nShiftAmount{ 2 };          // +204 (DWORD idx 51, 預設 2)
+
+    // 音效名稱（offset +208, 反編譯：strcpy((char*)this + 208, "J0003")）
+    char m_szSoundName[16]{};          // +208
+
+    // 內建文字子控制（offset +224）
+    CControlText m_Text;               // +224
 };

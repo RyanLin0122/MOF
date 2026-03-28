@@ -34,7 +34,11 @@ public:
     void SetScale(float s);
 
 private:
-    int           m_StyleIndex{ 2 };  // *((DWORD*)this + 31)  — 在 m_Digits 之前
+    // 對齊反編譯佈局：CControlBase 結尾在 byte 120 (DWORD[30])。
+    // Ground truth 中 m_StyleIndex 位於 DWORD[31] (byte 124)，m_Digits 從 byte 128 開始。
+    // 因此 DWORD[30] (byte 120) 為未使用的 4-byte 空間。
+    int           m_pad30{ 0 };       // *((DWORD*)this + 30) — 填充，對齊 m_Digits 至 byte 128
+    int           m_StyleIndex{ 2 };  // *((DWORD*)this + 31) = byte 124
     CControlImage m_Digits[20];       // +128 起 20 張 (每張 0xC0 = 192 bytes)
     float         m_Scale{ 1.0f };    // *((float*)this + 992)
 };

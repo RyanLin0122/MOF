@@ -96,29 +96,32 @@ private:
         int segL, int segT, int segR, int segB, const char* fullText);
 
 public:
+    // ---- 狀態（對齊反編譯佈局：標量欄位在前，子控制在後） ----
+    int       m_pad30{ -1 };             // DWORD[30] = byte 120，建構子設為 -1
+    int       m_focus{ 0 };              // DWORD[31] = byte 124
+    uint16_t  m_maxLen{ 0 };             // WORD[64] = byte 128
+    // 2 bytes auto-padding
+    int       m_writable{ 1 };           // DWORD[33] = byte 132
+    uint16_t  m_imeIndex{ 0xFFFF };      // WORD[68] = byte 136
+    uint8_t   m_visibleLines{ 1 };       // BYTE[138] = byte 138
+    // 1 byte auto-padding
+    int       m_caretIndex{ 0 };         // DWORD[35] = byte 140
+
+    // 行分割快取（最多 10 行，對齊反編譯 DWORD[36], DWORD[37], WORD[76]）
+    unsigned char m_lineBreakBytes[10]{};  // bytes 144-153
+    // 2 bytes auto-padding
+    int       m_caretX{ 0 };             // DWORD[39] = byte 156
+    int       m_caretY{ 0 };             // DWORD[40] = byte 160
+    int       m_password{ 0 };           // DWORD[41] = byte 164
+
     // ---- 子控制 ----
     // 對齊反編譯：ground truth 中其他類別（如 CControlBoxCreateChar、CControlBoxAbility）
     // 直接以偏移存取內部 CControlText，因此設為 public 以模擬該行為。
-    CControlAlphaBox        m_Block[5];    // 選取矩形（可疊 1~數個段）
-    CEditBoxBackgroundImage m_Back;        // 背景（九宮格）
-    CControlText            m_Text;        // 主文字（實際 IME 文字）
-    CControlText            m_Caret;       // 游標（字元 'I'，粗體）
-    CControlText            m_Mask;        // 密碼遮罩文字（用 '*'）
-
-    // ---- 狀態 ----
-    int       m_writable{ 1 };           // +33
-    uint16_t  m_maxLen{ 0 };             // +64
-    uint16_t  m_imeIndex{ 0xFFFF };      // +68
-    uint8_t   m_visibleLines{ 1 };       // +138（單行=1）
-    int       m_focus{ 0 };              // +31
-    int       m_caretIndex{ 0 };         // +35
-    int       m_caretX{ 0 };             // +39
-    int       m_caretY{ 0 };             // +40
-    int       m_align{ 0 };              // +800（0:L 1:C 2:R）
-    int       m_password{ 0 };           // +41（本類別自管的密碼遮罩旗標）
-
-    // 行分割快取（最多 10 行）
-    unsigned char m_lineBreakBytes[16]{};
+    CControlAlphaBox        m_Block[5];    // byte 168（5 × 0xD0 = 1040）
+    CEditBoxBackgroundImage m_Back;        // byte 1208
+    CControlText            m_Text;        // byte 3056
+    CControlText            m_Caret;       // byte 3488
+    CControlText            m_Mask;        // byte 3920
 
     // 游標閃爍
     static inline DWORD sBlinkTick{ 0 };

@@ -22,10 +22,7 @@ static constexpr float kSelA = 0.3137255f;
 CControlEditBox::CControlEditBox()
 {
     // 反編譯：CControlBase::CControlBase(this)
-    // 其餘欄位已在宣告處初始化
-
-    // 對齊反編譯：*((_DWORD *)this + 30) = -1
-    reinterpret_cast<int*>(this)[30] = -1;
+    // 其餘欄位已在宣告處初始化（含 m_pad30 = -1 對齊 DWORD[30]）
 
     // 對齊反編譯：建構子先呼叫 InitOpen 再 CreateChildren
     InitOpen();
@@ -56,7 +53,6 @@ void CControlEditBox::InitOpen()
     m_caretX      = 0;
     m_caretY      = 0;
     m_password    = 0;
-    m_align       = 0;
     m_writable    = 1;
     m_maxLen      = 0;
     m_imeIndex    = 0xFFFF;
@@ -147,7 +143,7 @@ void CControlEditBox::SetEBoxSize(int width, int height, int align)
     else if (align == 1) {       // 中
         m_Text.SetX(static_cast<int>(static_cast<double>(static_cast<uint16_t>(width)) * 0.5));
     }
-    m_align = align;
+    m_Text.SetAlignment(align);  // 對齊反編譯：*((_DWORD *)this + 800) = a4 → m_Text.m_isCentered
 
     // 多行高度/預設多行寬
     if (static_cast<uint16_t>(height)) {

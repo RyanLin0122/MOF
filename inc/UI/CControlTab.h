@@ -47,23 +47,29 @@ public:
     void SetText(int stringId);
 
 private:
+    // 對齊反編譯佈局順序（byte 660 起）：
+    // m_bTextTabType 必須在 m_bFocused 之前，兩者都在四組圖之前
+    uint8_t  m_bTextTabType{ 0 };           // BYTE at this+660
+    // 3 bytes padding (auto)
+    int      m_bFocused{ 1 };               // this[166] = byte 664
+
     // 四狀態圖：每組 {group, id, block}
     // 對齊反編譯 this[167..178]
     uint32_t m_imgFocusedGroup{ 5 };       // this[167]
     uint32_t m_imgFocusedId{ 0 };          // this[168]
-    uint16_t m_imgFocusedBlock{ 0xFFFF };  // this[169] (low word)
+    uint16_t m_imgFocusedBlock{ 0xFFFF };  // WORD[338] = byte 676
 
     uint32_t m_imgUnfocusedGroup{ 5 };     // this[170]
     uint32_t m_imgUnfocusedId{ 0 };        // this[171]
-    uint16_t m_imgUnfocusedBlock{ 0xFFFF }; // this[172] (low word)
+    uint16_t m_imgUnfocusedBlock{ 0xFFFF }; // WORD[344] = byte 688
 
     uint32_t m_imgHoverGroup{ 5 };         // this[173]
     uint32_t m_imgHoverId{ 0 };            // this[174]
-    uint16_t m_imgHoverBlock{ 0xFFFF };    // this[175] (low word)
+    uint16_t m_imgHoverBlock{ 0xFFFF };    // WORD[350] = byte 700
 
     uint32_t m_imgNoneActiveGroup{ 5 };    // this[176]
     uint32_t m_imgNoneActiveId{ 0 };       // this[177]
-    uint16_t m_imgNoneActiveBlock{ 0xFFFF }; // this[178] (low word)
+    uint16_t m_imgNoneActiveBlock{ 0xFFFF }; // WORD[356] = byte 712
 
     // 四狀態文字色：this[179..182]
     // 對齊反編譯：ground truth 建構子中未初始化這四個欄位
@@ -71,8 +77,4 @@ private:
     uint32_t m_colUnfocused;    // this[180]
     uint32_t m_colHover;        // this[181]
     uint32_t m_colNoneActive;   // this[182]
-
-    // 狀態
-    int      m_bFocused{ 1 };               // this[166]
-    uint8_t  m_bTextTabType{ 0 };           // byte at this+660
 };
