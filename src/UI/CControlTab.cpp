@@ -19,9 +19,8 @@ CControlTab::CControlTab()
     m_bPassKeyInputToParent = true;
 
     // 對齊反編譯：strcpy((char*)this + 208, "J0007")
-    // 這是 CControlButtonBase::m_Text 的某個屬性（字型key）
-    // offset 208 = CControlButtonBase 內的 m_Text.m_FontFaceA
-    strcpy(m_Text.m_FontFaceA, "J0007");
+    // offset 208 = CControlButtonBase 內的 m_szSoundName（音效名稱）
+    strcpy(m_szSoundName, "J0007");
 }
 
 CControlTab::~CControlTab()
