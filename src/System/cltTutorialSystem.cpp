@@ -9,7 +9,6 @@
 #include "Info/cltCharKindInfo.h"
 #include "Info/cltItemKindInfo.h"
 #include "Logic/Map.h"
-#include "Logic/CMessageBoxManager.h"
 #include "Logic/CObjectManager.h"
 #include "Logic/CShortKey.h"
 #include "Logic/cltBaseInventory.h"
@@ -55,7 +54,7 @@ int cltTutorialSystem::InitalizeTutorialSystem(std::uint8_t tutorialType) {
     // 1. Key / message-box setup
     CShortKey::SetAllDefaultKey(g_pShortKeyList);
     CShortKey::SaveKeySetting(g_pShortKeyList);
-    CMessageBoxManager::AddOK(g_pMsgBoxMgr, 8208, 0, 0, 0, -1);
+    g_pMsgBoxMgr->AddOK(8208, 0, 0, 0, -1);
 
     // 2. System message
     const char* msg = g_DCTTextManager.GetText(8208);

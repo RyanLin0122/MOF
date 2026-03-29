@@ -77,7 +77,7 @@ CBaseObject* CObjectManager::AddObject(unsigned short wObjectID)
         // Ground truth does NOT delete pNode here (memory leak in original)
         char szBuffer[100];
         sprintf(szBuffer, "%d Object kind is incorrect.", (unsigned short)pInfo->m_wKind);
-        CMessageBoxManager::AddOK(g_pMsgBoxMgr, szBuffer, 0, 0, 0, -1);
+        g_pMsgBoxMgr->AddOK(szBuffer, 0, 0, 0, -1);
         return nullptr;
     }
 

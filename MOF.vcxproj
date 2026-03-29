@@ -395,6 +395,7 @@
     <ClCompile Include="src\Logic\cltLogicCompatibility.cpp" />
     <ClCompile Include="src\Logic\CShortKey.cpp" />
     <ClCompile Include="src\Logic\CMessageBoxManager.cpp" />
+    <ClCompile Include="src\Logic\cltChattingMgr.cpp" />
     <ClCompile Include="src\Logic\cltSystemMessage.cpp" />
     <ClCompile Include="src\Logic\cltMyCharData.cpp" />
     <ClCompile Include="src\Logic\cltFieldItemManager.cpp" />
@@ -437,9 +438,13 @@
     <ClCompile Include="src\UI\CControlBoxSAReceiveItem.cpp" />
     <ClCompile Include="src\UI\CControlCA.cpp" />
     <ClCompile Include="src\UI\CControlCharBox.cpp" />
+    <ClCompile Include="src\UI\CControlChatPrint.cpp" />
     <ClCompile Include="src\UI\CControlScrollBar.cpp" />
     <ClCompile Include="src\UI\CControlScrollText.cpp" />
     <ClCompile Include="src\UI\CTextBoxScroll.cpp" />
+    <ClCompile Include="src\UI\CMessageBoxManager.cpp" />
+    <ClCompile Include="src\UI\CUIMessageBoxTypes.cpp" />
+    <ClCompile Include="src\UI\CUIBase.cpp" />
     <ClCompile Include="src\UI\CUITutorial.cpp" />
     <ClCompile Include="src\UI\CUIManager.cpp" />
     <ClCompile Include="src\UI\CControlAlphaBox.cpp" />
@@ -654,6 +659,7 @@
     <ClInclude Include="inc\Info\cltWorldMapColorInfo.h" />
     <ClInclude Include="inc\Logic\clClientTransportKindInfo.h" />
     <ClInclude Include="inc\Logic\cltCashShopItem.h" />
+    <ClInclude Include="inc\Logic\cltChattingMgr.h" />
     <ClInclude Include="inc\Logic\cltConfiguration.h" />
     <ClInclude Include="inc\Logic\cltFieldItemManager.h" />
     <ClInclude Include="inc\Logic\cltHelpMessage.h" />
@@ -810,6 +816,7 @@
     <ClInclude Include="inc\UI\CControlCA.h" />
     <ClInclude Include="inc\UI\CControlCharBox.h" />
     <ClInclude Include="inc\UI\CControlChatBallon.h" />
+    <ClInclude Include="inc\UI\CControlChatPrint.h" />
     <ClInclude Include="inc\UI\CControlCheckButton.h" />
     <ClInclude Include="inc\UI\CControlCount.h" />
     <ClInclude Include="inc\UI\CControlCountBar.h" />
@@ -828,8 +835,11 @@
     <ClInclude Include="inc\UI\CControlTabMgr.h" />
     <ClInclude Include="inc\UI\CListMgr.h" />
     <ClInclude Include="inc\UI\CControlBase.h" />
+    <ClInclude Include="inc\UI\CMessageBoxManager.h" />
     <ClInclude Include="inc\UI\CTextBoxScroll.h" />
+    <ClInclude Include="inc\UI\CUIBase.h" />
     <ClInclude Include="inc\UI\CUIManager.h" />
+    <ClInclude Include="inc\UI\CUIMessageBoxTypes.h" />
     <ClInclude Include="inc\UI\CUITutorial.h" />
     <ClInclude Include="inc\UI\stToolTipData.h" />
     <ClInclude Include="inc\UI\CControlImage.h" />

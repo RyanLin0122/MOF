@@ -723,6 +723,9 @@
     <ClCompile Include="src\Logic\CMessageBoxManager.cpp">
       <Filter>來源檔案</Filter>
     </ClCompile>
+    <ClCompile Include="src\Logic\cltChattingMgr.cpp">
+      <Filter>來源檔案</Filter>
+    </ClCompile>
     <ClCompile Include="src\Logic\cltSystemMessage.cpp">
       <Filter>來源檔案</Filter>
     </ClCompile>
@@ -883,6 +886,15 @@
       <Filter>來源檔案</Filter>
     </ClCompile>
     <ClCompile Include="src\Logic\cltNPCManager.cpp">
+      <Filter>來源檔案</Filter>
+    </ClCompile>
+    <ClCompile Include="src\UI\CMessageBoxManager.cpp">
+      <Filter>來源檔案</Filter>
+    </ClCompile>
+    <ClCompile Include="src\UI\CUIMessageBoxTypes.cpp">
+      <Filter>來源檔案</Filter>
+    </ClCompile>
+    <ClCompile Include="src\UI\CUIBase.cpp">
       <Filter>來源檔案</Filter>
     </ClCompile>
     <ClCompile Include="src\UI\CUITutorial.cpp">

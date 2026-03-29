@@ -5,6 +5,12 @@ from typing import Dict, List, Optional, Set
 # ========= 可調整設定 =========
 START_LINE = 26022
 
+# 手動指定「一定算已完成」的 class 清單
+# 只要 class 名稱在這裡，就直接視為已完成（優先權高於 FORCE_MISSING_CLASSES）
+FORCE_IMPLEMENTED_CLASSES = [
+    "Device_Reset_Manager"
+]
+
 # 手動指定「一定算未完成」的 class 清單
 # 只要 class 名稱在這裡，就直接視為未完成
 FORCE_MISSING_CLASSES = [
@@ -20,7 +26,26 @@ FORCE_MISSING_CLASSES = [
     "Map",
     "clClientTransportKindInfo",
     "clTransportAnilInfo",
-    "clTransportKindInfo"
+    "clTransportKindInfo",
+    "CCA",
+    "cltChattingMgr",
+    "CUIBase",
+    "CUIMessageBoxTypes",
+    "CUIMessageBoxList",
+    "CUIMessageBoxBase"
+    "CUIMessageBoxOK",
+    "CUIMessageBoxRadioList",
+    "CUIMessageBoxSortList",
+    "CUIMessageBoxMultLineOK",
+    "CUIMessageBoxMultLineOKLarge",
+    "CMessageBoxManager",
+    "cltShopInfo",
+    "CQuizEventParser",
+    "CShortKey",
+    "XJoyStick",
+    "cltSystemMessage",
+    "CControlCA",
+    "cltSkillKindInfo"
 ]
 
 # 例外清單：放 class 名稱字串，這些 class 會被跳過
@@ -258,10 +283,12 @@ def compare_tool_vs_headers(tool_result_list: List[dict], header_class_names: Li
     正確口徑：
     - 總 class / 總行數 都以 .c tool 結果為準
     - header 只拿來判斷哪些 class 算完成
-    - 完成 = class_name 同時存在於 tool 結果與 header 名單，且不在 FORCE_MISSING_CLASSES
+    - 完成 = class_name 同時存在於 tool 結果與 header 名單，或被手動指定為已完成
     - 未完成 = tool 有，但 header 沒有；或被手動指定為未完成
+    - 優先權：FORCE_IMPLEMENTED > FORCE_MISSING > header 判斷
     """
     header_set = set(header_class_names)
+    force_implemented_set = set(FORCE_IMPLEMENTED_CLASSES)
     force_missing_set = set(FORCE_MISSING_CLASSES)
 
     implemented_classes = []
@@ -270,7 +297,12 @@ def compare_tool_vs_headers(tool_result_list: List[dict], header_class_names: Li
     for item in tool_result_list:
         class_name = item["class_name"]
 
-        # 手動指定未完成的優先權最高
+        # 手動指定已完成的優先權最高
+        if class_name in force_implemented_set:
+            implemented_classes.append(item)
+            continue
+
+        # 手動指定未完成次之
         if class_name in force_missing_set:
             missing_classes.append(item)
             continue
