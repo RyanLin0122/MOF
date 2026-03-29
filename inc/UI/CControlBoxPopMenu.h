@@ -13,7 +13,7 @@
  *   +136~+148   float[4] m_fColor2_RGBA   Active/MouseOver 色 (Active() / case 4 使用)
  *   +152        int      m_nBtnDown       按鈕偏移旗標
  *   +156        CControlText m_Text       文字控制項
- *   +(approx)   DWORD    m_dwTextColor    合成後 ARGB 文字色
+ *   +304        m_Text.m_TextColor          合成後 ARGB 文字色（CControlText 內部偏移 148）
  */
 class CControlBoxPopMenu : public CControlBase
 {
@@ -29,7 +29,7 @@ public:
     // 設定兩組顏色：
     //   color2(a2-a5) → +136（mouseOver / Active）
     //   color1(a6-a9) → +120（normal / case 7）
-    // 同時以 color2 計算並寫入 m_dwTextColor
+    // 同時以 color2 計算並寫入 m_Text 的文字色
     int SetTextColorMouseInput(float color2R, float color2G, float color2B, float color2A,
                                float color1R, float color1G, float color1B, float color1A);
 
@@ -68,6 +68,7 @@ private:
     // +156：文字控制項
     CControlText m_Text;
 
-    // 合成後的文字 ARGB 色
-    DWORD m_dwTextColor{ 0 };
+    // 注意：文字 ARGB 色存於 m_Text.m_TextColor（CControlText 內部偏移 148，
+    //       對應 CControlBoxPopMenu 全域偏移 304）。
+    //       不需要額外成員變數，直接透過 m_Text.SetTextColor() 設定。
 };
