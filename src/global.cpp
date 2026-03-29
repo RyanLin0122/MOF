@@ -148,6 +148,7 @@ cltBasicAppearKindInfo g_clBasicAppearKindInfo;
 GameSound g_GameSoundManager;
 int dword_AFD34C = 0;
 int dword_AFD344 = 0;
+int cHeight = 0;
 
 int dword_73D154 = 0;
 int dword_B4BAB4 = 0;
