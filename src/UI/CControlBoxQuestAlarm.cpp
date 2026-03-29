@@ -31,6 +31,7 @@ CControlBoxQuestAlarm::~CControlBoxQuestAlarm()
 void CControlBoxQuestAlarm::Init()
 {
     CControlBoxBase::Init();
+    m_bPassKeyInputToParent = false;  // *((_DWORD *)this + 13) = 0
 }
 
 //--------------------------------------------------
@@ -147,7 +148,7 @@ void CControlBoxQuestAlarm::SetRootName(char* name)
 {
     CControlBase::Show();
     m_rootText.ClearText();
-    m_rootText.SetText(name ? name : "");
+    m_rootText.SetText(name);
     m_rootText.Show();
     m_rootBtn.Show();
     HideChild();
@@ -159,7 +160,7 @@ void CControlBoxQuestAlarm::SetRootName(char* name)
 void CControlBoxQuestAlarm::SetChildText(int idx, char* text)
 {
     m_childTexts[idx].ClearText();
-    m_childTexts[idx].SetText(text ? text : "");
+    m_childTexts[idx].SetText(text);
 }
 
 //--------------------------------------------------

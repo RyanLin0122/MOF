@@ -51,13 +51,14 @@ void CControlCheckButton::CreateChildren()
 }
 
 // 對齊反編譯 0041C380
-void CControlCheckButton::SetCallFunc(int basePtr, int fn, int argOffset, int a5, int a6)
+int CControlCheckButton::SetCallFunc(int basePtr, int fn, int argOffset, int a5, int a6)
 {
     m_cbBasePtr = basePtr;
     m_cbFunc = fn;
     m_cbArgOffset = argOffset;
     m_cbA5 = a5;
     m_cbA6 = a6;
+    return a6;
 }
 
 // 對齊反編譯 0041C3B0

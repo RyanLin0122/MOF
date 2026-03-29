@@ -35,7 +35,6 @@ void CControlBoxQSL::Init()
     m_cachedFrame    = 0;
     m_cachedIndex    = 0;
     m_cachedQuantity = 0;
-    m_sealStatus     = 0;
 }
 
 //--------------------------------------------------
@@ -299,7 +298,6 @@ void CControlBoxQSL::ShowChildren()
 void CControlBoxQSL::HideChildren()
 {
     CControlBoxBase::HideChildren();
-    Init();
 
     m_sealOverlay.Hide();
     m_sealImg6.Hide();

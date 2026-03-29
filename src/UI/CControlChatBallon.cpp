@@ -70,8 +70,8 @@ void CControlChatBallon::ResizeChatBallon(unsigned int wrapWidth, uint16_t fontH
     m_text.SetMultiLineSpace(3);
     m_text.SetMultiLineSize(100, 0);
 
-    // 儲存 wrapWidth（反編譯存在 m_text 欄位偏移 596）
-    // 在 C++ 中我們使用文字寬度限制來代替
+    // 儲存 wrapWidth（反編譯：*((_DWORD *)this + 596) = a2）
+    m_wrapWidth = wrapWidth;
 
     if (fontHeight)
         m_text.SetFontHeight(fontHeight);

@@ -40,4 +40,5 @@ public:
     int           m_nDirection{ 3 };   // +120 (DirDown)
     CControlImage m_piece[11];         // +124
     CControlText  m_text;              // +2236
+    unsigned int  m_wrapWidth{ 0 };    // 反編譯 *((_DWORD *)this + 596)，ResizeChatBallon 存入
 };

@@ -38,7 +38,7 @@ public:
     void SetCheck(int a2);
 
     // 設定回呼函式
-    void SetCallFunc(int basePtr, int fn, int argOffset, int a5, int a6);
+    int SetCallFunc(int basePtr, int fn, int argOffset, int a5, int a6);
 
 private:
     void CallFunc();
