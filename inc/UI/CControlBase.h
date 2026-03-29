@@ -80,6 +80,9 @@ public:
     void SetPassKeyInputToParent(bool b) { m_bPassKeyInputToParent = b; }
     bool GetPassKeyInputToParent() const { return m_bPassKeyInputToParent; }
 
+    void SetEnabled(bool b) { m_bEnabled = b; }
+    bool IsEnabled() const { return m_bEnabled; }
+
     void SetCenterOrigin(bool b) { m_bCenterOrigin = b; }
     bool GetCenterOrigin() const { return m_bCenterOrigin; }
 
@@ -139,15 +142,16 @@ protected:
     float    m_fScaleY{ 1.0f };
 
     // 旗標
-    bool m_bIsVisible{ true };
-    bool m_bPassKeyInputToParent{ false };
-    bool m_bCenterOrigin{ false };
+    bool m_bActive{ true };    // 對應 *((DWORD*)this+11)，ground truth 預設為 1
+    bool m_bIsVisible{ false }; // 對應 *((DWORD*)this+12)，ground truth 預設為 0（隱藏）
+    bool m_bPassKeyInputToParent{ false }; // 對應 *((DWORD*)this+13)
+    bool m_bEnabled{ true };   // 對應 *((DWORD*)this+14)，ground truth 預設為 1，用於 FindClickedChild/FindScrollBarCtrlChild
     bool m_bToolTipEnabled{ false };
+    bool m_bCenterOrigin{ false };
 
     // ToolTip
     stToolTipData m_ToolTip;
 
-    bool m_bActive{ true };    // 對應 *((DWORD*)this+11)，ground truth 預設為 1
     int  m_nClassId{ 0 };      // 用於 FindScrollBarCtrlChild 比對（100=scrollbar）
     int  m_nArrayIndex{ 0 };   // 對應 *((DWORD*)this+17)，由 SetArrayIndex 設定
 };

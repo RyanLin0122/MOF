@@ -311,26 +311,21 @@ bool CControlBase::PtInCtrl(stPoint pt) const
     if (!m_bIsVisible || m_usWidth == 0 || m_usHeight == 0)
         return false;
 
-    int ax, ay;
-    GetAbsPos(ax, ay);
-
-    float w = static_cast<float>(m_usWidth) * m_fScaleX;
-    float h = static_cast<float>(m_usHeight) * m_fScaleY;
-
-    float left = static_cast<float>(ax);
-    float top = static_cast<float>(ay);
+    int xLeft, yTop;
+    GetAbsPos(xLeft, yTop);
 
     if (m_bCenterOrigin)
     {
-        left -= w * 0.5f;
-        top -= h * 0.5f;
+        // ground truth: xLeft += (int)(width * -0.5); yTop -= height;
+        xLeft += static_cast<int>(static_cast<double>(m_usWidth) * -0.5);
+        yTop -= m_usHeight;
     }
 
     RECT rc;
-    rc.left = static_cast<int>(left);
-    rc.top = static_cast<int>(top);
-    rc.right = static_cast<int>(left + w);
-    rc.bottom = static_cast<int>(top + h);
+    rc.left = xLeft;
+    rc.top = yTop;
+    rc.right = xLeft + static_cast<int>(static_cast<double>(m_usWidth) * static_cast<double>(m_fScaleX));
+    rc.bottom = yTop + static_cast<int>(static_cast<double>(m_usHeight) * static_cast<double>(m_fScaleY));
 
     return PtInRectOpen(rc, pt);
 }
@@ -362,11 +357,12 @@ CControlBase* CControlBase::FindClickedChild(stPoint pt)
 
     while (true)
     {
-        // 走訪 node 的子鏈（由 first → next）
-        CControlBase* i = node->GetFirstChild();
-        for (; i; i = i->m_pNext)
+        // ground truth: 從 last child 往前走訪（this[5] → i[2]）
+        CControlBase* i = node->GetLastChild();
+        for (; i; i = i->m_pPrev)
         {
-            if (i->m_bIsVisible && i->IsActive() && i->PtInCtrl(stPoint{ pt.x, pt.y }))
+            // ground truth: if ( i[14] && i[12] && PtInCtrl(i, pt) )
+            if (i->m_bEnabled && i->m_bIsVisible && i->PtInCtrl(pt))
                 break;
         }
 
@@ -391,11 +387,12 @@ CControlBase* CControlBase::FindClickedChild(stPoint pt)
 // ------------------------------
 CControlBase* CControlBase::FindScrollBarCtrlChild(int /*a2*/, int /*a3*/)
 {
-    for (CControlBase* c = m_pFirstChild; c; c = c->m_pNext)
+    // ground truth: 從 last child 往前走訪（this[5] → result[2]）
+    for (CControlBase* c = m_pLastChild; c; c = c->m_pPrev)
     {
-        if (c->m_bIsVisible && c->IsActive())
+        // ground truth: if ( result[14] && result[12] )
+        if (c->m_bEnabled && c->m_bIsVisible)
         {
-            // 反編譯：if (result[29] == 100) return result;
             if (c->m_nClassId == 100)
                 return c;
 

@@ -66,6 +66,8 @@ void CControlButton::Create(CControlBase* pParent)
     m_Text.SetTextColor(0xFFFFFFFF);
     // 反編譯：this[92] = 1 → m_Text.m_isCentered = 1（置中）
     m_Text.SetAlignment(1);
+    // ground truth: *((_BYTE *)this + 704) = 1
+    m_bFlag704 = 1;
     CControlBase::Create(pParent);
 }
 
@@ -73,6 +75,8 @@ void CControlButton::Create(int x, int y, CControlBase* pParent)
 {
     m_Text.SetTextColor(0xFFFFFFFF);
     m_Text.SetAlignment(1);
+    // ground truth: *((_BYTE *)this + 704) = 1
+    m_bFlag704 = 1;
     CControlBase::Create(x, y, pParent);
 }
 
