@@ -224,14 +224,14 @@ void CControlBase::SetCenterPos()
 
 void CControlBase::SetCenterXToParent()
 {
-    if (!m_pParent) return;
-    m_x = static_cast<int>(m_pParent->GetWidth() * 0.5f - m_usWidth * 0.5f);
+    // ground truth: 不做 null 檢查，直接透過 parent vfunc 計算
+    m_x = static_cast<int>(m_pParent->GetWidth() * 0.5 - m_usWidth * 0.5);
 }
 
 void CControlBase::SetCenterYToParent()
 {
-    if (!m_pParent) return;
-    m_y = static_cast<int>(m_pParent->GetHeight() * 0.5f - m_usHeight * 0.5f);
+    // ground truth: 不做 null 檢查，直接透過 parent vfunc 計算
+    m_y = static_cast<int>(m_pParent->GetHeight() * 0.5 - m_usHeight * 0.5);
 }
 
 // ======================================================================

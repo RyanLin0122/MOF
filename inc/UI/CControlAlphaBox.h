@@ -34,6 +34,9 @@ public:
     virtual void PrepareDrawing() override;
     virtual void Draw() override;
 
+    // ground truth: CControlAlphaBox 有自己的 ControlKeyInputProcess override（直接轉呼叫 base）
+    virtual int* ControlKeyInputProcess(int msg, int key, int x, int y, int a6, int a7) override;
+
     // 顏色（單一顏色或四角獨立顏色）
     void SetColor(float r, float g, float b, float a);
     void SetColor(float r1, float g1, float b1, float a1,
@@ -60,6 +63,9 @@ private:
     void UpdateVerticesFromRect();
 
     VertexBufferData* m_pVBData = nullptr; // ResetManager 建立/刪除
-    D3DVertex         m_vtx[4] = {};      // 左上、右上、右下、左下（TriangleFan）
+    D3DVertex         m_vtx[4]{};         // 左上、右上、右下、左下（TriangleFan）
     bool              m_bCreated = false;  // 防重複 Create
+
+    // ground truth 的初始化在建構子中完成（InitVertices）
+    void InitVertices();
 };
