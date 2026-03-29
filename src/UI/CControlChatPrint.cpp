@@ -73,8 +73,13 @@ void CControlChatPrint::SetInputChat(int a2, int a3, char* a4, int a5, char* lpS
     }
 
     // ---- 設定聊天區塊位置 ----
-    int absX, absY;
-    GetAbsPos(absX, absY);
+    // 對齊 ground truth：呼叫兩次 GetAbsPos，一次取 Y、一次取 X
+    int v11X, absY;
+    GetAbsPos(v11X, absY);
+
+    int absX, v12Y;
+    GetAbsPos(absX, v12Y);
+
     g_clChattingMgr.SetChatBlock(absX, absY);
 }
 
