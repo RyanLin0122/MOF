@@ -35,6 +35,11 @@ void CControlBoxQSL::Init()
     m_cachedFrame    = 0;
     m_cachedIndex    = 0;
     m_cachedQuantity = 0;
+
+    // ground truth 額外重置（對應 +1216, +2184, +2376 = 各子控件的 m_bEnabled）
+    m_sealOverlay.SetEnabled(false);
+    m_sealImg6.SetEnabled(false);
+    m_sealImg7.SetEnabled(false);
 }
 
 //--------------------------------------------------

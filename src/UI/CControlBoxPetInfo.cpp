@@ -22,11 +22,10 @@ CControlBoxPetInfo::CControlBoxPetInfo()
     m_Name.m_isCentered = 1;  // *((_DWORD *)this + 114) = 1
     m_Name.SetControlSetFont("BuyPetFeedName");
 
-    // m_IconImage (+744): Create(this) + SetX(56)
+    // m_IconImage (+744): Create(this) + SetX(56) + EnableToolTip
     m_IconImage.Create(this);
     m_IconImage.SetX(56);
-    // *((_DWORD *)this + 214) = 1 → 對應 m_IconImage 內部 CControlBase 偏移 112
-    // 為 stToolTipData 尾端或 m_nClassId 欄位，設 1 無明確語意影響
+    m_IconImage.EnableToolTip(true);  // ground truth: *((_DWORD *)this + 214) = 1 → CControlBase+112 = m_bToolTipEnabled
 
     // m_SelectMark (+936): Create(this) + SetImage(0x22000029, 17) + SetPos(90, 9)
     m_SelectMark.Create(this);
