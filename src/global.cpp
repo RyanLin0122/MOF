@@ -48,6 +48,8 @@
 #include "Sound/GameSound.h"
 
 
+CDeviceManager& g_clDeviceManager = *CDeviceManager::GetInstance();
+
 LPDIRECT3D9 g_pD3D = NULL;
 LPDIRECT3DDEVICE9 g_pd3dDevice = NULL;
 D3DPRESENT_PARAMETERS g_d3dpp = {};

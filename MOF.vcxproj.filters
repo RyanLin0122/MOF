@@ -186,6 +186,9 @@
     <ClCompile Include="src\Effect\CEffect_Field_ItemPick_Sub.cpp">
       <Filter>來源檔案</Filter>
     </ClCompile>
+    <ClCompile Include="src\Character\CCA.cpp">
+      <Filter>來源檔案</Filter>
+    </ClCompile>
     <ClCompile Include="src\Character\ClientCharacter.cpp">
       <Filter>來源檔案</Filter>
     </ClCompile>
@@ -1036,6 +1039,24 @@
       <Filter>來源檔案</Filter>
     </ClCompile>
     <ClCompile Include="src\UI\CControlBoxSAReceiveItem.cpp">
+      <Filter>來源檔案</Filter>
+    </ClCompile>
+    <ClCompile Include="src\UI\CControlScrollBar.cpp">
+      <Filter>來源檔案</Filter>
+    </ClCompile>
+    <ClCompile Include="src\UI\CControlScrollText.cpp">
+      <Filter>來源檔案</Filter>
+    </ClCompile>
+    <ClCompile Include="src\UI\CTextBoxScroll.cpp">
+      <Filter>來源檔案</Filter>
+    </ClCompile>
+    <ClCompile Include="src\UI\CControlBoxPetInfo.cpp">
+      <Filter>來源檔案</Filter>
+    </ClCompile>
+    <ClCompile Include="src\UI\CControlCA.cpp">
+      <Filter>來源檔案</Filter>
+    </ClCompile>
+    <ClCompile Include="src\UI\CControlCharBox.cpp">
       <Filter>來源檔案</Filter>
     </ClCompile>
   </ItemGroup>
@@ -2076,6 +2097,27 @@
       <Filter>標頭檔</Filter>
     </ClInclude>
     <ClInclude Include="inc\UI\CControlBoxSAReceiveItem.h">
+      <Filter>標頭檔</Filter>
+    </ClInclude>
+    <ClInclude Include="inc\UI\CControlScrollBar.h">
+      <Filter>標頭檔</Filter>
+    </ClInclude>
+    <ClInclude Include="inc\UI\CControlScrollText.h">
+      <Filter>標頭檔</Filter>
+    </ClInclude>
+    <ClInclude Include="inc\UI\CTextBoxScroll.h">
+      <Filter>標頭檔</Filter>
+    </ClInclude>
+    <ClInclude Include="inc\UI\CControlBoxPetInfo.h">
+      <Filter>標頭檔</Filter>
+    </ClInclude>
+    <ClInclude Include="inc\Character\CCA.h">
+      <Filter>標頭檔</Filter>
+    </ClInclude>
+    <ClInclude Include="inc\UI\CControlCA.h">
+      <Filter>標頭檔</Filter>
+    </ClInclude>
+    <ClInclude Include="inc\UI\CControlCharBox.h">
       <Filter>標頭檔</Filter>
     </ClInclude>
   </ItemGroup>

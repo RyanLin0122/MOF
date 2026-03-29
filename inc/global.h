@@ -245,7 +245,7 @@ inline void CircleLoopLower(int* val, int maxCount)
 }
 
 // Device
-extern CDeviceManager           g_clDeviceManager;
+extern CDeviceManager&          g_clDeviceManager;
 
 // Sound
 extern GameSound                g_GameSoundManager;

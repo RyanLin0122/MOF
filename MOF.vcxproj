@@ -150,6 +150,7 @@
   </ItemDefinitionGroup>
   <ItemGroup>
     <ClCompile Include="main.cpp" />
+    <ClCompile Include="src\Character\CCA.cpp" />
     <ClCompile Include="src\Character\ClientCharacter.cpp" />
     <ClCompile Include="src\Character\ClientCharacterManager.cpp" />
     <ClCompile Include="src\Effect\CBulletArrow.cpp" />
@@ -429,10 +430,13 @@
     <ClCompile Include="src\Text\Huffman.cpp" />
     <ClCompile Include="src\UI\CControlBoxCreateChar.cpp" />
     <ClCompile Include="src\UI\CControlBoxMySAItem.cpp" />
+    <ClCompile Include="src\UI\CControlBoxPetInfo.cpp" />
     <ClCompile Include="src\UI\CControlBoxPopMenu.cpp" />
     <ClCompile Include="src\UI\CControlBoxPrivateShop.cpp" />
     <ClCompile Include="src\UI\CControlBoxQSL.cpp" />
     <ClCompile Include="src\UI\CControlBoxSAReceiveItem.cpp" />
+    <ClCompile Include="src\UI\CControlCA.cpp" />
+    <ClCompile Include="src\UI\CControlCharBox.cpp" />
     <ClCompile Include="src\UI\CControlScrollBar.cpp" />
     <ClCompile Include="src\UI\CControlScrollText.cpp" />
     <ClCompile Include="src\UI\CTextBoxScroll.cpp" />
@@ -791,6 +795,7 @@
     <ClInclude Include="inc\UI\CControlBoxLessonSchedule.h" />
     <ClInclude Include="inc\UI\CControlBoxMaking.h" />
     <ClInclude Include="inc\UI\CControlBoxMySAItem.h" />
+    <ClInclude Include="inc\UI\CControlBoxPetInfo.h" />
     <ClInclude Include="inc\UI\CControlBoxPopMenu.h" />
     <ClInclude Include="inc\UI\CControlBoxPrivateShop.h" />
     <ClInclude Include="inc\UI\CControlBoxQSL.h" />
@@ -801,6 +806,9 @@
     <ClInclude Include="inc\UI\CControlBoxSkill.h" />
     <ClInclude Include="inc\UI\CControlBoxSpecialty.h" />
     <ClInclude Include="inc\UI\CControlButton.h" />
+    <ClInclude Include="inc\Character\CCA.h" />
+    <ClInclude Include="inc\UI\CControlCA.h" />
+    <ClInclude Include="inc\UI\CControlCharBox.h" />
     <ClInclude Include="inc\UI\CControlChatBallon.h" />
     <ClInclude Include="inc\UI\CControlCheckButton.h" />
     <ClInclude Include="inc\UI\CControlCount.h" />
