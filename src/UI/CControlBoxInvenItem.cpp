@@ -18,9 +18,19 @@ CControlBoxInvenItem::CControlBoxInvenItem()
     // BoxBase 預設初始化（會設置 m_bShow 等）
     CControlBoxBase::Init();
 
-    // 與反編譯碼中的幾個旗標歸零一致（語意不明，保持行為）
-    // (*this)[13] = 0, [44]=0, [382]=0, [430]=0, [282]=0, [92]=0
-    // 在這份還原以類內狀態替代，不額外暴露欄位。
+    // 反編譯：*((_DWORD *)this + 13) = 0 → Init() 設了 m_bPassKeyInputToParent=true，這裡清回 false
+    SetPassKeyInputToParent(false);
+    // 反編譯：*((_DWORD *)this + 44) = 0 → m_Background 的 m_bEnabled
+    GetBackground()->SetEnabled(false);
+    // 反編譯：*((_DWORD *)this + 382) = 0 → m_frameYellow.m_bEnabled
+    m_frameYellow.SetEnabled(false);
+    // 反編譯：*((_DWORD *)this + 430) = 0 → m_frameGreen.m_bEnabled
+    m_frameGreen.SetEnabled(false);
+    // 反編譯：*((_DWORD *)this + 282) = 0 → m_sealBox.m_bEnabled
+    m_sealBox.SetEnabled(false);
+    // 反編譯：*((_DWORD *)this + 92) = 0 → m_countBox.m_bEnabled
+    m_countBox.SetEnabled(false);
+
     m_sealStatus = 0;
 }
 
@@ -57,12 +67,6 @@ void CControlBoxInvenItem::CreateChildren()
     m_frameYellow.Create(-3, -3, 570425419u, 6, this);
     m_frameGreen.Create(-3, -3, 570425419u, 7, this);
 
-    // 讓外框與數字盒先隱藏（ShowChildren/HideChildren 也會再處理一次）
-    m_countBox.Hide();
-    m_sealBox.Hide();
-    m_frameYellow.Hide();
-    m_frameGreen.Hide();
-
     // 依反編譯碼末行：CControlBase::SetSize(this, *((_DWORD*)this + 38))
     SetSize(GetBackground()->GetWidth(), GetBackground()->GetHeight());
 }
@@ -70,6 +74,9 @@ void CControlBoxInvenItem::CreateChildren()
 void CControlBoxInvenItem::ShowChildren(int showItemImage)
 {
     CControlBoxBase::ShowChildren();
+
+    // 反編譯：*((_DWORD *)this + 13) = 0 → m_bPassKeyInputToParent 清回 false
+    SetPassKeyInputToParent(false);
 
     // 反編譯：先把 sealBox/數字盒/兩個外框都 Hide，並設置 sealBox 顏色為紅(初值)
     m_sealBox.Hide();
@@ -157,7 +164,8 @@ int CControlBoxInvenItem::SetSealStatus(int status)
         m_frameYellow.Hide();
         m_frameGreen.Hide();
     }
-    return m_sealStatus;
+    // ground truth 回傳最後一次 Hide/Show 的結果（虛函式回傳值），語意上不重要
+    return 0;
 }
 
 void CControlBoxInvenItem::SetAlpha(int a)

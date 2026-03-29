@@ -43,7 +43,7 @@ void CControlBoxEquip::CreateChildren()
 //--------------------------------------------------
 // 設定封印狀態（對齊 004185F0）
 //--------------------------------------------------
-void CControlBoxEquip::SetSealStatus(int status)
+int CControlBoxEquip::SetSealStatus(int status)
 {
     m_SealStatus = status;
 
@@ -67,6 +67,7 @@ void CControlBoxEquip::SetSealStatus(int status)
         m_SealImg6.Hide();
         m_SealImg7.Hide();
     }
+    return 0;
 }
 
 //--------------------------------------------------

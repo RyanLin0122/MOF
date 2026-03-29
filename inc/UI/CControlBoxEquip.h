@@ -22,8 +22,8 @@ public:
 
     void CreateChildren();
 
-    // 設定封印狀態（對齊 004185F0）
-    void SetSealStatus(int status);
+    // 設定封印狀態（對齊 004185F0）— 回傳 int（ground truth 回傳最後一次 Show/Hide 的結果）
+    int SetSealStatus(int status);
 
     // 對齊 004186F0 / 00418740
     virtual void ShowChildren() override;

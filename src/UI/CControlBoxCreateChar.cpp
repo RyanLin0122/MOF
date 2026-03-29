@@ -62,10 +62,14 @@ void CControlBoxCreateChar::CreateChildren()
     // m_btnUp：Create + SetImage(536870949=0x20000025, blocks 79/80/81/82)
     m_btnUp.Create(this);
     m_btnUp.SetImage(536870949u, 79, 80, 81, 82);
+    // 反編譯：strcpy((char *)this + 5120, "J0002") → m_btnUp 的音效名稱
+    m_btnUp.SetSoundName("J0002");
 
     // m_btnDown：Create + SetImage(536870949, blocks 83/84/85/86)
     m_btnDown.Create(this);
     m_btnDown.SetImage(536870949u, 83, 84, 85, 86);
+    // 反編譯：strcpy((char *)this + 5844, "J0002") → m_btnDown 的音效名稱
+    m_btnDown.SetSoundName("J0002");
 }
 
 //-------------------------------------------------------------
@@ -133,9 +137,8 @@ void CControlBoxCreateChar::Create(int x, int y, CControlBase* pParent,
         m_label.SetX(14);
 
         // 反編譯：*((_DWORD*)this + 68) = 1
-        // 此寫入對應 m_label 內部某個欄位（推測為 ShadowColor 或 FontWeight），
-        // 因重建標頭與原始二進位記憶體佈局可能不完全吻合，以 SetShadowColor(1) 模擬。
-        m_label.SetShadowColor(1);
+        // byte offset 272 = m_label(+128) + 144 = CControlText::m_isCentered
+        m_label.SetAlignment(1);
 
         m_editBox.SetPos(0, 23);
         m_editBox.SetEBoxSize(24, 0, 1);
