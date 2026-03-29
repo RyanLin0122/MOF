@@ -66,4 +66,5 @@ private:
     CControlEditBox m_editBox;     // +560 編輯框
     CControlButton  m_btnUp;       // +4912 向上按鈕
     CControlButton  m_btnDown;     // +5636 向下按鈕
+    CControlBase    m_extra;       // +6360 GT 中構造/析構但未見方法引用的額外控制項
 };
