@@ -26,7 +26,7 @@ void CControlChatPrint::Create(CControlBase* pParent)
 
     // 建立遊標文字控制（反編譯 offset +128）
     m_TextCursor.Create(this);
-    _snprintf(Buffer, sizeof(Buffer), "%c", 95);   // '_'
+    _sprintf(Buffer, "%c", 95);                     // '_'
     m_TextCursor.SetText(Buffer);
     m_TextCursor.SetTextColor(0xFFFFFFFF);          // 對齊 *((_DWORD*)this + 69) = -1
 

@@ -20,7 +20,7 @@ strMsgBoxAttr::strMsgBoxAttr()
     , m_nField6(0)
     , m_nField7(-1)
     , m_nField8(0)
-    , m_nField9(0)
+    // m_nField9 未初始化 — 對齊 ground truth
 {
 }
 
@@ -144,15 +144,9 @@ CMsgBoxOptionEdit::CMsgBoxOptionEdit()
 //  CMsgBoxOptionEdit — 帶參數建構子
 // ================================================================
 CMsgBoxOptionEdit::CMsgBoxOptionEdit(int a2)
-    : m_nField0(0), m_nField1(0), m_nField2(0)
-    , m_usWidth(0), m_usHeight(0)
-    , m_nField4(0), m_nField5(0)
-    , m_bField6(0), m_pad1{}
-    , m_nField7(0), m_nField8(0)
-    , m_nField9(0), m_nField10(0)
-    , m_bField11(0), m_pad2{}
-    , m_nField12(0), m_nField13(0), m_nField14(0)
 {
+    // 對齊 ground truth：不預先清零，只設定各分支明確寫入的欄位
+    // m_nField8 在三個分支中均未被寫入（保持未初始化）
     if (a2 == 0)
     {
         m_nField0  = 12;
@@ -164,12 +158,12 @@ CMsgBoxOptionEdit::CMsgBoxOptionEdit(int a2)
         m_nField5  = 55;
         m_bField6  = 1;
         m_nField7  = 0;
+        m_nField13 = 0;
+        m_nField14 = 2;
         m_nField9  = 1;
         m_nField10 = 0;
         m_bField11 = 0;
         m_nField12 = 0;
-        m_nField13 = 0;
-        m_nField14 = 2;
     }
     else if (a2 == 1)
     {
@@ -182,12 +176,12 @@ CMsgBoxOptionEdit::CMsgBoxOptionEdit(int a2)
         m_nField5  = 55;
         m_bField6  = 5;
         m_nField7  = 0;
+        m_nField13 = 0;
+        m_nField14 = 2;
         m_nField9  = 0;
         m_nField10 = 0;
         m_bField11 = 2;
         m_nField12 = 1;
-        m_nField13 = 0;
-        m_nField14 = 2;
     }
     else if (a2 == 2)
     {
@@ -200,11 +194,12 @@ CMsgBoxOptionEdit::CMsgBoxOptionEdit(int a2)
         m_nField5  = 55;
         m_bField6  = 1;
         m_nField7  = 0;
+        m_nField13 = 1;
+        m_nField14 = 2;
+        // m_nField9 在 a2==2 分支未被寫入（保持未初始化）
         m_nField10 = 1;
         m_bField11 = 0;
         m_nField12 = 0;
-        m_nField13 = 1;
-        m_nField14 = 2;
     }
 }
 
@@ -266,11 +261,9 @@ stMessageBoxList* CMessageBoxManager::AddList(CUIMessageBoxBase* pBox)
         m_pHead = pNew;
     }
 
-    if (pNew)
-    {
-        pNew->m_pBox = pBox;
-        g_UIMgr->AddOrder(pBox);
-    }
+    // 對齊 ground truth：不做 null 保護，直接寫入並 AddOrder
+    pNew->m_pBox = pBox;
+    g_UIMgr->AddOrder(pBox);
     return pNew;
 }
 
@@ -389,9 +382,7 @@ CUIMessageBoxBase* CMessageBoxManager::Add(int type, int option, strMsgBoxAttr* 
         return nullptr;
     }
 
-    if (!pBox)
-        return nullptr;
-
+    // 對齊 ground truth：即便 pBox 為 null 也繼續呼叫（不提前 return）
     AddList(pBox);
     pBox->SetType(pAttr);
     pBox->Set(option);
