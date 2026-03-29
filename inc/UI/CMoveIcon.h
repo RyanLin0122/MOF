@@ -4,21 +4,9 @@
 #include <algorithm>
 #include "UI/CControlImage.h"
 #include "UI/CControlText.h"
+#include "UI/CUIBase.h"
+#include "UI/CUIManager.h"
 #include "Character/ClientCharacterManager.h"
-
-class CUIBase {
-public:
-	virtual ~CUIBase() = default;
-	virtual int  GetType() const { return 0; }   // 對應 *(_DWORD*)(p+12)
-	virtual void OnDragEnd() {}                  // 對應 vtbl+20 呼叫
-};
-
-class CUIManager {
-public:
-	CUIBase* GetUIWindow(int id);
-};
-
-extern CUIManager* g_UIMgr;
 
 class CMoveIcon : public CControlImage
 {

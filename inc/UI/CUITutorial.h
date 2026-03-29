@@ -1,9 +1,11 @@
 #pragma once
 
-class CUITutorial {
+#include "UI/CMessageBoxManager.h"
+
+class CUITutorial : public CUIMessageBoxBase {
 public:
-    CUITutorial() = default;
-    virtual ~CUITutorial() = default;
+    CUITutorial();
+    virtual ~CUITutorial();
 
     // Advances the tutorial UI to the given step.
     void AddTutorial(int stepId);
