@@ -52,8 +52,8 @@ void CControlCharBox::CreateChildren()
     // m_Button (+1828): Create(this) + SetPos + SetImage + SetText + SetButtonTextColor + SetChildMoveByClick
     m_Button.Create(this);
     m_Button.SetPos(98, 78);
-    // SetImage(imageId=0x2000002C=536870956, blockN=0, blockH=1, blockP=2, blockD=3)
-    m_Button.SetImage(536870956u, 0, 1, 2, 3);
+    // SetImage(imageId=0x2000003C=536870972, blockN=0, blockH=1, blockP=2, blockD=3)
+    m_Button.SetImage(536870972u, 0, 1, 2, 3);
     // SetText(stringId=3466)
     m_Button.SetText(3466);
     m_Button.SetButtonTextColor(0xFF000000, 0xFFEAFF00, 0xFFEAFF00, 0xFFC99273);

@@ -40,6 +40,7 @@ void CControlBoxQuest::CreateChildren()
     // 適配等級文字 (+744)
     m_fitLevel.Create(this);
     m_fitLevel.SetPos(183, 18);
+    m_fitLevel.m_isCentered = 2;  // *((_DWORD *)this + 222) = 2
 
     // 完成提示文字 (+1176)
     m_completeText.Create(this);
