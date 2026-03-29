@@ -61,6 +61,9 @@ public:
     // ---- 事件傳遞（可選）----
     virtual int* ControlKeyInputProcess(int msg, int key, int x, int y, int a6, int a7) override;
 
+    // 對齊反編譯：檢查 m_pGameImage 是否已填入（由 PrepareDrawing 填）
+    GameImage* GetGameImage() const { return m_pGameImage; }
+
     unsigned short m_usBlockID = 0xFFFF;   // [64]，-1 表示未指定
     int           m_nGIID = 0;        // [31]
     int           m_nGIGroup = 5;        // [30]，預設群組 5

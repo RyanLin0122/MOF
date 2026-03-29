@@ -92,8 +92,8 @@ void CControlChatBallon::SetString(char* text, int x, int y,
     // 顯示
     this->Show();
 
-    // 檢查氣球已建立且文字有變化
-    if (GetFirstChild() && strcmp(m_text.GetText(), text))
+    // 檢查氣球已建立且文字有變化（ground truth: *((_DWORD *)this + 304) = m_piece[5].m_pGameImage）
+    if (m_piece[5].GetGameImage() && strcmp(m_text.GetText(), text))
     {
         m_nDirection = static_cast<int>(dir);
         m_text.SetText(text);
@@ -181,7 +181,7 @@ void CControlChatBallon::SetString(char* text, int x, int y,
 
             int arrowEndX = m_piece[9].GetX();
             m_piece[10].SetPos(arrowW + arrowEndX, bottomY);
-            m_piece[10].SetScaleX(fScaledW - halfGap - static_cast<float>(arrowW));
+            m_piece[10].SetScaleX(static_cast<float>(fScaledW - halfGap - static_cast<double>(arrowW)));
         }
         else
         {
@@ -200,16 +200,16 @@ void CControlChatBallon::SetString(char* text, int x, int y,
                 // 箭頭朝上
                 int arrowH = m_piece[9].GetHeight();
                 int arrowPosY = 4 - arrowH;
-                float halfW = static_cast<float>(GetWidth()) * 0.5f;
-                float halfArrowW = static_cast<float>(m_piece[9].GetWidth()) * 0.5f;
+                float halfW = static_cast<float>(static_cast<double>(GetWidth()) * 0.5);
+                float halfArrowW = static_cast<float>(static_cast<double>(m_piece[9].GetWidth()) * 0.5);
                 m_piece[9].SetPos(static_cast<int>(halfW - halfArrowW), arrowPosY);
                 m_piece[9].SetAngle(180);
             }
             else if (dir == DirLeft) // dir == 1
             {
                 // 箭頭朝左
-                float halfH = static_cast<float>(GetHeight()) * 0.5f;
-                float halfArrowW = static_cast<float>(m_piece[9].GetWidth()) * 0.5f;
+                float halfH = static_cast<float>(static_cast<double>(GetHeight()) * 0.5);
+                float halfArrowW = static_cast<float>(static_cast<double>(m_piece[9].GetWidth()) * 0.5);
                 int posY = static_cast<int>(halfH - halfArrowW);
                 int arrowH2 = m_piece[9].GetHeight();
                 m_piece[9].SetPos(4 - arrowH2, posY);
@@ -218,8 +218,8 @@ void CControlChatBallon::SetString(char* text, int x, int y,
             else if (dir == DirRight) // dir == 2
             {
                 // 箭頭朝右
-                float halfH = static_cast<float>(GetHeight()) * 0.5f;
-                float halfArrowW = static_cast<float>(m_piece[9].GetWidth()) * 0.5f;
+                float halfH = static_cast<float>(static_cast<double>(GetHeight()) * 0.5);
+                float halfArrowW = static_cast<float>(static_cast<double>(m_piece[9].GetWidth()) * 0.5);
                 m_piece[9].SetPos(GetWidth() - 4, static_cast<int>(halfH - halfArrowW));
                 m_piece[9].SetAngle(270);
             }

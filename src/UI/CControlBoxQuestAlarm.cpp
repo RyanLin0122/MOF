@@ -235,23 +235,22 @@ void CControlBoxQuestAlarm::ClearTextData()
 
 //--------------------------------------------------
 // GetMaxLength (0041B5B0)
-// 反編譯：使用 GetTextPixelSize 取得像素寬度
+// 反編譯：使用 GetTextLength 取得文字長度
 //--------------------------------------------------
 int CControlBoxQuestAlarm::GetMaxLength()
 {
-    int w = 0, h = 0;
-    m_rootText.GetTextPixelSize(&w, &h);
-    int maxLen = (w >= 0) ? w : 0;
+    DWORD buf[2];
+    int maxLen = 0;
+    if ((int)*m_rootText.GetTextLength(buf) >= 0)
+        maxLen = (int)*m_rootText.GetTextLength(buf);
 
     for (int i = 0; i < 5; ++i)
     {
-        const char* s = m_childTexts[i].GetText();
-        if (s && std::strcmp(s, "") != 0 && m_childTexts[i].IsStringData())
+        if (std::strcmp(m_childTexts[i].GetText(), "")
+            && m_childTexts[i].IsVisible()
+            && maxLen <= (int)*m_childTexts[i].GetTextLength(buf))
         {
-            int cw = 0, ch = 0;
-            m_childTexts[i].GetTextPixelSize(&cw, &ch);
-            if (maxLen <= cw)
-                maxLen = cw;
+            maxLen = (int)*m_childTexts[i].GetTextLength(buf);
         }
     }
     return maxLen;
@@ -268,8 +267,7 @@ int CControlBoxQuestAlarm::GetMaxHeight()
 
     for (int i = 0; i < 5; ++i)
     {
-        const char* s = m_childTexts[i].GetText();
-        if (s && std::strcmp(s, "") != 0)
+        if (std::strcmp(m_childTexts[i].GetText(), ""))
             h += 15;
     }
     return h;
@@ -298,8 +296,7 @@ void CControlBoxQuestAlarm::OnClickedButtonRoot()
         m_expandedFlag = 1;
         for (int i = 0; i < 5; ++i)
         {
-            const char* s = m_childTexts[i].GetText();
-            if (s && std::strcmp(s, "") != 0)
+            if (std::strcmp(m_childTexts[i].GetText(), ""))
             {
                 m_childBtns[i].Show();
                 m_childTexts[i].Show();
