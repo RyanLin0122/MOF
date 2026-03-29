@@ -44,6 +44,7 @@
 #include "Effect/CEffectManager.h"
 #include "Image/CDeviceManager.h"
 #include "Logic/cltCashShopItem.h"
+#include "Logic/cltChattingMgr.h"
 #include "Info/cltBasicAppearKindInfo.h"
 #include "Sound/GameSound.h"
 
@@ -143,6 +144,9 @@ cltMoneySystem g_clMoneySystem;
 cltMoFC_EffectKindInfo g_clEffectKindInfo;
 // cltMyCharData g_clMyCharData is defined in Logic/cltMyCharData.cpp
 // cltSystemMessage g_clSysemMessage is defined in Logic/cltSystemMessage.cpp
+
+CMessageBoxManager* g_pMsgBoxMgr = nullptr;
+cltChattingMgr g_clChattingMgr;
 
 cltCashShopItem g_clCashShopItem;
 cltBasicAppearKindInfo g_clBasicAppearKindInfo;

@@ -68,6 +68,8 @@ class DirectInputManager;
 class cltCashShopItem;
 class cltBasicAppearKindInfo;
 class GameSound;
+class CMessageBoxManager;
+class cltChattingMgr;
 
 //-----------------------------------------------------------------------------
 // 全域變數
@@ -214,6 +216,12 @@ extern cltMoneySystem           g_clMoneySystem;
 extern cltMoFC_EffectKindInfo   g_clEffectKindInfo;
 extern cltMyCharData            g_clMyCharData;
 extern cltSystemMessage         g_clSysemMessage;
+
+// MessageBox
+extern CMessageBoxManager*      g_pMsgBoxMgr;
+
+// Chatting
+extern cltChattingMgr           g_clChattingMgr;
 
 // CashShop
 extern cltCashShopItem          g_clCashShopItem;

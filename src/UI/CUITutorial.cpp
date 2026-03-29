@@ -1,5 +1,8 @@
 #include "UI/CUITutorial.h"
 
+CUITutorial::CUITutorial() {}
+CUITutorial::~CUITutorial() {}
+
 void CUITutorial::AddTutorial(int /*stepId*/) {
     // Stub: real implementation advances the tutorial UI widget.
 }
