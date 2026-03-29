@@ -269,3 +269,7 @@ extern void*                    unk_B4B924[1024];
 extern ClientCharacter          unk_1409D80[1000];
 extern ClientCharacter*         dword_1843F78[1000];
 extern size_t                   NumOfElements;
+
+// CControlChatBallon 九宮格樣式表（每種樣式 11 個 uint16 block ID）
+// 對齊反編譯位址 0x6C6AD0
+extern const uint16_t           g_ChatBallonStyleTable[];

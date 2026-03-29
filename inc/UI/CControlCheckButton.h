@@ -1,52 +1,66 @@
 #pragma once
+
 #include "UI/CControlButtonBase.h"
 
-// 反編譯位址：0041C200 ~ 0041C520
-class CControlCheckButton final : public CControlButtonBase
+// 勾選按鈕
+// 反編譯對照 (0041C200 ~ 0041C520)：
+// CControlButtonBase 基底（CControlImage + 音效 + CControlText）
+// 之後依序：
+//   DWORD 164: m_cbBasePtr（回呼物件指標）
+//   DWORD 166: m_cbFunc（回呼函式指標）
+//   DWORD 167: m_cbArgOffset
+//   DWORD 168: m_cbA5
+//   DWORD 169: m_cbA6（預設 -1）
+//   DWORD 170: m_uncheckedGIGroup（預設 5）
+//   DWORD 171: m_uncheckedGIID
+//   WORD  344: m_uncheckedBlock（0xFFFF）
+//   DWORD 173: m_checkedGIGroup（預設 5）
+//   DWORD 174: m_checkedGIID
+//   WORD  350: m_checkedBlock（0xFFFF）
+class CControlCheckButton : public CControlButtonBase
 {
 public:
     CControlCheckButton();
-    ~CControlCheckButton() override;
+    virtual ~CControlCheckButton();
 
-    // 建立子物件（覆寫：設定文字位置，並給預設影像）
-    void CreateChildren() /*override*/;
+    void CreateChildren();
 
-    // 設定「同一張圖」的兩個影格（未勾/已勾）
-    // giid        : 資源 GIID（例如 0x20000013）
-    // blockUnchecked : 未勾選時的 block（例：0x15）
-    // blockChecked   : 勾選時的 block（例：0x14）
+    // 設定影像（同一 GIID，不同 block 分別對應未勾/已勾）
     void SetImage(unsigned int giid, unsigned short blockUnchecked, unsigned short blockChecked);
 
-    // 事件處理：攔截按下/放開以切換影像與回呼
-    int* ControlKeyInputProcess(int msg, int key, int x, int y, int a6, int a7) override;
+    // 事件處理
+    virtual int* ControlKeyInputProcess(int msg, int key, int x, int y, int a6, int a7) override;
 
-    // 目前是否為「已勾選」狀態
-    bool IsChecked() const;
+    // 查詢是否已勾選
+    BOOL IsChecked();
 
-    // 設定成勾選/不勾選（預設：設為勾選）。triggerCallback=true 時會走和點擊一致的回呼路徑
-    void SetCheck(bool checked = true, bool triggerCallback = true);
+    // 設定為已勾選（反編譯：若未勾選則模擬一次 msg=3 的點擊）
+    void SetCheck(int a2);
 
-    // 指定回呼：模擬反編譯 SetCallFunc(a2,a3,a4,a5,a6)
-    // basePtr + argOffset 會當作唯一參數傳入 fn(int)
-    void SetCallFunc(int basePtr, void (*fn)(int), int argOffset, int a5 = 0, int a6 = 0);
+    // 設定回呼函式
+    void SetCallFunc(int basePtr, int fn, int argOffset, int a5, int a6);
 
 private:
     void CallFunc();
 
 private:
-    // 兩組影像參數（同圖不同 block）
-    unsigned int   m_giidUnchecked{ 0 };
-    unsigned int   m_giidChecked{ 0 };
-    unsigned short m_blockUnchecked{ 0xFFFF };
-    unsigned short m_blockChecked{ 0xFFFF };
+    // 回呼相關
+    int  m_cbBasePtr{ 0 };      // DWORD 164
+    int  m_pad165{ 0 };         // DWORD 165（未使用/對齊）
+    int  m_cbFunc{ 0 };         // DWORD 166（函式指標，以 int 存）
+    int  m_cbArgOffset{ 0 };    // DWORD 167
+    int  m_cbA5{ 0 };           // DWORD 168
+    int  m_cbA6{ -1 };          // DWORD 169（預設 -1）
 
-    // 反編譯的 +164, +166~+169
-    int  m_cbBasePtr{ 0 };                 // a2
-    void (*m_cbFunc)(int) { nullptr };      // a3
-    int  m_cbArgOffset{ 0 };               // a4
-    int  m_cbA5{ 0 };                      // a5（保留）
-    int  m_cbA6{ 0 };                      // a6（保留）
+    // 未勾選狀態影像
+    unsigned int   m_uncheckedGIGroup{ 5 };   // DWORD 170
+    unsigned int   m_uncheckedGIID{ 0 };      // DWORD 171
+    unsigned short m_uncheckedBlock{ 0xFFFF }; // WORD 344
+    unsigned short m_pad172{ 0 };
+
+    // 已勾選狀態影像
+    unsigned int   m_checkedGIGroup{ 5 };     // DWORD 173
+    unsigned int   m_checkedGIID{ 0 };        // DWORD 174
+    unsigned short m_checkedBlock{ 0xFFFF };   // WORD 350
+    unsigned short m_pad175{ 0 };
 };
-
-//（可選）若你專案有「輸入被消耗」旗標，這裡宣告一下；沒有就移除此 extern
-extern int g_uiInputConsumed;
