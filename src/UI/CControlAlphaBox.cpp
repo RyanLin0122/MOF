@@ -23,8 +23,23 @@ DWORD CControlAlphaBox::PackColor(float r, float g, float b, float a)
 // ==== 建構 / 解構 ======================================================
 CControlAlphaBox::CControlAlphaBox()
 {
-	// 既定：白色不透明
+	// ground truth: ctor 先將每個頂點 z=0.5f, rhw=1.0f, diffuse=0xFFFF00FF
+	// 然後 SetColor(1,1,1,1) 覆寫 diffuse 為白色
+	InitVertices();
 	SetColor(1.f, 1.f, 1.f, 1.f);
+}
+
+void CControlAlphaBox::InitVertices()
+{
+	// ground truth (41366-41379): 每個頂點 x=0, y=0, z=0.5f, rhw=1.0f, diffuse=0xFFFF00FF
+	for (int i = 0; i < 4; ++i)
+	{
+		m_vtx[i].x = 0.0f;
+		m_vtx[i].y = 0.0f;
+		m_vtx[i].z = 0.5f;       // 1056964608 = 0x3F000000 = 0.5f
+		m_vtx[i].rhw = 1.0f;     // 1065353216 = 0x3F800000 = 1.0f
+		m_vtx[i].diffuse = 0xFFFF00FF; // -65281
+	}
 }
 
 CControlAlphaBox::~CControlAlphaBox()
@@ -79,20 +94,18 @@ void CControlAlphaBox::Create(int x, int y, unsigned short w, unsigned short h,
 // ==== 幾何更新 =========================================================
 void CControlAlphaBox::UpdateVerticesFromRect()
 {
-	// 與基準一致：半像素對齊（-0.5f）
+	// ground truth (PrepareDrawing): 只更新 x/y，不改 z/rhw
+	// z=0.5f 與 rhw=1.0f 在建構子中已設定
 	const float left = static_cast<float>(GetAbsX()) - 0.5f;
 	const float top = static_cast<float>(GetAbsY()) - 0.5f;
 	const float right = left + static_cast<float>(GetWidth());
 	const float bottom = top + static_cast<float>(GetHeight());
 
 	// TriangleFan：v0=LT, v1=RT, v2=RB, v3=LB
-	const float z = 0.0f;
-	const float rhw = 1.0f;
-
-	m_vtx[0].x = left;  m_vtx[0].y = top;    m_vtx[0].z = z; m_vtx[0].rhw = rhw;
-	m_vtx[1].x = right; m_vtx[1].y = top;    m_vtx[1].z = z; m_vtx[1].rhw = rhw;
-	m_vtx[2].x = right; m_vtx[2].y = bottom; m_vtx[2].z = z; m_vtx[2].rhw = rhw;
-	m_vtx[3].x = left;  m_vtx[3].y = bottom; m_vtx[3].z = z; m_vtx[3].rhw = rhw;
+	m_vtx[0].x = left;  m_vtx[0].y = top;
+	m_vtx[1].x = right; m_vtx[1].y = top;
+	m_vtx[2].x = right; m_vtx[2].y = bottom;
+	m_vtx[3].x = left;  m_vtx[3].y = bottom;
 }
 
 // ==== 顏色 / 透明度 ====================================================
@@ -139,6 +152,13 @@ void CControlAlphaBox::SetRectInParent()
 		m_usWidth = m_pParent->GetWidth();
 		m_usHeight = m_pParent->GetHeight();
 	}
+}
+
+// ==== 事件處理 =========================================================
+// ground truth (41408-41414): 直接轉呼叫 CControlBase::ControlKeyInputProcess
+int* CControlAlphaBox::ControlKeyInputProcess(int msg, int key, int x, int y, int a6, int a7)
+{
+	return CControlBase::ControlKeyInputProcess(msg, key, x, y, a6, a7);
 }
 
 // ==== 繪製流程（與基準一致） ===========================================
