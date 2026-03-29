@@ -80,6 +80,9 @@ public:
     void SetPassKeyInputToParent(bool b) { m_bPassKeyInputToParent = b; }
     bool GetPassKeyInputToParent() const { return m_bPassKeyInputToParent; }
 
+    void SetForwardKeyInputToParent(bool b) { m_bForwardKeyInputToParent = b; }
+    bool GetForwardKeyInputToParent() const { return m_bForwardKeyInputToParent; }
+
     void SetEnabled(bool b) { m_bEnabled = b; }
     bool IsEnabled() const { return m_bEnabled; }
 
@@ -146,6 +149,7 @@ protected:
     bool m_bIsVisible{ false }; // 對應 *((DWORD*)this+12)，ground truth 預設為 0（隱藏）
     bool m_bPassKeyInputToParent{ false }; // 對應 *((DWORD*)this+13)
     bool m_bEnabled{ true };   // 對應 *((DWORD*)this+14)，ground truth 預設為 1，用於 FindClickedChild/FindScrollBarCtrlChild
+    bool m_bForwardKeyInputToParent{ false }; // 對應 *((DWORD*)this+15)，ground truth 預設為 0，用於 ControlKeyInputProcess 判斷是否轉送至父層
     bool m_bToolTipEnabled{ false };
     bool m_bCenterOrigin{ false };
 

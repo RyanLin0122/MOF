@@ -22,7 +22,8 @@ CControlBoxBase::~CControlBoxBase()
 void CControlBoxBase::Init()
 {
     // 反編譯：*((DWORD*)this + 13) = 1
-    m_bIsVisible = true;
+    // ground truth: +13 對應 m_bPassKeyInputToParent（FindClickedChild 的 leaf 旗標），非 m_bIsVisible（+12）
+    m_bPassKeyInputToParent = true;
 
     // 反編譯：*((DWORD*)this + 16) = 0
     m_State16 = 0;

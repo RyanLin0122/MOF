@@ -14,7 +14,8 @@ static inline bool PtInRectOpen(const RECT& rc, stPoint pt)
 // ======================================================================
 CControlBase::CControlBase()
 {
-    m_ToolTip.Init();
+    // ground truth: 建構子只呼叫 stToolTipData 的建構子（由 C++ 成員初始化自動完成），
+    // 不呼叫 Init()。Init() 由 CControlBoxBase::Init() 或 InitLogIn() 在需要時呼叫。
 }
 
 CControlBase::~CControlBase()
@@ -290,9 +291,9 @@ int* CControlBase::ControlKeyInputProcess(int msg, int key, int x, int y, int a6
 
     if (m_pParent)
     {
-        if (m_bPassKeyInputToParent)
+        if (m_bForwardKeyInputToParent)
         {
-            // 如果旗標為 true，則呼叫父物件的函式，並用其回傳值更新 pResult
+            // ground truth: this[15] 為 true 時，轉送至父層的 ControlKeyInputProcess
             pResult = (CControlBase*)m_pParent->ControlKeyInputProcess(msg, key, x, y, a6, a7);
         }
         // 如果旗標為 false，則不執行任何操作，pResult 保持為 m_pParent 的值
