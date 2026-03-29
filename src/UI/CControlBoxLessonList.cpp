@@ -1,21 +1,22 @@
 #include "UI/CControlBoxLessonList.h"
 
-// 顏色常數：反編譯碼直接寫入 -7590900，推測為 ARGB 的某種深色
-static const int kLessonTextColor = -7590900;
-
 CControlBoxLessonList::CControlBoxLessonList()
     : CControlBoxBase()
     , m_titleText()
     , m_subText()
 {
-    // vftable
-    // *(_DWORD *)this = &CControlBoxLessonList::`vftable'; 由 C++ 自動完成
-
-    // 先做 BoxBase 的一般初始化（對應 CControlBoxBase::Init）
+    // 反編譯順序：Init → CreateChildren → 再在 ctor 本體建立/配置兩個 CControlText
     CControlBoxBase::Init();
-
-    // 建立/配置子控制項（等價於反編譯碼裡的 CreateChildren + 個別 Create/SetPos）
     CreateChildren();
+
+    // 反編譯碼在 ctor 裡 CreateChildren 之後，明確對兩個 Text 執行 Create/SetPos/SetTextColor
+    m_titleText.Create(this);
+    m_titleText.SetPos(43, 3);
+    m_titleText.SetTextColor(static_cast<DWORD>(-7590900));
+
+    m_subText.Create(this);
+    m_subText.SetPos(43, 17);
+    m_subText.SetTextColor(static_cast<DWORD>(-7590900));
 }
 
 CControlBoxLessonList::~CControlBoxLessonList()
@@ -32,19 +33,8 @@ CControlBoxLessonList::~CControlBoxLessonList()
 
 void CControlBoxLessonList::CreateChildren()
 {
-    // 先讓 BoxBase 建好它自己的背景（等價反編譯：CControlBoxBase::CreateChildren）
+    // GT 的 CreateChildren 無獨立函式本體（只有前置宣告），
+    // 呼叫 CControlBoxBase::CreateChildren 建立背景圖即可。
+    // 兩個 CControlText 的 Create/SetPos/SetTextColor 在 ctor 中完成。
     CControlBoxBase::CreateChildren();
-
-    // 建立第一個文字物件（偏移 +312）
-    // 反編譯碼中是呼叫該 CControlText 的 vtbl[12] 並帶入 parent=this
-    m_titleText.Create(this);
-    m_titleText.SetPos(43, 3);
-    m_titleText.SetTextColor(kLessonTextColor);
-
-    // 建立第二個文字物件（偏移 +744）
-    m_subText.Create(this);
-    m_subText.SetPos(43, 17);
-    m_subText.SetTextColor(kLessonTextColor);
-
-    // 反編譯碼在 ctor 末端並無額外動作（不需設字型就忠實維持原狀）。
 }

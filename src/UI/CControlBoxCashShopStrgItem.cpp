@@ -33,23 +33,20 @@ void CControlBoxCashShopStrgItem::CreateChildren()
     CControlBoxBase::CreateChildren();
 
     // 背景圖 X 往右 1（對應 SetX((char*)this+120, 1)）
-    if (auto* bg = GetBackground())
-        bg->SetX(1);
+    GetBackground()->SetX(1);
 
     // 數字框掛在背景圖底下（對應 *((this+80)->Create)(this+320, this+120)）
     m_countBox.Create(GetBackground());
 
-    // 自身尺寸設為背景圖尺寸（對應 CControlBase::SetSize(this, *((_DWORD*)this + 38)) 的等價處理）
-    if (auto* bg2 = GetBackground())
-        SetSize(bg2->GetWidth(), bg2->GetHeight());
+    // 自身尺寸設為背景圖尺寸（對應 CControlBase::SetSize(this, *((_DWORD*)this + 38))）
+    SetSize(GetBackground()->GetWidth(), GetBackground()->GetHeight());
 
     // 物品 Icon 掛在本控制項底下
     m_icon.Create(this);
     m_icon.SetImage(0x20000015u, 2u); // 對應 SetImage(..., 0x20000015, 2)
 
-    // *((_DWORD *)this + 284) = 0; 
-    // 原始碼直接寫入子物件內部位移（推測是不影響行為的旗標/暫存值）。
-    // 這裡不做未定義的內部欄位存取；如需相同行為，可在 CControlImage 內提供對應 setter。
+    // 反編譯：*((_DWORD *)this + 284) = 0 → byte 1136 = m_icon(+1080) + 56 = m_icon.m_bEnabled
+    m_icon.SetEnabled(false);
 }
 
 //-------------------------------------------------------------
