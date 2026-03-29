@@ -159,3 +159,17 @@ void* unk_B4B924[1024] = {};
 ClientCharacter unk_1409D80[1000] = {};
 ClientCharacter* dword_1843F78[1000] = {};
 size_t NumOfElements = 0;
+
+// CControlChatBallon 九宮格樣式表（對齊反編譯 0x6C6AD0）
+// 每種樣式 11 個 uint16 block ID，順序：TL, TM, TR, ML, MM, MC, BL, BM, BR, Arrow, ArrowTail
+// 注意：實際值需從二進制 dump 還原，此處為佔位
+const uint16_t g_ChatBallonStyleTable[] = {
+    // style 0 (預設白色氣球)
+    0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10,
+    // style 1
+    11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21,
+    // style 2
+    22, 23, 24, 25, 26, 27, 28, 29, 30, 31, 32,
+    // style 3
+    33, 34, 35, 36, 37, 38, 39, 40, 41, 42, 43,
+};
