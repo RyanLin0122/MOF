@@ -114,9 +114,9 @@ int CControlBoxPopMenu::SetTextColorMouseInput(
     m_fColor2B = color2B;
     m_fColor2A = color2A;
 
-    // 以 color2 計算 ARGB 並寫入 m_dwTextColor
+    // 以 color2 計算 ARGB 並寫入 m_Text 的文字色（對應 GT offset 304 = m_Text + 148）
     DWORD color = PackARGB(color2R, color2G, color2B, color2A);
-    m_dwTextColor = color;
+    m_Text.SetTextColor(color);
     return static_cast<int>(color);
 }
 
@@ -126,8 +126,8 @@ int CControlBoxPopMenu::SetTextColorMouseInput(
 void CControlBoxPopMenu::NoneActive()
 {
     CControlBase::NoneActive();
-    // 反編譯：*((_DWORD *)this + 76) = -3502787
-    m_dwTextColor = static_cast<DWORD>(-3502787);
+    // 反編譯：*((_DWORD *)this + 76) = -3502787 → offset 304 = m_Text.m_TextColor
+    m_Text.SetTextColor(static_cast<DWORD>(-3502787));
 }
 
 //----------------------------------------------------------------
@@ -136,8 +136,8 @@ void CControlBoxPopMenu::NoneActive()
 void CControlBoxPopMenu::Active()
 {
     CControlBase::Active();
-    // 以 Color2 計算 ARGB
-    m_dwTextColor = PackARGB(m_fColor2R, m_fColor2G, m_fColor2B, m_fColor2A);
+    // 以 Color2 計算 ARGB → 寫入 m_Text 文字色
+    m_Text.SetTextColor(PackARGB(m_fColor2R, m_fColor2G, m_fColor2B, m_fColor2A));
 }
 
 //----------------------------------------------------------------
@@ -173,11 +173,11 @@ int* CControlBoxPopMenu::ControlKeyInputProcess(int msg, int key, int x, int y, 
 
     case 4: // MouseLeave（恢復 Color2 / mouseOver 色）
         ButtonPosUp();
-        m_dwTextColor = PackARGB(m_fColor2R, m_fColor2G, m_fColor2B, m_fColor2A);
+        m_Text.SetTextColor(PackARGB(m_fColor2R, m_fColor2G, m_fColor2B, m_fColor2A));
         break;
 
     case 7: // MouseEnter（切換為 Color1 / normal 色）
-        m_dwTextColor = PackARGB(m_fColor1R, m_fColor1G, m_fColor1B, m_fColor1A);
+        m_Text.SetTextColor(PackARGB(m_fColor1R, m_fColor1G, m_fColor1B, m_fColor1A));
         break;
 
     default:
