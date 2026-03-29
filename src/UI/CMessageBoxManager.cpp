@@ -106,7 +106,7 @@ stMessageBoxList::~stMessageBoxList()
 // ================================================================
 CMsgBoxOptionOK::CMsgBoxOptionOK()
     : m_bFlag(1)
-    , m_pad1{}
+    // m_pad1 未初始化 — 對齊 ground truth（只寫 byte0 和 dword[1..5]）
     , m_nField1(0)
     , m_nField2(0)
     , m_nField3(0)
@@ -127,13 +127,13 @@ CMsgBoxOptionEdit::CMsgBoxOptionEdit()
     , m_nField4(43)
     , m_nField5(55)
     , m_bField6(1)
-    , m_pad1{}
+    // m_pad1 未初始化 — 對齊 ground truth（offset 25~27 未寫入）
     , m_nField7(0)
     , m_nField8(3386)
     , m_nField9(0)
     , m_nField10(0)
     , m_bField11(0)
-    , m_pad2{}
+    // m_pad2 未初始化 — 對齊 ground truth（offset 45~47 未寫入）
     , m_nField12(0)
     , m_nField13(0)
     , m_nField14(2)
