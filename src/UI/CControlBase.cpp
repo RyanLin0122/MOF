@@ -432,10 +432,9 @@ void CControlBase::SetToolTipDataString(char* a2, int a3)
 // ------------------------------
 void CControlBase::SetToolTipDataDesc(uint16_t a2)
 {
-    // kind=17，僅帶入 desc id，其餘參數填 0
-    (void)m_ToolTip.SetKindType(/*kind*/17, /*id*/(int16_t)a2,
-        /*a4*/0, /*a5*/0, /*a6*/0,
-        /*a7*/0, /*a8*/0);
+    // ground truth: *((_DWORD *)this + 18) = 17; *((_WORD *)this + 40) = a2;
+    // 只設 kind=17 與 descId=a2，不重置其他 tooltip 欄位
+    m_ToolTip.SetDescType(static_cast<int16_t>(a2));
 }
 
 // ------------------------------

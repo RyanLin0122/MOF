@@ -64,12 +64,16 @@ void CControlBoxCashShop::CreateChildren()
     GetBackground()->SetPos(31, 14);
     // 反編譯：*((_DWORD *)this + 39) = 0x40000000 → scale 2.0f
     GetBackground()->SetScale(2.0f, 2.0f);
+    // 反編譯：*((_DWORD *)this + 44) = 0 → background enabled = false
+    GetBackground()->SetEnabled(false);
 
     // ---- 名稱文字 (+3220) ----
     // 反編譯：vtable+8 → Create(63, 88, this)
     m_TextName.Create(63, 88, this);
     // 反編譯：*((_DWORD *)this + 841) = 1 → alignment = 1
     m_TextName.SetAlignment(1);
+    // 反編譯：*((_DWORD *)this + 819) = 0 → enabled = false
+    m_TextName.SetEnabled(false);
 
     // ---- 價格文字 (+3652) ----
     // 反編譯：vtable+8 → Create(63, 102, this)
@@ -78,6 +82,8 @@ void CControlBoxCashShop::CreateChildren()
     m_TextPrice.SetAlignment(1);
     // 反編譯：*((_DWORD *)this + 950) = -65536 → textColor = 0xFFFF0000 (紅色)
     m_TextPrice.SetTextColor(0xFFFF0000);
+    // 反編譯：*((_DWORD *)this + 927) = 0 → enabled = false
+    m_TextPrice.SetEnabled(false);
 
     // ---- 購買按鈕 (+324) ----
     // 反編譯：vtable+12 → Create(this)
@@ -132,6 +138,9 @@ void CControlBoxCashShop::CreateChildren()
     m_ImgFrame.SetPos(-6, -6);
     // 反編譯：SetImage(0x2200002E, 0)
     m_ImgFrame.SetImage(0x2200002Eu, 0);
+
+    // 反編譯：*((_DWORD *)this + 2128) = 0 → frame enabled = false
+    m_ImgFrame.SetEnabled(false);
 
     // ---- AlphaBox (+4084) ----
     // 反編譯：Create(15, 106, 1, 1, 1.0f, 0.0f, 0.0f, 1.0f, this)

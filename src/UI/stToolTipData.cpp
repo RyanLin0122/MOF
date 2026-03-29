@@ -77,3 +77,10 @@ void stToolTipData::SetKindType(int type, short id, int count, int color, char g
     m_durability = durability;  // 耐久度
     m_extra = extra;      // 額外數據
 }
+
+// 設定描述類型（kind=17），僅設 m_type 與 m_itemId，不重置其他欄位
+void stToolTipData::SetDescType(short descId)
+{
+    m_type = 17;
+    m_itemId = descId;
+}

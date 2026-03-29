@@ -144,7 +144,7 @@ void CControlAlphaBox::SetRectInParent()
 // ==== 繪製流程（與基準一致） ===========================================
 void CControlAlphaBox::PrepareDrawing()
 {
-	if (!m_bIsVisible) return;
+	// ground truth: 不檢查 m_bIsVisible，只檢查裝置狀態旗標與 VB 可用性
 	if (!m_pVBData)    return;
 
 	auto* mgr = CDeviceResetManager::GetInstance();
@@ -157,7 +157,7 @@ void CControlAlphaBox::PrepareDrawing()
 
 void CControlAlphaBox::Draw()
 {
-	if (!m_bIsVisible) return;
+	// ground truth: 不檢查 m_bIsVisible，只檢查裝置狀態旗標與 VB/Device
 	if (!m_pVBData)    return;
 	if (!Device)       return;
 
