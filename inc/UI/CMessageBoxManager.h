@@ -37,7 +37,7 @@ struct strMsgBoxAttr
     int m_nField6;          // this[6]  = 0
     int m_nField7;          // this[7]  = -1
     int m_nField8;          // this[8]  = 0
-    int m_nField9;          // this[9]  = 0
+    int m_nField9;          // this[9]  — 建構子未初始化
 };
 
 // ============================================================
