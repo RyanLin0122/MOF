@@ -27,13 +27,13 @@ void CControlPageScroll::CreateChildren()
     // 左鍵（上一頁）— 對齊反編譯：SetImage(0x20000013, 25, 27, 29, 31)
     m_btnPrev.Create(this);
     m_btnPrev.SetImage(0x20000013u, 25, 27, 29, 31);
-    m_btnPrev.SetPassKeyInputToParent(true);
+    m_btnPrev.SetForwardKeyInputToParent(true);
 
     // 右鍵（下一頁）— 對齊反編譯：SetImage(0x20000013, 26, 28, 30, 32)
     m_btnNext.Create(this);
     m_btnNext.SetX(69);
     m_btnNext.SetImage(0x20000013u, 26, 28, 30, 32);
-    m_btnNext.SetPassKeyInputToParent(true);
+    m_btnNext.SetForwardKeyInputToParent(true);
 
     // 依兩側按鈕設定整體控件大小（寬=右鍵X+右鍵寬；高=右鍵高）
     SetHeight(static_cast<uint16_t>(m_btnNext.GetHeight()));

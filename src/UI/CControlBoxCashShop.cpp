@@ -47,8 +47,10 @@ CControlBoxCashShop::~CControlBoxCashShop()
 void CControlBoxCashShop::Init()
 {
     CControlBoxBase::Init();
-    // 反編譯：*((_DWORD *)this + 13) = 0 → 初始隱藏
-    SetVisible(false);
+    // 反編譯：*((_DWORD *)this + 13) = 0
+    // ground truth: +13 對應 m_bPassKeyInputToParent，非 m_bIsVisible（+12）
+    // CControlBoxBase::Init() 設 +13=1，此處覆寫為 0
+    SetPassKeyInputToParent(false);
 }
 
 // ====================================================================

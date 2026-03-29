@@ -35,10 +35,10 @@ void CControlScrollBar::Create(int a2, int a3, unsigned short a4, unsigned short
 
     // 設定預設子控制屬性
     // 對齊反編譯：this[238]=1, this[600]=1, this[419]=1
-    // 這些是按鈕的 passKeyInputToParent 旗標
-    m_ArrowUp.SetPassKeyInputToParent(true);
-    m_Thumb.SetPassKeyInputToParent(true);
-    m_ArrowDown.SetPassKeyInputToParent(true);
+    // ground truth: 設定的是 +15（m_bForwardKeyInputToParent），非 +13
+    m_ArrowUp.SetForwardKeyInputToParent(true);
+    m_Thumb.SetForwardKeyInputToParent(true);
+    m_ArrowDown.SetForwardKeyInputToParent(true);
 
     // 設定預設圖像
     m_Background.SetImage(0x20000013u, 0x31, 0x32, 0x33, 0);

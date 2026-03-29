@@ -15,7 +15,7 @@ typedef int BOOL;
  *
  * 反編譯對照：
  * - ctor/dtor：基底 + 內建 CControlImage
- * - Init()：(*this+13)=1, (*this+16)=0, ToolTip.Init()
+ * - Init()：(*this+13)=1 (m_bPassKeyInputToParent), (*this+16)=0, ToolTip.Init()
  * - CreateChildren()：背景圖 Create(this)，SetShadeMode(0)
  * - ShowChildren()：基底後 (*this+16)=1
  * - HideChildren()：多處狀態復位後，基底 HideChildren()，再呼叫 vtbl+84

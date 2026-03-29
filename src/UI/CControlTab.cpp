@@ -15,8 +15,8 @@ CControlTab::CControlTab()
     CreateChildren();
     Init();
 
-    // 對齊反編譯：this[15] = 1（CControlBase 的某旗標）
-    m_bPassKeyInputToParent = true;
+    // 對齊反編譯：this[15] = 1（CControlBase 的 ForwardKeyInputToParent 旗標）
+    m_bForwardKeyInputToParent = true;
 
     // 對齊反編譯：strcpy((char*)this + 208, "J0007")
     // offset 208 = CControlButtonBase 內的 m_szSoundName（音效名稱）
