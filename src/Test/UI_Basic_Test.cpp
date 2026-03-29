@@ -1,6 +1,5 @@
 #include "Test/UI_Basic_Test.h"
 #include <cmath> // for sin
-#include <cstdio> // for sprintf_s
 
 UIBasicTest::UIBasicTest() :
     m_pRootControl(nullptr),
@@ -42,28 +41,30 @@ HRESULT UIBasicTest::Initialize()
     // 1. 建立一個半透明的根容器 (灰色)，方便觀察其範圍
     m_pRootControl = new CControlAlphaBox();
     m_pRootControl->Create(300, 100, 400, 300, 0.5f, 0.5f, 0.5f, 0.5f, nullptr);
+    m_pRootControl->Show();
 
-    // 2. 建立測試控制項1 (紅色)，掛在 Root底下。座標 (50, 50) 是相對於 Root 的。
+    // 2. 建立測試控制項1 (紅色)，掛在 Root 底下。
+    // Create() 接受絕對螢幕座標：abs(350, 150) = root(300,100) + 相對(50,50)
     m_pTestControl1 = new CControlAlphaBox();
-    m_pTestControl1->Create(50, 50, 200, 80, 1.0f, 0.0f, 0.0f, 1.0f, m_pRootControl);
+    m_pTestControl1->Create(350, 150, 200, 80, 1.0f, 0.0f, 0.0f, 1.0f, m_pRootControl);
+    m_pTestControl1->Show();
 
-    // 3. 建立測試控制項2 (藍色)，掛在 TestControl1 底下。座標 (20, 20) 是相對於 TestControl1 的。
+    // 3. 建立測試控制項2 (藍色)，掛在 TestControl1 底下。
+    // abs(370, 170) = ctrl1(350,150) + 相對(20,20)
     m_pTestControl2 = new CControlAlphaBox();
-    m_pTestControl2->Create(20, 20, 100, 40, 0.0f, 0.0f, 1.0f, 1.0f, m_pTestControl1);
+    m_pTestControl2->Create(370, 170, 100, 40, 0.0f, 0.0f, 1.0f, 1.0f, m_pTestControl1);
+    m_pTestControl2->Show();
 
     m_pTestEditBox = new CControlEditBox();
     m_pTestEditBox->Create(m_pRootControl);
 
     // 4. 建立一個文字控制項，用於顯示狀態資訊
     m_pStatusText = new CControlText();
-    m_pStatusText->Create(10, 10, nullptr); // 掛在根底下 (nullptr)
-    m_pStatusText->SetTextColor(0xFFFFFFFF); // 白色
-    m_pStatusText->SetFontHeight(16);
+    m_pStatusText->Create(10, 10, nullptr);
+    m_pStatusText->SetTextColor(0xFFFFFFFF);
+    m_pStatusText->SetControlSetFont("Notice");
+    m_pStatusText->Show();
 
-    printf("[DBG] root first child = %p\n", m_pRootControl->GetFirstChild());
-    printf("[DBG] ctrl1 parent == root ? %d\n", m_pTestControl1->GetParent() == m_pRootControl);
-    printf("[DBG] ctrl1 first child = %p\n", m_pTestControl1->GetFirstChild());
-    printf("[DBG] ctrl2 parent == ctrl1 ? %d\n", m_pTestControl2->GetParent() == m_pTestControl1);
     return S_OK;
 }
 
@@ -85,24 +86,20 @@ void UIBasicTest::Update(float fElapsedTime)
     bool isVisible = static_cast<int>(m_fTotalTime) % 2 == 0;
     m_pTestControl2->SetVisible(isVisible);
 
-    //m_pStatusText->SetText(4751);
-    //m_pStatusText->SetText(3145, 10);
     // 更新狀態文字，顯示各控制項的絕對座標
-    //m_pStatusText->SetTextW(L"紅色方塊(Control1) X 座標正在以 sin() 變化");
-    
     m_pStatusText->SetTextFmtW(
-        L"CControlBase 測試:\n"
-        L" - 紅色方塊 (Control1) X 座標正在以 sin() 變化。\n"
-        L" - 藍色方塊 (Control2) 是紅色方塊的子項，應跟隨移動，且每秒閃爍。\n\n"
-        L"即時座標:\n"
-        L" - Root Abs: (%d, %d)\n"
-        L" - Control1 Abs: (%d, %d)\n"
-        L" - Control2 Abs: (%d, %d)",
+        L"CControlBase Test:\n"
+        L" - Control1 (RED): X animates with sin()\n"
+        L" - Control2 (BLUE): child of Control1, blinks every 2s\n\n"
+        L"Abs Coords:\n"
+        L" - Root:     (%d, %d)\n"
+        L" - Control1: (%d, %d)\n"
+        L" - Control2: (%d, %d)",
         m_pRootControl->GetAbsX(), m_pRootControl->GetAbsY(),
         m_pTestControl1->GetAbsX(), m_pTestControl1->GetAbsY(),
         m_pTestControl2->GetAbsX(), m_pTestControl2->GetAbsY()
     );
-    
+
     // 由於文字是多行，需要給定一個繪製寬度
     m_pStatusText->SetSize(600, 200);
 
@@ -120,7 +117,6 @@ void UIBasicTest::Render()
     m_pRootControl->Draw();
 
     // 繪製狀態文字
-    if (m_pStatusText) {
+    if (m_pStatusText)
         m_pStatusText->Draw();
-    }
 }

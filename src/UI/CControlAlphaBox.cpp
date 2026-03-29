@@ -165,10 +165,10 @@ int* CControlAlphaBox::ControlKeyInputProcess(int msg, int key, int x, int y, in
 void CControlAlphaBox::PrepareDrawing()
 {
 	// ground truth: 不檢查 m_bIsVisible，只檢查裝置狀態旗標與 VB 可用性
-	if (!m_pVBData)    return;
+	if (!m_pVBData) return;
 
 	auto* mgr = CDeviceResetManager::GetInstance();
-	if (mgr && mgr->IsDeviceReady() && m_pVBData) {
+	if (mgr && mgr->IsDeviceReady()) {
 		UpdateVerticesFromRect();
 		mgr->UpdateVertexBuffer(m_pVBData, m_vtx, sizeof(m_vtx));
 		CControlBase::PrepareDrawing();
@@ -178,8 +178,8 @@ void CControlAlphaBox::PrepareDrawing()
 void CControlAlphaBox::Draw()
 {
 	// ground truth: 不檢查 m_bIsVisible，只檢查裝置狀態旗標與 VB/Device
-	if (!m_pVBData)    return;
-	if (!Device)       return;
+	if (!m_pVBData) return;
+	if (!Device)    return;
 
 	IDirect3DVertexBuffer9* vb = CDeviceResetManager::GetInstance()->GetVertexBuffer(m_pVBData);
 	if (!vb) return;

@@ -37,7 +37,7 @@ void CControlBase::Create(CControlBase* pParent)
 
 void CControlBase::Create(int x, int y, CControlBase* pParent)
 {
-    Create(pParent);
+    CControlBase::Create(pParent); // ground truth: non-virtual direct call
     SetAbsPos(x, y);
 }
 
