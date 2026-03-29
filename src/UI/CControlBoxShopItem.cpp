@@ -17,6 +17,10 @@ CControlBoxShopItem::CControlBoxShopItem()
     CreateChildren();
     CControlBoxBase::Init();
     m_fxState = 0;
+    // ground truth: *((_DWORD *)this + 140) = 0; *((_DWORD *)this + 188) = 0;
+    // 對應 m_frameL 與 m_frameR 的 DWORD[14] (m_bEnabled)
+    m_frameL.SetEnabled(false);
+    m_frameR.SetEnabled(false);
 }
 
 //--------------------------------------------------

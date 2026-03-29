@@ -216,8 +216,8 @@ void CControlBoxCashShop::SetData(unsigned int a2, uint16_t a3, char* a4,
     // 反編譯：CControlImage::SetBlockID((char*)this + 8456, a8)
     m_ImgFrame.SetBlockID(a8);
 
-    // 反編譯：*((_DWORD *)this + 2128) = 0 → 重置 m_ImgFrame 內部旗標
-    m_ImgFrame.NoneActive();
+    // ground truth: *((_DWORD *)this + 2128) = 0 → 對應 m_ImgFrame 的 DWORD[14] (m_bEnabled)
+    m_ImgFrame.SetEnabled(false);
 
     // 反編譯：if (a7 > 1) → 數量大於 1 時顯示數量
     if (a7 > 1u)

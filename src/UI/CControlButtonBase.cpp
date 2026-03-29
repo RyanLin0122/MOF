@@ -144,6 +144,6 @@ int CControlButtonBase::IsMouseOver()
 // ==========================
 void CControlButtonBase::SetSoundName(const char* name)
 {
-    strncpy(m_szSoundName, name, sizeof(m_szSoundName) - 1);
-    m_szSoundName[sizeof(m_szSoundName) - 1] = '\0';
+    // ground truth: strcpy((char*)this + 208, name) — 不截斷
+    strcpy(m_szSoundName, name);
 }
