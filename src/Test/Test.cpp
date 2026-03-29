@@ -165,7 +165,6 @@ int Run_Test() {
 	//print_nfs_test_result();
 	//run_cmofpacking_tests();
 	//run_comp_test();
-	//create_vfs_archive();
 	//ImageSystemTester tester;
 	//tester.RunImageTests();
 	//text_manager_test();

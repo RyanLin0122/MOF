@@ -39,6 +39,10 @@ bool ImageResource::LoadGIInPack(const char* filePathInPack, int /*packerType*/,
 
     // 讀 Header
     m_version = *reinterpret_cast<int*>(cur);               cur += 4;
+
+    // 驗證 version：只接受 10 或 20，其餘視為損壞資料
+    if (m_version != 10 && m_version != 20) return false;
+
     const bool isV20 = (m_version == 20);
     const bool isCompressed = isV20; // 目前資源：v20 皆為壓縮
 
@@ -47,6 +51,9 @@ bool ImageResource::LoadGIInPack(const char* filePathInPack, int /*packerType*/,
     m_imageDataSize = *reinterpret_cast<unsigned int*>(cur);      cur += 4; // v20: 解壓後大小
     m_d3dFormat = *reinterpret_cast<D3DFORMAT*>(cur);         cur += sizeof(D3DFORMAT);
     m_animationFrameCount = *reinterpret_cast<unsigned short*>(cur); cur += 2;
+
+    // 驗證影格數：合理上限防止損壞資料導致的巨量分配
+    if (m_animationFrameCount > 10000) return false;
 
     // 影格表
     if (m_animationFrameCount > 0) {

@@ -218,7 +218,7 @@ int APIENTRY  wWinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPWSTR lpCm
 	CMofPacking::GetInstance()->PackFileOpen("mof");
 	g_clTextFileManager.Initialize((char*)("MoFData/Mof.dat"));
 
-
+	//create_vfs_archive();
 	kr_printf(g_DCTTextManager.GetText(4750));
 
 	WNDCLASSEXW wc{ sizeof(WNDCLASSEXW) };

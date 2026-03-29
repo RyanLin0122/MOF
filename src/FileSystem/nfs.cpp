@@ -1941,10 +1941,11 @@ int cache_slide(NfsDataHandle* handle, long long new_desired_start_offset)
 		return -1; // fseek 失敗
 	}
 
-	// 從新位置讀取資料填滿快取緩衝區
-	// 原始碼中 _fread 的大小是 cache->buffer_capacity
-	// 不檢查實際讀取的位元組數，假設填滿或到達檔案結尾
-	fread(cache->buffer, 1, cache->buffer_capacity, handle->file_ptr);
+	// 從新位置讀取資料填滿快取緩衝區，zero-fill 未讀到的部分（如 EOF 之後）
+	size_t bytes_read = fread(cache->buffer, 1, cache->buffer_capacity, handle->file_ptr);
+	if (bytes_read < cache->buffer_capacity) {
+		memset(static_cast<char*>(cache->buffer) + bytes_read, 0, cache->buffer_capacity - bytes_read);
+	}
 
 	// 滑動並重新讀取後，快取應被視為 clean (因為它反映了磁碟的內容)
 	// 原始碼在 cache_create 和 cache_resize 後都設定 is_synced_flag = 1
