@@ -1,7 +1,5 @@
 #include "UI/CListMgr.h"
-
-// CUIBase 的虛設類別，僅用於編譯
-class CUIBase {};
+#include "UI/CUIBase.h"
 
 /**
  * CListMgr 建構函式

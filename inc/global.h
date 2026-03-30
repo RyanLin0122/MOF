@@ -70,6 +70,23 @@ class cltBasicAppearKindInfo;
 class GameSound;
 class CMessageBoxManager;
 class cltChattingMgr;
+class cltSkillKindInfo;
+class cltLessonKindInfo;
+class cltEmblemKindInfo;
+class cltSpecialtyKindInfo;
+class cltMakingItemKindInfo;
+class cltPetSkillKindInfo;
+class cltCoupleRingKindInfo;
+class cltTransformKindInfo;
+class cltEmoticonKindInfo;
+class cltPKRankKindInfo;
+class cltCharKindInfo;
+class cltRegenMonsterKindInfo;
+class cltMapUseItemInfoKindInfo;
+class cltEquipmentSystem;
+class cltSkillSystem;
+class cltUsingSkillSystem;
+class CToolTipManager;
 
 //-----------------------------------------------------------------------------
 // 全域變數
@@ -257,6 +274,26 @@ extern CDeviceManager&          g_clDeviceManager;
 
 // Sound
 extern GameSound                g_GameSoundManager;
+
+// Info (additional)
+extern cltSkillKindInfo         g_clSkillKindInfo;
+extern cltLessonKindInfo        g_clLessonKindInfo;
+extern cltEmblemKindInfo        g_clEmblemKindInfo;
+extern cltSpecialtyKindInfo     g_clSpecialtyKindInfo;
+extern cltMakingItemKindInfo    g_clMakingItemKindInfo;
+extern cltPetSkillKindInfo      g_clPetSkillKindInfo;
+extern cltCoupleRingKindInfo    g_clCoupleRingKindInfo;
+extern cltTransformKindInfo     g_clTransformKindInfo;
+extern cltEmoticonKindInfo      g_clEmoticonKindInfo;
+extern cltPKRankKindInfo        g_clPKRankKindInfo;
+extern cltCharKindInfo*         g_pcltCharKindInfo;
+extern cltRegenMonsterKindInfo  g_cltRegenMonsterKindInfo;
+extern cltMapUseItemInfoKindInfo g_clMapUseItemInfoKindInfo;
+extern cltMapInfo*              g_pcltMapInfo;
+
+// System (additional)
+extern cltEquipmentSystem*      dword_21BA32C;
+extern cltSkillSystem           g_clSkillSystem;
 
 // UI 輸入消耗旗標（對齊反編譯 dword_AFD34C）
 extern int                      dword_AFD34C;
