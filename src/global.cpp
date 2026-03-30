@@ -6,6 +6,21 @@
 #include "Info/cltPetKindInfo.h"
 #include "Info/cltClientPetKindInfo.h"
 #include "Info/cltMoFC_EffectKindInfo.h"
+#include "Info/cltSkillKindInfo.h"
+#include "Info/cltLessonKindInfo.h"
+#include "Info/cltEmblemKindInfo.h"
+#include "Info/cltSpecialtyKindInfo.h"
+#include "Info/cltMakingItemKindInfo.h"
+#include "Info/cltPetSkillKindInfo.h"
+#include "Info/cltCoupleRingKindInfo.h"
+#include "Info/cltTransformKindInfo.h"
+#include "Info/cltEmoticonKindInfo.h"
+#include "Info/cltPKRankKindInfo.h"
+#include "Info/cltRegenMonsterKindInfo.h"
+#include "Info/cltMapUseItemInfoKindInfo.h"
+#include "Info/cltMapInfo.h"
+#include "System/cltSkillSystem.h"
+#include "System/cltEquipmentSystem.h"
 #include "Character/ClientCharacter.h"
 #include "Character/ClientCharacterManager.h"
 #include "System/cltQuestSystem.h"
@@ -165,6 +180,26 @@ void* unk_B4B924[1024] = {};
 ClientCharacter unk_1409D80[1000] = {};
 ClientCharacter* dword_1843F78[1000] = {};
 size_t NumOfElements = 0;
+
+// Info (additional)
+cltSkillKindInfo g_clSkillKindInfo;
+cltLessonKindInfo g_clLessonKindInfo;
+cltEmblemKindInfo g_clEmblemKindInfo;
+cltSpecialtyKindInfo g_clSpecialtyKindInfo;
+cltMakingItemKindInfo g_clMakingItemKindInfo;
+cltPetSkillKindInfo g_clPetSkillKindInfo;
+cltCoupleRingKindInfo g_clCoupleRingKindInfo;
+cltTransformKindInfo g_clTransformKindInfo;
+cltEmoticonKindInfo g_clEmoticonKindInfo;
+cltPKRankKindInfo g_clPKRankKindInfo;
+cltCharKindInfo* g_pcltCharKindInfo = nullptr;
+cltRegenMonsterKindInfo g_cltRegenMonsterKindInfo;
+cltMapUseItemInfoKindInfo g_clMapUseItemInfoKindInfo;
+cltMapInfo* g_pcltMapInfo = nullptr;
+
+// System (additional)
+cltEquipmentSystem* dword_21BA32C = nullptr;
+cltSkillSystem g_clSkillSystem;
 
 // CControlChatBallon 九宮格樣式表（對齊反編譯 0x6C6AD0）
 // 每種樣式 11 個 uint16 block ID，順序：TL, TM, TR, ML, MM, MC, BL, BM, BR, Arrow, ArrowTail
