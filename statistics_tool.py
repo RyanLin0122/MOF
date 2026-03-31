@@ -38,6 +38,7 @@ FORCE_MISSING_CLASSES = [
     "CUIMessageBoxSortList",
     "CUIMessageBoxMultLineOK",
     "CUIMessageBoxMultLineOKLarge",
+    "CUIWorldMap"
     "CMessageBoxManager",
     "cltShopInfo",
     "CQuizEventParser",

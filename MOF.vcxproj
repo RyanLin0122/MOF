@@ -449,6 +449,7 @@
     <ClCompile Include="src\UI\CUIBase.cpp" />
     <ClCompile Include="src\UI\CUITutorial.cpp" />
     <ClCompile Include="src\UI\CUIManager.cpp" />
+    <ClCompile Include="src\UI\CUIWorldMap.cpp" />
     <ClCompile Include="src\UI\CControlAlphaBox.cpp" />
     <ClCompile Include="src\UI\CControlBoxAbility.cpp" />
     <ClCompile Include="src\UI\CControlBoxBase.cpp" />
@@ -845,6 +846,7 @@
     <ClInclude Include="inc\UI\CUIManager.h" />
     <ClInclude Include="inc\UI\CUIMessageBoxTypes.h" />
     <ClInclude Include="inc\UI\CUITutorial.h" />
+    <ClInclude Include="inc\UI\CUIWorldMap.h" />
     <ClInclude Include="inc\UI\stToolTipData.h" />
     <ClInclude Include="inc\UI\CControlImage.h" />
     <ClInclude Include="inc\UI\CControlText.h" />

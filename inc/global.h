@@ -177,6 +177,7 @@ extern DCTIMMList               g_IMMList;
 
 // Map
 extern Map                      g_Map;
+extern unsigned short           dword_21B8DF4; // current map ID (ground truth: 0x21B8DF4)
 extern cltMapTitle              g_clMapTitle;
 
 // Network

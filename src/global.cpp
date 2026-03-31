@@ -116,6 +116,7 @@ DCTTextManager g_DCTTextManager;
 MoFFont g_MoFFont;
 DCTIMMList g_IMMList;
 Map g_Map;
+unsigned short dword_21B8DF4 = 0; // current map ID (ground truth: 0x21B8DF4)
 CMoFNetwork g_Network;
 cltClassKindInfo g_clClassKindInfo;
 cltItemKindInfo g_clItemKindInfo;

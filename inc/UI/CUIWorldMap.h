@@ -12,4 +12,7 @@ public:
     // ground truth: unsigned __int16 __thiscall CUIWorldMap::GetToolTipData(this, int mouseX, int mouseY)
     // 依滑鼠座標回推地圖 kind（回傳 mapID，0 表示無效）
     uint16_t GetToolTipData(int mouseX, int mouseY);
+
+    // ground truth: struct stMapInfo * __thiscall CUIWorldMap::GetMyMapInfo(this)
+    stMapInfo* GetMyMapInfo();
 };
