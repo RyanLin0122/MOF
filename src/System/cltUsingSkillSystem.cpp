@@ -1,6 +1,6 @@
 #include "System/cltUsingSkillSystem.h"
 
-
+int cltUsingSkillSystem::GetSkillCoolTimeByBaseCoolTime(int /*a2*/, int baseCoolTime) { return baseCoolTime; }
 int cltUsingSkillSystem::GetUsingSkillNum() { return 0; }
 int cltUsingSkillSystem::GetTotalStrOfUsingSkill(){ return 0; }
 int cltUsingSkillSystem::GetTotalDexOfUsingSkill(){ return 0; }

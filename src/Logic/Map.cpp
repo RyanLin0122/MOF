@@ -1,5 +1,6 @@
 #include "Logic/Map.h"
 #include "Info/cltMapInfo.h"
+#include "Info/cltClimateKindInfo.h"
 
 Map::Map() {}
 Map::~Map() {}
@@ -23,6 +24,7 @@ void Map::DrawMap() {}
 void Map::DrawClip() {}
 void Map::PrepareDrawingClimate() {}
 void Map::DrawClimate() {}
+strClimateInfo* Map::GetClimateKindByMapId(uint16_t /*mapId*/) { return nullptr; }
 
 int Map::MapXtoScreenX(int x) { return x; }
 int Map::MapYtoScreenY(int y) { return y; }

@@ -1,5 +1,5 @@
 #include "Image/ImageResource.h"
-#include "Logic/CMessageBoxManager.h"
+#include "UI/CMessageBoxManager.h"
 #include <cassert> // 用於 assert
 
 // 假設這些外部相依性在連結時可用

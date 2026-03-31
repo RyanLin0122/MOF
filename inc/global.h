@@ -86,7 +86,14 @@ class cltMapUseItemInfoKindInfo;
 class cltEquipmentSystem;
 class cltSkillSystem;
 class cltUsingSkillSystem;
+class cltUsingItemSystem;
+class cltSexSystem;
+class cltPlayerAbility;
+class cltBaseAbility;
+class cltMarriageSystem;
+class cltSpecialtySystem;
 class CToolTipManager;
+struct strTransformKindInfo;
 
 //-----------------------------------------------------------------------------
 // 全域變數
@@ -247,6 +254,10 @@ extern cltCashShopItem          g_clCashShopItem;
 // BasicAppear
 extern cltBasicAppearKindInfo   g_clBasicAppearKindInfo;
 
+// 工具函式（對齊反編譯）
+unsigned int ExGetTimeOutItemRemindTime(unsigned int a1, unsigned short a2);
+unsigned int ExGetMyAccount();
+
 //-----------------------------------------------------------------------------
 // 工具函式（對齊反編譯 CircleLoopUpper / CircleLoopLower）
 //-----------------------------------------------------------------------------
@@ -295,6 +306,21 @@ extern cltMapInfo*              g_pcltMapInfo;
 // System (additional)
 extern cltEquipmentSystem*      dword_21BA32C;
 extern cltSkillSystem           g_clSkillSystem;
+extern cltSpecialtySystem       g_clSpecialtySystem;       // unk_21BCF88
+extern cltUsingItemSystem       g_clUsingItemSystem;       // unk_21BA4B0
+extern cltSexSystem             g_clSexSystem;             // unk_21BA7BC
+extern cltPlayerAbility         g_clPlayerAbility;         // unk_21B9F30
+extern cltUsingSkillSystem      g_clUsingSkillSystem;      // unk_21BA578
+extern cltMarriageSystem*       g_clMarriageSystem;        // dword_21C9C04
+
+// Free helper functions (ground truth: mofclient.c)
+unsigned int ExGetTextCodeHuntItemType(unsigned int a1);
+unsigned int ExGetTextCodeFashionItemType(unsigned int a1);
+unsigned int ExGetTextCodeInstantItemType(unsigned int a1);
+int ExGetTextCodeHuntItemAttribute(struct stItemKindInfo* a1);
+float SetRatePerThousand(int a1);
+float SetRatePerTenThousand(int a1);
+uint8_t ExGetMyLevel();
 
 // UI 輸入消耗旗標（對齊反編譯 dword_AFD34C）
 extern int                      dword_AFD34C;

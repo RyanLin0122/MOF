@@ -21,8 +21,29 @@
 #include "Info/cltClimateKindInfo.h"
 #include "Info/cltSkillKindInfo.h"
 #include "Info/cltEmblemKindInfo.h"
+#include "Info/cltTransformKindInfo.h"
+#include "Info/cltMapUseItemInfoKindInfo.h"
+#include "Info/cltMapInfo.h"
+#include "System/cltSexSystem.h"
+#include "System/cltUsingItemSystem.h"
+#include "System/cltPlayerAbility.h"
+#include "System/cltUsingSkillSystem.h"
+#include "System/cltSkillSystem.h"
+#include "System/CSpiritSystem.h"
+#include "System/cltMarriageSystem.h"
+#include "System/cltSpecialtySystem.h"
+#include "Other/cltBaseAbility.h"
+#include "Logic/cltBaseInventory.h"
+#include "System/cltTradeSystem.h"
+#include "System/cltStorageSystem.h"
+#include "System/cltExStorageSystem.h"
 #include <cstdio>
 #include <cstring>
+
+// OutputCashShopTime 依賴的外部符號
+extern unsigned short dword_21C9C54[8];
+extern int dword_B3D72C[40];
+extern cltStorageSystem* dword_21BB2AC;
 
 // ========================================
 // CToolTip::CToolTip  (對齊 00426D90)
@@ -78,7 +99,7 @@ void CToolTip::InitialUpdate()
     // 標題 (offset +2852)
     m_textTitle.Create(130, 10, &m_innerBox);
     m_textTitle.SetControlSetFont("ToolTipTitle");
-    m_nTitleColor = -1;
+    m_textTitle.m_TextColor = static_cast<DWORD>(-1);
     m_textTitle.m_isCentered = 1;
     m_textTitle.m_OutlineColor = static_cast<DWORD>(-12634624);
 
@@ -174,7 +195,7 @@ void CToolTip::Poll()
     }
 
     // 重設標題色 & 背景色
-    m_nTitleColor = -1;
+    m_textTitle.m_TextColor = static_cast<DWORD>(-1);
     m_innerBox.SetColor(0.29019609f, 0.44313729f, 0.10588236f, 0.74509805f);
 
     // 依據 tooltip type 分派處理
@@ -403,10 +424,6 @@ void CToolTip::SetUpOutLayer()
     m_borderBox[3].SetHeight(1);
 }
 
-// ========================================
-// Stub implementations（尚未實作的函數）
-// ========================================
-
 void CToolTip::SetIndex(uint16_t textCode)
 {
     const char* label = g_DCTTextManager.GetText(textCode);
@@ -544,7 +561,7 @@ void CToolTip::ProcessOneLineText(char* text)
 
     DWORD textSize[2] = {};
     m_textMain.GetTextLength(textSize);
-    const uint16_t height = static_cast<uint16_t>(HIWORD(textSize[0]) + 20);
+    const uint16_t height = static_cast<uint16_t>(static_cast<uint16_t>(textSize[1]) + 20);
     m_innerBox.SetWidth(width);
     m_innerBox.SetHeight(height);
     CalcPos();
@@ -597,7 +614,7 @@ void CToolTip::ProcessWorldMap(int mode)
 
         for (int i = 0; i < 5; ++i)
         {
-            if (m_nWorldMapTextCount > 50)
+            if (m_nWorldMapTextCount >= 50)
                 break;
             if (!regenMonKinds[i])
                 continue;
@@ -665,7 +682,7 @@ void CToolTip::ProcessWorldMap(int mode)
                         uint16_t* mapPtr = regenMaps;
                         do
                         {
-                            if (m_nWorldMapTextCount > 50)
+                            if (m_nWorldMapTextCount >= 50)
                                 break;
                             if (*mapPtr)
                             {
@@ -728,7 +745,7 @@ void CToolTip::ProcessWorldMap(int mode)
 
                         if (foundCount)
                             goto NEXT_QUEST;
-                        if (m_nWorldMapTextCount > 50)
+                        if (m_nWorldMapTextCount >= 50)
                             break;
 
                         // NPC fallback: offset 102
@@ -789,7 +806,7 @@ void CToolTip::ProcessWorldMap(int mode)
 
                         for (int n = 0; n < 4; ++n)
                         {
-                            if (m_nWorldMapTextCount > 50)
+                            if (m_nWorldMapTextCount >= 50)
                                 break;
                             stNPCInfo* loopNpc = g_clNPCInfo.GetNPCInfoByID(npcIds[n]);
                             if (!loopNpc)
@@ -889,388 +906,1018 @@ void CToolTip::ProcessLesson()
 }
 void CToolTip::ProcessItem()
 {
-    // 盡可能對齊 004287D0（mofclient.c）：
-    // - 先拉 item kind 與名稱
-    // - 再依 item class/type 輸出 index line
-    // - 最後補描述
-    //
-    // 注意：專案中 stItemKindInfo 多 union/欄位仍在持續還原，本函數採
-    //「可讀欄位先完整落地，未知欄位保留明確 TODO」策略。
+    // 對齊 004287D0：先判斷是否為裝備類物品
+    if (g_clItemKindInfo.IsEquipItem(m_usKindID))
+    {
+        ProcessHunt();
+        return;
+    }
+
+    // 非裝備物品路線
+    stItemKindInfo* v2 = g_clItemKindInfo.GetItemKindInfo(m_usKindID);
+    if (!v2)
+        return;
+
+    const auto W = reinterpret_cast<int16_t*>(v2);
+    const auto UW = reinterpret_cast<uint16_t*>(v2);
+    const auto DW = reinterpret_cast<int32_t*>(v2);
+    const auto UDW = reinterpret_cast<uint32_t*>(v2);
+    const auto B = reinterpret_cast<uint8_t*>(v2);
+
+    // 標題
+    m_textTitle.SetText(g_DCTTextManager.GetText(UW[1]));
+
+    // 類型名稱
+    int typeCode = ExGetTextCodeInstantItemType(B[80]);
+    AddIndexData(0x0C28u, g_DCTTextManager.GetText(typeCode), 0xFFFFC000);
+
+    // MapUseItem 分支
+    uint16_t mapUseItemId = UW[105];
+    if (mapUseItemId)
+    {
+        strMapUseItemInfoKindInfo* v7 = g_clMapUseItemInfoKindInfo.GetMapUseItemInfoKindInfo(mapUseItemId);
+        if (v7)
+        {
+            const auto MDW = reinterpret_cast<int32_t*>(v7);
+
+            // 重設標題
+            m_textTitle.SetText(g_DCTTextManager.GetText(UW[1]));
+
+            // extra data 字串
+            char* extraStr = reinterpret_cast<char*>(static_cast<intptr_t>(m_nExtraData));
+            if (extraStr)
+                AddIndexData(0x1FD1u, extraStr, 0xFFFFC000);
+
+            if (MDW[17])
+                AddIndexData(0x0C3Eu, g_DCTTextManager.GetText(3244), MDW[17]);
+            if (MDW[18])
+                AddIndexData(0x0C3Fu, g_DCTTextManager.GetText(3244), MDW[18]);
+            if (MDW[19])
+                AddIndexData(0x0C33u, g_DCTTextManager.GetText(3636), SetRatePerThousand(MDW[19]));
+            if (MDW[20])
+                AddIndexData(0x0C54u, g_DCTTextManager.GetText(3636), SetRatePerThousand(MDW[20]));
+            if (MDW[21])
+                AddIndexData(0x0C34u, g_DCTTextManager.GetText(3636), SetRatePerThousand(MDW[21]));
+            if (MDW[22])
+                AddIndexData(0x1FF7u, g_DCTTextManager.GetText(3636), SetRatePerThousand(MDW[22]));
+
+            AddDesc(reinterpret_cast<uint16_t*>(v7)[7], 1);
+        }
+    }
+    else
+    {
+        // 非 MapUseItem：一般消耗品
+        if (W[41])
+            AddIndexData(0x0C4Eu, static_cast<int>(W[41]), 0xFFFFC000);
+        if (W[42])
+            AddIndexData(0x0C4Fu, static_cast<int>(W[42]), 0xFFFFC000);
+        if (W[43])
+            AddIndexData(0x0C59u, g_DCTTextManager.GetText(3244), static_cast<int>(W[43]));
+        if (W[44])
+            AddIndexData(0x0C5Au, g_DCTTextManager.GetText(3244), static_cast<int>(W[44]));
+        if (W[54])
+            AddIndexData(0x0C5Bu, g_DCTTextManager.GetText(3244), static_cast<int>(W[54]));
+        if (W[55])
+            AddIndexData(0x0C5Cu, g_DCTTextManager.GetText(3244), static_cast<int>(W[55]));
+        if (W[50])
+            AddIndexData(0x0C5Du, static_cast<int>(W[50]), 0xFFFFC000);
+        if (W[51])
+            AddIndexData(0x0C5Eu, static_cast<int>(W[51]), 0xFFFFC000);
+        if (W[53])
+            AddIndexData(0x0C60u, static_cast<int>(W[53]), 0xFFFFC000);
+        if (W[52])
+            AddIndexData(0x0C5Fu, static_cast<int>(W[52]), 0xFFFFC000);
+        if (DW[65])
+            AddIndexData(0x0C50u, g_DCTTextManager.GetText(3244), DW[65]);
+        if (DW[66])
+            AddIndexData(0x0C51u, g_DCTTextManager.GetText(3244), DW[66]);
+        if (W[56])
+            AddIndexData(0x0C54u, g_DCTTextManager.GetText(3636), SetRatePerThousand(W[56]));
+        if (W[58])
+            AddIndexData(0x0C34u, g_DCTTextManager.GetText(3636), SetRatePerThousand(W[58]));
+        if (W[57])
+            AddIndexData(0x0C33u, g_DCTTextManager.GetText(3636), SetRatePerThousand(W[57]));
+
+        int useTerm = DW[23];
+        if (useTerm)
+            AddIndexData(0x0C46u, useTerm, 0xFFFFC000);
+
+        // 時間格式化（word[136] != 0）
+        if (UW[136])
+        {
+            int totalHours = DW[69];
+            int days = totalHours / 24;
+            int hours = totalHours % 24;
+
+            char dayBuf[128] = {};
+            char hourBuf[128] = {};
+            char combinedBuf[256] = {};
+
+            if (days)
+                std::snprintf(dayBuf, sizeof(dayBuf), g_DCTTextManager.GetText(3179), days);
+            if (hours)
+                std::snprintf(hourBuf, sizeof(hourBuf), g_DCTTextManager.GetText(4863), hours);
+
+            std::snprintf(combinedBuf, sizeof(combinedBuf), "%s%s", dayBuf, hourBuf);
+            AddIndexData(0x0C46u, combinedBuf, 0xFFFFC000);
+        }
+
+        // 時裝性別判定
+        if (g_clUsingItemSystem.IsCosmeticItem(UW[0]))
+        {
+            uint8_t mySex = g_clSexSystem.GetSex();
+            char itemSex = 0;
+            if (DW[44])
+                itemSex = B[172];
+            else if (DW[46])
+                itemSex = B[181];
+
+            unsigned int sexColor;
+            int sexTextCode;
+            if (itemSex == 'F')
+            {
+                sexColor = (mySex != 'F') ? 0xFFFF4600u : 0xFFFFC000u;
+                sexTextCode = 3181;
+            }
+            else if (itemSex == 'M')
+            {
+                sexColor = (mySex != 'M') ? 0xFFFF4600u : 0xFFFFC000u;
+                sexTextCode = 3180;
+            }
+            else
+            {
+                sexColor = 0xFFFFC000u;
+                sexTextCode = 3178;
+            }
+            AddIndexData(0x0C3Bu, g_DCTTextManager.GetText(sexTextCode), sexColor);
+        }
+
+        OutputCashShopTime(v2);
+
+        // ProcessSkill / ProcessPetSkill
+        uint16_t skillId = UW[104];
+        if (skillId)
+            ProcessSkill(skillId);
+        uint16_t petSkillId = UW[119];
+        if (petSkillId)
+            ProcessPetSkill(petSkillId);
+
+        AddDesc(UW[2], 1);
+    }
+}
+void CToolTip::ProcessMakingItem()
+{
+    // 對齊 00428DE0
     stItemKindInfo* item = g_clItemKindInfo.GetItemKindInfo(m_usKindID);
     if (!item)
         return;
 
-    // Name
-    m_textTitle.SetText(g_DCTTextManager.GetText(item->m_wTextCode));
+    const auto UW = reinterpret_cast<uint16_t*>(item);
 
-    // 共通欄位（對齊 decompile 中大量 AddIndexData 的骨架）
-    AddIndexData(0x0C28u, const_cast<char*>(g_DCTTextManager.GetText(item->m_wTextCode)), 0xFFFFC000);
+    m_textTitle.SetText(g_DCTTextManager.GetText(UW[1]));
 
-    // 價格（decompile 會依 UI 場景/compare flag 決定顯示格式；先落地主要值）
-    if (item->m_dwPrice)
-        AddIndexData(0x0C29u, const_cast<char*>("%d"), static_cast<int>(item->m_dwPrice));
-    if (item->m_dwPrice1)
-        AddIndexData(0x0ECFu, static_cast<int>(item->m_dwPrice1), 0xFFFFC000);
-    if (item->m_dwPrice2)
-        AddIndexData(0x0ED0u, static_cast<int>(item->m_dwPrice2), 0xFFFFC000);
-    if (item->m_dwPrice3)
-        AddIndexData(0x0EDBu, static_cast<int>(item->m_dwPrice3), 0xFFFFC000);
+    uint16_t specialtyKind = UW[69];
+    if (!specialtyKind)
+        return;
 
-    // 類型分流（對齊原始 itemClass 主 switch）
-    switch (item->m_byItemClass)
+    strSpecialtyKindInfo* v4 = g_clSpecialtyKindInfo.GetSpecialtyKindInfo(specialtyKind);
+    if (!v4)
+        return;
+
+    uint16_t specTextCode = reinterpret_cast<uint16_t*>(v4)[1];
+    if (specTextCode)
     {
-    case ITEM_CLASS_INSTANT:
-    case ITEM_CLASS_EVENT_INSTANT:
-    case ITEM_CLASS_PCBANG_INSTANT:
+        // 顏色取決於是否已習得
+        unsigned int specColor;
+        if (g_clSpecialtySystem.IsAcquiredSpecialty(specialtyKind))
+            specColor = 0xFFFFC000u;  // -16384
+        else
+            specColor = 0xFFFF4600u;  // -47616
+        AddIndexData(0x0F09u, g_DCTTextManager.GetText(specTextCode), specColor);
+    }
+
+    uint16_t makingKind = UW[70];
+    if (!makingKind)
+        return;
+
+    strMakingItemKindInfo* v8 = g_clMakingItemKindInfo.GetMakingItemKindInfo(makingKind);
+    if (!v8)
+        return;
+
+    int v16 = 0; // materialLineCount
+    AddIndexData(0x0F0Au, const_cast<char*>(""), 0xFFFFC000);
+
+    // 材料循環：v9 指向 (char*)v8 + 22，每次 +=2 words（4 bytes）
+    uint16_t* v9 = reinterpret_cast<uint16_t*>(reinterpret_cast<char*>(v8) + 22);
+    for (int i = 0; i < 10; ++i, v9 += 2)
     {
-        // Instant 共通屬性（HP/MP / stat buffs / sustain time）
-        if (item->Instant.m_wAddHP) AddIndexData(0x0C2Du, item->Instant.m_wAddHP, 0xFFFFC000);
-        if (item->Instant.m_wAddMP) AddIndexData(0x0C2Eu, item->Instant.m_wAddMP, 0xFFFFC000);
-        if (item->Instant.m_wAddHP_Percent) AddIndexData(0x0C2Fu, item->Instant.m_wAddHP_Percent, 0xFFFFC000);
-        if (item->Instant.m_wAddMP_Percent) AddIndexData(0x0C30u, item->Instant.m_wAddMP_Percent, 0xFFFFC000);
-        if (item->Instant.m_wAddStr) AddIndexData(0x0C31u, item->Instant.m_wAddStr, 0xFFFFC000);
-        if (item->Instant.m_wAddDex) AddIndexData(0x0C32u, item->Instant.m_wAddDex, 0xFFFFC000);
-        if (item->Instant.m_wAddInt) AddIndexData(0x0C33u, item->Instant.m_wAddInt, 0xFFFFC000);
-        if (item->Instant.m_wAddSta) AddIndexData(0x0C34u, item->Instant.m_wAddSta, 0xFFFFC000);
-        if (item->Instant.m_dwSustainTime) AddIndexData(0x0EDCu, static_cast<int>(item->Instant.m_dwSustainTime), 0xFFFFC000);
+        uint16_t matKind = *(v9 - 1);
+        if (!matKind)
+            continue;
+
+        stItemKindInfo* matItem = g_clItemKindInfo.GetItemKindInfo(matKind);
+        if (!matItem)
+            continue;
+
+        uint16_t matCount = *v9;
+        char Buffer[256] = {};
+        const char* suffix = g_DCTTextManager.GetText(3109);
+        const char* matName = g_DCTTextManager.GetText(reinterpret_cast<uint16_t*>(matItem)[1]);
+        std::snprintf(Buffer, sizeof(Buffer), "%s %d%s", matName, static_cast<int>(matCount), suffix);
+        AddNextLineData(Buffer);
+        ++v16;
+    }
+
+    // 無條件呼叫 SetVoidIndex（GT 不檢查 v16 > 0）
+    SetVoidIndex(m_nIndexCount - v16, m_nIndexCount);
+
+    // 成功率：FP 計算 (double)SuccessPermyriad * 0.01
+    const auto MDW = reinterpret_cast<int32_t*>(v8);
+    char Buffer[256] = {};
+    std::snprintf(Buffer, sizeof(Buffer), "%d%%",
+        static_cast<unsigned int>(static_cast<int64_t>(static_cast<double>(MDW[3]) * 0.0099999998)));
+    AddIndexData(0x0F0Bu, Buffer, 0xFFFFC000);
+    AddIndexData(0x0F0Cu, MDW[4], 0xFFFFC000);
+
+    AddDesc(UW[2], 1);
+}
+void CToolTip::ProcessHunt()
+{
+    // 對齊 00428FD0
+    stItemKindInfo* v2 = g_clItemKindInfo.GetItemKindInfo(m_usKindID);
+    if (!v2)
+        return;
+
+    const auto W = reinterpret_cast<int16_t*>(v2);
+    const auto UW = reinterpret_cast<uint16_t*>(v2);
+    const auto DW = reinterpret_cast<int32_t*>(v2);
+    const auto UDW = reinterpret_cast<uint32_t*>(v2);
+    const auto B = reinterpret_cast<uint8_t*>(v2);
+
+    // 精靈系統
+    uint8_t myLevel = ExGetMyLevel();
+    uint16_t spiritKind = g_clSpiritSystem.GetSpiritKind(myLevel);
+    uint16_t* v5 = reinterpret_cast<uint16_t*>(g_clSpiritSystem.GetSpiritInfo(spiritKind));
+
+    // 標題
+    m_textTitle.SetText(g_DCTTextManager.GetText(UW[1]));
+
+    unsigned int equipAtb = UDW[20]; // byte 80
+    int huntTypeTextCode = ExGetTextCodeHuntItemType(equipAtb);
+
+    char Buffer[256] = {};
+
+    switch (equipAtb)
+    {
+    case 0x8000u:
+    case 0x10000u:
+    {
+        // 武器
+        const char* typeText = g_DCTTextManager.GetText(huntTypeTextCode);
+        const char* weaponText = GetWeaponTypeText(UW[42]);
+        std::snprintf(Buffer, sizeof(Buffer), "%s(%s)", weaponText, typeText);
+        AddIndexData(0x0C28u, Buffer, 0xFFFFC000);
+        // 攻擊範圍
+        AddIndexData(0x0C29u, g_DCTTextManager.GetText(3176), static_cast<int>(W[43]), static_cast<int>(W[44]));
+        // 防禦
+        if (DW[46])
+            AddIndexData(0x0ECFu, DW[46], 0xFFFFC000);
+        // 攻速
+        if (static_cast<uint16_t>(UW[105]))
+            AddIndexData(0x0ED0u, static_cast<int>(UW[105]), 0xFFFFC000);
+        // 屬性
+        int attrCode = ExGetTextCodeHuntItemAttribute(v2);
+        AddIndexData(0x0EDBu, g_DCTTextManager.GetText(attrCode), 0xFFFFC000);
+        // 命中率 (permil)
+        if (W[78])
+            AddIndexData(0x0C34u, g_DCTTextManager.GetText(3636), SetRatePerThousand(W[78]));
+        // HP%
+        if (DW[35])
+            AddIndexData(0x0C2Fu, g_DCTTextManager.GetText(3244), DW[35]);
+        // MP Add
+        if (UW[68])
+            AddIndexData(0x0C2Eu, g_DCTTextManager.GetText(3244), static_cast<int>(UW[68]));
+        // 攻增
+        if (W[72])
+            AddIndexData(0x0C30u, g_DCTTextManager.GetText(3244), static_cast<int>(W[72]));
+        if (W[73])
+            AddIndexData(0x0C31u, g_DCTTextManager.GetText(3244), static_cast<int>(W[73]));
+        // accuracy/critical/magicresist/evasion
+        if (W[61])
+            AddIndexData(0x0C5Du, static_cast<int>(W[61]), 0xFFFFC000);
+        if (W[63])
+            AddIndexData(0x0C5Eu, static_cast<int>(W[63]), 0xFFFFC000);
+        if (W[62])
+            AddIndexData(0x0C60u, static_cast<int>(W[62]), 0xFFFFC000);
+        if (W[64])
+            AddIndexData(0x0C5Fu, static_cast<int>(W[64]), 0xFFFFC000);
+        // 命中率/迴避率 (permil)
+        if (W[76])
+            AddIndexData(0x0C32u, g_DCTTextManager.GetText(3636), SetRatePerThousand(W[76]));
+        if (W[77])
+            AddIndexData(0x0C33u, g_DCTTextManager.GetText(3636), SetRatePerThousand(W[77]));
         break;
     }
-    case ITEM_CLASS_HUNT:
-    case ITEM_CLASS_EVENT_HUNT:
-    case ITEM_CLASS_CASH_HUNT:
+    case 0x1000u:
+    case 0x20000u:
+    case 0x40000u:
+    case 0x80000u:
+    case 0x100000u:
+    case 0x200000u:
     {
-        // Hunt 裝備屬性（目前結構已還原欄位優先）
-        if (item->Equip.Hunt.m_byLevel) AddIndexData(0x0C3Bu, item->Equip.Hunt.m_byLevel, 0xFFFFC000);
-        if (item->Equip.Hunt.m_wNeedStr)   AddIndexData(0x0C3Eu, item->Equip.Hunt.m_wNeedStr, 0xFFFFC000);
-        if (item->Equip.Hunt.m_wNeedDex)   AddIndexData(0x0C3Fu, item->Equip.Hunt.m_wNeedDex, 0xFFFFC000);
-        if (item->Equip.Hunt.m_wMinAttack) AddIndexData(0x0C50u, item->Equip.Hunt.m_wMinAttack, 0xFFFFC000);
-        if (item->Equip.Hunt.m_wMaxAttack) AddIndexData(0x0C51u, item->Equip.Hunt.m_wMaxAttack, 0xFFFFC000);
-        if (item->Equip.Hunt.m_wAddInt) AddIndexData(0x0C33u, item->Equip.Hunt.m_wAddInt, 0xFFFFC000);
-        if (item->Equip.Hunt.m_wAddSta) AddIndexData(0x0C34u, item->Equip.Hunt.m_wAddSta, 0xFFFFC000);
-        if (item->Equip.Hunt.m_wAddAccuracy) AddIndexData(0x0C5Du, item->Equip.Hunt.m_wAddAccuracy, 0xFFFFC000);
-        if (item->Equip.Hunt.m_wAddCritical) AddIndexData(0x0C5Eu, item->Equip.Hunt.m_wAddCritical, 0xFFFFC000);
-        if (item->Equip.Hunt.m_wAddEvasion) AddIndexData(0x0C5Fu, item->Equip.Hunt.m_wAddEvasion, 0xFFFFC000);
-        if (item->Equip.Hunt.m_wAddAccuracy) AddIndexData(0x0C60u, item->Equip.Hunt.m_wAddAccuracy, 0xFFFFC000);
+        // 防具
+        AddIndexData(0x0C28u, g_DCTTextManager.GetText(huntTypeTextCode), 0xFFFFC000);
+        AddIndexData(0x0C38u, static_cast<int>(UW[49]), 0xFFFFC000);
+        if (W[72])
+            AddIndexData(0x0C30u, g_DCTTextManager.GetText(3244), static_cast<int>(W[72]));
+        if (W[73])
+            AddIndexData(0x0C31u, g_DCTTextManager.GetText(3244), static_cast<int>(W[73]));
+        if (DW[46])
+            AddIndexData(0x0EDCu, DW[46], 0xFFFFC000);
+        if (DW[35])
+            AddIndexData(0x0C2Fu, g_DCTTextManager.GetText(3244), DW[35]);
         break;
     }
-    case ITEM_CLASS_FASHION:
-    case ITEM_CLASS_EVENT_FASHION:
-    case ITEM_CLASS_CASH_FASHION:
+    case 0x2000u:
+    case 0x4000u:
     {
-        if (item->Equip.Hunt.m_byLevel) AddIndexData(0x0C3Bu, item->Equip.Hunt.m_byLevel, 0xFFFFC000);
-        if (item->Equip.Fashion.m_dwAddStr) AddIndexData(0x0C31u, item->Equip.Fashion.m_dwAddStr, 0xFFFFC000);
-        if (item->Equip.Fashion.m_dwAddDex) AddIndexData(0x0C32u, item->Equip.Fashion.m_dwAddDex, 0xFFFFC000);
-        if (item->Equip.Fashion.m_dwAddInt) AddIndexData(0x0C33u, item->Equip.Fashion.m_dwAddInt, 0xFFFFC000);
-        if (item->Equip.Fashion.m_dwAddSta) AddIndexData(0x0C34u, item->Equip.Fashion.m_dwAddSta, 0xFFFFC000);
+        // 盾牌/飾品
+        AddIndexData(0x0C28u, g_DCTTextManager.GetText(huntTypeTextCode), 0xFFFFC000);
+        if (DW[33])
+            AddIndexData(0x0C2Du, g_DCTTextManager.GetText(3244), DW[33]);
+        if (DW[46])
+            AddIndexData(0x0EDCu, DW[46], 0xFFFFC000);
+        if (UW[68])
+            AddIndexData(0x0C2Eu, g_DCTTextManager.GetText(3244), static_cast<int>(UW[68]));
+        if (DW[35])
+            AddIndexData(0x0C2Fu, g_DCTTextManager.GetText(3244), DW[35]);
+        if (W[72])
+            AddIndexData(0x0C5Bu, g_DCTTextManager.GetText(3244), static_cast<int>(W[72]));
+        if (W[73])
+            AddIndexData(0x0C5Cu, g_DCTTextManager.GetText(3244), static_cast<int>(W[73]));
+        if (W[74])
+            AddIndexData(0x0C3Eu, g_DCTTextManager.GetText(3636), SetRatePerThousand(W[74]));
+        if (W[75])
+            AddIndexData(0x0C3Fu, g_DCTTextManager.GetText(3636), SetRatePerThousand(W[75]));
+        if (W[76])
+            AddIndexData(0x0C32u, g_DCTTextManager.GetText(3636), SetRatePerThousand(W[76]));
+        if (W[77])
+            AddIndexData(0x0C33u, g_DCTTextManager.GetText(3636), SetRatePerThousand(W[77]));
+        if (W[78])
+            AddIndexData(0x0C34u, g_DCTTextManager.GetText(3636), SetRatePerThousand(W[78]));
+        if (W[61])
+            AddIndexData(0x0C5Du, static_cast<int>(W[61]), 0xFFFFC000);
+        if (W[63])
+            AddIndexData(0x0C5Eu, static_cast<int>(W[63]), 0xFFFFC000);
+        if (W[62])
+            AddIndexData(0x0C60u, static_cast<int>(W[62]), 0xFFFFC000);
+        if (W[64])
+            AddIndexData(0x0C5Fu, static_cast<int>(W[64]), 0xFFFFC000);
+        if (W[79])
+            AddIndexData(0x1066u, g_DCTTextManager.GetText(3244), static_cast<int>(W[79]));
+        if (W[80])
+            AddIndexData(0x1067u, g_DCTTextManager.GetText(3244), static_cast<int>(W[80]));
+        if (W[81])
+            AddIndexData(0x1068u, g_DCTTextManager.GetText(3244), static_cast<int>(W[81]));
+        if (W[82])
+            AddIndexData(0x1069u, g_DCTTextManager.GetText(3244), static_cast<int>(W[82]));
+        if (W[83])
+            AddIndexData(0x1325u, g_DCTTextManager.GetText(3244), static_cast<int>(W[83]));
+        if (W[84])
+            AddIndexData(0x1326u, g_DCTTextManager.GetText(3244), static_cast<int>(W[84]));
+        if (W[85])
+            AddIndexData(0x1327u, g_DCTTextManager.GetText(3244), static_cast<int>(W[85]));
+        if (W[86])
+            AddIndexData(0x1328u, g_DCTTextManager.GetText(3244), static_cast<int>(W[86]));
         break;
     }
-    case ITEM_CLASS_TRAINING:
-    case ITEM_CLASS_CASH_TRAINING:
-    case ITEM_CLASS_EVENT_TRAINING:
-        // TODO(ground-truth): 004287D0 後半包含訓練卡、課程、時間限制與等級差色彩判斷
+    case 0x400000u:
+    {
+        // 精靈裝備
+        if (v5)
+        {
+            int val;
+            val = v5[7]; if (static_cast<uint16_t>(val)) AddIndexData(0x0C5Du, val, 0xFFFFC000);
+            val = v5[9]; if (static_cast<uint16_t>(val)) AddIndexData(0x0C5Eu, val, 0xFFFFC000);
+            val = v5[10]; if (static_cast<uint16_t>(val)) AddIndexData(0x0C60u, val, 0xFFFFC000);
+            val = v5[8]; if (static_cast<uint16_t>(val)) AddIndexData(0x0C5Fu, val, 0xFFFFC000);
+        }
         break;
+    }
     default:
         break;
     }
 
-    // 使用期限（原碼在多分支都會輸出）
-    if (item->m_wUseTerm)
-        AddIndexData(0x0C46u, static_cast<int>(item->m_wUseTerm), 0xFFFFC000);
-
-    // 描述（ground truth：多數 itemFlag=1）
-    AddDesc(item->m_wDescCode, 1);
-}
-void CToolTip::ProcessMakingItem()
-{
-    stItemKindInfo* item = g_clItemKindInfo.GetItemKindInfo(m_usKindID);
-    if (!item)
-        return;
-
-    m_textTitle.SetText(g_DCTTextManager.GetText(item->m_wTextCode));
-
-    // 對齊 00428DE0：specialty line
-    const uint16_t specialtyKind = *(reinterpret_cast<uint16_t*>(reinterpret_cast<unsigned char*>(item) + 138)); // word[69]
-    if (specialtyKind)
+    // 等級需求（色彩判斷）
+    if (B[120])
     {
-        strSpecialtyKindInfo* spec = g_clSpecialtyKindInfo.GetSpecialtyKindInfo(specialtyKind);
-        if (spec && spec->wTextCode)
-        {
-            // 原版會依「是否已習得」決定顏色；此專案 specialty system 全域未完整接線，先保留可讀顏色。
-            AddIndexData(0x0F09u, g_DCTTextManager.GetText(spec->wTextCode), 0xFFFFC000);
-        }
+        int reqLv = B[120];
+        if (g_clLevelSystem.GetLevel() >= reqLv)
+            AddIndexData(0x0C2Au, reqLv, 0xFFFFC000);
+        else
+            AddIndexData(0x0C2Au, reqLv, 0xFFFF4600);
     }
-
-    // 對齊 00428DE0：recipe / ingredient section
-    const uint16_t makingKind = *(reinterpret_cast<uint16_t*>(reinterpret_cast<unsigned char*>(item) + 140)); // word[70]
-    if (makingKind)
-    {
-        strMakingItemKindInfo* making = g_clMakingItemKindInfo.GetMakingItemKindInfo(makingKind);
-        if (making)
-        {
-            int materialLineCount = 0;
-            AddIndexData(0x0F0Au, const_cast<char*>(""), 0xFFFFC000);
-
-            for (int i = 0; i < 10; ++i)
-            {
-                const uint16_t matKind = making->Ingredient[i].Kind;
-                const uint16_t matCnt = making->Ingredient[i].Count;
-                if (!matKind)
-                    continue;
-
-                stItemKindInfo* matInfo = g_clItemKindInfo.GetItemKindInfo(matKind);
-                if (!matInfo)
-                    continue;
-
-                char line[256] = {};
-                const char* countSuffix = g_DCTTextManager.GetText(3109);
-                std::snprintf(
-                    line,
-                    sizeof(line),
-                    "%s %d%s",
-                    g_DCTTextManager.GetText(matInfo->m_wTextCode),
-                    static_cast<int>(matCnt),
-                    countSuffix ? countSuffix : "");
-                AddNextLineData(line);
-                ++materialLineCount;
-            }
-
-            if (materialLineCount > 0)
-                SetVoidIndex(m_nIndexCount - materialLineCount, m_nIndexCount);
-
-            char successRate[64] = {};
-            std::snprintf(successRate, sizeof(successRate), "%d%%", making->SuccessPermyriad / 100);
-            AddIndexData(0x0F0Bu, successRate, 0xFFFFC000);
-            AddIndexData(0x0F0Cu, making->ExpBonus, 0xFFFFC000);
-        }
-    }
-
-    AddDesc(item->m_wDescCode, 1);
-}
-void CToolTip::ProcessHunt()
-{
-    stItemKindInfo* item = g_clItemKindInfo.GetItemKindInfo(m_usKindID);
-    if (!item)
-        return;
-
-    m_textTitle.SetText(g_DCTTextManager.GetText(item->m_wTextCode));
-
-    // 對齊 00428FD0：類型名稱 + 武器/防具主屬性
-    AddIndexData(0x0C28u, g_DCTTextManager.GetText(item->m_wTextCode), 0xFFFFC000);
-
-    if (item->Equip.Hunt.m_wWeaponType)
-        AddIndexData(0x0C38u, item->Equip.Hunt.m_wWeaponType, 0xFFFFC000);
-
-    if (item->Equip.Hunt.m_wMinAttack || item->Equip.Hunt.m_wMaxAttack)
-    {
-        char atk[64] = {};
-        std::snprintf(atk, sizeof(atk), "%d ~ %d", item->Equip.Hunt.m_wMinAttack, item->Equip.Hunt.m_wMaxAttack);
-        AddIndexData(0x0C29u, atk, 0xFFFFC000);
-    }
-
-    if (item->Equip.Hunt.m_wDef)
-        AddIndexData(0x0ECFu, item->Equip.Hunt.m_wDef, 0xFFFFC000);
-    if (item->Equip.Hunt.m_dwAttSpeed)
-        AddIndexData(0x0ED0u, static_cast<int>(item->Equip.Hunt.m_dwAttSpeed), 0xFFFFC000);
-
-    // 裝備加成（對齊 decompile 常見欄位）
-    if (item->Equip.Hunt.m_wAddStr) AddIndexData(0x0C31u, item->Equip.Hunt.m_wAddStr, 0xFFFFC000);
-    if (item->Equip.Hunt.m_wAddDex) AddIndexData(0x0C32u, item->Equip.Hunt.m_wAddDex, 0xFFFFC000);
-    if (item->Equip.Hunt.m_wAddInt) AddIndexData(0x0C33u, item->Equip.Hunt.m_wAddInt, 0xFFFFC000);
-    if (item->Equip.Hunt.m_wAddSta) AddIndexData(0x0C34u, item->Equip.Hunt.m_wAddSta, 0xFFFFC000);
-
-    if (item->Equip.Hunt.m_wAddAccuracy) AddIndexData(0x0C5Du, item->Equip.Hunt.m_wAddAccuracy, 0xFFFFC000);
-    if (item->Equip.Hunt.m_wAddCritical) AddIndexData(0x0C5Eu, item->Equip.Hunt.m_wAddCritical, 0xFFFFC000);
-    if (item->Equip.Hunt.m_wAddEvasion) AddIndexData(0x0C5Fu, item->Equip.Hunt.m_wAddEvasion, 0xFFFFC000);
-    if (item->Equip.Hunt.m_wMagicResist) AddIndexData(0x0C60u, item->Equip.Hunt.m_wMagicResist, 0xFFFFC000);
-
-    // 要求條件（等級 / 四維）
-    if (item->Equip.Hunt.m_byLevel)
-        AddIndexData(0x0C2Au, item->Equip.Hunt.m_byLevel, 0xFFFFC000);
     else
+    {
         AddIndexData(0x0C2Au, g_DCTTextManager.GetText(3178), 0xFFFFC000);
+    }
 
     PrintReqClassForHuntItem();
-    if (item->Equip.Hunt.m_wNeedStr) AddIndexData(0x0C7Du, item->Equip.Hunt.m_wNeedStr, 0xFFFFC000);
-    if (item->Equip.Hunt.m_wNeedDex) AddIndexData(0x0C7Eu, item->Equip.Hunt.m_wNeedDex, 0xFFFFC000);
-    if (item->Equip.Hunt.m_wNeedSta) AddIndexData(0x0C7Fu, item->Equip.Hunt.m_wNeedSta, 0xFFFFC000);
-    if (item->Equip.Hunt.m_wNeedInt) AddIndexData(0x0C80u, item->Equip.Hunt.m_wNeedInt, 0xFFFFC000);
 
-    // 稀有度背景色（對齊 00428FD0 尾段）
-    if (item->Equip.Hunt.m_byRareType == 1)
+    // 四維需求（色彩判斷）
+    int needStr = UW[50];
+    if (static_cast<uint16_t>(needStr))
+    {
+        if (g_clPlayerAbility.GetStr(reinterpret_cast<int>(v5), 0) >= needStr)
+            AddIndexData(0x0C7Du, needStr, 0xFFFFC000);
+        else
+            AddIndexData(0x0C7Du, needStr, 0xFFFF4600);
+    }
+    int needDex = UW[52];
+    if (static_cast<uint16_t>(needDex))
+    {
+        if (g_clPlayerAbility.GetDex(reinterpret_cast<int>(v5), 0) >= needDex)
+            AddIndexData(0x0C7Eu, needDex, 0xFFFFC000);
+        else
+            AddIndexData(0x0C7Eu, needDex, 0xFFFF4600);
+    }
+    int needVit = UW[51];
+    if (static_cast<uint16_t>(needVit))
+    {
+        if (g_clPlayerAbility.GetVit(reinterpret_cast<int>(v5), 0) >= needVit)
+            AddIndexData(0x0C7Fu, needVit, 0xFFFFC000);
+        else
+            AddIndexData(0x0C7Fu, needVit, 0xFFFF4600);
+    }
+    int needInt = UW[53];
+    if (static_cast<uint16_t>(needInt))
+    {
+        if (g_clPlayerAbility.GetInt(reinterpret_cast<int>(v5), 0) >= needInt)
+            AddIndexData(0x0C80u, needInt, 0xFFFFC000);
+        else
+            AddIndexData(0x0C80u, needInt, 0xFFFF4600);
+    }
+
+    // 稀有度背景色
+    if (B[218] == 1)
         m_innerBox.SetColor(0.0f, 0.078431375f, 0.49019611f, 0.58823532f);
-    else if (item->Equip.Hunt.m_byRareType == 2)
+    else if (B[218] == 2)
         m_innerBox.SetColor(0.18039216f, 0.070588239f, 0.34117648f, 0.82352948f);
 
-    OutputCashShopTime(item);
-    AddDesc(item->m_wDescCode, 1);
+    // CanEquipItemByItemKind
+    if (!dword_21BA32C->CanEquipItemByItemKind(reinterpret_cast<int>(v5), UW[0]))
+        m_textTitle.m_TextColor = static_cast<DWORD>(-65536);
+
+    OutputCashShopTime(v2);
+    AddDesc(UW[2], 1);
 }
 void CToolTip::ProcessFashion()
 {
-    stItemKindInfo* item = g_clItemKindInfo.GetItemKindInfo(m_usKindID);
-    if (!item)
+    // 對齊 00429A00（__usercall，a2@<ebp> 用於 CanEquipItemByItemKind）
+    stItemKindInfo* v3 = g_clItemKindInfo.GetItemKindInfo(m_usKindID);
+    if (!v3)
         return;
 
-    m_textTitle.SetText(g_DCTTextManager.GetText(item->m_wTextCode));
-    AddIndexData(0x0C28u, g_DCTTextManager.GetText(item->m_wTextCode), 0xFFFFC000);
+    const auto W = reinterpret_cast<int16_t*>(v3);
+    const auto UW = reinterpret_cast<uint16_t*>(v3);
+    const auto DW = reinterpret_cast<int32_t*>(v3);
+    const auto B = reinterpret_cast<uint8_t*>(v3);
 
-    // 性別需求（對齊 00429A00：F/M/ALL 三態）
-    unsigned int genderColor = 0xFFFFC000;
-    int genderTextCode = 3178; // ALL
-    if (item->Equip.Fashion.m_byGender == 'F')
-        genderTextCode = 3181;
-    else if (item->Equip.Fashion.m_byGender == 'M')
-        genderTextCode = 3180;
-    AddIndexData(0x0C3Bu, g_DCTTextManager.GetText(genderTextCode), genderColor);
+    m_textTitle.SetText(g_DCTTextManager.GetText(UW[1]));
 
-    OutputCashShopTime(item);
+    // Fashion type text (not item name)
+    int fashionTypeCode = ExGetTextCodeFashionItemType(reinterpret_cast<uint32_t*>(v3)[20]);
+    AddIndexData(0x0C28u, g_DCTTextManager.GetText(fashionTypeCode), 0xFFFFC000);
 
-    if (item->Equip.Hunt.m_wNeedStr) AddIndexData(0x0C3Eu, item->Equip.Hunt.m_wNeedStr, 0xFFFFC000);
-    if (item->Equip.Hunt.m_wNeedDex) AddIndexData(0x0C3Fu, item->Equip.Hunt.m_wNeedDex, 0xFFFFC000);
+    // stat at offset +46 (0xC3D)
+    if (W[46])
+        AddIndexData(0x0C3Du, g_DCTTextManager.GetText(3244), static_cast<int>(W[46]));
 
-    if (item->Equip.Fashion.m_dwAddStr) AddIndexData(0x0C2Du, item->Equip.Fashion.m_dwAddStr, 0xFFFFC000);
-    if (item->Equip.Fashion.m_dwAddDex) AddIndexData(0x0C2Fu, item->Equip.Fashion.m_dwAddDex, 0xFFFFC000);
-
-    if (item->Equip.Fashion.m_dwAccuracyThousand)
+    // 性別色彩判定
+    uint8_t mySex = g_clSexSystem.GetSex();
+    char itemSex = B[84]; // byte offset 84 = Equip.Fashion.m_byGender
+    unsigned int sexColor;
+    int sexTextCode;
+    if (itemSex == 'F')
     {
-        float v = item->Equip.Fashion.m_dwAccuracyThousand * 0.001f;
-        AddIndexData(0x0C32u, const_cast<char*>("%.1f"), v);
+        sexColor = (mySex != 'F') ? 0xFFFF4600u : 0xFFFFC000u;
+        sexTextCode = 3181;
     }
-    if (item->Equip.Fashion.m_dwEvasionThousand)
+    else if (itemSex == 'M')
     {
-        float v = item->Equip.Fashion.m_dwEvasionThousand * 0.001f;
-        AddIndexData(0x0C33u, const_cast<char*>("%.1f"), v);
+        sexColor = (mySex != 'M') ? 0xFFFF4600u : 0xFFFFC000u;
+        sexTextCode = 3180;
     }
+    else
+    {
+        sexColor = 0xFFFFC000u;
+        sexTextCode = 3178;
+    }
+    AddIndexData(0x0C3Bu, g_DCTTextManager.GetText(sexTextCode), sexColor);
 
-    if (item->Equip.Fashion.m_dwDamagePercent) AddIndexData(0x0C5Du, item->Equip.Fashion.m_dwDamagePercent, 0xFFFFC000);
-    if (item->Equip.Fashion.m_dwDefPercent) AddIndexData(0x0C60u, item->Equip.Fashion.m_dwDefPercent, 0xFFFFC000);
-    if (item->Equip.Fashion.m_dwAddInt) AddIndexData(0x0C5Eu, item->Equip.Fashion.m_dwAddInt, 0xFFFFC000);
-    if (item->Equip.Fashion.m_dwAddSta) AddIndexData(0x0C5Fu, item->Equip.Fashion.m_dwAddSta, 0xFFFFC000);
+    OutputCashShopTime(v3);
 
-    AddDesc(item->m_wDescCode, 1);
+    if (W[49])
+        AddIndexData(0x0C3Eu, static_cast<int>(W[49]), 0xFFFFC000);
+    if (W[50])
+        AddIndexData(0x0C3Fu, static_cast<int>(W[50]), 0xFFFFC000);
+    if (DW[29])
+        AddIndexData(0x0C2Du, g_DCTTextManager.GetText(3244), DW[29]);
+    if (DW[30])
+        AddIndexData(0x0C2Fu, g_DCTTextManager.GetText(3244), DW[30]);
+    if (DW[31])
+        AddIndexData(0x0C32u, g_DCTTextManager.GetText(3636), SetRatePerThousand(DW[31]));
+    if (DW[32])
+        AddIndexData(0x0C33u, g_DCTTextManager.GetText(3636), SetRatePerThousand(DW[32]));
+    if (DW[33])
+        AddIndexData(0x0C5Du, DW[33], 0xFFFFC000);
+    if (DW[36])
+        AddIndexData(0x0C60u, DW[36], 0xFFFFC000);
+    if (DW[34])
+        AddIndexData(0x0C5Eu, DW[34], 0xFFFFC000);
+    if (DW[35])
+        AddIndexData(0x0C5Fu, DW[35], 0xFFFFC000);
+
+    AddDesc(UW[2], 1);
+
+    // CanEquipItemByItemKind（GT 用 a2@<ebp>，此處用精靈系統指標近似）
+    uint16_t spiritKind = g_clSpiritSystem.GetSpiritKind(ExGetMyLevel());
+    uint16_t* spiritInfo = reinterpret_cast<uint16_t*>(g_clSpiritSystem.GetSpiritInfo(spiritKind));
+    if (!dword_21BA32C->CanEquipItemByItemKind(reinterpret_cast<int>(spiritInfo), UW[0]))
+        m_textTitle.m_TextColor = static_cast<DWORD>(-65536);
+
+    if (UW[77])
+        m_textTitle.m_TextColor = static_cast<DWORD>(-1);
 }
-void CToolTip::ProcessSkill(uint16_t skillKind)
+void CToolTip::ProcessSkill(uint16_t a2)
 {
-    uint16_t useKind = skillKind ? skillKind : m_usKindID;
-    stSkillKindInfo* skill = g_clSkillKindInfo.GetSkillKindInfo(useKind);
-    if (!skill)
+    // 對齊 00429C80
+    uint16_t v2 = a2;
+    BOOL v119;
+    if (a2)
+    {
+        v119 = 1;
+    }
+    else
+    {
+        v2 = m_usKindID;
+        v119 = (m_byUIType == 14);
+    }
+
+    stSkillKindInfo* v4 = g_clSkillKindInfo.GetSkillKindInfo(v2);
+    if (!v4)
         return;
 
-    const bool fromBook = (skillKind != 0);
-    const bool isActive = g_clSkillKindInfo.IsActiveSkill(useKind) != 0;
+    const auto SDW = reinterpret_cast<int32_t*>(v4);
+    const auto SUW = reinterpret_cast<uint16_t*>(v4);
+    const auto SW = reinterpret_cast<int16_t*>(v4);
+    const auto SB = reinterpret_cast<uint8_t*>(v4);
 
-    const uint16_t nameCode = *reinterpret_cast<uint16_t*>(skill->raw + 4);
-    const uint16_t descCode = *reinterpret_cast<uint16_t*>(skill->raw + 6);
-    m_textTitle.SetText(g_DCTTextManager.GetText(nameCode));
-    AddIndexData(0x0C41u, g_DCTTextManager.GetText(isActive ? 3173 : 3172), 0xFFFFC000);
+    m_textTitle.SetText(g_DCTTextManager.GetText(SUW[2]));
+    g_clSkillSystem.IsAcquiredSkill(v2, 0);
+    BOOL v6 = cltSkillKindInfo::IsActiveSkill(v2);
 
-    if (isActive)
+    AddIndexData(0x0C41u, g_DCTTextManager.GetText(v6 ? 3173 : 3172), 0xFFFFC000);
+
+    char Buffer[256] = {};
+
+    if (v6)
     {
-        const int ap = *reinterpret_cast<int32_t*>(skill->raw + 24);
-        const int dp = *reinterpret_cast<int32_t*>(skill->raw + 28);
-        const int coolMs = *reinterpret_cast<int32_t*>(skill->raw + 36);
-        const int needHp = *reinterpret_cast<uint16_t*>(skill->raw + 132);
-        const int needMp = *reinterpret_cast<uint16_t*>(skill->raw + 134);
-        if (ap) AddIndexData(0x0C50u, g_DCTTextManager.GetText(3244), ap);
-        if (dp) AddIndexData(0x0C51u, g_DCTTextManager.GetText(3244), dp);
-        if (coolMs)
+        // Active skill
+        if (SDW[6] && !SDW[35])
+            AddIndexData(0x0DCAu, g_DCTTextManager.GetText(3244), SDW[6] + 100);
+        if (static_cast<uint16_t>(SUW[83]))
+            AddIndexData(0x0ED0u, static_cast<int>(SUW[83]), 0xFFFFC000);
+        if (SW[57])
+            AddIndexData(0x0C4Eu, static_cast<int>(SW[57]), 0xFFFFC000);
+        if (SW[58])
+            AddIndexData(0x0C4Fu, static_cast<int>(SW[58]), 0xFFFFC000);
+        if (SDW[6] && SDW[35])
+            AddIndexData(0x0C50u, g_DCTTextManager.GetText(3244), SDW[6]);
+        if (SDW[7])
+            AddIndexData(0x0C51u, g_DCTTextManager.GetText(3244), SDW[7]);
+        if (SDW[31])
+            AddIndexData(0x0C54u, g_DCTTextManager.GetText(3636), SetRatePerThousand(SDW[31]));
+        if (SDW[32])
+            AddIndexData(0x0C34u, g_DCTTextManager.GetText(3636), SetRatePerThousand(SDW[32]));
+        if (SDW[30])
+            AddIndexData(0x0C33u, g_DCTTextManager.GetText(3636), SetRatePerThousand(SDW[30]));
+        if (SDW[78])
+            AddIndexData(0x1B24u, g_DCTTextManager.GetText(3244), SDW[78]);
+        if (SDW[79])
+            AddIndexData(0x1B25u, g_DCTTextManager.GetText(3244), SDW[79]);
+        if (SDW[80])
+            AddIndexData(0x1B26u, g_DCTTextManager.GetText(6962), 0xFFFFC000);
+        if (SDW[81])
+            AddIndexData(0x1B27u, g_DCTTextManager.GetText(6963), 0xFFFFC000);
+        if (SDW[44])
+            AddIndexData(0x0CC9u, g_DCTTextManager.GetText(3636), SetRatePerThousand(SDW[44]));
+        if (SDW[48])
+            AddIndexData(0x0CCAu, g_DCTTextManager.GetText(3636), SetRatePerThousand(SDW[48]));
+        if (SDW[46])
+            AddIndexData(0x0CCBu, g_DCTTextManager.GetText(3636), SetRatePerThousand(SDW[46]));
+
+        // Cooltime from v4+35
+        int v121 = SDW[35];
+        if (v121)
         {
-            char coolBuf[64] = {};
-            std::snprintf(coolBuf, sizeof(coolBuf), "%.2f%s", coolMs * 0.001f, g_DCTTextManager.GetText(3224));
-            AddIndexData(0x0C47u, coolBuf, 0xFFFFC000);
+            std::snprintf(Buffer, sizeof(Buffer), "%.2f%s",
+                static_cast<double>(v121) * 0.001, g_DCTTextManager.GetText(3224));
+            AddIndexData(0x0C46u, Buffer, 0xFFFFC000);
         }
-        if (needHp) AddIndexData(0x0CC9u, needHp, 0xFFFFC000);
-        if (needMp) AddIndexData(0x0CCAu, needMp, 0xFFFFC000);
+        if (SDW[66])
+            AddIndexData(0x1272u, g_DCTTextManager.GetText(3244), SDW[66]);
+        if (SDW[67])
+            AddIndexData(0x1273u, g_DCTTextManager.GetText(3244), SDW[67]);
+        if (SDW[57])
+            AddIndexData(0x1274u, SDW[57], 0xFFFFC000);
+        if (SDW[58])
+            AddIndexData(0x1276u, SDW[58], 0xFFFFC000);
+        if (SDW[59])
+            AddIndexData(0x1275u, SDW[59], 0xFFFFC000);
+        if (SDW[60])
+            AddIndexData(0x1277u, SDW[60], 0xFFFFC000);
+
+        // Transform
+        uint16_t transformKind = SUW[126];
+        if (transformKind)
+        {
+            strTransformKindInfo* v31 = g_clTransformKindInfo.GetTransfromKindInfo(transformKind);
+            if (v31)
+            {
+                const auto TDW = reinterpret_cast<int32_t*>(v31);
+                if (TDW[6])
+                    AddIndexData(0x1278u, TDW[6], 0xFFFFC000);
+                if (TDW[7])
+                    AddIndexData(0x1279u, TDW[7], 0xFFFFC000);
+            }
+        }
+
+        // Skill cool time (from system)
+        float v122 = static_cast<float>(
+            static_cast<double>(g_clUsingSkillSystem.GetSkillCoolTimeByBaseCoolTime(0, SDW[9])) * 0.001);
+        std::snprintf(Buffer, sizeof(Buffer), "%.2f%s", v122, g_DCTTextManager.GetText(3224));
+        AddIndexData(0x0C47u, Buffer, 0xFFFFC000);
+
+        // Skill type switch
+        switch (SB[112])
+        {
+        case 1: AddIndexData(0x0E15u, g_DCTTextManager.GetText(3606), 0xFFFFC000); break;
+        case 2: AddIndexData(0x0E15u, g_DCTTextManager.GetText(3607), 0xFFFFC000); break;
+        case 3: case 4: AddIndexData(0x0E15u, g_DCTTextManager.GetText(3608), 0xFFFFC000); break;
+        case 5: case 6: case 7: case 9: AddIndexData(0x0E15u, g_DCTTextManager.GetText(3610), 0xFFFFC000); break;
+        case 8: AddIndexData(0x0E15u, g_DCTTextManager.GetText(3609), 0xFFFFC000); break;
+        default: break;
+        }
+
+        // HP need
+        int v36 = SUW[66];
+        if (static_cast<uint16_t>(v36))
+        {
+            uint16_t hpIdx = SUW[68] ? 3943 : 3277;
+            if (v119 || g_clPlayerAbility.GetHP() > v36)
+                AddIndexData(hpIdx, v36, 0xFFFFC000);
+            else
+                AddIndexData(hpIdx, v36, 0xFFFF4600);
+        }
+
+        // MP need
+        int v38 = g_clPlayerAbility.GetNeedManaForUsingSkill(SUW[67]);
+        uint16_t mpIdx = SUW[69] ? 3944 : 3141;
+        if (v119 || g_clPlayerAbility.GetMP() > v38)
+            AddIndexData(mpIdx, v38, 0xFFFFC000);
+        else
+            AddIndexData(mpIdx, v38, 0xFFFF4600);
     }
     else
     {
-        const int bonus1 = *reinterpret_cast<int32_t*>(skill->raw + 152);
-        const int bonus2 = *reinterpret_cast<int32_t*>(skill->raw + 156);
-        const int bonus3 = *reinterpret_cast<int32_t*>(skill->raw + 160);
-        if (bonus1) AddIndexData(0x0C52u, g_DCTTextManager.GetText(3244), bonus1);
-        if (bonus2) AddIndexData(0x0C53u, g_DCTTextManager.GetText(3244), bonus2);
-        if (bonus3) AddIndexData(0x0E30u, g_DCTTextManager.GetText(3244), bonus3);
+        // Passive skill
+        if (SW[57])
+            AddIndexData(0x0C52u, g_DCTTextManager.GetText(3244), static_cast<int>(SW[57]));
+        if (SW[58])
+            AddIndexData(0x0C53u, g_DCTTextManager.GetText(3244), static_cast<int>(SW[58]));
+        if (SDW[6])
+            AddIndexData(0x0C50u, g_DCTTextManager.GetText(3244), SDW[6]);
+        if (SDW[7])
+            AddIndexData(0x0C51u, g_DCTTextManager.GetText(3244), SDW[7]);
+        if (SDW[30])
+            AddIndexData(0x0C54u, g_DCTTextManager.GetText(3636), SetRatePerThousand(SDW[30]));
+        if (SDW[67])
+            AddIndexData(0x0C33u, g_DCTTextManager.GetText(3636), SetRatePerThousand(SDW[67]));
+        if (SDW[31])
+            AddIndexData(0x0C34u, g_DCTTextManager.GetText(3636), SetRatePerThousand(SDW[31]));
+        if (SDW[32])
+            AddIndexData(0x0E30u, g_DCTTextManager.GetText(3244), SDW[32]);
+        if (SDW[80])
+            AddIndexData(0x118Fu, SDW[80], 0xFFFFC000);
+        if (SDW[81])
+            AddIndexData(0x119Au, SDW[81], 0xFFFFC000);
+        if (SDW[38])
+            AddIndexData(0x119Bu, g_DCTTextManager.GetText(3244), SDW[38]);
+        if (SDW[39])
+            AddIndexData(0x119Cu, g_DCTTextManager.GetText(3244), SDW[39]);
+        if (SDW[41])
+            AddIndexData(0x1190u, g_DCTTextManager.GetText(3244), SDW[41]);
+        if (SDW[34])
+            AddIndexData(0x1191u, g_DCTTextManager.GetText(3244), SDW[34]);
+        if (SDW[35])
+            AddIndexData(0x1192u, g_DCTTextManager.GetText(3244), SDW[35]);
+        if (SDW[36])
+            AddIndexData(0x1193u, g_DCTTextManager.GetText(3244), SDW[36]);
+        if (SDW[45])
+            AddIndexData(0x1194u, g_DCTTextManager.GetText(3244), SDW[45]);
+        if (SDW[46])
+            AddIndexData(0x1195u, g_DCTTextManager.GetText(3244), SDW[46]);
+        if (SDW[47])
+            AddIndexData(0x1196u, g_DCTTextManager.GetText(3244), SDW[47]);
+        if (SDW[48])
+            AddIndexData(0x1197u, g_DCTTextManager.GetText(3244), SDW[48]);
+        if (SDW[65])
+            AddIndexData(0x1B28u, g_DCTTextManager.GetText(3636), SetRatePerThousand(SDW[65]));
+        if (SDW[66])
+            AddIndexData(0x1B29u, g_DCTTextManager.GetText(3636), SetRatePerThousand(SDW[66]));
+        if (SDW[88])
+            AddIndexData(0x1B2Au, SDW[88], 0xFFFFC000);
+        if (SDW[90])
+            AddIndexData(0x1B2Bu, g_DCTTextManager.GetText(3244), SDW[90]);
+        if (SDW[91])
+            AddIndexData(0x1B2Cu, g_DCTTextManager.GetText(3244), SDW[91]);
+        if (SDW[92])
+            AddIndexData(0x1B2Du, g_DCTTextManager.GetText(3244), SDW[92]);
+        if (SDW[93])
+            AddIndexData(0x1B2Eu, g_DCTTextManager.GetText(3244), SDW[93]);
+        if (SDW[94])
+            AddIndexData(0x1B2Fu, g_DCTTextManager.GetText(3636), SetRatePerThousand(SDW[94]));
+        if (SDW[95])
+            AddIndexData(0x1B30u, g_DCTTextManager.GetText(3636), SetRatePerThousand(SDW[95]));
+        if (SDW[96])
+            AddIndexData(0x1B31u, g_DCTTextManager.GetText(3636), SetRatePerThousand(SDW[96]));
+        if (SDW[97])
+            AddIndexData(0x1315u, g_DCTTextManager.GetText(3244), SDW[97]);
+
+        // Switch on v4+62
+        uint16_t v71 = 0;
+        switch (SDW[62])
+        {
+        case 1: case 2: v71 = 4504; break;
+        case 3: case 4: v71 = 4505; break;
+        case 5: case 6: v71 = 6964; break;
+        default: break;
+        }
+
+        if (v71 && SDW[49])
+            AddIndexData(v71, g_DCTTextManager.GetText(3636), SetRatePerThousand(SDW[49]));
+
+        if (SDW[85])
+            AddIndexData(0x119Eu, const_cast<char*>("%dms"), SDW[85]);
+        if (SDW[83])
+            AddIndexData(0x119Fu, const_cast<char*>("%dms"), SDW[83]);
     }
 
-    PrintReqWeaponForSkill(skill, !fromBook);
+    PrintReqWeaponForSkill(v4, !v119);
 
-    const uint16_t reqLv = *reinterpret_cast<uint16_t*>(skill->raw + 68);
-    if (reqLv)
-        AddIndexData(0x0BDBu, reqLv, 0xFFFFC000);
+    int v73 = SUW[34];
+    if (static_cast<uint16_t>(v73))
+    {
+        if (g_clLevelSystem.GetLevel() >= v73)
+            AddIndexData(0x0BDBu, v73, 0xFFFFC000);
+        else
+            AddIndexData(0x0BDBu, v73, 0xFFFF4600);
+    }
     else
+    {
         AddIndexData(0x0BDBu, g_DCTTextManager.GetText(3178), 0xFFFFC000);
+    }
 
-    m_nTitleColor = (reqLv && g_clLevelSystem.GetLevel() < reqLv) ? 0xFFFF0000 : 0xFFFFFFFF;
-    PrintReqClassForSkill(skill);
+    if (g_clLevelSystem.GetLevel() >= v73)
+        m_textTitle.m_TextColor = static_cast<DWORD>(-1);
+    else
+        m_textTitle.m_TextColor = static_cast<DWORD>(-65536);
 
-    if (!skillKind)
-        AddDesc(descCode, 0);
+    PrintReqClassForSkill(v4);
+
+    if (!a2)
+        AddDesc(SUW[3], 0);
 }
 void CToolTip::ProcessEmblem()
 {
-    strEmblemKindInfo* e = g_clEmblemKindInfo.GetEmblemKindInfo(m_usKindID);
-    if (!e)
+    // 對齊 0042A910：使用 raw DWORD offset 存取所有欄位
+    strEmblemKindInfo* v3 = g_clEmblemKindInfo.GetEmblemKindInfo(m_usKindID);
+    if (!v3)
         return;
 
-    m_textTitle.SetText(g_DCTTextManager.GetText(e->wEmblemNameCode));
+    const auto EDW = reinterpret_cast<int32_t*>(v3);
+    const auto EUW = reinterpret_cast<uint16_t*>(v3);
+
+    char Buffer[256] = {};
+
+    m_textTitle.SetText(g_DCTTextManager.GetText(EUW[14]));
     AddIndexData(0x0C28u, g_DCTTextManager.GetText(4246), 0xFFFFC000);
 
-    if (e->wEquipConditionLevelFrom)
+    // Level from (word[2]) with color check
+    int v6 = EUW[2];
+    if (static_cast<uint16_t>(v6))
     {
-        char buf[128] = {};
-        std::snprintf(buf, sizeof(buf), g_DCTTextManager.GetParsedText(4305, 0, nullptr), e->wEquipConditionLevelFrom);
-        AddIndexData(0x0C2Au, buf, 0xFFFFC000);
+        std::snprintf(Buffer, sizeof(Buffer), g_DCTTextManager.GetParsedText(4305, 0, 0), v6);
+        if (ExGetMyLevel() <= v6)
+            AddIndexData(0x0C2Au, Buffer, v6);
+        else
+            AddIndexData(0x0C2Au, Buffer, 0xFFFF0000);
     }
-    if (e->wEquipConditionLevelTo)
+    // Level to (word[1]) with color check
+    int v8 = EUW[1];
+    if (static_cast<uint16_t>(v8))
     {
-        char buf[128] = {};
-        std::snprintf(buf, sizeof(buf), g_DCTTextManager.GetParsedText(4306, 0, nullptr), e->wEquipConditionLevelTo);
-        AddIndexData(0x0C2Au, buf, 0xFFFFC000);
-    }
-
-    if (e->dwExtraExperienceRate) AddIndexData(0x0F0Cu, g_DCTTextManager.GetText(3244), static_cast<int>(e->dwExtraExperienceRate));
-    if (e->dwAcquireConditionSwordClassCompletionRate) AddIndexData(0x0C2Du, g_DCTTextManager.GetText(3244), static_cast<int>(e->dwAcquireConditionSwordClassCompletionRate));
-    if (e->dwAcquireConditionArcheryClassCompletionRate) AddIndexData(0x0C2Fu, g_DCTTextManager.GetText(3244), static_cast<int>(e->dwAcquireConditionArcheryClassCompletionRate));
-    if (e->dwAcquireConditionMagicClassCompletionRate) AddIndexData(0x10A4u, g_DCTTextManager.GetText(3244), static_cast<int>(e->dwAcquireConditionMagicClassCompletionRate));
-    if (e->dwAcquireConditionTheologyClassCompletionRate) AddIndexData(0x10A5u, g_DCTTextManager.GetText(3244), static_cast<int>(e->dwAcquireConditionTheologyClassCompletionRate));
-
-    if (e->dwExtraHitRate) AddIndexData(0x0C32u, g_DCTTextManager.GetText(3636), e->dwExtraHitRate * 0.001f);
-    if (e->dwExtraCriticalRate) AddIndexData(0x0C33u, g_DCTTextManager.GetText(3636), e->dwExtraCriticalRate * 0.001f);
-    if (e->dwExtraEvasionRate) AddIndexData(0x0C34u, g_DCTTextManager.GetText(3636), e->dwExtraEvasionRate * 0.001f);
-    if (e->dwAcquireConditionCritDealtRate) AddIndexData(0x0CCBu, g_DCTTextManager.GetText(3636), e->dwAcquireConditionCritDealtRate * 0.001f);
-
-    if (e->dwAcquireConditionItemSale) AddIndexData(0x10A6u, static_cast<int>(e->dwAcquireConditionItemSale), 0xFFFFC000);
-    if (e->dwAcquireConditionPublicQuestCompletionRate) AddIndexData(0x10A7u, g_DCTTextManager.GetText(3636), e->dwAcquireConditionPublicQuestCompletionRate * 0.001f);
-    if (e->dwAcquireConditionJobChangeQuestCompletion) AddIndexData(0x10A8u, static_cast<int>(e->dwAcquireConditionJobChangeQuestCompletion), 0xFFFFC000);
-    if (e->dwAcquireConditionCircleTaskCompletion) AddIndexData(0x10A9u, g_DCTTextManager.GetText(3636), e->dwAcquireConditionCircleTaskCompletion * 0.001f);
-    if (e->dwAcquireConditionAllBossKill) AddIndexData(0x10AAu, static_cast<int>(e->dwAcquireConditionAllBossKill), 0xFFFFC000);
-
-    if (e->wTrainingCard)
-    {
-        stItemKindInfo* tr = g_clItemKindInfo.GetItemKindInfo(e->wTrainingCard);
-        if (tr) AddIndexData(0x1FE0u, g_DCTTextManager.GetText(tr->m_wTextCode), 0xFFFFC000);
+        std::snprintf(Buffer, sizeof(Buffer), g_DCTTextManager.GetParsedText(4306, 0, 0), v8);
+        if (ExGetMyLevel() >= v8)
+            AddIndexData(0x0C2Au, Buffer, v8);
+        else
+            AddIndexData(0x0C2Au, Buffer, 0xFFFF0000);
     }
 
-    AddDesc(e->wEmblemDescriptionCode, 0);
+    if (EDW[65]) AddIndexData(0x0F0Cu, g_DCTTextManager.GetText(3244), EDW[65]);
+    if (EDW[78]) AddIndexData(0x0C2Du, g_DCTTextManager.GetText(3244), EDW[78]);
+    if (EDW[79]) AddIndexData(0x0C2Fu, g_DCTTextManager.GetText(3244), EDW[79]);
+    if (EDW[80]) AddIndexData(0x10A4u, g_DCTTextManager.GetText(3244), EDW[80]);
+    if (EDW[81]) AddIndexData(0x10A5u, g_DCTTextManager.GetText(3244), EDW[81]);
+    if (EDW[67]) AddIndexData(0x0C32u, g_DCTTextManager.GetText(3636), SetRatePerThousand(EDW[67]));
+    if (EDW[66]) AddIndexData(0x0C33u, g_DCTTextManager.GetText(3636), SetRatePerThousand(EDW[66]));
+    if (EDW[68]) AddIndexData(0x0C34u, g_DCTTextManager.GetText(3636), SetRatePerThousand(EDW[68]));
+    if (EDW[84]) AddIndexData(0x0CCBu, g_DCTTextManager.GetText(3636), SetRatePerThousand(EDW[84]));
+    if (EDW[85]) AddIndexData(0x10A6u, EDW[85], 0xFFFFC000);
+    if (EDW[82]) AddIndexData(0x10A7u, g_DCTTextManager.GetText(3636), SetRatePerThousand(EDW[82]));
+    if (EDW[83]) AddIndexData(0x10A8u, EDW[83], 0xFFFFC000);
+    if (EDW[86]) AddIndexData(0x10A9u, g_DCTTextManager.GetText(3636), SetRatePerThousand(EDW[86]));
+    if (EDW[87]) AddIndexData(0x10AAu, EDW[87], 0xFFFFC000);
+    // Missing 22 stats from GT:
+    if (EDW[69]) AddIndexData(0x10ABu, g_DCTTextManager.GetText(3244), EDW[69]);
+    if (EDW[70]) AddIndexData(0x10ACu, g_DCTTextManager.GetText(3244), EDW[70]);
+    if (EDW[71]) AddIndexData(0x10ADu, g_DCTTextManager.GetText(3244), EDW[71]);
+    if (EDW[72]) AddIndexData(0x10AEu, g_DCTTextManager.GetText(3244), EDW[72]);
+    if (EDW[73]) AddIndexData(0x10AFu, g_DCTTextManager.GetText(3636), SetRatePerThousand(EDW[73]));
+    if (EDW[74]) AddIndexData(0x10B0u, g_DCTTextManager.GetText(3636), SetRatePerThousand(EDW[74]));
+    if (EDW[75]) AddIndexData(0x10B1u, g_DCTTextManager.GetText(3636), SetRatePerThousand(EDW[75]));
+    if (EDW[76]) AddIndexData(0x10B2u, g_DCTTextManager.GetText(3636), SetRatePerThousand(EDW[76]));
+    if (EDW[77]) AddIndexData(0x10B3u, g_DCTTextManager.GetText(3636), SetRatePerThousand(EDW[77]));
+    if (EDW[88]) AddIndexData(0x10B4u, g_DCTTextManager.GetText(3636), SetRatePerThousand(EDW[88]));
+    if (EDW[89]) AddIndexData(0x10B5u, g_DCTTextManager.GetText(3244), EDW[89]);
+    if (EDW[90]) AddIndexData(0x1FD9u, g_DCTTextManager.GetText(3636), SetRatePerThousand(EDW[90]));
+    if (EDW[91]) AddIndexData(0x1FDAu, g_DCTTextManager.GetText(3244), EDW[91]);
+    if (EDW[92]) AddIndexData(0x1FDBu, g_DCTTextManager.GetText(3636), SetRatePerThousand(EDW[92]));
+    if (EDW[93]) AddIndexData(0x1FDCu, g_DCTTextManager.GetText(3636), SetRatePerThousand(EDW[93]));
+    if (EDW[94]) AddIndexData(0x1FDDu, g_DCTTextManager.GetText(3636), SetRatePerThousand(EDW[94]));
+    if (EDW[95]) AddIndexData(0x1FDEu, g_DCTTextManager.GetText(3636), SetRatePerThousand(EDW[95]));
+    if (EDW[96]) AddIndexData(0x1FDFu, g_DCTTextManager.GetText(3636), SetRatePerThousand(EDW[96]));
+    if (EDW[99]) AddIndexData(0x1FE1u, g_DCTTextManager.GetText(3636), SetRatePerThousand(EDW[99]));
+    if (EDW[100]) AddIndexData(0x1FE2u, g_DCTTextManager.GetText(3636), SetRatePerThousand(EDW[100]));
+    if (EDW[97]) AddIndexData(0x1FE3u, g_DCTTextManager.GetText(3636), SetRatePerThousand(EDW[97]));
+    if (EDW[101]) AddIndexData(0x1FE4u, g_DCTTextManager.GetText(3244), EDW[101]);
+
+    // Training card
+    uint16_t trainCard = EUW[196];
+    if (trainCard)
+    {
+        stItemKindInfo* tr = g_clItemKindInfo.GetItemKindInfo(trainCard);
+        if (tr)
+            AddIndexData(0x1FE0u, g_DCTTextManager.GetText(reinterpret_cast<uint16_t*>(tr)[1]), 0xFFFFC000);
+    }
+
+    AddDesc(EUW[15], 0);
 }
-void CToolTip::OutputCashShopTime(stItemKindInfo* pItemInfo)
+void CToolTip::OutputCashShopTime(stItemKindInfo* a2)
 {
-    if (!pItemInfo)
-        return;
-    if (!g_clItemKindInfo.IsCashItem(pItemInfo->m_wKind) ||
-        !g_clItemKindInfo.IsTimerItem(pItemInfo->m_wKind))
+    // 對齊 0042B0A0
+    if (!a2)
         return;
 
-    if (pItemInfo->m_wUseTerm == 0)
+    const auto AB = reinterpret_cast<uint8_t*>(a2);
+    const auto AW = reinterpret_cast<uint16_t*>(a2);
+
+    if (!g_clItemKindInfo.IsCashItem(AB[34]) || !g_clItemKindInfo.IsTimerItem(AB[34]))
+        return;
+
+    uint16_t useTerm = AW[30]; // word offset 30 = byte 60
+    if (!useTerm)
     {
         AddIndexData(0x0C3Cu, g_DCTTextManager.GetText(4024), 0xFFFFC000);
         return;
     }
 
-    // Ground-truth 會依 UI type/slot 從不同系統讀剩餘秒數；在還原不足情況下以 useTerm 作為 fallback。
-    unsigned int remainSec = pItemInfo->m_wUseTerm;
-    if (remainSec <= 365)
-        AddIndexData(0x0C3Cu, g_DCTTextManager.GetText(4011), static_cast<int>(remainSec));
-    else
+    unsigned int v8 = 0;
+    switch (m_byUIType)
+    {
+    case 5: // equipment
+    {
+        unsigned int slot;
+        if (m_nSubType == 4)
+            slot = 1;
+        else if (m_nSubType == 5)
+            slot = 0;
+        else
+            break;
+        if (m_usSlotIndex != 0xFFFF)
+        {
+            v8 = dword_21BA32C->GetEquipItemTime(slot, m_usSlotIndex);
+            goto HAVE_TIME;
+        }
+        break;
+    }
+    case 4: // inventory
+        if (m_usSlotIndex != 0xFFFF)
+        {
+            strInventoryItem* pItem = g_clMyInventory.GetInventoryItem(m_usSlotIndex);
+            v8 = pItem->value0; // time value (DWORD offset +1)
+            goto HAVE_TIME;
+        }
+        break;
+    case 16: // trade
+    {
+        unsigned int targetAccount = *reinterpret_cast<uint32_t*>(dword_21C9C54);
+        if ((m_usSlotIndex & 0xFFF8) != 0)
+            targetAccount = ExGetMyAccount();
+        cltTradeBasket* pBasket = g_clTradeSystem.GetTradeBasket(targetAccount);
+        if (pBasket)
+        {
+            v8 = pBasket->GetItemTime(m_usSlotIndex & 7);
+            goto HAVE_TIME;
+        }
+        break;
+    }
+    case 43:
+    case 45:
+    case 47:
+    case 12:
+        AddIndexData(0x0C3Cu, g_DCTTextManager.GetText(4011), static_cast<int>(useTerm));
+        return;
+    case 48: // pet inventory / special UI
+        if (m_usSlotIndex != 0xFFFF)
+        {
+            ClientCharacter* pMyChar = g_ClientCharMgr.GetMyCharacterPtr();
+            if (pMyChar)
+            {
+                if (*(reinterpret_cast<uint8_t*>(pMyChar) + 11524) == 3)
+                {
+                    int uiWindow = reinterpret_cast<int>(g_UIMgr->GetUIWindow(48));
+                    v8 = *reinterpret_cast<uint32_t*>(uiWindow + 1956 * static_cast<uint16_t>(m_usSlotIndex) + 7924);
+                }
+                else
+                {
+                    v8 = dword_B3D72C[4 * static_cast<uint16_t>(m_usSlotIndex)];
+                }
+                goto HAVE_TIME;
+            }
+        }
+        break;
+    default:
+        if (m_byUIType == 29 && m_usSlotIndex != 0xFFFF && g_UIMgr->IsOpenUserInterface(29))
+        {
+            unsigned int v20 = 0;
+            uint16_t outKind = 0;
+            uint16_t outQty = 0;
+            int uiWindow = reinterpret_cast<int>(g_UIMgr->GetUIWindow(29));
+            if (*reinterpret_cast<int*>(uiWindow + 3300))
+            {
+                g_clExStorageSystem.GetStorageItem(
+                    static_cast<uint8_t>(m_usSlotIndex),
+                    &outKind, &outQty, &v20);
+            }
+            else
+            {
+                dword_21BB2AC->GetStorageItem(
+                    static_cast<uint8_t>(m_usSlotIndex),
+                    &outKind, &outQty, &v20);
+            }
+            v8 = v20;
+            if (v20)
+                goto HAVE_TIME;
+        }
+        break;
+    }
+
+    // 最終 fallback
+    if (!a2 || !AW[77])
+    {
+        AddIndexData(0x0C3Cu, g_DCTTextManager.GetText(4480), 0xFFFFC000);
+        return;
+    }
+    return;
+
+HAVE_TIME:
+    if (!a2)
+    {
+        AddIndexData(0x0C3Cu, g_DCTTextManager.GetText(4480), 0xFFFFC000);
+        return;
+    }
+    {
+        unsigned int remain = ExGetTimeOutItemRemindTime(v8, *reinterpret_cast<uint16_t*>(a2));
+        if (remain <= 0x16D)
+        {
+            AddIndexData(0x0C3Cu, g_DCTTextManager.GetText(4011), static_cast<int>(remain));
+            return;
+        }
+    }
+    // fall through: check word[77]
+    if (!a2 || !AW[77])
         AddIndexData(0x0C3Cu, g_DCTTextManager.GetText(4480), 0xFFFFC000);
 }
 void CToolTip::ProcessDesc()
@@ -1310,35 +1957,30 @@ void CToolTip::ProcessDesc()
 }
 void CToolTip::ProcessClimate()
 {
-    // 原始碼從當前地圖取 climate；這裡優先以 tooltip kind 作 climate code，
-    // 若無資料則回退把 tooltip kind 視為 map id，顯示基本氣候標題。
-    static cltClimateKindInfo climateInfo;
-    strClimateInfo* c = climateInfo.GetClimateKindInfo(m_usKindID);
-    if (!c)
-    {
-        stMapInfo* mapInfo = g_Map.GetMapInfoByID(m_usKindID);
-        if (!mapInfo)
-            return;
-        m_textTitle.SetText(g_DCTTextManager.GetText(mapInfo->m_wRegionNameCode));
-        AddIndexData(0x0C28u, g_DCTTextManager.GetText(8165), 0xFFFFC000);
-        AddDesc(0, 0);
+    // 對齊 0042B3D0：從當前地圖取氣候資訊
+    strClimateInfo* v2 = g_Map.GetClimateKindByMapId(dword_21B8DF4);
+    if (!v2)
         return;
-    }
 
-    m_textTitle.SetText(g_DCTTextManager.GetText(c->nameTextId));
+    const auto CW = reinterpret_cast<uint16_t*>(v2);
+    const auto CDW = reinterpret_cast<int32_t*>(v2);
+
+    m_textTitle.SetText(g_DCTTextManager.GetText(CW[1]));
     AddIndexData(0x0C28u, g_DCTTextManager.GetText(8165), 0xFFFFC000);
     AddDesc(0, 0);
 
-    if (c->moveSpeedPermil != 1000)
-        AddIndexData(0x1FE6u, g_DCTTextManager.GetText(3636), (1000 - c->moveSpeedPermil) * 0.001f);
-    if (c->hpRegenIncPermil)
-        AddIndexData(0x1FE7u, g_DCTTextManager.GetText(3636), c->hpRegenIncPermil * 0.001f);
-    if (c->mpRegenDecPermil)
-        AddIndexData(0x1FE8u, g_DCTTextManager.GetText(3636), c->mpRegenDecPermil * 0.001f);
-    if (c->itemDropIncPermil)
-        AddIndexData(0x1FE9u, g_DCTTextManager.GetText(3636), (c->itemDropIncPermil % 1000) * 0.001f);
-    if (c->unitCount)
-        AddIndexData(0x1FEAu, g_DCTTextManager.GetText(8175), c->unitCount * 0.001f + 1.0f);
+    uint16_t moveSpeed = CW[2];
+    if (moveSpeed != 1000)
+        AddIndexData(0x1FE6u, g_DCTTextManager.GetText(3636), SetRatePerThousand(1000 - static_cast<unsigned int>(moveSpeed)));
+    if (CDW[2])
+        AddIndexData(0x1FE7u, g_DCTTextManager.GetText(3636), SetRatePerThousand(CDW[2]));
+    if (CDW[3])
+        AddIndexData(0x1FE8u, g_DCTTextManager.GetText(3636), SetRatePerThousand(CDW[3]));
+    if (CW[8])
+        AddIndexData(0x1FE9u, g_DCTTextManager.GetText(3636), SetRatePerThousand(static_cast<uint16_t>(CW[8]) % 1000));
+    uint16_t v10 = CW[14];
+    if (v10)
+        AddIndexData(0x1FEAu, g_DCTTextManager.GetText(8175), static_cast<float>(static_cast<double>(v10) * 0.001 + 1.0));
 }
 void CToolTip::ProcessEmoticon()
 {
@@ -1353,43 +1995,47 @@ void CToolTip::ProcessEmoticon()
     m_textTitle.SetText(g_DCTTextManager.GetText(info->nameId));
     AddDesc(info->tooltipId, 0);
 }
-void CToolTip::ProcessPetSkill(uint16_t petSkillKind)
+void CToolTip::ProcessPetSkill(uint16_t a2)
 {
-    uint16_t skillKind = petSkillKind ? petSkillKind : m_usKindID;
-    strPetSkillKindInfo* info = g_clPetSkillKindInfo.GetPetSkillKindInfo(skillKind);
-    if (!info)
+    // 對齊 0042B6B0
+    uint16_t v2 = a2 ? a2 : m_usKindID;
+    strPetSkillKindInfo* v4 = g_clPetSkillKindInfo.GetPetSkillKindInfo(v2);
+    if (!v4)
         return;
 
-    m_textTitle.SetText(g_DCTTextManager.GetText(info->wSkillNameTextId));
+    const auto PDW = reinterpret_cast<int32_t*>(v4);
+    const auto PUW = reinterpret_cast<uint16_t*>(v4);
+
+    m_textTitle.SetText(g_DCTTextManager.GetText(PUW[1]));
     AddIndexData(0x0C41u, g_DCTTextManager.GetText(7216), 0xFFFFC000);
 
-    if (info->dwAttackPowerIncreasePerThousand)
-        AddIndexData(0x0DCAu, const_cast<char*>("%.2f"), info->dwAttackPowerIncreasePerThousand * 0.001f);
-    if (info->dwDefensePowerIncreasePerThousand)
-        AddIndexData(0x0DCBu, const_cast<char*>("%.2f"), info->dwDefensePowerIncreasePerThousand * 0.001f);
-    if (info->dwHitRateIncreasePerThousand)
-        AddIndexData(0x0DCCu, const_cast<char*>("%.2f"), info->dwHitRateIncreasePerThousand * 0.001f);
-
-    if (info->dwSkillAttackPowerIncrease)
-        AddIndexData(0x0C2Eu, const_cast<char*>("%d"), static_cast<int>(info->dwSkillAttackPowerIncrease));
-    if (info->dwAttackSpeed)
-        AddIndexData(0x0ECFu, const_cast<char*>("%d"), static_cast<int>(info->dwAttackSpeed));
-
-    if (info->dwHpAutoRecoveryRateChangePerThousand)
-        AddIndexData(0x10B1u, const_cast<char*>("%.2f"), info->dwHpAutoRecoveryRateChangePerThousand * 0.001f);
-    if (info->dwMpAutoRecoveryRateChangePerThousand)
-        AddIndexData(0x10B3u, const_cast<char*>("%.2f"), info->dwMpAutoRecoveryRateChangePerThousand * 0.001f);
-
-    if (info->wPickup)
+    if (PDW[5])
+        AddIndexData(0x0DCAu, g_DCTTextManager.GetText(3636), SetRatePerThousand(PDW[5]));
+    if (PDW[6])
+        AddIndexData(0x0DCBu, g_DCTTextManager.GetText(3636), SetRatePerThousand(PDW[6]));
+    if (PDW[7])
+        AddIndexData(0x0DCCu, g_DCTTextManager.GetText(3636), SetRatePerThousand(PDW[7]));
+    if (PDW[4])
+        AddIndexData(0x0C2Eu, g_DCTTextManager.GetText(3244), PDW[4]);
+    if (PDW[10])
+        AddIndexData(0x0ECFu, g_DCTTextManager.GetText(3636), PDW[10]);
+    if (PDW[8])
+        AddIndexData(0x10B1u, g_DCTTextManager.GetText(3636), SetRatePerThousand(PDW[8]));
+    if (PDW[9])
+        AddIndexData(0x10B3u, g_DCTTextManager.GetText(3636), SetRatePerThousand(PDW[9]));
+    if (PUW[22])
         AddIndexData(0x1C31u, g_DCTTextManager.GetText(7219), 0xFFFFC000);
 
-    if (info->wRequiredLevel)
+    int v14 = PUW[7];
+    if (static_cast<uint16_t>(v14))
     {
-        const unsigned int levelColor = (g_clPetSystem.GetPetLevel() < info->wRequiredLevel) ? 0xFFFF4600 : 0xFFFFC000;
-        AddIndexData(0x1C32u, static_cast<int>(info->wRequiredLevel), levelColor);
+        if (g_clPetSystem.GetPetLevel() < v14)
+            AddIndexData(0x1C32u, v14, 0xFFFF4600);
+        else
+            AddIndexData(0x1C32u, v14, 0xFFFFC000);
     }
 
-    AddDesc(info->wSkillDescriptionTextId, 0);
+    AddDesc(PUW[2], 0);
 }
 void CToolTip::ProcessCoupleRing()
 {
@@ -1407,14 +2053,32 @@ void CToolTip::ProcessCoupleRing()
     if (info->blockId)
         AddIndexData(0x0ECCu, g_DCTTextManager.GetText(8215), 0xFFFFC000);
 
-    // 原碼這段會組 marriage system 的剩餘召喚次數；該全域目前未完整還原，先用可等價的可召喚/不可召喚文字。
-    if (info->canSummonSpouse)
-        AddIndexData(0x1FCAu, g_DCTTextManager.GetText(8216), 0xFFFFC000);
+    // 對齊 0042B8A0：marriage system recall quantity
+    const auto RDW = reinterpret_cast<int32_t*>(info);
+    char* recallText;
+    if (RDW[2]) // canSummonSpouse
+    {
+        char myItemBuf[128] = {};
+        char totalBuf[128] = {};
+        if (g_clMarriageSystem->GetRemainedRecallQty_MyItem())
+        {
+            int myItemQty = g_clMarriageSystem->GetRemainedRecallQty_MyItem();
+            int remainQty = g_clMarriageSystem->GetRemainedRecallQty();
+            std::snprintf(myItemBuf, sizeof(myItemBuf), g_DCTTextManager.GetText(8375), remainQty, myItemQty);
+        }
+        int totalQty = g_clMarriageSystem->GetRemainedRecallQty_Total();
+        std::snprintf(totalBuf, sizeof(totalBuf), g_DCTTextManager.GetText(8216), totalQty, myItemBuf);
+        recallText = totalBuf;
+        AddIndexData(0x1FCAu, recallText, 0xFFFFC000);
+    }
     else
+    {
         AddIndexData(0x1FCAu, g_DCTTextManager.GetText(8217), 0xFFFFC000);
+    }
 
-    if (info->expRatePercent)
-        AddIndexData(0x0C3Du, g_DCTTextManager.GetText(3244), info->expRatePercent);
+    int v8 = RDW[1]; // expRatePercent
+    if (v8)
+        AddIndexData(0x0C3Du, g_DCTTextManager.GetText(3244), v8);
 
     AddIndexData(0x2015u, g_DCTTextManager.GetText(8218), 0xFFFFC000);
 
@@ -1574,59 +2238,118 @@ void CToolTip::PrintReqWeaponForSkill(stSkillKindInfo* pSkill, int checkEquipped
         AddIndexData(0x0C79u, g_DCTTextManager.GetText(3178), 0xFFFFC000);
     }
 }
-void CToolTip::PrintReqClassForSkill(stSkillKindInfo* pSkill)
+void CToolTip::PrintReqClassForSkill(stSkillKindInfo* a2)
 {
-    const uint16_t myClass = g_clClassSystem.GetClass();
-    if (!myClass)
+    // 對齊 0042C160：class hierarchy walk
+    uint16_t v3 = g_clClassSystem.GetClass();
+    if (!v3)
         return;
 
-    uint16_t classes[64] = {};
-    const uint64_t classMask = *reinterpret_cast<uint64_t*>(pSkill->raw + 40);
-    const int count = g_clClassKindInfo.GetClassKindsByAtb(classMask, classes);
-    if (count <= 0)
+    uint16_t v15[64] = {};
+    int v4 = g_clClassKindInfo.GetClassKindsByAtb(*reinterpret_cast<uint64_t*>(reinterpret_cast<char*>(a2) + 40), v15);
+    if (v4 <= 0)
     {
         AddIndexData(0x0C7Au, g_DCTTextManager.GetText(3178), 0xFFFFC000);
         return;
     }
 
-    SetVoidIndex(m_nIndexCount + 1, m_nIndexCount + count);
-    bool canUse = false;
-    for (int i = 0; i < count; ++i)
+    SetVoidIndex(m_nIndexCount + 1, m_nIndexCount + v4);
+
+    // 第一遍：走 class hierarchy 判斷是否可用
+    int v6 = 0; // canUse flag
+    for (int i = 0; i < v4; ++i)
     {
-        if (classes[i] == myClass)
-            canUse = true;
+        if (!v15[i])
+            continue;
+
+        // 取玩家當前職業資訊，向上走 parent chain
+        strClassKindInfo* v8 = g_clClassKindInfo.GetClassKindInfo(v3);
+        v6 = 0;
+        while (v8)
+        {
+            strClassKindInfo* target = g_clClassKindInfo.GetClassKindInfo(v15[i]);
+            if (target)
+            {
+                // 比較 attribute mask 交集 (QWORD offset 1 = byte offset 8)
+                uint64_t myAtb = *reinterpret_cast<uint64_t*>(reinterpret_cast<char*>(v8) + 8);
+                uint64_t reqAtb = *reinterpret_cast<uint64_t*>(reinterpret_cast<char*>(target) + 8);
+                if ((myAtb & reqAtb) != 0)
+                {
+                    v6 = 1;
+                    i = v4; // break outer loop too
+                    break;
+                }
+            }
+            // Walk up to parent class: word offset 10 = byte offset 20
+            uint16_t parentClass = reinterpret_cast<uint16_t*>(v8)[10];
+            v8 = g_clClassKindInfo.GetClassKindInfo(parentClass);
+        }
     }
-    for (int i = 0; i < count; ++i)
+
+    // 第二遍：輸出所有職業（色彩依 canUse）
+    for (int i = 0; i < v4; ++i)
     {
-        strClassKindInfo* info = g_clClassKindInfo.GetClassKindInfo(classes[i]);
-        if (info)
-            AddIndexData(0x0C7Au, g_DCTTextManager.GetText(info->name_code), canUse ? 0xFFFFC000 : 0xFFFF4600);
+        strClassKindInfo* v10 = g_clClassKindInfo.GetClassKindInfo(v15[i]);
+        if (v10)
+        {
+            unsigned int color = v6 ? 0xFFFFC000u : 0xFFFF4600u;
+            AddIndexData(0x0C7Au, g_DCTTextManager.GetText(reinterpret_cast<uint16_t*>(v10)[8]), color);
+        }
     }
 }
 void CToolTip::PrintReqClassForHuntItem()
 {
-    uint16_t classes[32] = {};
-    int count = 0;
-    if (!g_clItemKindInfo.GetReqClassKindsForEquip(m_usKindID, &count, classes))
+    // 對齊 0042C2B0：class hierarchy walk
+    uint16_t v19[32] = {};
+    int v17 = 0;
+    if (!g_clItemKindInfo.GetReqClassKindsForEquip(m_usKindID, &v17, v19))
         return;
 
-    if (count <= 0)
+    if (v17 <= 0)
     {
         AddIndexData(0x0C2Bu, g_DCTTextManager.GetText(3178), 0xFFFFC000);
         return;
     }
 
-    SetVoidIndex(m_nIndexCount + 1, m_nIndexCount + count);
-    const uint16_t myClass = g_clClassSystem.GetClass();
-    bool canUse = false;
-    for (int i = 0; i < count; ++i)
-        if (classes[i] == myClass) canUse = true;
+    SetVoidIndex(m_nIndexCount + 1, m_nIndexCount + v17);
 
-    for (int i = 0; i < count; ++i)
+    // 第一遍：走 class hierarchy 判斷是否可用
+    int v18 = 0; // canUse flag
+    for (int i = 0; i < v17; ++i)
     {
-        strClassKindInfo* info = g_clClassKindInfo.GetClassKindInfo(classes[i]);
-        if (info)
-            AddIndexData(0x0C2Bu, g_DCTTextManager.GetText(info->name_code), canUse ? 0xFFFFC000 : 0xFFFF4600);
+        if (!v19[i])
+            continue;
+
+        strClassKindInfo* v7 = g_clClassKindInfo.GetClassKindInfo(v19[i]);
+        if (!v7)
+            continue;
+
+        uint16_t myClassCode = g_clClassSystem.GetClass();
+        strClassKindInfo* v9 = g_clClassKindInfo.GetClassKindInfo(myClassCode);
+
+        while (v9)
+        {
+            uint64_t reqAtb = *reinterpret_cast<uint64_t*>(reinterpret_cast<char*>(v7) + 8);
+            uint64_t myAtb = *reinterpret_cast<uint64_t*>(reinterpret_cast<char*>(v9) + 8);
+            if ((reqAtb & myAtb) != 0)
+            {
+                v18 = 1;
+                break;
+            }
+            uint16_t parentClass = reinterpret_cast<uint16_t*>(v9)[10];
+            v9 = g_clClassKindInfo.GetClassKindInfo(parentClass);
+        }
+    }
+
+    // 第二遍：輸出所有職業
+    for (int i = 0; i < v17; ++i)
+    {
+        strClassKindInfo* v12 = g_clClassKindInfo.GetClassKindInfo(v19[i]);
+        if (v12)
+        {
+            unsigned int color = v18 ? 0xFFFFC000u : 0xFFFF4600u;
+            AddIndexData(0x0C2Bu, g_DCTTextManager.GetText(reinterpret_cast<uint16_t*>(v12)[8]), color);
+        }
     }
 }
 
@@ -1654,37 +2377,126 @@ void CToolTip::ProcessCharInfo(char* charName)
 }
 void CToolTip::SetTextMainTitle(stMapInfo* pMapInfo)
 {
-    if (!pMapInfo || m_nWorldMapTextCount >= 50)
+    // 對齊 0042C3D0：GT 使用 <= 50（允許 count == 50）
+    if (m_nWorldMapTextCount >= 50 || !pMapInfo)
         return;
-    const int textCode = pMapInfo->m_wDungeonNameCode ? pMapInfo->m_wDungeonNameCode : pMapInfo->m_wFileName;
+    const auto MW = reinterpret_cast<uint16_t*>(pMapInfo);
+    const int textCode = MW[186] ? MW[186] : MW[1];
     m_worldMapText[m_nWorldMapTextCount].SetText(g_DCTTextManager.GetText(textCode));
     m_worldMapText[m_nWorldMapTextCount++].m_TextColor = 0xFF00FF00; // -16711936
 }
 void CToolTip::SetTextDungeonBasic(stMapInfo* pMapInfo)
 {
-    if (!pMapInfo || m_nWorldMapTextCount >= 50)
+    // 對齊 0042C460
+    if (m_nWorldMapTextCount >= 50 || !pMapInfo)
         return;
 
-    // 盡量對齊 ground-truth：輸出副本基礎文字（地區、怪物群、難度）
-    if (pMapInfo->m_wRegionCode)
-    {
-        m_worldMapText[m_nWorldMapTextCount].SetText(g_DCTTextManager.GetText(pMapInfo->m_wRegionCode));
-        m_worldMapText[m_nWorldMapTextCount++].m_TextColor = 0xFFFFFFFF;
-    }
+    const auto MW = reinterpret_cast<uint16_t*>(pMapInfo);
 
-    uint16_t* regen = g_cltRegenMonsterKindInfo.GetRegenMonsterKindByMapID(pMapInfo->m_wID);
-    if (regen)
+    uint16_t dungeonNameCode = MW[186];
+
+    if (dungeonNameCode)
     {
-        int count = 0;
-        for (int i = 0; i < 5; ++i) if (regen[i]) ++count;
-        if (count > 0)
+        // 副本路線：遍歷所有屬於同副本的地圖
+        int mapCount = g_pcltMapInfo->GetMapKindCountByDungeonNameCode(dungeonNameCode);
+        if (mapCount <= 0)
+            return;
+
+        // 取得地圖列表起始位址
+        uint16_t* mapList = reinterpret_cast<uint16_t*>(reinterpret_cast<char*>(g_pcltMapInfo) + 20);
+        if (!mapList)
+            return;
+
+        for (int m = 0; m < mapCount; ++m)
         {
-            char line[128] = {};
-            std::snprintf(line, sizeof(line), "%s : %d", g_DCTTextManager.GetText(8218), count);
-            if (m_nWorldMapTextCount < 50)
+            uint16_t* regenMonsters = g_cltRegenMonsterKindInfo.GetRegenMonsterKindByMapID(mapList[m]);
+            if (!regenMonsters)
+                continue;
+
+            for (int i = 0; i < 5; ++i)
             {
-                m_worldMapText[m_nWorldMapTextCount].SetText(line);
-                m_worldMapText[m_nWorldMapTextCount++].m_TextColor = 0xFFFFFFFF;
+                stCharKindInfo* charInfo = static_cast<stCharKindInfo*>(g_pcltCharKindInfo->GetCharKindInfo(regenMonsters[i]));
+                if (!charInfo)
+                    continue;
+                const auto CDW = reinterpret_cast<int32_t*>(charInfo);
+                const auto CUW = reinterpret_cast<uint16_t*>(charInfo);
+                const auto CB = reinterpret_cast<uint8_t*>(charInfo);
+
+                if (CDW[53] < 1)
+                    continue;
+
+                char Buffer[256] = {};
+                std::snprintf(Buffer, sizeof(Buffer), "%s(Lv%d)",
+                    g_DCTTextManager.GetText(CUW[1]), static_cast<int>(CB[146]));
+
+                // 重複檢查 + 寫入
+                bool found = false;
+                for (int j = 1; j < 50; ++j)
+                {
+                    CControlText* line = reinterpret_cast<CControlText*>(
+                        reinterpret_cast<char*>(this) + 21436 + 432 * (j - 1));
+
+                    if (std::strcmp(line->GetText(), Buffer) == 0)
+                    {
+                        found = true;
+                        break;
+                    }
+                    if (std::strcmp(line->GetText(), Buffer) == 0 || !line->IsStringData())
+                    {
+                        if (std::strcmp(line->GetText(), Buffer) != 0 && !line->IsStringData())
+                        {
+                            // 寫入新行
+                            m_worldMapText[m_nWorldMapTextCount].SetText(Buffer);
+                            m_worldMapText[m_nWorldMapTextCount].m_TextColor = -65536; // 紅色
+                            ++m_nWorldMapTextCount;
+                            found = true;
+                            break;
+                        }
+                    }
+                }
+            }
+        }
+    }
+    else
+    {
+        // 非副本路線：單一地圖
+        uint16_t* regenMonsters = g_cltRegenMonsterKindInfo.GetRegenMonsterKindByMapID(MW[0]);
+        if (!regenMonsters)
+            return;
+
+        for (int i = 0; i < 5; ++i)
+        {
+            stCharKindInfo* charInfo = static_cast<stCharKindInfo*>(g_pcltCharKindInfo->GetCharKindInfo(regenMonsters[i]));
+            if (!charInfo)
+                continue;
+            const auto CDW = reinterpret_cast<int32_t*>(charInfo);
+            const auto CUW = reinterpret_cast<uint16_t*>(charInfo);
+            const auto CB = reinterpret_cast<uint8_t*>(charInfo);
+
+            if (CDW[53] < 1)
+                continue;
+
+            char Buffer[256] = {};
+            std::snprintf(Buffer, sizeof(Buffer), "%s(Lv%d)",
+                g_DCTTextManager.GetText(CUW[1]), static_cast<int>(CB[146]));
+
+            // 重複檢查 + 寫入
+            for (int j = 1; j < 50; ++j)
+            {
+                CControlText* line = &m_worldMapText[j];
+
+                if (std::strcmp(line->GetText(), Buffer) == 0)
+                    break;
+                if (std::strcmp(line->GetText(), Buffer) == 0 || !line->IsStringData())
+                {
+                    if (std::strcmp(line->GetText(), Buffer) != 0 && !line->IsStringData())
+                    {
+                        m_worldMapText[m_nWorldMapTextCount].SetText(Buffer);
+                        m_worldMapText[m_nWorldMapTextCount].m_TextColor = -65536;
+                        ++m_nWorldMapTextCount;
+                        break;
+                    }
+                }
             }
         }
     }

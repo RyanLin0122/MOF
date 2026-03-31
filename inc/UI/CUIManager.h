@@ -13,6 +13,7 @@ public:
     static int IsCharActionKey(CUIManager* pMgr, int keyId);
 
     CUIBase* GetUIWindow(int id);
+    int IsOpenUserInterface(int id);
     int GetGameState();
 
     // CMessageBoxManager 使用的排序管理

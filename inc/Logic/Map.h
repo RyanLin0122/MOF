@@ -35,6 +35,7 @@ public:
     void DrawClip();
     void PrepareDrawingClimate();
     void DrawClimate();
+    struct strClimateInfo* GetClimateKindByMapId(uint16_t mapId);
 
     // Coord conversion
     int MapXtoScreenX(int x);

@@ -1,5 +1,10 @@
 #include "global.h"
 #include "Info/cltClassKindInfo.h"
+#include "System/cltUsingItemSystem.h"
+#include "System/cltSexSystem.h"
+#include "System/cltPlayerAbility.h"
+#include "System/cltUsingSkillSystem.h"
+#include "System/cltSpecialtySystem.h"
 #include "Info/cltItemKindInfo.h"
 #include "Info/cltNPCInfo.h"
 #include "Info/cltCharKindInfo.h"
@@ -62,6 +67,9 @@
 #include "Logic/cltChattingMgr.h"
 #include "Info/cltBasicAppearKindInfo.h"
 #include "Sound/GameSound.h"
+#include "System/cltTradeSystem.h"
+#include "System/cltStorageSystem.h"
+#include "System/cltExStorageSystem.h"
 
 
 CDeviceManager& g_clDeviceManager = *CDeviceManager::GetInstance();
@@ -201,6 +209,28 @@ cltMapInfo* g_pcltMapInfo = nullptr;
 // System (additional)
 cltEquipmentSystem* dword_21BA32C = nullptr;
 cltSkillSystem g_clSkillSystem;
+cltSpecialtySystem g_clSpecialtySystem;
+cltUsingItemSystem g_clUsingItemSystem;
+cltSexSystem g_clSexSystem;
+cltPlayerAbility g_clPlayerAbility;
+cltUsingSkillSystem g_clUsingSkillSystem;
+cltMarriageSystem* g_clMarriageSystem = nullptr;
+cltStorageSystem* dword_21BB2AC = nullptr;
+
+// OutputCashShopTime 用的外部符號（對齊反編譯）
+unsigned short dword_21C9C54[8] = {};
+int dword_B3D72C[40] = {};
+
+unsigned int ExGetTimeOutItemRemindTime(unsigned int a1, unsigned short a2)
+{
+    // TODO: 從 mofclient.c 還原完整實作
+    return a1;
+}
+
+unsigned int ExGetMyAccount()
+{
+    return g_dwMyAccountID;
+}
 
 // CControlChatBallon 九宮格樣式表（對齊反編譯 0x6C6AD0）
 // 每種樣式 11 個 uint16 block ID，順序：TL, TM, TR, ML, MM, MC, BL, BM, BR, Arrow, ArrowTail

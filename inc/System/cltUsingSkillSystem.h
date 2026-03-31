@@ -4,6 +4,7 @@
 
 class cltUsingSkillSystem {
 public:
+    int GetSkillCoolTimeByBaseCoolTime(int a2, int baseCoolTime);
     int GetUsingSkillNum();
     int GetTotalStrOfUsingSkill();
     int GetTotalDexOfUsingSkill();

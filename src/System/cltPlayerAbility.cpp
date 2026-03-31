@@ -115,6 +115,7 @@ std::uint16_t cltPlayerAbility::GetBaseInt() const { return m_baseInt; }
 std::uint16_t cltPlayerAbility::GetBaseVit() const { return m_baseVit; }
 
 void cltPlayerAbility::SetMana(int mana) { m_mana = max(mana, 0); }
+int cltPlayerAbility::GetHP() const { return m_hp; }
 int cltPlayerAbility::GetMP() const { return m_mana; }
 
 void cltPlayerAbility::DecreaseMP(int value) {

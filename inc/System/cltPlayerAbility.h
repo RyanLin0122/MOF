@@ -55,6 +55,7 @@ public:
     std::uint16_t GetBaseVit() const;
 
     void SetMana(int mana);
+    int GetHP() const;
     int GetMP() const;
     void DecreaseMP(int value);
     std::uint16_t GetBonusPoint() const;

@@ -4,11 +4,11 @@
 #include "UI/CControlAlphaBox.h"
 #include "UI/CControlImage.h"
 #include "UI/CControlText.h"
-#include "UI/stToolTipData.h"
 
 struct stItemKindInfo;
 struct stSkillKindInfo;
 struct stMapInfo;
+class stToolTipData;
 
 /**
  * CToolTip - 遊戲內工具提示面板
@@ -18,14 +18,29 @@ struct stMapInfo;
  *   +4       CControlAlphaBox  m_innerBox          (主背景)
  *   +212     CControlAlphaBox  m_borderBox[4]      (邊框 4 條)
  *   +1044    CControlAlphaBox  m_sectionBar[5]     (分隔線)
- *   +2188    stToolTipData     m_tipData           (工具提示數據)
+ *   +2084    int               m_nSectionBarCount  (section bar 數量)
+ *   +2088    int               m_nIndexCount       (索引行數)
+ *   +2092    int               m_voidIndices[20]   (void index 陣列)
+ *   +2172    int               m_nVoidCount        (void index 數量)
+ *   +2180    int               m_nMouseX           (滑鼠 X)
+ *   +2184    int               m_nMouseY           (滑鼠 Y)
+ *   +2188    int               m_nType             (tooltip 類型，同 stToolTipData 佈局)
+ *   +2192    int               m_nSubType          (顏色/子類型)
+ *   +2196    uint16_t          m_usKindID          (物品/技能 kind)
+ *   +2200    int               m_nCompareFlag      (比較旗標)
+ *   +2204    std::string       m_strData           (字串數據)
+ *   +2220    uint8_t           m_byUIType          (UI 類型)
+ *   +2222    uint16_t          m_usSlotIndex       (slot 索引)
+ *   +2224    int               m_nExtraData        (額外數據)
  *   +2228    CControlImage     m_icon              (圖標)
  *   +2420    CControlText      m_textMain          (主文字)
  *   +2852    CControlText      m_textTitle         (標題)
  *   +3284    CControlText      m_textDesc          (描述)
  *   +3716    CControlText      m_labelText[20]     (20 行索引標籤)
  *   +12356   CControlText      m_valueText[20]     (20 行索引值)
+ *   +21000   int               m_nAlpha            (透明度)
  *   +21004   CControlText      m_worldMapText[50]  (世界地圖 50 行)
+ *   +42604   int               m_nWorldMapTextCount(世界地圖文字數)
  *   sizeof(CToolTip) = 42608 bytes (0xA670)
  */
 class CToolTip
@@ -104,6 +119,8 @@ public:
 	void SetTextDungeonBasic(stMapInfo* pMapInfo);
 
 private:
+	// ---- 控制物件（對齊反編譯偏移）----
+
 	// 主背景 Box（+4）
 	CControlAlphaBox m_innerBox;
 
@@ -113,8 +130,59 @@ private:
 	// 分隔線 5 條（+1044）
 	CControlAlphaBox m_sectionBar[5];
 
-	// 工具提示數據（+2188）
-	stToolTipData m_tipData;
+	// ---- 狀態數據（+2084，位於 sectionBar 和 tipData 之間）----
+
+	// +2084: section bar 數量  [this+521]
+	int m_nSectionBarCount = 0;
+
+	// +2088: 當前索引行數  [this+522]
+	int m_nIndexCount = 0;
+
+	// +2092: void index 陣列  [this+523] ~ [this+542] (20 個)
+	int m_voidIndices[20] = {};
+
+	// +2172: void index 數量  [this+543]
+	int m_nVoidCount = 0;
+
+	// +2176: padding（對齊至 +2180）
+	int m_nPadding2176 = 0;
+
+	// +2180: 滑鼠 X  [this+545]
+	int m_nMouseX = 0;
+	// +2184: 滑鼠 Y  [this+546]
+	int m_nMouseY = 0;
+
+	// ---- tooltip 狀態（+2188，覆蓋 m_tipData 佈局）----
+	// GT 中 Show() 直接寫入這些欄位，與 stToolTipData 佈局相同
+
+	// tooltip type  [this+547]  (+2188)
+	int m_nType = -1;
+	// tooltip color/sub  [this+548]  (+2192)
+	int m_nSubType = 0;
+
+	// item/skill kind  [this+1098 as WORD]  (+2196)
+	uint16_t m_usKindID = 0;
+	// +2198: reserved
+	uint16_t m_usReserved1 = 0;
+
+	// m_nCount（compare flag）[this+550]  (+2200)
+	int m_nCompareFlag = 0;
+
+	// 字串數據  [this+551~555] → std::string at +2204
+	std::string m_strData;
+
+	// UI type byte  [this+2220 as BYTE]  (+2220)
+	uint8_t m_byUIType = 0;
+	// +2221: reserved
+	uint8_t m_byReserved2 = 0;
+
+	// slot index  [this+1111 as WORD]  (+2222)
+	uint16_t m_usSlotIndex = 0xFFFF;
+
+	// extra dword  [this+556]  (+2224)
+	int m_nExtraData = 0;
+
+	// ---- 控制物件（續）----
 
 	// 圖標（+2228）
 	CControlImage m_icon;
@@ -134,61 +202,12 @@ private:
 	// 20 行索引值（+12356）
 	CControlText m_valueText[20];
 
+	// alpha  [this+5250]  (+21000)
+	int m_nAlpha = 190;
+
 	// 世界地圖 50 行（+21004）
 	CControlText m_worldMapText[50];
 
-	// ---- 狀態數據（對齊反編譯偏移）----
-
-	// +2084: 當前索引行數  [this+522]
-	int m_nIndexCount = 0;
-
-	// +2088: void index 陣列  [this+523] ~ [this+542] (20 個)
-	int m_voidIndices[20] = {};
-
-	// +2168: void index 數量  [this+543]
-	int m_nVoidCount = 0;
-
-	// +2172: section bar 數量  [this+521] → 注意：實際偏移 2084 之前
-	// 重新排列以匹配反編譯
-	int m_nSectionBarCount = 0;
-
-	// +2180: 滑鼠 X  [this+545]
-	int m_nMouseX = 0;
-	// +2184: 滑鼠 Y  [this+546]
-	int m_nMouseY = 0;
-
-	// +2188 已由 m_tipData 佔用
-	// 以下欄位對齊到 [this+547] 起
-
-	// tooltip type  [this+547]
-	int m_nType = -1;
-	// tooltip color/sub  [this+548]
-	int m_nSubType = 0;
-
-	// item/skill kind  [this+1098 as WORD]  → 偏移 2196
-	uint16_t m_usKindID = 0;
-
-	// m_nCount（compare flag）[this+550]
-	int m_nCompareFlag = 0;
-
-	// 字串數據  [this+551~555] → std::string at +2204
-	std::string m_strData;
-
-	// UI type byte  [this+2220 as BYTE]
-	uint8_t m_byUIType = 0;
-
-	// slot index  [this+1111 as WORD] → 偏移 2222
-	uint16_t m_usSlotIndex = 0xFFFF;
-
-	// extra dword  [this+556]
-	int m_nExtraData = 0;
-
-	// title color  [this+750]
-	int m_nTitleColor = -1;
-
-	// alpha  [this+5250]
-	int m_nAlpha = 190;
-
-	// world map text count  [this+10651]
+	// world map text count  [this+10651]  (+42604)
 	int m_nWorldMapTextCount = 0;
 };

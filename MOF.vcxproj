@@ -445,6 +445,7 @@
     <ClCompile Include="src\UI\CMessageBoxManager.cpp" />
     <ClCompile Include="src\UI\CToolTip.cpp" />
     <ClCompile Include="src\UI\CToolTipManager.cpp" />
+    <ClCompile Include="src\Helpers\ExTextCodeHelpers.cpp" />
     <ClCompile Include="src\UI\CUIMessageBoxTypes.cpp" />
     <ClCompile Include="src\UI\CUIBase.cpp" />
     <ClCompile Include="src\UI\CUITutorial.cpp" />
@@ -680,7 +681,6 @@
     <ClInclude Include="inc\Logic\CObjectManager.h" />
     <ClInclude Include="inc\Logic\CPlayerSpirit.h" />
     <ClInclude Include="inc\Logic\CShortKey.h" />
-    <ClInclude Include="inc\Logic\CMessageBoxManager.h" />
     <ClInclude Include="inc\Logic\cltSystemMessage.h" />
     <ClInclude Include="inc\Logic\cltMyCharData.h" />
     <ClInclude Include="inc\Logic\CQuizEventParser.h" />

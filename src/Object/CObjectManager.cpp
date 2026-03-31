@@ -3,7 +3,7 @@
 #include "Object/CStaticObject.h"
 #include "Object/CEffectObject.h"
 #include "Object/CObjectResourceManager.h"
-#include "Logic/CMessageBoxManager.h"
+#include "UI/CMessageBoxManager.h"
 #include "Info/cltItemKindInfo.h"
 #include "Text/cltTextFileManager.h"
 #include "Character/ClientCharacter.h"

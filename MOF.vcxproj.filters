@@ -723,9 +723,6 @@
     <ClCompile Include="src\Logic\CShortKey.cpp">
       <Filter>來源檔案</Filter>
     </ClCompile>
-    <ClCompile Include="src\Logic\CMessageBoxManager.cpp">
-      <Filter>來源檔案</Filter>
-    </ClCompile>
     <ClCompile Include="src\Logic\cltChattingMgr.cpp">
       <Filter>來源檔案</Filter>
     </ClCompile>
@@ -1081,6 +1078,12 @@
       <Filter>來源檔案</Filter>
     </ClCompile>
     <ClCompile Include="src\UI\CToolTipManager.cpp">
+      <Filter>來源檔案</Filter>
+    </ClCompile>
+    <ClCompile Include="src\Helpers\ExTextCodeHelpers.cpp">
+      <Filter>來源檔案</Filter>
+    </ClCompile>
+    <ClCompile Include="src\UI\CUIWorldMap.cpp">
       <Filter>來源檔案</Filter>
     </ClCompile>
   </ItemGroup>
@@ -1916,9 +1919,6 @@
     <ClInclude Include="inc\Logic\CShortKey.h">
       <Filter>標頭檔</Filter>
     </ClInclude>
-    <ClInclude Include="inc\Logic\CMessageBoxManager.h">
-      <Filter>標頭檔</Filter>
-    </ClInclude>
     <ClInclude Include="inc\Logic\cltSystemMessage.h">
       <Filter>標頭檔</Filter>
     </ClInclude>
@@ -2163,6 +2163,9 @@
       <Filter>標頭檔</Filter>
     </ClInclude>
     <ClInclude Include="inc\UI\CToolTipManager.h">
+      <Filter>標頭檔</Filter>
+    </ClInclude>
+    <ClInclude Include="inc\UI\CUIWorldMap.h">
       <Filter>標頭檔</Filter>
     </ClInclude>
   </ItemGroup>
