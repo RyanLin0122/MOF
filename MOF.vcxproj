@@ -276,6 +276,7 @@
     <ClCompile Include="src\Info\cltMakingItemKindInfo.cpp" />
     <ClCompile Include="src\Info\cltMapAreaKindInfo.cpp" />
     <ClCompile Include="src\Info\cltMapInfo.cpp" />
+    <ClCompile Include="src\Info\cltRegenMonsterKindInfo.cpp" />
     <ClCompile Include="src\Info\cltMapUseItemInfoKindInfo.cpp" />
     <ClCompile Include="src\Info\cltMineKindInfo.cpp" />
     <ClCompile Include="src\Info\cltMoFC_EffectKindInfo.cpp" />
@@ -443,6 +444,8 @@
     <ClCompile Include="src\UI\CControlScrollText.cpp" />
     <ClCompile Include="src\UI\CTextBoxScroll.cpp" />
     <ClCompile Include="src\UI\CMessageBoxManager.cpp" />
+    <ClCompile Include="src\UI\CToolTip.cpp" />
+    <ClCompile Include="src\UI\CToolTipManager.cpp" />
     <ClCompile Include="src\UI\CUIMessageBoxTypes.cpp" />
     <ClCompile Include="src\UI\CUIBase.cpp" />
     <ClCompile Include="src\UI\CUITutorial.cpp" />
@@ -837,6 +840,8 @@
     <ClInclude Include="inc\UI\CControlBase.h" />
     <ClInclude Include="inc\UI\CMessageBoxManager.h" />
     <ClInclude Include="inc\UI\CTextBoxScroll.h" />
+    <ClInclude Include="inc\UI\CToolTip.h" />
+    <ClInclude Include="inc\UI\CToolTipManager.h" />
     <ClInclude Include="inc\UI\CUIBase.h" />
     <ClInclude Include="inc\UI\CUIManager.h" />
     <ClInclude Include="inc\UI\CUIMessageBoxTypes.h" />

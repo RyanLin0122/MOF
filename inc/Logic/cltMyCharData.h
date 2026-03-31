@@ -1,15 +1,8 @@
 #pragma once
 #include <cstdint>
+#include "System/cltEquipmentSystem.h"
 
 class cltItemList;
-
-// 12-byte equip item info struct (matches ground truth layout).
-struct stEquipItemInfo {
-    std::uint16_t itemKind = 0;
-    std::uint16_t pad      = 0;
-    std::uint32_t value0   = 0;
-    std::uint32_t value1   = 0;
-};
 
 class cltMyCharData {
 public:

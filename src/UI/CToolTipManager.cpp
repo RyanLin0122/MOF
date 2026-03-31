@@ -78,16 +78,14 @@ void CToolTipManager::Show(int x, int y, char uiType, stToolTipData* pData)
 			uint16_t itemId = *reinterpret_cast<uint16_t*>(dst + 8); // localData.itemId
 			if (itemId)
 			{
-				stItemKindInfo* pItemInfo = cltItemKindInfo::GetItemKindInfo(
-					(cltItemKindInfo*)&g_clItemKindInfo, itemId);
+				stItemKindInfo* pItemInfo = g_clItemKindInfo.GetItemKindInfo(itemId);
 				if (pItemInfo)
 				{
 					unsigned int pos1 = 0, pos2 = 0, pos3 = 0;
-					stItemKindInfo* equipCount = cltEquipmentSystem::GetEquipablePosByItemKind(
-						dword_21BA32C, itemId, &pos1, &pos2, &pos3);
+					stItemKindInfo* equipCount = dword_21BA32C->GetEquipablePosByItemKind(
+						itemId, &pos1, &pos2, &pos3);
 
-					uint16_t equipItemKind = cltEquipmentSystem::GetEquipItem(
-						dword_21BA32C, pos1, pos2);
+					uint16_t equipItemKind = dword_21BA32C->GetEquipItem(pos1, pos2);
 
 					if (equipItemKind)
 					{
@@ -110,8 +108,7 @@ void CToolTipManager::Show(int x, int y, char uiType, stToolTipData* pData)
 						// 第三個裝備位（如果有）
 						if (equipCount == (stItemKindInfo*)2)
 						{
-							uint16_t equipItem2 = cltEquipmentSystem::GetEquipItem(
-								dword_21BA32C, pos1, pos3);
+							uint16_t equipItem2 = dword_21BA32C->GetEquipItem(pos1, pos3);
 							if (equipItem2)
 							{
 								int subWidth = m_tips[1].GetWidth();

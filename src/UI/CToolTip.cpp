@@ -1,6 +1,8 @@
 #include "UI/CToolTip.h"
 #include "global.h"
+#include "Info/cltCharKindInfo.h"
 #include "Info/cltItemKindInfo.h"
+#include "System/cltPetSystem.h"
 #include "Info/cltLessonKindInfo.h"
 #include "Info/cltNPCInfo.h"
 #include "Info/cltQuestKindInfo.h"
@@ -1080,8 +1082,8 @@ void CToolTip::OutputCashShopTime(stItemKindInfo* pItemInfo)
 {
     if (!pItemInfo)
         return;
-    if (!cltItemKindInfo::IsCashItem(static_cast<EItemClass>(pItemInfo->m_byItemClass)) ||
-        !cltItemKindInfo::IsTimerItem(static_cast<EItemClass>(pItemInfo->m_byItemClass)))
+    if (!g_clItemKindInfo.IsCashItem(pItemInfo->m_wKind) ||
+        !g_clItemKindInfo.IsTimerItem(pItemInfo->m_wKind))
         return;
 
     if (pItemInfo->m_wUseTerm == 0)

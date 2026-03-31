@@ -8,7 +8,6 @@
 // 靜態和全局變數初始化
 DCTTextManager* cltMapInfo::m_pclTextManager = nullptr;
 unsigned char* cltMapInfo::m_dwMapTypeAtb = nullptr; // 應由其他部分初始化 (byte array)
-cltMapInfo* g_pcltMapInfo = nullptr;
 
 
 void cltMapInfo::InitializeStaticVariable(DCTTextManager* a1) {

@@ -19,7 +19,7 @@ CMoveIcon::CMoveIcon()
 	m_Text.SetMultiLineSize(36, 36);
 	m_Text.SetCenterOrigin(true);
 	// 對齊反編譯 *((DWORD*)this + 218) = -5418489 → 0xFFACACC7
-	m_Text.SetMainColor(0xFFACACC7u);
+	m_Text.SetTextColor(0xFFACACC7u);
 
 	InitData();
 }
@@ -93,7 +93,7 @@ int CMoveIcon::Start(CUIBase* pDownUI,
 	if (!result)
 		return 0;
 
-	SetImageID(pSrcCtrl->m_nGIGroup, pSrcCtrl->m_nGIID, pSrcCtrl->m_usBlockID);
+	SetImageID((unsigned int)pSrcCtrl->m_nGIGroup, (unsigned int)pSrcCtrl->m_nGIID, pSrcCtrl->m_usBlockID);
 	m_nShadeAlpha = pSrcCtrl->m_fadeCurA;
 	SetCenterPos(centerAbsX, centerAbsY);
 	Show();
@@ -173,7 +173,7 @@ int CMoveIcon::Put(CUIBase* pTargetUI)
 
 int CMoveIcon::Put(int uiId)
 {
-	CUIBase* p = (CUIBase*)CUIManager::GetUIWindow(g_UIMgr, uiId);
+	CUIBase* p = g_UIMgr->GetUIWindow(uiId);
 	return Put(p);
 }
 

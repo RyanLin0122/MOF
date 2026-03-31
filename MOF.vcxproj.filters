@@ -561,6 +561,9 @@
     <ClCompile Include="src\Info\cltMapInfo.cpp">
       <Filter>來源檔案</Filter>
     </ClCompile>
+    <ClCompile Include="src\Info\cltRegenMonsterKindInfo.cpp">
+      <Filter>來源檔案</Filter>
+    </ClCompile>
     <ClCompile Include="src\Info\cltCharKindInfo.cpp">
       <Filter>來源檔案</Filter>
     </ClCompile>
@@ -1069,6 +1072,15 @@
       <Filter>來源檔案</Filter>
     </ClCompile>
     <ClCompile Include="src\UI\CControlCharBox.cpp">
+      <Filter>來源檔案</Filter>
+    </ClCompile>
+    <ClCompile Include="src\UI\CControlChatPrint.cpp">
+      <Filter>來源檔案</Filter>
+    </ClCompile>
+    <ClCompile Include="src\UI\CToolTip.cpp">
+      <Filter>來源檔案</Filter>
+    </ClCompile>
+    <ClCompile Include="src\UI\CToolTipManager.cpp">
       <Filter>來源檔案</Filter>
     </ClCompile>
   </ItemGroup>
@@ -2130,6 +2142,27 @@
       <Filter>標頭檔</Filter>
     </ClInclude>
     <ClInclude Include="inc\UI\CControlCharBox.h">
+      <Filter>標頭檔</Filter>
+    </ClInclude>
+    <ClInclude Include="inc\Logic\cltChattingMgr.h">
+      <Filter>標頭檔</Filter>
+    </ClInclude>
+    <ClInclude Include="inc\UI\CControlChatPrint.h">
+      <Filter>標頭檔</Filter>
+    </ClInclude>
+    <ClInclude Include="inc\UI\CMessageBoxManager.h">
+      <Filter>標頭檔</Filter>
+    </ClInclude>
+    <ClInclude Include="inc\UI\CUIBase.h">
+      <Filter>標頭檔</Filter>
+    </ClInclude>
+    <ClInclude Include="inc\UI\CUIMessageBoxTypes.h">
+      <Filter>標頭檔</Filter>
+    </ClInclude>
+    <ClInclude Include="inc\UI\CToolTip.h">
+      <Filter>標頭檔</Filter>
+    </ClInclude>
+    <ClInclude Include="inc\UI\CToolTipManager.h">
       <Filter>標頭檔</Filter>
     </ClInclude>
   </ItemGroup>
