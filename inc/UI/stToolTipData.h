@@ -8,6 +8,9 @@ public:
     // 建構函數
     stToolTipData();
 
+    // 複製建構函數（對齊 ground truth: stToolTipData::stToolTipData(this, const stToolTipData*)）
+    stToolTipData(const stToolTipData& other);
+
     // 解構函數
     ~stToolTipData();
 
@@ -15,16 +18,11 @@ public:
     void Init();
 
     // 設定字串類型的工具提示
-    void SetStringType(const char* text, int color);
+    void SetStringType(char* text, int color);
 
     // 設定物品類型的工具提示（ground truth 回傳 int = extra）
     int SetKindType(int type, short id, int count, int color, char grade, short durability, int extra);
 
-    // 設定描述類型（kind=17），僅設 m_type 與 m_itemId，不重置其他欄位
-    // 對應 ground truth: *((_DWORD *)this + 18) = 17; *((_WORD *)this + 40) = a2;
-    void SetDescType(short descId);
-
-private:
     // 偏移 0: 類型 (-1=未設定, 1=字串類型, 其他=物品類型)
     int m_type;
 

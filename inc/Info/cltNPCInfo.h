@@ -7,7 +7,12 @@
 struct stNPCInfo {
     std::uint16_t m_wKind = 0;              // offset 0
     std::uint16_t _pad2 = 0;               // offset 2
-    std::uint32_t _reserved[46]{};         // offset 4~187  (184 bytes)
+    std::uint16_t m_wNameCode = 0;          // offset 4  (NPC name text code)
+    std::uint16_t _field6 = 0;             // offset 6
+    std::uint32_t _field8 = 0;             // offset 8
+    std::uint16_t m_wMapID = 0;             // offset 12 (NPC 所在地圖 ID)
+    std::uint16_t _field14 = 0;            // offset 14
+    std::uint32_t _reserved[43]{};         // offset 16~187 (172 bytes)
     std::uint32_t m_dwNoRecall = 0;        // offset 188
     std::uint32_t _field_192 = 0;          // offset 192 (GetNPCIDByLevel 用)
     std::uint16_t _pad196[2]{};            // offset 196~199

@@ -30,13 +30,13 @@ public:
 		CControlImage* pSrcCtrl,
 		int centerAbsX, int centerAbsY);
 
-	int IsStart() const { return m_bStarted; }
+	int IsStart();
 
 	// Data 64 組
 	void         AddData(uint8_t idx, unsigned int value);
 	void         OverlapData(uint8_t idx, unsigned int value);
 	unsigned int GetData(uint8_t idx);
-	int          IsSetData(uint8_t idx) const;
+	int          IsSetData(uint8_t idx);
 
 	// 移動/放置
 	void Move(int absX, int absY);
@@ -44,16 +44,16 @@ public:
 	int  Put(int uiId);
 
 	// 條件判斷
-	int IsDownUIType(int typeId) const;
-	int IsDownUIType(CUIBase* pUI) const;
+	int IsDownUIType(int typeId);
+	int IsDownUIType(CUIBase* pUI);
 
 	// 自動終結
 	void SetNotAutoTerminate();
 	void Terminate();
 	int  AutoTerminate();
 
-	// 文字控制取得
-	CControlText* GetTextControl() { return &m_Text; }
+	// 文字控制取得（ground truth: 獨立函式，非 inline）
+	CControlText* GetTextControl();
 
 private:
 	struct Slot { unsigned int value; unsigned int isSet; };

@@ -139,9 +139,25 @@ unsigned int CMoveIcon::GetData(uint8_t idx)
 	return m_slots[idx].value;
 }
 
-int CMoveIcon::IsSetData(uint8_t idx) const
+int CMoveIcon::IsSetData(uint8_t idx)
 {
 	return m_slots[idx].isSet;
+}
+
+// ------------------------------------------------------------
+// IsStart（ground truth: 獨立函式，回傳 *((_DWORD *)this + 51)）
+// ------------------------------------------------------------
+int CMoveIcon::IsStart()
+{
+	return m_bStarted;
+}
+
+// ------------------------------------------------------------
+// GetTextControl（ground truth: 回傳 (char*)this + 724）
+// ------------------------------------------------------------
+CControlText* CMoveIcon::GetTextControl()
+{
+	return &m_Text;
 }
 
 // ------------------------------------------------------------
@@ -180,14 +196,14 @@ int CMoveIcon::Put(int uiId)
 // ------------------------------------------------------------
 // 判斷拖曳起點 UI 類型
 // ------------------------------------------------------------
-int CMoveIcon::IsDownUIType(int typeId) const
+int CMoveIcon::IsDownUIType(int typeId)
 {
 	if (!m_bStarted) return 0;
 	if (!m_pDownUI) return 0;
 	return (m_pDownUI->GetType() == typeId) ? 1 : 0;
 }
 
-int CMoveIcon::IsDownUIType(CUIBase* pUI) const
+int CMoveIcon::IsDownUIType(CUIBase* pUI)
 {
 	return IsDownUIType(pUI->GetType());
 }

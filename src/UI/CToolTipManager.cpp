@@ -31,36 +31,17 @@ void CToolTipManager::InitialUpdate()
 // 將 count 清 0 後傳給 tips[0]；裝備比較時設 count=1 並重用 localData。
 void CToolTipManager::Show(int x, int y, char uiType, stToolTipData* pData)
 {
-	stToolTipData localData;
-
 	m_nMouseX = x;
 	m_nMouseY = y;
 
-	// 完整複製 pData 到 localData（對齊 ground truth 的 v40 = deep copy a5）
-	const unsigned char* src = reinterpret_cast<const unsigned char*>(pData);
-	unsigned char* dst = reinterpret_cast<unsigned char*>(&localData);
-
-	// 複製非字串欄位
-	*reinterpret_cast<int*>(dst + 0)  = *reinterpret_cast<const int*>(src + 0);   // type
-	*reinterpret_cast<int*>(dst + 4)  = *reinterpret_cast<const int*>(src + 4);   // color
-	*reinterpret_cast<short*>(dst + 8) = *reinterpret_cast<const short*>(src + 8); // itemId
-	*reinterpret_cast<int*>(dst + 12) = *reinterpret_cast<const int*>(src + 12);  // count
-
-	// 複製字串（offset 16，使用 std::string::assign）
-	std::string& dstStr = *reinterpret_cast<std::string*>(dst + 16);
-	const std::string& srcStr = *reinterpret_cast<const std::string*>(src + 16);
-	dstStr = srcStr;
-
-	// 複製剩餘欄位
-	*(dst + 32)  = *(src + 32);                                                     // grade
-	*reinterpret_cast<short*>(dst + 34) = *reinterpret_cast<const short*>(src + 34); // durability
-	*reinterpret_cast<int*>(dst + 36) = *reinterpret_cast<const int*>(src + 36);    // extra
+	// ground truth: default construct v40, then field-by-field copy from a5
+	// 使用 copy constructor 完成等價的深複製
+	stToolTipData localData(*pData);
 
 	// ground truth: v42 = 0（清除 count，使主 tooltip 不進入比較模式）
-	int savedCount = *reinterpret_cast<int*>(dst + 12);
-	*reinterpret_cast<int*>(dst + 12) = 0;
+	localData.m_count = 0;
 
-	// 顯示主提示（ground truth: tips[0].Show(x, y, v40, 0)，用 localData 而非 pData）
+	// 顯示主提示（ground truth: tips[0].Show(x, y, v40, 0)）
 	m_tips[0].Show(x, y, &localData, 0);
 
 	// 隱藏其他 4 個
@@ -69,39 +50,37 @@ void CToolTipManager::Show(int x, int y, char uiType, stToolTipData* pData)
 	m_tips[3].Hide();
 	m_tips[4].Hide();
 
-	// 裝備比較邏輯（ground truth: 檢查原始 count）
-	if (savedCount)
+	// 裝備比較邏輯（ground truth: 檢查原始 pData->m_count，即 *((_DWORD *)a5 + 3)）
+	if (pData->m_count)
 	{
-		int dataType = *reinterpret_cast<int*>(dst + 0);  // localData.type
-		if (dataType == 4) // 物品類型
+		if (localData.m_type == 4) // 物品類型
 		{
-			uint16_t itemId = *reinterpret_cast<uint16_t*>(dst + 8); // localData.itemId
-			if (itemId)
+			if (localData.m_itemId)
 			{
-				stItemKindInfo* pItemInfo = g_clItemKindInfo.GetItemKindInfo(itemId);
+				stItemKindInfo* pItemInfo = g_clItemKindInfo.GetItemKindInfo(localData.m_itemId);
 				if (pItemInfo)
 				{
 					unsigned int pos1 = 0, pos2 = 0, pos3 = 0;
 					stItemKindInfo* equipCount = dword_21BA32C->GetEquipablePosByItemKind(
-						itemId, &pos1, &pos2, &pos3);
+						localData.m_itemId, &pos1, &pos2, &pos3);
 
 					uint16_t equipItemKind = dword_21BA32C->GetEquipItem(pos1, pos2);
 
 					if (equipItemKind)
 					{
 						// ground truth: v42 = 1（設 count=1 使比較 tooltip 進入比較模式）
-						*reinterpret_cast<int*>(dst + 12) = 1;
+						localData.m_count = 1;
 
 						// 顯示 "目前裝備" 標題在 tips[3]
-						*reinterpret_cast<int*>(dst + 0)  = 0;     // type = static
-						*reinterpret_cast<uint16_t*>(dst + 8) = 3931; // text code
+						localData.m_type = 0;      // type = static
+						localData.m_itemId = 3931;  // text code
 						int mainWidth = m_tips[0].GetWidth();
 						int posX = x + mainWidth;
 						m_tips[3].Show(posX, y, &localData, 1);
 
 						// 顯示裝備物品提示在 tips[1]
-						*reinterpret_cast<int*>(dst + 0)  = 4;     // type = item
-						*reinterpret_cast<uint16_t*>(dst + 8) = equipItemKind;
+						localData.m_type = 4;       // type = item
+						localData.m_itemId = equipItemKind;
 						int titleHeight = m_tips[3].GetHeight();
 						m_tips[1].Show(posX, y + titleHeight, &localData, 1);
 
@@ -114,12 +93,12 @@ void CToolTipManager::Show(int x, int y, char uiType, stToolTipData* pData)
 								int subWidth = m_tips[1].GetWidth();
 								int posX2 = posX + subWidth;
 
-								*reinterpret_cast<int*>(dst + 0)  = 0;
-								*reinterpret_cast<uint16_t*>(dst + 8) = 3931;
+								localData.m_type = 0;
+								localData.m_itemId = 3931;
 								m_tips[4].Show(posX2, y, &localData, 1);
 
-								*reinterpret_cast<int*>(dst + 0)  = 4;
-								*reinterpret_cast<uint16_t*>(dst + 8) = equipItem2;
+								localData.m_type = 4;
+								localData.m_itemId = equipItem2;
 								int titleHeight2 = m_tips[4].GetHeight();
 								m_tips[2].Show(posX2, y + titleHeight2, &localData, 1);
 							}
