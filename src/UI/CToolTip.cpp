@@ -1,4 +1,6 @@
 #include "UI/CToolTip.h"
+#include "UI/CUIWorldMap.h"
+#include "UI/CUIManager.h"
 #include "global.h"
 #include "Info/cltCharKindInfo.h"
 #include "Info/cltItemKindInfo.h"
@@ -549,158 +551,330 @@ void CToolTip::ProcessOneLineText(char* text)
 }
 void CToolTip::ProcessWorldMap(int mode)
 {
-    // Ground-truth 對齊重點：
-    // 1) mode==0 時由 WorldMap UI 依滑鼠位置回推 map kind
-    // 2) map kind == 0 則直接隱藏 tooltip
-    // 3) 先輸出主標題/基礎資訊，再輸出 world-map 專用多行內容
-    // 4) 最後掃描 50 行 m_worldMapText 計算寬高
-    //
-    // 目前專案尚未完整還原 CUIWorldMap 介面，因此 mode==0 取值路徑採保留：
-    // 若無法由 UI 回推 map kind，沿用 m_usKindID（Show() 前已寫入）。
+    // 對齊 ground truth 00427EA0
 
-    if (mode == 0 && m_usKindID == 0)
+    // mode==0: 從 CUIWorldMap 取得滑鼠位置對應的 map kind
+    if (!mode)
     {
-        // 對齊 ground truth：找不到有效 map kind 時隱藏
-        m_innerBox.Hide();
-        return;
+        CUIWorldMap* pWorldMap = reinterpret_cast<CUIWorldMap*>(g_UIMgr->GetUIWindow(19));
+        if (!pWorldMap)
+            return;
+        m_usKindID = pWorldMap->GetToolTipData(m_nMouseX, m_nMouseY);
     }
 
-    if (m_usKindID == 0)
+    uint16_t mapKind = m_usKindID;
+    if (!mapKind)
     {
         m_innerBox.Hide();
         return;
     }
 
-    stMapInfo* mapInfo = g_Map.GetMapInfoByID(m_usKindID);
+    char Buffer[256];
+    char Buffer2[256];
+    Buffer[0] = '\0';
+    Buffer2[0] = '\0';
+    memset(&Buffer[1], 0, 0xFCu);
+    *reinterpret_cast<uint16_t*>(&Buffer[253]) = 0;
+    Buffer[255] = 0;
+    memset(&Buffer2[1], 0, 252);
+    *reinterpret_cast<uint16_t*>(&Buffer2[249]) = 0;
+    Buffer2[251] = 0;
+
+    stMapInfo* mapInfo = g_Map.GetMapInfoByID(mapKind);
+    stMapInfo* savedMapInfo = mapInfo;
     if (!mapInfo)
         return;
 
     SetTextMainTitle(mapInfo);
     SetTextDungeonBasic(mapInfo);
 
-    // ===== 對齊 00427EA0 的 world-map 行輸出區 =====
-    // 在原始客戶端，m_worldMapText 共 50 行，並搭配不同來源設定顏色：
-    // - 怪物：依善惡值紅/黃/白
-    // - NPC / 目的地：偏黃
-    // 這裡保留同樣資料流與顏色規則（資料來源不足時盡量降級）。
-    m_nWorldMapTextCount = 0;
-
-    auto pushWorldLine = [this](const char* txt, DWORD color)
+    // 條件：field map (regionType==1) 且無 dungeon name code
+    if (mapInfo->m_wRegionType == 1 && !mapInfo->m_wDungeonNameCode)
     {
-        if (!txt || !txt[0] || m_nWorldMapTextCount >= 50)
+        uint16_t* regenMonKinds = g_cltRegenMonsterKindInfo.GetRegenMonsterKindByMapID(m_usKindID);
+        if (!regenMonKinds)
             return;
-        m_worldMapText[m_nWorldMapTextCount].SetText(txt);
-        m_worldMapText[m_nWorldMapTextCount].m_TextColor = color;
-        ++m_nWorldMapTextCount;
-    };
 
-    // 1) map 對應重生怪物（對齊 decompile 的前半段）
-    // 原碼每圖取最多 5 隻怪物 kind。
-    uint16_t* regenMonKinds = g_cltRegenMonsterKindInfo.GetRegenMonsterKindByMapID(m_usKindID);
-    if (regenMonKinds)
-    {
-        for (int i = 0; i < 5 && m_nWorldMapTextCount < 50; ++i)
+        for (int i = 0; i < 5; ++i)
         {
-            const uint16_t monKind = regenMonKinds[i];
-            if (!monKind)
+            if (m_nWorldMapTextCount > 50)
+                break;
+            if (!regenMonKinds[i])
                 continue;
 
-            auto* monRaw = reinterpret_cast<unsigned char*>(g_pcltCharKindInfo ? g_pcltCharKindInfo->GetCharKindInfo(monKind) : nullptr);
-            if (!monRaw)
+            memset(Buffer, 0, sizeof(Buffer));
+            auto* charInfo = reinterpret_cast<unsigned char*>(g_pcltCharKindInfo->GetCharKindInfo(regenMonKinds[i]));
+            if (!charInfo)
                 continue;
 
-            // 依 decompile 偏移：
-            // +2: name text code (WORD), +146: level (BYTE), +212: alignment/tribe (DWORD)
-            const uint16_t nameCode = *reinterpret_cast<uint16_t*>(monRaw + 2);
-            const uint8_t level = *(monRaw + 146);
-            const int align = *reinterpret_cast<int*>(monRaw + 212);
+            int level = *(charInfo + 146);
+            const char* monName = g_DCTTextManager.GetText(*reinterpret_cast<uint16_t*>(charInfo + 2));
+            sprintf(Buffer, "%s(Lv%d)", monName, level);
 
-            const char* monName = g_DCTTextManager.GetText(nameCode);
-            char line[256] = {};
-            std::snprintf(line, sizeof(line), "%s(Lv%d)", monName ? monName : "", static_cast<int>(level));
-
-            DWORD color = 0xFFFFFF00; // -256
-            if (align > 0) color = 0xFFFF0000;   // -65536
-            else if (align < 0) color = 0xFFFFFFFF; // -1
-            pushWorldLine(line, color);
+            int alignment = *reinterpret_cast<int*>(charInfo + 212);
+            if (alignment < 1)
+            {
+                if (alignment)
+                    m_worldMapText[m_nWorldMapTextCount].m_TextColor = 0xFFFFFFFF; // -1 (white)
+                else
+                    m_worldMapText[m_nWorldMapTextCount].m_TextColor = 0xFFFFFF00; // -256 (yellow)
+            }
+            else
+            {
+                m_worldMapText[m_nWorldMapTextCount].m_TextColor = 0xFFFF0000; // -65536 (red)
+            }
+            m_worldMapText[m_nWorldMapTextCount].SetText(Buffer);
+            ++m_nWorldMapTextCount;
         }
     }
 
-    // 2) running quest 導向資訊（對齊 decompile 中段的 quest switch）
-    //    由於目前結構尚未完整還原，採「可解析就輸出」策略：
-    //    - 優先顯示 quest 指向 NPC 名稱
-    //    - 若可拿到 NPC map，再附帶 (mapName)
-    const uint8_t runningCount = g_clQuestSystem.GetRunningQuestCount();
-    for (uint8_t i = 0; i < runningCount && m_nWorldMapTextCount < 50; ++i)
+    // Quest 導向資訊
+    uint8_t questIdx = 0;
+    int questLoopIdx = 0;
+    if (g_clQuestSystem.GetRunningQuestCount())
     {
-        stPlayingQuestInfo* q = g_clQuestSystem.GetRunningQuestInfoByIndex(i);
-        if (!q)
-            continue;
-
-        stQuestKindInfo* qk = g_clQuestKindInfo.GetQuestKindInfo(q->wQuestID);
-        if (!qk)
-            continue;
-
-        // 與原碼一致，使用 bPlayType 決定追蹤目標。
-        // 這裡先落地通用 NPC 路徑（delivery/hunt/common）。
-        uint16_t npcKind = 0;
-        switch (qk->bPlayType)
+        do
         {
-        case 1: // DELIVERY
-        case 3: // ONEWAY
-        case 4: // BUY EMBLEM-like
-        case 5: // SPECIAL DELIVERY
-        case 6:
-        case 7:
-            npcKind = qk->extra.tail[2] | (static_cast<uint16_t>(qk->extra.tail[3]) << 8); // offset 98
-            break;
-        case 2: // HUNT
-            npcKind = qk->extra.tail[6] | (static_cast<uint16_t>(qk->extra.tail[7]) << 8); // offset 102
-            break;
-        default:
-            break;
-        }
+            stPlayingQuestInfo* questInfo = g_clQuestSystem.GetRunningQuestInfoByIndex(questIdx);
+            if (!questInfo)
+                goto NEXT_QUEST;
 
-        if (!npcKind)
-            continue;
+            {
+                stQuestKindInfo* qk = g_clQuestKindInfo.GetQuestKindInfo(questInfo->wQuestID);
+                if (!qk)
+                    goto NEXT_QUEST;
 
-        stNPCInfo* npc = g_clNPCInfo.GetNPCInfoByID(npcKind);
-        if (!npc)
-            continue;
+                uint8_t playType = qk->bPlayType;
+                uint16_t monKind;
 
-        auto* npcRaw = reinterpret_cast<unsigned char*>(npc);
-        const uint16_t npcNameCode = *reinterpret_cast<uint16_t*>(npcRaw + 4);
-        const uint16_t npcMapID = *reinterpret_cast<uint16_t*>(npcRaw + 12);
+                if (playType == 2)
+                {
+                    // HUNT: monster kind at offset 96
+                    monKind = *reinterpret_cast<uint16_t*>(reinterpret_cast<uint8_t*>(qk) + 96);
+                    goto REGEN_MAP_SEARCH;
 
-        const char* npcName = g_DCTTextManager.GetText(npcNameCode);
-        stMapInfo* npcMap = g_Map.GetMapInfoByID(npcMapID);
-        const char* npcMapName = npcMap ? g_DCTTextManager.GetText(npcMap->m_wFileName) : nullptr;
+                REGEN_MAP_SEARCH_ENTRY_TYPE1:
+                    // COLLECTION: monster kind at offset 100
+                    monKind = *reinterpret_cast<uint16_t*>(reinterpret_cast<uint8_t*>(qk) + 100);
 
-        char line[256] = {};
-        if (npcMapName && npcMapName[0])
-            std::snprintf(line, sizeof(line), "%s(%s)", npcName ? npcName : "", npcMapName);
-        else
-            std::snprintf(line, sizeof(line), "%s", npcName ? npcName : "");
-        pushWorldLine(line, 0xFFFFFF00); // -256
+                REGEN_MAP_SEARCH:
+                    {
+                        uint16_t* regenMaps = g_cltRegenMonsterKindInfo.GetRegenMapIDByMonsterKind(monKind);
+                        int foundCount = 0;
+                        int mapLoopIdx = 0;
+                        uint16_t* mapPtr = regenMaps;
+                        do
+                        {
+                            if (m_nWorldMapTextCount > 50)
+                                break;
+                            if (*mapPtr)
+                            {
+                                ++foundCount;
+                                stMapInfo* regenMapInfo = g_Map.GetMapInfoByID(*mapPtr);
+                                if (regenMapInfo)
+                                {
+                                    // 條件：(非 field 或有 dungeon name) 且 dungeon name 匹配
+                                    if ((regenMapInfo->m_wRegionType != 1 || regenMapInfo->m_wDungeonNameCode)
+                                        && regenMapInfo->m_wDungeonNameCode == savedMapInfo->m_wDungeonNameCode)
+                                    {
+                                        char* mapName = const_cast<char*>(g_DCTTextManager.GetText(regenMapInfo->m_wFileName));
+                                        m_worldMapText[m_nWorldMapTextCount].SetText(mapName);
+                                        ++m_nWorldMapTextCount;
+
+                                        // 掃描該地圖的 5 隻重生怪，找 quest 目標
+                                        uint16_t* regenMons = g_cltRegenMonsterKindInfo.GetRegenMonsterKindByMapID(*mapPtr);
+                                        int monLoop = 5;
+                                        do
+                                        {
+                                            uint16_t curMon = *regenMons;
+                                            // 檢查是否為 quest 目標（offset 96 或 100）
+                                            uint16_t target1 = *reinterpret_cast<uint16_t*>(reinterpret_cast<uint8_t*>(qk) + 96);
+                                            uint16_t target2 = *reinterpret_cast<uint16_t*>(reinterpret_cast<uint8_t*>(qk) + 100);
+                                            if (curMon && (target1 == curMon || target2 == curMon))
+                                            {
+                                                memset(Buffer, 0, sizeof(Buffer));
+                                                auto* charInfo = reinterpret_cast<unsigned char*>(g_pcltCharKindInfo->GetCharKindInfo(curMon));
+                                                if (charInfo)
+                                                {
+                                                    int level = *(charInfo + 146);
+                                                    const char* monName = g_DCTTextManager.GetText(*reinterpret_cast<uint16_t*>(charInfo + 2));
+                                                    sprintf(Buffer, "%s(Lv%d)", monName, level);
+
+                                                    int alignment = *reinterpret_cast<int*>(charInfo + 212);
+                                                    if (alignment < 1)
+                                                    {
+                                                        if (alignment)
+                                                            m_worldMapText[m_nWorldMapTextCount].m_TextColor = 0xFFFFFFFF;
+                                                        else
+                                                            m_worldMapText[m_nWorldMapTextCount].m_TextColor = 0xFFFFFF00;
+                                                    }
+                                                    else
+                                                    {
+                                                        m_worldMapText[m_nWorldMapTextCount].m_TextColor = 0xFFFF0000;
+                                                    }
+                                                    m_worldMapText[m_nWorldMapTextCount].SetText(Buffer);
+                                                    ++m_nWorldMapTextCount;
+                                                }
+                                            }
+                                            ++regenMons;
+                                            --monLoop;
+                                        } while (monLoop);
+                                    }
+                                }
+                            }
+                            ++mapLoopIdx;
+                            ++mapPtr;
+                        } while (mapLoopIdx < 1);
+
+                        if (foundCount)
+                            goto NEXT_QUEST;
+                        if (m_nWorldMapTextCount > 50)
+                            break;
+
+                        // NPC fallback: offset 102
+                        uint16_t fallbackNpcKind = *reinterpret_cast<uint16_t*>(reinterpret_cast<uint8_t*>(qk) + 102);
+                        stNPCInfo* fallbackNpc = g_clNPCInfo.GetNPCInfoByID(fallbackNpcKind);
+                        if (!fallbackNpc)
+                            goto NEXT_QUEST;
+                        stMapInfo* npcMap = g_Map.GetMapInfoByID(fallbackNpc->m_wMapID);
+                        if (npcMap->m_wDungeonNameCode != savedMapInfo->m_wDungeonNameCode)
+                            goto NEXT_QUEST;
+
+                        const char* mapName2 = g_DCTTextManager.GetText(npcMap->m_wFileName);
+                        const char* npcName2 = g_DCTTextManager.GetText(fallbackNpc->m_wNameCode);
+                        sprintf(Buffer, "%s(%s)", npcName2, mapName2);
+                        m_worldMapText[m_nWorldMapTextCount].m_TextColor = 0xFFFFFF00;
+                        m_worldMapText[m_nWorldMapTextCount].SetText(Buffer);
+                        ++m_nWorldMapTextCount;
+                    }
+                }
+                else if (playType == 1)
+                {
+                    goto REGEN_MAP_SEARCH_ENTRY_TYPE1;
+                }
+                else if (playType != 3 && playType != 6 && playType != 5 && playType != 4 && playType != 7)
+                {
+                    goto NEXT_QUEST;
+                }
+                else
+                {
+                    // Types 3,4,5,6,7: NPC-based quest tracking
+                    // NPC from offset 98
+                    stNPCInfo* npc = g_clNPCInfo.GetNPCInfoByID(
+                        *reinterpret_cast<uint16_t*>(reinterpret_cast<uint8_t*>(qk) + 98));
+
+                    // Type-specific NPC override
+                    switch (playType)
+                    {
+                    case 4:
+                    {
+                        uint16_t npcCode = cltNPCInfo::TranslateKindCode("N0015");
+                        npc = g_clNPCInfo.GetNPCInfoByID(npcCode);
+                        break;
+                    }
+                    case 7:
+                    {
+                        uint16_t npcCode = cltNPCInfo::TranslateKindCode("N0020");
+                        npc = g_clNPCInfo.GetNPCInfoByID(npcCode);
+                        break;
+                    }
+                    case 5:
+                    {
+                        // Special: 4 NPC loop (N0016~N0019)
+                        uint16_t npcIds[4];
+                        npcIds[0] = g_clNPCInfo.GetNPCInfoByID(cltNPCInfo::TranslateKindCode("N0016"))->m_wKind;
+                        npcIds[1] = g_clNPCInfo.GetNPCInfoByID(cltNPCInfo::TranslateKindCode("N0017"))->m_wKind;
+                        npcIds[2] = g_clNPCInfo.GetNPCInfoByID(cltNPCInfo::TranslateKindCode("N0018"))->m_wKind;
+                        npcIds[3] = g_clNPCInfo.GetNPCInfoByID(cltNPCInfo::TranslateKindCode("N0019"))->m_wKind;
+
+                        for (int n = 0; n < 4; ++n)
+                        {
+                            if (m_nWorldMapTextCount > 50)
+                                break;
+                            stNPCInfo* loopNpc = g_clNPCInfo.GetNPCInfoByID(npcIds[n]);
+                            if (!loopNpc)
+                                continue;
+                            stMapInfo* loopMap = g_Map.GetMapInfoByID(loopNpc->m_wMapID);
+                            if (!loopMap)
+                                continue;
+                            if (savedMapInfo->m_wDungeonNameCode != loopMap->m_wDungeonNameCode)
+                                continue;
+
+                            const char* loopMapName = g_DCTTextManager.GetText(loopMap->m_wFileName);
+                            const char* loopNpcName = g_DCTTextManager.GetText(loopNpc->m_wNameCode);
+                            sprintf(Buffer2, "%s(%s)", loopNpcName, loopMapName);
+                            m_worldMapText[m_nWorldMapTextCount].m_TextColor = 0xFFFFFF00;
+                            m_worldMapText[m_nWorldMapTextCount].SetText(Buffer2);
+                            ++m_nWorldMapTextCount;
+                        }
+                        goto NEXT_QUEST;
+                    }
+                    default:
+                        break;
+                    }
+
+                    // Common path for types 3,4,6,7
+                    if (!npc)
+                        goto NEXT_QUEST;
+
+                    stMapInfo* npcMap = g_Map.GetMapInfoByID(npc->m_wMapID);
+                    if (!npcMap)
+                        goto NEXT_QUEST;
+
+                    // field map check
+                    if (savedMapInfo->m_wRegionType == 1)
+                        goto NEXT_QUEST;
+
+                    // dungeon name match check
+                    uint16_t dungeonCode = savedMapInfo->m_wDungeonNameCode;
+                    if (npcMap->m_wDungeonNameCode != dungeonCode
+                        || (!dungeonCode && savedMapInfo->m_wID != npcMap->m_wID))
+                        goto NEXT_QUEST;
+
+                    {
+                        const char* mapNameStr = g_DCTTextManager.GetText(npcMap->m_wFileName);
+                        const char* npcNameStr = g_DCTTextManager.GetText(npc->m_wNameCode);
+                        sprintf(Buffer2, "%s(%s)", npcNameStr, mapNameStr);
+                        m_worldMapText[m_nWorldMapTextCount].m_TextColor = 0xFFFFFF00;
+                        m_worldMapText[m_nWorldMapTextCount].SetText(Buffer2);
+                        ++m_nWorldMapTextCount;
+                    }
+                }
+            }
+
+        NEXT_QUEST:
+            questIdx = static_cast<uint8_t>(++questLoopIdx);
+        } while (questLoopIdx < g_clQuestSystem.GetRunningQuestCount());
     }
 
-    // ===== 尺寸計算（對齊 decompile 收尾）=====
-    uint16_t width = 0;
-    uint16_t height = 0;
-    for (int i = 0; i < 50; ++i)
+    // 尺寸計算（對齊 ground truth 收尾）
+    uint16_t totalWidth = 0;
+    int16_t totalHeight = 0;
+    CControlText* pText = &m_worldMapText[0];
+    int remaining = 50;
+    do
     {
-        DWORD textSize[2] = {};
-        m_worldMapText[i].GetTextLength(textSize);
-        const uint16_t lineW = static_cast<uint16_t>(LOWORD(textSize[0]));
-        const uint16_t lineH = static_cast<uint16_t>(HIWORD(textSize[0]));
-        if (width < static_cast<uint16_t>(lineW + 20))
-            width = static_cast<uint16_t>(lineW + 20);
-        if (m_worldMapText[i].IsStringData())
-            height = static_cast<uint16_t>(height + lineH + 7);
-    }
+        DWORD sizeOut[2] = {};
+        pText->GetTextLength(sizeOut);
+        uint16_t lineW = static_cast<uint16_t>(sizeOut[0] & 0xFFFF);
+        if (totalWidth < static_cast<uint16_t>(lineW + 20))
+        {
+            DWORD sizeOut2[2] = {};
+            pText->GetTextLength(sizeOut2);
+            totalWidth = static_cast<uint16_t>((sizeOut2[0] & 0xFFFF) + 20);
+        }
+        if (pText->IsStringData())
+        {
+            DWORD sizeOut3[2] = {};
+            pText->GetTextLength(sizeOut3);
+            totalHeight += static_cast<int16_t>(static_cast<uint16_t>(sizeOut3[1] & 0xFFFF) + 7);
+        }
+        pText = reinterpret_cast<CControlText*>(reinterpret_cast<char*>(pText) + 432);
+        --remaining;
+    } while (remaining);
 
-    m_innerBox.SetWidth(width);
-    m_innerBox.SetHeight(static_cast<uint16_t>(height + 20));
+    m_innerBox.SetWidth(totalWidth);
+    m_innerBox.SetHeight(static_cast<uint16_t>(totalHeight + 20));
     CalcPos();
     m_nWorldMapTextCount = 0;
 }
