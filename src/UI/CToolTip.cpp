@@ -1262,9 +1262,6 @@ void CToolTip::Draw()
 
 void CToolTip::Show(int x, int y, const stToolTipData* pData, int compareFlag)
 {
-    if (!pData)
-        return;
-
     const unsigned char* raw = reinterpret_cast<const unsigned char*>(pData);
     m_nMouseX = x;
     m_nMouseY = y;
@@ -1348,57 +1345,63 @@ char* CToolTip::GetWeaponTypeText(int weaponType)
 }
 void CToolTip::SetVoidIndex(int from, int to)
 {
-    for (int i = from; i < to && m_nVoidCount < 20; ++i)
-        m_voidIndices[m_nVoidCount++] = i;
+    for (int i = from; i < to; ++m_nVoidCount)
+        m_voidIndices[m_nVoidCount] = i++;
 }
 
 void CToolTip::PrintReqWeaponForSkill(stSkillKindInfo* pSkill, int checkEquipped)
 {
-    if (!pSkill)
-        return;
-
+    uint16_t equipSubType = 0;
     const int reqWeaponCount = *reinterpret_cast<uint32_t*>(pSkill->raw + 88);
-    if (reqWeaponCount <= 0)
+    if (reqWeaponCount)
+    {
+        SetVoidIndex(m_nIndexCount + 1, m_nIndexCount + reqWeaponCount);
+        char satisfied = 0;
+
+        if (checkEquipped)
+        {
+            uint16_t equipMain = dword_21BA32C->GetEquipItem(1u, 4u);
+            uint16_t equipSub = dword_21BA32C->GetEquipItem(1u, 5u);
+            uint16_t equipMainType = 0;
+            if (equipMain)
+                equipMainType = *reinterpret_cast<uint16_t*>(
+                    reinterpret_cast<unsigned char*>(g_clItemKindInfo.GetItemKindInfo(equipMain)) + 84);
+            if (equipSub)
+                equipSubType = *reinterpret_cast<uint16_t*>(
+                    reinterpret_cast<unsigned char*>(g_clItemKindInfo.GetItemKindInfo(equipSub)) + 84);
+
+            // ground truth: 先掃描所有 15 種武器，判斷是否有任何一種匹配裝備
+            for (int i = 0; i < 15; ++i)
+            {
+                if (pSkill->raw[72 + i] && (i == equipMainType || i == equipSubType))
+                {
+                    satisfied = 1;
+                    break;
+                }
+            }
+        }
+
+        // ground truth: 再用 satisfied flag 決定所有武器項目的統一顏色
+        for (int i = 0; i < 15; ++i)
+        {
+            if (pSkill->raw[72 + i])
+            {
+                unsigned int color;
+                if (!checkEquipped || satisfied)
+                    color = 0xFFFFC000;
+                else
+                    color = 0xFFFF4600;
+                AddIndexData(0x0C79u, GetWeaponTypeText(i), color);
+            }
+        }
+    }
+    else
     {
         AddIndexData(0x0C79u, g_DCTTextManager.GetText(3178), 0xFFFFC000);
-        return;
-    }
-
-    SetVoidIndex(m_nIndexCount + 1, m_nIndexCount + reqWeaponCount);
-    bool satisfied = !checkEquipped;
-
-    uint16_t equipMainType = 0;
-    uint16_t equipSubType = 0;
-    if (checkEquipped && dword_21BA32C)
-    {
-        const uint16_t equipMain = dword_21BA32C->GetEquipItem(1u, 4u);
-        const uint16_t equipSub = dword_21BA32C->GetEquipItem(1u, 5u);
-        if (equipMain)
-        {
-            stItemKindInfo* info = g_clItemKindInfo.GetItemKindInfo(equipMain);
-            if (info) equipMainType = info->Equip.Hunt.m_wWeaponType;
-        }
-        if (equipSub)
-        {
-            stItemKindInfo* info = g_clItemKindInfo.GetItemKindInfo(equipSub);
-            if (info) equipSubType = info->Equip.Hunt.m_wWeaponType;
-        }
-    }
-
-    for (int i = 0; i < 15; ++i)
-    {
-        if (pSkill->raw[72 + i])
-        {
-            if (checkEquipped && (i == equipMainType || i == equipSubType))
-                satisfied = true;
-            AddIndexData(0x0C79u, GetWeaponTypeText(i), satisfied ? 0xFFFFC000 : 0xFFFF4600);
-        }
     }
 }
 void CToolTip::PrintReqClassForSkill(stSkillKindInfo* pSkill)
 {
-    if (!pSkill)
-        return;
     const uint16_t myClass = g_clClassSystem.GetClass();
     if (!myClass)
         return;

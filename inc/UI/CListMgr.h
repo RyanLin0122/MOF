@@ -48,8 +48,8 @@ public:
     // 刪除指定的節點
     bool DeleteNode(stNode* pNode);
 
-    // 透過項目指標刪除節點
-    bool DeleteNodeByItem(CUIBase* pItem);
+    // 透過項目指標刪除節點（ground truth 回傳 stNode*）
+    stNode* DeleteNodeByItem(CUIBase* pItem);
 
     // 透過索引尋找節點
     stNode* FindNodeByIndex(int nIndex);

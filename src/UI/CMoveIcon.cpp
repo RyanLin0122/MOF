@@ -12,7 +12,13 @@ CMoveIcon::CMoveIcon()
 	// 清 64 組槽位
 	memset(m_slots, 0, sizeof(m_slots));
 
-	// 內嵌文字控制：掛到自己底下
+	// ground truth 順序：先設定初始狀態，再設定文字控制
+	m_pDownUI = nullptr;
+	m_pPutUI = nullptr;
+	m_bStarted = 0;
+	InitData();
+
+	// 內嵌文字控制：掛到自己底下（ground truth: InitData 之後）
 	m_Text.Create(this);
 	m_Text.SetControlSetFont("MoveIconText");
 	m_Text.SetMultiLineSpace(0);
@@ -20,8 +26,6 @@ CMoveIcon::CMoveIcon()
 	m_Text.SetCenterOrigin(true);
 	// 對齊反編譯 *((DWORD*)this + 218) = -5418489 → 0xFFACACC7
 	m_Text.SetTextColor(0xFFACACC7u);
-
-	InitData();
 }
 
 CMoveIcon::~CMoveIcon()
@@ -106,7 +110,6 @@ int CMoveIcon::Start(CUIBase* pDownUI,
 void CMoveIcon::AddData(uint8_t idx, unsigned int value)
 {
 	if (!m_bStarted) return;
-	if (idx >= 64) return;
 
 	Slot& s = m_slots[idx];
 	if (s.isSet == 0) {
@@ -119,7 +122,6 @@ void CMoveIcon::AddData(uint8_t idx, unsigned int value)
 void CMoveIcon::OverlapData(uint8_t idx, unsigned int value)
 {
 	if (!m_bStarted) return;
-	if (idx >= 64) return;
 
 	Slot& s = m_slots[idx];
 	if (s.isSet) {
@@ -131,7 +133,6 @@ void CMoveIcon::OverlapData(uint8_t idx, unsigned int value)
 unsigned int CMoveIcon::GetData(uint8_t idx)
 {
 	if (!m_bStarted) return 0;
-	if (idx >= 64) return 0;
 	if (!m_slots[idx].isSet) return 0;
 
 	g_ClientCharMgr.ResetMoveTarget();
@@ -140,7 +141,6 @@ unsigned int CMoveIcon::GetData(uint8_t idx)
 
 int CMoveIcon::IsSetData(uint8_t idx) const
 {
-	if (idx >= 64) return 0;
 	return m_slots[idx].isSet;
 }
 
@@ -189,7 +189,6 @@ int CMoveIcon::IsDownUIType(int typeId) const
 
 int CMoveIcon::IsDownUIType(CUIBase* pUI) const
 {
-	if (!pUI) return 0;
 	return IsDownUIType(pUI->GetType());
 }
 

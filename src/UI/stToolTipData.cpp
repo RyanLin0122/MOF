@@ -26,8 +26,8 @@ stToolTipData::~stToolTipData()
 }
 
 // 初始化函數
-// ground truth: 只設 m_type, m_color, m_grade, m_durability 並清字串
-// 不重置 m_itemId, m_count, m_extra
+// ground truth: 設 m_type, m_color, m_grade, m_durability，清字串，
+// 並重置 m_itemId, m_count, m_extra
 void stToolTipData::Init()
 {
     m_type = -1;
@@ -37,6 +37,11 @@ void stToolTipData::Init()
 
     // 清空字串（對齊 ground truth 的 string 操作）
     m_text.clear();
+
+    // ground truth: 結尾重置這三個欄位
+    m_itemId = 0;
+    m_count = 0;
+    m_extra = 0;
 }
 
 // 設定字串類型的工具提示
