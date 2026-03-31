@@ -195,29 +195,26 @@ bool CListMgr::DeleteNode(stNode* pNode)
         pNextNode->pPrev = pPrevNode; // 後一個節點的上一個指向被刪除節點的上一個
     }
     
-    // 5. 釋放 pNode 的記憶體
+    // 5. 清零節點欄位後釋放記憶體（對齊 ground truth）
+    pNode->pItem = nullptr;
+    pNode->pPrev = nullptr;
+    pNode->pNext = nullptr;
     delete pNode;
-    
+
     return true;
 }
 
 /**
  * 透過項目指標 pItem 尋找並刪除節點。
  * @param pItem 要刪除的節點所包含的 CUIBase 物件指標。
- * @return 成功刪除返回 true，否則返回 false。
+ * @return ground truth 回傳 stNode*（實際為 DeleteNode 的 int 結果轉型）。
  */
-bool CListMgr::DeleteNodeByItem(CUIBase* pItem)
+stNode* CListMgr::DeleteNodeByItem(CUIBase* pItem)
 {
-    // 1. 尋找包含該項目的節點
-    stNode* pNodeToDelete = FindNodeByItem(pItem);
-    
-    // 2. 如果找到，則刪除它
-    if (pNodeToDelete)
-    {
-        return DeleteNode(pNodeToDelete);
-    }
-    
-    return false;
+    stNode* result = FindNodeByItem(pItem);
+    if (result)
+        result = reinterpret_cast<stNode*>(DeleteNode(result));
+    return result;
 }
 
 /**
@@ -308,12 +305,28 @@ stNode* CListMgr::GetTail()
 
 /**
  * 清空整個鏈結串列，並釋放所有節點的記憶體。
+ * ground truth: 先反覆刪除 m_pHead->pNext，最後手動清零並刪除 head。
  */
 void CListMgr::UnInitList()
 {
-    // 重複刪除頭部節點，直到整個串列為空
-    while (m_pHead)
+    if (!m_pHead)
+        return;
+
+    // 先刪除 head 之後的所有節點
+    if (DeleteNode(m_pHead->pNext))
     {
-        DeleteNode(m_pHead);
+        while (DeleteNode(m_pHead->pNext))
+            ;
+    }
+
+    // 手動清零並刪除 head 本身
+    if (m_pHead)
+    {
+        stNode* pHead = m_pHead;
+        pHead->pItem = nullptr;
+        pHead->pPrev = nullptr;
+        pHead->pNext = nullptr;
+        delete pHead;
+        m_pHead = nullptr;
     }
 }
