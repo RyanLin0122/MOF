@@ -37,13 +37,9 @@ stNode* CListMgr::InsertHead(CUIBase* pItem)
         return AppendNode(pItem);
     }
 
-    // 3. 建立一個新的節點
+    // 3. 建立一個新的節點（對齊 GT：new 失敗會丟例外，不需檢查 nullptr）
     stNode* pNewNode = new stNode();
-    if (!pNewNode)
-    {
-        return nullptr; // 記憶體分配失敗
-    }
-    
+
     // 4. 設定新節點的資料
     pNewNode->pItem = pItem;
     
@@ -72,12 +68,8 @@ stNode* CListMgr::InsertNodeRight(stNode* pNode, CUIBase* pItem)
         return nullptr;
     }
 
-    // 2. 建立新節點
+    // 2. 建立新節點（對齊 GT：new 失敗會丟例外，不需檢查 nullptr）
     stNode* pNewNode = new stNode();
-    if (!pNewNode)
-    {
-        return nullptr; // 記憶體分配失敗
-    }
 
     // 3. 設定新節點的資料
     pNewNode->pItem = pItem;
@@ -141,13 +133,11 @@ stNode* CListMgr::AppendNode(CUIBase* pItem)
     }
 
     // 2. 如果串列是空的，建立新節點並將其設為頭部
+    //    （對齊 GT：new 失敗會丟例外，不需檢查 nullptr）
     if (!m_pHead)
     {
         m_pHead = new stNode();
-        if (m_pHead)
-        {
-            m_pHead->pItem = pItem;
-        }
+        m_pHead->pItem = pItem;
         return m_pHead;
     }
     

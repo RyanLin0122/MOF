@@ -62,7 +62,8 @@ int CMoveIcon::Start(CUIBase* pDownUI, int autoTerminateFlag)
 	m_pDownUI = pDownUI;
 	InitData();
 
-	m_nShadeAlpha = 0;
+	// ground truth: *((_DWORD *)this + 28) = 0; → 清除 CControlBase 的 m_bCenterOrigin
+	m_bCenterOrigin = false;
 	if (autoTerminateFlag == 0)
 		SetNotAutoTerminate();
 
@@ -98,7 +99,9 @@ int CMoveIcon::Start(CUIBase* pDownUI,
 		return 0;
 
 	SetImageID((unsigned int)pSrcCtrl->m_nGIGroup, (unsigned int)pSrcCtrl->m_nGIID, pSrcCtrl->m_usBlockID);
-	m_nShadeAlpha = pSrcCtrl->m_fadeCurA;
+	// ground truth: *((_DWORD *)this + 28) = *(_DWORD *)(a3 + 112);
+	// 從來源控制元件複製 m_bCenterOrigin（CControlBase DWORD 28）
+	m_bCenterOrigin = pSrcCtrl->GetCenterOrigin();
 	SetCenterPos(centerAbsX, centerAbsY);
 	Show();
 	return 1;

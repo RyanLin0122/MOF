@@ -74,7 +74,4 @@ private:
 
 	// 統計：已設定的槽位數
 	uint8_t      m_setCount = 0;        // +720
-
-	// 透明陰影
-	int          m_nShadeAlpha = 0;     // +28
 };
