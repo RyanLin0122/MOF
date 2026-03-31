@@ -412,9 +412,10 @@ CControlBase* CControlBase::FindScrollBarCtrlChild(int /*a2*/, int /*a3*/)
 // ToolTip：Kind/Type 版本
 // 反編譯：stToolTipData::SetKindType(this+18, a3, a2, a4, a5, a6, a7, a8);
 // ------------------------------
-void CControlBase::SetToolTipData(int16_t a2, int a3, int a4, int a5, char a6, int16_t a7, int a8)
+// ground truth: return stToolTipData::SetKindType(this+18, a3, a2, a4, a5, a6, a7, a8);
+int CControlBase::SetToolTipData(int16_t a2, int a3, int a4, int a5, char a6, int16_t a7, int a8)
 {
-    m_ToolTip.SetKindType(a3, a2, a4, a5, a6, a7, a8);
+    return m_ToolTip.SetKindType(a3, a2, a4, a5, a6, a7, a8);
 }
 
 // ------------------------------

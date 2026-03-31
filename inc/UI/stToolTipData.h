@@ -17,8 +17,8 @@ public:
     // 設定字串類型的工具提示
     void SetStringType(const char* text, int color);
 
-    // 設定物品類型的工具提示
-    void SetKindType(int type, short id, int count, int color, char grade, short durability, int extra);
+    // 設定物品類型的工具提示（ground truth 回傳 int = extra）
+    int SetKindType(int type, short id, int count, int color, char grade, short durability, int extra);
 
     // 設定描述類型（kind=17），僅設 m_type 與 m_itemId，不重置其他欄位
     // 對應 ground truth: *((_DWORD *)this + 18) = 17; *((_WORD *)this + 40) = a2;

@@ -88,6 +88,10 @@ public:
 	void Hide();
 	int  IsShow();
 
+	// alpha 存取（供 CToolTipManager::Draw 同步用）
+	int  GetAlpha() const { return m_nAlpha; }
+	void SetAlpha(int alpha) { m_nAlpha = alpha; }
+
 	char* GetWeaponTypeText(int weaponType);
 	void SetVoidIndex(int from, int to);
 
