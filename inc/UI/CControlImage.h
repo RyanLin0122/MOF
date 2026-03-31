@@ -4,8 +4,8 @@
 #include <algorithm>
 #include "UI/CControlBase.h"
 #include "Image/cltImageManager.h"   // 包含 GameImage.h
-// timeGetTime：避免拉進 windows.h
-extern "C" unsigned long __stdcall timeGetTime(void);
+#include <timeapi.h>
+#pragma comment(lib, "winmm.lib")
 
 // 這個常數在基準中用來做淡入速度換算
 extern int SETTING_FRAME; // 例如 60

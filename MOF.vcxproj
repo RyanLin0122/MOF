@@ -395,7 +395,6 @@
     <ClCompile Include="src\System\cltDebuffSystem.cpp" />
     <ClCompile Include="src\Logic\cltLogicCompatibility.cpp" />
     <ClCompile Include="src\Logic\CShortKey.cpp" />
-    <ClCompile Include="src\Logic\CMessageBoxManager.cpp" />
     <ClCompile Include="src\Logic\cltChattingMgr.cpp" />
     <ClCompile Include="src\Logic\cltSystemMessage.cpp" />
     <ClCompile Include="src\Logic\cltMyCharData.cpp" />

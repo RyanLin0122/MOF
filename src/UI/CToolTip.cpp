@@ -228,7 +228,7 @@ void CToolTip::Poll()
         SetUpSizeIndexData();
         break;
     case 0xD:
-        ProcessCharInfo(reinterpret_cast<char*>(m_nExtraData));
+        ProcessCharInfo(reinterpret_cast<char*>(static_cast<intptr_t>(m_nExtraData)));
         SetUpSizeIndexData();
         break;
     case 0xE:
@@ -1480,7 +1480,7 @@ void CToolTip::ProcessCharInfo(char* charName)
 }
 void CToolTip::SetTextMainTitle(stMapInfo* pMapInfo)
 {
-    if (!pMapInfo || m_nWorldMapTextCount > 50)
+    if (!pMapInfo || m_nWorldMapTextCount >= 50)
         return;
     const int textCode = pMapInfo->m_wDungeonNameCode ? pMapInfo->m_wDungeonNameCode : pMapInfo->m_wFileName;
     m_worldMapText[m_nWorldMapTextCount].SetText(g_DCTTextManager.GetText(textCode));
@@ -1488,7 +1488,7 @@ void CToolTip::SetTextMainTitle(stMapInfo* pMapInfo)
 }
 void CToolTip::SetTextDungeonBasic(stMapInfo* pMapInfo)
 {
-    if (!pMapInfo || m_nWorldMapTextCount > 50)
+    if (!pMapInfo || m_nWorldMapTextCount >= 50)
         return;
 
     // 盡量對齊 ground-truth：輸出副本基礎文字（地區、怪物群、難度）
