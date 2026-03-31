@@ -115,8 +115,8 @@ public:
     void ClearData();
     void EnableToolTip(bool enable) { m_bToolTipEnabled = enable; }
     bool IsToolTipEnabled() const { return m_bToolTipEnabled; }
-    // ToolTip：Kind/Type 版本（對應 SetKindType）
-    void SetToolTipData(int16_t a2, int a3, int a4, int a5, char a6, int16_t a7, int a8);
+    // ToolTip：Kind/Type 版本（對應 SetKindType，ground truth 回傳 int）
+    int SetToolTipData(int16_t a2, int a3, int a4, int a5, char a6, int16_t a7, int a8);
 
     // ToolTip：字串版本
     void SetToolTipDataString(char* a2, int a3);

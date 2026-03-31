@@ -1293,17 +1293,22 @@ void CToolTip::Show(int x, int y, const stToolTipData* pData, int compareFlag)
         m_textMain.Hide();
     }
 
+    // ground truth: 色彩由 m_nCompareFlag（data.count）決定
+    // compare mode: loc_5D1F38 → 0x5D1F39 → R=93(0x5D), G=31(0x1F), B=57(0x39)
+    // normal mode:  loc_4A7119 → 0x4A711B → R=74(0x4A), G=113(0x71), B=27(0x1B)
     if (m_nCompareFlag)
     {
-        m_innerBox.SetColor(0.21960784f, 0.12156863f, 0.22352941f, m_nAlpha / 255.0f);
+        // compare mode: 0x5D1F39 | (alpha << 24)
+        m_innerBox.SetColor(93 / 255.0f, 31 / 255.0f, 57 / 255.0f, m_nAlpha / 255.0f);
         for (int i = 0; i < 4; ++i)
-            m_borderBox[i].SetColor(0.23529412f, 0.12941177f, 0.23529412f, (m_nAlpha + 60) / 255.0f);
+            m_borderBox[i].SetColor(93 / 255.0f, 31 / 255.0f, 57 / 255.0f, (m_nAlpha + 60) / 255.0f);
     }
     else
     {
-        m_innerBox.SetColor(0.29019609f, 0.44313729f, 0.10588236f, m_nAlpha / 255.0f);
+        // normal mode: 0x4A711B | (alpha << 24)
+        m_innerBox.SetColor(74 / 255.0f, 113 / 255.0f, 27 / 255.0f, m_nAlpha / 255.0f);
         for (int i = 0; i < 4; ++i)
-            m_borderBox[i].SetColor(0.0f, 0.19607845f, 0.0f, (m_nAlpha + 60) / 255.0f);
+            m_borderBox[i].SetColor(0.0f, 50 / 255.0f, 0.0f, (m_nAlpha + 60) / 255.0f);
     }
 }
 void CToolTip::Hide()
@@ -1311,9 +1316,11 @@ void CToolTip::Hide()
     m_innerBox.Hide();
     m_nAlpha = 190;
 }
+// ground truth: return *((_DWORD *)this + 13)
+// this+13 DWORD = m_innerBox 的 m_bIsVisible 欄位
 int  CToolTip::IsShow()
 {
-    return m_innerBox.IsVisible() ? 1 : 0;
+    return m_innerBox.IsVisible();
 }
 
 char* CToolTip::GetWeaponTypeText(int weaponType)

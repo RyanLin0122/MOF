@@ -27,6 +27,8 @@ void CToolTipManager::InitialUpdate()
 // ------------------------------------------------------------
 // Show - 顯示工具提示，可能同時顯示裝備比較
 // ------------------------------------------------------------
+// ground truth: 建立 v40 (localData) 完整複製 a5 的所有欄位（含 string），
+// 將 count 清 0 後傳給 tips[0]；裝備比較時設 count=1 並重用 localData。
 void CToolTipManager::Show(int x, int y, char uiType, stToolTipData* pData)
 {
 	stToolTipData localData;
@@ -34,26 +36,32 @@ void CToolTipManager::Show(int x, int y, char uiType, stToolTipData* pData)
 	m_nMouseX = x;
 	m_nMouseY = y;
 
-	// 複製傳入的數據到本地
-	localData.SetKindType(
-		*reinterpret_cast<int*>(pData),                       // type
-		*reinterpret_cast<short*>((char*)pData + 8),          // itemId
-		*reinterpret_cast<int*>((char*)pData + 12),           // count
-		*reinterpret_cast<int*>((char*)pData + 4),            // color
-		*reinterpret_cast<char*>((char*)pData + 32),          // grade
-		*reinterpret_cast<short*>((char*)pData + 34),         // durability
-		*reinterpret_cast<int*>((char*)pData + 36)            // extra
-	);
+	// 完整複製 pData 到 localData（對齊 ground truth 的 v40 = deep copy a5）
+	const unsigned char* src = reinterpret_cast<const unsigned char*>(pData);
+	unsigned char* dst = reinterpret_cast<unsigned char*>(&localData);
 
-	// 字串需要特殊處理：直接用 SetStringType 如果是字串類型
-	// 先用 Init 方式拷貝所有欄位（簡化版本）
-	// 重建一個乾淨的 stToolTipData 然後傳下去
-	// 注意：count 欄位清零
-	int savedCount = *reinterpret_cast<int*>((char*)pData + 12);
-	*reinterpret_cast<int*>((char*)&localData + 12) = 0;
+	// 複製非字串欄位
+	*reinterpret_cast<int*>(dst + 0)  = *reinterpret_cast<const int*>(src + 0);   // type
+	*reinterpret_cast<int*>(dst + 4)  = *reinterpret_cast<const int*>(src + 4);   // color
+	*reinterpret_cast<short*>(dst + 8) = *reinterpret_cast<const short*>(src + 8); // itemId
+	*reinterpret_cast<int*>(dst + 12) = *reinterpret_cast<const int*>(src + 12);  // count
 
-	// 顯示主提示
-	m_tips[0].Show(x, y, pData, 0);
+	// 複製字串（offset 16，使用 std::string::assign）
+	std::string& dstStr = *reinterpret_cast<std::string*>(dst + 16);
+	const std::string& srcStr = *reinterpret_cast<const std::string*>(src + 16);
+	dstStr = srcStr;
+
+	// 複製剩餘欄位
+	*(dst + 32)  = *(src + 32);                                                     // grade
+	*reinterpret_cast<short*>(dst + 34) = *reinterpret_cast<const short*>(src + 34); // durability
+	*reinterpret_cast<int*>(dst + 36) = *reinterpret_cast<const int*>(src + 36);    // extra
+
+	// ground truth: v42 = 0（清除 count，使主 tooltip 不進入比較模式）
+	int savedCount = *reinterpret_cast<int*>(dst + 12);
+	*reinterpret_cast<int*>(dst + 12) = 0;
+
+	// 顯示主提示（ground truth: tips[0].Show(x, y, v40, 0)，用 localData 而非 pData）
+	m_tips[0].Show(x, y, &localData, 0);
 
 	// 隱藏其他 4 個
 	m_tips[1].Hide();
@@ -61,13 +69,13 @@ void CToolTipManager::Show(int x, int y, char uiType, stToolTipData* pData)
 	m_tips[3].Hide();
 	m_tips[4].Hide();
 
-	// 裝備比較邏輯
+	// 裝備比較邏輯（ground truth: 檢查原始 count）
 	if (savedCount)
 	{
-		int dataType = *reinterpret_cast<int*>(pData);
+		int dataType = *reinterpret_cast<int*>(dst + 0);  // localData.type
 		if (dataType == 4) // 物品類型
 		{
-			uint16_t itemId = *reinterpret_cast<uint16_t*>((char*)pData + 8);
+			uint16_t itemId = *reinterpret_cast<uint16_t*>(dst + 8); // localData.itemId
 			if (itemId)
 			{
 				stItemKindInfo* pItemInfo = cltItemKindInfo::GetItemKindInfo(
@@ -83,21 +91,21 @@ void CToolTipManager::Show(int x, int y, char uiType, stToolTipData* pData)
 
 					if (equipItemKind)
 					{
-						// 裝備比較模式
+						// ground truth: v42 = 1（設 count=1 使比較 tooltip 進入比較模式）
+						*reinterpret_cast<int*>(dst + 12) = 1;
+
 						// 顯示 "目前裝備" 標題在 tips[3]
-						stToolTipData titleData;
-						*reinterpret_cast<int*>(&titleData) = 0;           // type = static
-						*reinterpret_cast<uint16_t*>((char*)&titleData + 8) = 3931; // text code
+						*reinterpret_cast<int*>(dst + 0)  = 0;     // type = static
+						*reinterpret_cast<uint16_t*>(dst + 8) = 3931; // text code
 						int mainWidth = m_tips[0].GetWidth();
 						int posX = x + mainWidth;
-						m_tips[3].Show(posX, y, &titleData, 1);
+						m_tips[3].Show(posX, y, &localData, 1);
 
 						// 顯示裝備物品提示在 tips[1]
-						stToolTipData equipData;
-						*reinterpret_cast<int*>(&equipData) = 4;          // type = item
-						*reinterpret_cast<uint16_t*>((char*)&equipData + 8) = equipItemKind;
+						*reinterpret_cast<int*>(dst + 0)  = 4;     // type = item
+						*reinterpret_cast<uint16_t*>(dst + 8) = equipItemKind;
 						int titleHeight = m_tips[3].GetHeight();
-						m_tips[1].Show(posX, y + titleHeight, &equipData, 1);
+						m_tips[1].Show(posX, y + titleHeight, &localData, 1);
 
 						// 第三個裝備位（如果有）
 						if (equipCount == (stItemKindInfo*)2)
@@ -109,16 +117,14 @@ void CToolTipManager::Show(int x, int y, char uiType, stToolTipData* pData)
 								int subWidth = m_tips[1].GetWidth();
 								int posX2 = posX + subWidth;
 
-								stToolTipData titleData2;
-								*reinterpret_cast<int*>(&titleData2) = 0;
-								*reinterpret_cast<uint16_t*>((char*)&titleData2 + 8) = 3931;
-								m_tips[4].Show(posX2, y, &titleData2, 1);
+								*reinterpret_cast<int*>(dst + 0)  = 0;
+								*reinterpret_cast<uint16_t*>(dst + 8) = 3931;
+								m_tips[4].Show(posX2, y, &localData, 1);
 
-								stToolTipData equipData2;
-								*reinterpret_cast<int*>(&equipData2) = 4;
-								*reinterpret_cast<uint16_t*>((char*)&equipData2 + 8) = equipItem2;
+								*reinterpret_cast<int*>(dst + 0)  = 4;
+								*reinterpret_cast<uint16_t*>(dst + 8) = equipItem2;
 								int titleHeight2 = m_tips[4].GetHeight();
-								m_tips[2].Show(posX2, y + titleHeight2, &equipData2, 1);
+								m_tips[2].Show(posX2, y + titleHeight2, &localData, 1);
 							}
 						}
 					}
@@ -226,15 +232,18 @@ void CToolTipManager::PrepareDrawing()
 // ------------------------------------------------------------
 // Draw
 // ------------------------------------------------------------
+// ground truth: Draw 先畫 tips[0]，再將 tips[0].alpha 同步到 tips[1] 和 tips[2]，
+// 然後依序畫 tips[1]~[4]
 void CToolTipManager::Draw()
 {
 	m_tips[0].Draw();
 
-	// 對齊反編譯：將 tips[0] 的 alpha 傳播到 tips[1] 和 tips[2]
-	// tips[0].m_nAlpha → tips[1].m_nAlpha, tips[2].m_nAlpha
-	// （這裡通過直接存取私有成員的方式在原始碼中不可行，
-	//   但反編譯顯示它直接寫偏移。用友元或公開方法替代。）
-	// 簡化：Draw 順序保持一致
+	// 對齊反編譯：*(this+15904) = *(this+5252); *(this+26556) = *(this+5252);
+	// 即 tips[1].m_nAlpha = tips[0].m_nAlpha; tips[2].m_nAlpha = tips[0].m_nAlpha;
+	int alpha = m_tips[0].GetAlpha();
+	m_tips[1].SetAlpha(alpha);
+	m_tips[2].SetAlpha(alpha);
+
 	m_tips[1].Draw();
 	m_tips[2].Draw();
 	m_tips[3].Draw();
