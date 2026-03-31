@@ -1262,18 +1262,18 @@ void CToolTip::Draw()
 
 void CToolTip::Show(int x, int y, const stToolTipData* pData, int compareFlag)
 {
-    const unsigned char* raw = reinterpret_cast<const unsigned char*>(pData);
     m_nMouseX = x;
     m_nMouseY = y;
-    m_nType = *reinterpret_cast<const int*>(raw + 0);
-    m_nSubType = *reinterpret_cast<const int*>(raw + 4);
-    m_usKindID = *reinterpret_cast<const uint16_t*>(raw + 8);
-    m_nCompareFlag = *reinterpret_cast<const int*>(raw + 12);
-    m_strData = *reinterpret_cast<const std::string*>(raw + 16);
-    m_byUIType = *(raw + 32);
-    m_usSlotIndex = *reinterpret_cast<const uint16_t*>(raw + 34);
-    m_nExtraData = *reinterpret_cast<const int*>(raw + 36);
-    (void)compareFlag;
+
+    // ground truth: 逐欄位從 stToolTipData 複製到 CToolTip 內部狀態
+    m_nType = pData->m_type;              // *((_DWORD *)this + 547) = *(_DWORD *)a4
+    m_nSubType = pData->m_color;          // *((_DWORD *)this + 548) = *((_DWORD *)a4 + 1)
+    m_usKindID = pData->m_itemId;         // *((_WORD *)this + 1098) = *((_WORD *)a4 + 4)
+    m_nCompareFlag = pData->m_count;      // *((_DWORD *)this + 550) = *((_DWORD *)a4 + 3)
+    m_strData.assign(pData->m_text);      // std::string::assign((char *)this + 2204, (char *)a4 + 16, ...)
+    m_byUIType = pData->m_grade;          // *((_BYTE *)this + 2220) = *((_BYTE *)a4 + 32)
+    m_usSlotIndex = pData->m_durability;  // *((_WORD *)this + 1111) = *((_WORD *)a4 + 17)
+    m_nExtraData = pData->m_extra;        // *((_DWORD *)this + 556) = *((_DWORD *)a4 + 9)
 
     m_innerBox.Show();
 

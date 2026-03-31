@@ -167,41 +167,47 @@ stNode* CListMgr::AppendNode(CUIBase* pItem)
  * @param pNode 要刪除的節點指標。
  * @return 成功刪除返回 true，否則返回 false。
  */
-bool CListMgr::DeleteNode(stNode* pNode)
+int CListMgr::DeleteNode(stNode* pNode)
 {
     // 1. 檢查指標是否有效
     if (!pNode)
     {
-        return false;
+        return 0;
     }
 
     // 2. 取得前後節點
     stNode* pPrevNode = pNode->pPrev;
     stNode* pNextNode = pNode->pNext;
 
-    // 3. 處理與前一個節點的連結
+    // 3. 處理與前一個節點的連結（對齊 ground truth 分支結構）
     if (pPrevNode)
     {
         pPrevNode->pNext = pNextNode; // 前一個節點的下一個指向被刪除節點的下一個
+        if (pNextNode)
+        {
+            pNextNode->pPrev = pPrevNode; // 後一個節點的上一個指向被刪除節點的上一個
+        }
     }
     else // 如果沒有前一個節點，表示 pNode 是頭部
     {
-        m_pHead = pNextNode; // 更新頭部指標
+        if (pNextNode)
+        {
+            m_pHead = pNextNode; // 更新頭部指標
+            pNextNode->pPrev = nullptr;
+        }
+        else
+        {
+            m_pHead = nullptr;
+        }
     }
 
-    // 4. 處理與後一個節點的連結
-    if (pNextNode)
-    {
-        pNextNode->pPrev = pPrevNode; // 後一個節點的上一個指向被刪除節點的上一個
-    }
-    
-    // 5. 清零節點欄位後釋放記憶體（對齊 ground truth）
+    // 4. 清零節點欄位後釋放記憶體（對齊 ground truth）
     pNode->pItem = nullptr;
     pNode->pPrev = nullptr;
     pNode->pNext = nullptr;
     delete pNode;
 
-    return true;
+    return 1;
 }
 
 /**

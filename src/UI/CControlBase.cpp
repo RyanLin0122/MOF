@@ -436,7 +436,8 @@ void CControlBase::SetToolTipDataDesc(uint16_t a2)
 {
     // ground truth: *((_DWORD *)this + 18) = 17; *((_WORD *)this + 40) = a2;
     // 只設 kind=17 與 descId=a2，不重置其他 tooltip 欄位
-    m_ToolTip.SetDescType(static_cast<int16_t>(a2));
+    m_ToolTip.m_type = 17;
+    m_ToolTip.m_itemId = static_cast<short>(a2);
 }
 
 // ------------------------------

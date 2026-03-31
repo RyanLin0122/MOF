@@ -45,8 +45,8 @@ public:
     // 在串列尾部附加新節點
     stNode* AppendNode(CUIBase* pItem);
 
-    // 刪除指定的節點
-    bool DeleteNode(stNode* pNode);
+    // 刪除指定的節點（ground truth 回傳 int）
+    int DeleteNode(stNode* pNode);
 
     // 透過項目指標刪除節點（ground truth 回傳 stNode*）
     stNode* DeleteNodeByItem(CUIBase* pItem);
