@@ -402,7 +402,7 @@ int* CControlImage::ControlKeyInputProcess(int msg, int key, int x, int y, int a
     static int s_lastY = 0;
 
     // 對齊反編譯：result = (int *)pt.y;
-    int* pResult = reinterpret_cast<int*>(y);
+    int* pResult = reinterpret_cast<int*>(static_cast<intptr_t>(y));
 
     if (a6 != 1 && (msg == 7 || msg == 4))  // a6 != 1 時啟用去抖；7/4 為滑鼠移動/相關訊息
     {

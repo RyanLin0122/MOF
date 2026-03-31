@@ -198,7 +198,7 @@ void CControlBoxQSL::SetQSLBoxDataForItem(unsigned int imageId, unsigned short f
         if (!g_clItemKindInfo.IsFashionItem(index) || fashionParam == (unsigned short)-1)
         {
             m_dataType = 1;
-            SetToolTipData(m_cachedIndex, 3, 0, 1, (char)255, 0xFFFF, 0);
+            SetToolTipData(m_cachedIndex, 3, 0, 1, static_cast<char>(-1), static_cast<int16_t>(-1), 0);
         }
         else
         {
@@ -223,7 +223,7 @@ void CControlBoxQSL::SetQSLBoxDataForSkill(unsigned int imageId, unsigned short 
         m_dataType      = 2;
 
         GetBackground()->SetImageID(3u, imageId, frame);
-        SetToolTipData(m_cachedIndex, 6, 0, 1, (char)255, 0xFFFF, 0);
+        SetToolTipData(m_cachedIndex, 6, 0, 1, static_cast<char>(-1), static_cast<int16_t>(-1), 0);
         ShowChildren();
     }
 
@@ -254,7 +254,7 @@ void CControlBoxQSL::SetQSLboxDataForEmblem(unsigned int imageId, unsigned short
         m_dataType      = 3;
 
         GetBackground()->SetImageID(3u, imageId, frame);
-        SetToolTipData(m_cachedIndex, 10, 0, 1, (char)255, 0xFFFF, 0);
+        SetToolTipData(m_cachedIndex, 10, 0, 1, static_cast<char>(-1), static_cast<int16_t>(-1), 0);
         ShowChildren();
     }
 }

@@ -223,7 +223,7 @@ int* CControlButton::ControlKeyInputProcess(int msg, int key, int x, int y, int 
     if (a6 != 1 && (msg == 7 || msg == 4))
     {
         if (s_nLastX == x && s_nLastY == y)
-            return (int*)x;  // 反編譯：return a4 (即 x 指標語義)
+            return reinterpret_cast<int*>(static_cast<intptr_t>(x));  // 反編譯：return a4 (即 x 指標語義)
         s_nLastX = x;
         s_nLastY = y;
     }

@@ -70,7 +70,7 @@ void CControlCheckButton::CallFunc()
         {
             // 反編譯：v2 = (void (__thiscall *)(int))m_cbFunc; v2(m_cbBasePtr + m_cbArgOffset);
             typedef void (__thiscall *CallbackFn)(int);
-            CallbackFn fn = reinterpret_cast<CallbackFn>(m_cbFunc);
+            CallbackFn fn = reinterpret_cast<CallbackFn>(static_cast<intptr_t>(m_cbFunc));
             fn(m_cbBasePtr + m_cbArgOffset);
         }
     }

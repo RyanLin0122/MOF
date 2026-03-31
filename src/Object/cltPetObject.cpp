@@ -307,7 +307,7 @@ void cltPetObject::PrepareDrawing(int speechFlag, int forceShow) {
             if (!pGIData) {
                 return;
             }
-            int value = *reinterpret_cast<int*>(*reinterpret_cast<int*>(reinterpret_cast<char*>(pGIData) + 32) + 32);
+            int value = *reinterpret_cast<int*>(static_cast<intptr_t>(*reinterpret_cast<int*>(reinterpret_cast<char*>(pGIData) + 32)) + 32);
             int textOffsetY = abs32(value) + 40;
 
             if (!m_pOwnerChar) {

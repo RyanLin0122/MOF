@@ -4,7 +4,7 @@
 #include "UI/CControlAlphaBox.h"
 
 struct strPetKindInfo;
-struct GameImage;
+class GameImage;
 struct stEffectKindInfo;
 class ClientCharacter;
 class CCA;

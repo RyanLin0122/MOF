@@ -38,7 +38,7 @@ void CControlTabMgr::InitLogIn()
         // 對齊反編譯：在目前焦點 Tab 上觸發一次 msg=3 (MouseDown) 事件
         // GT: v5[1] = (int)this + 732 * v2 + 128 → 傳該 tab 的指標作為第 2 參數
         uint8_t idx = m_focusIndex;
-        m_Tabs[idx].ControlKeyInputProcess(3, reinterpret_cast<int>(&m_Tabs[idx]), 0, 0, 0, 0);
+        m_Tabs[idx].ControlKeyInputProcess(3, static_cast<int>(reinterpret_cast<uintptr_t>(&m_Tabs[idx])), 0, 0, 0, 0);
     }
 }
 
@@ -208,7 +208,7 @@ void CControlTabMgr::ChildKeyInputProcess(int msg, int a3, int /*x*/, int /*y*/,
     // 對齊反編譯：msg==0 時，a3 是子物件指標，+68 取 index
     if (msg == 0)
     {
-        CControlBase* child = reinterpret_cast<CControlBase*>(a3);
+        CControlBase* child = reinterpret_cast<CControlBase*>(static_cast<intptr_t>(a3));
         int idx = child->GetArrayIndex();
         SetFocusTabIndex(static_cast<uint8_t>(idx));
     }

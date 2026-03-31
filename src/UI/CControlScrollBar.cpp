@@ -103,7 +103,7 @@ void CControlScrollBar::CallScrollFunc()
     if (m_callbackObj && m_callbackFunc)
     {
         typedef void (__thiscall *CallbackFn)(int);
-        CallbackFn fn = reinterpret_cast<CallbackFn>(m_callbackFunc);
+        CallbackFn fn = reinterpret_cast<CallbackFn>(static_cast<intptr_t>(m_callbackFunc));
         fn(m_callbackObj + m_callbackOffset);
     }
 }
@@ -375,7 +375,7 @@ int* CControlScrollBar::ControlKeyInputProcess(int a2, int a3, int a4, int a5, i
 // ========================================
 void CControlScrollBar::ChildKeyInputProcess(int a2, int a3, int /*a4*/, int a5, int /*a6*/, int /*a7*/)
 {
-    CControlBase* child = reinterpret_cast<CControlBase*>(a3);
+    CControlBase* child = reinterpret_cast<CControlBase*>(static_cast<intptr_t>(a3));
 
     if (child == &m_ArrowUp && a2 == 3)
     {

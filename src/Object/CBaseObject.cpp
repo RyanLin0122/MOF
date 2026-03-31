@@ -53,7 +53,7 @@ void CBaseObject::InitNameBackBox(char* szName, char* szTitle)
     }
 
     // Create chat balloon
-    m_ChatBallon.Create(nullptr, 0, 4, -463873);
+    m_ChatBallon.Create(nullptr, 0, 4, static_cast<uint16_t>(-463873));
 
     // Calculate text widths
     g_MoFFont.SetFont("ObjectName");

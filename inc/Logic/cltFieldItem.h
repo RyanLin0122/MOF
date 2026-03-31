@@ -2,9 +2,9 @@
 
 #include <cstdint>
 
-struct Map;
-struct GameImage;
-struct cltItemKindInfo;
+class Map;
+class GameImage;
+class cltItemKindInfo;
 
 class cltFieldItem {
 public:

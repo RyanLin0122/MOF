@@ -163,7 +163,7 @@ void CControlBoxCreateChar::Create(int x, int y, CControlBase* pParent,
         SetSize(editW2 + btnW2, ebH2 + 23);
 
         // ToolTip（type + 3228 = 對應能力文字 ID）
-        SetToolTipData(static_cast<int16_t>(type + 3228), 0, 0, 0, 255, 0xFFFF, 0);
+        SetToolTipData(static_cast<int16_t>(type + 3228), 0, 0, 0, static_cast<char>(-1), static_cast<int16_t>(-1), 0);
 
         // 初始值 4
         SetAbilityData(4);

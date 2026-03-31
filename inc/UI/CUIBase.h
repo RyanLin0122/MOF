@@ -1,6 +1,6 @@
 #pragma once
 
-struct CUIMessageBoxBase;
+class CUIMessageBoxBase;
 
 class CUIBase {
 public:

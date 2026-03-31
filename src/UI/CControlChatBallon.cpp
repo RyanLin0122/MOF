@@ -173,8 +173,8 @@ void CControlChatBallon::SetString(char* text, int x, int y,
             m_piece[8].SetY(bottomY);
             m_piece[8].SetScaleX(halfGap);
 
-            float brOffset = static_cast<double>(m_piece[8].GetWidth())
-                           * static_cast<double>(m_piece[8].GetScaleX());
+            float brOffset = static_cast<float>(static_cast<double>(m_piece[8].GetWidth())
+                           * static_cast<double>(m_piece[8].GetScaleX()));
             float arrowX = static_cast<float>(m_piece[8].GetX()) + brOffset;
 
             m_piece[9].SetPos(static_cast<int>(arrowX), bottomY);

@@ -2,7 +2,8 @@
 #include <algorithm>
 #include "global.h"
 
-extern "C" unsigned long __stdcall timeGetTime(void); // 與你專案一致（已在 CControlImage.h 有用過） :contentReference[oaicite:9]{index=9}
+#include <timeapi.h>
+#pragma comment(lib, "winmm.lib")
 
 using std::min;
 using std::max;

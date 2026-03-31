@@ -395,7 +395,7 @@ void cltTutorialSystem::UseItem() {
             m_nWaitingUseItemResult = 0;
             m_nTimerID = g_clTimerManager.CreateTimer(
                 0x3E8u,
-                reinterpret_cast<unsigned int>(this),
+                static_cast<unsigned int>(reinterpret_cast<uintptr_t>(this)),
                 0, 1,
                 nullptr, nullptr,
                 reinterpret_cast<cltTimer::TimerCallback>(cltTutorialSystem::OnTimer_EndUseItem),
@@ -449,7 +449,7 @@ void cltTutorialSystem::SendTutorialMsg(std::uint8_t msgType) {
     switch (msgType) {
     case 7: {
         stCharKindInfo* ki = g_clCharKindInfo.GetMonsterNameByKind(0x4801);
-        const char* nameFmt = g_DCTTextManager.GetText(reinterpret_cast<int>(ki));
+        const char* nameFmt = g_DCTTextManager.GetText(static_cast<int>(reinterpret_cast<intptr_t>(ki)));
         char monName[128];
         wsprintfA(monName, nameFmt, 100);
 
@@ -488,7 +488,7 @@ void cltTutorialSystem::SendTutorialMsg(std::uint8_t msgType) {
     case 0x0E:
         m_nTimerID = g_clTimerManager.CreateTimer(
             0x7D0u,
-            reinterpret_cast<unsigned int>(this),
+            static_cast<unsigned int>(reinterpret_cast<uintptr_t>(this)),
             0, 1,
             nullptr, nullptr,
             reinterpret_cast<cltTimer::TimerCallback>(cltTutorialSystem::OnTimer_StartExitMap),

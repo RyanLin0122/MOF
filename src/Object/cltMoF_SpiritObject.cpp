@@ -272,7 +272,7 @@ void cltMoF_SpiritObject::PrepareDrawing(int showSpeech)
             int* pGIDataDwords = (int*)m_pGameImage->m_pGIData;
             if (pGIDataDwords)
             {
-                int* pBlockArray = (int*)(*(pGIDataDwords + 8));
+                int* pBlockArray = reinterpret_cast<int*>(static_cast<intptr_t>(*(pGIDataDwords + 8)));
                 if (pBlockArray)
                 {
                     int blockOff32 = *(int*)((char*)pBlockArray + 52 * startBlock + 32);

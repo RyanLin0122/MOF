@@ -1,7 +1,7 @@
 #pragma once
 
 class CUIBase;
-struct CUIMessageBoxBase;
+class CUIMessageBoxBase;
 
 class CUIManager {
 public:
