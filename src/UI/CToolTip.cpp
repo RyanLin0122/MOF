@@ -614,7 +614,7 @@ void CToolTip::ProcessWorldMap(int mode)
 
         for (int i = 0; i < 5; ++i)
         {
-            if (m_nWorldMapTextCount >= 50)
+            if (m_nWorldMapTextCount > 50)
                 break;
             if (!regenMonKinds[i])
                 continue;
@@ -682,7 +682,7 @@ void CToolTip::ProcessWorldMap(int mode)
                         uint16_t* mapPtr = regenMaps;
                         do
                         {
-                            if (m_nWorldMapTextCount >= 50)
+                            if (m_nWorldMapTextCount > 50)
                                 break;
                             if (*mapPtr)
                             {
@@ -745,7 +745,7 @@ void CToolTip::ProcessWorldMap(int mode)
 
                         if (foundCount)
                             goto NEXT_QUEST;
-                        if (m_nWorldMapTextCount >= 50)
+                        if (m_nWorldMapTextCount > 50)
                             break;
 
                         // NPC fallback: offset 102
@@ -806,7 +806,7 @@ void CToolTip::ProcessWorldMap(int mode)
 
                         for (int n = 0; n < 4; ++n)
                         {
-                            if (m_nWorldMapTextCount >= 50)
+                            if (m_nWorldMapTextCount > 50)
                                 break;
                             stNPCInfo* loopNpc = g_clNPCInfo.GetNPCInfoByID(npcIds[n]);
                             if (!loopNpc)
@@ -2377,18 +2377,18 @@ void CToolTip::ProcessCharInfo(char* charName)
 }
 void CToolTip::SetTextMainTitle(stMapInfo* pMapInfo)
 {
-    // 對齊 0042C3D0：GT 使用 <= 50（允許 count == 50）
-    if (m_nWorldMapTextCount >= 50 || !pMapInfo)
+    // 對齊 0042C3D0：GT 使用 <= 50（允許 count == 50），即 > 50 才 return
+    if (m_nWorldMapTextCount > 50 || !pMapInfo)
         return;
     const auto MW = reinterpret_cast<uint16_t*>(pMapInfo);
-    const int textCode = MW[186] ? MW[186] : MW[1];
+    const int textCode = MW[186] ? MW[186] : MW[2];
     m_worldMapText[m_nWorldMapTextCount].SetText(g_DCTTextManager.GetText(textCode));
     m_worldMapText[m_nWorldMapTextCount++].m_TextColor = 0xFF00FF00; // -16711936
 }
 void CToolTip::SetTextDungeonBasic(stMapInfo* pMapInfo)
 {
-    // 對齊 0042C460
-    if (m_nWorldMapTextCount >= 50 || !pMapInfo)
+    // 對齊 0042C5B0：GT 使用 <= 50（允許 count == 50），即 > 50 才 return
+    if (m_nWorldMapTextCount > 50 || !pMapInfo)
         return;
 
     const auto MW = reinterpret_cast<uint16_t*>(pMapInfo);
