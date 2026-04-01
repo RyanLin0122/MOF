@@ -304,6 +304,7 @@
     <ClCompile Include="src\Logic\clClientTransportKindInfo.cpp" />
     <ClCompile Include="src\Logic\cltMapTitle.cpp" />
     <ClCompile Include="src\Logic\cltMatchManager.cpp" />
+    <ClCompile Include="src\Logic\cltPKManager.cpp" />
     <ClCompile Include="src\Logic\cltMiniGame_Button.cpp" />
     <ClCompile Include="src\Logic\cltMoF_ClientMine.cpp" />
     <ClCompile Include="src\Logic\cltMoF_MineManager.cpp" />
@@ -669,6 +670,7 @@
     <ClInclude Include="inc\Logic\cltHelpMessage.h" />
     <ClInclude Include="inc\Logic\cltMapTitle.h" />
     <ClInclude Include="inc\Logic\cltMatchManager.h" />
+    <ClInclude Include="inc\Logic\cltPKManager.h" />
     <ClInclude Include="inc\Logic\cltMiniGame_Button.h" />
     <ClInclude Include="inc\Logic\cltMoF_ClientMine.h" />
     <ClInclude Include="inc\Logic\cltMoF_MineManager.h" />
