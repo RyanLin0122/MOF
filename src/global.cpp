@@ -47,6 +47,7 @@
 #include "Logic/cltMapTitle.h"
 #include "Logic/cltMoF_MineManager.h"
 #include "Logic/cltMatchManager.h"
+#include "Logic/cltPKManager.h"
 #include "Logic/cltPKFlagManager.h"
 #include "Logic/CSpiritSpeechMgr.h"
 #include "Logic/SpiritSpeechParser.h"
@@ -152,6 +153,7 @@ CUIManager* g_UIMgr = nullptr;
 cltMapTitle g_clMapTitle;
 cltMoF_MineManager g_clMineMgr;
 cltMatchManager g_clMatchManager;
+cltPKManager g_clPKManager;
 cltPKFlagManager g_clPKFlagManager;
 CSpiritSpeechMgr g_clSpiritSpeechMgr;
 CSpiritSpeechParser g_clSpiritSpeechParser;

@@ -942,6 +942,9 @@
     <ClCompile Include="src\Logic\cltMatchManager.cpp">
       <Filter>來源檔案</Filter>
     </ClCompile>
+    <ClCompile Include="src\Logic\cltPKManager.cpp">
+      <Filter>來源檔案</Filter>
+    </ClCompile>
     <ClCompile Include="src\Logic\cltMoF_MineManager.cpp">
       <Filter>來源檔案</Filter>
     </ClCompile>
@@ -1995,6 +1998,9 @@
       <Filter>標頭檔</Filter>
     </ClInclude>
     <ClInclude Include="inc\Logic\cltMatchManager.h">
+      <Filter>標頭檔</Filter>
+    </ClInclude>
+    <ClInclude Include="inc\Logic\cltPKManager.h">
       <Filter>標頭檔</Filter>
     </ClInclude>
     <ClInclude Include="inc\Logic\cltMoF_MineManager.h">
