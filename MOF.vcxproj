@@ -655,6 +655,7 @@
     <ClInclude Include="inc\Info\cltPortalInfo.h" />
     <ClInclude Include="inc\Info\cltQuestionKindInfo.h" />
     <ClInclude Include="inc\Info\cltQuestKindInfo.h" />
+    <ClInclude Include="inc\Info\cltRegenMonsterKindInfo.h" />
     <ClInclude Include="inc\Info\cltResurrectInfo.h" />
     <ClInclude Include="inc\Info\cltSkillKindInfo.h" />
     <ClInclude Include="inc\Info\cltSpecialtyKindInfo.h" />

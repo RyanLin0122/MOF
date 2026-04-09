@@ -26,6 +26,7 @@ class cltMonsterToleranceKindInfo
 {
 public:
     cltMonsterToleranceKindInfo() : m_list(nullptr), m_count(0) {}
+
     ~cltMonsterToleranceKindInfo() { Free(); }
 
     // 成功完整解析回傳 1；否則 0
