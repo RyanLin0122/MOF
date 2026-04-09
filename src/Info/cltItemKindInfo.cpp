@@ -932,7 +932,7 @@ int cltItemKindInfo::GetEquipableClassAtb(char* str) {
 			if (classInfo) {
 				// 3. 從結構中取得屬性位元遮罩 (Attribute Bitmask) 並用 OR 運算符合併
 				// 假設 `m_dwAtb` 是 `stClassKindInfo` 結構中對應 `*((_DWORD *)v7 + 2)` 的成員
-				atb |= classInfo->atb;
+				atb |= classInfo->qwClassAtb;
 			}
 		}
 		token = strtok(nullptr, "|");

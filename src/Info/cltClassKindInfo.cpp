@@ -1,284 +1,376 @@
 ﻿#include "Info/cltClassKindInfo.h"
 
-static constexpr const char* kDelims = "\t\n";
+#include <cstring>
+#include <cstdlib>
+#include <cctype>
+#include <algorithm>
 
+// ------------------------------------------------------------
+// 內部輔助
+// ------------------------------------------------------------
+namespace
+{
+    bool IsDigitString(const char* s)
+    {
+        if (s == nullptr || *s == '\0')
+            return false;
+
+        for (const unsigned char* p = reinterpret_cast<const unsigned char*>(s); *p; ++p)
+        {
+            if (!std::isdigit(*p))
+                return false;
+        }
+        return true;
+    }
+
+    int StrICmp(const char* a, const char* b)
+    {
+        if (a == nullptr || b == nullptr)
+            return (a == b) ? 0 : (a ? 1 : -1);
+
+        while (*a && *b)
+        {
+            const int ca = std::toupper(static_cast<unsigned char>(*a));
+            const int cb = std::toupper(static_cast<unsigned char>(*b));
+            if (ca != cb)
+                return ca - cb;
+            ++a;
+            ++b;
+        }
+        return std::toupper(static_cast<unsigned char>(*a)) -
+            std::toupper(static_cast<unsigned char>(*b));
+    }
+}
+
+// ------------------------------------------------------------
+// cltClassKindInfo
+// ------------------------------------------------------------
 cltClassKindInfo::cltClassKindInfo()
+    : m_pInfo(nullptr)
+    , m_wTotalClassNum(0)
 {
-    m_list = nullptr;
-    m_count = 0;
 }
 
-// 僅允許全部為 0..9；空字串或含非數字則視為非數字
-bool cltClassKindInfo::IsDigitStr(const char* t)
-{
-    if (!t || !*t) return false;
-    for (const unsigned char* p = (const unsigned char*)t; *p; ++p)
-        if (!std::isdigit(*p)) return false;
-    return true;
-}
-
-uint16_t cltClassKindInfo::TranslateKindCode(char* a1)
-{
-    if (!a1) return 0;
-    if (std::strlen(a1) != 3) return 0;
-
-    uint16_t c0 = (uint16_t)(std::toupper((unsigned char)a1[0]) - 'A') & 0x1F;
-    uint16_t c1 = (uint16_t)(std::toupper((unsigned char)a1[1]) - 'A') & 0x1F;
-    uint16_t c2 = (uint16_t)(std::toupper((unsigned char)a1[2]) - 'A') & 0x1F;
-
-    // 與反編譯運算 (32 * (c1 | (32 * c0))) | c2 等價：((c0*32 + c1) * 32 + c2)
-    return (uint16_t)(((c0 * 32) + c1) * 32 + c2);
-}
-
-int cltClassKindInfo::Initialize(char* filename)
+cltClassKindInfo::~cltClassKindInfo()
 {
     Free();
-    if (!filename) return 0;
+}
 
-    FILE* f = g_clTextFileManager.fopen(filename);
-    if (!f) return 0;
+int cltClassKindInfo::Initialize(const char* fileName)
+{
+    char delimiter[3] = "\t\n";
+    int result = 0;
+    std::uint64_t atb = 1;
 
-    char buf[1024] = {};
-    // 略過 3 行表頭
-    if (!std::fgets(buf, sizeof(buf), f) ||
-        !std::fgets(buf, sizeof(buf), f) ||
-        !std::fgets(buf, sizeof(buf), f))
-    {
-        g_clTextFileManager.fclose(f);
+    std::FILE* stream = g_clTextFileManager.fopen((char *)fileName);
+    if (!stream)
         return 0;
-    }
 
-    // 計數
-    fpos_t pos{};
-    std::fgetpos(f, &pos);
-    uint16_t cnt = 0;
-    while (std::fgets(buf, sizeof(buf), f))
-        ++cnt;
+    char buffer[1024] = {};
+    std::fpos_t position{};
 
-    if (cnt == 0) {
-        g_clTextFileManager.fclose(f);
-        return 0;
-    }
-
-    // 配置
-    m_list = static_cast<strClassKindInfo*>(operator new[](cnt * sizeof(strClassKindInfo)));
-    std::memset(m_list, 0, cnt * sizeof(strClassKindInfo));
-    m_count = cnt;
-
-    // 回復到資料起點
-    std::fsetpos(f, &pos);
-
-    // 依反編譯：初始 atb = 1，每筆 *2
-    uint64_t atb_next = 1ULL;
-
-    uint16_t idx = 0;
-    bool ok_all = true;
-
-    while (idx < m_count && std::fgets(buf, sizeof(buf), f))
+    // 跳過前三行
+    if (std::fgets(buffer, 1023, stream) &&
+        std::fgets(buffer, 1023, stream) &&
+        std::fgets(buffer, 1023, stream))
     {
-        strClassKindInfo& r = m_list[idx];
-        std::memset(&r, 0, sizeof(r));
+        std::fgetpos(stream, &position);
 
-        char* tok = std::strtok(buf, kDelims);            // 1: 클래스 아이디
-        if (!tok) { ok_all = false; break; }
-        r.kind = (_stricmp(tok, "NONE") == 0) ? 0 : TranslateKindCode(tok);
-
-        // atb（低/高位）— 與反編譯一致，給定唯一 2^n
-        r.atb = atb_next;
-
-        // 2: 클래스 이름（略過）
-        if (!std::strtok(nullptr, kDelims)) { ok_all = false; break; }
-
-        // 3: 클래스 이름 코드（WORD）
-        tok = std::strtok(nullptr, kDelims);
-        if (!tok || !IsDigitStr(tok)) { ok_all = false; break; }
-        r.name_code = (uint16_t)std::atoi(tok);
-
-        // 4: 전직 가능 클래스（WORD, 3 碼）
-        tok = std::strtok(nullptr, kDelims);
-        if (!tok) { ok_all = false; break; }
-        r.from_class = TranslateKindCode(tok);
-
-        // 5: 전직 단계（BYTE）
-        tok = std::strtok(nullptr, kDelims);
-        if (!tok || !IsDigitStr(tok)) { ok_all = false; break; }
-        r.job_step = (uint8_t)std::atoi(tok);
-
-        // 6: 최소 레벨（BYTE）
-        tok = std::strtok(nullptr, kDelims);
-        if (!tok || !IsDigitStr(tok)) { ok_all = false; break; }
-        r.min_level = (uint8_t)std::atoi(tok);
-
-        // 7: 타겟탐색범위（DWORD）
-        tok = std::strtok(nullptr, kDelims);
-        if (!tok || !IsDigitStr(tok)) { ok_all = false; break; }
-        r.target_search_range = (uint32_t)std::atoi(tok);
-
-        // 8~16: 9 個 WORD（最低屬性/熟練度）
-        uint16_t* pWord[9] = {
-            &r.min_attack, &r.min_dex, &r.min_con, &r.min_int,
-            &r.mastery_sword, &r.mastery_magic, &r.mastery_archery,
-            &r.mastery_priest, &r.mastery_thief
-        };
-        for (int k = 0; k < 9; ++k) {
-            tok = std::strtok(nullptr, kDelims);
-            if (!tok || !IsDigitStr(tok)) { ok_all = false; break; }
-            *pWord[k] = (uint16_t)std::atoi(tok);
+        // 先算資料筆數
+        for (; std::fgets(buffer, 1023, stream); ++m_wTotalClassNum)
+        {
         }
-        if (!ok_all) break;
 
-        // 17: 코멘트 코드（WORD）
-        tok = std::strtok(nullptr, kDelims);
-        if (!tok || !IsDigitStr(tok)) { ok_all = false; break; }
-        r.comment_code = (uint16_t)std::atoi(tok);
+        m_pInfo = new strClassKindInfo[m_wTotalClassNum];
+        std::memset(m_pInfo, 0, sizeof(strClassKindInfo) * m_wTotalClassNum);
 
-        // 18: 마크이미지 블록 아이디（WORD）
-        tok = std::strtok(nullptr, kDelims);
-        if (!tok || !IsDigitStr(tok)) { ok_all = false; break; }
-        r.mark_img_block_id = (uint16_t)std::atoi(tok);
+        std::fsetpos(stream, &position);
 
-        // 19~21: 三個 DWORD（依原表：HP/Mana 與一個額外整數；檔案中皆為整數）
-        tok = std::strtok(nullptr, kDelims);
-        if (!tok || !IsDigitStr(tok)) { ok_all = false; break; }
-        r.base_buff_uses = (uint32_t)std::atoi(tok);
+        strClassKindInfo* info = m_pInfo;
 
-        tok = std::strtok(nullptr, kDelims);
-        if (!tok || !IsDigitStr(tok)) { ok_all = false; break; }
-        r.hp_regen = (uint32_t)std::atoi(tok);
+        if (std::fgets(buffer, 1023, stream))
+        {
+            while (true)
+            {
+                // 1. 職業ID
+                char* tok = std::strtok(buffer, delimiter);
+                if (!tok)
+                    break;
 
-        tok = std::strtok(nullptr, kDelims);
-        if (!tok || !IsDigitStr(tok)) { ok_all = false; break; }
-        r.mana_regen = (uint32_t)std::atoi(tok);
+                info->wClassId = (StrICmp(tok, "NONE") == 0) ? 0 : TranslateKindCode(tok);
 
-        // 22: 物品1代碼（5 碼；或 "0"）
-        tok = std::strtok(nullptr, kDelims);
-        if (!tok) { ok_all = false; break; }
-        r.item1_code = cltItemKindInfo::TranslateKindCode(tok); // 非 5 碼→0
+                // 這筆資料對應的 one-hot 屬性值
+                info->qwClassAtb = atb;
 
-        // 23: 物品1數量（WORD）
-        tok = std::strtok(nullptr, kDelims);
-        if (!tok || !IsDigitStr(tok)) { ok_all = false; break; }
-        r.item1_count = (uint16_t)std::atoi(tok);
+                // 2. 職業名稱
+                tok = std::strtok(nullptr, delimiter);
+                if (!tok)
+                    break;
 
-        // 24: 物品2代碼
-        tok = std::strtok(nullptr, kDelims);
-        if (!tok) { ok_all = false; break; }
-        r.item2_code = cltItemKindInfo::TranslateKindCode(tok);
+                // 根據 offset 2~7 還原，固定 6 bytes
+                // 結構已先清零，故可安全截斷
+                std::strncpy(info->szClassName, tok, sizeof(info->szClassName));
 
-        // 25: 物品2數量
-        tok = std::strtok(nullptr, kDelims);
-        if (!tok || !IsDigitStr(tok)) { ok_all = false; break; }
-        r.item2_count = (uint16_t)std::atoi(tok);
+                // 3. 職業名稱代碼
+                tok = std::strtok(nullptr, delimiter);
+                if (!tok || !IsDigitString(tok))
+                    break;
+                info->wClassNameCode = static_cast<std::uint16_t>(std::atoi(tok));
 
-        // 下一筆
-        ++idx;
-        atb_next <<= 1;
+                // 4. 可轉職職業
+                tok = std::strtok(nullptr, delimiter);
+                if (!tok)
+                    break;
+                info->wTransferableClasses = TranslateKindCode(tok);
+
+                // 5. 轉職階段
+                tok = std::strtok(nullptr, delimiter);
+                if (!tok || !IsDigitString(tok))
+                    break;
+                info->bTransferStage = static_cast<std::uint8_t>(std::atoi(tok));
+
+                // 6. 最小等級
+                tok = std::strtok(nullptr, delimiter);
+                if (!tok || !IsDigitString(tok))
+                    break;
+                info->bMinLevel = static_cast<std::uint8_t>(std::atoi(tok));
+
+                // 7. 目標搜尋範圍
+                tok = std::strtok(nullptr, delimiter);
+                if (!tok || !IsDigitString(tok))
+                    break;
+                info->dwTargetSearchRange = static_cast<std::uint32_t>(std::atoi(tok));
+
+                // 8. 最小攻擊
+                tok = std::strtok(nullptr, delimiter);
+                if (!tok || !IsDigitString(tok))
+                    break;
+                info->wMinAttack = static_cast<std::uint16_t>(std::atoi(tok));
+
+                // 9. 最小敏捷
+                tok = std::strtok(nullptr, delimiter);
+                if (!tok || !IsDigitString(tok))
+                    break;
+                info->wMinAgility = static_cast<std::uint16_t>(std::atoi(tok));
+
+                // 10. 最小體力
+                tok = std::strtok(nullptr, delimiter);
+                if (!tok || !IsDigitString(tok))
+                    break;
+                info->wMinHealth = static_cast<std::uint16_t>(std::atoi(tok));
+
+                // 11. 最小智力
+                tok = std::strtok(nullptr, delimiter);
+                if (!tok || !IsDigitString(tok))
+                    break;
+                info->wMinIntelligence = static_cast<std::uint16_t>(std::atoi(tok));
+
+                // 12. 劍術課程熟練度
+                tok = std::strtok(nullptr, delimiter);
+                if (!tok || !IsDigitString(tok))
+                    break;
+                info->wSwordsmanshipSkill = static_cast<std::uint16_t>(std::atoi(tok));
+
+                // 13. 魔法課程熟練度
+                tok = std::strtok(nullptr, delimiter);
+                if (!tok || !IsDigitString(tok))
+                    break;
+                info->wMagicSkill = static_cast<std::uint16_t>(std::atoi(tok));
+
+                // 14. 弓術課程熟練度
+                tok = std::strtok(nullptr, delimiter);
+                if (!tok || !IsDigitString(tok))
+                    break;
+                info->wArcherySkill = static_cast<std::uint16_t>(std::atoi(tok));
+
+                // 15. 牧師課程熟練度
+                tok = std::strtok(nullptr, delimiter);
+                if (!tok || !IsDigitString(tok))
+                    break;
+                info->wPriestSkill = static_cast<std::uint16_t>(std::atoi(tok));
+
+                // 16. 盜賊課程熟練度
+                tok = std::strtok(nullptr, delimiter);
+                if (!tok || !IsDigitString(tok))
+                    break;
+                info->wRogueSkill = static_cast<std::uint16_t>(std::atoi(tok));
+
+                // 17. 註解代碼
+                tok = std::strtok(nullptr, delimiter);
+                if (!tok || !IsDigitString(tok))
+                    break;
+                info->wCommentCode = static_cast<std::uint16_t>(std::atoi(tok));
+
+                // 18. 標記圖片區塊ID
+                tok = std::strtok(nullptr, delimiter);
+                if (!tok || !IsDigitString(tok))
+                    break;
+                info->wMarkImageBlockId = static_cast<std::uint16_t>(std::atoi(tok));
+
+                // 19. 基本給予增益使用數
+                tok = std::strtok(nullptr, delimiter);
+                if (!tok || !IsDigitString(tok))
+                    break;
+                info->dwBaseBuffUsageCount = static_cast<std::uint32_t>(std::atoi(tok));
+
+                // 20. HP(地圖自動回復量上升)
+                tok = std::strtok(nullptr, delimiter);
+                if (!tok || !IsDigitString(tok))
+                    break;
+                info->dwHPMapRecoveryIncrease = static_cast<std::uint32_t>(std::atoi(tok));
+
+                // 21. 魔法(地圖自動回復量上升)
+                tok = std::strtok(nullptr, delimiter);
+                if (!tok || !IsDigitString(tok))
+                    break;
+                info->dwManaMapRecoveryIncrease = static_cast<std::uint32_t>(std::atoi(tok));
+
+                // 22. 轉職時給予的物品1代碼
+                tok = std::strtok(nullptr, delimiter);
+                if (!tok)
+                    break;
+                info->wItem1CodeOnTransfer = cltItemKindInfo::TranslateKindCode(tok);
+
+                // 23. 轉職時給予的物品1數量
+                tok = std::strtok(nullptr, delimiter);
+                if (!tok || !IsDigitString(tok))
+                    break;
+                info->wItem1QuantityOnTransfer = static_cast<std::uint16_t>(std::atoi(tok));
+
+                // 24. 轉職時給予的物品2代碼
+                tok = std::strtok(nullptr, delimiter);
+                if (!tok)
+                    break;
+                info->wItem2CodeOnTransfer = cltItemKindInfo::TranslateKindCode(tok);
+
+                // 25. 轉職時給予的物品2數量
+                tok = std::strtok(nullptr, delimiter);
+                if (!tok || !IsDigitString(tok))
+                    break;
+                info->wItem2QuantityOnTransfer = static_cast<std::uint16_t>(std::atoi(tok));
+
+                ++info;
+                atb <<= 1;
+
+                if (!std::fgets(buffer, 1023, stream))
+                    goto LABEL_SUCCESS;
+            }
+        }
+        else
+        {
+        LABEL_SUCCESS:
+            result = 1;
+        }
     }
 
-    g_clTextFileManager.fclose(f);
-
-    if (!ok_all || idx != m_count) {
-        Free();
-        return 0;
-    }
-    return 1;
+    g_clTextFileManager.fclose(stream);
+    return result;
 }
 
 void cltClassKindInfo::Free()
 {
-    if (m_list) {
-        operator delete[](m_list);
-        m_list = nullptr;
+    if (m_pInfo)
+    {
+        delete[] m_pInfo;
+        m_pInfo = nullptr;
     }
-    m_count = 0;
+    m_wTotalClassNum = 0;
 }
 
-strClassKindInfo* cltClassKindInfo::GetClassKindInfo(uint16_t a2)
+std::uint16_t cltClassKindInfo::TranslateKindCode(const char* text)
 {
-    if (!m_list || m_count == 0) return nullptr;
-    for (uint16_t i = 0; i < m_count; ++i)
-        if (m_list[i].kind == a2)
-            return &m_list[i];
+    if (text == nullptr || std::strlen(text) != 3)
+        return 0;
+
+    const std::uint16_t a = static_cast<std::uint16_t>(std::toupper(static_cast<unsigned char>(text[0])) - 'A');
+    const std::uint16_t b = static_cast<std::uint16_t>(std::toupper(static_cast<unsigned char>(text[1])) - 'A');
+    const std::uint16_t c = static_cast<std::uint16_t>(std::toupper(static_cast<unsigned char>(text[2])) - 'A');
+
+    return static_cast<std::uint16_t>((32 * (b | (32 * a))) | c);
+}
+
+std::uint16_t cltClassKindInfo::GetTotalClassNum() const
+{
+    return m_wTotalClassNum;
+}
+
+strClassKindInfo* cltClassKindInfo::GetClassKindInfo(std::uint16_t classId) const
+{
+    if (m_wTotalClassNum == 0 || m_pInfo == nullptr)
+        return nullptr;
+
+    for (std::uint16_t i = 0; i < m_wTotalClassNum; ++i)
+    {
+        if (m_pInfo[i].wClassId == classId)
+            return &m_pInfo[i];
+    }
     return nullptr;
 }
 
-strClassKindInfo* cltClassKindInfo::GetClassKindInfoByIndex(unsigned int a2)
+strClassKindInfo* cltClassKindInfo::GetClassKindInfoByIndex(unsigned int index) const
 {
-    if (!m_list || a2 >= m_count) return nullptr;
-    return (strClassKindInfo*)((uint8_t*)m_list + 72u * a2);
-}
-
-strClassKindInfo* cltClassKindInfo::GetClassKindInfoByAtb(uint64_t a2)
-{
-    if (!m_list || m_count == 0) return nullptr;
-    for (uint16_t i = 0; i < m_count; ++i)
-        if (m_list[i].atb == a2)
-            return &m_list[i];
+    if (index < m_wTotalClassNum)
+        return &m_pInfo[index];
     return nullptr;
 }
 
-int cltClassKindInfo::GetClassKindsByAtb(uint64_t mask, uint16_t* a3)
+strClassKindInfo* cltClassKindInfo::GetClassKindInfoByAtb(std::uint64_t atb) const
 {
-    // 與反編譯邏輯等價：對每個 set bit（2^n）找出對應類別
-    int written = 0;
-    if (!m_list || m_count == 0 || !a3) return 0;
+    if (m_wTotalClassNum == 0 || m_pInfo == nullptr)
+        return nullptr;
 
-    while (mask) {
-        uint64_t bit = mask & (~mask + 1);    // 取最低位的 set bit
-        mask ^= bit;                          // 清除該 bit
-        if (auto* rec = GetClassKindInfoByAtb(bit)) {
-            *a3++ = rec->kind;
-            ++written;
-        }
+    for (std::uint16_t i = 0; i < m_wTotalClassNum; ++i)
+    {
+        if (m_pInfo[i].qwClassAtb == atb)
+            return &m_pInfo[i];
     }
-    return written;
+    return nullptr;
 }
 
-int cltClassKindInfo::GetClassAtb(char* String)
+int cltClassKindInfo::GetClassKindsByAtb(std::uint64_t atb, std::uint16_t* outClassIds) const
 {
-    if (!String || *String == '0') return 0;
+    int count = 0;
+    std::uint64_t mask = 1;
 
-    int lo = 0;           // 低 32-bit（回傳值）
-    int hi_ignored = 0;   // 僅為符合反編譯：仍計算但不回傳
-
-    char delims[2]; std::strcpy(delims, "|");
-    for (char* tok = std::strtok(String, delims); tok; tok = std::strtok(nullptr, delims)) {
-        uint16_t k = TranslateKindCode(tok);
-        if (auto* rec = GetClassKindInfo(k)) {
-            lo |= (int)(rec->atb & 0xFFFFFFFFULL);
-            hi_ignored |= (int)((rec->atb >> 32) & 0xFFFFFFFFULL);
-        }
-    }
-    return lo; // 與 IDA 版本一致：僅回傳低 32 位
-}
-
-uint64_t cltClassKindInfo::GetClassAtb(const char* s)
-{
-    if (!s || *s == '0') return 0;
-
-    uint64_t mask = 0;
-
-    // 逐段以 '|' 切開（不修改呼叫端字串）
-    const char* p = s;
-    while (true) {
-        const char* q = std::strchr(p, '|');
-        size_t len = q ? static_cast<size_t>(q - p) : std::strlen(p);
-
-        if (len > 0) {
-            // TranslateKindCode 需要 C-style 字元陣列
-            char token[16] = {};
-            if (len >= sizeof(token)) len = sizeof(token) - 1; // 保守保護
-            std::memcpy(token, p, len);
-            token[len] = '\0';
-
-            uint16_t k = TranslateKindCode(token);
-            if (auto* rec = GetClassKindInfo(k)) {
-                mask |= rec->atb;  // rec->atb 已是 uint64_t
+    do
+    {
+        if ((atb & mask) != 0)
+        {
+            strClassKindInfo* info = GetClassKindInfoByAtb(mask);
+            if (info)
+            {
+                *outClassIds = info->wClassId;
+                ++outClassIds;
+                ++count;
             }
         }
+        mask <<= 1;
+    } while (mask != 0);
 
-        if (!q) break;   // 最後一段
-        p = q + 1;
+    return count;
+}
+
+int cltClassKindInfo::GetClassAtb(char* text) const
+{
+    char delimiter[2] = "|";
+    int low = 0;
+    int high = 0; // 原始反編譯有累積高 32-bit，但最後未回傳
+
+    if (text == nullptr || *text == '0')
+        return 0;
+
+    for (char* tok = std::strtok(text, delimiter); tok; tok = std::strtok(nullptr, delimiter))
+    {
+        const std::uint16_t classId = TranslateKindCode(tok);
+        strClassKindInfo* info = GetClassKindInfo(classId);
+        if (!info)
+            continue;
+
+        const std::uint32_t* parts = reinterpret_cast<const std::uint32_t*>(&info->qwClassAtb);
+        low |= static_cast<int>(parts[0]);
+        high |= static_cast<int>(parts[1]);
     }
-    return mask;
+
+    (void)high; // 保留原始行為：高 32-bit 被算出但沒回傳
+    return low;
 }

@@ -2368,7 +2368,7 @@ void CToolTip::ProcessCharInfo(char* charName)
         return;
 
     m_textTitle.SetText(charName);
-    AddIndexData(0x1B55u, g_DCTTextManager.GetText(cls->name_code), 0xFFFFC000);
+    AddIndexData(0x1B55u, g_DCTTextManager.GetText(cls->wClassNameCode), 0xFFFFC000);
     AddIndexData(0x1B56u, static_cast<int>(*(reinterpret_cast<unsigned char*>(chr) + 536)), 0xFFFFC000);
 
     strPKRankKindInfo* pk = g_clPKRankKindInfo.GetPKRankKindInfo(*reinterpret_cast<uint16_t*>(reinterpret_cast<unsigned char*>(chr) + 14680));

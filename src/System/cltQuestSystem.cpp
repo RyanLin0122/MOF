@@ -1338,7 +1338,7 @@ std::uint16_t cltQuestSystem::GetRewardItem(std::uint16_t npcID, std::uint8_t gr
     if (!pClassInfo)
         return 0;
 
-    return pQuest->GetRewardItem(pClassInfo->kind, groupIndex);
+    return pQuest->GetRewardItem(pClassInfo->wClassId, groupIndex);
 }
 
 std::uint8_t cltQuestSystem::GetRewardItemNum(std::uint16_t /*npcID*/, std::uint8_t /*groupIndex*/)

@@ -306,10 +306,10 @@ stItemKindInfo* cltEquipmentSystem::CanEquipItemByItemKind(int equipType, unsign
         }
 
         while (classInfo) {
-            if ((requiredClassAtb & classInfo->atb) != 0) {
+            if ((requiredClassAtb & classInfo->qwClassAtb) != 0) {
                 return itemInfo;
             }
-            classInfo = m_pclClassKindInfo->GetClassKindInfo(classInfo->from_class);
+            classInfo = m_pclClassKindInfo->GetClassKindInfo(classInfo->wTransferableClasses);
         }
 
         return nullptr;

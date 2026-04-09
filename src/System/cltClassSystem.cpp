@@ -88,42 +88,42 @@ unsigned int cltClassSystem::CanUpgradeClass(
     if (!classInfo) {
         return 6;
     }
-    if (classInfo->min_level > m_pLevelSystem->GetLevel()) {
+    if (classInfo->bMinLevel > m_pLevelSystem->GetLevel()) {
         return 602;
     }
-    if (classInfo->from_class != GetClass()) {
+    if (classInfo->wTransferableClasses != GetClass()) {
         return 6;
     }
-    if (classInfo->min_attack > m_pPlayerAbility->GetBaseStr()) {
+    if (classInfo->wMinAttack > m_pPlayerAbility->GetBaseStr()) {
         return 7;
     }
-    if (classInfo->min_dex > m_pPlayerAbility->GetBaseDex()) {
+    if (classInfo->wMinAgility > m_pPlayerAbility->GetBaseDex()) {
         return 8;
     }
-    if (classInfo->min_int > m_pPlayerAbility->GetBaseInt()) {
+    if (classInfo->wMinIntelligence > m_pPlayerAbility->GetBaseInt()) {
         return 9;
     }
-    if (classInfo->min_con > m_pPlayerAbility->GetBaseVit()) {
+    if (classInfo->wMinHealth > m_pPlayerAbility->GetBaseVit()) {
         return 10;
     }
-    if (classInfo->mastery_sword > m_pLessonSystem->GetSwordLessonPt()) {
+    if (classInfo->wSwordsmanshipSkill > m_pLessonSystem->GetSwordLessonPt()) {
         return 11;
     }
-    if (classInfo->mastery_magic > m_pLessonSystem->GetBowLessonPt()) {
+    if (classInfo->wMagicSkill > m_pLessonSystem->GetBowLessonPt()) {
         return 12;
     }
-    if (classInfo->mastery_priest > m_pLessonSystem->GetTheologyLessonPt()) {
+    if (classInfo->wPriestSkill > m_pLessonSystem->GetTheologyLessonPt()) {
         return 13;
     }
-    if (classInfo->mastery_archery > m_pLessonSystem->GetMagicLessonPt()) {
+    if (classInfo->wArcherySkill > m_pLessonSystem->GetMagicLessonPt()) {
         return 14;
     }
 
-    if (classInfo->item1_code) {
-        requiredItems.AddItem(classInfo->item1_code, classInfo->item1_count, 0, 0, 0xFFFFu, nullptr);
+    if (classInfo->wItem1CodeOnTransfer) {
+        requiredItems.AddItem(classInfo->wItem1CodeOnTransfer, classInfo->wItem1QuantityOnTransfer, 0, 0, 0xFFFFu, nullptr);
     }
-    if (classInfo->item2_code) {
-        requiredItems.AddItem(classInfo->item2_code, classInfo->item2_count, 0, 0, 0xFFFFu, nullptr);
+    if (classInfo->wItem2CodeOnTransfer) {
+        requiredItems.AddItem(classInfo->wItem2CodeOnTransfer, classInfo->wItem2QuantityOnTransfer, 0, 0, 0xFFFFu, nullptr);
     }
     for (int i = 0; i < extraItemCount; ++i) {
         requiredItems.AddItem(extraItemCodes[i], extraItemCounts[i], 0, 0, 0xFFFFu, nullptr);
@@ -151,11 +151,11 @@ void cltClassSystem::UpgradeClass(
     if (classInfo) {
         cltItemList* targetList = externalItemList ? externalItemList : &localItemList;
 
-        if (classInfo->item1_code) {
-            targetList->AddItem(classInfo->item1_code, classInfo->item1_count, 0, 0, 0xFFFFu, nullptr);
+        if (classInfo->wItem1CodeOnTransfer) {
+            targetList->AddItem(classInfo->wItem1CodeOnTransfer, classInfo->wItem1QuantityOnTransfer, 0, 0, 0xFFFFu, nullptr);
         }
-        if (classInfo->item2_code) {
-            targetList->AddItem(classInfo->item2_code, classInfo->item2_count, 0, 0, 0xFFFFu, nullptr);
+        if (classInfo->wItem2CodeOnTransfer) {
+            targetList->AddItem(classInfo->wItem2CodeOnTransfer, classInfo->wItem2QuantityOnTransfer, 0, 0, 0xFFFFu, nullptr);
         }
 
         for (int i = 0; i < extraItemCount; ++i) {
@@ -207,8 +207,8 @@ std::uint16_t cltClassSystem::GetUpgradeableClasses(std::uint16_t* outClassCodes
 
     do {
         strClassKindInfo* classInfo = m_pstClassKindInfo->GetClassKindInfoByIndex(index);
-        if (classInfo && classInfo->from_class == m_wClassCode && maxCount > foundCount) {
-            outClassCodes[foundCount++] = classInfo->kind;
+        if (classInfo && classInfo->wTransferableClasses == m_wClassCode && maxCount > foundCount) {
+            outClassCodes[foundCount++] = classInfo->wClassId;
         }
         ++index;
     } while (index < m_pstClassKindInfo->GetTotalClassNum());
@@ -217,28 +217,28 @@ std::uint16_t cltClassSystem::GetUpgradeableClasses(std::uint16_t* outClassCodes
 }
 
 std::uint16_t cltClassSystem::GetMaxHPConstant() {
-    const int classLevel = m_pClassKindInfo->job_step;
+    const int classLevel = m_pClassKindInfo->bTransferStage;
     if (classLevel == 1) return 4;
     if (classLevel == 2) return 5;
     return 3;
 }
 
 std::uint16_t cltClassSystem::GetMaxManaConstant() {
-    const int classLevel = m_pClassKindInfo->job_step;
+    const int classLevel = m_pClassKindInfo->bTransferStage;
     if (classLevel == 1) return 5;
     if (classLevel == 2) return 6;
     return 4;
 }
 
 std::uint16_t cltClassSystem::GetAPowerConstant() {
-    const int classLevel = m_pClassKindInfo->job_step;
+    const int classLevel = m_pClassKindInfo->bTransferStage;
     if (classLevel == 1) return 150;
     if (classLevel == 2) return 200;
     return 100;
 }
 
 std::uint16_t cltClassSystem::GetDPowerConstant() {
-    const int classLevel = m_pClassKindInfo->job_step;
+    const int classLevel = m_pClassKindInfo->bTransferStage;
     if (classLevel == 1) return 120;
     if (classLevel == 2) return 150;
     return 100;
@@ -246,40 +246,40 @@ std::uint16_t cltClassSystem::GetDPowerConstant() {
 
 BOOL cltClassSystem::IsFighterClass() {
     strClassKindInfo* rootClass = m_pClassKindInfo;
-    for (std::uint16_t parentCode = rootClass->from_class; parentCode; parentCode = rootClass->from_class) {
+    for (std::uint16_t parentCode = rootClass->wTransferableClasses; parentCode; parentCode = rootClass->wTransferableClasses) {
         rootClass = m_pstClassKindInfo->GetClassKindInfo(parentCode);
     }
-    return rootClass->kind == cltClassKindInfo::TranslateKindCode(const_cast<char*>("FIG"));
+    return rootClass->wClassId == cltClassKindInfo::TranslateKindCode(const_cast<char*>("FIG"));
 }
 
 BOOL cltClassSystem::IsArcherClass() {
     strClassKindInfo* rootClass = m_pClassKindInfo;
-    for (std::uint16_t parentCode = rootClass->from_class; parentCode; parentCode = rootClass->from_class) {
+    for (std::uint16_t parentCode = rootClass->wTransferableClasses; parentCode; parentCode = rootClass->wTransferableClasses) {
         rootClass = m_pstClassKindInfo->GetClassKindInfo(parentCode);
     }
-    return rootClass->kind == cltClassKindInfo::TranslateKindCode(const_cast<char*>("ARC"));
+    return rootClass->wClassId == cltClassKindInfo::TranslateKindCode(const_cast<char*>("ARC"));
 }
 
 BOOL cltClassSystem::IsMageClass() {
     strClassKindInfo* rootClass = m_pClassKindInfo;
-    for (std::uint16_t parentCode = rootClass->from_class; parentCode; parentCode = rootClass->from_class) {
+    for (std::uint16_t parentCode = rootClass->wTransferableClasses; parentCode; parentCode = rootClass->wTransferableClasses) {
         rootClass = m_pstClassKindInfo->GetClassKindInfo(parentCode);
     }
-    return rootClass->kind == cltClassKindInfo::TranslateKindCode(const_cast<char*>("MAG"));
+    return rootClass->wClassId == cltClassKindInfo::TranslateKindCode(const_cast<char*>("MAG"));
 }
 
 BOOL cltClassSystem::IsClericClass() {
     strClassKindInfo* rootClass = m_pClassKindInfo;
-    for (std::uint16_t parentCode = rootClass->from_class; parentCode; parentCode = rootClass->from_class) {
+    for (std::uint16_t parentCode = rootClass->wTransferableClasses; parentCode; parentCode = rootClass->wTransferableClasses) {
         rootClass = m_pstClassKindInfo->GetClassKindInfo(parentCode);
     }
-    return rootClass->kind == cltClassKindInfo::TranslateKindCode(const_cast<char*>("CLA"));
+    return rootClass->wClassId == cltClassKindInfo::TranslateKindCode(const_cast<char*>("CLA"));
 }
 
 std::uint8_t cltClassSystem::GetClassLevel() {
-    return m_pClassKindInfo->job_step;
+    return m_pClassKindInfo->bTransferStage;
 }
 
 int cltClassSystem::GetDefaultBuffNum() {
-    return static_cast<int>(m_pClassKindInfo->base_buff_uses);
+    return static_cast<int>(m_pClassKindInfo->dwBaseBuffUsageCount);
 }

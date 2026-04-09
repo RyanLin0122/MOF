@@ -117,7 +117,7 @@ int cltEmblemSystem::CanAcquireEmblem(std::uint16_t emblemKind) {
     if (info->qwAcquireConditionJobChangeAtb != 0) {
         const std::uint16_t classKind = m_pClassSystem ? m_pClassSystem->GetClass() : 0;
         strClassKindInfo* classInfo = m_pclClassKindInfo ? m_pclClassKindInfo->GetClassKindInfo(classKind) : nullptr;
-        if (!classInfo || ((info->qwAcquireConditionJobChangeAtb & classInfo->atb) == 0)) return 0;
+        if (!classInfo || ((info->qwAcquireConditionJobChangeAtb & classInfo->qwClassAtb) == 0)) return 0;
     }
 
     if (info->wAcquireConditionQuest != 0 && m_pQuestSystem->IsCompleteQuest(info->wAcquireConditionQuest) == 0) {
@@ -447,7 +447,7 @@ void cltEmblemSystem::OnEvent_ChangeClass() {
         if (!info || IsAcquiredEmblem(info->wEmblemId) == 1) continue;
         if (info->dwAcquireConditionJobChangeQuestCompletion == 0) continue;
         if (m_pQuestSystem->IsGiveupQuestPermanently() == 1) continue;
-        if (classInfo->job_step == static_cast<std::uint8_t>(info->dwAcquireConditionJobChangeQuestCompletion)) {
+        if (classInfo->bTransferStage == static_cast<std::uint8_t>(info->dwAcquireConditionJobChangeQuestCompletion)) {
             AcquireEmblem(info->wEmblemId);
             if (m_pExternOnAcquiredEmblemFuncPtr) m_pExternOnAcquiredEmblemFuncPtr(m_userData0, info->wEmblemId);
         }

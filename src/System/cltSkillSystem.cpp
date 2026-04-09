@@ -305,8 +305,8 @@ int cltSkillSystem::CanAcquireSkill(std::uint16_t skillKind) const {
         const std::uint64_t reqClassMask = *reinterpret_cast<std::uint64_t*>(reinterpret_cast<unsigned char*>(info) + 40);
         if (reqClassMask != 0 && classInfo) {
             bool classMatched = false;
-            for (strClassKindInfo* cur = classInfo; cur; cur = m_pclClassKindInfo->GetClassKindInfo(cur->from_class)) {
-                if ((reqClassMask & cur->atb) != 0) {
+            for (strClassKindInfo* cur = classInfo; cur; cur = m_pclClassKindInfo->GetClassKindInfo(cur->wTransferableClasses)) {
+                if ((reqClassMask & cur->qwClassAtb) != 0) {
                     classMatched = true;
                     break;
                 }
@@ -706,8 +706,8 @@ void cltSkillSystem::UpdateValidity() {
         const std::uint64_t reqClassMask = *reinterpret_cast<std::uint64_t*>(reinterpret_cast<unsigned char*>(skillInfo) + 40);
         if (reqClassMask != 0 && classInfo) {
             classValid = false;
-            for (strClassKindInfo* cur = classInfo; cur; cur = m_pclClassKindInfo->GetClassKindInfo(cur->from_class)) {
-                if ((reqClassMask & cur->atb) != 0) {
+            for (strClassKindInfo* cur = classInfo; cur; cur = m_pclClassKindInfo->GetClassKindInfo(cur->wTransferableClasses)) {
+                if ((reqClassMask & cur->qwClassAtb) != 0) {
                     classValid = true;
                     break;
                 }
