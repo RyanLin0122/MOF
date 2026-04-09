@@ -1,4 +1,4 @@
-﻿#pragma once
+#pragma once
 #include <cstdint>
 #include <cstdio>
 #include <cstring>
@@ -66,20 +66,20 @@ public:
     cltClassKindInfo();
     ~cltClassKindInfo();
 
-    int Initialize(const char* fileName);
+    int Initialize(char* fileName);
     void Free();
 
-    static std::uint16_t TranslateKindCode(const char* text);
+    static std::uint16_t TranslateKindCode(char* text);
 
-    std::uint16_t GetTotalClassNum() const;
-    strClassKindInfo* GetClassKindInfo(std::uint16_t classId) const;
-    strClassKindInfo* GetClassKindInfoByIndex(unsigned int index) const;
-    strClassKindInfo* GetClassKindInfoByAtb(std::uint64_t atb) const;
+    std::uint16_t GetTotalClassNum();
+    strClassKindInfo* GetClassKindInfo(std::uint16_t classId);
+    strClassKindInfo* GetClassKindInfoByIndex(unsigned int index);
+    strClassKindInfo* GetClassKindInfoByAtb(std::uint64_t atb);
 
-    int GetClassKindsByAtb(std::uint64_t atb, std::uint16_t* outClassIds) const;
+    int GetClassKindsByAtb(std::uint64_t atb, std::uint16_t* outClassIds);
 
     // 只回傳低 32-bit
-    int GetClassAtb(char* text) const;
+    int GetClassAtb(char* text);
 
 private:
     strClassKindInfo* m_pInfo;
