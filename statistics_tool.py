@@ -32,7 +32,7 @@ FORCE_MISSING_CLASSES = [
     "CUIBase",
     "CUIMessageBoxTypes",
     "CUIMessageBoxList",
-    "CUIMessageBoxBase"
+    "CUIMessageBoxBase",
     "CUIMessageBoxOK",
     "CUIMessageBoxRadioList",
     "CUIMessageBoxSortList",
