@@ -1005,6 +1005,12 @@
     <ClCompile Include="src\Info\cltClientPetKindInfo.cpp">
       <Filter>來源檔案</Filter>
     </ClCompile>
+    <ClCompile Include="src\Info\cltClientCharKindInfo.cpp">
+      <Filter>來源檔案</Filter>
+    </ClCompile>
+    <ClCompile Include="src\Info\cltClientPortalInfo.cpp">
+      <Filter>來源檔案</Filter>
+    </ClCompile>
     <ClCompile Include="src\Logic\cltMiniGame_Button.cpp">
       <Filter>來源檔案</Filter>
     </ClCompile>
@@ -2076,6 +2082,12 @@
       <Filter>標頭檔</Filter>
     </ClInclude>
     <ClInclude Include="inc\Info\cltClientPetKindInfo.h">
+      <Filter>標頭檔</Filter>
+    </ClInclude>
+    <ClInclude Include="inc\Info\cltClientCharKindInfo.h">
+      <Filter>標頭檔</Filter>
+    </ClInclude>
+    <ClInclude Include="inc\Info\cltClientPortalInfo.h">
       <Filter>標頭檔</Filter>
     </ClInclude>
     <ClInclude Include="inc\Logic\cltMiniGame_Button.h">

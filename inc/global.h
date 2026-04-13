@@ -53,6 +53,8 @@ class clClientTransportKindInfo;
 class clTransportKindInfo;
 class cltPetKindInfo;
 class cltClientPetKindInfo;
+class cltPortalInfo;
+class cltClientPortalInfo;
 class cltPetSystem;
 class cltMoneySystem;
 class cltMoFC_EffectKindInfo;
@@ -238,6 +240,8 @@ extern CUIManager*              g_UIMgr;
 // Pet / Monster / Money
 extern cltPetKindInfo           g_clPetKindInfoBase;
 extern cltClientPetKindInfo     g_clClientPetKindInfo;
+extern cltPortalInfo            g_clPortalInfo;
+extern cltClientPortalInfo      g_clClientPortalInfo;
 extern cltPetSystem             g_clPetSystem;
 extern cltMoneySystem           g_clMoneySystem;
 extern cltMoFC_EffectKindInfo   g_clEffectKindInfo;

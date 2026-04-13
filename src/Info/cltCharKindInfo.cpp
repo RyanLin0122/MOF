@@ -1,14 +1,76 @@
 #include "Info/cltCharKindInfo.h"
+#include "global.h"
 #include <cstring>
 #include <cstdlib>
 #include <cctype>
 
+// ---------------------------------------------------------------------------
+// Constructor / destructor (aligned with mofclient.c)
+// ---------------------------------------------------------------------------
+cltCharKindInfo::cltCharKindInfo()
+{
+    // Allocate and zero the 65536-slot pointer table (uint16 range).
+    // mofclient.c memsets 0xFFFF slots; we allocate one extra so any
+    // call with index 0xFFFF stays within bounds.
+    m_ppCharKindTable = new stCharKindInfo*[0x10000];
+    std::memset(m_ppCharKindTable, 0, sizeof(stCharKindInfo*) * 0x10000);
+    m_pMonsterNameBuffer = nullptr;
+    m_nMonsterNameCount = 0;
+
+    // Mirror mofclient.c: g_pcltCharKindInfo = this;
+    g_pcltCharKindInfo = this;
+}
+
+cltCharKindInfo::~cltCharKindInfo()
+{
+    cltCharKindInfo::Free();
+    if (m_ppCharKindTable) {
+        delete[] m_ppCharKindTable;
+        m_ppCharKindTable = nullptr;
+    }
+}
+
+// ---------------------------------------------------------------------------
+// Initialize / Free
+// ---------------------------------------------------------------------------
+// NOTE: The original cltCharKindInfo::Initialize is a ~400-line text parser
+// that reads charkindinfo.txt and InitMonsterAinFrame. That parser is out of
+// scope for the ClientCharKindInfo/ClientPetKindInfo/ClientPortalInfo task.
+// We keep the table empty and return success so the derived client classes
+// link and run; actual data population will be added when the parser is
+// ported.
+int cltCharKindInfo::Initialize(char* /*String2*/)
+{
+    return 1;
+}
+
+void cltCharKindInfo::Free()
+{
+    // mofclient.c walks the 65535 pointer slots and operator deletes each
+    // non-null entry.
+    if (m_ppCharKindTable) {
+        for (int i = 0; i < 0xFFFF; ++i) {
+            if (m_ppCharKindTable[i]) {
+                ::operator delete(m_ppCharKindTable[i]);
+                m_ppCharKindTable[i] = nullptr;
+            }
+        }
+    }
+    if (m_pMonsterNameBuffer) {
+        ::operator delete(m_pMonsterNameBuffer);
+        m_pMonsterNameBuffer = nullptr;
+    }
+    m_nMonsterNameCount = 0;
+    g_pcltCharKindInfo = nullptr;
+}
+
+// ---------------------------------------------------------------------------
+// Static: TranslateKindCode
+// ---------------------------------------------------------------------------
 uint16_t cltCharKindInfo::TranslateKindCode(char* a1)
 {
     if (!a1) return 0;
-
-    if (std::strlen(a1) != 5)
-        return 0;
+    if (std::strlen(a1) != 5) return 0;
 
     int hi = (std::toupper(static_cast<unsigned char>(a1[0])) + 31) << 11;
     int lo = std::atoi(a1 + 1);
@@ -18,48 +80,49 @@ uint16_t cltCharKindInfo::TranslateKindCode(char* a1)
     return 0;
 }
 
-void* cltCharKindInfo::GetCharKindInfo(uint16_t)
+// ---------------------------------------------------------------------------
+// Lookup helpers (align with mofclient.c semantics)
+// ---------------------------------------------------------------------------
+void* cltCharKindInfo::GetCharKindInfo(uint16_t a2)
 {
-    // 目前專案未建 CharKind 資料表，先回傳 nullptr 以滿足連結。
-    return nullptr;
+    // mofclient.c: return *((_DWORD *)this + a2 + 1);
+    if (!m_ppCharKindTable) return nullptr;
+    return m_ppCharKindTable[a2];
 }
 
 uint16_t cltCharKindInfo::GetRealCharID(uint16_t charKind)
 {
-    // stub：資料表未建立，直接回傳輸入值。
+    // Placeholder: real binary resolves alt/transform forms.
     return charKind;
 }
 
 stCharKindInfo* cltCharKindInfo::GetMonsterNameByKind(unsigned short /*kind*/)
 {
-    // Stub: real implementation looks up the monster name/info record.
+    // Placeholder.
     return nullptr;
 }
 
 int cltCharKindInfo::GetCharKindInfoByDropItemKind(uint16_t /*dropItemKindCode*/, stCharKindInfo** /*outChars*/)
 {
-    // Stub: real implementation searches the char kind table for entries
-    // whose drop item kind code matches dropItemKindCode and writes them
-    // into outChars, returning the count found.
+    // Placeholder.
     return 0;
 }
 
 int cltCharKindInfo::GetMonsterCharKinds(int /*a2*/, int /*a3*/, int /*a4*/, int /*a5*/, uint16_t* /*a6*/)
 {
-    // Stub: the reconstructed client does not have the original monster kind
-    // table wired up yet, so report "no matching monsters".
+    // Placeholder.
     return 0;
 }
 
 int cltCharKindInfo::IsMonsterChar(uint16_t /*kindCode*/)
 {
-    // Stub: without the original char kind table, default to "not a monster".
+    // Placeholder.
     return 0;
 }
 
 void* cltCharKindInfo::GetBossInfoByKind(uint16_t /*kindCode*/)
 {
-    // Stub: no boss metadata is available in the reconstructed client yet.
+    // Placeholder.
     return nullptr;
 }
 

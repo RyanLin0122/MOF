@@ -10,6 +10,8 @@
 #include "Info/cltCharKindInfo.h"
 #include "Info/cltPetKindInfo.h"
 #include "Info/cltClientPetKindInfo.h"
+#include "Info/cltPortalInfo.h"
+#include "Info/cltClientPortalInfo.h"
 #include "Info/cltMoFC_EffectKindInfo.h"
 #include "Info/cltSkillKindInfo.h"
 #include "Info/cltLessonKindInfo.h"
@@ -165,6 +167,8 @@ CEffectManager* g_pEffectManager_After_Chr = nullptr;
 
 cltPetKindInfo g_clPetKindInfoBase;
 cltClientPetKindInfo g_clClientPetKindInfo;
+cltPortalInfo g_clPortalInfo;
+cltClientPortalInfo g_clClientPortalInfo;
 cltPetSystem g_clPetSystem;
 cltMoneySystem g_clMoneySystem;
 cltMoFC_EffectKindInfo g_clEffectKindInfo;
