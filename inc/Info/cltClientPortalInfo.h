@@ -18,7 +18,8 @@ class Map;
 class cltClientPortalInfo {
 public:
     cltClientPortalInfo();
-    ~cltClientPortalInfo();
+    // 注意：ground truth 沒有使用者定義的解構子 (dtor 主體未出現在 mofclient.c)，
+    // 由 compiler 產生 trivial dtor。本還原遵循該行為，不提供顯式 dtor。
 
     // 靜態初始化：儲存 cltPortalInfo/Map 指標
     static void InitializeStaticVariable(cltPortalInfo* portalInfo, Map* map);

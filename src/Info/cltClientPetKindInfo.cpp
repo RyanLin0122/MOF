@@ -16,8 +16,9 @@ cltClientPetKindInfo::cltClientPetKindInfo()
     //   cltPetKindInfo::cltPetKindInfo((char *)this + 4);
     //   *(_DWORD *)this = &cltClientPetKindInfo::vftable;
     //   return this;
-    // (組合成員 m_petKindInfo 會被編譯器預先建構)
-    std::memset(m_aniInfoTable, 0, sizeof(m_aniInfoTable));
+    // ground truth 未對 m_aniInfoTable 做任何初始化；g_clPetKindInfo 為
+    // 全域物件，依賴 BSS 零值初始化。(組合成員 m_petKindInfo 會被編譯器
+    // 預先建構)
 }
 
 // (0x004EDA60)

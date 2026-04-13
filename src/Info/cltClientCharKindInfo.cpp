@@ -64,13 +64,11 @@ void cltClientCharKindInfo::Free()
     //       operator delete(v4);
     //       *v3 = 0;
     //   cltCharKindInfo::Free(this);
-    if (m_ppMonsterAniInfoTable) {
-        for (int i = 0; i < 0xFFFF; ++i) {
-            cltMonsterAniInfo* entry = m_ppMonsterAniInfoTable[i];
-            if (entry) {
-                delete entry;                    // dtor + operator delete
-                m_ppMonsterAniInfoTable[i] = nullptr;
-            }
+    for (int i = 0; i < 0xFFFF; ++i) {
+        cltMonsterAniInfo* entry = m_ppMonsterAniInfoTable[i];
+        if (entry) {
+            delete entry;                    // dtor + operator delete
+            m_ppMonsterAniInfoTable[i] = nullptr;
         }
     }
     cltCharKindInfo::Free();
@@ -100,7 +98,7 @@ cltMonsterAniInfo* cltClientCharKindInfo::GetMonsterAniInfo(unsigned short a2)
     //       }
     //   }
     //   return result;
-    if (m_ppMonsterAniInfoTable && m_ppMonsterAniInfoTable[a2])
+    if (m_ppMonsterAniInfoTable[a2])
         return m_ppMonsterAniInfoTable[a2];
 
     void* rawResult = cltCharKindInfo::GetCharKindInfo(a2);
@@ -113,8 +111,7 @@ cltMonsterAniInfo* cltClientCharKindInfo::GetMonsterAniInfo(unsigned short a2)
         return nullptr;
 
     cltMonsterAniInfo* ani = new cltMonsterAniInfo();
-    if (m_ppMonsterAniInfoTable)
-        m_ppMonsterAniInfoTable[a2] = ani;
+    m_ppMonsterAniInfoTable[a2] = ani;
 
     if (!ani->Initialize(aniFileName)) {
         CHAR Text[1024];
@@ -123,7 +120,7 @@ cltMonsterAniInfo* cltClientCharKindInfo::GetMonsterAniInfo(unsigned short a2)
         return nullptr;
     }
 
-    return m_ppMonsterAniInfoTable ? m_ppMonsterAniInfoTable[a2] : ani;
+    return m_ppMonsterAniInfoTable[a2];
 }
 
 // (0x00401590)

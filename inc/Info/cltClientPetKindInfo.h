@@ -12,6 +12,8 @@
 //
 // 此 C++ 還原採用組合（composition），與反編譯行為等價：
 // cltPetKindInfo 為成員，在建構子被初始化；動畫表亦為固定陣列成員。
+// 注意：ground truth 的建構子不會初始化動畫表，依賴全域物件之 BSS
+// 零值初始化（g_clPetKindInfo）。此處同樣不提供預設初始化以忠實對齊。
 class cltClientPetKindInfo {
 public:
     cltClientPetKindInfo();
@@ -34,5 +36,5 @@ public:
 
 private:
     cltPetKindInfo  m_petKindInfo;                 // +0x04 (after vftable)
-    cltPetAniInfo*  m_aniInfoTable[0xFFFF] = {};   // +0x14
+    cltPetAniInfo*  m_aniInfoTable[0xFFFF];        // +0x14 (zero-init via BSS)
 };

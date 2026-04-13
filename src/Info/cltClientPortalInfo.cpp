@@ -16,23 +16,15 @@ Map*           cltClientPortalInfo::m_pMap          = nullptr;
 
 // (0x004E1350)
 cltClientPortalInfo::cltClientPortalInfo()
-    : m_pPortalBuffer(nullptr)
-    , m_nPortalCount(0)
-    , m_wMapKind(0)
-    , _pad32(0)
 {
-    // mofclient.c constructor 只 return this，未初始化成員；在 C++ 端
-    // 為避免使用到未初始化記憶體，這裡提供零值預設。行為等價於原始 binary
-    // 在呼叫 Init / Free 之前欄位未被使用的情境。
-    std::memset(m_nIndexBuffer, 0, sizeof(m_nIndexBuffer));
+    // mofclient.c constructor 只 return this，未初始化任何成員。
+    //   cltClientPortalInfo *__thiscall cltClientPortalInfo::cltClientPortalInfo(cltClientPortalInfo *this)
+    //   { return this; }
+    // g_clClientPortalInfo 為全域物件，依賴 BSS 零值初始化。忠實對齊
+    // 反編譯：此處同樣不做任何欄位賦值。
 }
 
-cltClientPortalInfo::~cltClientPortalInfo()
-{
-    // 原始 binary 沒有明確的 dtor；退出時由 OS 釋放。
-    // 這裡主動呼叫 Free 以符合 RAII。
-    Free();
-}
+// Ground truth 沒有使用者定義的 destructor —— 由 compiler 產生 trivial dtor。
 
 // (0x004E1370)
 void cltClientPortalInfo::InitializeStaticVariable(cltPortalInfo* a1, Map* a2)
@@ -61,41 +53,45 @@ void cltClientPortalInfo::GetPortalInfo(uint16_t a2, int* a3)
     //   v4 = cltPortalInfo::GetPortalCntInMap(m_pclPortalInfo, a2, a3);
     //   *((_DWORD *)this + 11) = v4;            // m_nPortalCount
     //   v5 = operator new(40 * v4);
-    //   v6 = m_nPortalCount;
-    //   *(_DWORD *)this = v5;                   // m_pPortalBuffer
+    //   v6 = *((_DWORD *)this + 11);
+    //   *(_DWORD *)this = v5;                   // m_pPortalBuffer (直接覆寫)
     //   v9 = 0;
     //   if ( v6 > 0 ) {
     //       v10 = 0;
-    //       v7 = (int *)((char *)this + 4);     // 讀取剛寫入的 index 陣列
+    //       v7 = (int *)((char *)this + 4);     // 固定讀取 this+4 的 index 陣列
     //       do {
     //           v8 = cltPortalInfo::GetPortalInfoByIndex(m_pclPortalInfo, *v7++);
     //           qmemcpy((char *)v10 + *(_DWORD *)this, v8, 0x28u);  // 40 bytes
     //           ++v9;
     //           v10 += 10;  // 10 * 4 = 40 bytes
-    //       } while ( v9 < m_nPortalCount );
+    //       } while ( v9 < *((_DWORD *)this + 11) );
     //   }
-    if (!m_pclPortalInfo)
-        return;
-
-    int count = m_pclPortalInfo->GetPortalCntInMap(a2, a3);
+    //
+    // 忠實對齊反編譯行為：
+    //   * 不檢查 m_pclPortalInfo
+    //   * 不釋放舊的 m_pPortalBuffer（原始 binary 直接覆寫造成 leak，
+    //     呼叫端需先呼叫 Free）
+    //   * 即使 count == 0 仍呼叫 operator new
+    //   * 迴圈內固定讀取 (int*)this + 1 (m_nIndexBuffer)，忽略參數 a3
+    int count = cltClientPortalInfo::m_pclPortalInfo->GetPortalCntInMap(a2, a3);
     m_nPortalCount = count;
 
-    if (m_pPortalBuffer) {
-        // 避免覆蓋舊 buffer 造成洩漏 (原始 binary 預期呼叫端事先 Free，
-        // 我們補上以維持正確性)
-        ::operator delete(m_pPortalBuffer);
-        m_pPortalBuffer = nullptr;
-    }
+    m_pPortalBuffer = static_cast<stPortalInfo*>(
+        ::operator new(sizeof(stPortalInfo) * static_cast<std::size_t>(count)));
 
     if (count > 0) {
-        m_pPortalBuffer = static_cast<stPortalInfo*>(
-            ::operator new(sizeof(stPortalInfo) * static_cast<std::size_t>(count)));
-        for (int i = 0; i < count; ++i) {
-            stPortalInfo* src = m_pclPortalInfo->GetPortalInfoByIndex(a3[i]);
-            std::memcpy(reinterpret_cast<char*>(m_pPortalBuffer) + i * sizeof(stPortalInfo),
-                        src,
+        int* v7 = m_nIndexBuffer;  // 對齊 ground truth: (int *)((char *)this + 4)
+        int v9 = 0;
+        int v10 = 0;
+        do {
+            stPortalInfo* v8 =
+                cltClientPortalInfo::m_pclPortalInfo->GetPortalInfoByIndex(*v7++);
+            std::memcpy(reinterpret_cast<char*>(m_pPortalBuffer) + v10,
+                        v8,
                         0x28u);
-        }
+            ++v9;
+            v10 += 40;  // v10 += 10 (int*) == +40 bytes
+        } while (v9 < m_nPortalCount);
     }
 }
 
@@ -103,8 +99,8 @@ void cltClientPortalInfo::GetPortalInfo(uint16_t a2, int* a3)
 stPortalInfo* cltClientPortalInfo::GetPortalInfoByPortalID(uint16_t a2)
 {
     // mofclient.c: return cltPortalInfo::GetPortalInfoByID(m_pclPortalInfo, a2);
-    if (!m_pclPortalInfo) return nullptr;
-    return m_pclPortalInfo->GetPortalInfoByID(a2);
+    // 忠實對齊 ground truth：不做 m_pclPortalInfo null-check。
+    return cltClientPortalInfo::m_pclPortalInfo->GetPortalInfoByID(a2);
 }
 
 // (0x004E1460)
@@ -173,7 +169,7 @@ unsigned char cltClientPortalInfo::IsPortalAction(int pt, int pt_4,
         return 1;
 
     int v10 = a8;
-    RECT rc{};
+    RECT rc;  // ground truth 未初始化 rc（UB 但忠實對齊）
 
     for (int i = 0; ; i += 40) {
         char* v12 = reinterpret_cast<char*>(m_pPortalBuffer) + i;
