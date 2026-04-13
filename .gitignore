@@ -4,3 +4,5 @@ mofdata
 mof.pak
 mof.paki
 txt.tmp
+__pycache__/
+*.pyc
