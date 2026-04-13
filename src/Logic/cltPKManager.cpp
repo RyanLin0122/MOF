@@ -219,17 +219,22 @@ cltPKManager::~cltPKManager()
 
 void cltPKManager::Release()
 {
-    // Delete all stPKRoomInfo* in each map and clear
+    // 對齊 GT (mofclient.c:199137)：以 m_iter 為迭代變數，逐筆刪除 value
+    // 並 erase。GT 在 value == nullptr 時不前進、不 erase（潛在無限迴圈），
+    // 實務上 value 永遠非空，這裡比照 GT 結構。
     for (int i = 0; i < 5; i++)
     {
-        for (auto it = m_mapRooms[i].begin(); it != m_mapRooms[i].end(); ++it)
+        m_iter = m_mapRooms[i].begin();
+        while (m_iter != m_mapRooms[i].end())
         {
-            if (it->second)
+            if (m_iter->second)
             {
-                delete it->second;
+                delete m_iter->second;
+                auto old = m_iter;
+                ++m_iter;
+                m_mapRooms[i].erase(old);
             }
         }
-        m_mapRooms[i].clear();
     }
 
     // Reset current room fields
@@ -368,50 +373,186 @@ void cltPKManager::SetPKRoomInfoCreate(stPKRoomInfo* pInfo)
 
 int cltPKManager::CopyPKRoomInfoFromList(int a2, int a3)
 {
-    // Check bounds
-    if (a2 < 0 || a2 > 4)
-        return 0;
-
-    if ((int)m_mapRooms[a2].size() <= a3)
-        return 0;
-
-    // Get begin iterator and advance to position a3
-    m_iter = m_mapRooms[a2].begin();
-
-    for (int i = 0; i < a3; i++)
+    // 對齊 GT (mofclient.c:199580) 結構：
+    //   if (a2) switch(a2) { case 1..4; default: goto LABEL_17; }
+    //   else { ...map0 分支... }
+    //   m_iter = begin(mapN)
+    //   LABEL_17: 推進 m_iter a3 次
+    //   根據 a2 走各自的 return 分支
+    // default case 會跳過 m_iter 的重設，讓 m_iter 保留呼叫前的狀態再被 ++
+    // 這是 GT 的行為（副作用），雖然實務上 caller 不會傳非法值。
+    if (a2)
     {
-        ++m_iter;
+        switch (a2)
+        {
+        case 1:
+            if ((int)m_mapRooms[1].size() <= a3)
+                return 0;
+            m_iter = m_mapRooms[1].begin();
+            break;
+        case 2:
+            if ((int)m_mapRooms[2].size() <= a3)
+                return 0;
+            m_iter = m_mapRooms[2].begin();
+            break;
+        case 3:
+            if ((int)m_mapRooms[3].size() <= a3)
+                return 0;
+            m_iter = m_mapRooms[3].begin();
+            break;
+        case 4:
+            if ((int)m_mapRooms[4].size() <= a3)
+                return 0;
+            m_iter = m_mapRooms[4].begin();
+            break;
+        default:
+            goto LABEL_17; // 對齊 GT：略過 m_iter 重設
+        }
+    }
+    else
+    {
+        if ((int)m_mapRooms[0].size() <= a3)
+            return 0;
+        m_iter = m_mapRooms[0].begin();
     }
 
-    if (m_iter == m_mapRooms[a2].end())
+LABEL_17:
+    if (a3 > 0)
+    {
+        for (int i = 0; i < a3; i++)
+            ++m_iter;
+    }
+
+    if (!a2)
+    {
+        // case 0: reset + field-wise copy
+        if (m_iter != m_mapRooms[0].end())
+        {
+            m_currentRoom.gameLevel = -1;
+            m_currentRoom.roomType = -1;
+            m_currentRoom.unk3 = -1;
+            m_currentRoom.lockState = -1;
+            m_currentRoom.handleID = 0;
+            m_currentRoom.hostAccountID = 0;
+            m_currentRoom.unkShort = 0;
+            m_currentRoom.unk4 = 0;
+            m_currentRoom.unk5 = 0;
+            m_currentRoom.unk6 = 0;
+            m_currentRoom.isStarted = 0;
+            m_currentRoom.roomNum = 0;
+            m_currentRoom.unk1 = 0;
+            m_currentRoom.costType = -2;
+            m_currentRoom.unk7 = 0;
+            std::memset(m_currentRoom.roomName, 0, 256);
+            std::memset(m_currentRoom.password, 0, 256);
+            for (int i = 0; i < 12; i++)
+                m_currentRoom.players[i].Init();
+
+            stPKRoomInfo* pSrc = m_iter->second;
+            if (pSrc != &m_currentRoom)
+            {
+                m_currentRoom.handleID = pSrc->handleID;
+                m_currentRoom.hostAccountID = pSrc->hostAccountID;
+                m_currentRoom.unkShort = pSrc->unkShort;
+                m_currentRoom.gameLevel = pSrc->gameLevel;
+                m_currentRoom.roomType = pSrc->roomType;
+                m_currentRoom.unk3 = pSrc->unk3;
+                m_currentRoom.lockState = pSrc->lockState;
+                m_currentRoom.unk4 = pSrc->unk4;
+                m_currentRoom.unk5 = pSrc->unk5;
+                m_currentRoom.unk6 = pSrc->unk6;
+                m_currentRoom.isStarted = pSrc->isStarted;
+                m_currentRoom.roomNum = pSrc->roomNum;
+                m_currentRoom.unk1 = pSrc->unk1;
+                m_currentRoom.costType = pSrc->costType;
+                m_currentRoom.unk7 = pSrc->unk7;
+                std::strcpy(m_currentRoom.roomName, pSrc->roomName);
+                std::strcpy(m_currentRoom.password, pSrc->password);
+                for (int i = 0; i < 12; i++)
+                    m_currentRoom.players[i] = (stPlayerInfo*)&pSrc->players[i];
+            }
+            return 1;
+        }
+        return 0;
+    }
+
+    if (a2 != 1)
+    {
+        if (a2 == 2)
+        {
+            if (m_iter != m_mapRooms[2].end())
+            {
+                m_currentRoom.operator=((char*)m_iter->second);
+                return 1;
+            }
+        }
+        else if (a2 == 3)
+        {
+            // GT: inline reset (== stPKRoomInfo::Init) + operator=
+            if (m_iter != m_mapRooms[3].end())
+            {
+                m_currentRoom.gameLevel = -1;
+                m_currentRoom.roomType = -1;
+                m_currentRoom.unk3 = -1;
+                m_currentRoom.lockState = -1;
+                m_currentRoom.handleID = 0;
+                m_currentRoom.hostAccountID = 0;
+                m_currentRoom.unkShort = 0;
+                m_currentRoom.unk4 = 0;
+                m_currentRoom.unk5 = 0;
+                m_currentRoom.unk6 = 0;
+                m_currentRoom.isStarted = 0;
+                m_currentRoom.roomNum = 0;
+                m_currentRoom.unk1 = 0;
+                m_currentRoom.costType = -2;
+                m_currentRoom.unk7 = 0;
+                std::memset(m_currentRoom.roomName, 0, 256);
+                std::memset(m_currentRoom.password, 0, 256);
+                for (int i = 0; i < 12; i++)
+                    m_currentRoom.players[i].Init();
+                m_currentRoom.operator=((char*)m_iter->second);
+                return 1;
+            }
+        }
+        else if (a2 == 4)
+        {
+            // GT: stPKRoomInfo::Init() + operator=
+            if (m_iter != m_mapRooms[4].end())
+            {
+                m_currentRoom.Init();
+                m_currentRoom.operator=((char*)m_iter->second);
+                return 1;
+            }
+        }
+        return 0;
+    }
+
+    // a2 == 1: reset + field-wise copy (與 case 0 相同 inline 形式)
+    if (m_iter == m_mapRooms[1].end())
         return 0;
 
-    stPKRoomInfo* pSrc = m_iter->second;
+    m_currentRoom.gameLevel = -1;
+    m_currentRoom.roomType = -1;
+    m_currentRoom.unk3 = -1;
+    m_currentRoom.lockState = -1;
+    m_currentRoom.handleID = 0;
+    m_currentRoom.hostAccountID = 0;
+    m_currentRoom.unkShort = 0;
+    m_currentRoom.unk4 = 0;
+    m_currentRoom.unk5 = 0;
+    m_currentRoom.unk6 = 0;
+    m_currentRoom.isStarted = 0;
+    m_currentRoom.roomNum = 0;
+    m_currentRoom.unk1 = 0;
+    m_currentRoom.costType = -2;
+    m_currentRoom.unk7 = 0;
+    std::memset(m_currentRoom.roomName, 0, 256);
+    std::memset(m_currentRoom.password, 0, 256);
+    for (int i = 0; i < 12; i++)
+        m_currentRoom.players[i].Init();
 
-    if (a2 == 0 || a2 == 1)
     {
-        // Full reset then copy (GT: clears all fields, then copies)
-        m_currentRoom.gameLevel = -1;
-        m_currentRoom.roomType = -1;
-        m_currentRoom.unk3 = -1;
-        m_currentRoom.lockState = -1;
-        m_currentRoom.handleID = 0;
-        m_currentRoom.hostAccountID = 0;
-        m_currentRoom.unkShort = 0;
-        m_currentRoom.unk4 = 0;
-        m_currentRoom.unk5 = 0;
-        m_currentRoom.unk6 = 0;
-        m_currentRoom.isStarted = 0;
-        m_currentRoom.roomNum = 0;
-        m_currentRoom.unk1 = 0;
-        m_currentRoom.costType = -2;
-        m_currentRoom.unk7 = 0;
-        std::memset(m_currentRoom.roomName, 0, 256);
-        std::memset(m_currentRoom.password, 0, 256);
-        for (int i = 0; i < 12; i++)
-            m_currentRoom.players[i].Init();
-
-        // Copy from source
+        stPKRoomInfo* pSrc = m_iter->second;
         if (pSrc != &m_currentRoom)
         {
             m_currentRoom.handleID = pSrc->handleID;
@@ -434,22 +575,8 @@ int cltPKManager::CopyPKRoomInfoFromList(int a2, int a3)
             for (int i = 0; i < 12; i++)
                 m_currentRoom.players[i] = (stPlayerInfo*)&pSrc->players[i];
         }
-        return 1;
     }
-    else if (a2 == 2)
-    {
-        m_currentRoom.operator=((char*)pSrc);
-        return 1;
-    }
-    else if (a2 == 3 || a2 == 4)
-    {
-        // Reset then copy (GT: Init then operator=)
-        m_currentRoom.Init();
-        m_currentRoom.operator=((char*)pSrc);
-        return 1;
-    }
-
-    return 0;
+    return 1;
 }
 
 void cltPKManager::DestroyRoom(unsigned int handleID)
