@@ -291,6 +291,42 @@ def load_illust_items(path):
     return out
 
 
+def load_item_names(path):
+    """Parse ``itemkindinfo.txt`` and return ``dict[str, str]`` mapping
+    item code → item name.
+
+    The file has 3 header lines, then tab-separated rows where:
+      column 0 = item code (e.g. "H0001")
+      column 1 = item name (e.g. "皮帽")
+
+    Mirrors ``cltItemKindInfo::LoadItemList`` (cltItemKindInfo.cpp).
+    """
+    if not os.path.isfile(path):
+        return {}
+    lines, _enc = _open_text(path)
+    out = {}
+    # Skip 3 header lines
+    data_lines = []
+    skip = 3
+    for raw_line in lines:
+        line = raw_line.strip()
+        if not line or line.startswith('//') or line.startswith('#'):
+            continue
+        if skip > 0:
+            skip -= 1
+            continue
+        data_lines.append(raw_line)
+    for raw_line in data_lines:
+        parts = raw_line.split('\t')
+        if len(parts) < 2:
+            continue
+        code = parts[0].strip()
+        name = parts[1].strip()
+        if code and name:
+            out[code.upper()] = name
+    return out
+
+
 # ── CLI ───────────────────────────────────────────────────────────────────────
 
 def main():

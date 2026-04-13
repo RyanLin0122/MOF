@@ -56,26 +56,40 @@ def build_default_slots(character_ca):
     return slots
 
 
-# CCA-slot index → (slot_id, sub-layer offset relative to the item's
-# layer_index1).  Pulled directly from CCA::LayerPutOn in
-# mofclient.c:242019-242109.  Some categories paint multiple CCA slots from
-# consecutive layer indices.
+# CCA-slot index → (cca_slot, sub-layer offset) pairs.
+#
+# In the C++ code, CCA::LayerPutOn writes to *((_DWORD *)this + N) where the
+# layer array starts at this+6.  The CCA::Process loop iterates v13 = 0..22
+# and accesses *((_DWORD *)this + v13 + 6).  So the 0-based slot index used
+# in our Python slots[] array is (N - 6).
+#
+# Reference: CCA::LayerPutOn at mofclient.c:242019-242109.
+#
+# Rendering order (0 drawn first / behind, 22 drawn last / in front):
+#   0  CLOCK back#0      8  SHOES           16 ACC3
+#   1  HAIR back          9  TRIUSERS        17 CLOCK#3
+#   2  CLOCK#1           10  COAT            18 RWEAPON
+#   3  LWEAPON           11  SUIT            19 HAND back / SUIT sub
+#   4  HAND / SUIT sub   12  CLOCK#2         20 LWEAPON sub
+#   5  DUALWEAPON        13  HAIR front      21 RWEAPON sub
+#   6  FACE              14  MASKHAIR        22 (unused)
+#   7  ACC1              15  ACC2
 _PUT_ON_RULES = {
-    SLOT_HAIR:       [(7,  0), (19, 1)],                              # case 0
-    SLOT_FACE:       [(12, 0)],                                       # case 1
-    SLOT_COAT:       [(16, 0)],                                       # case 2
-    SLOT_TRIUSERS:   [(15, 0)],                                       # case 3
-    SLOT_SHOES:      [(14, 0)],                                       # case 4
-    SLOT_HAND:       [(10, 0), (25, 1)],                              # case 5
-    SLOT_CLOCK:      [(6,  0), (8,  1), (18, 2), (23, 3)],            # case 6
-    SLOT_RWEAPON:    [(24, 0), (27, 1)],                              # case 7
-    SLOT_LWEAPON:    [(9,  0), (26, 1)],                              # case 8
-    SLOT_ACC1:       [(13, 0)],                                       # case 9
-    SLOT_ACC2:       [(21, 0)],                                       # case 10
-    SLOT_ACC3:       [(22, 0)],                                       # case 11
-    SLOT_MASKHAIR:   [(20, 0)],                                       # case 12
-    SLOT_SUIT:       [(17, 0), (10, 1), (25, 2)],                     # case 13
-    SLOT_DUALWEAPON: [(11, 0), (24, 1), (27, 2)],                     # case 15
+    SLOT_HAIR:       [(1,  0), (13, 1)],                              # case 0: this+7,19
+    SLOT_FACE:       [(6,  0)],                                       # case 1: this+12
+    SLOT_COAT:       [(10, 0)],                                       # case 2: this+16
+    SLOT_TRIUSERS:   [(9,  0)],                                       # case 3: this+15
+    SLOT_SHOES:      [(8,  0)],                                       # case 4: this+14
+    SLOT_HAND:       [(4,  0), (19, 1)],                              # case 5: this+10,25
+    SLOT_CLOCK:      [(0,  0), (2,  1), (12, 2), (17, 3)],            # case 6: this+6,8,18,23
+    SLOT_RWEAPON:    [(18, 0), (21, 1)],                              # case 7: this+24,27
+    SLOT_LWEAPON:    [(3,  0), (20, 1)],                              # case 8: this+9,26
+    SLOT_ACC1:       [(7,  0)],                                       # case 9: this+13
+    SLOT_ACC2:       [(15, 0)],                                       # case 10: this+21
+    SLOT_ACC3:       [(16, 0)],                                       # case 11: this+22
+    SLOT_MASKHAIR:   [(14, 0)],                                       # case 12: this+20
+    SLOT_SUIT:       [(11, 0), (4, 1), (19, 2)],                      # case 13: this+17,10,25
+    SLOT_DUALWEAPON: [(5,  0), (18, 1), (21, 2)],                     # case 15: this+11,24,27
 }
 
 

@@ -38,41 +38,84 @@ from character_renderer import (
 )
 from gi_resource import GIResource
 from item_data import (
-    SLOT_NAMES, load_dot_items, load_illust_items, item_id_to_code,
+    SLOT_NAMES, load_dot_items, load_illust_items, load_item_names,
 )
 
 
 CANVAS_W, CANVAS_H = 480, 560
 DEFAULT_FPS_FALLBACK = 12
 
+# Korean animation key names → Chinese translation
+_KEY_NAME_ZH = {
+    '걷기': '走路',
+    '정지': '站立',
+    '찌르기': '刺擊',
+    '옆베기': '橫砍',
+    '내려치기': '下劈',
+    '올려치기': '上砍',
+    '양손': '雙手',
+    '듀얼1': '雙持1',
+    '듀얼2': '雙持2',
+    '총쏘기': '射擊',
+    '활소기': '射箭',
+    '주문': '咒語',
+    '기도': '祈禱',
+    '맞음': '受擊',
+    '죽음': '死亡',
+    '달리기': '跑步',
+}
+
 
 # ── A single equipment combobox row ──────────────────────────────────────────
 
 class SlotControl:
-    def __init__(self, parent, slot_id, slot_name, max_index, on_change):
+    def __init__(self, parent, slot_id, slot_name, max_index, on_change,
+                 layer_names=None):
         self.slot_id = slot_id
         self.slot_name = slot_name
         self.max_index = max_index
+        # layer_names: dict mapping layer_index → display label
+        self.layer_names = layer_names or {}
         self.var = tk.StringVar(value='(none)')
         ttk.Label(parent, text='%-9s' % slot_name, width=10).grid(
             row=slot_id, column=0, padx=2, pady=1, sticky='w')
-        values = ['(none)'] + [str(i) for i in range(max_index)]
+        values = self._build_values()
         self.combo = ttk.Combobox(parent, textvariable=self.var,
-                                  values=values, width=8, state='readonly')
+                                  values=values, width=14, state='readonly')
         self.combo.grid(row=slot_id, column=1, padx=2, pady=1, sticky='w')
         self.combo.bind('<<ComboboxSelected>>', lambda e: on_change())
+
+    def _build_values(self):
+        vals = ['(none)']
+        for i in range(self.max_index):
+            label = self.layer_names.get(i)
+            if label:
+                vals.append('%d: %s' % (i, label))
+            else:
+                vals.append(str(i))
+        return vals
 
     def get_index(self):
         v = self.var.get()
         if v == '(none)':
             return None
+        # Parse index from "N: name" or plain "N"
         try:
-            return int(v)
+            return int(v.split(':')[0])
         except ValueError:
             return None
 
     def set_index(self, idx):
-        self.var.set('(none)' if idx is None else str(idx))
+        if idx is None:
+            self.var.set('(none)')
+        else:
+            label = self.layer_names.get(idx)
+            self.var.set('%d: %s' % (idx, label) if label else str(idx))
+
+    def update_layers(self, max_index, layer_names=None):
+        self.max_index = max_index
+        self.layer_names = layer_names or {}
+        self.combo.config(values=self._build_values())
 
 
 # ── Main application ─────────────────────────────────────────────────────────
@@ -98,6 +141,8 @@ class CharacterEmulator:
                                                       load_dot_items)
         self.item_table_illust = self._try_load_items(
             'CA_Character_illustration.txt', load_illust_items)
+        # Item name table from itemkindinfo.txt (code → display name).
+        self.item_names = self._try_load_item_names('itemkindinfo.txt')
 
         # Animation state
         self.equipment = {}        # slot_id → layer_index
@@ -112,6 +157,41 @@ class CharacterEmulator:
         self._tick()
 
     # — initialisation helpers ——
+    def _build_layer_names(self, slot_id):
+        """Build a dict mapping layer_index → item display name for a slot."""
+        table = (self.item_table_dot if self.mode == 'dot'
+                 else self.item_table_illust)
+        names = {}
+        for code, info in table.items():
+            # Resolve display name: prefer itemkindinfo.txt name, fall back
+            # to CA table name field, then just the code.
+            display = self.item_names.get(code, '')
+            if self.mode == 'dot':
+                if not display:
+                    display = info.name
+                if info.type1 == slot_id:
+                    names[info.layer_index1] = display or code
+                if info.type2 == slot_id:
+                    names[info.layer_index2] = display or code
+            else:
+                if info.type == slot_id:
+                    names[info.frame_index] = display or code
+        return names
+
+    def _try_load_item_names(self, name):
+        """Try to find and load itemkindinfo.txt from various subdirs."""
+        for sub in ('', 'Character', 'character', 'Data', 'data'):
+            p = os.path.join(self.mofdata_dir, sub, name) if sub \
+                else os.path.join(self.mofdata_dir, name)
+            if os.path.isfile(p):
+                try:
+                    result = load_item_names(p)
+                    print('  [items] loaded %d item names from %s' % (len(result), p))
+                    return result
+                except Exception as e:
+                    print('  [items] failed to read %s: %s' % (p, e))
+        return {}
+
     def _try_load_items(self, name, loader):
         for sub in ('', 'Character', 'character'):
             p = os.path.join(self.mofdata_dir, sub, name) if sub \
@@ -162,8 +242,10 @@ class CharacterEmulator:
         for slot_id, fname in DOT_SLOT_FILES:
             slot_ca = self.character.get_slot(slot_id)
             n_layers = len(slot_ca.ca.layers) if slot_ca else 0
+            layer_names = self._build_layer_names(slot_id)
             ctl = SlotControl(parent, slot_id, SLOT_NAMES[slot_id],
-                              n_layers, self._on_equipment_change)
+                              n_layers, self._on_equipment_change,
+                              layer_names=layer_names)
             self.slot_controls[slot_id] = ctl
 
         ttk.Separator(parent, orient='horizontal').grid(
@@ -220,9 +302,10 @@ class CharacterEmulator:
         keys = self.character.keys or []
         if keys:
             for i, k in enumerate(keys):
-                label = '%2d  %-12s [%d-%d]' % (
-                    i, (k.name or '').strip() or '(unnamed)',
-                    k.start_frame, k.end_frame)
+                raw = (k.name or '').strip() or '(unnamed)'
+                display = _KEY_NAME_ZH.get(raw, raw)
+                label = '%2d  %-6s [%d-%d]' % (
+                    i, display, k.start_frame, k.end_frame)
                 self.key_list.insert('end', label)
             if self.current_key_index >= len(keys):
                 self.current_key_index = 0
@@ -348,12 +431,11 @@ class CharacterEmulator:
         self.mode = mode
         self.mode_var.set(mode)
         self._clear_equipment()
-        # Rebuild slot combos with new layer counts.
+        # Rebuild slot combos with new layer counts and names.
         for slot_id, ctl in self.slot_controls.items():
             slot_ca = self.character.get_slot(slot_id)
             n = len(slot_ca.ca.layers) if slot_ca else 0
-            ctl.max_index = n
-            ctl.combo.config(values=['(none)'] + [str(i) for i in range(n)])
+            ctl.update_layers(n, self._build_layer_names(slot_id))
         self.frame_index = 0
         self.accum_time = 0.0
         self.last_time = time.monotonic()
