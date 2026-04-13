@@ -509,14 +509,15 @@ class GIFile:
         f = self.frames[idx]
         if f.width <= 0 or f.height <= 0:
             return None
-        u1 = max(0.0, min(1.0, f.u1))
-        v1 = max(0.0, min(1.0, f.v1))
-        u2 = max(0.0, min(1.0, f.u2))
-        v2 = max(0.0, min(1.0, f.v2))
-        x1 = int(round(u1 * self.width))
-        y1 = int(round(v1 * self.height))
-        x2 = int(round(u2 * self.width))
-        y2 = int(round(v2 * self.height))
+        # u2/v2 store the sub-rect *size* in UV units (width/atlas_w), not the
+        # right/bottom edge. GameImage::Process at mofclient.c:272557 builds the
+        # right-edge vertex U as `u2 + u1`, and the bottom-edge V as `v1 + v2`.
+        u_right = f.u1 + f.u2
+        v_bottom = f.v1 + f.v2
+        x1 = max(0, min(self.width,  int(round(f.u1    * self.width))))
+        y1 = max(0, min(self.height, int(round(f.v1    * self.height))))
+        x2 = max(0, min(self.width,  int(round(u_right  * self.width))))
+        y2 = max(0, min(self.height, int(round(v_bottom * self.height))))
         if x2 <= x1 or y2 <= y1:
             return None
         atlas = self.to_pil_image()
