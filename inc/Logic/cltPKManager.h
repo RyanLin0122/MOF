@@ -136,18 +136,23 @@ public:
     // 費用
     int  GetCost(int level, int team);
 
-    // 公開成員 — 提供給外部直接存取 (對齊 GT 用法)
+private:
+    // ---- 以下成員順序對齊 GT (mofclient.c:198787 cltPKManager 建構子) ----
+    // GT 佈局：vftable@+0、5 個 map@+4..+83、m_iter@+84、m_currentRoom@+88、
+    //          players@+656、m_extraData@+7232、m_gameLevelSetting@+7280...
+
+    // offset +4: 5 個 map，依 gameLevel 分類 (0~4)
+    std::map<unsigned long, stPKRoomInfo*> m_mapRooms[5];
+
+    // offset +84: 迭代器狀態 (跨方法共用)
+    std::map<unsigned long, stPKRoomInfo*>::iterator m_iter;
+
+public:
+    // offset +88: 公開成員 — 提供給外部直接存取 (對齊 GT 用法)
     stPKRoomInfo m_currentRoom;
 
 private:
-    // 5 個 map，依 gameLevel 分類 (0~4)
-    std::map<unsigned long, stPKRoomInfo*> m_mapRooms[5];
-
-    // 迭代器狀態 (跨方法共用)
-    std::map<unsigned long, stPKRoomInfo*>::iterator m_iter;
-    int m_iterMapIdx;
-
-    // offset 7232: 額外資料區
+    // offset +7232: 額外資料區
     char m_extraData[48];
 
     // offset 7280+

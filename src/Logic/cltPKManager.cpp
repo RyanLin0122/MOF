@@ -174,7 +174,6 @@ cltPKManager::cltPKManager()
     std::memset(m_unkName1, 0, 256);
     std::memset(m_unkName2, 0, 256);
 
-    m_iterMapIdx = 0;
     m_iter = m_mapRooms[0].end();
 }
 
@@ -325,27 +324,24 @@ void cltPKManager::AddPKRoomInfoByLobby(stPKRoomInfo* pInfo)
 
 int cltPKManager::GetGameLevelByHandle(unsigned int handleID)
 {
+    // GT (mofclient.c:199444) 對每個 map 呼叫 find/lower_bound，
+    // 並將結果寫回 m_iter (offset +84) 即使 find 失敗也寫入。
     for (int i = 0; i < 5; i++)
     {
         auto it = m_mapRooms[i].find(handleID);
+        m_iter = it;
         if (it != m_mapRooms[i].end())
-        {
-            m_iter = it;
-            m_iterMapIdx = i;
             return i;
-        }
     }
     return -1;
 }
 
 void cltPKManager::SetPKRoomInfoCreate(stPKRoomInfo* pInfo)
 {
-    if (&m_currentRoom == (stPKRoomInfo*)((char*)this + 0) || (stPKRoomInfo*)pInfo == &m_currentRoom)
-    {
-        // self-assignment check: if pInfo points to m_currentRoom, skip
-        if (pInfo == &m_currentRoom)
-            return;
-    }
+    // GT (mofclient.c:199519) 只做單純的 self-assignment 檢查：
+    //   if ( (char*)this + 88 != a2 ) { ...copy... }
+    if (pInfo == &m_currentRoom)
+        return;
 
     m_currentRoom.handleID = pInfo->handleID;
     m_currentRoom.hostAccountID = pInfo->hostAccountID;
@@ -381,7 +377,6 @@ int cltPKManager::CopyPKRoomInfoFromList(int a2, int a3)
 
     // Get begin iterator and advance to position a3
     m_iter = m_mapRooms[a2].begin();
-    m_iterMapIdx = a2;
 
     for (int i = 0; i < a3; i++)
     {
@@ -477,6 +472,11 @@ void cltPKManager::DestroyRoom(unsigned int handleID)
 
 void cltPKManager::UpdatePKRoomInfo(stPKRoomInfo* pInfo)
 {
+    // GT (mofclient.c:200037) 流程：
+    //   m_currentRoom.gameLevel = m_gameLevelSetting;
+    //   依序在 map0..map4 呼叫 find/insert/operator[]，將結果寫回 m_iter；
+    //   找到 → 對既有 entry 呼叫 operator= 進行 in-place 更新。
+    //   全部都找不到 → 不做任何事 (GT 沒有「建立新房間」的 fallback)。
     if (!pInfo)
         return;
 
@@ -484,34 +484,19 @@ void cltPKManager::UpdatePKRoomInfo(stPKRoomInfo* pInfo)
 
     unsigned long handleID = pInfo->handleID;
 
-    // Search through all maps for the handleID
     for (int i = 0; i < 5; i++)
     {
         auto it = m_mapRooms[i].find(handleID);
+        m_iter = it;
         if (it != m_mapRooms[i].end())
         {
-            m_iter = it;
-            m_iterMapIdx = i;
-
-            // Found — update the room data
+            // Found — update the existing room (skip self-assignment)
             if (it->second != pInfo)
-            {
                 it->second->operator=((char*)pInfo);
-            }
             return;
         }
     }
-
-    // Not found in any map — should not normally happen,
-    // but GT code has insert-then-copy logic for maps 0/1
-    // We replicate by inserting into the appropriate map
-    int level = pInfo->gameLevel;
-    if (level >= 0 && level <= 4)
-    {
-        stPKRoomInfo* pNew = new stPKRoomInfo();
-        pNew->operator=((char*)pInfo);
-        m_mapRooms[level][handleID] = pNew;
-    }
+    // Not found in any map: GT 不會自行建立新房間，這裡也不做。
 }
 
 int cltPKManager::GetPKRoomNumByGameLevel(int a2)
@@ -605,7 +590,6 @@ int cltPKManager::CheckQuickJoinRoom(int gameLevel)
         return 0;
 
     m_iter = m_mapRooms[mapIdx].begin();
-    m_iterMapIdx = mapIdx;
 
     if (m_iter == m_mapRooms[mapIdx].end())
         return 0;
