@@ -566,7 +566,15 @@ def parse_gi_bytes(data):
         # v10: 1 byte unknownFlag, then raw pixel data
         gi.unknown_flag = data[off]; off += 1
         if gi.image_data_size > 0:
-            gi.pixel_data = data[off:off + gi.image_data_size]
+            raw = data[off:off + gi.image_data_size]
+            # ImageResource::LoadTexture checks for embedded DDS header
+            # (magic "DDS " = 0x20534444) and skips it (128 bytes).
+            # The remaining data may also include mipmap levels — only
+            # the first w*h*bpp bytes are the top-level texture.
+            DDS_MAGIC = 0x20534444
+            if len(raw) >= 4 and struct.unpack_from('<I', raw, 0)[0] == DDS_MAGIC:
+                raw = raw[128:]  # skip DDS header
+            gi.pixel_data = raw
         else:
             gi.pixel_data = b''
 

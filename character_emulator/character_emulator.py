@@ -35,7 +35,6 @@ from ca_loader import (
 )
 from character_renderer import (
     NUM_CCA_SLOTS, build_default_slots, apply_equipment, render_frame,
-    frame_index_for_key,
 )
 from gi_resource import GIResource
 from item_data import (
@@ -103,9 +102,10 @@ class CharacterEmulator:
         # Animation state
         self.equipment = {}        # slot_id → layer_index
         self.current_key_index = 0
-        self.tick = 0
+        self.frame_index = 0       # relative frame index within current key
         self.playing = True
         self.last_time = time.monotonic()
+        self.accum_time = 0.0      # accumulated time for frame advancement
 
         self._build_ui()
         self._refresh_keys()
@@ -155,6 +155,7 @@ class CharacterEmulator:
         self.root.bind('<Left>',  lambda e: self._step(-1))
         self.root.bind('1',       lambda e: self._switch_mode('dot'))
         self.root.bind('2',       lambda e: self._switch_mode('illust'))
+        self.root.bind('s',       lambda e: self._save_debug_frame())
 
     def _build_equipment_pane(self, parent):
         self.slot_controls = {}
@@ -247,7 +248,8 @@ class CharacterEmulator:
         if not sel:
             return
         self.current_key_index = sel[0]
-        self.tick = 0
+        self.frame_index = 0
+        self.accum_time = 0.0
 
     def _on_equipment_change(self):
         self.equipment = {sid: ctl.get_index()
@@ -293,17 +295,43 @@ class CharacterEmulator:
         ttk.Button(win, text='Apply', command=apply).pack(pady=4)
         win.bind('<Return>', lambda e: apply())
 
+    def _save_debug_frame(self):
+        """Press 's' to save the current frame as PNG with debug log."""
+        keys = self.character.keys or []
+        key = keys[self.current_key_index] if keys else None
+        if key is not None:
+            span = max(1, key.end_frame - key.start_frame + 1)
+            fi = self.frame_index % span
+            abs_frame = key.start_frame + fi
+        else:
+            abs_frame = self.frame_index % max(1, self.character.max_frames)
+        print('=== DEBUG FRAME: mode=%s frame=%d ===' % (self.mode, abs_frame))
+        slots = build_default_slots(self.character)
+        apply_equipment(slots, self.character, self.equipment)
+        result = render_frame(slots, abs_frame, self.gi_resource,
+                              canvas_size=(CANVAS_W, CANVAS_H), debug=True)
+        out = 'debug_%s_frame%d.png' % (self.mode, abs_frame)
+        result.image.save(out)
+        print('  saved → %s  (%dx%d, dots=%d, miss=%d)'
+              % (out, result.image.width, result.image.height,
+                 result.dot_count, len(result.missing_ids)))
+
     def _toggle_play(self):
         self.playing = not self.playing
         self.play_btn.config(text='Play' if not self.playing else 'Pause')
+        if self.playing:
+            self.last_time = time.monotonic()
+            self.accum_time = 0.0
 
     def _step(self, delta):
         self.playing = False
         self.play_btn.config(text='Play')
-        self.tick += delta
+        self.frame_index += delta
+        self.accum_time = 0.0
 
     def _reset_tick(self):
-        self.tick = 0
+        self.frame_index = 0
+        self.accum_time = 0.0
 
     def _switch_mode(self, mode):
         if mode == self.mode:
@@ -326,23 +354,53 @@ class CharacterEmulator:
             n = len(slot_ca.ca.layers) if slot_ca else 0
             ctl.max_index = n
             ctl.combo.config(values=['(none)'] + [str(i) for i in range(n)])
-        self.tick = 0
+        self.frame_index = 0
+        self.accum_time = 0.0
+        self.last_time = time.monotonic()
         self.current_key_index = 0
         self._refresh_keys()
 
     # — main animation loop ——
+    # Mirrors CCA::Process (mofclient.c:240931-240968):
+    #   - time-based frame advancement using accumulated wall-clock time
+    #   - frame_index is RELATIVE (0, 1, 2, …) within the current key
+    #   - absolute frame = start_frame + frame_index
     def _tick(self):
-        # Advance frame counter
-        if self.playing:
-            self.tick += 1
+        now = time.monotonic()
+        fps = self.character.anim_fps or DEFAULT_FPS_FALLBACK
+        frame_duration = 1.0 / max(1, fps)  # seconds per frame
 
+        # Advance frame counter using elapsed time (matches C++ logic).
+        # Illust mode is static — no frame animation.
+        if self.playing and self.mode == 'dot':
+            dt = now - self.last_time
+            self.accum_time += dt
+            if self.accum_time >= frame_duration:
+                frames_to_advance = int(self.accum_time / frame_duration)
+                self.accum_time -= frames_to_advance * frame_duration
+                self.frame_index += frames_to_advance
+        self.last_time = now
+
+        # Compute absolute frame from relative frame_index + key range
         keys = self.character.keys or []
         key = keys[self.current_key_index] if keys else None
-        frame_index = frame_index_for_key(self.character, key, self.tick)
+        if key is not None:
+            span = key.end_frame - key.start_frame + 1
+            if span > 0:
+                self.frame_index %= span
+            abs_frame = key.start_frame + self.frame_index
+            # Boundary check (matches mofclient.c:240962-240966)
+            if abs_frame > key.end_frame:
+                self.frame_index = 0
+                abs_frame = key.start_frame
+        else:
+            max_f = max(1, self.character.max_frames)
+            self.frame_index %= max_f
+            abs_frame = self.frame_index
 
         slots = build_default_slots(self.character)
         apply_equipment(slots, self.character, self.equipment)
-        result = render_frame(slots, frame_index, self.gi_resource,
+        result = render_frame(slots, abs_frame, self.gi_resource,
                               canvas_size=(CANVAS_W, CANVAS_H))
 
         # Draw
@@ -357,7 +415,7 @@ class CharacterEmulator:
         max_frame = key.end_frame if key else self.character.max_frames - 1
         min_frame = key.start_frame if key else 0
         self.frame_label.config(text='frame %d / %d-%d  dots=%d  miss=%d'
-                                % (frame_index, min_frame, max_frame,
+                                % (abs_frame, min_frame, max_frame,
                                    result.dot_count, len(result.missing_ids)))
         if result.missing_ids:
             sample = sorted(result.missing_ids)[:3]
@@ -365,10 +423,9 @@ class CharacterEmulator:
         else:
             self.status.set('')
 
-        # Schedule next tick
-        fps = self.character.anim_fps or DEFAULT_FPS_FALLBACK
-        delay = max(16, int(1000 / max(1, fps)))
-        self.root.after(delay, self._tick)
+        # Schedule next tick — use fixed 16ms (~60 UI fps) since frame
+        # advancement is now time-based, not tick-based.
+        self.root.after(16, self._tick)
 
 
 # ── entry point ──────────────────────────────────────────────────────────────

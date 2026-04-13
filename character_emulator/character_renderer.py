@@ -117,7 +117,8 @@ class RenderResult:
 def render_frame(slots, frame_index, gi_resource,
                  canvas_size=(400, 500),
                  origin=None,
-                 background=(0, 0, 0, 0)):
+                 background=(0, 0, 0, 0),
+                 debug=False):
     """Render a single composite frame.
 
     Args:
@@ -165,11 +166,20 @@ def render_frame(slots, frame_index, gi_resource,
             anim = gi.frames[dot.frame_index] if dot.frame_index < len(gi.frames) else None
             if anim is None:
                 continue
-            # See CCA::Process @ mofclient.c:241541-241547 :
-            #   x = sub.offset_x + dot.offset_x + character_x
-            #   y = sub.offset_y + dot.offset_y + character_y
+            # CCA::Process (mofclient.c:241541-241547) computes the sprite
+            # top-left position, which ID3DXSprite::Draw uses directly:
+            #   x = anim.offset_x + dot.offset_x + character_x
+            #   y = anim.offset_y + dot.offset_y + character_y
             x = ox + anim.offset_x + int(round(dot.offset_x))
             y = oy + anim.offset_y + int(round(dot.offset_y))
+            if debug:
+                print('  slot=%2d dot img=0x%08X frm=%d  '
+                      'anim.off=(%d,%d) dot.off=(%.1f,%.1f) '
+                      'sub=%dx%d → pos=(%d,%d)'
+                      % (slot_idx, dot.image_id, dot.frame_index,
+                         anim.offset_x, anim.offset_y,
+                         dot.offset_x, dot.offset_y,
+                         sub.width, sub.height, x, y))
             # Apply per-dot alpha if non-default
             paste = sub
             if dot.alpha != 255 and dot.alpha is not None:
