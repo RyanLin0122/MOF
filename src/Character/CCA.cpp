@@ -34,11 +34,38 @@ static bool  g_bProcessInit  = false;
 static float g_fLastTime     = 0.0f;
 static int   g_nFrameIndex   = 0;
 
-// Layer-slot �� case-number LUT used by the fallback image-lookup branch in
-// CCA::Process().  The binary's byte_525EB4 is a weak symbol (all zeros), so
-// we preserve that default here �X every slot falls through to case 0 at load,
-// and data-driven tooling can override it later if needed.
-static unsigned char byte_525EB4[20] = { 0 };
+// The per-slot fallback case map (byte_525EB4) used by Process()'s recovery
+// branch now lives in global.cpp so tooling can repurpose it without touching
+// CCA internals.  See global.h for the case-value legend.
+
+// -----------------------------------------------------------------------------
+// Fallback helper: re-resolve a frame entry from an alternate (kind, idx)
+// timeline layer.  Mirrors the common pattern used by every non-zero case in
+// mofclient.c 241143-241408: grab the layer, validate the frame / entry
+// bounds, load the alternate CA_DRAWENTRY at the same entry index, and ask
+// cltImageManager for the backing GameImage (flag 0 — raw lookup, no alpha).
+// Returns true on success; in that case both outPGI and outPEntry are set.
+// -----------------------------------------------------------------------------
+static bool CCA_TryFallbackResolve(int kind, int idx, uint16_t frame, int e,
+                                   cltImageManager* pIM,
+                                   GameImage** outPGI, CA_DRAWENTRY** outPEntry)
+{
+    LAYERINFO* pFL = g_CAManager.GetDotLayer(kind, idx);
+    if (!pFL || !pFL->m_pFrames) return false;
+    if (static_cast<int>(frame) > pFL->m_nFrameCount - 1) return false;
+
+    FRAMEINFO* pFR = &pFL->m_pFrames[frame];
+    if (e > pFR->m_nCount1 - 1) return false;
+    if (!pFR->m_pEntries1) return false;
+
+    CA_DRAWENTRY* pEnt = static_cast<CA_DRAWENTRY*>(pFR->m_pEntries1) + e;
+    GameImage* pRec = pIM ? pIM->GetGameImage(0, pEnt->m_dwImageID, 0, 0) : nullptr;
+    if (!pRec || !pRec->m_pGIData) return false;
+
+    *outPGI    = pRec;
+    *outPEntry = pEnt;
+    return true;
+}
 
 // -----------------------------------------------------------------------------
 // Helpers for CCA's internal vector<GameImage*> (triple {begin, end, endCap}).
@@ -381,39 +408,68 @@ bool CCA::Process(GameImage* pFrameAsPtr)
             }
             if (!pGI || !pGI->m_pGIData)
             {
-                // Fallback recovery path (byte_525EB4 case map).  Because the
-                // weak table is all-zero, every slot falls through to case 0
-                // (re-resolve via hair layer index), matching the original.
-                int hairIdx = m_nHairIndex;
-                int faceIdx = m_nFaceIndex;
-                if (hairIdx == -1 || faceIdx == -1) { pGI = nullptr; }
-                else
+                // Fallback recovery path (byte_525EB4 case map).  byte_525EB4
+                // is weak/zero in the shipped binary, so every slot lands in
+                // case 0 by default — but all 9 cases (0..8) are wired up here
+                // so the table can be re-purposed at runtime via global.cpp.
+                // Cases mirror mofclient.c 241143-241408.
+                pGI = nullptr;
+                const int hairIdx = m_nHairIndex;
+                const int faceIdx = m_nFaceIndex;
+                const uint8_t curSex = static_cast<uint8_t>(m_uCurSex);
+                if (hairIdx != -1 && faceIdx != -1 &&
+                    curSex <= 1 && slot >= 1 && slot <= 19)
                 {
-                    uint8_t curSex = static_cast<uint8_t>(m_uCurSex);
-                    if (curSex > 1 || slot < 1 || slot > 19)
+                    GameImage* pAlt = nullptr;
+                    CA_DRAWENTRY* pAltEntry = nullptr;
+
+                    switch (byte_525EB4[slot - 1])
                     {
-                        pGI = nullptr;
+                    case 0:  // re-resolve via front hair layer
+                    {
+                        int idx = g_CAManager.GetHairLayerIndexDot(hairIdx, curSex);
+                        if (idx != -1)
+                            CCA_TryFallbackResolve(0, idx, frame, e, pIM, &pAlt, &pAltEntry);
+                        break;
                     }
-                    else
+                    case 1:  // hand layer low (kind 5, 2*sex)
+                        CCA_TryFallbackResolve(5, 2 * curSex, frame, e, pIM, &pAlt, &pAltEntry);
+                        break;
+                    case 2:  // re-resolve via face layer
                     {
-                        int fallbackCase = byte_525EB4[slot - 1];
-                        if (fallbackCase == 0)
-                        {
-                            int idx = g_CAManager.GetHairLayerIndexDot(hairIdx, curSex);
-                            LAYERINFO* pFL = g_CAManager.GetDotLayer(0, idx);
-                            if (idx != -1 && pFL && static_cast<int>(frame) <= pFL->m_nFrameCount - 1)
-                            {
-                                FRAMEINFO* pFR = &pFL->m_pFrames[frame];
-                                CA_DRAWENTRY* pEnt = static_cast<CA_DRAWENTRY*>(pFR->m_pEntries1) + e;
-                                if (pEnt)
-                                {
-                                    pGI = pIM ? pIM->GetGameImage(0, pEnt->m_dwImageID, 0, 0) : nullptr;
-                                    pEntry = pEnt;
-                                    if (!pGI || !pGI->m_pGIData) pGI = nullptr;
-                                }
-                            }
-                        }
-                        // (other fallback cases unused �X byte_525EB4 is weak/zero)
+                        int idx = g_CAManager.GetFaceLayerIndexDot(faceIdx, curSex);
+                        if (idx != -1)
+                            CCA_TryFallbackResolve(1, idx, frame, e, pIM, &pAlt, &pAltEntry);
+                        break;
+                    }
+                    case 3:  // shoes layer (kind 4, sex)
+                        CCA_TryFallbackResolve(4, curSex, frame, e, pIM, &pAlt, &pAltEntry);
+                        break;
+                    case 4:  // triusers layer (kind 3, sex)
+                        CCA_TryFallbackResolve(3, curSex, frame, e, pIM, &pAlt, &pAltEntry);
+                        break;
+                    case 5:  // coat layer (kind 2, sex)
+                        CCA_TryFallbackResolve(2, curSex, frame, e, pIM, &pAlt, &pAltEntry);
+                        break;
+                    case 6:  // back hair layer (front hair + 1)
+                    {
+                        int idx = g_CAManager.GetHairLayerIndexDot(hairIdx, curSex);
+                        if (idx != -1)
+                            CCA_TryFallbackResolve(0, idx + 1, frame, e, pIM, &pAlt, &pAltEntry);
+                        break;
+                    }
+                    case 7:  // hand layer high (kind 5, 2*sex + 1)
+                        CCA_TryFallbackResolve(5, 2 * curSex + 1, frame, e, pIM, &pAlt, &pAltEntry);
+                        break;
+                    case 8:  // explicit skip — leave pGI null
+                    default:
+                        break;
+                    }
+
+                    if (pAlt)
+                    {
+                        pGI    = pAlt;
+                        pEntry = pAltEntry;
                     }
                 }
             }

@@ -352,6 +352,65 @@ extern char                     byte_21CB35D;
 // fopen/fread.  The original initializes this elsewhere; we default to 1
 // (packed) because the shipped .ca files live inside the MOF pack.
 extern int                      dword_829254;
+
+// -----------------------------------------------------------------------------
+// CCA / CCAClone per-slot fallback case maps (mofclient.c 0x525EB4 / 0x5280FC).
+//
+// Purpose
+// -------
+// CCA::Process(GameImage*) and CCAClone::Process() iterate every visible
+// layer slot (0..22) and resolve a GameImage for each CA_DRAWENTRY in the
+// current frame.  When cltImageManager::GetGameImage returns null / an
+// un-textured node (e.g. a missing item-kind asset), Process() falls back
+// to one of these two LUTs — indexed by `slot - 1` for valid slots 1..19
+// — to pick an alternate (kind, idx) layer to re-query with the SAME
+// frame + entry index.  This lets a character keep rendering sensible
+// geometry when an equipped item is missing its CA data.
+//
+// Case legend (both tables share the same encoding)
+// -------------------------------------------------
+//   0 → re-resolve via the current hair layer (kind 0, GetHairLayerIndexDot)
+//   1 → hand layer lo (kind 5, 2*sex)
+//   2 → re-resolve via the current face layer (kind 1, GetFaceLayerIndexDot)
+//   3 → shoes layer (kind 4, sex)
+//   4 → triusers layer (kind 3, sex)
+//   5 → coat layer (kind 2, sex)
+//   6 → hair layer +1 (kind 0, GetHairLayerIndexDot + 1)  // back-hair
+//   7 → hand layer hi (kind 5, 2*sex + 1)
+//   8 → skip this entry entirely (no fallback — leave the slot empty)
+//
+// Any other value is treated as 8 (skip).
+//
+// Usage
+// -----
+// Both arrays are zero-initialized at startup (matching the shipped weak
+// symbols), so EVERY slot defaults to case 0 — i.e. missing items fall
+// back to the character's current hair silhouette.  To change the fallback
+// strategy for a particular slot from tooling / init code, just write the
+// desired case number into the table before the next Process() tick:
+//
+//     // Skip fallback entirely for slot 7 (ACC1), so a missing ACC1 item
+//     // simply renders nothing instead of bleeding hair geometry:
+//     byte_525EB4[7 - 1] = 8;
+//
+//     // Make missing shoes fall back to the triusers layer:
+//     byte_525EB4[8 - 1] = 4;
+//
+// Both CCA and CCAClone consult their table on every Process() call, so
+// changes take effect on the very next frame — no re-link, no relayout.
+// Valid slot range is 1..19 (slot 0 and 20..22 never hit the fallback).
+//
+// Full case dispatch lives in src/Character/CCA.cpp::CCA::Process(GameImage*)
+// and src/Character/CCAClone.cpp::CCAClone::Process(); both share the same
+// CCA_TryFallbackResolve / CCAClone_TryFallbackResolve helper that mirrors
+// mofclient.c 241143-241408 / 243031-243223.
+// -----------------------------------------------------------------------------
+// Indexed as `byte_525EB4[slot - 1]`; slot ∈ [1, 19].  Set to 0..8 to pick a
+// fallback strategy (see legend above), or 8 to disable fallback for a slot.
+extern unsigned char            byte_525EB4[19];  // CCA fallback case map
+// Indexed as `byte_5280FC[slot - 1]`; slot ∈ [1, 19].  Same encoding as
+// byte_525EB4 but consulted by CCAClone::Process() instead of CCA::Process().
+extern unsigned char            byte_5280FC[19];  // CCAClone fallback case map
 extern cltFieldItem*            unk_73D15C[1024];
 extern void*                    unk_813AA8[1024];
 extern void*                    unk_B4B924[1024];
