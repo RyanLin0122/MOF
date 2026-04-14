@@ -9,6 +9,7 @@
 #include <map>
 #include <string>
 
+#include "Character/CCA.h"
 #include "Character/ClientCharacter.h"
 #include "Character/ClientCharacterManager.h"
 #include "Effect/CEffect_Pet_Base.h"
@@ -93,7 +94,7 @@ void cltPetObject::SetActive(int active) {
         m_nFacing = (m_pOwnerChar->m_dwLR_Flag == 0);
         m_nTraceReady = 1;
         if (m_pCCA) {
-            m_nPosX = static_cast<int>(*reinterpret_cast<float*>(reinterpret_cast<char*>(m_pCCA) + 128));
+            m_nPosX = static_cast<int>(m_pCCA->m_fPosX);
         } else {
             m_nPosX = m_pOwnerChar->m_iPosX;
         }
@@ -155,7 +156,7 @@ void cltPetObject::InitPet(ClientCharacter* owner, CCA* cca, uint16_t petKind, i
     m_nTraceReady = 1;
 
     if (m_pCCA) {
-        m_nPosX = static_cast<int>(*reinterpret_cast<float*>(reinterpret_cast<char*>(m_pCCA) + 128));
+        m_nPosX = static_cast<int>(m_pCCA->m_fPosX);
     } else {
         m_nPosX = owner->m_iPosX;
     }
@@ -414,8 +415,8 @@ void cltPetObject::MovePatrol() {
     int ownerX = m_pOwnerChar->m_iPosX;
     int ownerY = m_pOwnerChar->m_iPosY;
     if (m_pCCA) {
-        ownerX = static_cast<int>(*reinterpret_cast<float*>(reinterpret_cast<char*>(m_pCCA) + 128));
-        ownerY = static_cast<int>(*reinterpret_cast<float*>(reinterpret_cast<char*>(m_pCCA) + 132));
+        ownerX = static_cast<int>(m_pCCA->m_fPosX);
+        ownerY = static_cast<int>(m_pCCA->m_fPosY);
     }
 
     int extraRange = 55;

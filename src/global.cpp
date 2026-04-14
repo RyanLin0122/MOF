@@ -30,6 +30,8 @@
 #include "System/cltEquipmentSystem.h"
 #include "Character/ClientCharacter.h"
 #include "Character/ClientCharacterManager.h"
+#include "Character/CAManager.h"
+#include "Character/CCAClone.h"
 #include "System/cltQuestSystem.h"
 #include "System/CMeritoriousSystem.h"
 #include "System/CSpiritSystem.h"
@@ -144,6 +146,8 @@ cltFieldItemManager g_clFieldItemMgr;
 cltHelpMessage g_clHelpMessage;
 cltNPCManager g_clNPCManager;
 ClientCharacterManager g_ClientCharMgr;
+CAManager g_CAManager;
+CCAClone g_clCAClone;
 cltConfiguration* g_clConfig = nullptr;
 CObjectManager g_ObjectManager;
 CObjectResourceManager g_ObjectResourceManager;

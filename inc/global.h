@@ -23,6 +23,7 @@ class cltMapInfo;
 class Map;
 class ClientCharacter;
 class ClientCharacterManager;
+class CAManager;
 class cltQuestSystem;
 class CMeritoriousSystem;
 class cltLevelSystem;
@@ -223,6 +224,9 @@ extern clTransportKindInfo      g_clTransportKindInfo;
 extern clClientTransportKindInfo g_clClientTransportKindInfo;
 
 extern ClientCharacterManager   g_ClientCharMgr;
+extern CAManager                g_CAManager;
+class CCAClone;
+extern CCAClone                 g_clCAClone;
 extern cltConfiguration*        g_clConfig;
 
 // Object

@@ -27,7 +27,6 @@ FORCE_MISSING_CLASSES = [
     "clClientTransportKindInfo",
     "clTransportAnilInfo",
     "clTransportKindInfo",
-    "CCA",
     "cltChattingMgr",
     "CUIBase",
     "CUIMessageBoxTypes",

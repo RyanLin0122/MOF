@@ -150,7 +150,11 @@
   </ItemDefinitionGroup>
   <ItemGroup>
     <ClCompile Include="main.cpp" />
+    <ClCompile Include="src\Character\CAManager.cpp" />
     <ClCompile Include="src\Character\CCA.cpp" />
+    <ClCompile Include="src\Character\CCAClone.cpp" />
+    <ClCompile Include="src\Character\CCAillust.cpp" />
+    <ClCompile Include="src\Character\CCANormal.cpp" />
     <ClCompile Include="src\Character\ClientCharacter.cpp" />
     <ClCompile Include="src\Character\ClientCharacterManager.cpp" />
     <ClCompile Include="src\Effect\CBulletArrow.cpp" />
@@ -822,7 +826,12 @@
     <ClInclude Include="inc\UI\CControlBoxSkill.h" />
     <ClInclude Include="inc\UI\CControlBoxSpecialty.h" />
     <ClInclude Include="inc\UI\CControlButton.h" />
+    <ClInclude Include="inc\Character\CAManager.h" />
+    <ClInclude Include="inc\Character\CATypes.h" />
     <ClInclude Include="inc\Character\CCA.h" />
+    <ClInclude Include="inc\Character\CCAClone.h" />
+    <ClInclude Include="inc\Character\CCAillust.h" />
+    <ClInclude Include="inc\Character\CCANormal.h" />
     <ClInclude Include="inc\UI\CControlCA.h" />
     <ClInclude Include="inc\UI\CControlCharBox.h" />
     <ClInclude Include="inc\UI\CControlChatBallon.h" />
