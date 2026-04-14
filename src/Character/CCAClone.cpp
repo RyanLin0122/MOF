@@ -17,10 +17,36 @@
 // CCAClone — restored from mofclient.c (0x00527700 .. 0x00528560)
 // ============================================================================
 
-// The original uses a weak LUT (byte_5280FC) to switch fallback image recovery
-// paths when GetGameImage returns null.  The symbol is all-zero in the binary,
-// so every slot lands in case 0 (hair re-resolve).
-static unsigned char byte_5280FC[19] = { 0 };
+// The per-slot fallback case map (byte_5280FC) used by Process()'s recovery
+// branch now lives in global.cpp so tooling can repurpose it without touching
+// CCAClone internals.  See global.h for the case-value legend.
+
+// -----------------------------------------------------------------------------
+// Fallback helper: re-resolve a frame entry from an alternate (kind, idx)
+// timeline layer.  Mirrors mofclient.c 243031-243223 — identical to the
+// CCA helper, duplicated here to keep each class's fallback logic self
+// contained (the function is tiny and the runtime cost is identical).
+// -----------------------------------------------------------------------------
+static bool CCAClone_TryFallbackResolve(int kind, int idx, uint16_t frame, int e,
+                                        cltImageManager* pIM,
+                                        GameImage** outPGI, CA_DRAWENTRY** outPEntry)
+{
+    LAYERINFO* pFL = g_CAManager.GetDotLayer(kind, idx);
+    if (!pFL || !pFL->m_pFrames) return false;
+    if (static_cast<int>(frame) > pFL->m_nFrameCount - 1) return false;
+
+    FRAMEINFO* pFR = &pFL->m_pFrames[frame];
+    if (e > pFR->m_nCount1 - 1) return false;
+    if (!pFR->m_pEntries1) return false;
+
+    CA_DRAWENTRY* pEnt = static_cast<CA_DRAWENTRY*>(pFR->m_pEntries1) + e;
+    GameImage* pRec = pIM ? pIM->GetGameImage(0, pEnt->m_dwImageID, 0, 0) : nullptr;
+    if (!pRec || !pRec->m_pGIData) return false;
+
+    *outPGI    = pRec;
+    *outPEntry = pEnt;
+    return true;
+}
 
 // -----------------------------------------------------------------------------
 // Helpers for the internal vector<GameImage*> (triple {begin, end, endCap}).
@@ -210,42 +236,73 @@ void CCAClone::Process()
                                  !pGI->m_pGIData->m_Resource.m_pTexture);
             }
 
-            // Fallback recovery (byte_5280FC cases).  The weak LUT is all zero,
-            // so only case 0 (hair re-resolve) is reachable in the original —
-            // all other cases fall through to LABEL_106 (skip).
+            // Fallback recovery (byte_5280FC case map).  byte_5280FC is
+            // weak/zero in the shipped binary, so every slot lands in case 0
+            // by default — but all 9 cases (0..8) are wired up here so the
+            // table can be re-purposed at runtime via global.cpp.  Cases
+            // mirror mofclient.c 243031-243223.
             if (bNeedFallback)
             {
                 // GT resets a2/v71 = 0 at LABEL_21 before attempting recovery,
                 // so a failed fallback drops this entry entirely instead of
                 // keeping the (potentially texture-less) original GameImage.
                 pGI = nullptr;
-                int hairIdx = m_nHairIndex;
-                int faceIdx = m_nFaceIndex;
+                const int hairIdx = m_nHairIndex;
+                const int faceIdx = m_nFaceIndex;
                 if (hairIdx != -1 && faceIdx != -1 &&
                     m_ucSex <= 1 && slot >= 1 && slot <= 19)
                 {
-                    int fallbackCase = byte_5280FC[slot - 1];
-                    if (fallbackCase == 0)
+                    GameImage* pAlt = nullptr;
+                    CA_DRAWENTRY* pAltEntry = nullptr;
+
+                    switch (byte_5280FC[slot - 1])
+                    {
+                    case 0:  // re-resolve via front hair layer
                     {
                         int idx = g_CAManager.GetHairLayerIndexDot(hairIdx, m_ucSex);
-                        LAYERINFO* pFL = g_CAManager.GetDotLayer(0, idx);
-                        if (idx != -1 && pFL &&
-                            static_cast<int>(frame) <= pFL->m_nFrameCount - 1)
-                        {
-                            FRAMEINFO* pFR = &pFL->m_pFrames[frame];
-                            if (e < pFR->m_nCount1)
-                            {
-                                CA_DRAWENTRY* pEnt = static_cast<CA_DRAWENTRY*>(pFR->m_pEntries1) + e;
-                                GameImage* pRec = pIM ? pIM->GetGameImage(0, pEnt->m_dwImageID, 0, 0) : nullptr;
-                                if (pRec && pRec->m_pGIData)
-                                {
-                                    pGI = pRec;
-                                    pEntry = pEnt;
-                                }
-                            }
-                        }
+                        if (idx != -1)
+                            CCAClone_TryFallbackResolve(0, idx, frame, e, pIM, &pAlt, &pAltEntry);
+                        break;
                     }
-                    // (cases 1..8 are unreachable because the LUT is zero)
+                    case 1:  // hand layer low (kind 5, 2*sex)
+                        CCAClone_TryFallbackResolve(5, 2 * m_ucSex, frame, e, pIM, &pAlt, &pAltEntry);
+                        break;
+                    case 2:  // re-resolve via face layer
+                    {
+                        int idx = g_CAManager.GetFaceLayerIndexDot(faceIdx, m_ucSex);
+                        if (idx != -1)
+                            CCAClone_TryFallbackResolve(1, idx, frame, e, pIM, &pAlt, &pAltEntry);
+                        break;
+                    }
+                    case 3:  // shoes layer (kind 4, sex)
+                        CCAClone_TryFallbackResolve(4, m_ucSex, frame, e, pIM, &pAlt, &pAltEntry);
+                        break;
+                    case 4:  // triusers layer (kind 3, sex)
+                        CCAClone_TryFallbackResolve(3, m_ucSex, frame, e, pIM, &pAlt, &pAltEntry);
+                        break;
+                    case 5:  // coat layer (kind 2, sex)
+                        CCAClone_TryFallbackResolve(2, m_ucSex, frame, e, pIM, &pAlt, &pAltEntry);
+                        break;
+                    case 6:  // back hair layer (front hair + 1)
+                    {
+                        int idx = g_CAManager.GetHairLayerIndexDot(hairIdx, m_ucSex);
+                        if (idx != -1)
+                            CCAClone_TryFallbackResolve(0, idx + 1, frame, e, pIM, &pAlt, &pAltEntry);
+                        break;
+                    }
+                    case 7:  // hand layer high (kind 5, 2*sex + 1)
+                        CCAClone_TryFallbackResolve(5, 2 * m_ucSex + 1, frame, e, pIM, &pAlt, &pAltEntry);
+                        break;
+                    case 8:  // explicit skip — leave pGI null
+                    default:
+                        break;
+                    }
+
+                    if (pAlt)
+                    {
+                        pGI    = pAlt;
+                        pEntry = pAltEntry;
+                    }
                 }
             }
 

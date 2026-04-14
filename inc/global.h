@@ -352,6 +352,30 @@ extern char                     byte_21CB35D;
 // fopen/fread.  The original initializes this elsewhere; we default to 1
 // (packed) because the shipped .ca files live inside the MOF pack.
 extern int                      dword_829254;
+
+// -----------------------------------------------------------------------------
+// CCA / CCAClone per-slot fallback case maps (mofclient.c 0x525EB4 / 0x5280FC).
+//
+// When Process() fails to resolve a GameImage through the normal layer path,
+// it consults one of these tables with `slot - 1` as the index (valid slot
+// range is 1..19 → 19 entries) to decide which alternate (kind, idx) pair to
+// re-query.  The table values are:
+//   0 → re-resolve via the current hair layer (kind 0, GetHairLayerIndexDot)
+//   1 → hand layer lo (kind 5, 2*sex)
+//   2 → re-resolve via the current face layer (kind 1, GetFaceLayerIndexDot)
+//   3 → shoes layer (kind 4, sex)
+//   4 → triusers layer (kind 3, sex)
+//   5 → coat layer (kind 2, sex)
+//   6 → hair layer +1 (kind 0, GetHairLayerIndexDot + 1)
+//   7 → hand layer hi (kind 5, 2*sex + 1)
+//   8 → skip this entry (no fallback)
+//
+// In the shipped binary both tables are weak single-zero arrays — every slot
+// falls through to case 0.  We expose them as globals so future data-driven
+// tooling can toggle individual slots without re-linking.
+// -----------------------------------------------------------------------------
+extern unsigned char            byte_525EB4[19];  // CCA fallback map
+extern unsigned char            byte_5280FC[19];  // CCAClone fallback map
 extern cltFieldItem*            unk_73D15C[1024];
 extern void*                    unk_813AA8[1024];
 extern void*                    unk_B4B924[1024];
