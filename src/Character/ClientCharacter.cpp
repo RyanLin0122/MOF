@@ -1,4 +1,5 @@
 #include "Character/ClientCharacter.h"
+#include "Character/CCA.h"
 
 #include "Info/cltClassKindInfo.h"
 #include "global.h"
@@ -160,4 +161,41 @@ unsigned int ClientCharacter::GetLastOrder() {
 
 void ClientCharacter::PushOrder(stCharOrder* /*pOrder*/) {
     // Stub: real implementation enqueues the order onto the character's order queue.
+}
+
+
+void ClientCharacter::SetItem(unsigned short itemKind, int qty) {
+    if (itemKind < 16) {
+        reinterpret_cast<unsigned short*>(this)[80 + itemKind] = (qty > 0) ? itemKind : 0;
+    }
+}
+
+void ClientCharacter::ResetItem(unsigned char slot) {
+    if (slot < 16) {
+        reinterpret_cast<unsigned short*>(this)[80 + slot] = 0;
+    }
+}
+
+void ClientCharacter::SetCAClone() {
+    reinterpret_cast<unsigned int*>(this)[2424] = 1;
+}
+
+void ClientCharacter::DeleteCharacter() {
+    m_dwAccountID = 0;
+    m_szName[0] = '\0';
+    reinterpret_cast<unsigned int*>(this)[1109] = 0;
+}
+
+void ClientCharacter::SetEmoticonKind(int emoticonKind) {
+    reinterpret_cast<int*>(this)[2425] = emoticonKind;
+    if (m_pCCA) {
+        m_pCCA->BegineEmoticon(emoticonKind);
+    }
+}
+
+void ClientCharacter::ReleaseEmoticon() {
+    reinterpret_cast<int*>(this)[2425] = 0;
+    if (m_pCCA) {
+        m_pCCA->EndEmoticon(m_ucFace, m_ucSex);
+    }
 }
