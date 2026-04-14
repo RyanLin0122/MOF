@@ -622,25 +622,36 @@ void CAManager::LoadDefinImage()
     {
         const int hairIdx = m_DefineInfoDot[i].m_nLayerIndex;
         LAYERINFO* pLayer0 = GetDotLayer(0, hairIdx);
-        if (!pLayer0 || !pLayer0->m_pFrames) continue;
+        if (!pLayer0 || !pLayer0->m_pFrames)
+        {
+            // GT: CLog::Log("LoadDefinImage GetDotLayer(ITEM_KIND_HAIR) return NULL");
+            ::OutputDebugStringA("LoadDefinImage GetDotLayer(ITEM_KIND_HAIR) return NULL\n");
+            continue;
+        }
 
         auto* pDraw = static_cast<CA_DRAWENTRY*>(pLayer0->m_pFrames[0].m_pEntries1);
         if (pDraw) pIM->GetGameImage(0, pDraw->m_dwImageID, 0, 0);
 
         LAYERINFO* pLayer1 = GetDotLayer(0, hairIdx + 1);
-        if (pLayer1 && pLayer1->m_pFrames)
+        if (!pLayer1 || !pLayer1->m_pFrames)
         {
-            pDraw = static_cast<CA_DRAWENTRY*>(pLayer1->m_pFrames[0].m_pEntries1);
-            if (pDraw) pIM->GetGameImage(0, pDraw->m_dwImageID, 0, 0);
+            // GT: CLog::Log("LoadDefinImage GetDotLayer(ITEM_KIND_HAIR + 1) return NULL");
+            ::OutputDebugStringA("LoadDefinImage GetDotLayer(ITEM_KIND_HAIR + 1) return NULL\n");
+            continue;
         }
+        pDraw = static_cast<CA_DRAWENTRY*>(pLayer1->m_pFrames[0].m_pEntries1);
+        if (pDraw) pIM->GetGameImage(0, pDraw->m_dwImageID, 0, 0);
 
         const int faceIdx = m_DefineInfoDot[30 + i].m_nLayerIndex;
         LAYERINFO* pLayerFace = GetDotLayer(1, faceIdx);
-        if (pLayerFace && pLayerFace->m_pFrames)
+        if (!pLayerFace || !pLayerFace->m_pFrames)
         {
-            pDraw = static_cast<CA_DRAWENTRY*>(pLayerFace->m_pFrames[0].m_pEntries1);
-            if (pDraw) pIM->GetGameImage(0, pDraw->m_dwImageID, 0, 0);
+            // GT: CLog::Log("LoadDefinImage GetDotLayer(ITEM_KIND_FACE) return NULL");
+            ::OutputDebugStringA("LoadDefinImage GetDotLayer(ITEM_KIND_FACE) return NULL\n");
+            continue;
         }
+        pDraw = static_cast<CA_DRAWENTRY*>(pLayerFace->m_pFrames[0].m_pEntries1);
+        if (pDraw) pIM->GetGameImage(0, pDraw->m_dwImageID, 0, 0);
     }
 
     // The ground truth finishes with 8 specific prewarm calls that walk

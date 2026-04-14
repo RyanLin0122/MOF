@@ -191,25 +191,38 @@ void CCAClone::Process()
 
             cltImageManager* pIM = cltImageManager::GetInstance();
             GameImage* pGI = nullptr;
+            bool bNeedFallback = false;
             if (slot == 11)
             {
+                // Slot 11 (dualweapon back): validate only that the GIData
+                // node exists; the texture may legitimately be lazy-loaded.
                 pGI = pIM ? pIM->GetGameImage(0, pEntry->m_dwImageID, 0, 0) : nullptr;
+                bNeedFallback = (!pGI || !pGI->m_pGIData);
             }
             else
             {
                 pGI = pIM ? pIM->GetGameImage(0, pEntry->m_dwImageID, 0, 1) : nullptr;
+                // GT (mofclient.c 243016-243019) additionally checks
+                // m_pGIData->m_Resource.m_pTexture here: if the texture has
+                // not been uploaded to D3D yet, treat the fetch as failed
+                // and drop into the fallback recovery path.
+                bNeedFallback = (!pGI || !pGI->m_pGIData ||
+                                 !pGI->m_pGIData->m_Resource.m_pTexture);
             }
 
             // Fallback recovery (byte_5280FC cases).  The weak LUT is all zero,
             // so only case 0 (hair re-resolve) is reachable in the original —
             // all other cases fall through to LABEL_106 (skip).
-            if (!pGI || !pGI->m_pGIData)
+            if (bNeedFallback)
             {
+                // GT resets a2/v71 = 0 at LABEL_21 before attempting recovery,
+                // so a failed fallback drops this entry entirely instead of
+                // keeping the (potentially texture-less) original GameImage.
+                pGI = nullptr;
                 int hairIdx = m_nHairIndex;
                 int faceIdx = m_nFaceIndex;
-                if (hairIdx == -1 || faceIdx == -1) { pGI = nullptr; }
-                else if (m_ucSex > 1 || slot < 1 || slot > 19) { pGI = nullptr; }
-                else
+                if (hairIdx != -1 && faceIdx != -1 &&
+                    m_ucSex <= 1 && slot >= 1 && slot <= 19)
                 {
                     int fallbackCase = byte_5280FC[slot - 1];
                     if (fallbackCase == 0)
@@ -223,9 +236,12 @@ void CCAClone::Process()
                             if (e < pFR->m_nCount1)
                             {
                                 CA_DRAWENTRY* pEnt = static_cast<CA_DRAWENTRY*>(pFR->m_pEntries1) + e;
-                                pGI = pIM ? pIM->GetGameImage(0, pEnt->m_dwImageID, 0, 0) : nullptr;
-                                pEntry = pEnt;
-                                if (!pGI || !pGI->m_pGIData) pGI = nullptr;
+                                GameImage* pRec = pIM ? pIM->GetGameImage(0, pEnt->m_dwImageID, 0, 0) : nullptr;
+                                if (pRec && pRec->m_pGIData)
+                                {
+                                    pGI = pRec;
+                                    pEntry = pEnt;
+                                }
                             }
                         }
                     }
