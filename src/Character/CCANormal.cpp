@@ -384,23 +384,58 @@ bool CCANormal::Process(uint16_t a2)
         pGI->m_fPosX     = pEntry[0].m_fOffsetX + m_fPosX;
         pGI->m_fPosY     = pEntry[0].m_fOffsetY + m_fPosY;
 
-        // Per-entry alpha override sourced from CCANormal::m_ucAlpha.  The
-        // original writes integer pos/alpha into three adjacent GameImage
-        // fields at +404/+408/+412; those fields serve a different purpose
-        // in our port, so we route the alpha through the dedicated channel.
-        pGI->m_dwAlpha = m_ucAlpha;
+        // Per-entry scratch-pack: ground truth fuses three adjacent dword
+        // stores at +404/+408/+412 via an MMX-style 64-bit packing pattern:
+        //   v15 = *(int64*)&pEntry->m_fOffsetX;           // low 32 bits = raw float bits
+        //   HIDWORD(v15) = m_ucAlpha;                     // high 32 bits = alpha
+        //   v19 = *(int64*)&pEntry->m_fOffsetY;
+        //   v16[101] = (dword)v15;                        // +404 raw offsetX bits
+        //   v16[103] = HIDWORD(v15);                      // +412 alpha
+        //   v16[102] = (dword)v19;                        // +408 raw offsetY bits
+        // In our port those dwords happen to map to m_fCenterX / m_dwGroupID /
+        // m_dwResourceID, so we spill via std::memcpy to preserve bit-exact
+        // semantics (a plain assignment would do an implicit float->int cast).
+        std::memcpy(&pGI->m_fCenterX,     &pEntry[0].m_fOffsetX, sizeof(float));
+        std::memcpy(&pGI->m_dwGroupID,    &pEntry[0].m_fOffsetY, sizeof(float));
+        pGI->m_dwResourceID = static_cast<unsigned int>(m_ucAlpha);
+        pGI->m_dwAlpha      = m_ucAlpha;  // keep the semantic channel in sync
 
-        // Shader/overlay reset — the original writes default hot-spot /
-        // angle floats and toggles the "draw-part-2" flag.  Our GameImage
-        // owns its own shader-state pipeline, so we simply flip the flag
-        // and let Draw fall back to defaults.
-        pGI->m_bDrawPart2 = (m_bResetShader != 0);
+        // Shader/overlay reset — ground truth writes the exact float bit
+        // patterns 0/100/0/100/-20 into the angle + hot-spot dwords 87..92
+        // (bytes 348..368) and flips the draw-part-2 flag.  Reproduce the
+        // literal float constants so the downstream draw state matches.
+        if (m_bResetShader)
+        {
+            pGI->m_fAngleX        = 0.0f;
+            pGI->m_fAngleY        = 0.0f;
+            pGI->m_fHotspotX      = 100.0f;
+            pGI->m_fHotspotY      = 0.0f;
+            pGI->m_fHotspotWidth  = 100.0f;
+            pGI->m_fHotspotHeight = -20.0f;
+            pGI->m_bDrawPart2     = true;
+        }
+        else
+        {
+            pGI->m_bDrawPart2     = false;
+        }
     }
     return true;
 }
 
 // =============================================================================
 // Draw (0x0052D1D0)
+//
+// Ground truth:
+//   for (i = 0; i < m_nLayerCount; ++i) {
+//     v4 = m_ppImages[i];
+//     if (v4 && v4->m_pGIData && v4->m_pGIData->m_Resource.m_pTexture) {
+//       GameImage::Draw(v4);
+//       m_ppImages[i] = 0;
+//     }
+//   }
+// The inner `m_pGIData->m_Resource.m_pTexture` check is critical — images
+// that still have their data node but lost their texture (mid device-reset)
+// are silently skipped, not drawn.
 // =============================================================================
 bool CCANormal::Draw()
 {
@@ -409,9 +444,9 @@ bool CCANormal::Draw()
     {
         GameImage* pGI = m_ppImages[i];
         if (!pGI) continue;
-        if (!pGI->m_pGIData) continue;
-        // Original also guards on (m_pGIData->m_internal != 0); our
-        // GameImage pipeline treats a live m_pGIData as sufficient.
+        ImageResourceListData* pData = pGI->m_pGIData;
+        if (!pData) continue;
+        if (!pData->m_Resource.m_pTexture) continue;
         pGI->Draw();
         m_ppImages[i] = nullptr;
     }

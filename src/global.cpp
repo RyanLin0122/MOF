@@ -193,6 +193,7 @@ int cHeight = 0;
 int dword_73D154 = 0;
 int dword_B4BAB4 = 0;
 char byte_21CB35D = 0;
+int dword_829254 = 1;   // default: prefer packed .ca loads
 cltFieldItem* unk_73D15C[1024] = {};
 void* unk_813AA8[1024] = {};
 void* unk_B4B924[1024] = {};

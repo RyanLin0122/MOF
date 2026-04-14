@@ -345,6 +345,13 @@ extern int                      dword_AFD344;
 extern int                      dword_73D154;
 extern int                      dword_B4BAB4;
 extern char                     byte_21CB35D;
+
+// CAManager packed-vs-direct timeline load flag (reverse of packing origin).
+// Mirrors mofclient.c's `dword_829254`: when non-zero, timelines are fetched
+// via CMofPacking::FileReadBackGroundLoading; otherwise they come from direct
+// fopen/fread.  The original initializes this elsewhere; we default to 1
+// (packed) because the shipped .ca files live inside the MOF pack.
+extern int                      dword_829254;
 extern cltFieldItem*            unk_73D15C[1024];
 extern void*                    unk_813AA8[1024];
 extern void*                    unk_B4B924[1024];

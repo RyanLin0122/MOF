@@ -263,9 +263,23 @@ void CCAClone::Process()
             pBack->m_wBlockID  = pEntry->m_wBlockID;
             pBack->m_bFlag_446 = true;
 
-            float px = m_bMirrored ? (m_fPosX - pEntry->m_fOffsetX)
-                                   : (m_fPosX + pEntry->m_fOffsetX);
-            float py = m_fPosY + pEntry->m_fOffsetY;
+            // Ground truth walks the per-block hot-spot table on the live
+            // GameImage (m_pGIData->m_Resource.m_pAnimationFrames[blockID])
+            // and adds offsetX/offsetY into the CA_DRAWENTRY + CCA origin
+            // formula.  Mirror the exact arithmetic from mofclient.c
+            // lines 243302-243318 so per-sprite translations match.
+            float blockHotX = 0.0f;
+            float blockHotY = 0.0f;
+            if (pBack->m_pGIData && pBack->m_pGIData->m_Resource.m_pAnimationFrames)
+            {
+                AnimationFrameData* pFrames = pBack->m_pGIData->m_Resource.m_pAnimationFrames;
+                const int blockID = pEntry->m_wBlockID;
+                blockHotX = static_cast<float>(pFrames[blockID].offsetX);
+                blockHotY = static_cast<float>(pFrames[blockID].offsetY);
+            }
+            const float v58 = blockHotX + pEntry->m_fOffsetX;
+            const float px  = m_bMirrored ? (m_fPosX - v58) : (v58 + m_fPosX);
+            const float py  = blockHotY + pEntry->m_fOffsetY + m_fPosY;
             pBack->m_bFlag_447 = true;
             pBack->m_fPosX = px;
             pBack->m_fPosY = py;

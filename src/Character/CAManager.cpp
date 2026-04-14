@@ -239,9 +239,11 @@ FILE* CAManager::LoadCADataDot(char* filename)
         "MoFData/Character/Dot_Character_EMOTICON.ca",
         "MoFData/Character/Dot_Character_DUALWEAPON.ca"
     };
-    // Mofclient uses dword_829254 as the packed-vs-direct flag; default to packed.
-    const bool usePacked = true;
-    if (usePacked)
+    // Mofclient dispatches through the global dword_829254 flag (the original
+    // symbol sets it at startup based on whether the game was launched against
+    // the packed or unpacked data folder).  Honour that flag here instead of
+    // a hardcoded constant.
+    if (dword_829254)
     {
         for (int k = 0; k < 16; ++k)
             LoadTimelineInPack(kDotTlFiles[k], &m_TimelineInfoDot[k], nullptr);
@@ -294,8 +296,7 @@ int CAManager::LoadCADataIllust(char* filename)
     }
     g_clTextFileManager.fclose(fp);
 
-    const bool usePacked = true;
-    if (usePacked)
+    if (dword_829254)
     {
         for (int i = 0; i < 6; ++i)
             LoadTimelineInPack(m_IllustPaths[i].m_szFileName, &m_TimelineInfoIllust[i], nullptr);
@@ -578,15 +579,17 @@ ITEMCAINFO_ILLUST* CAManager::GetItemCAInfoIllust(uint16_t itemIndex)
     return m_pItemCAInfoIllust[itemIndex];
 }
 
+// Ground truth: `return *((_DWORD *)this + 3 * a2 + 69821);` — a single direct
+// dword read with no bounds protection.  Any OOB input is a hard crash in the
+// original binary, and we mirror that exactly (callers are expected to have
+// already clamped `hairIdx`/`faceIdx` to the valid 0..29 slot range).
 int CAManager::GetHairFrameIndexIllust(int hairIdx, uint8_t /*sex*/)
 {
-    if (hairIdx < 0 || hairIdx >= 30) return 0;
     return m_DefineInfoIllust[hairIdx].m_nValue;
 }
 
 int CAManager::GetFaceFrameIndexIllust(int faceIdx, uint8_t /*sex*/)
 {
-    if (faceIdx < 0 || faceIdx >= 30) return 0;
     return m_DefineInfoIllust[30 + faceIdx].m_nValue;
 }
 
@@ -628,21 +631,25 @@ void CAManager::LoadDefinImage()
         }
     }
 
-    // Pre-warm illustration base-timeline frames (6 kinds × pair of layers)
-    for (int kind = 0; kind < 6; ++kind)
+    // The ground truth finishes with 8 specific prewarm calls that walk
+    // TimelineInfoDot[kind].m_pLayers[L].m_pFrames[0].m_pEntries1[0].m_dwImageID
+    // for the pairs listed below.  These are hand-picked "first frame of each
+    // body-part base layer" loads — NOT a generic illust loop.  Mirror them
+    // exactly to match mofclient.c.
+    struct DotPrewarm { int kind; int layer; };
+    static const DotPrewarm kPrewarms[] = {
+        // COAT (kind 2), TRIUSERS (3), SHOES (4): layers 0 and 1
+        {2, 0}, {2, 1},
+        {3, 0}, {3, 1},
+        {4, 0}, {4, 1},
+        // HAND (kind 5): layers 1 and 3 (not 0/2)
+        {5, 1}, {5, 3},
+    };
+    for (const auto& e : kPrewarms)
     {
-        TIMELINEINFO& tl = m_TimelineInfoIllust[kind];
-        if (tl.m_pLayers && tl.m_nLayerCount > 2)
-        {
-            for (int li : { 0, 2 })
-            {
-                LAYERINFO& layer = tl.m_pLayers[li];
-                if (layer.m_pFrames && layer.m_nFrameCount > 0)
-                {
-                    auto* pDraw = static_cast<CA_DRAWENTRY*>(layer.m_pFrames[0].m_pEntries1);
-                    if (pDraw) pIM->GetGameImage(0, pDraw->m_dwImageID, 0, 0);
-                }
-            }
-        }
+        LAYERINFO* pLayer = GetDotLayer(e.kind, e.layer);
+        if (!pLayer || !pLayer->m_pFrames) continue;
+        auto* pDraw = static_cast<CA_DRAWENTRY*>(pLayer->m_pFrames[0].m_pEntries1);
+        if (pDraw) pIM->GetGameImage(0, pDraw->m_dwImageID, 0, 0);
     }
 }
