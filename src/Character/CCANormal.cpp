@@ -84,11 +84,17 @@ namespace
         src.Read(&self->m_nLayerCount, 4);
 
         // ---- image pointer array (one entry per layer, zero-initialized).
-        //      The original allocates `new int[layerCount]` then zeros it.
+        //      Ground truth (mofclient.c 247113-247125) allocates the slot
+        //      table with raw `operator new(4 * layerCount)` and pairs it with
+        //      `operator delete` in the destructor.  We MUST use the matching
+        //      non-array allocator here: a previous version allocated with
+        //      `new GameImage*[N]` but freed with `::operator delete`, which
+        //      is undefined behavior (new[] must pair with delete[]).
         self->m_nImageCount = self->m_nLayerCount;
         if (self->m_nLayerCount > 0)
         {
-            self->m_ppImages = new GameImage*[self->m_nLayerCount];
+            const size_t nBytes = static_cast<size_t>(self->m_nLayerCount) * sizeof(GameImage*);
+            self->m_ppImages = static_cast<GameImage**>(::operator new(nBytes));
             for (int i = 0; i < self->m_nLayerCount; ++i)
                 self->m_ppImages[i] = nullptr;
         }

@@ -550,7 +550,13 @@ uint16_t CAManager::GetItemSpecial(uint16_t itemIndex)
 
 LAYERINFO* CAManager::GetDotLayer(int kind, int index)
 {
-    if (index < 0 || kind < 0 || kind >= 16) return nullptr;
+    // Ground truth (mofclient.c 246279-246294): index < 0 returns null,
+    // kind >= 16 returns null; callers with negative kind are expected to
+    // already have sanitized input (GT would happily walk backwards through
+    // the timeline array otherwise).  The m_pLayers null guard is defensive
+    // here because our loader may leave m_pLayers unallocated for empty
+    // timelines; GT assumes it is always valid.
+    if (index < 0 || kind >= 16) return nullptr;
     TIMELINEINFO& tl = m_TimelineInfoDot[kind];
     if (index >= tl.m_nLayerCount) return nullptr;
     return tl.m_pLayers ? &tl.m_pLayers[index] : nullptr;

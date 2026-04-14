@@ -401,15 +401,26 @@ bool CCA::Process(GameImage* pFrameAsPtr)
                         {
                             int idx = g_CAManager.GetHairLayerIndexDot(hairIdx, curSex);
                             LAYERINFO* pFL = g_CAManager.GetDotLayer(0, idx);
-                            if (idx != -1 && pFL && static_cast<int>(frame) <= pFL->m_nFrameCount - 1)
+                            // GT (mofclient.c 241148-241158) gates this branch
+                            // on BOTH the frame bound (v61 <= nFrameCount - 1)
+                            // AND the per-frame entry bound
+                            // (v60 <= pFR->m_nCount1 - 1, i.e. e < pFR->m_nCount1).
+                            // Without the entry-count gate we would index past
+                            // the fallback frame's entry array whenever the
+                            // outer layer had more entries than the hair layer.
+                            if (idx != -1 && pFL && pFL->m_pFrames &&
+                                static_cast<int>(frame) <= pFL->m_nFrameCount - 1)
                             {
                                 FRAMEINFO* pFR = &pFL->m_pFrames[frame];
-                                CA_DRAWENTRY* pEnt = static_cast<CA_DRAWENTRY*>(pFR->m_pEntries1) + e;
-                                if (pEnt)
+                                if (e < pFR->m_nCount1)
                                 {
-                                    pGI = pIM ? pIM->GetGameImage(0, pEnt->m_dwImageID, 0, 0) : nullptr;
-                                    pEntry = pEnt;
-                                    if (!pGI || !pGI->m_pGIData) pGI = nullptr;
+                                    CA_DRAWENTRY* pEnt = static_cast<CA_DRAWENTRY*>(pFR->m_pEntries1) + e;
+                                    if (pEnt)
+                                    {
+                                        pGI = pIM ? pIM->GetGameImage(0, pEnt->m_dwImageID, 0, 0) : nullptr;
+                                        pEntry = pEnt;
+                                        if (!pGI || !pGI->m_pGIData) pGI = nullptr;
+                                    }
                                 }
                             }
                         }
