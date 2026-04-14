@@ -14,6 +14,16 @@
 #include <windows.h>
 
 // ============================================================================
+// Weak statistics counters from the ground-truth binary (data addresses
+// 0x2255AB8 / 0x2255ABC).  LoadCADataDot bumps the allocation counter when
+// it creates a new ITEMCAINFO_DOT and the destructor bumps the deallocation
+// counter for each one it frees.  Exposed as externals so test harnesses can
+// sample them, mirroring the original weak symbols.
+// ============================================================================
+int nAllocCntItemCAInfo   = 0;
+int nDeAllocCntItemCAInfo = 0;
+
+// ============================================================================
 // Helpers for type constructors (match original 0-initialization semantics).
 // ============================================================================
 
@@ -166,6 +176,7 @@ CAManager::~CAManager()
     {
         if (m_pItemCAInfoDot[i])
         {
+            ++nDeAllocCntItemCAInfo;
             delete m_pItemCAInfoDot[i];
             m_pItemCAInfoDot[i] = nullptr;
         }
@@ -205,6 +216,7 @@ FILE* CAManager::LoadCADataDot(char* filename)
         {
             ITEMCAINFO_DOT* pRec = new ITEMCAINFO_DOT();
             m_pItemCAInfoDot[itemID] = pRec;
+            ++nAllocCntItemCAInfo;
             pRec->m_wItemID = itemID;
 
             int typeAResult = ParsingFashionItemType(typeA);

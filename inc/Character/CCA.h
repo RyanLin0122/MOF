@@ -4,8 +4,8 @@
 #include <d3dx9.h>
 #include "Character/CATypes.h"
 
-struct CEffectBase;
-class  GameImage;
+class CEffectBase;
+class GameImage;
 
 // =============================================================================
 // CCA  (292 bytes in the original binary)
