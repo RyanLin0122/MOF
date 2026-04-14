@@ -293,11 +293,10 @@ void CCAillust::SetItemtoDot(CCA* pSource, uint8_t sex, uint8_t age,
     InitItem(sex, age, static_cast<uint16_t>(hairExtra),
              static_cast<uint16_t>(faceExtra), packed);
 
-    if (!pSource) return;
-
     // Walk pSource->m_ItemIDs[0..15][1] (the fashion-override column).  The
     // original uses raw byte arithmetic starting at (char*)a2 + 162 with a
-    // 4-byte stride; our named layout is equivalent.
+    // 4-byte stride; our named layout is equivalent.  No nullptr guard on
+    // pSource — the ground truth assumes a live CCA is always passed in.
     for (int k = 0; k < 16; ++k)
     {
         uint16_t id = pSource->m_ItemIDs[k][1];
@@ -392,75 +391,72 @@ void CCAillust::LayerPutOn(uint16_t itemID, uint8_t sex, uint8_t age)
 // Rebind slots back to their "base" FRAMEINFO — derived from the current hair
 // or face definition for kinds 0/1, or frame 0 of the corresponding layer for
 // the remaining kinds.  Kind 0xD (SUIT) rebuilds coat/pants/shoes/hand/suit
-// and falls through to the common hand-restore tail at LABEL_12.  Kind 0xF
-// clears slot 5 then re-enters the switch with kind = 7.
+// and falls through to the common hand-restore tail at LABEL_12 (shared with
+// case 5).  The original switch has no 0xF case — DUALWEAPON is handled
+// elsewhere.
 // =============================================================================
 void CCAillust::LayerPutOff(uint16_t kind, uint8_t sex, uint8_t age,
                             int hairExtra, int faceExtra)
 {
     int kindIdx = static_cast<int>(age) + 3 * static_cast<int>(sex);
 
-    for (;;)
+    switch (kind)
     {
-        switch (kind)
-        {
-        case 0u:  // HAIR
-        {
-            int hairFrame = g_CAManager.GetHairFrameIndexIllust(hairExtra, sex);
-            m_pFrameSlots[1]  = g_CAManager.GetIllustFrame(kindIdx, 1,  hairFrame);
-            m_pFrameSlots[11] = g_CAManager.GetIllustFrame(kindIdx, 11, hairFrame);
-            return;
-        }
-        case 1u:  // FACE
-        {
-            int faceFrame = g_CAManager.GetFaceFrameIndexIllust(faceExtra, sex);
-            m_pFrameSlots[3]  = g_CAManager.GetIllustFrame(kindIdx, 3, faceFrame);
-            return;
-        }
-        case 2u:
-            m_pFrameSlots[8]  = g_CAManager.GetIllustFrame(kindIdx, 8, 0);
-            return;
-        case 3u:
-            m_pFrameSlots[7]  = g_CAManager.GetIllustFrame(kindIdx, 7, 0);
-            return;
-        case 4u:
-            m_pFrameSlots[5]  = g_CAManager.GetIllustFrame(kindIdx, 5, 0);
-            return;
-        case 5u:
-            // Fall through to the shared LABEL_12 tail (slots 6/15 only).
-            m_pFrameSlots[6]  = g_CAManager.GetIllustFrame(kindIdx, 6,  0);
-            m_pFrameSlots[15] = g_CAManager.GetIllustFrame(kindIdx, 15, 0);
-            return;
-        case 6u:
-            m_pFrameSlots[0]  = g_CAManager.GetIllustFrame(kindIdx, 0,  0);
-            m_pFrameSlots[2]  = g_CAManager.GetIllustFrame(kindIdx, 2,  0);
-            m_pFrameSlots[10] = g_CAManager.GetIllustFrame(kindIdx, 10, 0);
-            m_pFrameSlots[14] = g_CAManager.GetIllustFrame(kindIdx, 14, 0);
-            return;
-        case 9u:
-            m_pFrameSlots[4]  = g_CAManager.GetIllustFrame(kindIdx, 4, 0);
-            return;
-        case 0xAu:
-            m_pFrameSlots[12] = g_CAManager.GetIllustFrame(kindIdx, 12, 0);
-            return;
-        case 0xBu:
-            m_pFrameSlots[13] = g_CAManager.GetIllustFrame(kindIdx, 13, 0);
-            return;
-        case 0xDu:
-            m_pFrameSlots[9]  = g_CAManager.GetIllustFrame(kindIdx, 9, 0);
-            m_pFrameSlots[8]  = g_CAManager.GetIllustFrame(kindIdx, 8, 0);
-            m_pFrameSlots[7]  = g_CAManager.GetIllustFrame(kindIdx, 7, 0);
-            m_pFrameSlots[5]  = g_CAManager.GetIllustFrame(kindIdx, 5, 0);
-            m_pFrameSlots[6]  = g_CAManager.GetIllustFrame(kindIdx, 6, 0);
-            m_pFrameSlots[15] = g_CAManager.GetIllustFrame(kindIdx, 15, 0);
-            return;
-        case 0xFu:
-            m_pFrameSlots[5]  = nullptr;
-            kind = 7;
-            continue;
-        default:
-            return;
-        }
+    case 0u:  // HAIR
+    {
+        int hairFrame = g_CAManager.GetHairFrameIndexIllust(hairExtra, sex);
+        m_pFrameSlots[1]  = g_CAManager.GetIllustFrame(kindIdx, 1,  hairFrame);
+        m_pFrameSlots[11] = g_CAManager.GetIllustFrame(kindIdx, 11, hairFrame);
+        return;
+    }
+    case 1u:  // FACE
+    {
+        int faceFrame = g_CAManager.GetFaceFrameIndexIllust(faceExtra, sex);
+        m_pFrameSlots[3]  = g_CAManager.GetIllustFrame(kindIdx, 3, faceFrame);
+        return;
+    }
+    case 2u:
+        m_pFrameSlots[8]  = g_CAManager.GetIllustFrame(kindIdx, 8, 0);
+        return;
+    case 3u:
+        m_pFrameSlots[7]  = g_CAManager.GetIllustFrame(kindIdx, 7, 0);
+        return;
+    case 4u:
+        m_pFrameSlots[5]  = g_CAManager.GetIllustFrame(kindIdx, 5, 0);
+        return;
+    case 5u:
+        // Ground truth's case 5 is `goto LABEL_12;` which runs only the two
+        // slot-6/slot-15 writes (the shared tail).
+        m_pFrameSlots[6]  = g_CAManager.GetIllustFrame(kindIdx, 6,  0);
+        m_pFrameSlots[15] = g_CAManager.GetIllustFrame(kindIdx, 15, 0);
+        return;
+    case 6u:
+        m_pFrameSlots[0]  = g_CAManager.GetIllustFrame(kindIdx, 0,  0);
+        m_pFrameSlots[2]  = g_CAManager.GetIllustFrame(kindIdx, 2,  0);
+        m_pFrameSlots[10] = g_CAManager.GetIllustFrame(kindIdx, 10, 0);
+        m_pFrameSlots[14] = g_CAManager.GetIllustFrame(kindIdx, 14, 0);
+        return;
+    case 9u:
+        m_pFrameSlots[4]  = g_CAManager.GetIllustFrame(kindIdx, 4, 0);
+        return;
+    case 0xAu:
+        m_pFrameSlots[12] = g_CAManager.GetIllustFrame(kindIdx, 12, 0);
+        return;
+    case 0xBu:
+        m_pFrameSlots[13] = g_CAManager.GetIllustFrame(kindIdx, 13, 0);
+        return;
+    case 0xDu:
+        // SUIT: rebuild body slots then fall through the LABEL_12 tail
+        // (shared with case 5) for the hand layers.
+        m_pFrameSlots[9]  = g_CAManager.GetIllustFrame(kindIdx, 9, 0);
+        m_pFrameSlots[8]  = g_CAManager.GetIllustFrame(kindIdx, 8, 0);
+        m_pFrameSlots[7]  = g_CAManager.GetIllustFrame(kindIdx, 7, 0);
+        m_pFrameSlots[5]  = g_CAManager.GetIllustFrame(kindIdx, 5, 0);
+        m_pFrameSlots[6]  = g_CAManager.GetIllustFrame(kindIdx, 6, 0);
+        m_pFrameSlots[15] = g_CAManager.GetIllustFrame(kindIdx, 15, 0);
+        return;
+    default:
+        return;
     }
 }
 
