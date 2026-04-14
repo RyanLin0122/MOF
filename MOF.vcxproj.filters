@@ -1116,6 +1116,9 @@
     <ClCompile Include="src\MiniGame\cltValidMiniGameScore.cpp">
       <Filter>來源檔案\MiniGame</Filter>
     </ClCompile>
+    <ClCompile Include="src\MiniGame\cltMini_Sword_2.cpp">
+      <Filter>來源檔案\MiniGame</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="inc\Sound\COgg.h">
@@ -2223,6 +2226,9 @@
       <Filter>標頭檔\MiniGame</Filter>
     </ClInclude>
     <ClInclude Include="inc\MiniGame\cltValidMiniGameScore.h">
+      <Filter>標頭檔\MiniGame</Filter>
+    </ClInclude>
+    <ClInclude Include="inc\MiniGame\cltMini_Sword_2.h">
       <Filter>標頭檔\MiniGame</Filter>
     </ClInclude>
   </ItemGroup>

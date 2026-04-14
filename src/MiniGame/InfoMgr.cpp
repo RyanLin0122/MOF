@@ -52,15 +52,12 @@ void InfoMgr::InitInfoMgr()
     m_timeNum.SetNumber(10, tx, ty);
     m_timeNum.Process();
 
-    // 清除每個 slot 的 active 旗標（mofclient 清 0..4，再清 +496 那個 byte）
-    for (int i = 0; i < 6; ++i)
+    for (int i = 0; i < 5; ++i)
         m_scoreActive[i] = 0;
 }
 
 void InfoMgr::SetScore(int slot, int value)
 {
-    if (slot < 0 || slot >= 6)
-        return;
     m_scoreActive[slot] = 1;
     m_scoreNum[slot].SetNumber(value, m_scoreX[slot], m_scoreY[slot]);
 }

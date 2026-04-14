@@ -25,6 +25,9 @@ public:
     int  Process();   // 回傳 BOOL
     void Render();
 
+    // 供 cltMini_Sword_2 讀取本局累積得分（原始為 *((_DWORD *)&sword2 + 5)）
+    int  GetTotalScore() const { return m_totalScore; }
+
 private:
     int             m_state;          // 狀態 0/2/3/4
     int             m_round;          // 目前第幾回合

@@ -317,6 +317,7 @@
     <ClCompile Include="src\MiniGame\BackGroundMgr.cpp" />
     <ClCompile Include="src\MiniGame\BoardMgr.cpp" />
     <ClCompile Include="src\MiniGame\cltMini_Sword.cpp" />
+    <ClCompile Include="src\MiniGame\cltMini_Sword_2.cpp" />
     <ClCompile Include="src\MiniGame\cltMiniGame_DrawNum.cpp" />
     <ClCompile Include="src\MiniGame\cltMoF_BaseMiniGame.cpp" />
     <ClCompile Include="src\MiniGame\cltValidMiniGameScore.cpp" />
@@ -699,6 +700,7 @@
     <ClInclude Include="inc\MiniGame\BackGroundMgr.h" />
     <ClInclude Include="inc\MiniGame\BoardMgr.h" />
     <ClInclude Include="inc\MiniGame\cltMini_Sword.h" />
+    <ClInclude Include="inc\MiniGame\cltMini_Sword_2.h" />
     <ClInclude Include="inc\MiniGame\cltMiniGame_DrawNum.h" />
     <ClInclude Include="inc\MiniGame\cltMoF_BaseMiniGame.h" />
     <ClInclude Include="inc\MiniGame\cltValidMiniGameScore.h" />

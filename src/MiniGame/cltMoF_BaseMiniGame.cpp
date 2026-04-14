@@ -122,9 +122,6 @@ int cltMoF_BaseMiniGame::RequestRanking(std::uint8_t lessonType, std::uint8_t /*
 
 void cltMoF_BaseMiniGame::SetRankingData(std::uint8_t index, char* name, std::uint8_t classKind, int score)
 {
-    if (index >= kRankingCount)
-        return;
-
     RankingEntry& entry = m_ranking[index];
     // rank 編號：page*10 + index + 1
     wsprintfA(entry.rank, "%02i",

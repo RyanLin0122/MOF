@@ -196,6 +196,7 @@ cltLessonSystem     g_clLessonSystem;
 
 // cltMini_Sword 使用的全域狀態
 unsigned char g_cGameSwordState = 0;
+unsigned char g_cGameSword_2State = 0;
 unsigned int  dwFrameCnt = 0;
 int           MonPosY[10] = { 0, 0, 0, 0, 0, 0, 0, 0, 0, 0 };
 int dword_AFD34C = 0;
