@@ -1,0 +1,147 @@
+#pragma once
+
+#include <cstdint>
+
+#include "MiniGame/cltMoF_BaseMiniGame.h"
+#include "MiniGame/cltMiniGame_DrawNum.h"
+
+class GameImage;
+
+// mofclient.c 還原：cltMini_Sword — 劍士小遊戲。
+// 狀態機由全域 g_cGameSwordState 管理：
+//   0 = Wait, 1 = SelectDegree, 2 = Help, 3 = ShowPoint,
+//   4 = Ready, 5 = Gamming, 6 = EndStage, 7 = Ranking, 100 = Exit
+class cltMini_Sword : public cltMoF_BaseMiniGame {
+public:
+    cltMini_Sword();
+    virtual ~cltMini_Sword();
+
+    virtual int  Poll() override;
+    void PrepareDrawing();
+    void Draw();
+    void ExitGame();
+
+    unsigned int   GetExp();
+    void           SetPoint(uint16_t v);
+    void           IncreasePoint();
+    void           IncLessonPt_Sword(unsigned int v);
+    uint16_t       GetPoint();
+
+    // 狀態切換
+    void Ready();
+    void Init_Wait();
+    void Init_SelectDegree();
+    void Init_Ranking();
+    void Ranking();
+    void Init_PreRanking();
+    void Init_NextRanking();
+    void Init_Help();
+    void Init_ShowPoint();
+    void ShowPointText();
+    void SetGameDegree(uint8_t degree);
+    void StartGame();
+    void Gamming();
+    void EndStage();
+    void KeyHit(uint8_t direction);
+    void DrawEffect(uint8_t dummy);
+    void CheckGameDegree();
+    void InitMiniGameImage();
+
+    // --- Button / Timer callbacks ---
+    static void OnBtn_Start(cltMini_Sword* self);
+    static void OnBtn_Ranking(cltMini_Sword* self);
+    static void OnBtn_Exit();
+    static void OnBtn_RankingPre(cltMini_Sword* self);
+    static void OnBtn_RankingNext(cltMini_Sword* self);
+    static void OnBtn_Help(cltMini_Sword* self);
+    static void OnBtn_ShowPoint(cltMini_Sword* self);
+    static void OnBtn_ExitPopUp(cltMini_Sword* self);
+    static void OnBtn_DegreeEasy(cltMini_Sword* self);
+    static void OnBtn_DegreeNormal(cltMini_Sword* self);
+    static void OnBtn_DegreeHard(cltMini_Sword* self);
+
+    static void OnTimer_DecreaseReadyTime(unsigned int id, cltMoF_BaseMiniGame* self);
+    static void OnTimer_TimeOutReadyTime(unsigned int id, cltMini_Sword*      self);
+    static void OnTimer_DecreaseRemainTime(unsigned int id, cltMoF_BaseMiniGame* self);
+    static void OnTimer_StageClear(unsigned int id, cltMini_Sword* self);
+
+public:
+    // mofclient.c 的 5 欄位圖像 slot（每個 slot 20 bytes + GameImage*）
+    struct ImageSlot
+    {
+        int           active;
+        unsigned int  resID;
+        uint16_t      blockID;
+        int           x;
+        int           y;
+        GameImage*    pImage;
+    };
+
+    static constexpr int kSlotCount = 40;
+
+    // --- 遊戲狀態欄位 ---
+    uint32_t   m_bgResID;                 // +16 (dword 4)
+    int        m_totalScore;              // +20 (dword 5)
+    int        m_winMark;                 // +28 (dword 7)
+    int        m_difficultyBaseScore;     // +24 (dword 6)
+    int        m_currentRoundScore;       // +32 (dword 8)
+    int        m_finalScore;              // +36 (dword 9)
+    int        m_displayScore;            // +40 (dword 10)
+    uint16_t   m_point;                   // +36 offset: actually WORD[1982] = +3964
+
+    // 5*i + 565 中的「i」剛好是 slot index，所以 slot data 從 dword 565 = byte 2260 開始。
+    // 原始邏輯每個 slot 含 active(int) + resID(int) + blockID(short)+pad + x(int) + y(int) 共 20 bytes。
+    ImageSlot  m_slots[kSlotCount];       // +2260 ~ +3060
+
+    cltMiniGame_DrawNum m_drawNumTime;    // +3060：剩餘時間顯示
+    cltMiniGame_DrawNum m_drawNumPoint;   // +3120：目前得分
+    cltMiniGame_DrawNum m_drawNumReady;   // +3180：倒數顯示
+    cltMiniGame_DrawNum m_drawNumFinal;   // +3240：最終分數顯示
+
+    CControlAlphaBox    m_topBlackBox;    // +3300
+    CControlAlphaBox    m_midBlackBox;    // +3508
+    CControlAlphaBox    m_botBlackBox;    // +3716
+
+    uint8_t    m_byte3932;                // 每回合首次結束時=1
+    uint8_t    m_gameDegree;              // +3940 (= 20/30/40 依難度)
+    int        m_dword3936;               // score per exp mult
+    int        m_dword3944;               // trainning item kind
+    uint8_t    m_byte3948;                // slot hit direction
+
+    // 4 個怪物「index slot」——對齊 Init 中的 slot id 常數
+    uint8_t    m_slotMonsterBase;         // 3994 = 8
+    uint8_t    m_slotMonsterHead;         // 3995 = 30
+    uint8_t    m_slotHitFX;               // 3996 = 22
+    uint8_t    m_slotMissFX;              // 3997 = 26
+    uint8_t    m_slotMonsterAlt;          // 3998 = 24
+    uint8_t    m_slotTargetFX;            // 3999 = 31
+    uint8_t    m_slotEffectA;             // 4000 = 12
+    uint8_t    m_slotEffectB;             // 4001 = 13
+    uint8_t    m_slotEffectC;             // 4002 = 14
+    uint8_t    m_slotReadyBG;             // 4003 = 17
+    uint8_t    m_slotReadyTime;           // 4004 = 18
+    uint8_t    m_slotPointFrame;          // 4005 = 30
+    uint8_t    m_slotHelpFrame;           // 4006 = 15
+    uint8_t    m_slotBtnFrame;            // 3993 = 4
+
+    // 對應狀態
+    uint8_t    m_curTarget;               // 3972 (目前顯示的攻擊目標 0..3)
+    uint8_t    m_nextTarget;              // 3973 (下次目標)
+    int        m_missFlash;               // 3988 dword 997
+    int        m_hitLocked;               // 3968 dword 992
+    int        m_needNewTarget;           // 3976 dword 994
+    int        m_monsterSpawned;          // 3952 dword 988
+    unsigned int m_lastSpawnTick;         // 3960 dword 990
+    unsigned int m_spawnInterval;         // 3956 dword 989
+    int        m_startTick;               // 4008 dword 1002
+    int        m_pollFrame;               // 4012 dword 1003
+    uint8_t    m_prevState;               // +2061
+
+    // 與結算 popup 相關
+    uint32_t   m_finalReady;              // dword 138
+    uint32_t   m_serverAck;               // dword 139
+    uint32_t   m_serverResult;            // dword 140
+    uint32_t   m_serverValid;             // dword 141
+    uint32_t   m_serverTimeMs;            // dword 146
+    uint32_t   m_exitTick;                // dword 150
+};

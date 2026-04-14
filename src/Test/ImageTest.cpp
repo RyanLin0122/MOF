@@ -4,7 +4,7 @@
 #include "Image/ImageResource.h"
 #include "Image/LoadingThread.h"
 #include "Image/ResourceMgr.h"
-#include "Image/BackgroundImage.h"
+#include "Image/BackGroundImage.h"
 #include "Image/GameImage.h"
 #include "Image/cltImageManager.h"
 #include "FileSystem/CMOFPacking.h" // For integration test
@@ -410,7 +410,7 @@ void ImageSystemTester::Test_GameImage_ColorAndAlpha() {
 }
 
 void ImageSystemTester::Test_BackgroundImage_Scrolling() {
-    BackgroundImage bg;
+    BackGroundImage bg;
     // 建立一個 512x256 的圖片，但來源紋理是 512x1024
     bg.CreateImage("dummy_bg.jpg", 512.0f, 256.0f, 512.0f, 1024.0f);
 
@@ -423,14 +423,14 @@ void ImageSystemTester::Test_BackgroundImage_Scrolling() {
     assert(abs(bg.m_fV_Start - 0.65f) < 0.001f);
 
     // 2. 向下捲動
-    bool at_edge = bg.SetPositionDOWN(204.8f); // 向下捲動 20%
+    char at_edge = bg.SetPositionDOWN(204.8f); // 向下捲動 20%
     assert(abs(bg.m_fV_Start - 0.85f) < 0.001f);
-    assert(at_edge == false); // 還沒到底部
+    assert(at_edge == 0); // 還沒到底部
 
     // 3. 捲動到底部
     at_edge = bg.SetPositionDOWN(500.0f); // 嘗試捲動一個很大的值
     assert(abs(bg.m_fV_Start - 0.75f) < 0.001f); // 應被限制在最大值 0.75
-    assert(at_edge == true); // 應返回已到達邊界
+    assert(at_edge == 1); // 應返回已到達邊界
 }
 
 

@@ -1,4 +1,4 @@
-#include "Image/BackgroundImage.h"
+#include "Image/BackGroundImage.h"
 #include "Image/CDeviceManager.h"
 #include "Image/CDeviceResetManager.h"
 #include <cstring> // for memcpy
@@ -7,7 +7,7 @@
 extern LPDIRECT3DDEVICE9    Device;
 extern bool                 DontDraw; // 全域的 "不要繪製" 旗標
 
-BackgroundImage::BackgroundImage()
+BackGroundImage::BackGroundImage()
 {
     // 將所有指標和數值成員初始化為 0 或 nullptr
     Reset();
@@ -21,7 +21,7 @@ BackgroundImage::BackgroundImage()
     }
 }
 
-BackgroundImage::~BackgroundImage()
+BackGroundImage::~BackGroundImage()
 {
     // 在解構時釋放 D3D 資源
     if (m_pTexData) {
@@ -32,7 +32,7 @@ BackgroundImage::~BackgroundImage()
     }
 }
 
-void BackgroundImage::Reset()
+void BackGroundImage::Reset()
 {
     // 釋放 D3D 資源
     if (m_pTexData) {
@@ -57,7 +57,7 @@ void BackgroundImage::Reset()
     m_fV_Start = 0.0f;
 }
 
-void BackgroundImage::CreateImage(const char* szFilename, float imgWidth, float imgHeight, float texWidth, float texHeight)
+void BackGroundImage::CreateImage(const char* szFilename, float imgWidth, float imgHeight, float texWidth, float texHeight)
 {
     Reset(); // 先清除舊資源
 
@@ -75,7 +75,7 @@ void BackgroundImage::CreateImage(const char* szFilename, float imgWidth, float 
     m_fV_Start = 1.0f - m_fV_End; // V 座標從底部開始計算
 }
 
-void BackgroundImage::CreateBlackBG(float x, float y, float width, float height)
+void BackGroundImage::CreateBlackBG(float x, float y, float width, float height)
 {
     Reset(); // 先清除舊資源
 
@@ -115,34 +115,34 @@ void BackgroundImage::CreateBlackBG(float x, float y, float width, float height)
     }
 }
 
-void BackgroundImage::SetPosition(float x, float y)
+void BackGroundImage::SetPosition(float x, float y)
 {
     m_fPosX = x;
     m_fPosY = y;
 }
 
-bool BackgroundImage::SetPositionUP(float delta)
+char BackGroundImage::SetPositionUP(float delta)
 {
     m_fV_Start -= (delta / m_fTexHeight);
     if (m_fV_Start < 0.0f) {
         m_fV_Start = 0.0f;
-        return true; // 已達頂部
+        return 1; // 已達頂部
     }
-    return false;
+    return 0;
 }
 
-bool BackgroundImage::SetPositionDOWN(float delta)
+char BackGroundImage::SetPositionDOWN(float delta)
 {
     m_fV_Start += (delta / m_fTexHeight);
     float maxV = 1.0f - m_fV_End;
     if (m_fV_Start > maxV) {
         m_fV_Start = maxV;
-        return true; // 已達底部
+        return 1; // 已達底部
     }
-    return false;
+    return 0;
 }
 
-void BackgroundImage::Process()
+void BackGroundImage::Process(float /*dt*/)
 {
     if (!m_pVBData) return;
 
@@ -167,7 +167,7 @@ void BackgroundImage::Process()
     }
 }
 
-void BackgroundImage::Render()
+void BackGroundImage::Render()
 {
     if (DontDraw || !m_pVBData || !m_pTexData) return;
 
@@ -177,7 +177,7 @@ void BackgroundImage::Render()
     Device->DrawPrimitive(D3DPT_TRIANGLEFAN, 0, 2);
 }
 
-void BackgroundImage::RenderBlackBG()
+void BackGroundImage::RenderBlackBG()
 {
     if (DontDraw || !m_pVBData) return;
 

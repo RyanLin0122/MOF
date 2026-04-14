@@ -32,6 +32,10 @@ public:
     unsigned int GetResourceID();
     uint16_t     GetBlockID();
 
+    // 供小遊戲焦點管理使用（對齊 mofclient.c 的欄位直接讀取）
+    int     IsActive() const { return m_nActive; }
+    uint8_t GetState() const { return m_nState; }
+
 private:
     int          m_nActive = 0;
     uint8_t      m_nState = 0;

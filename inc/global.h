@@ -293,6 +293,17 @@ extern CDeviceManager&          g_clDeviceManager;
 // Sound
 extern GameSound                g_GameSoundManager;
 
+// MiniGame
+class cltMoF_BaseMiniGame;
+extern cltMoF_BaseMiniGame      g_clMiniGame;
+extern CEffectManager           g_EffectManager_MiniGame;
+extern cltLessonSystem          g_clLessonSystem;
+
+// cltMini_Sword 所使用的全域狀態（對齊 mofclient.c）
+extern unsigned char            g_cGameSwordState;  // 0..7 / 100
+extern unsigned int             dwFrameCnt;
+extern int                      MonPosY[10];        // 怪物頭頂抖動位移
+
 // Info (additional)
 extern cltSkillKindInfo         g_clSkillKindInfo;
 extern cltLessonKindInfo        g_clLessonKindInfo;

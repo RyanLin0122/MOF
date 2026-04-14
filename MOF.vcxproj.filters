@@ -22,6 +22,12 @@
     <Filter Include="標頭檔\fmod">
       <UniqueIdentifier>{012e5b89-20ab-41e0-b3d3-5a78ac89a086}</UniqueIdentifier>
     </Filter>
+    <Filter Include="來源檔案\MiniGame">
+      <UniqueIdentifier>{8c3e97ab-16a8-4c7e-9c0b-7a1d44b8b5a7}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="標頭檔\MiniGame">
+      <UniqueIdentifier>{3b1bdcb5-3a58-4f4e-b4a5-8c93d3c7a2fa}</UniqueIdentifier>
+    </Filter>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="main.cpp">
@@ -57,7 +63,7 @@
     <ClCompile Include="src\Image\Image.cpp">
       <Filter>來源檔案</Filter>
     </ClCompile>
-    <ClCompile Include="src\Image\BackgroundImage.cpp">
+    <ClCompile Include="src\Image\BackGroundImage.cpp">
       <Filter>來源檔案</Filter>
     </ClCompile>
     <ClCompile Include="src\Image\cltImageManager.cpp">
@@ -1095,6 +1101,21 @@
     <ClCompile Include="src\UI\CUIWorldMap.cpp">
       <Filter>來源檔案</Filter>
     </ClCompile>
+    <ClCompile Include="src\MiniGame\Ani_Board.cpp">
+      <Filter>來源檔案\MiniGame</Filter>
+    </ClCompile>
+    <ClCompile Include="src\MiniGame\BackGroundMgr.cpp">
+      <Filter>來源檔案\MiniGame</Filter>
+    </ClCompile>
+    <ClCompile Include="src\MiniGame\BoardMgr.cpp">
+      <Filter>來源檔案\MiniGame</Filter>
+    </ClCompile>
+    <ClCompile Include="src\MiniGame\cltMoF_BaseMiniGame.cpp">
+      <Filter>來源檔案\MiniGame</Filter>
+    </ClCompile>
+    <ClCompile Include="src\MiniGame\cltValidMiniGameScore.cpp">
+      <Filter>來源檔案\MiniGame</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="inc\Sound\COgg.h">
@@ -1139,7 +1160,7 @@
     <ClInclude Include="inc\Image\Image.h">
       <Filter>標頭檔</Filter>
     </ClInclude>
-    <ClInclude Include="inc\Image\BackgroundImage.h">
+    <ClInclude Include="inc\Image\BackGroundImage.h">
       <Filter>標頭檔</Filter>
     </ClInclude>
     <ClInclude Include="inc\Image\GameImage.h">
@@ -2188,6 +2209,21 @@
     </ClInclude>
     <ClInclude Include="inc\Info\cltRegenMonsterKindInfo.h">
       <Filter>標頭檔</Filter>
+    </ClInclude>
+    <ClInclude Include="inc\MiniGame\Ani_Board.h">
+      <Filter>標頭檔\MiniGame</Filter>
+    </ClInclude>
+    <ClInclude Include="inc\MiniGame\BackGroundMgr.h">
+      <Filter>標頭檔\MiniGame</Filter>
+    </ClInclude>
+    <ClInclude Include="inc\MiniGame\BoardMgr.h">
+      <Filter>標頭檔\MiniGame</Filter>
+    </ClInclude>
+    <ClInclude Include="inc\MiniGame\cltMoF_BaseMiniGame.h">
+      <Filter>標頭檔\MiniGame</Filter>
+    </ClInclude>
+    <ClInclude Include="inc\MiniGame\cltValidMiniGameScore.h">
+      <Filter>標頭檔\MiniGame</Filter>
     </ClInclude>
   </ItemGroup>
   <ItemGroup>
