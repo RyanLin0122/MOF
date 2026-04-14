@@ -15,14 +15,14 @@
 #include <cstddef>
 
 // ============================================================================
-// CCA â€” restored from mofclient.c (0x00524C8C .. 0x00526E00)
+// CCA ¡X restored from mofclient.c (0x00524C8C .. 0x00526E00)
 // ============================================================================
 
 // -----------------------------------------------------------------------------
 // NOTE: the original binary is 32-bit x86 and places m_fPosX/m_fPosY at byte
 // offsets 128/132.  We build as x64, where the class has a larger vtable and
 // 8-byte pointers, so those byte offsets no longer apply.  All call sites in
-// this port use named access (m_pCCA->m_fPosX) â€” search the repo to confirm.
+// this port use named access (m_pCCA->m_fPosX) ¡X search the repo to confirm.
 // -----------------------------------------------------------------------------
 
 // -----------------------------------------------------------------------------
@@ -33,9 +33,9 @@ static bool  g_bProcessInit  = false;
 static float g_fLastTime     = 0.0f;
 static int   g_nFrameIndex   = 0;
 
-// Layer-slot â†’ case-number LUT used by the fallback image-lookup branch in
+// Layer-slot ¡÷ case-number LUT used by the fallback image-lookup branch in
 // CCA::Process().  The binary's byte_525EB4 is a weak symbol (all zeros), so
-// we preserve that default here â€” every slot falls through to case 0 at load,
+// we preserve that default here ¡X every slot falls through to case 0 at load,
 // and data-driven tooling can override it later if needed.
 static unsigned char byte_525EB4[20] = { 0 };
 
@@ -252,7 +252,7 @@ void CCA::EndEmoticon(uint16_t faceIdx, uint8_t sex)
 }
 
 // =============================================================================
-// Process() â€” top-level per-frame tick (0x005251A0)
+// Process() ¡X top-level per-frame tick (0x005251A0)
 // =============================================================================
 bool CCA::Process()
 {
@@ -278,7 +278,7 @@ bool CCA::Process()
 
     g_nFrameIndex += step;
     // The original sums the frame index as (step + frameIndex) and uses it as
-    // a pointer-sized int, which is meaningless here â€” we simulate the same
+    // a pointer-sized int, which is meaningless here ¡X we simulate the same
     // behaviour by advancing the same counter and clamping.
     int frameIdxLocal = g_nFrameIndex;
     uint16_t frame = static_cast<uint16_t>(frameIdxLocal + static_cast<uint16_t>(m_nCurFrame));
@@ -294,7 +294,7 @@ bool CCA::Process()
 }
 
 // =============================================================================
-// Process(GameImage*) â€” per-layer draw-list rebuild (0x00525290)
+// Process(GameImage*) ¡X per-layer draw-list rebuild (0x00525290)
 //
 // Rebuilds m_pVec* with the GameImage records for every visible layer at the
 // current animation frame, applying position/offset/alpha overrides and
@@ -347,7 +347,7 @@ bool CCA::Process(GameImage* pFrameAsPtr)
         if (m_nTransportActive)
         {
             // slot values are 0-based here (0..22), the original was 1..22 via v13+6.
-            // The original checks v13 âˆˆ {1,6,7,13,14,15,16,22} â†’ our slots {1,6,7,13,14,15,16,22}.
+            // The original checks v13 ? {1,6,7,13,14,15,16,22} ¡÷ our slots {1,6,7,13,14,15,16,22}.
             switch (slot)
             {
             case 1: case 6: case 7: case 13:
@@ -412,7 +412,7 @@ bool CCA::Process(GameImage* pFrameAsPtr)
                                 }
                             }
                         }
-                        // (other fallback cases unused â€” byte_525EB4 is weak/zero)
+                        // (other fallback cases unused ¡X byte_525EB4 is weak/zero)
                     }
                 }
             }
@@ -471,7 +471,7 @@ bool CCA::Process(GameImage* pFrameAsPtr)
             {
                 // ImageResourceListData has a block table at offset 32 of the
                 // underlying data; each block is 52 bytes with a hot-spot at
-                // +28, +32.  We don't reimplement that walker here â€” instead
+                // +28, +32.  We don't reimplement that walker here ¡X instead
                 // we use the CA_DRAWENTRY offsets directly, which is what the
                 // original formula reduces to when the block offsets are 0.
                 (void)blockOffsetX; (void)blockOffsetY;
@@ -507,7 +507,7 @@ bool CCA::Draw(int viewport)
         if (pEff)
         {
             // Original: (*(void (__thiscall **)(int))(*(_DWORD *)v6 + 12))(v6);
-            // We cannot dispatch through an unknown vtable slot here â€” instead
+            // We cannot dispatch through an unknown vtable slot here ¡X instead
             // treat the effect as opaque and simply mark the renderstate as
             // touched so it gets reset below.
             (void)pEff;
@@ -575,7 +575,7 @@ LAYERINFO** CCA::GetLayerInfo()
 }
 
 // =============================================================================
-// SetItemID (0x005261C0) â€” dispatches to LayerPutOn / LayerPutOff / SetLayerByItemKind
+// SetItemID (0x005261C0) ¡X dispatches to LayerPutOn / LayerPutOff / SetLayerByItemKind
 // =============================================================================
 void CCA::SetItemID(uint16_t itemID, uint8_t sex, int mode, int hairIdx, int faceIdx, uint8_t slotIndex)
 {
@@ -588,7 +588,7 @@ void CCA::SetItemID(uint16_t itemID, uint8_t sex, int mode, int hairIdx, int fac
 
     if (slotIndex == 0)
     {
-        // slot 0 â€” equipment
+        // slot 0 ¡X equipment
         if (!mode)
         {
             if (m_ItemIDs[itemKind][0] == 0)
@@ -639,7 +639,7 @@ void CCA::SetItemID(uint16_t itemID, uint8_t sex, int mode, int hairIdx, int fac
         return;
     }
 
-    // slotIndex == 1 â€” fashion override
+    // slotIndex == 1 ¡X fashion override
     if (mode)
     {
         SetLayerByItemKind(itemID, mode, sex, hairIdx, faceIdx, m_ItemIDs[8][1]);
@@ -677,7 +677,7 @@ void CCA::SetItemID(uint16_t itemID, uint8_t sex, int mode, int hairIdx, int fac
     // mode == 0 branch
     if (itemKind == 13)
     {
-        // SUIT â€” spread across coat/pants/shoes/hand/suit slots.
+        // SUIT ¡X spread across coat/pants/shoes/hand/suit slots.
         uint16_t cur = m_ItemIDs[13][0];
         if (cur)
         {
@@ -821,7 +821,7 @@ void CCA::LayerPutOn(uint16_t itemID, uint16_t extraItemID)
 }
 
 // =============================================================================
-// LayerPutOff (0x005269D0) â€” clears layer slots for a given kind
+// LayerPutOff (0x005269D0) ¡X clears layer slots for a given kind
 // =============================================================================
 void CCA::LayerPutOff(uint16_t kind, uint8_t sex, int hairIdx, int faceIdx)
 {
