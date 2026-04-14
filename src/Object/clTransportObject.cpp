@@ -1,6 +1,7 @@
 #include "Object/clTransportObject.h"
 #include "Image/cltImageManager.h"
 #include "Image/GameImage.h"
+#include "Character/CCA.h"
 #include "Character/ClientCharacter.h"
 #include "Logic/clTransportKindInfo.h"
 #include "Logic/clClientTransportKindInfo.h"
@@ -87,8 +88,8 @@ void clTransportObject::UpdatePosition()
 
     if (m_pCCA)
     {
-        m_nPosY = static_cast<int>(static_cast<std::int64_t>(*reinterpret_cast<float*>(reinterpret_cast<char*>(m_pCCA) + 132)));
-        m_nPosX = static_cast<int>(static_cast<std::int64_t>(*reinterpret_cast<float*>(reinterpret_cast<char*>(m_pCCA) + 128)));
+        m_nPosY = static_cast<int>(static_cast<std::int64_t>(m_pCCA->m_fPosY));
+        m_nPosX = static_cast<int>(static_cast<std::int64_t>(m_pCCA->m_fPosX));
     }
     else
     {

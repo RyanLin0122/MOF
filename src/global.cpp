@@ -30,6 +30,8 @@
 #include "System/cltEquipmentSystem.h"
 #include "Character/ClientCharacter.h"
 #include "Character/ClientCharacterManager.h"
+#include "Character/CAManager.h"
+#include "Character/CCAClone.h"
 #include "System/cltQuestSystem.h"
 #include "System/CMeritoriousSystem.h"
 #include "System/CSpiritSystem.h"
@@ -146,6 +148,8 @@ cltFieldItemManager g_clFieldItemMgr;
 cltHelpMessage g_clHelpMessage;
 cltNPCManager g_clNPCManager;
 ClientCharacterManager g_ClientCharMgr;
+CAManager g_CAManager;
+CCAClone g_clCAClone;
 cltConfiguration* g_clConfig = nullptr;
 CObjectManager g_ObjectManager;
 CObjectResourceManager g_ObjectResourceManager;
@@ -201,6 +205,15 @@ int cHeight = 0;
 int dword_73D154 = 0;
 int dword_B4BAB4 = 0;
 char byte_21CB35D = 0;
+int dword_829254 = 1;   // default: prefer packed .ca loads
+
+// CCA / CCAClone per-slot fallback case maps (mofclient.c 0x525EB4 / 0x5280FC).
+// Both are zero in the shipped binary (weak single-zero arrays), meaning every
+// slot that drops into the recovery path re-resolves through the current hair
+// layer (case 0).  Exposed as named externs so future tooling can toggle any
+// slot without touching CCA internals — see global.h for the case legend.
+unsigned char byte_525EB4[19] = {};
+unsigned char byte_5280FC[19] = {};
 cltFieldItem* unk_73D15C[1024] = {};
 void* unk_813AA8[1024] = {};
 void* unk_B4B924[1024] = {};

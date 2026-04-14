@@ -79,6 +79,14 @@ public:
 
     bool GetSustainSkillState(unsigned short a);
 
+
+    // Character lifecycle / equipment hooks used by ClientCharacterManager
+    void SetItem(unsigned short itemKind, int qty);
+    void ResetItem(unsigned char slot);
+    void SetCAClone();
+    void DeleteCharacter();
+    void SetEmoticonKind(int emoticonKind);
+    void ReleaseEmoticon();
     // Tutorial helpers
     unsigned int GetSearchMonster();
     void SetOrderAttack(stCharOrder* pOrder, unsigned int targetAccount,
