@@ -3,6 +3,7 @@
 #include "Image/cltImageManager.h"
 #include "Image/GameImage.h"
 #include "FileSystem/CMOFPacking.h"
+#include "UI/CMessageBoxManager.h"
 #include "global.h"
 
 #include <cstring>
@@ -305,7 +306,8 @@ void CCANormal::LoadCAInPack(char* filename)
     {
         char msg[256];
         std::snprintf(msg, sizeof(msg), "%s didn't find Character Animation File.", filename);
-        ::MessageBoxA(nullptr, msg, nullptr, 0);
+        // GT: CMessageBoxManager::AddOK(g_pMsgBoxMgr, Buffer, 0, 0, 0, -1);
+        if (g_pMsgBoxMgr) g_pMsgBoxMgr->AddOK(msg, 0, 0, 0, -1);
         return;
     }
 
@@ -317,7 +319,8 @@ void CCANormal::LoadCAInPack(char* filename)
     {
         char msg[256];
         std::snprintf(msg, sizeof(msg), "%s didn't find Character Animation File.", filename);
-        ::MessageBoxA(nullptr, msg, nullptr, 0);
+        // GT: CMessageBoxManager::AddOK(g_pMsgBoxMgr, Buffer, 0, 0, 0, -1);
+        if (g_pMsgBoxMgr) g_pMsgBoxMgr->AddOK(msg, 0, 0, 0, -1);
         return;
     }
 
@@ -335,7 +338,8 @@ void CCANormal::LoadCA(const char* filename)
     {
         char msg[256];
         std::snprintf(msg, sizeof(msg), "%s didn't find Character Animation File.", filename);
-        ::MessageBoxA(nullptr, msg, nullptr, 0);
+        // GT: CMessageBoxManager::AddOK(g_pMsgBoxMgr, Buffer, 0, 0, 0, -1);
+        if (g_pMsgBoxMgr) g_pMsgBoxMgr->AddOK(msg, 0, 0, 0, -1);
         return;
     }
     FileSrc cursor{ fp };
