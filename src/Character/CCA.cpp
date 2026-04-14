@@ -1,5 +1,6 @@
 #include "Character/CCA.h"
 #include "Character/CAManager.h"
+#include "Effect/CEffectBase.h"
 #include "Image/cltImageManager.h"
 #include "Image/CDeviceResetManager.h"
 #include "Image/CDeviceManager.h"
@@ -503,17 +504,17 @@ bool CCA::Draw(int viewport)
 
     bool renderStateTouched = false;
 
-    // Effects rendered before the character body.
+    // Effects rendered before the character body.  Ground truth dispatches
+    // through vtable slot +12 on the first CEffectBase* held at m_pEffectBefore,
+    // which corresponds to CEffectBase::Draw() in our class layout
+    // (dtor/FrameProcess/Process/Draw => slots 0/4/8/12 in 32-bit).  Call the
+    // virtual directly so derived effects render their pre-body pass.
     if (m_pEffectBefore && !m_nTransportActive)
     {
         CEffectBase* pEff = *m_pEffectBefore;
         if (pEff)
         {
-            // Original: (*(void (__thiscall **)(int))(*(_DWORD *)v6 + 12))(v6);
-            // We cannot dispatch through an unknown vtable slot here �X instead
-            // treat the effect as opaque and simply mark the renderstate as
-            // touched so it gets reset below.
-            (void)pEff;
+            pEff->Draw();
             renderStateTouched = true;
         }
         if (renderStateTouched)
@@ -526,28 +527,25 @@ bool CCA::Draw(int viewport)
     ID3DXSprite* pSprite = reinterpret_cast<ID3DXSprite*>(m_pSprite);
     if (pSprite) pSprite->Begin(static_cast<DWORD>(viewport));
 
+    // Ground truth (D3DX8) path: for every image in the draw list, compute
+    // scale+tint+position then dispatch the sprite's Draw vtable entry with
+    // (tex, srcRect, scale, center, rot, pos, color).  Our port is D3DX9 and
+    // GameImage owns its own vertex buffer pipeline, so the per-image vertex
+    // state (position, tint, mirror flip) is already set up in Process(); we
+    // only need to invoke GameImage::Draw() here to issue the DrawPrimitive.
     size_t count = CCA_VectorSize(this);
     for (size_t i = 0; i < count; ++i)
     {
         GameImage* pGI = m_pVecBegin[i];
         if (!pGI || !pGI->m_pGIData) continue;
-        // Compute per-GameImage tint & position then dispatch to sprite->Draw.
-        float scale[2]  = { 1.0f, 1.0f };
-        float position[2] = { pGI->m_fPosX, pGI->m_fPosY };
-        if (static_cast<int>(i) == m_nTransportMask)
-        {
-            // override tint: (original uses 1023410175 = 0x3F000000 = 0.5f)
-        }
-        if (m_bMirrored) scale[0] = -1.0f;
-        RECT rc; pGI->GetBlockRect(&rc);
-        // The sprite drawing call is opaque in the decompilation; invoke
-        // GameImage::Draw() which already wraps the D3DX sprite pipeline.
         pGI->Draw();
     }
 
     if (pSprite) pSprite->End();
 
-    // Effects rendered after the character body.
+    // Effects rendered after the character body.  Ground truth iterates
+    // m_pEffectAfter over 9 slots (for i = 0; i < 36; i += 4) and dispatches
+    // vtable slot +12 on each non-null entry; that is CEffectBase::Draw().
     if (m_pEffectAfter)
     {
         for (int i = 0; i < 9; ++i)
@@ -555,7 +553,7 @@ bool CCA::Draw(int viewport)
             CEffectBase* pEff = m_pEffectAfter[i];
             if (pEff)
             {
-                (void)pEff;
+                pEff->Draw();
                 renderStateTouched = true;
             }
         }

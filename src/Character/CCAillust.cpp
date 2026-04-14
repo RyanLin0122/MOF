@@ -238,13 +238,13 @@ void CCAillust::Draw(int viewport)
         RECT rc;
         pGI->GetBlockRect(&rc);
 
-        // The decompile dispatches through a wrapper that takes (texture, rect,
-        // matrix, color).  ID3DXSprite::Draw's signature is (tex, rect, center,
-        // pos, color) — feed the matrix translation as the position vector to
-        // preserve behaviour.
-        D3DXVECTOR3 pos(pGI->m_fPosX, pGI->m_fPosY, 0.0f);
+        // Ground truth calls ID3DXSprite::DrawTransform(tex, rect, matrix,
+        // color) — a D3DX8 API.  In D3DX9 the equivalent is
+        //   SetTransform(matrix); Draw(tex, rect, nullptr, nullptr, color);
+        // Passing both the transform AND a position vector would double the
+        // translation, so feed the position only through SetTransform here.
         pSprite->SetTransform(&trans);
-        pSprite->Draw(pTexture, &rc, nullptr, &pos, color);
+        pSprite->Draw(pTexture, &rc, nullptr, nullptr, color);
     }
 
     pSprite->End();

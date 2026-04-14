@@ -299,21 +299,18 @@ void CCAClone::Draw()
     ID3DXSprite* pSprite = reinterpret_cast<ID3DXSprite*>(m_pSprite);
     pSprite->Begin(0);
 
+    // Ground truth (D3DX8) issues the sprite's Draw vtable entry with
+    // (tex, srcRect, scale, center, rot, pos, color) and then calls
+    // GameImage::SetDefaultTextureColor after each image.  In our D3DX9 port
+    // the per-image transform / tint / mirror flip is already baked into the
+    // GameImage vertex buffer by Process(), so we just invoke GameImage::Draw
+    // to issue the DrawPrimitive and restore the default tint afterwards.
     size_t count = CCAClone_VectorSize(this);
     for (size_t i = 0; i < count; ++i)
     {
         GameImage* pGI = m_pVecBegin[i];
         if (!pGI || !pGI->m_pGIData) continue;
-
-        // Match the original: read+restore the GameImage overwrite color so
-        // the final tint respects our m_bMirrored horizontal flip.
-        float oc[4] = { 1.0f, 1.0f, 1.0f, 1.0f };
-        pGI->GetOverWriteTextureColor(oc);
-        (void)ClampFloatToByte(oc[0]);  // (values folded into the tint below)
-
-        RECT rc; pGI->GetBlockRect(&rc);
         pGI->Draw();
-
         pGI->SetDefaultTextureColor();
     }
 
