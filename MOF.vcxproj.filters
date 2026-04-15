@@ -1119,6 +1119,30 @@
     <ClCompile Include="src\MiniGame\cltMini_Sword_2.cpp">
       <Filter>來源檔案\MiniGame</Filter>
     </ClCompile>
+    <ClCompile Include="src\MiniGame\Mini_AniCtrl.cpp">
+      <Filter>來源檔案\MiniGame</Filter>
+    </ClCompile>
+    <ClCompile Include="src\MiniGame\MedicalKit_Button.cpp">
+      <Filter>來源檔案\MiniGame</Filter>
+    </ClCompile>
+    <ClCompile Include="src\MiniGame\Mini_Speek.cpp">
+      <Filter>來源檔案\MiniGame</Filter>
+    </ClCompile>
+    <ClCompile Include="src\MiniGame\CMedical.cpp">
+      <Filter>來源檔案\MiniGame</Filter>
+    </ClCompile>
+    <ClCompile Include="src\MiniGame\PatientRecallMgr.cpp">
+      <Filter>來源檔案\MiniGame</Filter>
+    </ClCompile>
+    <ClCompile Include="src\MiniGame\CHospital.cpp">
+      <Filter>來源檔案\MiniGame</Filter>
+    </ClCompile>
+    <ClCompile Include="src\MiniGame\cltMini_Exorcist_2.cpp">
+      <Filter>來源檔案\MiniGame</Filter>
+    </ClCompile>
+    <ClCompile Include="src\MiniGame\cltMini_Exorcist.cpp">
+      <Filter>來源檔案\MiniGame</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="inc\Sound\COgg.h">
@@ -2229,6 +2253,30 @@
       <Filter>標頭檔\MiniGame</Filter>
     </ClInclude>
     <ClInclude Include="inc\MiniGame\cltMini_Sword_2.h">
+      <Filter>標頭檔\MiniGame</Filter>
+    </ClInclude>
+    <ClInclude Include="inc\MiniGame\Mini_AniCtrl.h">
+      <Filter>標頭檔\MiniGame</Filter>
+    </ClInclude>
+    <ClInclude Include="inc\MiniGame\MedicalKit_Button.h">
+      <Filter>標頭檔\MiniGame</Filter>
+    </ClInclude>
+    <ClInclude Include="inc\MiniGame\Mini_Speek.h">
+      <Filter>標頭檔\MiniGame</Filter>
+    </ClInclude>
+    <ClInclude Include="inc\MiniGame\CMedical.h">
+      <Filter>標頭檔\MiniGame</Filter>
+    </ClInclude>
+    <ClInclude Include="inc\MiniGame\PatientRecallMgr.h">
+      <Filter>標頭檔\MiniGame</Filter>
+    </ClInclude>
+    <ClInclude Include="inc\MiniGame\CHospital.h">
+      <Filter>標頭檔\MiniGame</Filter>
+    </ClInclude>
+    <ClInclude Include="inc\MiniGame\cltMini_Exorcist_2.h">
+      <Filter>標頭檔\MiniGame</Filter>
+    </ClInclude>
+    <ClInclude Include="inc\MiniGame\cltMini_Exorcist.h">
       <Filter>標頭檔\MiniGame</Filter>
     </ClInclude>
   </ItemGroup>

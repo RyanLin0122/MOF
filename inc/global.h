@@ -306,8 +306,12 @@ extern cltLessonSystem          g_clLessonSystem;
 // cltMini_Sword 所使用的全域狀態（對齊 mofclient.c）
 extern unsigned char            g_cGameSwordState;  // 0..7 / 100
 extern unsigned char            g_cGameSword_2State; // cltMini_Sword_2 專用狀態機
+extern unsigned char            g_cGameExorcist_2State; // cltMini_Exorcist_2 專用狀態機
+extern unsigned char            g_cGameExorcistState;   // cltMini_Exorcist 專用狀態機
+extern unsigned char            g_cCardState[3];        // cltMini_Exorcist 三張卡片動畫狀態
 extern unsigned int             dwFrameCnt;
 extern int                      MonPosY[10];        // 怪物頭頂抖動位移
+extern int                      g_GAMESCORE;        // 通用小遊戲分數累計（cltMini_Exorcist 等使用）
 
 // Info (additional)
 extern cltSkillKindInfo         g_clSkillKindInfo;
