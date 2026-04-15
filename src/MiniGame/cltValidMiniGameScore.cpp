@@ -20,7 +20,9 @@ int cltValidMiniGameScore::IsValidScore(std::uint8_t lessonType, std::uint32_t s
             break;
         case 0x15u: // cltMini_Exorcist_2（神學 2）
         case 0x1Eu: // cltMini_Bow_2（弓箭 2）
-            if (score >= 0x0Au) return 0;
+            // mofclient.c 0x5A0040: `if ( a2 >= 0xA ) goto LABEL_16(=valid)`
+            // 亦即這兩種小遊戲要求分數至少為 10 才算合法，<10 視為無效。
+            if (score < 0x0Au) return 0;
             break;
         case 0x1Fu: // cltMini_Magic（魔法 1）
             if (score > 0x96u) return 0;
