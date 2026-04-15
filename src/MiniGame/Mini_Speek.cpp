@@ -85,9 +85,7 @@ Mini_Speek_Thanks::Mini_Speek_Thanks()
     , m_alphaScale(bitsToFloat(1132396544u))   // 255.0
     , m_colorScale(bitsToFloat(1120403456u))   // 102.0
     , m_bUsed(0)
-    , m_FrameSkip_vft(nullptr)
-    , m_accum(0.0f)
-    , m_threshold(bitsToFloat(1015580809u))    // ≈ 1/60
+    , m_FrameSkip()                            // vftable + accum=0 + threshold=1/60
 {
 }
 
@@ -114,15 +112,15 @@ void Mini_Speek_Thanks::Process(float dt)
     if (!m_bUsed)
         return;
 
-    float accum = dt + m_accum;
-    bool below = accum < m_threshold;
-    m_accum = accum;
+    float accum = dt + m_FrameSkip.m_fAccumulatedTime;
+    bool below = accum < m_FrameSkip.m_fTimePerFrame;
+    m_FrameSkip.m_fAccumulatedTime = accum;
     int frames = 0;
     if (!below)
     {
-        long long n = static_cast<long long>(accum / m_threshold);
+        long long n = static_cast<long long>(accum / m_FrameSkip.m_fTimePerFrame);
         if (n)
-            m_accum = accum - static_cast<float>(static_cast<int>(n)) * m_threshold;
+            m_FrameSkip.m_fAccumulatedTime = accum - static_cast<float>(static_cast<int>(n)) * m_FrameSkip.m_fTimePerFrame;
         frames = static_cast<int>(n);
     }
 

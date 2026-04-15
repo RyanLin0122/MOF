@@ -2,6 +2,8 @@
 
 #include <cstdint>
 
+#include "Effect/CCAEffect.h"  // for FrameSkip (embedded in Mini_Speek_Thanks DWORD[7..9])
+
 class GameImage;
 
 // mofclient.c 還原：Mini_Speek_Mgr — 顯示「需要的藥水」對話框
@@ -47,7 +49,5 @@ public:
     float        m_colorScale;    // DWORD[5]   bits 1120403456 = 102.f
     std::uint8_t m_bUsed;         // BYTE[24]
     std::uint8_t m_pad1[3];
-    void*        m_FrameSkip_vft; // DWORD[7]
-    float        m_accum;         // DWORD[8]
-    float        m_threshold;     // DWORD[9]   bits 1015580809 = 1/60
+    FrameSkip    m_FrameSkip;     // DWORD[7..9] (vftable + accum + threshold=1/60)
 };

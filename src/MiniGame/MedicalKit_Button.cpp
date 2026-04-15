@@ -19,9 +19,7 @@ MedicalKit_Button::MedicalKit_Button()
     // mofclient.c：先清掉 m_ani[0..1]
     std::memset(m_ani, 0, sizeof(m_ani));
 
-    m_FrameSkip_vft = nullptr;
-    m_threshold     = bitsToFloat(1015580809u);  // 預設 ~1/60
-    m_accum         = 0.0f;
+    // FrameSkip 預設 ~1/60（由 FrameSkip ctor 完成），再於 ctor 末尾覆寫。
     m_bSelected     = 0;
     m_buttonIdx     = 0;
     m_pImage        = nullptr;
@@ -30,7 +28,7 @@ MedicalKit_Button::MedicalKit_Button()
     m_fAnchor       = 0.0f;
     m_state         = 0;
     // mofclient.c 在 ctor 末尾把 threshold 改寫成 0x3AA3D70A
-    m_threshold     = bitsToFloat(983815946u);   // ≈ 0.00125
+    m_FrameSkip.m_fTimePerFrame = bitsToFloat(983815946u);   // ≈ 0.00125
 }
 
 MedicalKit_Button::~MedicalKit_Button() = default;
@@ -79,7 +77,7 @@ void MedicalKit_Button::OpenMedicalKit(float x, float y)
 void MedicalKit_Button::CloseMedicalKit()
 {
     m_state     = 2;
-    m_threshold = bitsToFloat(981668463u);  // ≈ 0.001
+    m_FrameSkip.m_fTimePerFrame = bitsToFloat(981668463u);  // ≈ 0.001
 }
 
 void MedicalKit_Button::SetSelect(bool selected)
@@ -106,15 +104,15 @@ int MedicalKit_Button::Process(float dt)
         {
             case 0:
             {
-                float v = dt + m_accum;
-                bool below = v < m_threshold;
-                m_accum = v;
+                float v = dt + m_FrameSkip.m_fAccumulatedTime;
+                bool below = v < m_FrameSkip.m_fTimePerFrame;
+                m_FrameSkip.m_fAccumulatedTime = v;
                 int frames = 0;
                 if (!below)
                 {
-                    long long n = static_cast<long long>(v / m_threshold);
+                    long long n = static_cast<long long>(v / m_FrameSkip.m_fTimePerFrame);
                     if (n)
-                        m_accum = v - static_cast<float>(static_cast<int>(n)) * m_threshold;
+                        m_FrameSkip.m_fAccumulatedTime = v - static_cast<float>(static_cast<int>(n)) * m_FrameSkip.m_fTimePerFrame;
                     frames = static_cast<int>(n);
                 }
                 m_fY -= static_cast<float>(frames) * 0.5f;
@@ -129,15 +127,15 @@ int MedicalKit_Button::Process(float dt)
             }
             case 1:
             {
-                float v = dt + m_accum;
-                bool below = v < m_threshold;
-                m_accum = v;
+                float v = dt + m_FrameSkip.m_fAccumulatedTime;
+                bool below = v < m_FrameSkip.m_fTimePerFrame;
+                m_FrameSkip.m_fAccumulatedTime = v;
                 int frames = 0;
                 if (!below)
                 {
-                    long long n = static_cast<long long>(v / m_threshold);
+                    long long n = static_cast<long long>(v / m_FrameSkip.m_fTimePerFrame);
                     if (n)
-                        m_accum = v - static_cast<float>(static_cast<int>(n)) * m_threshold;
+                        m_FrameSkip.m_fAccumulatedTime = v - static_cast<float>(static_cast<int>(n)) * m_FrameSkip.m_fTimePerFrame;
                     frames = static_cast<int>(n);
                 }
                 m_fX -= static_cast<float>(frames) * 0.5f;
@@ -152,15 +150,15 @@ int MedicalKit_Button::Process(float dt)
             }
             case 2:
             {
-                float v = dt + m_accum;
-                bool below = v < m_threshold;
-                m_accum = v;
+                float v = dt + m_FrameSkip.m_fAccumulatedTime;
+                bool below = v < m_FrameSkip.m_fTimePerFrame;
+                m_FrameSkip.m_fAccumulatedTime = v;
                 int frames = 0;
                 if (!below)
                 {
-                    long long n = static_cast<long long>(v / m_threshold);
+                    long long n = static_cast<long long>(v / m_FrameSkip.m_fTimePerFrame);
                     if (n)
-                        m_accum = v - static_cast<float>(static_cast<int>(n)) * m_threshold;
+                        m_FrameSkip.m_fAccumulatedTime = v - static_cast<float>(static_cast<int>(n)) * m_FrameSkip.m_fTimePerFrame;
                     frames = static_cast<int>(n);
                 }
                 m_fY += static_cast<float>(frames) * 0.5f;
@@ -174,15 +172,15 @@ int MedicalKit_Button::Process(float dt)
             }
             case 3:
             {
-                float v = dt + m_accum;
-                bool below = v < m_threshold;
-                m_accum = v;
+                float v = dt + m_FrameSkip.m_fAccumulatedTime;
+                bool below = v < m_FrameSkip.m_fTimePerFrame;
+                m_FrameSkip.m_fAccumulatedTime = v;
                 int frames = 0;
                 if (!below)
                 {
-                    long long n = static_cast<long long>(v / m_threshold);
+                    long long n = static_cast<long long>(v / m_FrameSkip.m_fTimePerFrame);
                     if (n)
-                        m_accum = v - static_cast<float>(static_cast<int>(n)) * m_threshold;
+                        m_FrameSkip.m_fAccumulatedTime = v - static_cast<float>(static_cast<int>(n)) * m_FrameSkip.m_fTimePerFrame;
                     frames = static_cast<int>(n);
                 }
                 m_fX += static_cast<float>(frames) * 0.5f;
@@ -206,15 +204,15 @@ int MedicalKit_Button::Process(float dt)
         {
             case 0:
             {
-                float v = dt + m_accum;
-                bool below = v < m_threshold;
-                m_accum = v;
+                float v = dt + m_FrameSkip.m_fAccumulatedTime;
+                bool below = v < m_FrameSkip.m_fTimePerFrame;
+                m_FrameSkip.m_fAccumulatedTime = v;
                 int frames = 0;
                 if (!below)
                 {
-                    long long n = static_cast<long long>(v / m_threshold);
+                    long long n = static_cast<long long>(v / m_FrameSkip.m_fTimePerFrame);
                     if (n)
-                        m_accum = v - static_cast<float>(static_cast<int>(n)) * m_threshold;
+                        m_FrameSkip.m_fAccumulatedTime = v - static_cast<float>(static_cast<int>(n)) * m_FrameSkip.m_fTimePerFrame;
                     frames = static_cast<int>(n);
                 }
                 m_fY += static_cast<float>(frames) * 0.5f;
@@ -227,15 +225,15 @@ int MedicalKit_Button::Process(float dt)
             }
             case 1:
             {
-                float v = dt + m_accum;
-                bool below = v < m_threshold;
-                m_accum = v;
+                float v = dt + m_FrameSkip.m_fAccumulatedTime;
+                bool below = v < m_FrameSkip.m_fTimePerFrame;
+                m_FrameSkip.m_fAccumulatedTime = v;
                 int frames = 0;
                 if (!below)
                 {
-                    long long n = static_cast<long long>(v / m_threshold);
+                    long long n = static_cast<long long>(v / m_FrameSkip.m_fTimePerFrame);
                     if (n)
-                        m_accum = v - static_cast<float>(static_cast<int>(n)) * m_threshold;
+                        m_FrameSkip.m_fAccumulatedTime = v - static_cast<float>(static_cast<int>(n)) * m_FrameSkip.m_fTimePerFrame;
                     frames = static_cast<int>(n);
                 }
                 m_fX += static_cast<float>(frames) * 0.5f;
@@ -248,15 +246,15 @@ int MedicalKit_Button::Process(float dt)
             }
             case 2:
             {
-                float v = dt + m_accum;
-                bool below = v < m_threshold;
-                m_accum = v;
+                float v = dt + m_FrameSkip.m_fAccumulatedTime;
+                bool below = v < m_FrameSkip.m_fTimePerFrame;
+                m_FrameSkip.m_fAccumulatedTime = v;
                 int frames = 0;
                 if (!below)
                 {
-                    long long n = static_cast<long long>(v / m_threshold);
+                    long long n = static_cast<long long>(v / m_FrameSkip.m_fTimePerFrame);
                     if (n)
-                        m_accum = v - static_cast<float>(static_cast<int>(n)) * m_threshold;
+                        m_FrameSkip.m_fAccumulatedTime = v - static_cast<float>(static_cast<int>(n)) * m_FrameSkip.m_fTimePerFrame;
                     frames = static_cast<int>(n);
                 }
                 m_fY -= static_cast<float>(frames) * 0.5f;
@@ -269,15 +267,15 @@ int MedicalKit_Button::Process(float dt)
             }
             case 3:
             {
-                float v = dt + m_accum;
-                bool below = v < m_threshold;
-                m_accum = v;
+                float v = dt + m_FrameSkip.m_fAccumulatedTime;
+                bool below = v < m_FrameSkip.m_fTimePerFrame;
+                m_FrameSkip.m_fAccumulatedTime = v;
                 int frames = 0;
                 if (!below)
                 {
-                    long long n = static_cast<long long>(v / m_threshold);
+                    long long n = static_cast<long long>(v / m_FrameSkip.m_fTimePerFrame);
                     if (n)
-                        m_accum = v - static_cast<float>(static_cast<int>(n)) * m_threshold;
+                        m_FrameSkip.m_fAccumulatedTime = v - static_cast<float>(static_cast<int>(n)) * m_FrameSkip.m_fTimePerFrame;
                     frames = static_cast<int>(n);
                 }
                 m_fX -= static_cast<float>(frames) * 0.5f;

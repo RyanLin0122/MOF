@@ -2,6 +2,7 @@
 
 #include <cstdint>
 
+#include "Effect/CCAEffect.h"       // for FrameSkip (embedded at DWORD[11..13])
 #include "MiniGame/Mini_AniCtrl.h"  // for Mini_AniInfo
 
 class GameImage;
@@ -31,7 +32,5 @@ public:
     float         m_fY;             // DWORD[8]
     float         m_fAnchor;        // DWORD[9]   目標位置（開/關交界）
     std::int32_t  m_state;          // DWORD[10]  0=opening,1=open,2=closing,3=closed
-    void*         m_FrameSkip_vft;  // DWORD[11]
-    float         m_accum;          // DWORD[12]
-    float         m_threshold;      // DWORD[13]
+    FrameSkip     m_FrameSkip;      // DWORD[11..13] (vftable + accum + threshold)
 };

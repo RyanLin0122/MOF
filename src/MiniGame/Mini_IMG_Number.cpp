@@ -61,17 +61,15 @@ void Mini_IMG_Number::SetNumber(int value, float x, float y)
     m_fY = y;
 
     // mofclient.c：取 GameImage 查詢每位數 block 寬度並累加為 halfWidth。
+    // 對齊 ground truth：只檢查 GetGameImage 結果，pGIData 直接解參考（無 guard）。
     GameImage* pQuery = cltImageManager::GetInstance()->GetGameImage(9u, m_dwResourceID, 0, 1);
-    if (pQuery && pQuery->m_pGIData)
+    if (pQuery)
     {
         for (int i = m_digitCount - 1; i >= 0; --i)
         {
             uint8_t b = m_digitBlock[i];
-            AnimationFrameData* pFrame = nullptr;
-            if (b < pQuery->m_pGIData->m_Resource.m_animationFrameCount)
-                pFrame = &pQuery->m_pGIData->m_Resource.m_pAnimationFrames[b];
-            if (pFrame)
-                m_fHalfWidth += static_cast<float>(pFrame->width);
+            m_fHalfWidth += static_cast<float>(
+                pQuery->m_pGIData->m_Resource.m_pAnimationFrames[b].width);
         }
         m_fHalfWidth *= 0.5f;
     }
@@ -92,20 +90,17 @@ void Mini_IMG_Number::Process()
     float curY = m_fY;
 
     // 由高位到低位填寫每一位數對應的 GameImage。
+    // 對齊 ground truth：只檢查 GetGameImage 結果，pGIData 直接解參考（無 guard）。
     for (; idx >= 0; --idx)
     {
         GameImage* pImg = cltImageManager::GetInstance()->GetGameImage(9u, m_dwResourceID, 0, 1);
         m_pImages[idx] = pImg;
-        if (!pImg || !pImg->m_pGIData)
+        if (!pImg)
             continue;
 
         uint8_t b = m_digitBlock[idx];
-        int blockWidth = 0;
-        if (b < pImg->m_pGIData->m_Resource.m_animationFrameCount)
-        {
-            AnimationFrameData* pFrame = &pImg->m_pGIData->m_Resource.m_pAnimationFrames[b];
-            blockWidth = pFrame->width;
-        }
+        int blockWidth =
+            pImg->m_pGIData->m_Resource.m_pAnimationFrames[b].width;
 
         pImg->m_fPosX = curX - m_fHalfWidth;
         pImg->m_fPosY = curY;

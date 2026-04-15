@@ -6,15 +6,6 @@
 #include "Image/cltImageManager.h"
 #include "Image/GameImage.h"
 
-namespace {
-inline float bitsToFloat(unsigned int bits)
-{
-    float f;
-    std::memcpy(&f, &bits, sizeof(f));
-    return f;
-}
-}
-
 Mini_AniCtrl::Mini_AniCtrl()
     : m_pImage(nullptr)
     , m_pAniArr(nullptr)
@@ -26,9 +17,7 @@ Mini_AniCtrl::Mini_AniCtrl()
     , m_fX(0.0f)
     , m_fY(0.0f)
     , m_alpha(255)
-    , m_FrameSkip_vft(nullptr)
-    , m_accum(0.0f)
-    , m_threshold(bitsToFloat(1015580809u))   // ~1/60
+    , m_FrameSkip()                // vftable + accum=0 + threshold=1/60
     , m_dword13(0)
 {
 }
@@ -70,7 +59,7 @@ void Mini_AniCtrl::Create_Mini_AniCtrl(Mini_AniInfo* aniArr, int aniCount,
     m_pKeyArr  = pKey;
     std::memcpy(pKey, keyArr, keyBytes);
 
-    m_threshold = 1.0f / static_cast<float>(frameRate);
+    m_FrameSkip.m_fTimePerFrame = 1.0f / static_cast<float>(frameRate);
     m_curKey    = 0;
     m_curFrame  = 0;
     m_dword13   = 0;
@@ -88,7 +77,7 @@ void Mini_AniCtrl::Play(int keyIdx)
 
 void Mini_AniCtrl::SetFrameRate(int frameRate)
 {
-    m_threshold = 1.0f / static_cast<float>(frameRate);
+    m_FrameSkip.m_fTimePerFrame = 1.0f / static_cast<float>(frameRate);
 }
 
 void Mini_AniCtrl::SetPosition(float x, float y)
@@ -104,16 +93,16 @@ void Mini_AniCtrl::SetAlpha(int alpha)
 
 void Mini_AniCtrl::Process(float dt)
 {
-    // FrameSkip 累計：每 m_threshold 秒前進一格
-    float accum = dt + m_accum;
-    bool below = accum < m_threshold;
-    m_accum = accum;
+    // FrameSkip 累計：每 m_fTimePerFrame 秒前進一格
+    float accum = dt + m_FrameSkip.m_fAccumulatedTime;
+    bool below = accum < m_FrameSkip.m_fTimePerFrame;
+    m_FrameSkip.m_fAccumulatedTime = accum;
     int frames = 0;
     if (!below)
     {
-        long long n = static_cast<long long>(accum / m_threshold);
+        long long n = static_cast<long long>(accum / m_FrameSkip.m_fTimePerFrame);
         if (n)
-            m_accum = accum - static_cast<float>(static_cast<int>(n)) * m_threshold;
+            m_FrameSkip.m_fAccumulatedTime = accum - static_cast<float>(static_cast<int>(n)) * m_FrameSkip.m_fTimePerFrame;
         frames = static_cast<int>(n);
     }
     int newFrame = m_curFrame + frames;

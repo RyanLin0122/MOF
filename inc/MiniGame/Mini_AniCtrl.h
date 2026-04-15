@@ -2,6 +2,8 @@
 
 #include <cstdint>
 
+#include "Effect/CCAEffect.h"  // for FrameSkip (embedded at DWORD[10..12])
+
 class GameImage;
 
 // mofclient.c 還原：Mini_AniInfo / Mini_KeyInfo
@@ -47,8 +49,6 @@ public:
     float         m_fX;             // DWORD[7]
     float         m_fY;             // DWORD[8]
     std::int32_t  m_alpha;          // DWORD[9]
-    void*         m_FrameSkip_vft;  // DWORD[10]
-    float         m_accum;          // DWORD[11]
-    float         m_threshold;      // DWORD[12]
+    FrameSkip     m_FrameSkip;      // DWORD[10..12] (vftable + accum + threshold)
     std::int32_t  m_dword13;        // DWORD[13]
 };
