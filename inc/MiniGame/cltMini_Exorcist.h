@@ -136,8 +136,8 @@ public:
 
     // --- 各狀態介面對應的 slot 索引 ---
     std::uint8_t     m_uiRanking;       // BYTE[604] = 15
-    std::uint8_t     m_uiHelp;          // BYTE[605] = 16
-    std::uint8_t     m_uiSelectDegree;  // BYTE[606] = 17
+    std::uint8_t     m_uiSelectDegree;  // BYTE[605] = 16
+    std::uint8_t     m_uiHelp;          // BYTE[606] = 17
     std::uint8_t     m_uiShowPoint;     // BYTE[607] = 18
     std::uint8_t     m_uiWin;           // BYTE[608] = 13
     std::uint8_t     m_uiLose;          // BYTE[609] = 14

@@ -54,7 +54,7 @@ void Mini_IMG_Number::SetNumber(int value, float x, float y)
                 static_cast<uint8_t>(m_blockBase + (q % 10));
             ++m_digitCount;
         }
-        while (divisor <= abs_v && m_digitCount < kMaxDigits);
+        while (divisor <= abs_v);
     }
 
     m_fX = x;
@@ -77,9 +77,8 @@ void Mini_IMG_Number::SetNumber(int value, float x, float y)
     }
     else
     {
-        // mofclient.c：若資源抓不到，會把 digitCount 減一。
-        if (m_digitCount > 0)
-            --m_digitCount;
+        // mofclient.c：若資源抓不到，直接把 digitCount 減一（無邊界防呆）。
+        --m_digitCount;
     }
 }
 
@@ -124,10 +123,12 @@ void Mini_IMG_Number::Render()
     if (!m_digitCount)
         return;
 
+    // mofclient.c：只檢查 GameImage 內部的 m_pGIData 是否存在，
+    // 不對 m_pImages[i] 指標本身做 null guard。
     for (int i = static_cast<int>(m_digitCount) - 1; i >= 0; --i)
     {
         GameImage* p = m_pImages[i];
-        if (p && p->m_pGIData)
+        if (p->m_pGIData)
             p->Draw();
     }
 }

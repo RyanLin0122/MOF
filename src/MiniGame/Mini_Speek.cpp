@@ -46,23 +46,21 @@ void Mini_Speek_Mgr::Process()
 {
     if (m_bUsed)
     {
+        // mofclient.c：直接寫 pImg 欄位（無 null guard）。
         cltImageManager* pMgr = cltImageManager::GetInstance();
         GameImage* pImg = pMgr->GetGameImage(9u, 0x2000003Au, 0, 1);
         std::uint16_t blockID = static_cast<std::uint16_t>(m_patientType);
         m_pImage = pImg;
-        if (pImg)
-        {
-            pImg->m_wBlockID  = blockID;
-            pImg->m_bFlag_446 = true;
+        pImg->m_wBlockID  = blockID;
+        pImg->m_bFlag_446 = true;
 
-            pImg->m_fPosX = m_fX;
-            pImg->m_bFlag_447 = true;
+        pImg->m_fPosX = m_fX;
+        pImg->m_bFlag_447 = true;
 
-            pImg->m_fPosY = m_fY;
-            pImg->m_bFlag_447 = true;
+        pImg->m_fPosY = m_fY;
+        pImg->m_bFlag_447 = true;
 
-            pImg->Process();
-        }
+        pImg->Process();
     }
 }
 
@@ -155,28 +153,17 @@ void Mini_Speek_Thanks::Process(float dt)
     m_pImage = pImg;
     if (pImg)
     {
-        // 取得 block 寬度（block 0 的 width 在 GIData 對應的 block 表）
         // mofclient.c：(double)*(int *)(*(_DWORD *)(*((_DWORD *)v7 + 2) + 32) + 540)
-        //            = pGIData -> 第 10 個 block (52 bytes/筆) 的 width
-        float halfWidth = 0.0f;
-        if (pImg->m_pGIData)
-        {
-            // pGIData 指向 ImageResourceListData；其偏移 +32 處有 ImageResource* (m_pImageResource)
-            // 該 ImageResource 偏移 +540 (=20+52*10) 的 int 即第 10 個 block 的寬度。
-            // 為避免依賴 ImageResource 的內部 layout，這裡用 RECT 方式取 block 0 的寬度。
-            RECT r{};
-            std::uint16_t saved = pImg->m_wBlockID;
-            pImg->m_wBlockID = 10;
-            pImg->GetBlockRect(&r);
-            pImg->m_wBlockID = saved;
-            halfWidth = static_cast<float>(r.right - r.left);
-        }
+        //            = pGIData 指向的 ImageResource 中第 10 個 block 的 width
+        //              (每筆 52 bytes；偏移 20 = width 欄位 → 540 = 10*52+20)。
+        float blockWidth = static_cast<float>(
+            pImg->m_pGIData->m_Resource.m_pAnimationFrames[10].width);
 
         pImg->m_wBlockID  = 10;
         pImg->m_bFlag_446 = true;
 
         pImg->m_bFlag_447 = true;
-        pImg->m_fPosX     = m_fX - halfWidth * 0.5f;
+        pImg->m_fPosX     = m_fX - blockWidth * 0.5f;
 
         pImg->m_fPosY     = m_fY;
         pImg->m_bFlag_447 = true;

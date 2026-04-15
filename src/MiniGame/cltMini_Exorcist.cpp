@@ -119,8 +119,8 @@ cltMini_Exorcist::cltMini_Exorcist()
     , m_cardViewValue{ 4, 4, 4 }
     , m_cardYPos(0)
     , m_uiRanking(0)
-    , m_uiHelp(0)
     , m_uiSelectDegree(0)
+    , m_uiHelp(0)
     , m_uiShowPoint(0)
     , m_uiWin(0)
     , m_uiLose(0)
@@ -228,8 +228,8 @@ void cltMini_Exorcist::InitMiniGameImage()
     m_uiWin          = 13; // BYTE[608]
     m_uiLose         = 14; // BYTE[609]
     m_uiRanking      = 15; // BYTE[604]
-    m_uiHelp         = 16; // BYTE[605]
-    m_uiSelectDegree = 17; // BYTE[606]
+    m_uiSelectDegree = 16; // BYTE[605]
+    m_uiHelp         = 17; // BYTE[606]
     m_uiShowPoint    = 18; // BYTE[607]
 
     // mofclient.c：在 InitMiniGameImage 末尾把 slot 7、9、11（三個 OFF
@@ -556,14 +556,14 @@ void cltMini_Exorcist::Draw()
             if (p) p->Draw();
         }
     };
-    drawIfActive(m_uiRanking);
-    drawIfActive(m_uiHelp);
-    drawIfActive(m_uiSelectDegree);
-    drawIfActive(m_uiShowPoint);
+    drawIfActive(m_uiRanking);       // BYTE[604]
+    drawIfActive(m_uiSelectDegree);  // BYTE[605]
+    drawIfActive(m_uiHelp);          // BYTE[606]
+    drawIfActive(m_uiShowPoint);     // BYTE[607]
 
     // mofclient.c 在 Draw 結尾覆寫 BYTE[605..607] = 16/17/18
-    m_uiHelp         = 16;
-    m_uiSelectDegree = 17;
+    m_uiSelectDegree = 16;
+    m_uiHelp         = 17;
     m_uiShowPoint    = 18;
 
     // 13 顆按鈕
@@ -605,9 +605,10 @@ void cltMini_Exorcist::Init_Wait()
     m_serverTimeMs    = 0;
     m_difficultyByte  = 0;
 
-    if (m_uiRanking < kSlotCount) m_slots[m_uiRanking].active = 1;
-    if (m_uiHelp < kSlotCount)    m_slots[m_uiHelp].active    = 1;
-    if (m_uiSelectDegree < kSlotCount) m_slots[m_uiSelectDegree].active = 1;
+    // mofclient.c：Init_Wait 啟用 slot[0..2]（卡片底圖）讓 Wait 狀態下可見。
+    m_slots[0].active = 1;
+    m_slots[1].active = 1;
+    m_slots[2].active = 1;
 
     // 主選單 5 顆按鈕
     m_buttons[0].SetActive(1);
@@ -621,8 +622,8 @@ void cltMini_Exorcist::Init_Wait()
     if (m_uiWin < kSlotCount)          m_slots[m_uiWin].active          = 0;
     if (m_uiLose < kSlotCount)         m_slots[m_uiLose].active         = 0;
     if (m_uiRanking < kSlotCount)      m_slots[m_uiRanking].active      = 0;
-    if (m_uiHelp < kSlotCount)         m_slots[m_uiHelp].active         = 0;
     if (m_uiSelectDegree < kSlotCount) m_slots[m_uiSelectDegree].active = 0;
+    if (m_uiHelp < kSlotCount)         m_slots[m_uiHelp].active         = 0;
     if (m_uiShowPoint < kSlotCount)    m_slots[m_uiShowPoint].active    = 0;
 
     m_drawNumFinal.SetActive(0);
@@ -641,7 +642,8 @@ void cltMini_Exorcist::Init_SelectDegree()
     m_buttons[10].SetActive(1);
     m_buttons[11].SetActive(1);
 
-    if (m_uiHelp < kSlotCount) m_slots[m_uiHelp].active = 1;
+    // mofclient.c：啟用 BYTE[605] → m_uiSelectDegree 對應的 UI slot
+    if (m_uiSelectDegree < kSlotCount) m_slots[m_uiSelectDegree].active = 1;
     g_cGameExorcistState = 1;
 }
 
@@ -739,8 +741,8 @@ void cltMini_Exorcist::Init_Help()
     m_buttons[8].SetActive(1);
     m_buttons[8].SetPosition(m_uiPos[6] + 402, m_uiPos[7] + 475);
 
-    if (m_uiSelectDegree < kSlotCount)
-        m_slots[m_uiSelectDegree].active = 1;
+    // mofclient.c：啟用 BYTE[606] → m_uiHelp 對應的 UI slot
+    if (m_uiHelp < kSlotCount) m_slots[m_uiHelp].active = 1;
     g_cGameExorcistState = 2;
 }
 
@@ -915,7 +917,8 @@ void cltMini_Exorcist::SetGameDegree(std::uint8_t degree)
     for (int i = 0; i < kButtonCount; ++i)
         m_buttons[i].SetActive(0);
 
-    if (m_uiHelp < kSlotCount) m_slots[m_uiHelp].active = 0;
+    // mofclient.c：關閉 BYTE[605] → m_uiSelectDegree 對應的 UI slot
+    if (m_uiSelectDegree < kSlotCount) m_slots[m_uiSelectDegree].active = 0;
     g_cGameExorcistState = 4;
 }
 

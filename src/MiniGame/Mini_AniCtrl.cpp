@@ -58,8 +58,7 @@ void Mini_AniCtrl::Create_Mini_AniCtrl(Mini_AniInfo* aniArr, int aniCount,
     }
     m_aniCount = aniCount;
     m_pAniArr  = pAni;
-    if (pAni)
-        std::memcpy(pAni, aniArr, aniBytes);
+    std::memcpy(pAni, aniArr, aniBytes);
 
     const std::size_t keyBytes = static_cast<std::size_t>(8 * keyCount);
     Mini_KeyInfo* pKey = static_cast<Mini_KeyInfo*>(operator new(keyBytes));
@@ -69,8 +68,7 @@ void Mini_AniCtrl::Create_Mini_AniCtrl(Mini_AniInfo* aniArr, int aniCount,
     }
     m_keyCount = keyCount;
     m_pKeyArr  = pKey;
-    if (pKey)
-        std::memcpy(pKey, keyArr, keyBytes);
+    std::memcpy(pKey, keyArr, keyBytes);
 
     m_threshold = 1.0f / static_cast<float>(frameRate);
     m_curKey    = 0;

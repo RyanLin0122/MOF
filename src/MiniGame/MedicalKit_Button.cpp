@@ -92,14 +92,12 @@ int MedicalKit_Button::Process(float dt)
     cltImageManager* pMgr = cltImageManager::GetInstance();
 
     // 取對應的圖：未選中 m_ani[0]，選中 m_ani[1]
+    // mofclient.c 直接寫 pImg 欄位（無 null guard）。
     GameImage* pImg = pMgr->GetGameImage(9u, m_ani[m_bSelected].resourceID, 0, 1);
     m_pImage = pImg;
     std::uint16_t blockID = m_ani[m_bSelected].blockID;
-    if (pImg)
-    {
-        pImg->m_bFlag_446 = true;
-        pImg->m_wBlockID  = blockID;
-    }
+    pImg->m_bFlag_446 = true;
+    pImg->m_wBlockID  = blockID;
 
     // ----- 開啟階段 -----
     if (m_state == 0)
@@ -295,14 +293,12 @@ int MedicalKit_Button::Process(float dt)
         }
     }
 
-    if (m_pImage)
-    {
-        m_pImage->m_fPosX = m_fX;
-        m_pImage->m_bFlag_447 = true;
-        m_pImage->m_fPosY = m_fY;
-        m_pImage->m_bFlag_447 = true;
-        m_pImage->Process();
-    }
+    // mofclient.c：直接寫 pImg 欄位並呼叫 Process（無 null guard）。
+    m_pImage->m_fPosX = m_fX;
+    m_pImage->m_bFlag_447 = true;
+    m_pImage->m_fPosY = m_fY;
+    m_pImage->m_bFlag_447 = true;
+    m_pImage->Process();
     return m_state;
 }
 
