@@ -201,7 +201,9 @@ void cltMini_Exorcist::InitMiniGameImage()
     // m_cardYPos = screenY + 154
     m_cardYPos = m_screenY + 154;
 
-    // 19 個 slot 寫入；其餘 slot 保持 active=0
+    // mofclient.c 把所有 50 個 slot 條目完整重寫：前 19 筆從
+    // local 陣列複製實際值，19..49 來自清零緩衝 → 整個結構清 0。
+    std::memset(m_slots, 0, sizeof(m_slots));
     for (int i = 0; i < 19; ++i)
     {
         const SlotDef& d = kSlotTable[i];
@@ -212,8 +214,6 @@ void cltMini_Exorcist::InitMiniGameImage()
         m_slots[i].x       = a.x;
         m_slots[i].y       = a.y;
     }
-    for (int i = 19; i < kSlotCount; ++i)
-        m_slots[i].active = 0;
 
     // 卡片 / 方向鍵 slot 索引
     m_cardSlots[0] = 6;   // BYTE[3606]
@@ -504,12 +504,10 @@ void cltMini_Exorcist::PrepareDrawingCard()
 {
     cltImageManager* pMgr = m_pclImageMgr;
 
+    // mofclient.c：直接以 slot 索引取 resID / blockID（不做邊界檢查）
     for (int i = 0; i < 3; ++i)
     {
         std::uint8_t slotIdx = m_cardImageIdx[i];
-        if (slotIdx >= kSlotCount)
-            continue;
-
         const ImageSlot& src = m_slots[slotIdx];
         GameImage* p = pMgr->GetGameImage(9u, src.resID, 0, 1);
         m_slotImages[i] = p;
@@ -548,9 +546,9 @@ void cltMini_Exorcist::Draw()
     if (m_drawAlphaBox)
         m_alphaBox.Draw();
 
-    // 對齊 mofclient.c：若四個 UI slot active，重新覆繪一次
+    // 對齊 mofclient.c：若四個 UI slot active，重新覆繪一次（直接索引，不檢查邊界）
     auto drawIfActive = [this](std::uint8_t slot) {
-        if (slot < kSlotCount && m_slots[slot].active)
+        if (m_slots[slot].active)
         {
             GameImage* p = m_slotImages[slot];
             if (p) p->Draw();
@@ -618,13 +616,13 @@ void cltMini_Exorcist::Init_Wait()
     m_buttons[6].SetActive(1);
     m_buttons[7].SetActive(1);
 
-    // 關閉所有狀態相關 UI slot
-    if (m_uiWin < kSlotCount)          m_slots[m_uiWin].active          = 0;
-    if (m_uiLose < kSlotCount)         m_slots[m_uiLose].active         = 0;
-    if (m_uiRanking < kSlotCount)      m_slots[m_uiRanking].active      = 0;
-    if (m_uiSelectDegree < kSlotCount) m_slots[m_uiSelectDegree].active = 0;
-    if (m_uiHelp < kSlotCount)         m_slots[m_uiHelp].active         = 0;
-    if (m_uiShowPoint < kSlotCount)    m_slots[m_uiShowPoint].active    = 0;
+    // mofclient.c：直接以 UI slot 索引寫入 active=0（不做邊界檢查）
+    m_slots[m_uiWin].active          = 0;
+    m_slots[m_uiLose].active         = 0;
+    m_slots[m_uiRanking].active      = 0;
+    m_slots[m_uiSelectDegree].active = 0;
+    m_slots[m_uiHelp].active         = 0;
+    m_slots[m_uiShowPoint].active    = 0;
 
     m_drawNumFinal.SetActive(0);
     g_cGameExorcistState = 0;
@@ -642,8 +640,7 @@ void cltMini_Exorcist::Init_SelectDegree()
     m_buttons[10].SetActive(1);
     m_buttons[11].SetActive(1);
 
-    // mofclient.c：啟用 BYTE[605] → m_uiSelectDegree 對應的 UI slot
-    if (m_uiSelectDegree < kSlotCount) m_slots[m_uiSelectDegree].active = 1;
+    m_slots[m_uiSelectDegree].active = 1;
     g_cGameExorcistState = 1;
 }
 
@@ -652,7 +649,7 @@ void cltMini_Exorcist::Init_SelectDegree()
 // =========================================================================
 void cltMini_Exorcist::Init_Ranking()
 {
-    if (m_uiRanking < kSlotCount) m_slots[m_uiRanking].active = 1;
+    m_slots[m_uiRanking].active = 1;
 
     for (int i = 0; i < kButtonCount; ++i)
         m_buttons[i].SetActive(0);
@@ -661,8 +658,8 @@ void cltMini_Exorcist::Init_Ranking()
     m_buttons[4].SetActive(1);
     m_buttons[5].SetActive(1);
 
-    if (m_uiWin < kSlotCount)  m_slots[m_uiWin].active  = 0;
-    if (m_uiLose < kSlotCount) m_slots[m_uiLose].active = 0;
+    m_slots[m_uiWin].active  = 0;
+    m_slots[m_uiLose].active = 0;
 
     m_myRankingText[0] = 0;
     m_curRankPage      = 0;
@@ -741,8 +738,7 @@ void cltMini_Exorcist::Init_Help()
     m_buttons[8].SetActive(1);
     m_buttons[8].SetPosition(m_uiPos[6] + 402, m_uiPos[7] + 475);
 
-    // mofclient.c：啟用 BYTE[606] → m_uiHelp 對應的 UI slot
-    if (m_uiHelp < kSlotCount) m_slots[m_uiHelp].active = 1;
+    m_slots[m_uiHelp].active = 1;
     g_cGameExorcistState = 2;
 }
 
@@ -754,8 +750,7 @@ void cltMini_Exorcist::Init_ShowPoint()
     m_buttons[8].SetActive(1);
     m_buttons[8].SetPosition(m_uiPos[10] + 380, m_uiPos[11] + 216);
 
-    if (m_uiShowPoint < kSlotCount)
-        m_slots[m_uiShowPoint].active = 1;
+    m_slots[m_uiShowPoint].active = 1;
     g_cGameExorcistState = 3;
 }
 
@@ -886,8 +881,8 @@ void cltMini_Exorcist::SetGameDegree(std::uint8_t degree)
             break;
     }
 
-    if (m_uiWin < kSlotCount)  m_slots[m_uiWin].active  = 0;
-    if (m_uiLose < kSlotCount) m_slots[m_uiLose].active = 0;
+    m_slots[m_uiWin].active  = 0;
+    m_slots[m_uiLose].active = 0;
     m_drawNumFinal.SetActive(0);
     m_score = 0;
 
@@ -917,8 +912,7 @@ void cltMini_Exorcist::SetGameDegree(std::uint8_t degree)
     for (int i = 0; i < kButtonCount; ++i)
         m_buttons[i].SetActive(0);
 
-    // mofclient.c：關閉 BYTE[605] → m_uiSelectDegree 對應的 UI slot
-    if (m_uiSelectDegree < kSlotCount) m_slots[m_uiSelectDegree].active = 0;
+    m_slots[m_uiSelectDegree].active = 0;
     g_cGameExorcistState = 4;
 }
 
@@ -927,23 +921,17 @@ void cltMini_Exorcist::SetGameDegree(std::uint8_t degree)
 // =========================================================================
 void cltMini_Exorcist::Ready()
 {
-    // 預設關閉三個方向鍵 ON 圖
-    if (m_cardSlots[2] < kSlotCount) m_slots[m_cardSlots[2]].active = 0; // LEFT  on
-    if (m_cardSlots[4] < kSlotCount) m_slots[m_cardSlots[4]].active = 0; // UP    on
-    if (m_cardSlots[6] < kSlotCount) m_slots[m_cardSlots[6]].active = 0; // RIGHT on
+    // 預設關閉三個方向鍵 ON 圖（mofclient.c 不做 slot 邊界檢查）
+    m_slots[m_cardSlots[2]].active = 0; // LEFT  on
+    m_slots[m_cardSlots[4]].active = 0; // UP    on
+    m_slots[m_cardSlots[6]].active = 0; // RIGHT on
 
     if (m_pInputMgr->IsKeyPressed(203) || m_pInputMgr->IsJoyStickPush(0, 1))
-    {
-        if (m_cardSlots[2] < kSlotCount) m_slots[m_cardSlots[2]].active = 1;
-    }
+        m_slots[m_cardSlots[2]].active = 1;
     if (m_pInputMgr->IsKeyPressed(200) || m_pInputMgr->IsJoyStickPush(1, 1))
-    {
-        if (m_cardSlots[4] < kSlotCount) m_slots[m_cardSlots[4]].active = 1;
-    }
+        m_slots[m_cardSlots[4]].active = 1;
     if (m_pInputMgr->IsKeyPressed(205) || m_pInputMgr->IsJoyStickPush(0, 2))
-    {
-        if (m_cardSlots[6] < kSlotCount) m_slots[m_cardSlots[6]].active = 1;
-    }
+        m_slots[m_cardSlots[6]].active = 1;
 }
 
 // =========================================================================
@@ -1049,13 +1037,13 @@ void cltMini_Exorcist::EndGame()
 
         if (score < baseScore)
         {
-            if (m_uiLose < kSlotCount) m_slots[m_uiLose].active = 1;
+            m_slots[m_uiLose].active = 1;
         }
         else
         {
             m_finalScore = m_winMark;
             m_totalScore = 1;
-            if (m_uiWin < kSlotCount) m_slots[m_uiWin].active = 1;
+            m_slots[m_uiWin].active = 1;
         }
 
         m_drawNumFinal.SetActive(1);
@@ -1115,8 +1103,10 @@ void cltMini_Exorcist::EndGame()
             InitBtnFocus();
         }
 
-        if ((m_pInputMgr->IsKeyDown(1)    && m_focusEnabled)
-            || (m_pInputMgr->IsJoyButtonPush(1) && m_focusEnabled))
+        // mofclient.c：((IsKeyDown(1) && m_focusEnabled) || IsJoyButtonPush(1))
+        // 手把返回鍵不受 m_focusEnabled 限制（&& 優先序高於 ||）。
+        if ((m_pInputMgr->IsKeyDown(1) && m_focusEnabled)
+            || m_pInputMgr->IsJoyButtonPush(1))
         {
             Init_Wait();
             m_pGameSoundMgr->PlaySoundA((char*)"J0002", 0, 0);
@@ -1186,11 +1176,9 @@ void cltMini_Exorcist::InitCardTime(unsigned int openTimeMs, unsigned int hitTim
 // =========================================================================
 void cltMini_Exorcist::DecideCardViewValue(std::uint8_t cardIdx)
 {
-    if (cardIdx >= 3) return;
-
+    // mofclient.c：不做 cardIdx / viewValue 邊界檢查，全靠上層維持合法狀態
     auto applyView = [&]() {
         std::uint8_t v = m_cardViewValue[cardIdx];
-        if (v > 4) v = 4;
         if (m_targetCard[cardIdx])
             m_cardImageIdx[cardIdx] = m_cardDarkSlots[v];
         else
@@ -1272,15 +1260,15 @@ int cltMini_Exorcist::KeyHit(std::uint16_t scancode)
     switch (scancode)
     {
         case 0xC8u: // UP
-            if (m_cardSlots[4] < kSlotCount) m_slots[m_cardSlots[4]].active = 1;
+            m_slots[m_cardSlots[4]].active = 1;
             result = CheckSuccess(1u);
             break;
         case 0xCBu: // LEFT
-            if (m_cardSlots[2] < kSlotCount) m_slots[m_cardSlots[2]].active = 1;
+            m_slots[m_cardSlots[2]].active = 1;
             result = CheckSuccess(0u);
             break;
         case 0xCDu: // RIGHT
-            if (m_cardSlots[6] < kSlotCount) m_slots[m_cardSlots[6]].active = 1;
+            m_slots[m_cardSlots[6]].active = 1;
             result = CheckSuccess(2u);
             break;
         default:
@@ -1417,8 +1405,8 @@ void cltMini_Exorcist::CreateNewCard()
     m_inputReceivedThisFrame = 0;
     m_inputCooldown          = 0;
 
-    // 重置三個方向鍵 ON 圖
-    if (m_cardSlots[2] < kSlotCount) m_slots[m_cardSlots[2]].active = 0;
-    if (m_cardSlots[4] < kSlotCount) m_slots[m_cardSlots[4]].active = 0;
-    if (m_cardSlots[6] < kSlotCount) m_slots[m_cardSlots[6]].active = 0;
+    // 重置三個方向鍵 ON 圖（mofclient.c 不做邊界檢查）
+    m_slots[m_cardSlots[2]].active = 0;
+    m_slots[m_cardSlots[4]].active = 0;
+    m_slots[m_cardSlots[6]].active = 0;
 }
