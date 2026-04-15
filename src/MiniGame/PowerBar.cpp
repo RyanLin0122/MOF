@@ -13,7 +13,7 @@ PowerBar::PowerBar()
     , m_maxRange(200.0f)                  // 1127743488
     , m_decaySpeed(0.0f)
     , m_curOffset(0.0f)
-    , m_running(1)
+    , m_running(0)                        // mofclient.c ctor：byte16 = 0；InitPowerBar 才設 1
     , m_pBar(nullptr)
     , m_pCursor(nullptr)
     , m_highlightUp(0)

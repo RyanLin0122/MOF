@@ -87,6 +87,12 @@ public:
     int        m_currentRoundScore;       // +32 (dword 8)
     int        m_finalScore;              // +36 (dword 9)
     int        m_displayScore;            // +40 (dword 10)
+    // mofclient.c：*((float*)this + 520) — point 超過 baseScore 後的加分倍率
+    //   Easy=2.0、Normal=8.0、Hard=4.0。SetGameDegree 寫入，EndStage 讀取。
+    float      m_bonusMultiplier;         // dword 520
+    // mofclient.c：*((_DWORD*)this + 521) — 結算分數上限
+    //   Easy=90、Normal=180、Hard=360。
+    int        m_scoreCap;                // dword 521
     uint16_t   m_point;                   // +36 offset: actually WORD[1982] = +3964
 
     // 5*i + 565 中的「i」剛好是 slot index，所以 slot data 從 dword 565 = byte 2260 開始。
