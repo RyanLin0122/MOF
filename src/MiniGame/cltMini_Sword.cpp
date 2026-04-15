@@ -133,6 +133,8 @@ cltMini_Sword::cltMini_Sword()
     , m_currentRoundScore(0)
     , m_finalScore(0)
     , m_displayScore(0)
+    , m_bonusMultiplier(0.0f)
+    , m_scoreCap(0)
     , m_point(0)
     , m_slots{}
     , m_drawNumTime()
@@ -860,7 +862,8 @@ void cltMini_Sword::SetGameDegree(uint8_t degree)
 {
     m_stage = degree;
     m_currentRoundScore = 30;
-    m_difficultyBaseScore = 0;
+    // mofclient.c：*((_DWORD*)this + 520) = 0 在 switch 前先清為 0
+    m_bonusMultiplier = 0.0f;
 
     switch (degree)
     {
@@ -869,8 +872,9 @@ void cltMini_Sword::SetGameDegree(uint8_t degree)
             m_difficultyBaseScore = 20;
             m_spawnInterval       = 800;
             m_gameDegree          = 20;
-            // 每 point > 20 後，額外加 (point-20)*2.0 分上限 90
-            m_displayScore        = 0;
+            // 每 point > 20 後，額外加 (point-20)*2.0 分，上限 90
+            m_scoreCap            = 90;
+            m_bonusMultiplier     = 2.0f;   // 0x40000000
             m_bgResID             = 0x20000023u;
             break;
         case 2:
@@ -878,7 +882,8 @@ void cltMini_Sword::SetGameDegree(uint8_t degree)
             m_difficultyBaseScore = 55;
             m_spawnInterval       = 700;
             m_gameDegree          = 30;
-            m_displayScore        = 0;
+            m_scoreCap            = 180;
+            m_bonusMultiplier     = 8.0f;   // 0x41000000
             m_bgResID             = 0x20000025u;
             break;
         case 4:
@@ -886,7 +891,8 @@ void cltMini_Sword::SetGameDegree(uint8_t degree)
             m_difficultyBaseScore = 40;
             m_spawnInterval       = 600;
             m_gameDegree          = 40;
-            m_displayScore        = 0;
+            m_scoreCap            = 360;
+            m_bonusMultiplier     = 4.0f;   // 0x40800000
             m_bgResID             = 0x20000024u;
             break;
     }
@@ -989,7 +995,10 @@ void cltMini_Sword::StartGame()
     m_slots[m_slotMonsterHead].active = 1;
     m_slots[m_slotMonsterAlt].active  = 0;
 
-    m_lastSpawnTick = 0;
+    // mofclient.c：*((_BYTE *)this + 3966) = -106
+    m_targetAlphaState = static_cast<uint8_t>(-106);
+    // mofclient.c：*((_DWORD *)this + 992) = 0 — hit lock 需在開局時重置
+    m_hitLocked     = 0;
     m_needNewTarget = 0;
     m_curTarget     = 0;
 
@@ -1145,11 +1154,13 @@ void cltMini_Sword::EndStage()
 
             if (m_totalScore)
             {
+                // mofclient.c：bonus = (point - baseScore) * m_bonusMultiplier
+                //   加到 m_finalScore（此時等於 m_winMark），再依 m_scoreCap 截頂
                 double frac = static_cast<double>(GetPoint() - m_difficultyBaseScore);
-                int bonus = static_cast<int>(frac * 2.0); // 近似 mofclient.c 用的 m_dword520 = float
+                int bonus = static_cast<int>(frac * static_cast<double>(m_bonusMultiplier));
                 m_finalScore += bonus;
-                if (static_cast<int>(m_currentRoundScore) < m_finalScore)
-                    m_finalScore = m_currentRoundScore;
+                if (m_scoreCap < m_finalScore)
+                    m_finalScore = m_scoreCap;
             }
 
             int finalValue = m_finalScore;
