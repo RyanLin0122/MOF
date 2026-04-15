@@ -37,6 +37,13 @@ public:
     // 呼叫端會把回傳值直接餵給 _wsprintfA 的 "%s"。這裡提供相同語意的 shim，
     // 讓 minigame 等呼叫端能對齊 GT 的呼叫寫法。
     static cltMyCharData* GetMyCharName(cltMyCharData* self);
+
+    // mofclient.c 0x519150：
+    //   void cltMyCharData::IncLessonPt_Sword(this, a2)
+    //   { cltLessonSystem::IncLessonPt_Sword((char*)this + 6568, a2); }
+    // cltMyCharData 內嵌了 cltLessonSystem 於 offset 6568；這裡提供同語意
+    // 的 shim，使小遊戲加分流程能對齊 GT（透過 MyCharData → LessonSystem）。
+    static void IncLessonPt_Sword(cltMyCharData* self, unsigned int value);
 };
 
 extern cltMyCharData g_clMyCharData;

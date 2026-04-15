@@ -1,5 +1,6 @@
 #include "Logic/cltMyCharData.h"
 #include "global.h"
+#include "System/cltLessonSystem.h"
 
 cltMyCharData g_clMyCharData{};
 
@@ -53,4 +54,12 @@ cltMyCharData* cltMyCharData::GetMyCharName(cltMyCharData* self) {
     // 呼叫端 (_wsprintfA(..., fmt, GetMyCharName(...), ...)) 會把回傳值當作
     // 指向角色名稱字元陣列（位於 cltMyCharData 起始位址）的 char*。
     return self;
+}
+
+void cltMyCharData::IncLessonPt_Sword(cltMyCharData* /*self*/, unsigned int value) {
+    // Ground truth 0x519150：
+    //   cltLessonSystem::IncLessonPt_Sword((char*)this + 6568, a2);
+    // cltMyCharData 內嵌 cltLessonSystem 於 offset 6568；本專案以 g_clLessonSystem
+    // 作為全域的 LessonSystem 實例，因此以同一個實例轉發加分呼叫。
+    g_clLessonSystem.IncLessonPt_Sword(value);
 }

@@ -22,7 +22,7 @@ void cltMiniGame_Button::CreateBtn(int x, int y,
                                    unsigned int resDisabled, uint16_t blockDisabled,
                                    void (*callback)(unsigned int),
                                    unsigned int userData,
-                                   int /*reserved*/)
+                                   int initialActive)
 {
     m_x = x;
     m_y = y;
@@ -37,6 +37,9 @@ void cltMiniGame_Button::CreateBtn(int x, int y,
     m_blockIDs[3] = blockDisabled;
     m_pCallback = callback;
     m_userData = userData;
+    // mofclient.c CreateBtn 0x5BE7A0：*(_DWORD *)this = a15;
+    // a15 是初始 m_nActive，呼叫端後續會在狀態切換時以 SetActive() 覆寫。
+    m_nActive = initialActive;
     m_nState = 0;
 }
 
