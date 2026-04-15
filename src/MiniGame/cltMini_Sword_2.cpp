@@ -228,7 +228,8 @@ void cltMini_Sword_2::InitMiniGameImage()
                       static_cast<unsigned short>(800),
                       static_cast<unsigned short>(m_screenY + 600),
                       0.0f, 0.0f, 0.0f, 0.5f, nullptr);
-    m_rankDrawCounter = 0;
+    // mofclient.c 352604：*((_DWORD *)this + 211) = 0（frame-local alphabox flag）
+    m_drawAlphaBox = 0;
 
     // 上黑條：x=screenX, y=0, w=800, h=screenY+50, 黑不透明
     m_topBlackBox.Create(m_screenX, 0,
@@ -256,8 +257,11 @@ void cltMini_Sword_2::InitMiniGameImage()
 // =========================================================================
 int cltMini_Sword_2::Poll()
 {
+    // mofclient.c：*((_DWORD *)this + 211) = 0 — 每幀先把 m_alphaBox 顯示
+    // 旗標清為 0，後面依 state 決定是否重新設為 1。與 base class 的
+    // m_rankDrawCounter (DWORD[104]) 無關。
     unsigned int prevFrame = m_pollFrame;
-    m_rankDrawCounter = 0;
+    m_drawAlphaBox = 0;
     m_pollFrame = prevFrame + 1;
 
     // Ready / Gamming / EndStage 三態採 frame-skip；其它狀態立即處理。
@@ -281,7 +285,7 @@ int cltMini_Sword_2::Poll()
                 Init_Wait();
                 m_pGameSoundMgr->PlaySoundA((char*)"J0002", 0, 0);
             }
-            m_rankDrawCounter = 1;
+            m_drawAlphaBox = 1;
             break;
 
         case 4:   // Ready
@@ -294,7 +298,7 @@ int cltMini_Sword_2::Poll()
 
         case 7:   // Ranking
             Ranking();
-            m_rankDrawCounter = 1;
+            m_drawAlphaBox = 1;
             break;
 
         case 100: // Exit
@@ -383,7 +387,8 @@ void cltMini_Sword_2::PrepareDrawing()
     // AlphaBox 三塊：top / bottom 永遠處理；中央半透明遮罩只在排行榜/選單顯示。
     m_topBlackBox.PrepareDrawing();
     m_botBlackBox.PrepareDrawing();
-    if (m_rankDrawCounter)
+    // mofclient.c 352211：if (*((_DWORD *)this + 211)) m_alphaBox.PrepareDrawing()
+    if (m_drawAlphaBox)
         m_alphaBox.PrepareDrawing();
 }
 
@@ -395,7 +400,8 @@ void cltMini_Sword_2::Draw()
     m_bgMgr.Render();
     m_sword2.Render();
 
-    if (m_rankDrawCounter)
+    // mofclient.c：Draw 依 *((_DWORD *)this + 211) 決定是否畫整塊半透明遮罩
+    if (m_drawAlphaBox)
         m_alphaBox.Draw();
 
     m_topBlackBox.Draw();

@@ -369,7 +369,8 @@ void cltMini_Sword::InitMiniGameImage()
     m_alphaBox.Create  (m_screenX,          m_screenY + 9,   static_cast<unsigned short>(800), static_cast<unsigned short>(500),
                          0.0f, 0.0f, 0.0f, 0.5f, nullptr);
 
-    m_rankDrawCounter = 0;
+    // mofclient.c：*((_DWORD *)this + 211) = 0（frame-local alphabox flag）
+    m_drawAlphaBox = 0;
     m_bgResID = 0x20000023u;
 
     g_GameSoundManager.PlayMusic((char*)"MoFData/Music/bg_minigame.ogg");
@@ -399,7 +400,10 @@ void cltMini_Sword::IncLessonPt_Sword(unsigned int v)
 // =========================================================================
 int cltMini_Sword::Poll()
 {
-    m_rankDrawCounter = 0;
+    // mofclient.c：*((_DWORD *)this + 211) = 0 — 每幀先把 m_alphaBox 顯示
+    // 旗標清為 0，後面依 state 決定是否重新設為 1。這與 base class 的
+    // m_rankDrawCounter (DWORD[104]) 無關。
+    m_drawAlphaBox = 0;
     ++m_pollFrame;
 
     bool inReadyOrLater = (g_cGameSwordState == 4 || g_cGameSwordState == 5 || g_cGameSwordState == 6);
@@ -418,7 +422,7 @@ int cltMini_Sword::Poll()
                 Init_Wait();
                 m_pGameSoundMgr->PlaySoundA((char*)"J0002", 0, 0);
             }
-            m_rankDrawCounter = 1;
+            m_drawAlphaBox = 1;
             break;
 
         case 4:  Ready();    break;
@@ -426,7 +430,7 @@ int cltMini_Sword::Poll()
         case 6:  EndStage(); break;
         case 7:
             Ranking();
-            m_rankDrawCounter = 1;
+            m_drawAlphaBox = 1;
             break;
         case 100:
             ExitGame();
@@ -486,7 +490,8 @@ void cltMini_Sword::PrepareDrawing()
     m_topBlackBox.PrepareDrawing();
     m_midBlackBox.PrepareDrawing();
     m_botBlackBox.PrepareDrawing();
-    if (m_rankDrawCounter)
+    // mofclient.c：*((_DWORD *)this + 211) 為本幀的 alphabox 顯示旗標
+    if (m_drawAlphaBox)
         m_alphaBox.PrepareDrawing();
 
     // 40 個 slot
@@ -577,7 +582,8 @@ void cltMini_Sword::Draw()
             m_slots[i].pImage->Draw();
     }
 
-    if (m_rankDrawCounter)
+    // mofclient.c：Draw 依 *((_DWORD *)this + 211) 決定是否畫整塊半透明遮罩
+    if (m_drawAlphaBox)
         m_alphaBox.Draw();
 
     m_topBlackBox.Draw();
@@ -920,7 +926,10 @@ void cltMini_Sword::SetGameDegree(uint8_t degree)
 
     m_drawNumFinal.SetActive(0);
     m_totalScore = 0;
-    m_rankDrawCounter = 0;
+    // mofclient.c 348544：*((_DWORD *)this + 138) = 0 — 清 m_finalReady。
+    // 早先版本誤寫成 m_rankDrawCounter = 0，會把 Init_Ranking 剛設好的
+    // DWORD[104] gate 清掉，導致 state==7 的排行榜在資料還沒到前就被畫出。
+    m_finalReady = 0;
 
     for (int i = 0; i < kButtonCount; ++i)
         m_buttons[i].SetActive(0);

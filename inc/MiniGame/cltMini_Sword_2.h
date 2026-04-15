@@ -131,4 +131,10 @@ public:
     std::uint32_t m_pollFrame;               // DWORD[1198]：Poll frame skip 計數
 
     std::uint8_t  m_prevState;               // byte 2061 : 上一 tick 的狀態
+
+    // mofclient.c：*((_DWORD *)this + 211) — 每幀的 m_alphaBox 顯示旗標。
+    //   Poll 開頭清為 0；state == 1/2/3 或 7 時設為 1；PrepareDrawing/Draw
+    //   依它決定是否繪製整張半透明遮罩。與 base class 的 m_rankDrawCounter
+    //   (DWORD[104]) 是兩個語意完全不同的欄位。
+    int           m_drawAlphaBox;
 };

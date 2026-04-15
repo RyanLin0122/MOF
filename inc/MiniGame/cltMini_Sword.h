@@ -143,6 +143,15 @@ public:
     int        m_pollFrame;               // 4012 dword 1003
     uint8_t    m_prevState;               // +2061
 
+    // mofclient.c：*((_DWORD *)this + 211) — 每幀的 m_alphaBox 顯示旗標。
+    //   Poll 開頭清為 0；state == 1/2/3 或 7 時設為 1；PrepareDrawing/Draw
+    //   依它決定是否繪製整張半透明遮罩。與 base class 的 m_rankDrawCounter
+    //   (DWORD[104]) 是兩個語意完全不同的欄位：前者是「本幀要不要畫 alpha」
+    //   的 frame-local flag，後者是「排名資料尚未就緒，不要畫 DrawRanking」
+    //   的 persistent gate。早先的版本把兩者合併成 m_rankDrawCounter，導致
+    //   state==7 時排行榜 / 遮罩互相干擾。
+    int        m_drawAlphaBox;
+
     // 與結算 popup 相關
     uint32_t   m_finalReady;              // dword 138
     uint32_t   m_serverAck;               // dword 139
