@@ -42,8 +42,10 @@ int Mini_Timer::GetCurrentSecondDelta()
     return 1;
 }
 
-float Mini_Timer::GetCurrentFrameTime()
+double Mini_Timer::GetCurrentFrameTime()
 {
+    // mofclient.c：函式簽章回傳 double，內部 m_fFrameSecond 為 float。
+    // 以 float 儲存後再以 double 傳回（將 float 擴展為 double）。
     unsigned int now  = timeGetTime();
     unsigned int prev = m_dwPrevTick;
     m_dwCurTick  = now;

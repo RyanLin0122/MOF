@@ -178,6 +178,14 @@ cltMini_Sword::cltMini_Sword()
     , m_serverValid(0)
     , m_serverTimeMs(0)
     , m_exitTick(0)
+    , m_pBgImage(nullptr)
+    , m_targetAlphaState(0)
+    , m_drawSlot604(19)
+    , m_drawSlot605(32)
+    , m_drawSlot606(33)
+    , m_drawSlot607(34)
+    , m_drawSlot608(20)
+    , m_drawSlot609(21)
 {
     g_cGameSwordState = 0;
 
@@ -243,6 +251,15 @@ void cltMini_Sword::InitMiniGameImage()
     m_slotMissFX      = 26;
     m_slotTargetFX    = 31;
     m_bgResID         = 0x20000023u;
+
+    // mofclient.c：bytes 604-609 — Draw 使用的 6 個 priority 用途 slot 索引
+    //   (Init 設為 19/20/21/32/33/34，整個 cltMini_Sword 生命週期不再變動)
+    m_drawSlot604 = 19;
+    m_drawSlot608 = 20;
+    m_drawSlot609 = 21;
+    m_drawSlot605 = 32;
+    m_drawSlot606 = 33;
+    m_drawSlot607 = 34;
 
     // 3) 13 個按鈕
     //   對齊 mofclient.c 對每個按鈕的 CreateBtn 呼叫 —— 僅以本專案的 API 重排參數。
@@ -453,7 +470,9 @@ void cltMini_Sword::PrepareDrawing()
     cltImageManager* pMgr = m_pclImageMgr;
 
     // 半透明底色 (m_bgResID)
+    // mofclient.c：取得後存入 *((_DWORD *)this + 2)，Draw 會直接 Draw(m_pBgImage)。
     GameImage* pBg = pMgr->GetGameImage(9u, m_bgResID, 0, 1);
+    m_pBgImage = pBg;
     if (pBg)
     {
         pBg->SetBlockID(0);
@@ -504,8 +523,11 @@ void cltMini_Sword::PrepareDrawing()
     }
 
     // Target frame 閃爍
+    // mofclient.c：使用 *((_BYTE *)this + 3966) — 獨立的 byte 狀態，每幀 +=6
+    // 後直接當 alpha 寫入 target FX slot；由於是 byte 運算，會自動 wrap 0..255。
     {
-        unsigned char a = static_cast<unsigned char>(0x9A + dwFrameCnt); // 模擬 +=6 的變化
+        m_targetAlphaState = static_cast<uint8_t>(m_targetAlphaState + 6);
+        uint8_t a = m_targetAlphaState;
         if (m_slots[m_slotTargetFX].active)
         {
             GameImage* p = m_slots[m_slotTargetFX].pImage;
@@ -533,12 +555,22 @@ void cltMini_Sword::PrepareDrawing()
 // =========================================================================
 void cltMini_Sword::Draw()
 {
-    // 40 slot 內可見的兩組：先畫 slot 22~39，再畫 slot 0~21
-    for (int i = m_slots[33].active ? 23 : 22; i < 40; ++i)
+    // mofclient.c：Draw 第一步先畫半透明底圖 (PrepareDrawing 取的那張)
+    if (m_pBgImage)
+        m_pBgImage->Draw();
+
+    // mofclient.c：若 byte606 > 22 才會進 22..(byte606-1) 的迴圈；
+    // byte606 在 Init 中固定為 33，所以實際上畫 slot 22..32。
+    if (m_drawSlot606 > 22u)
     {
-        if (m_slots[i].active && m_slots[i].pImage)
-            m_slots[i].pImage->Draw();
+        for (int i = 22; i < static_cast<int>(m_drawSlot606); ++i)
+        {
+            if (m_slots[i].active && m_slots[i].pImage)
+                m_slots[i].pImage->Draw();
+        }
     }
+
+    // 固定再畫前 22 格（slot 0..21）。
     for (int i = 0; i < 22; ++i)
     {
         if (m_slots[i].active && m_slots[i].pImage)
@@ -558,15 +590,16 @@ void cltMini_Sword::Draw()
 
     m_botBlackBox.Draw();
 
-    // 單獨繪製幾個高優先級的 slot
+    // mofclient.c：四個 priority slot — 順序為 byte605, byte604, byte606, byte607
+    // （對應 slot 32 / 19 / 33 / 34）。
     auto drawSlot = [&](uint8_t idx) {
         if (m_slots[idx].active && m_slots[idx].pImage)
             m_slots[idx].pImage->Draw();
     };
-    drawSlot(m_slotPointFrame);
-    drawSlot(m_slotBtnFrame);
-    drawSlot(m_slotHitFX);
-    drawSlot(m_slotMissFX);
+    drawSlot(m_drawSlot605);
+    drawSlot(m_drawSlot604);
+    drawSlot(m_drawSlot606);
+    drawSlot(m_drawSlot607);
 
     for (int i = 0; i < kButtonCount; ++i)
         m_buttons[i].Draw();

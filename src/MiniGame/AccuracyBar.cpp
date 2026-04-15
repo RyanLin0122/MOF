@@ -47,7 +47,7 @@ void AccuracyBar::InitAccuracyBar(int degree, float x, float y)
     //  1094538581 = 12.30f
     //  1092765989 = 10.95f
     //
-    // degree=0: r=0→15, r=1→12.30, r=2→(no set)
+    // degree=0: r=0→15, r=1→12.30, r=2→10.95 (case 0 fall-through LABEL_19)
     // degree=1: r=0→15, r=1→12.30, r=2→10.95
     // degree=2: r=0→15, r=1→12.30, r=2→10.95
     auto f = [](unsigned int bits) -> float {
@@ -58,6 +58,7 @@ void AccuracyBar::InitAccuracyBar(int degree, float x, float y)
         case 0:
             if (r == 0) m_speed = f(1097020211u);
             else if (r == 1) m_speed = f(1094538581u);
+            else if (r == 2) m_speed = f(1092765989u);
             break;
         case 1:
             if (r == 0) m_speed = f(1097020211u);
@@ -228,7 +229,9 @@ bool AccuracyBar::Process(float dt)
 
 void AccuracyBar::Render()
 {
-    if (m_running && m_pCursor && m_pHighlight)
+    // mofclient.c：只在 running && cursor 存在時直接 Draw(highlight)，
+    // 不額外檢查 highlight 指標是否非 null。
+    if (m_running && m_pCursor)
         m_pHighlight->Draw();
     if (m_pBar)
         m_pBar->Draw();
