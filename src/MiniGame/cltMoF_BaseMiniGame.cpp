@@ -18,8 +18,13 @@
 #include "System/cltLessonSystem.h"
 #include "Info/cltItemKindInfo.h"
 
-// mofclient.c 取用 g_clLessonSystem 的等價全域（原始碼經由
-// cltMyCharData 物件的 +6568 偏移抓到 lesson system 實例）。
+// 原始碼 (mofclient.c 0x5BE910/0x5BE920) 取用的 lesson system 位於
+// cltMyCharData 物件的 +6568 偏移處：
+//     cltLessonSystem::GetTraningItemKind((char*)m_pclMyChatData + 6568)
+// 本還原專案中 cltMyCharData 為不含內嵌子系統的精簡 stub，因此將所有
+// lesson system 操作統一放到獨立全域 g_clLessonSystem。整個專案
+// (cltMini_Sword.cpp / cltMini_Sword_2.cpp 等) 都走這個全域，所以
+// 語意上等同於 GT — 不存在「兩份 lesson system 不同步」的風險。
 extern cltLessonSystem g_clLessonSystem;
 
 // --- 靜態成員定義 ---
@@ -202,19 +207,26 @@ void cltMoF_BaseMiniGame::SetMyRanking(int rank)
 {
     int textId;
     int rankValue;
+    cltMyCharData* name;
+    // mofclient.c 0x5BE370：兩個分支都在 if/else 內呼叫 GetMyCharName，
+    // 結果會跟 rankValue、textId 一起當作 _wsprintfA 的可變參數。
     if (rank == -1)
     {
         rankValue = 300;
+        name = cltMyCharData::GetMyCharName(m_pclMyChatData);
         textId = 3338;
     }
     else
     {
         rankValue = rank + 1;
+        name = cltMyCharData::GetMyCharName(m_pclMyChatData);
         textId = 3339;
     }
-    // mofclient.c：呼叫 GetMyCharName 取得角色名稱指標作為 wsprintfA 的 %s 參數。
-    cltMyCharData* name = m_pclMyChatData; // GetMyCharName 在原始版本中 return this；
     const char* fmt = m_pDCTTextManager->GetText(textId);
+    // GT：_wsprintfA((LPSTR)this + 421, fmt, v5, v6)
+    //   v5 = GetMyCharName(m_pclMyChatData) 回傳指標 → 在 cltMyCharData 起點
+    //        放著 NUL 結尾的角色名稱，被 %s 解讀為 C-string。
+    //   v6 = rankValue。
     wsprintfA(m_myRankingText, fmt, reinterpret_cast<const char*>(name), rankValue);
 }
 

@@ -31,6 +31,12 @@ public:
     static void SetMapID(cltMyCharData* self, unsigned short mapKind);
 
     static void SetMyCharName(cltMyCharData* self, const char* name);
+
+    // mofclient.c 0x518610：此函式在原始程式碼實際上只是 `return this;`
+    // 原因是 cltMyCharData 的前幾個 byte 即為以 NUL 結尾的角色名稱字串，
+    // 呼叫端會把回傳值直接餵給 _wsprintfA 的 "%s"。這裡提供相同語意的 shim，
+    // 讓 minigame 等呼叫端能對齊 GT 的呼叫寫法。
+    static cltMyCharData* GetMyCharName(cltMyCharData* self);
 };
 
 extern cltMyCharData g_clMyCharData;

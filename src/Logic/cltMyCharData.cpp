@@ -45,3 +45,12 @@ void cltMyCharData::SetMapID(cltMyCharData* /*self*/, unsigned short /*mapKind*/
 void cltMyCharData::SetMyCharName(cltMyCharData* /*self*/, const char* /*name*/) {
     // Stub: real implementation stores the character name.
 }
+
+cltMyCharData* cltMyCharData::GetMyCharName(cltMyCharData* self) {
+    // Ground truth 0x518610：
+    //   cltMyCharData *__thiscall cltMyCharData::GetMyCharName(cltMyCharData *this)
+    //   { return this; }
+    // 呼叫端 (_wsprintfA(..., fmt, GetMyCharName(...), ...)) 會把回傳值當作
+    // 指向角色名稱字元陣列（位於 cltMyCharData 起始位址）的 char*。
+    return self;
+}
