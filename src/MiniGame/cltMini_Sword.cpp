@@ -265,6 +265,10 @@ void cltMini_Sword::InitMiniGameImage()
 
     // 3) 13 個按鈕
     //   對齊 mofclient.c 對每個按鈕的 CreateBtn 呼叫 —— 僅以本專案的 API 重排參數。
+    //   CreateBtn 最後一個參數是 initialActive（mofclient.c 直接寫入 *(_DWORD*)this），
+    //   GT 的 13 個按鈕中只有 Main 選單的 Start/Ranking/Exit 與 Help/ShowPoint 傳 1，
+    //   其餘（Ranking 彈窗的 Prev/Next/Back、Help/ShowPoint 關閉鈕、難度三顆、
+    //   EndStage 關閉鈕）皆傳 0。
     auto make = [&](int idx, int x, int y,
                     unsigned int imageType,
                     unsigned int r1, uint16_t b1,
@@ -272,11 +276,12 @@ void cltMini_Sword::InitMiniGameImage()
                     unsigned int r3, uint16_t b3,
                     unsigned int r4, uint16_t b4,
                     void (*cb)(unsigned int),
-                    unsigned int userData)
+                    unsigned int userData,
+                    int initialActive)
     {
         m_buttons[idx].CreateBtn(x, y, imageType,
                                  r1, b1, r2, b2, r3, b3, r4, b4,
-                                 cb, userData, 1);
+                                 cb, userData, initialActive);
     };
 
     auto cast = [](void (*fn)(cltMini_Sword*)) -> void(*)(unsigned int) {
@@ -286,76 +291,65 @@ void cltMini_Sword::InitMiniGameImage()
         return reinterpret_cast<void (*)(unsigned int)>(fn);
     };
 
-    // 主選單三顆（Start / Ranking / Exit）
+    const unsigned int self = reinterpret_cast<unsigned int>(this);
+
+    // 主選單三顆（Start / Ranking / Exit）— GT: initialActive = 1
     make(0,  m_screenX + 37,  m_screenY + 472, 9u,
          0x2200000Au, 0, 0x2200000Au, 3, 0x2200000Au, 6,
-         0x20000014u, 9, cast(&cltMini_Sword::OnBtn_Start),
-         reinterpret_cast<unsigned int>(this));
+         0x20000014u, 9, cast(&cltMini_Sword::OnBtn_Start),   self, 1);
 
     make(1,  m_screenX + 183, m_screenY + 472, 9u,
          0x2200000Au, 1, 0x2200000Au, 4, 0x2200000Au, 7,
-         0x20000014u, 10, cast(&cltMini_Sword::OnBtn_Ranking),
-         reinterpret_cast<unsigned int>(this));
+         0x20000014u, 10, cast(&cltMini_Sword::OnBtn_Ranking), self, 1);
 
     make(2,  m_screenX + 621, m_screenY + 472, 9u,
          0x2200000Au, 2, 0x2200000Au, 5, 0x2200000Au, 8,
-         0x20000014u, 11, cast2(&cltMini_Sword::OnBtn_Exit),
-         reinterpret_cast<unsigned int>(this));
+         0x20000014u, 11, cast2(&cltMini_Sword::OnBtn_Exit),   self, 1);
 
-    // Ranking Pre/Next/Back
+    // Ranking Pre/Next/Back — GT: initialActive = 0
     make(3,  m_uiPos[0] + 17,  m_uiPos[1] + 295, 9u,
          0x2200000Au, 13, 0x2200000Au, 15, 0x2200000Au, 17,
-         0x2200000Au, 19, cast(&cltMini_Sword::OnBtn_RankingPre),
-         reinterpret_cast<unsigned int>(this));
+         0x2200000Au, 19, cast(&cltMini_Sword::OnBtn_RankingPre),  self, 0);
 
     make(4,  m_uiPos[0] + 62,  m_uiPos[1] + 295, 9u,
          0x2200000Au, 14, 0x2200000Au, 16, 0x2200000Au, 18,
-         0x2200000Au, 20, cast(&cltMini_Sword::OnBtn_RankingNext),
-         reinterpret_cast<unsigned int>(this));
+         0x2200000Au, 20, cast(&cltMini_Sword::OnBtn_RankingNext), self, 0);
 
     make(5,  m_uiPos[0] + 220, m_uiPos[1] + 295, 9u,
          0x2200000Au, 21, 0x2200000Au, 22, 0x2200000Au, 23,
-         0x2200000Au, 24, cast(&cltMini_Sword::OnBtn_ExitPopUp),
-         reinterpret_cast<unsigned int>(this));
+         0x2200000Au, 24, cast(&cltMini_Sword::OnBtn_ExitPopUp),   self, 0);
 
-    // Help / ShowPoint
+    // Help / ShowPoint — GT: initialActive = 1
     make(6,  m_screenX + 329, m_screenY + 472, 9u,
          0x1000009Bu, 12, 0x1000009Bu, 14, 0x1000009Bu, 16,
-         0x1000009Bu, 18, cast(&cltMini_Sword::OnBtn_Help),
-         reinterpret_cast<unsigned int>(this));
+         0x1000009Bu, 18, cast(&cltMini_Sword::OnBtn_Help),       self, 1);
 
     make(7,  m_screenX + 475, m_screenY + 472, 9u,
          0x1000009Bu, 13, 0x1000009Bu, 15, 0x1000009Bu, 17,
-         0x1000009Bu, 19, cast(&cltMini_Sword::OnBtn_ShowPoint),
-         reinterpret_cast<unsigned int>(this));
+         0x1000009Bu, 19, cast(&cltMini_Sword::OnBtn_ShowPoint),  self, 1);
 
-    // Help / ShowPoint popup 上的關閉鈕
+    // Help / ShowPoint popup 上的關閉鈕 — GT: initialActive = 0
     make(8,  m_screenX + 566, m_screenY + 513, 9u,
          0x2200000Au, 21, 0x2200000Au, 22, 0x2200000Au, 23,
-         0x2200000Au, 24, cast(&cltMini_Sword::OnBtn_ExitPopUp),
-         reinterpret_cast<unsigned int>(this));
+         0x2200000Au, 24, cast(&cltMini_Sword::OnBtn_ExitPopUp),  self, 0);
 
-    // 難度選擇：Easy / Normal / Hard
+    // 難度選擇：Easy / Normal / Hard — GT: initialActive = 0
     make(9,  m_uiPos[8] + 36,  m_uiPos[9] + 48,  9u,
          0x1000009Bu, 0, 0x1000009Bu, 3, 0x1000009Bu, 6,
-         0x1000009Bu, 9, cast(&cltMini_Sword::OnBtn_DegreeEasy),
-         reinterpret_cast<unsigned int>(this));
+         0x1000009Bu, 9, cast(&cltMini_Sword::OnBtn_DegreeEasy),   self, 0);
 
     make(10, m_uiPos[8] + 36,  m_uiPos[9] + 102, 9u,
          0x1000009Bu, 1, 0x1000009Bu, 4, 0x1000009Bu, 7,
-         0x1000009Bu, 10, cast(&cltMini_Sword::OnBtn_DegreeNormal),
-         reinterpret_cast<unsigned int>(this));
+         0x1000009Bu, 10, cast(&cltMini_Sword::OnBtn_DegreeNormal), self, 0);
 
     make(11, m_uiPos[8] + 36,  m_uiPos[9] + 156, 9u,
          0x1000009Bu, 2, 0x1000009Bu, 5, 0x1000009Bu, 8,
-         0x1000009Bu, 11, cast(&cltMini_Sword::OnBtn_DegreeHard),
-         reinterpret_cast<unsigned int>(this));
+         0x1000009Bu, 11, cast(&cltMini_Sword::OnBtn_DegreeHard),  self, 0);
 
-    // EndStage popup 關閉鈕
+    // EndStage popup 關閉鈕 — GT: initialActive = 0
     make(12, m_uiPos[2] + 215, m_uiPos[3] + 170, 9u,
          0x2200000Au, 21, 0x2200000Au, 22, 0x2200000Au, 23,
-         0x2200000Au, 24, cast(&cltMini_Sword::OnBtn_ExitPopUp),
-         reinterpret_cast<unsigned int>(this));
+         0x2200000Au, 24, cast(&cltMini_Sword::OnBtn_ExitPopUp),   self, 0);
 
     // DrawNum 初始化
     m_drawNumTime .InitDrawNum(9u, 0x22000007u, 0x11u, 0);
@@ -393,7 +387,11 @@ uint16_t cltMini_Sword::GetPoint()            { return m_point; }
 
 void cltMini_Sword::IncLessonPt_Sword(unsigned int v)
 {
-    g_clLessonSystem.IncLessonPt_Sword(v);
+    // mofclient.c 0x5A6100：
+    //   cltMyCharData::IncLessonPt_Sword(cltMoF_BaseMiniGame::m_pclMyChatData, a2);
+    // GT 的加分流程是 cltMini_Sword → cltMyCharData → cltLessonSystem，
+    // 不是直接呼叫 g_clLessonSystem。
+    cltMyCharData::IncLessonPt_Sword(cltMoF_BaseMiniGame::m_pclMyChatData, v);
 }
 
 // =========================================================================

@@ -10,6 +10,9 @@ public:
     cltMiniGame_Button();
     ~cltMiniGame_Button();
 
+    // 最後一個 int 對應 mofclient.c CreateBtn 的 a15 參數：
+    //   *(_DWORD *)this = a15;
+    // 即按鈕建立後的初始 m_nActive 值。呼叫端會在其後再呼叫 SetActive() 覆寫。
     void CreateBtn(int x, int y,
                    unsigned int imageType,
                    unsigned int resNormal,   uint16_t blockNormal,
@@ -18,7 +21,7 @@ public:
                    unsigned int resDisabled, uint16_t blockDisabled,
                    void (*callback)(unsigned int),
                    unsigned int userData,
-                   int reserved);
+                   int initialActive);
 
     void SetActive(int active);
     void SetBtnState(uint8_t state);
