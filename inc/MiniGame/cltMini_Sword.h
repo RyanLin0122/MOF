@@ -144,4 +144,23 @@ public:
     uint32_t   m_serverValid;             // dword 141
     uint32_t   m_serverTimeMs;            // dword 146
     uint32_t   m_exitTick;                // dword 150
+
+    // mofclient.c：PrepareDrawing 取得的背景圖 pointer
+    //   *((_DWORD *)this + 2)：以獨立欄位存放，避免透過 cltMoF_BaseMiniGame 的
+    //   其他成員意外覆寫。Draw 一開始會直接 Draw(m_pBgImage)。
+    GameImage* m_pBgImage;
+
+    // mofclient.c：*((_BYTE *)this + 3966) — 每次 PrepareDrawing 都 +=6 並
+    // 寫入 target FX slot 的 alpha，模擬「緩慢閃爍」的動畫狀態機。
+    uint8_t    m_targetAlphaState;
+
+    // mofclient.c：bytes 604-609 — 6 個 priority 用途的 slot 索引（在 Init 設為
+    // 19/20/21/32/33/34，整個 cltMini_Sword 生命週期不再變動）。這些值被
+    // Draw 使用於首個 loop 的結束界線 (byte606=33) 以及四個 priority slot。
+    uint8_t    m_drawSlot604;             // byte 604 = 19 (ranking base slot)
+    uint8_t    m_drawSlot605;             // byte 605 = 32 (priority slot A)
+    uint8_t    m_drawSlot606;             // byte 606 = 33 (priority slot B / loop bound)
+    uint8_t    m_drawSlot607;             // byte 607 = 34 (priority slot C)
+    uint8_t    m_drawSlot608;             // byte 608 = 20 (ranking prev slot)
+    uint8_t    m_drawSlot609;             // byte 609 = 21 (ranking next slot)
 };

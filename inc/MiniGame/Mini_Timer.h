@@ -10,7 +10,7 @@ public:
     void         InitTimer(int secondStep);
     long long    GetCurrentSecond();
     int          GetCurrentSecondDelta();
-    float        GetCurrentFrameTime();
+    double       GetCurrentFrameTime();
 
 private:
     unsigned int m_dwStartTick;   // +0  : 起始 tick

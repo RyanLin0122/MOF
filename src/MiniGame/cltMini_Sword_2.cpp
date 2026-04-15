@@ -643,7 +643,9 @@ void cltMini_Sword_2::SetGameDegree(std::uint8_t degree)
     m_slots[m_uiSelectDegree].active = 0;
 
     // Ready 倒數 3 秒 + 啟動 timer
-    InitMiniGameTime(0, 3u);
+    // mofclient.c：第一參數為 *((_DWORD *)this + 6)，即剛設定好的
+    // m_difficultyBaseScore (Easy=12, Normal=20, Hard=27)。
+    InitMiniGameTime(static_cast<unsigned int>(m_difficultyBaseScore), 3u);
     m_dword149 = 0;
     unsigned int rt = GetReadyTime();
     m_dword149 = g_clTimerManager.CreateTimer(
