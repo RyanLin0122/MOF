@@ -425,9 +425,8 @@ int cltMini_Exorcist_2::ExitGame()
 
 void cltMini_Exorcist_2::Ready()
 {
-    // mofclient.c：cltMini_Exorcist_2::Ready 在 IDB 中保留但無顯式實作；
+    // mofclient.c：cltMini_Exorcist_2::Ready 在 IDB 中僅有宣告但無函式本體；
     // 倒數實際由 OnTimer_DecreaseReadyTime / OnTimer_TimeOutReadyTime 推進。
-    ++dwFrameCnt;
 }
 
 // =========================================================================
