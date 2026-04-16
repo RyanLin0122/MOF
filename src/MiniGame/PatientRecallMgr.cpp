@@ -71,8 +71,7 @@ void PatientRecallMgr::AutoPatientRecall()
     int freeCount = 0;
     for (int i = 0; i < 9; ++i)
     {
-        CBedstead* bed = m_beds[i];
-        if (bed && bed->IsPatientState() == 0)
+        if (!m_beds[i]->IsPatientState())
         {
             m_freeIndices[freeCount] = i;
             ++freeCount;
@@ -93,8 +92,7 @@ void PatientRecallMgr::Process()
     int emptyCount = 0;
     for (int i = 0; i < 9; ++i)
     {
-        CBedstead* bed = m_beds[i];
-        if (bed && bed->IsPatientState() == 0)
+        if (!m_beds[i]->IsPatientState())
             ++emptyCount;
     }
     int busyCount = 9 - emptyCount;

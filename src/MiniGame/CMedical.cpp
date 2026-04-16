@@ -143,14 +143,13 @@ CPatient::CPatient()
     , m_medicalKind(0)
     , m_pad32(10)
     , m_alpha(255)
-    , m_FrameSkip_vft(nullptr)
-    , m_alphaAccum(0.0f)
-    , m_alphaThreshold(bitsToFloat(1015580809u))   // ≈ 1/60
     , m_fX(0.0f)
     , m_fY(0.0f)
     , m_bFirstHurt(1)
     , m_bSpeekUsed(0)
 {
+    // m_frameSkip 的 FrameSkip 建構子會自動設定 vftable、
+    // m_fAccumulatedTime=0.0f、m_fTimePerFrame=1/60 — 對齊 ground truth。
 }
 
 CPatient::~CPatient() = default;
@@ -256,8 +255,7 @@ int CPatient::UseMedical(int medicalKind)
         }
         float ey = m_fY + 80.0f;
         float ex = m_fX + 53.0f;
-        if (pEff)
-            pEff->SetEffect(ex, ey);
+        pEff->SetEffect(ex, ey);
         g_EffectManager_MiniGame.BulletAdd(pEff);
         return 1;
     }
@@ -275,7 +273,7 @@ void CPatient::RecallPatient()
     m_pad32        = 10 - r1 % 3;
     m_medicalKind  = std::rand() % 4;
     m_timer.InitTimer(1);
-    m_alphaThreshold = bitsToFloat(1006632960u);   // 0.0078125
+    m_frameSkip.m_fTimePerFrame = bitsToFloat(1006632960u);   // 0.0078125
     int patientType = m_medicalKind;
     m_alpha        = 255;
     m_bFirstHurt   = 1;
@@ -374,15 +372,15 @@ void CPatient::Process(float dt)
         if (m_bSpeekUsed)
             m_speekMgr.SetUsed(false);
 
-        float accum = dt + m_alphaAccum;
-        bool below = accum < m_alphaThreshold;
-        m_alphaAccum = accum;
+        float accum = dt + m_frameSkip.m_fAccumulatedTime;
+        bool below = accum < m_frameSkip.m_fTimePerFrame;
+        m_frameSkip.m_fAccumulatedTime = accum;
         long long n = 0;
         if (!below)
         {
-            n = static_cast<long long>(accum / m_alphaThreshold);
+            n = static_cast<long long>(accum / m_frameSkip.m_fTimePerFrame);
             if (n)
-                m_alphaAccum = accum - static_cast<float>(static_cast<int>(n)) * m_alphaThreshold;
+                m_frameSkip.m_fAccumulatedTime = accum - static_cast<float>(static_cast<int>(n)) * m_frameSkip.m_fTimePerFrame;
         }
         int newAlpha = m_alpha - static_cast<int>(n);
         m_alpha = newAlpha;

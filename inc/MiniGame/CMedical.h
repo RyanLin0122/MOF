@@ -45,9 +45,7 @@ public:
     std::int32_t  m_pad32;          // DWORD[8] = +32  剩餘秒數
     Mini_AniCtrl  m_aniCtrl;        // +36 (56 bytes)
     std::int32_t  m_alpha;          // DWORD[23] = +92
-    void*         m_FrameSkip_vft;  // DWORD[24] = +96
-    float         m_alphaAccum;     // DWORD[25] = +100
-    float         m_alphaThreshold; // DWORD[26] = +104
+    FrameSkip     m_frameSkip;      // DWORD[24..26] (vftable + accum + threshold)
     float         m_fX;             // DWORD[27] = +108
     float         m_fY;             // DWORD[28] = +112
     std::uint8_t  m_bFirstHurt;     // BYTE[116]
