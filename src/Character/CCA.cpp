@@ -4,6 +4,7 @@
 #include "Image/cltImageManager.h"
 #include "Image/CDeviceResetManager.h"
 #include "Image/CDeviceManager.h"
+#include "Info/cltClassKindInfo.h"
 #include "global.h"
 
 #include <d3d9.h>
@@ -1016,6 +1017,17 @@ void CCA::SetTransportActive(int active)
 }
 
 // =============================================================================
+// ExGetClassLevel (0x0042D1B0)
+// =============================================================================
+unsigned char ExGetClassLevel(unsigned short a1)
+{
+    strClassKindInfo* info = g_clClassKindInfo.GetClassKindInfo(a1);
+    if (info)
+        return info->bTransferStage;
+    return 0;
+}
+
+// =============================================================================
 // ExGetIllustCharSexCode (0x0042DE80)
 // =============================================================================
 unsigned char ExGetIllustCharSexCode(char charKind)
@@ -1023,4 +1035,16 @@ unsigned char ExGetIllustCharSexCode(char charKind)
     if (charKind == 70) return 0;
     if (charKind == 77) return 1;
     return static_cast<unsigned char>(charKind);
+}
+
+// =============================================================================
+// ExGetIllustCharAgeCode (0x0042DEB0)
+// =============================================================================
+unsigned char ExGetIllustCharAgeCode(unsigned short a1)
+{
+    if (!a1)
+        return 0;
+    if (ExGetClassLevel(a1) >= 2)
+        return 2;
+    return ExGetClassLevel(a1);
 }

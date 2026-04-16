@@ -113,5 +113,11 @@ public:
     int           m_nTransportMask;   // +288 (index 72, set to -1 or 0 in Process)
 };
 
+// Free function restored from mofclient.c (0042D1B0)
+unsigned char ExGetClassLevel(unsigned short a1);
+
 // Free function restored from mofclient.c (0042DE80)
 unsigned char ExGetIllustCharSexCode(char charKind);
+
+// Free function restored from mofclient.c (0042DEB0)
+unsigned char ExGetIllustCharAgeCode(unsigned short a1);

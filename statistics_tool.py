@@ -44,7 +44,6 @@ FORCE_MISSING_CLASSES = [
     "CShortKey",
     "XJoyStick",
     "cltSystemMessage",
-    "CControlCA",
     "cltSkillKindInfo",
     "cltRegenMonsterKindInfo"
 ]
