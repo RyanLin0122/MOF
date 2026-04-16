@@ -405,7 +405,7 @@ void cltMini_Exorcist_2::Draw()
 
     if (g_cGameExorcist_2State == 7)
     {
-        if (!m_drawAlphaBox)
+        if (!m_rankDrawCounter)
             DrawRanking(static_cast<std::uint16_t>(m_uiPos[0]),
                         static_cast<std::uint16_t>(m_uiPos[1]), 0);
     }
@@ -473,7 +473,7 @@ void cltMini_Exorcist_2::Init_Ranking()
     std::memset(m_ranking, 0, sizeof(m_ranking));
 
     RequestRanking(0x29u, m_curRankPage);
-    m_drawAlphaBox = 1;
+    m_rankDrawCounter = 1;
     g_cGameExorcist_2State = 7;
 }
 
