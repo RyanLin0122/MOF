@@ -22,10 +22,11 @@ CHospital::CHospital()
     , m_imgNumber()
     , m_selectRow(0)
     , m_selectCol(0)
-    , m_difficulty(5)
+    , m_difficulty(0)
 {
-    // mofclient.c：建構子最後把 g_GAMESCORE 歸零、設定預設難度 5（將被
-    // InitHospital 覆寫成 0/1/2），並建立游標動畫 (resID 0x20000032 blocks 8/9)。
+    // mofclient.c：建構子不寫入 m_difficulty（由 InitHospital 設定 0/1/2）；
+    // LOBYTE(v11)=5 是 MSVC __ehstate，非 m_difficulty。
+    // 建構子歸零 g_GAMESCORE 及 m_state，並建立游標動畫 (resID 0x20000032 blocks 8/9)。
     g_GAMESCORE = 0;
     m_state     = 0;
 
