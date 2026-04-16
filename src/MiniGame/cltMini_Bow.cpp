@@ -50,11 +50,12 @@ cltMini_Bow::cltMini_Bow()
     memset(m_arrowScores, 0, sizeof(m_arrowScores));
     memset(m_arrowNumXPos, 0, sizeof(m_arrowNumXPos));
 
-    // 對齊 mofclient.c：arrowY 初始取自 screenY 偏移
-    m_initArrowX = static_cast<std::uint16_t>(m_screenX);
-    m_initArrowY = static_cast<std::uint16_t>(m_screenY);
-    m_arrowX = m_initArrowX;
-    m_arrowY = m_initArrowY;
+    // 對齊 mofclient.c：建構子讀取尚未初始化的 DWORD[1253]/[1254]，
+    // InitMiniGameImage 後才設為 screenX+400 / screenY+367。
+    m_initArrowX = 0;
+    m_initArrowY = 0;
+    m_arrowX = 0;
+    m_arrowY = 0;
 
     g_cGameBowState = 0;
     m_prevState      = 100;
@@ -332,9 +333,10 @@ void cltMini_Bow::SetGameDegree(std::uint8_t degree)
         1000 * readyTime,
         reinterpret_cast<unsigned int>(this),
         1000u, 1,
+        nullptr, nullptr,
         reinterpret_cast<cltTimer::TimerCallback>(OnTimer_TimeOutReadyTime),
         reinterpret_cast<cltTimer::TimerCallback>(OnTimer_DecreaseReadyTime),
-        nullptr, nullptr, nullptr);
+        nullptr);
 
     for (int i = 0; i < kButtonCount; ++i)
         m_buttons[i].SetActive(0);
@@ -357,8 +359,8 @@ void cltMini_Bow::Ready()
 void cltMini_Bow::StartGame()
 {
     m_drawNumReady.SetActive(0);
-    m_startAreaX   = static_cast<std::uint16_t>(m_screenX);
-    m_startAreaY   = static_cast<std::uint16_t>(m_screenY);
+    m_startAreaX   = static_cast<std::uint16_t>(m_initArrowX); // WORD[2506] = low16(DWORD[1253])
+    m_startAreaY   = static_cast<std::uint16_t>(m_initArrowY); // WORD[2508] = low16(DWORD[1254])
     m_arrowBlockID = 14;
     m_curTargetSlot = 0;
 
@@ -456,8 +458,7 @@ void cltMini_Bow::EndGame()
 
         if (m_totalPoint < static_cast<std::uint16_t>(m_difficultyBaseScore))
         {
-            // 失敗
-            m_slots[m_slotLose + 115].active = 1; // 原始碼用 slot offset 計算
+            // 失敗 — 原始碼 DWORD[5*(BYTE[609]+115)] = DWORD[5*m_slotLose+575] = m_slots[m_slotLose].active
             m_slots[m_slotLose].active = 1;
         }
         else
@@ -609,7 +610,7 @@ void cltMini_Bow::ShootArrow()
 
         if (m_arrowY <= static_cast<std::uint16_t>(hitY))
         {
-            m_arrowY = static_cast<std::uint16_t>(m_slots[1].x); // WORD[2504] mapped to slot[1] data
+            m_arrowY = static_cast<std::uint16_t>(m_hitTargetY); // WORD[2504] = low16(DWORD[1252])
             CheckPoint();
         }
     }
@@ -660,13 +661,14 @@ int cltMini_Bow::CheckPoint()
     {
         // 命中
         char grade = 3;
-        m_slots[m_curArrowSlot].y     = m_hitTargetY;
-        m_slots[m_curTargetSlot].active = 0;
-        m_slots[m_curTargetSlot].x      = m_targetX; // 記錄靶位置
+        m_slots[m_curArrowSlot].y       = m_hitTargetY;
+        m_slots[m_curTargetSlot].active  = 0;
 
+        // 對齊 mofclient.c：DWORD[5*curTargetSlot+583] 寫入下一個 slot 的 x
         ++m_curTargetSlot;
-        m_slots[m_curTargetSlot].active = 1;
-        m_slots[m_curTargetSlot].y      = m_hitTargetY;
+        m_slots[m_curTargetSlot].x       = m_targetX;
+        m_slots[m_curTargetSlot].active  = 1;
+        m_slots[m_curTargetSlot].y       = m_hitTargetY;
 
         // 計分
         if (static_cast<std::uint16_t>(diff) == 0)
@@ -1028,10 +1030,10 @@ after_ranking:
 // ---------------------------------------------------------------------------
 void cltMini_Bow::InitMiniGameImage()
 {
-    // 計算關鍵座標
-    m_hitTargetY = m_screenY + 157;
-    int arrowAreaX = m_screenX + 400;
-    int arrowAreaY = m_screenY + 367;
+    // 計算關鍵座標（對齊 mofclient.c DWORD[1252..1254]）
+    m_hitTargetY  = m_screenY + 157;
+    m_initArrowX  = m_screenX + 400;
+    m_initArrowY  = m_screenY + 367;
 
     // --- Slot 索引設定 ---
     m_curArrowSlot  = 2;
@@ -1061,7 +1063,7 @@ void cltMini_Bow::InitMiniGameImage()
     // Slot 1: 靶（右）
     m_slots[1].resID   = 0x10000022u;
     m_slots[1].blockID = 10;
-    m_slots[1].x       = arrowAreaX;
+    m_slots[1].x       = m_initArrowX;
     m_slots[1].y       = m_hitTargetY;
 
     // Slots 2-10: 箭（block 8, 0-7）

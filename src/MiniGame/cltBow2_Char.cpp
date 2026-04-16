@@ -47,10 +47,10 @@ void cltBow2_Char::Initalize(float radius, std::uint8_t degree,
         m_resID = 0x0C00029Du;
         break;
     case 2:
-        m_resID = 0x0B00004Bu;
+        m_resID = 0x0B00073Bu;  // 184551227
         break;
     case 4:
-        m_resID = 0x0B00004Cu;
+        m_resID = 0x0B00073Cu;  // 184551228
         break;
     }
 
