@@ -20,10 +20,12 @@ public:
     void PrepareDrawing(int x, int y, unsigned int value, int alpha);
     void Draw();
 
-private:
+public:
     static constexpr int kMaxDigits = 20;
 
     int           m_active;                // +0
+
+private:
     unsigned int  m_imageType;             // +4
     unsigned int  m_dwResourceID;          // +8
     uint16_t      m_blockBase;             // +12

@@ -4,10 +4,13 @@
 
 #include "MiniGame/CMedical.h"   // CBedstead 完整定義
 
-// mofclient.c: CBedstead 在 eh vector constructor iterator 中確認為 0xC8 bytes，
+// mofclient.c: CBedstead 在 eh vector constructor iterator 中確認為 0xC8 bytes (x86)，
 // 且 InitPatientRecallMgr 以 +200 byte 步進遍歷 9 張連續病床。
+// x64 下因指標 8 bytes 與對齊差異，struct 大小不同，僅在 x86 驗證。
+#if defined(_M_IX86)
 static_assert(sizeof(CBedstead) == 200,
               "CBedstead must be exactly 200 bytes to match ground truth bed array stride");
+#endif
 
 // =========================================================================
 // PatientRecallMgr — 對齊 mofclient.c 0x5B04F0 / 0x5B0530 / 0x5B05C0 / 0x5B0620

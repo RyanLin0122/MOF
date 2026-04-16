@@ -308,10 +308,13 @@ extern unsigned char            g_cGameSwordState;  // 0..7 / 100
 extern unsigned char            g_cGameSword_2State; // cltMini_Sword_2 專用狀態機
 extern unsigned char            g_cGameExorcist_2State; // cltMini_Exorcist_2 專用狀態機
 extern unsigned char            g_cGameExorcistState;   // cltMini_Exorcist 專用狀態機
+extern unsigned char            g_cGameBowState;        // cltMini_Bow 專用狀態機
+extern unsigned char            g_cGameBow_2State;      // cltMini_Bow_2 專用狀態機
 extern unsigned char            g_cCardState[3];        // cltMini_Exorcist 三張卡片動畫狀態
 extern unsigned int             dwFrameCnt;
 extern int                      MonPosY[10];        // 怪物頭頂抖動位移
 extern int                      g_GAMESCORE;        // 通用小遊戲分數累計（cltMini_Exorcist 等使用）
+extern float                    g_fBowSpearTable[34]; // mofclient.c: g_fPoint/dword_6CDB84 — 17 組 [x,y] 飛矛生成位移
 
 // Info (additional)
 extern cltSkillKindInfo         g_clSkillKindInfo;
