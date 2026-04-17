@@ -26,31 +26,28 @@ extern unsigned char g_cGameBow_2State;
 // mofclient.c @ 005B5010 — 建構子
 // ---------------------------------------------------------------------------
 cltMini_Bow_2::cltMini_Bow_2()
-    : m_bgResID(0), m_totalScore(0), m_difficultyBaseScore(0),
-      m_winMark(0), m_currentRoundScore(0), m_finalScore(0), m_displayScore(0),
-      m_bonusMultiplier(0), m_scoreCap(0),
-      m_pLifeBarImage(nullptr), m_pBgImage(nullptr),
-      m_timerLiveTime(0), m_timerNormalSpear(0), m_timerSnipeSpear(0),
-      m_timerOctetSpear(0), m_timer2VolleySpear(0), m_timerRainSpear(0),
-      m_timerHorizonSpear(0),
-      m_liveTime(0), m_liveTimeChanged(0),
-      m_slotSelectDeg(0), m_slotHelp(0), m_slotShowPoint(0),
-      m_slotWin(0), m_slotLose(0),
-      m_alphaWhiteValue(0), m_alphaRedValue(0), m_hitPhase(0),
-      m_isHit(0), m_pollFrame(0),
-      m_firstTimeEnd(0), m_serverAck(0), m_serverResult(0), m_serverValid(0),
-      m_startTick(0), m_exitTick(0),
-      m_prevState(100), m_drawAlphaBox(0), m_showTime2(0), m_difficulty(0)
 {
-    memset(m_slotImages, 0, sizeof(m_slotImages));
-    memset(m_slots, 0, sizeof(m_slots));
-
+    // GT: 子物件建構後立即呼叫 InitMiniGameImage（內部會 memset slots）
     InitMiniGameImage();
 
-    m_showTime  = 1;
+    // GT: BYTE[49] = 1
+    m_showTime = 1;
+
+    // GT: DWORD[3934..3940] = 0 — 清除 7 個 timer handles
+    m_timerLiveTime     = 0;
+    m_timerNormalSpear  = 0;
+    m_timerSnipeSpear   = 0;
+    m_timerOctetSpear   = 0;
+    m_timer2VolleySpear = 0;
+    m_timerRainSpear    = 0;
+    m_timerHorizonSpear = 0;
+
+    // GT: DWORD[3949] = 0
+    m_pollFrame = 0;
+
+    // GT: BYTE[2061] = 100, BYTE[568] = 0
     m_prevState = 100;
     m_showTime2 = 0;
-    m_difficulty = 0;
 
     InitBtnFocus();
 }

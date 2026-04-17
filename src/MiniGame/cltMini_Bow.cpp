@@ -27,42 +27,24 @@ extern unsigned char g_cGameBowState;
 // mofclient.c @ 005B2900 — 建構子
 // ---------------------------------------------------------------------------
 cltMini_Bow::cltMini_Bow()
-    : m_bgResID(0), m_totalScore(0), m_difficultyBaseScore(0),
-      m_winMark(0), m_currentRoundScore(0), m_finalScore(0), m_displayScore(0),
-      m_bonusMultiplier(0), m_scoreCap(0),
-      m_arrowShotCount(0), m_arrowLoaded(0), m_arrowShooting(0),
-      m_arrowBlockID(0), m_targetMoveSpeed(0), m_totalPoint(0),
-      m_firstTimeEnd(0), m_shootSpeed(0), m_targetX(0),
-      m_arrowX(0), m_arrowY(0), m_startAreaX(0), m_startAreaY(0),
-      m_hitTargetY(0), m_initArrowX(0), m_initArrowY(0),
-      m_shootCounter(0), m_curArrowSlot(0), m_curTargetSlot(0),
-      m_slotRanking(0), m_slotSelectDeg(0), m_slotHelp(0), m_slotShowPoint(0),
-      m_slotWin(0), m_slotLose(0),
-      m_slotIdx_11(0), m_slotIdx_12(0), m_slotIdx_13(0),
-      m_slotIdx_14(0), m_slotIdx_15(0), m_slotIdx_16(0),
-      m_timerHandle(0), m_pollFrame(0), m_prevState(100),
-      m_drawAlphaBox(0), m_showTime2(0), m_difficulty(0),
-      m_finalReady(0), m_serverAck(0), m_serverResult(0), m_serverValid(0),
-      m_startTick(0), m_serverTimeMs(0), m_exitTick(0),
-      m_pBgImage(nullptr)
 {
+    // GT: memset((char*)this + 2300, 0, 0x3E8u) — 清除 slots 陣列
     memset(m_slots, 0, sizeof(m_slots));
-    memset(m_arrowScores, 0, sizeof(m_arrowScores));
-    memset(m_arrowNumXPos, 0, sizeof(m_arrowNumXPos));
 
-    // 對齊 mofclient.c：建構子讀取尚未初始化的 DWORD[1253]/[1254]，
-    // InitMiniGameImage 後才設為 screenX+400 / screenY+367。
-    m_initArrowX = 0;
-    m_initArrowY = 0;
-    m_arrowX = 0;
-    m_arrowY = 0;
+    // GT: BYTE[4916] = 0, bytes 4917-4926 = 0 — 清除射箭計數與得分
+    m_arrowShotCount = 0;
+    memset(m_arrowScores, 0, sizeof(m_arrowScores));
+
+    // GT: 特定欄位歸零
+    m_arrowLoaded = 0;
+    m_totalPoint  = 0;
+    m_pollFrame   = 0;
+    m_timerHandle = 0;
 
     g_cGameBowState = 0;
-    m_prevState      = 100;
-    m_showTime2      = 0;
-    m_showTime       = 0;
-    m_timerHandle    = 0;
-    m_pollFrame      = 0;
+    m_prevState     = 100;
+    m_showTime2     = 0;
+    m_showTime      = 0;
 
     InitMiniGameImage();
     InitBtnFocus();
