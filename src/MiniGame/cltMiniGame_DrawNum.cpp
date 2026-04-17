@@ -1,8 +1,9 @@
 #include "MiniGame/cltMiniGame_DrawNum.h"
 
-#include <cstdio>
+#include <io.h>
 #include <cstdlib>
 #include <cstring>
+#include <windows.h>
 
 #include "Image/cltImageManager.h"
 #include "Image/GameImage.h"
@@ -40,68 +41,94 @@ void cltMiniGame_DrawNum::SetActive(int active)
     m_active = active;
 }
 
+// ---------------------------------------------------------------------------
+// PrepareDrawing — mofclient.c 0x5BEE40
+// ---------------------------------------------------------------------------
 void cltMiniGame_DrawNum::PrepareDrawing(int x, int y, unsigned int value, int alpha)
 {
     if (!m_active)
         return;
 
-    // 1) 將數字轉成字串（十進位）。
-    char buf[20];
-    std::snprintf(buf, sizeof(buf), "%u", value);
-    int len = static_cast<int>(std::strlen(buf));
-    if (len <= 0)
-        return;
-    if (len > kMaxDigits)
-        len = kMaxDigits;
+    CHAR Text[256];
+    CHAR Text2[256];
+    char Buffer[20];
 
+    _itoa(value, Buffer, 10);
+    int len = static_cast<int>(std::strlen(Buffer));
     m_digitCount = static_cast<uint16_t>(len);
 
-    // 2) 第一輪迴圈：累計總寬度並填入 m_pImages[i]。
-    //    mofclient.c 的第一輪是由右向左（i = len-1 → 0）取 GameImage 和寬度。
+    // First loop: right to left, accumulate total width and store GameImage pointers.
     int totalWidth = 0;
     for (int i = len - 1; i >= 0; --i)
     {
-        uint16_t blockId = static_cast<uint16_t>(m_blockBase + (buf[i] - '0'));
+        uint16_t blockId = static_cast<uint16_t>(m_blockBase + (Buffer[i] - '0'));
         GameImage* pImg = cltImageManager::GetInstance()->GetGameImage(
             m_imageType, m_dwResourceID, 0, 1);
         m_pImages[i] = pImg;
 
-        if (pImg && pImg->m_pGIData
-            && blockId < pImg->m_pGIData->m_Resource.m_animationFrameCount)
+        int w = 0;
+        auto pGIData = pImg->m_pGIData;
+        if (pGIData)
         {
-            AnimationFrameData* pFrame =
-                &pImg->m_pGIData->m_Resource.m_pAnimationFrames[blockId];
-            totalWidth += pFrame->width;
+            if (pGIData->m_Resource.m_animationFrameCount > blockId)
+            {
+                w = pGIData->m_Resource.m_pAnimationFrames[blockId].width;
+            }
+            else
+            {
+                if (_access("MofData/Local.dat", 0) != -1)
+                {
+                    wsprintfA(Text, "%s:%i", pImg->m_pGIData->m_szFileName, blockId);
+                    MessageBoxA(nullptr, Text, "Block Error", 0);
+                }
+            }
         }
+        totalWidth += w;
     }
 
-    // 3) 計算起始 X 位置（依 m_alignMode）。
-    //    mofclient.c：0 -> 右對齊（cursor = x - totalWidth）
-    //                 1 -> 左對齊（cursor = x）
-    //                 其他 -> cursor 保持 0（等同未初始化）
-    int curX;
+    // Calculate start X based on alignMode.
+    int curX = 0;
     switch (m_alignMode)
     {
         case 0: curX = x - totalWidth; break;
         case 1: curX = x;              break;
-        default: curX = 0;             break;
+        default:                        break;
     }
 
-    // 4) 第二輪迴圈：由左向右依序填入各數字的 GameImage 屬性。
-    for (int i = 0; i < len; ++i)
+    // Second loop: left to right, set image properties.
+    for (int i = 0; i < m_digitCount; ++i)
     {
         GameImage* pImg = m_pImages[i];
-        if (!pImg)
-            continue;
+        uint16_t blockId = static_cast<uint16_t>(m_blockBase + (Buffer[i] - '0'));
 
-        uint16_t blockId = static_cast<uint16_t>(m_blockBase + (buf[i] - '0'));
-        int blockWidth = 0;
-        if (pImg->m_pGIData
-            && blockId < pImg->m_pGIData->m_Resource.m_animationFrameCount)
+        uint16_t blockWidth = 0;
+        auto pGIData = pImg->m_pGIData;
+        if (!pGIData)
         {
-            AnimationFrameData* pFrame =
-                &pImg->m_pGIData->m_Resource.m_pAnimationFrames[blockId];
-            blockWidth = pFrame->width;
+            // width stays 0
+        }
+        else if (pGIData->m_Resource.m_animationFrameCount <= blockId)
+        {
+            if (_access("MofData/Local.dat", 0) != -1)
+            {
+                wsprintfA(Text, "%s:%i", pImg->m_pGIData->m_szFileName, blockId);
+                MessageBoxA(nullptr, Text, "Block Error", 0);
+            }
+        }
+        else
+        {
+            blockWidth = static_cast<uint16_t>(
+                pGIData->m_Resource.m_pAnimationFrames[blockId].width);
+        }
+
+        // GT redundant Block Error check (same condition, different buffer)
+        auto pGIData2 = pImg->m_pGIData;
+        if (pGIData2
+            && pGIData2->m_Resource.m_animationFrameCount <= blockId
+            && _access("MofData/Local.dat", 0) != -1)
+        {
+            wsprintfA(Text2, "%s:%i", pImg->m_pGIData->m_szFileName, blockId);
+            MessageBoxA(nullptr, Text2, "Block Error", 0);
         }
 
         pImg->SetAlpha(static_cast<unsigned int>(alpha));
@@ -110,8 +137,9 @@ void cltMiniGame_DrawNum::PrepareDrawing(int x, int y, unsigned int value, int a
         pImg->m_fPosX = static_cast<float>(curX);
         pImg->m_fPosY = static_cast<float>(y);
         pImg->SetBlockID(blockId);
-        pImg->m_bFlag_446 = true;
         pImg->m_bFlag_447 = true;
+        pImg->m_bFlag_446 = true;
+        pImg->m_bVertexAnimation = false;
 
         curX += blockWidth;
     }

@@ -1,5 +1,6 @@
 #include "Logic/cltMiniGame_Button.h"
 
+#include <io.h>
 #include <windows.h>
 
 #include "Image/cltImageManager.h"
@@ -42,31 +43,53 @@ void cltMiniGame_Button::CreateBtn(int x, int y,
                                    unsigned int userData,
                                    int initialActive)
 {
-    // Clear all per-state fields
+    CHAR Text[256];
+
     m_normalImageType = 0; m_normalResID = 0; m_normalBlockID = 0;
     m_overImageType = 0;   m_overResID = 0;   m_overBlockID = 0;
     m_downImageType = 0;   m_downResID = 0;   m_downBlockID = 0;
     m_disabledImageType = 0; m_disabledResID = 0; m_disabledBlockID = 0;
 
-    // Get image to measure block dimensions
     GameImage* pImg = cltImageManager::GetInstance()->GetGameImage(
         imageType, resNormal, 0, 1);
     m_pImage = pImg;
 
-    // Get width from animation frame
     int w = 0;
-    if (pImg && pImg->m_pGIData
-        && blockNormal < pImg->m_pGIData->m_Resource.m_animationFrameCount)
+    if (pImg->m_pGIData)
     {
-        w = pImg->m_pGIData->m_Resource.m_pAnimationFrames[blockNormal].width;
+        if (blockNormal < pImg->m_pGIData->m_Resource.m_animationFrameCount)
+        {
+            w = pImg->m_pGIData->m_Resource.m_pAnimationFrames[blockNormal].width;
+        }
+        else
+        {
+            if (_access("MofData/Local.dat", 0) != -1)
+            {
+                wsprintfA(Text, "%s:%i",
+                          pImg->m_pGIData->m_szFileName,
+                          blockNormal);
+                MessageBoxA(nullptr, Text, "Block Error", 0);
+            }
+        }
     }
 
-    // Get height from animation frame
     int h = 0;
-    if (pImg && pImg->m_pGIData
-        && blockNormal < pImg->m_pGIData->m_Resource.m_animationFrameCount)
+    if (pImg->m_pGIData)
     {
-        h = pImg->m_pGIData->m_Resource.m_pAnimationFrames[blockNormal].height;
+        if (blockNormal < pImg->m_pGIData->m_Resource.m_animationFrameCount)
+        {
+            h = pImg->m_pGIData->m_Resource.m_pAnimationFrames[blockNormal].height;
+        }
+        else
+        {
+            if (_access("MofData/Local.dat", 0) != -1)
+            {
+                wsprintfA(Text, "%s:%i",
+                          pImg->m_pGIData->m_szFileName,
+                          blockNormal);
+                MessageBoxA(nullptr, Text, "Block Error", 0);
+            }
+        }
     }
 
     m_width  = w;
@@ -76,7 +99,6 @@ void cltMiniGame_Button::CreateBtn(int x, int y,
     m_right  = x + w;
     m_bottom = y + h;
 
-    // Store per-state resources
     m_normalResID    = resNormal;
     m_overResID      = resOver;
     m_overBlockID    = blockOver;
@@ -171,8 +193,7 @@ void cltMiniGame_Button::SetPosition(int x, int y)
 // ---------------------------------------------------------------------------
 void cltMiniGame_Button::ButtonAction()
 {
-    if (m_pCallback)
-        m_pCallback(m_userData);
+    m_pCallback(m_userData);
     m_nState = 1;
 }
 
@@ -189,9 +210,6 @@ int cltMiniGame_Button::Poll()
     m_nState = 0;
 
     DirectInputManager* pInput = cltMoF_BaseMiniGame::m_pInputMgr;
-    if (!pInput)
-        return 0;
-
     int mx = pInput->GetMouse_X();
     int my = pInput->GetMouse_Y();
 
@@ -207,18 +225,17 @@ int cltMiniGame_Button::Poll()
     if (!PtInRect(&rc, pt))
         return 0;
 
-    m_nState = 1; // hover
+    m_nState = 1;
 
     if (pInput->IsLMButtonPressed())
     {
-        m_nState = 3; // pressed
+        m_nState = 3;
         return 1;
     }
 
     if (pInput->IsLMButtonUp())
     {
-        if (m_pCallback)
-            m_pCallback(m_userData);
+        m_pCallback(m_userData);
         m_nState = 1;
     }
 
@@ -236,9 +253,6 @@ void cltMiniGame_Button::PrepareDrawing()
     unsigned int resID = GetResourceID();
     unsigned int imgType = GetImageType();
     m_pImage = cltImageManager::GetInstance()->GetGameImage(imgType, resID, 0, 1);
-
-    if (!m_pImage)
-        return;
 
     uint16_t blockID = GetBlockID();
     m_pImage->m_fPosX = static_cast<float>(m_left);

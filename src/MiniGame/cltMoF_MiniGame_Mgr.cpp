@@ -28,14 +28,10 @@ cltMoF_MiniGame_Mgr::cltMoF_MiniGame_Mgr()
 
 // ---------------------------------------------------------------------------
 // ~cltMoF_MiniGame_Mgr — mofclient.c (implicit)
+// GT 沒有顯式 destructor delete m_pMiniGame，只歸零指標。
 // ---------------------------------------------------------------------------
 cltMoF_MiniGame_Mgr::~cltMoF_MiniGame_Mgr()
 {
-    if (m_pMiniGame)
-    {
-        delete m_pMiniGame;
-        m_pMiniGame = nullptr;
-    }
 }
 
 // ---------------------------------------------------------------------------
@@ -43,71 +39,51 @@ cltMoF_MiniGame_Mgr::~cltMoF_MiniGame_Mgr()
 // ---------------------------------------------------------------------------
 void cltMoF_MiniGame_Mgr::InitMiniGame()
 {
-    if (cltMoF_BaseMiniGame::m_pInputMgr)
-        cltMoF_BaseMiniGame::m_pInputMgr->FreeAllKey();
+    cltMoF_BaseMiniGame::m_pInputMgr->FreeAllKey();
 
     m_gameKind = g_clMyCharData.GetMiniGameKind();
     if (!m_gameKind)
         return;
 
-    // 判定是否為進階課程 (lesson v4 & 1)
-    int lessonSlot = 0;
-    bool foundActive = false;
+    int v3 = 0;
     char v4 = 0;
 
-    for (int i = 0; i < 4; ++i)
+    while (g_clLessonSystem.GetLessonState(v3) != 1)
     {
-        if (g_clLessonSystem.GetLessonState(i) == 1)
-        {
-            foundActive = true;
-            lessonSlot = i;
-            break;
-        }
+        if (++v3 >= 4)
+            goto LABEL_7;
+    }
+    {
+        uint8_t schedule = g_clLessonSystem.GetLessonSchedule(v3);
+        v4 = *reinterpret_cast<char*>(g_clLessonKindInfo.GetLessonKindInfo(schedule));
     }
 
-    if (foundActive)
-    {
-        uint8_t schedule = g_clLessonSystem.GetLessonSchedule(lessonSlot);
-        strLessonKindInfo* pInfo = g_clLessonKindInfo.GetLessonKindInfo(schedule);
-        if (pInfo)
-            v4 = *reinterpret_cast<char*>(pInfo);
-    }
-
-    cltMoF_BaseMiniGame* pGame = nullptr;
-
+LABEL_7:
     if ((v4 & 1) != 0)
     {
-        // 進階版
         switch (m_gameKind)
         {
-            case 1: pGame = new cltMini_Sword_2(); break;
-            case 2: pGame = new cltMini_Bow_2(); break;
-            case 3: pGame = new cltMini_Magic_2(); break;
-            case 4: pGame = new cltMini_Exorcist_2(); break;
+            case 1: m_pMiniGame = new cltMini_Sword_2(); break;
+            case 2: m_pMiniGame = new cltMini_Bow_2(); break;
+            case 3: m_pMiniGame = new cltMini_Magic_2(); break;
+            case 4: m_pMiniGame = new cltMini_Exorcist_2(); break;
             default: break;
         }
     }
     else
     {
-        // 基本版
         switch (m_gameKind)
         {
-            case 1: pGame = new cltMini_Sword(); break;
-            case 2: pGame = new cltMini_Bow(); break;
-            case 3: pGame = new cltMini_Magic(); break;
-            case 4: pGame = new cltMini_Exorcist(); break;
+            case 1: m_pMiniGame = new cltMini_Sword(); break;
+            case 2: m_pMiniGame = new cltMini_Bow(); break;
+            case 3: m_pMiniGame = new cltMini_Magic(); break;
+            case 4: m_pMiniGame = new cltMini_Exorcist(); break;
             default: break;
         }
     }
 
-    m_pMiniGame = pGame;
-
-    if (g_UIMgr)
-    {
-        CUIBase* pUI = g_UIMgr->GetUIWindow(0);
-        if (pUI)
-            pUI->Hide_QuestAlarm(1);
-    }
+    CUIBase* pUI = g_UIMgr->GetUIWindow(0);
+    pUI->Hide_QuestAlarm(1);
 }
 
 // ---------------------------------------------------------------------------
@@ -148,21 +124,15 @@ void cltMoF_MiniGame_Mgr::Draw()
 
 // ---------------------------------------------------------------------------
 // EndMiniGame — mofclient.c 0x5BF4A0
+// GT 不 delete m_pMiniGame，只歸零指標。
 // ---------------------------------------------------------------------------
 void cltMoF_MiniGame_Mgr::EndMiniGame()
 {
     if (m_pMiniGame)
-    {
-        delete m_pMiniGame;
         m_pMiniGame = nullptr;
-    }
 
-    if (g_UIMgr)
-    {
-        CUIBase* pUI = g_UIMgr->GetUIWindow(0);
-        if (pUI)
-            pUI->OpenQuestAlarm();
-    }
+    CUIBase* pUI = g_UIMgr->GetUIWindow(0);
+    pUI->OpenQuestAlarm();
 }
 
 // ---------------------------------------------------------------------------
@@ -218,14 +188,9 @@ void cltMoF_MiniGame_Mgr::SetMyRanking(int rank)
 // ---------------------------------------------------------------------------
 // InvalidScore — mofclient.c 0x5BF580
 // GT: (*(void (__thiscall **)(int))(*(_DWORD *)v1 + 24))(v1);
-// This is a virtual call at vtable offset 24 (6th slot).
-// In our vtable: slot 0 = destructor, slot 1 = Poll.
-// For now this is a virtual call on the mini-game object.
 // ---------------------------------------------------------------------------
 void cltMoF_MiniGame_Mgr::InvalidScore()
 {
-    // GT calls vtable+24 on the mini-game, which is a virtual function.
-    // The exact vtable slot depends on the class. For now, leave as stub
-    // since no derived class has a matching virtual at that slot yet.
-    // TODO: 需要確認 vtable 佈局後補齊
+    if (m_pMiniGame)
+        m_pMiniGame->InvalidScore();
 }
