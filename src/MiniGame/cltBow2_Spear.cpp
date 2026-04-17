@@ -49,8 +49,8 @@ void cltBow2_Spear::Create(std::uint8_t posIndex, std::uint8_t direction,
     m_centerX = static_cast<float>((g_Game_System_Info.ScreenWidth - 800) / 2) + 403.0f;
     m_centerY = static_cast<float>((g_Game_System_Info.ScreenHeight - 600) / 2) + 272.0f;
 
-    m_radius    = 300.0f;
-    m_maxDist   = 50000.0f;
+    m_radius    = 216.0f;    // IEEE 1129840640
+    m_maxDist   = 46656.0f;  // IEEE 1194737664 (= 216^2)
     m_intercept = 0.0f;
     m_moveType  = moveType;
 

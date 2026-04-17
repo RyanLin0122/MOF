@@ -125,8 +125,8 @@ public:
     std::uint16_t m_startAreaX;            // 射出起始 X
     std::uint16_t m_startAreaY;            // 射出起始 Y
     int           m_hitTargetY;            // 箭命中的 Y 座標（靶中心）
-    std::uint16_t m_initArrowX;            // 箭初始 X（= screenX 偏移）
-    std::uint16_t m_initArrowY;            // 箭初始 Y（= screenY 偏移）
+    int           m_initArrowX;            // DWORD[1253] 箭初始 X（= screenX + 400）
+    int           m_initArrowY;            // DWORD[1254] 箭初始 Y（= screenY + 367）
     std::uint8_t  m_shootCounter;          // 射擊動畫計數
     std::uint8_t  m_curArrowSlot;          // 目前箭的 slot 索引（初始 2）
     std::uint8_t  m_curTargetSlot;         // 目前靶的 slot 索引
