@@ -498,8 +498,7 @@ int cltMini_Magic_2::Poll()
         InitBtnFocus();
     }
 
-    if (m_pInputMgr)
-        m_pInputMgr->IsLMButtonUp();
+    m_pInputMgr->IsLMButtonUp();
 
     PollTarget();
     PollBox();
@@ -883,13 +882,13 @@ void cltMini_Magic_2::EndStage()
 
         if (m_gameScore < static_cast<uint16_t>(m_passScore))
         {
-            m_slots[m_uiSlotFail + 128].active = 1;
+            m_slots[m_uiSlotFail].active = 1;
         }
         else
         {
             m_totalScore = 1;
             m_baseScore = m_winBaseScore;
-            m_slots[m_uiSlotPass + 128].active = 1;
+            m_slots[m_uiSlotPass].active = 1;
         }
 
         m_drawNumFinal.SetActive(1);
