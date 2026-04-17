@@ -11,14 +11,6 @@
 #include "Image/ImageResourceListDataMgr.h"
 
 cltMiniGame_DrawNum::cltMiniGame_DrawNum()
-    : m_active(0)
-    , m_imageType(0)
-    , m_dwResourceID(0)
-    , m_blockBase(0)
-    , m_alignMode(0)
-    , m_pad17(0)
-    , m_digitCount(0)
-    , m_pImages{}
 {
 }
 

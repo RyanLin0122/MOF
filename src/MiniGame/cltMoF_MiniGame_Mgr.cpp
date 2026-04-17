@@ -46,7 +46,7 @@ void cltMoF_MiniGame_Mgr::InitMiniGame()
         return;
 
     int v3 = 0;
-    char v4 = 0;
+    char v4; // GT: possibly undefined (v16) when no lesson state==1
 
     while (g_clLessonSystem.GetLessonState(v3) != 1)
     {

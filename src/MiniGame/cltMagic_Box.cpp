@@ -11,9 +11,6 @@
 // Constructor / Destructor
 // ---------------------------------------------------------------------------
 cltMagic_Box::cltMagic_Box()
-    : m_active(0), m_posX(0.0f), m_posY(0.0f)
-    , m_resID(0), m_frame(0), m_alpha(0), m_pad23(0)
-    , m_fadeDir(0), m_pImage(nullptr)
 {
 }
 
