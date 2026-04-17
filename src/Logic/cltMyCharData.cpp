@@ -63,3 +63,16 @@ void cltMyCharData::IncLessonPt_Sword(cltMyCharData* /*self*/, unsigned int valu
     // 作為全域的 LessonSystem 實例，因此以同一個實例轉發加分呼叫。
     g_clLessonSystem.IncLessonPt_Sword(value);
 }
+
+// mofclient.c 0x5190A0
+uint16_t cltMyCharData::GetMiniGameKind()
+{
+    // Ground truth:
+    //   v1 = cltNPCManager::GetNPCType(&g_clNPCManager);
+    //   if (v1[3]) return 1;      // Sword
+    //   else if (v1[4]) return 2;  // Bow
+    //   else if (v1[5]) return 3;  // Magic
+    //   else return v1[6] ? 4 : 0; // Exorcist or none
+    // TODO: 需要 cltNPCManager::GetNPCType 完整實作後補齊
+    return 0;
+}

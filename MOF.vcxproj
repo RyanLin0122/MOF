@@ -328,6 +328,11 @@
     <ClCompile Include="src\MiniGame\CHospital.cpp" />
     <ClCompile Include="src\MiniGame\cltMini_Exorcist_2.cpp" />
     <ClCompile Include="src\MiniGame\cltMini_Exorcist.cpp" />
+    <ClCompile Include="src\MiniGame\cltMagic_Target.cpp" />
+    <ClCompile Include="src\MiniGame\cltMagic_Box.cpp" />
+    <ClCompile Include="src\MiniGame\cltMini_Magic.cpp" />
+    <ClCompile Include="src\MiniGame\cltMini_Magic_2.cpp" />
+    <ClCompile Include="src\MiniGame\cltMoF_MiniGame_Mgr.cpp" />
     <ClCompile Include="src\MiniGame\CMedical.cpp" />
     <ClCompile Include="src\MiniGame\InfoMgr.cpp" />
     <ClCompile Include="src\MiniGame\PatientRecallMgr.cpp" />
@@ -723,6 +728,9 @@
     <ClInclude Include="inc\MiniGame\CHospital.h" />
     <ClInclude Include="inc\MiniGame\cltMini_Exorcist_2.h" />
     <ClInclude Include="inc\MiniGame\cltMini_Exorcist.h" />
+    <ClInclude Include="inc\MiniGame\cltMagic_Target.h" />
+    <ClInclude Include="inc\MiniGame\cltMagic_Box.h" />
+    <ClInclude Include="inc\MiniGame\cltMini_Magic.h" />
     <ClInclude Include="inc\MiniGame\CMedical.h" />
     <ClInclude Include="inc\MiniGame\InfoMgr.h" />
     <ClInclude Include="inc\MiniGame\PatientRecallMgr.h" />

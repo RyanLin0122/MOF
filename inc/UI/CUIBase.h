@@ -7,6 +7,8 @@ public:
     virtual ~CUIBase() = default;
     virtual int  GetType() const { return m_nType; }   // 對應 *(_DWORD*)(p+12)
     virtual void OnDragEnd() {}                         // 對應 vtbl+20 呼叫
+    virtual void Hide_QuestAlarm(int hide) {}            // CUIBasic override
+    virtual void OpenQuestAlarm() {}                     // CUIBasic override
 
     void SetChildMessageBox(CUIMessageBoxBase* pMsgBox);
 

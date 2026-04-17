@@ -77,6 +77,7 @@
 #include "System/cltExStorageSystem.h"
 #include "System/cltLessonSystem.h"
 #include "MiniGame/cltMoF_BaseMiniGame.h"
+#include "MiniGame/cltMoF_MiniGame_Mgr.h"
 
 
 CDeviceManager& g_clDeviceManager = *CDeviceManager::GetInstance();
@@ -191,6 +192,7 @@ GameSound g_GameSoundManager;
 
 // MiniGame
 cltMoF_BaseMiniGame g_clMiniGame;
+cltMoF_MiniGame_Mgr g_clMiniGameMgr;
 CEffectManager      g_EffectManager_MiniGame;
 cltLessonSystem     g_clLessonSystem;
 
@@ -201,7 +203,10 @@ unsigned char g_cGameExorcist_2State = 0;
 unsigned char g_cGameExorcistState = 0;
 unsigned char g_cGameBowState = 0;
 unsigned char g_cGameBow_2State = 0;
+unsigned char g_cGameMagicState = 0;
+unsigned char g_cGameMagic_2State = 0;
 unsigned char g_cCardState[3] = { 0, 0, 0 };
+int           g_stGsGameFieldArg = 0;
 unsigned int  dwFrameCnt = 0;
 int           MonPosY[10] = { 0, 0, 0, 0, 0, 0, 0, 0, 0, 0 };
 int           g_GAMESCORE = 0;

@@ -299,7 +299,9 @@ extern GameSound                g_GameSoundManager;
 
 // MiniGame
 class cltMoF_BaseMiniGame;
+class cltMoF_MiniGame_Mgr;
 extern cltMoF_BaseMiniGame      g_clMiniGame;
+extern cltMoF_MiniGame_Mgr      g_clMiniGameMgr;
 extern CEffectManager           g_EffectManager_MiniGame;
 extern cltLessonSystem          g_clLessonSystem;
 
@@ -310,7 +312,10 @@ extern unsigned char            g_cGameExorcist_2State; // cltMini_Exorcist_2 �
 extern unsigned char            g_cGameExorcistState;   // cltMini_Exorcist 專用狀態機
 extern unsigned char            g_cGameBowState;        // cltMini_Bow 專用狀態機
 extern unsigned char            g_cGameBow_2State;      // cltMini_Bow_2 專用狀態機
+extern unsigned char            g_cGameMagicState;      // cltMini_Magic 專用狀態機
+extern unsigned char            g_cGameMagic_2State;    // cltMini_Magic_2 專用狀態機
 extern unsigned char            g_cCardState[3];        // cltMini_Exorcist 三張卡片動畫狀態
+extern int                      g_stGsGameFieldArg;     // mofclient.c: _UNKNOWN，用於 MiniGame 結束後場景切換
 extern unsigned int             dwFrameCnt;
 extern int                      MonPosY[10];        // 怪物頭頂抖動位移
 extern int                      g_GAMESCORE;        // 通用小遊戲分數累計（cltMini_Exorcist 等使用）

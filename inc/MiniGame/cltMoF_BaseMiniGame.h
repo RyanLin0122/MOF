@@ -31,8 +31,10 @@ public:
     cltMoF_BaseMiniGame();
     virtual ~cltMoF_BaseMiniGame();
 
-    // Ground truth: mofclient.c vftable 第 0 個槽指到 Poll，預設空實作。
+    // Ground truth vftable: slot 0 = Poll, slot 1 = PrepareDrawing, slot 2 = Draw
     virtual int Poll();
+    virtual void PrepareDrawing();
+    virtual void Draw();
 
     static void InitializeStaticVariable(cltMyCharData* myCharData,
                                          cltImageManager* imageMgr,
@@ -95,10 +97,19 @@ public:
 
     CControlAlphaBox m_alphaBox;                  // +636
 
+    // Game result fields — accessed by cltMoF_MiniGame_Mgr::SetMiniGameResult
+    int           m_gameActive;                   // DWORD[138]
+    int           m_serverAck;                    // DWORD[139]
+    int           m_serverResult;                 // DWORD[140]
+    int           m_serverValid;                  // DWORD[141]
+
     std::uint32_t m_readyTime;                    // DWORD[143]
     std::uint32_t m_remainTime;                   // DWORD[144]
+    std::uint32_t m_startTick;                    // DWORD[145]
+    std::uint32_t m_elapsedTime;                  // DWORD[146]
     std::uint32_t m_dword148;                     // DWORD[148]
     std::uint32_t m_dword149;                     // DWORD[149]
+    std::uint32_t m_endTick;                      // DWORD[150]
 
     // UI 座標（對齊原始 WORD[305..316]）
     std::int16_t  m_uiPos[12];

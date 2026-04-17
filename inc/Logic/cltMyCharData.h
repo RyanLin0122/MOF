@@ -44,6 +44,9 @@ public:
     // cltMyCharData 內嵌了 cltLessonSystem 於 offset 6568；這裡提供同語意
     // 的 shim，使小遊戲加分流程能對齊 GT（透過 MyCharData → LessonSystem）。
     static void IncLessonPt_Sword(cltMyCharData* self, unsigned int value);
+
+    // mofclient.c 0x5190A0：根據 NPC 類型決定目前小遊戲類型（1=劍/2=弓/3=魔/4=驅魔）。
+    uint16_t GetMiniGameKind();
 };
 
 extern cltMyCharData g_clMyCharData;

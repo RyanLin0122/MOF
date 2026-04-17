@@ -3,16 +3,13 @@
 
 class GameImage;
 
-// cltMiniGame_Button — 從 mofclient.c 反推的按鈕元件。
-// cltHelpMessage 內含此物件 (offset 40, 92 bytes)。
+// mofclient.c 還原：cltMiniGame_Button — 小遊戲通用按鈕元件。
+// 32-bit 大小 0x5C (92 bytes)，stride 用於 eh vector constructor iterator。
 class cltMiniGame_Button {
 public:
     cltMiniGame_Button();
     ~cltMiniGame_Button();
 
-    // 最後一個 int 對應 mofclient.c CreateBtn 的 a15 參數：
-    //   *(_DWORD *)this = a15;
-    // 即按鈕建立後的初始 m_nActive 值。呼叫端會在其後再呼叫 SetActive() 覆寫。
     void CreateBtn(int x, int y,
                    unsigned int imageType,
                    unsigned int resNormal,   uint16_t blockNormal,
@@ -35,19 +32,47 @@ public:
     unsigned int GetResourceID();
     uint16_t     GetBlockID();
 
-    // 供小遊戲焦點管理使用（對齊 mofclient.c 的欄位直接讀取）
     int     IsActive() const { return m_nActive; }
     uint8_t GetState() const { return m_nState; }
 
-private:
-    int          m_nActive = 0;
-    uint8_t      m_nState = 0;
-    int          m_x = 0;
-    int          m_y = 0;
-    unsigned int m_imageType = 0;
-    unsigned int m_resIDs[4] = {};
-    uint16_t     m_blockIDs[4] = {};
-    void       (*m_pCallback)(unsigned int) = nullptr;
-    unsigned int m_userData = 0;
-    GameImage*   m_pImage = nullptr;
+public:
+    // +0: DWORD[0]
+    int          m_nActive;
+    // +4: BYTE[4]
+    uint8_t      m_nState;
+
+    // Hit-test rect: +8..+20 (left, top, right, bottom)
+    int          m_left;
+    int          m_top;
+    int          m_right;
+    int          m_bottom;
+
+    // Block dimensions (from animation frame): +24, +28
+    int          m_width;
+    int          m_height;
+
+    // Per-state image data
+    // Normal: +32, +36, +40
+    unsigned int m_normalImageType;
+    unsigned int m_normalResID;
+    uint16_t     m_normalBlockID;
+    // Over (hover): +44, +48, +52
+    unsigned int m_overImageType;
+    unsigned int m_overResID;
+    uint16_t     m_overBlockID;
+    // Down (pressed): +56, +60, +64
+    unsigned int m_downImageType;
+    unsigned int m_downResID;
+    uint16_t     m_downBlockID;
+    // Disabled: +68, +72, +76
+    unsigned int m_disabledImageType;
+    unsigned int m_disabledResID;
+    uint16_t     m_disabledBlockID;
+
+    // +80: GameImage*
+    GameImage*   m_pImage;
+    // +84: callback
+    void       (*m_pCallback)(unsigned int);
+    // +88: userData
+    unsigned int m_userData;
 };
