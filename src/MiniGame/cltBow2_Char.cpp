@@ -11,11 +11,8 @@
 // mofclient.c @ 005B7CA0 — 建構子
 // ---------------------------------------------------------------------------
 cltBow2_Char::cltBow2_Char()
-    : m_initPosX(0), m_initPosY(0), m_curPosX(0), m_curPosY(0),
-      m_resID(0), m_frame(0), m_direction(0), m_frameCount(0),
-      m_animCounter(0), m_radius(0), m_blockIDBase(0),
-      m_pImage(nullptr), m_active(0)
 {
+    // GT: 只設 vftable（自動），不初始化任何成員
 }
 
 // ---------------------------------------------------------------------------

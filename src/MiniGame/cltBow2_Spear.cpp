@@ -14,8 +14,7 @@
 // ---------------------------------------------------------------------------
 stBowSpear::stBowSpear()
 {
-    m_active = 0;
-    // cltBow2_Spear 由其自身建構子初始化
+    // GT: 只呼叫 cltBow2_Spear 建構子（C++ 自動處理），不初始化 m_active
 }
 
 stBowSpear::~stBowSpear()
@@ -27,12 +26,9 @@ stBowSpear::~stBowSpear()
 // cltBow2_Spear
 // ---------------------------------------------------------------------------
 cltBow2_Spear::cltBow2_Spear()
-    : m_posX(0), m_posY(0), m_frame(0), m_animCounter(0),
-      m_radius(0), m_maxDist(0), m_active(0),
-      m_centerX(0), m_centerY(0), m_pImage(nullptr),
-      m_speedX(0), m_speedY(0), m_moveType(0),
-      m_intercept(0), m_dirX(0), m_dirY(0)
+    : m_active(0)
 {
+    // GT: 只設 vftable（自動）+ *((_DWORD *)this + 10) = 0 即 m_active
 }
 
 cltBow2_Spear::~cltBow2_Spear()
