@@ -14,18 +14,20 @@
 // cltMiniGame_Button — mofclient.c 0x5BE950
 // ---------------------------------------------------------------------------
 cltMiniGame_Button::cltMiniGame_Button()
-    : m_nActive(0)
-    , m_nState(0)
-    , m_left(0), m_top(0), m_right(0), m_bottom(0)
-    , m_width(0), m_height(0)
-    , m_normalImageType(0), m_normalResID(0), m_normalBlockID(0)
-    , m_overImageType(0), m_overResID(0), m_overBlockID(0)
-    , m_downImageType(0), m_downResID(0), m_downBlockID(0)
-    , m_disabledImageType(0), m_disabledResID(0), m_disabledBlockID(0)
-    , m_pImage(nullptr)
-    , m_pCallback(nullptr)
-    , m_userData(0)
 {
+    m_normalImageType = 0;
+    m_normalResID = 0;
+    m_normalBlockID = 0;
+    m_overImageType = 0;
+    m_overResID = 0;
+    m_overBlockID = 0;
+    m_downImageType = 0;
+    m_downResID = 0;
+    m_downBlockID = 0;
+    m_disabledImageType = 0;
+    m_disabledResID = 0;
+    m_disabledBlockID = 0;
+    m_nState = 0;
 }
 
 cltMiniGame_Button::~cltMiniGame_Button() = default;

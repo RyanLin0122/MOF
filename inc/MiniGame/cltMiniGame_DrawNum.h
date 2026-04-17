@@ -23,14 +23,14 @@ public:
 public:
     static constexpr int kMaxDigits = 20;
 
-    int           m_active;                // +0
+    int           m_active;                // +0  DWORD[0]
 
 private:
-    unsigned int  m_imageType;             // +4
-    unsigned int  m_dwResourceID;          // +8
-    uint16_t      m_blockBase;             // +12
-    uint8_t       m_alignMode;             // +16
-    uint8_t       m_pad17;
-    uint16_t      m_digitCount;            // +14 ~ 實際位數
+    unsigned int  m_imageType;             // +4  DWORD[1]
+    unsigned int  m_dwResourceID;          // +8  DWORD[2]
+    uint16_t      m_blockBase;             // +12 WORD[6]
+    uint16_t      m_digitCount;            // +14 WORD[7]
+    uint8_t       m_alignMode;             // +16 BYTE[16]
+    uint8_t       m_pad17[3];
     GameImage*    m_pImages[kMaxDigits];   // +20 ~ +96
 };

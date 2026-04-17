@@ -13,12 +13,6 @@
 // Constructor / Destructor
 // ---------------------------------------------------------------------------
 cltMagic_Target::cltMagic_Target()
-    : m_type(0), m_kind(0), m_pad6{}, m_active(0), m_live(0)
-    , m_speed(0.0f), m_direction(0), m_pad21{}
-    , m_posX(0.0f), m_posY(0.0f), m_flip(0)
-    , m_resID(0), m_currentFrame(0), m_startFrame(0), m_frameCount(0), m_pad46(0)
-    , m_animCounter(0.0f), m_halfSizeX(0.0f), m_halfSizeY(0.0f)
-    , m_pImage(nullptr), m_screenBaseX(0), m_screenBaseY(0)
 {
 }
 
