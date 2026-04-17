@@ -31,9 +31,22 @@ cltMini_Bow::cltMini_Bow()
     // GT: memset((char*)this + 2300, 0, 0x3E8u) — 清除 slots 陣列
     memset(m_slots, 0, sizeof(m_slots));
 
+    // GT: 先把 WORD[2506]/WORD[2508] (m_startAreaX/Y) 存到暫存，之後寫回箭座標。
+    //     構造子階段這兩者通常為 0；StartGame 才會填入真正的起始座標。
+    const std::uint16_t v2 = m_startAreaX;
+    const std::uint16_t v3 = m_startAreaY;
+
+    // GT: DWORD[1232] = 0 — m_targetX 清零。
+    m_targetX = 0;
+
     // GT: BYTE[4916] = 0, bytes 4917-4926 = 0 — 清除射箭計數與得分
     m_arrowShotCount = 0;
     memset(m_arrowScores, 0, sizeof(m_arrowScores));
+
+    // GT: WORD[2492]/WORD[2493] = saved values — m_arrowX/m_arrowY 回填。
+    //     必須在 InitMiniGameImage 之前，因為 slot 2..10 的初值會用到它們。
+    m_arrowX = v2;
+    m_arrowY = v3;
 
     // GT: 特定欄位歸零
     m_arrowLoaded = 0;
