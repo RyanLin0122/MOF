@@ -923,9 +923,12 @@ void cltMini_Bow::PrepareDrawing()
         }
     }
 
-    // 半透明遮罩
+    // 半透明遮罩：GT 在 slot loop 後直接呼叫 Draw（vtable+28），而非 PrepareDrawing。
+    // 原因：cltMini_Bow::Draw() 未對 m_alphaBox 作任何動作，遮罩只能靠 PrepareDrawing
+    // 中的這個提前 Draw 呼叫來渲染，好插在 slot 與 button 之間的 Z 序。
+    // mofclient.c 359126-359127。
     if (m_drawAlphaBox)
-        m_alphaBox.PrepareDrawing();
+        m_alphaBox.Draw();
 
     // 按鈕
     for (int i = 0; i < kButtonCount; ++i)
