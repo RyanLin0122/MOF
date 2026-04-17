@@ -32,9 +32,11 @@ public:
     virtual ~cltMoF_BaseMiniGame();
 
     // Ground truth vftable: slot 0 = Poll, slot 1 = PrepareDrawing, slot 2 = Draw
+    // vtable+24 = InvalidScore (called by cltMoF_MiniGame_Mgr::InvalidScore)
     virtual int Poll();
     virtual void PrepareDrawing();
     virtual void Draw();
+    virtual void InvalidScore();
 
     static void InitializeStaticVariable(cltMyCharData* myCharData,
                                          cltImageManager* imageMgr,

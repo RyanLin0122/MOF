@@ -50,21 +50,21 @@ void cltMagic_Target::Initialize(std::uint8_t a2, std::uint8_t a3,
     // 資源/動畫依 kind
     switch (a3) {
     case 0:
-        m_resID = 0x0C00009Fu;
+        m_resID = 0x0C00029Fu;
         m_frameCount = 4;
         m_startFrame = 0;
         m_halfSizeX = 30.0f;   // 1106247680
         m_halfSizeY = 30.0f;
         break;
     case 1:
-        m_resID = 0x0C00009Fu;
+        m_resID = 0x0C00029Fu;
         m_frameCount = 4;
         m_startFrame = 7;
         m_halfSizeX = 30.0f;
         m_halfSizeY = 30.0f;
         break;
     case 2:
-        m_resID = 0x0C00009Fu;
+        m_resID = 0x0C00029Fu;
         m_frameCount = 2;
         m_startFrame = 14;
         m_halfSizeX = 20.0f;   // 1099431936

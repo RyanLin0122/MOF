@@ -91,6 +91,7 @@ int cltMoF_BaseMiniGame::Poll()
 
 void cltMoF_BaseMiniGame::PrepareDrawing() {}
 void cltMoF_BaseMiniGame::Draw() {}
+void cltMoF_BaseMiniGame::InvalidScore() {}
 
 void cltMoF_BaseMiniGame::InitializeStaticVariable(cltMyCharData* myCharData,
                                                    cltImageManager* imageMgr,
