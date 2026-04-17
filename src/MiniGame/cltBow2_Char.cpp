@@ -160,19 +160,17 @@ void cltBow2_Char::PrepareDrawing()
     GameImage* pImg = cltMoF_BaseMiniGame::m_pclImageMgr->GetGameImage(
         9u, m_resID, 0, 1);
 
+    // GT: 無 nullptr 防護；直接寫入 GameImage 欄位（mofclient.c 362135-362147）。
     m_pImage = pImg;
-    if (pImg)
-    {
-        pImg->m_fPosX           = m_curPosX;
-        pImg->SetBlockID(static_cast<unsigned short>(m_frame));
-        pImg->m_bFlag_447       = true;
-        pImg->m_fPosY           = m_curPosY;
-        pImg->m_bFlag_446       = true;
-        pImg->m_bVertexAnimation = false;
+    pImg->m_fPosX           = m_curPosX;
+    pImg->SetBlockID(static_cast<unsigned short>(m_frame));
+    pImg->m_bFlag_447       = true;
+    pImg->m_fPosY           = m_curPosY;
+    pImg->m_bFlag_446       = true;
+    pImg->m_bVertexAnimation = false;
 
-        if (m_direction > 4)
-            pImg->m_bFlipX = true;
-    }
+    if (m_direction > 4)
+        pImg->m_bFlipX = true;
 
     m_animCounter += 0.5f;
     m_frame = m_blockIDBase + static_cast<int>(m_animCounter);

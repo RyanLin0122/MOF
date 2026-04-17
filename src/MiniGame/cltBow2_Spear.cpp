@@ -174,16 +174,14 @@ void cltBow2_Spear::PrepareDrawing()
     GameImage* pImg = cltMoF_BaseMiniGame::m_pclImageMgr->GetGameImage(
         9u, 0x0C00029Eu, 0, 1);
 
+    // GT: 無 nullptr 防護；直接依序寫入 GameImage 欄位（mofclient.c 361958-361968）。
     m_pImage = pImg;
-    if (pImg)
-    {
-        pImg->m_fPosX = m_posX;
-        pImg->m_fPosY = m_posY;
-        pImg->SetBlockID(static_cast<unsigned short>(m_frame));
-        pImg->m_bFlag_447 = true;
-        pImg->m_bFlag_446 = true;
-        pImg->m_bVertexAnimation = false;
-    }
+    pImg->m_fPosX = m_posX;
+    pImg->SetBlockID(static_cast<unsigned short>(m_frame));
+    pImg->m_bFlag_447 = true;
+    pImg->m_fPosY = m_posY;
+    pImg->m_bFlag_446 = true;
+    pImg->m_bVertexAnimation = false;
 
     m_animCounter += 0.2f;
     m_frame = static_cast<int>(m_animCounter);
