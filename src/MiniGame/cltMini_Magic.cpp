@@ -136,7 +136,7 @@ cltMini_Magic::cltMini_Magic()
     , m_matrixImages{}, m_baseX2(0), m_barY(0)
     , m_gridBaseX(0), m_gridBaseY(0), m_goalImgX(0), m_goalImgY(0)
     , m_barEndX(0), m_timeBarWidth(0), m_bgFadeDir(0)
-    , m_timeLapseStarted(0), m_elapsedTime(0), m_pollFrame(0)
+    , m_timeLapseStarted(0), m_gameElapsedTime(0), m_pollFrame(0)
     , m_showTimeBarArrow(0), m_bgResID(0x20000120u)
     , m_prevState(100), m_rows(4), m_cols(4)
     , m_cursorRow(0), m_cursorCol(0)
@@ -326,6 +326,7 @@ void cltMini_Magic::Init_Wait()
         m_buttons[i].SetActive(0);
 
     InitMiniGameTime(0, 0);
+    m_elapsedTime = 0;
     m_difficultyByte = 0;
     m_gameTime = 0;
     m_buttons[0].SetActive(1);
@@ -640,7 +641,6 @@ void cltMini_Magic::ChangeRun()
     if (m_cursorRow != m_emptyRow) {
         if (m_cursorCol == m_emptyCol) {
             // 同列不同行 → 滑動整行
-            m_pGameSoundMgr->PlaySoundA((char*)"M0011", 0, 0);
             if (m_cursorRow <= m_emptyRow) {
                 for (int i = 0; i < m_emptyRow - m_cursorRow; ++i)
                     Swap(m_emptyRow - i, m_cursorCol, m_emptyRow - i - 1, m_cursorCol);
@@ -677,7 +677,7 @@ void cltMini_Magic::ChangeRun()
         SetStageBar();
         if (m_stageCompleted >= m_totalStages) {
             if (m_stageCompleted == m_totalStages) {
-                m_elapsedTime = timeGetTime() - m_startTick;
+                m_gameElapsedTime = timeGetTime() - m_startTick;
                 g_cGameMagicState = 6;
             }
         } else {
@@ -803,7 +803,7 @@ void cltMini_Magic::Gamming()
     m_remainTime = remain;
     if (remain >= static_cast<DWORD>(m_gameTime) && m_timeLapseStarted) {
         m_remainTime = 0;
-        m_elapsedTime = timeGetTime() - m_startTick;
+        m_gameElapsedTime = timeGetTime() - m_startTick;
         g_cGameMagicState = 6;
     }
     m_timeLapseStarted = 1;
@@ -815,10 +815,10 @@ void cltMini_Magic::EndGame()
     m_drawNumScore.SetActive(1);
 
     if (m_gameActive) {
-        if (!m_validScore.IsValidScore(0x1Eu, m_elapsedTime)) {
+        if (!m_validScore.IsValidScore(0x1Eu, m_gameElapsedTime)) {
             CHAR buf[256];
             const char* txt = m_pDCTTextManager->GetText(58092);
-            wsprintfA(buf, "client : %s :%i", txt, m_elapsedTime);
+            wsprintfA(buf, "client : %s :%i", txt, m_gameElapsedTime);
             cltSystemMessage::SetSystemMessage(&g_clSysemMessage,buf, 0, 0, 0);
             Init_Wait();
             return;
@@ -835,7 +835,7 @@ void cltMini_Magic::EndGame()
         }
 
         if (m_totalScore) {
-            unsigned int remainMs = static_cast<unsigned int>(m_gameTime) - m_elapsedTime;
+            unsigned int remainMs = static_cast<unsigned int>(m_gameTime) - m_gameElapsedTime;
             unsigned int remainSec = remainMs / 1000u;
             int bonus = static_cast<int>(
                 static_cast<__int64>(static_cast<double>(remainSec) * static_cast<double>(m_incrementFactor)));
@@ -847,7 +847,7 @@ void cltMini_Magic::EndGame()
         unsigned int finalBase = static_cast<unsigned int>(m_baseScore);
         int multiple = GetMultipleNum();
         m_displayScore = static_cast<int>(finalBase * multiple);
-        SendScore(0x1Eu, m_elapsedTime, m_elapsedTime,
+        SendScore(0x1Eu, m_gameElapsedTime, m_gameElapsedTime,
                   m_difficultyByte, finalBase);
 
         if (m_timerId)

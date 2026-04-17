@@ -203,7 +203,7 @@ public:
     // --- 其他 ---
     int             m_bgFadeDir;           // DWORD[728]: 背景閃爍方向
     int             m_timeLapseStarted;    // DWORD[730]
-    std::uint32_t   m_elapsedTime;         // DWORD[727]: 經過時間(ms)
+    std::uint32_t   m_gameElapsedTime;     // DWORD[727]: 遊戲經過時間(ms)
     std::uint32_t   m_pollFrame;           // DWORD[732]
 
     int             m_showTimeBarArrow;    // DWORD[610]

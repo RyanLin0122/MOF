@@ -498,8 +498,7 @@ int cltMini_Magic_2::Poll()
         InitBtnFocus();
     }
 
-    if (m_pInputMgr)
-        m_pInputMgr->IsLMButtonUp();
+    m_pInputMgr->IsLMButtonUp();
 
     PollTarget();
     PollBox();
@@ -883,13 +882,13 @@ void cltMini_Magic_2::EndStage()
 
         if (m_gameScore < static_cast<uint16_t>(m_passScore))
         {
-            m_slots[m_uiSlotFail + 128].active = 1;
+            m_slots[m_uiSlotFail].active = 1;
         }
         else
         {
             m_totalScore = 1;
             m_baseScore = m_winBaseScore;
-            m_slots[m_uiSlotPass + 128].active = 1;
+            m_slots[m_uiSlotPass].active = 1;
         }
 
         m_drawNumFinal.SetActive(1);
@@ -1098,15 +1097,12 @@ void cltMini_Magic_2::PrepareDrawing()
         GameImage* pImg = cltImageManager::GetInstance()->GetGameImage(
             9, m_slots[i].resID, 0, 1);
         m_slotImages[i] = pImg;
-        if (pImg)
-        {
-            pImg->SetBlockID(m_slots[i].blockID);
-            pImg->m_bFlag_447 = true;
-            pImg->m_bFlag_446 = true;
-            pImg->m_bVertexAnimation = false;
-            pImg->m_fPosX = static_cast<float>(m_slots[i].x);
-            pImg->m_fPosY = static_cast<float>(m_slots[i].y);
-        }
+        pImg->SetBlockID(m_slots[i].blockID);
+        pImg->m_bFlag_447 = true;
+        pImg->m_bFlag_446 = true;
+        pImg->m_bVertexAnimation = false;
+        pImg->m_fPosX = static_cast<float>(m_slots[i].x);
+        pImg->m_fPosY = static_cast<float>(m_slots[i].y);
     }
 
     // Buttons
@@ -1300,16 +1296,16 @@ void cltMini_Magic_2::InitMiniGameImage()
     int sy = m_screenY;
 
     SlotInit initData[kSlotCount] = {
-        { 0, 536870960, 1,  sx + 400, sy + 600 },  // slot 0: bg overlay
-        { 0, 570425353, 0,  sx + 400, sy + 600 },  // slot 1
-        { 0, 570425353, 1,  sx + 177, sy + 300 },  // slot 2
-        { 0, 570425354, 12, sx + 177, sy + 300 },  // slot 3
-        { 0, 536870914, 0,  m_uiPos[0], m_uiPos[1] },  // slot 4: ranking
-        { 0, 536870914, 1,  m_uiPos[2], m_uiPos[3] },  // slot 5
-        { 0, 536870914, 1,  m_uiPos[2], m_uiPos[3] },  // slot 6
-        { 0, 268435611, 20, m_uiPos[6], m_uiPos[7] },  // slot 7: degree select
-        { 0, 536870993, 0,  m_uiPos[4], m_uiPos[5] },  // slot 8: help
-        { 0, 268435616, 0,  m_uiPos[8], m_uiPos[9] },  // slot 9: show point
+        { 0, 536870960, 0,  sx + 400, sy + 600 },       // slot 0: left box bg
+        { 0, 536870960, 1,  sx + 400, sy + 600 },       // slot 1: right box bg
+        { 0, 570425353, 0,  sx + 177, sy + 300 },       // slot 2: pass overlay
+        { 0, 570425353, 1,  sx + 177, sy + 300 },       // slot 3: fail overlay
+        { 0, 570425354, 12, m_uiPos[0], m_uiPos[1] },  // slot 4: ranking
+        { 0, 536870914, 0,  m_uiPos[2], m_uiPos[3] },  // slot 5: pass result
+        { 0, 536870914, 1,  m_uiPos[2], m_uiPos[3] },  // slot 6: fail result
+        { 0, 268435611, 20, m_uiPos[8], m_uiPos[9] },  // slot 7: degree select
+        { 0, 536870993, 0,  m_uiPos[6], m_uiPos[7] },  // slot 8: help
+        { 0, 268435616, 0,  m_uiPos[10], m_uiPos[11] }, // slot 9: show point
     };
 
     for (int i = 0; i < kSlotCount; ++i)
@@ -1333,7 +1329,7 @@ void cltMini_Magic_2::InitMiniGameImage()
 
     // Create buttons
     m_buttons[0].CreateBtn(sx + 37, sy + 472, 9,
-        0x2200000A, 0, 0x2200000A, 3, 0x2200000A, 6, 536870960, 9,
+        0x2200000A, 0, 0x2200000A, 3, 0x2200000A, 6, 0x20000014, 9,
         reinterpret_cast<void(*)(unsigned int)>(OnBtn_Start),
         reinterpret_cast<unsigned int>(this), 1);
 
@@ -1377,17 +1373,17 @@ void cltMini_Magic_2::InitMiniGameImage()
         reinterpret_cast<void(*)(unsigned int)>(OnBtn_ExitPopUp),
         reinterpret_cast<unsigned int>(this), 0);
 
-    m_buttons[9].CreateBtn(m_uiPos[6] + 36, m_uiPos[7] + 48, 9,
+    m_buttons[9].CreateBtn(m_uiPos[8] + 36, m_uiPos[9] + 48, 9,
         0x1000009B, 0, 0x1000009B, 3, 0x1000009B, 6, 0x1000009B, 9,
         reinterpret_cast<void(*)(unsigned int)>(OnBtn_DegreeEasy),
         reinterpret_cast<unsigned int>(this), 0);
 
-    m_buttons[10].CreateBtn(m_uiPos[6] + 36, m_uiPos[7] + 102, 9,
+    m_buttons[10].CreateBtn(m_uiPos[8] + 36, m_uiPos[9] + 102, 9,
         0x1000009B, 1, 0x1000009B, 4, 0x1000009B, 7, 0x1000009B, 10,
         reinterpret_cast<void(*)(unsigned int)>(OnBtn_DegreeNormal),
         reinterpret_cast<unsigned int>(this), 0);
 
-    m_buttons[11].CreateBtn(m_uiPos[6] + 36, m_uiPos[7] + 156, 9,
+    m_buttons[11].CreateBtn(m_uiPos[8] + 36, m_uiPos[9] + 156, 9,
         0x1000009B, 2, 0x1000009B, 5, 0x1000009B, 8, 0x1000009B, 11,
         reinterpret_cast<void(*)(unsigned int)>(OnBtn_DegreeHard),
         reinterpret_cast<unsigned int>(this), 0);
@@ -1407,11 +1403,13 @@ void cltMini_Magic_2::InitMiniGameImage()
     m_drawNumFinal.InitDrawNum(9, 0x22000016, 0, 0);
     m_drawNumFinal.SetActive(0);
 
-    // Screen effect alpha box (red flash) — initialized with color 0xFF0000
-    m_screenEffectBox.Create(m_screenX, m_screenY, 800, 600, nullptr);
+    // Screen effect alpha box (red flash) — D3DXCOLOR(0x00FF0000) = invisible red
+    m_screenEffectBox.Create(m_screenX, m_screenY, 800, 600,
+        1.0f, 0.0f, 0.0f, 0.0f, nullptr);
 
-    // Overlay alpha box for dimming — color 0x80000000
-    m_alphaBox.Create(m_screenX, m_screenY + 9, 800, 600, nullptr);
+    // Overlay alpha box for dimming — D3DXCOLOR(0x80000000) = semi-transparent black
+    m_alphaBox.Create(m_screenX, m_screenY + 9, 800, 600,
+        0.0f, 0.0f, 0.0f, 0.501960784f, nullptr);
     m_drawAlphaBox = 0;
     m_bgResID = 536871187; // 0x20000013
 
@@ -1421,8 +1419,10 @@ void cltMini_Magic_2::InitMiniGameImage()
     if (g_Game_System_Info.ScreenWidth > 800)
     {
         int sideWidth = (g_Game_System_Info.ScreenWidth - 800) / 2;
-        m_sideBoxLeft.Create(0, 0, sideWidth, g_Game_System_Info.ScreenHeight, nullptr);
-        m_sideBoxRight.Create(sideWidth + 800, 0, sideWidth, g_Game_System_Info.ScreenHeight, nullptr);
+        m_sideBoxLeft.Create(0, 0, sideWidth, g_Game_System_Info.ScreenHeight,
+            0.0f, 0.0f, 0.0f, 1.0f, nullptr);
+        m_sideBoxRight.Create(sideWidth + 800, 0, sideWidth, g_Game_System_Info.ScreenHeight,
+            0.0f, 0.0f, 0.0f, 1.0f, nullptr);
     }
 
     Init_Wait();
