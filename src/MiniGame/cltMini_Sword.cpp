@@ -85,24 +85,18 @@ static const SlotDef kSlotTable[40] = {
     { 0x20000002u, 0,   1,   0,   0 },
     // -- 21: Lose banner (= 609)
     { 0x20000002u, 1,   1,   0,   0 },
-    // -- 22: Hit effect (= 3996)
-    { 0x0B00007Eu, 0,  -1, 100,   0 },
-    // -- 23: 保留
-    { 0x0B000080u, 0,  -1,   0,   0 },
-    // -- 24: 反向怪物 (= 3998)
-    { 0x0B000082u, 0,  -1, 100,   0 },
-    // -- 25: 保留
-    { 0x0B00007Fu, 0,  -1, 300,   0 },
-    // -- 26: Miss effect (= 3997)
-    { 0x0B00007Du, 0,  -1, 100,   0 },
-    // -- 27: 保留
-    { 0x0B00007Cu, 0,  -1, 300,   0 },
-    // -- 28: 保留
-    { 0x0B000082u, 0,  -1, 100,   0 },
-    // -- 29: 保留
-    { 0x0B00007Bu, 0,  -1,   0,   0 },
-    // -- 30: 怪物頭頂圖示 (= 3995 / 4005)
-    { 0x0B000081u, 0,  -1, 100,   0 },
+    // -- 22..30: 對齊 GT 184549563..184549570 (0x0B0000BB..0x0B0000C2)
+    // 還原原先寫成 0x0B00007B..0x0B000082，全部少了 0x40；實際檔名為
+    // MoFData/minigame/0b0000b{b..f},c{0..2}_mok_*.gi (mok = 劍士小遊戲怪物素材).
+    { 0x0B0000BEu, 0,  -1, 100,   0 },  // 22 (GT v30 = 0xBE mok_head)
+    { 0x0B0000C0u, 0,  -1,   0,   0 },  // 23 (GT v34 = 0xC0 mok_right)
+    { 0x0B0000C2u, 0,  -1, 100,   0 },  // 24 (GT v38 = 0xC2 mok_attack)
+    { 0x0B0000BFu, 0,  -1, 300,   0 },  // 25 (GT v42 = 0xBF mok_left)
+    { 0x0B0000BDu, 0,  -1, 100,   0 },  // 26 (GT v46 = 0xBD mok_block)
+    { 0x0B0000BCu, 0,  -1, 300,   0 },  // 27 (GT v50 = 0xBC mok_avoid_right)
+    { 0x0B0000C2u, 0,  -1, 100,   0 },  // 28 (GT v54 = 0xC2 mok_attack, dup)
+    { 0x0B0000BBu, 0,  -1,   0,   0 },  // 29 (GT v58 = 0xBB mok_avoid_left)
+    { 0x0B0000C1u, 0,  -1, 100,   0 },  // 30 (GT v62 = 0xC1 mok_ready)
     // -- 31: 目標特效 (= 3999)
     { 0x22000008u, 10, -1,   0,   0 },
     // -- 32: Degree select 底圖 (= 605)
@@ -126,7 +120,7 @@ static const SlotDef kSlotTable[40] = {
 // =========================================================================
 cltMini_Sword::cltMini_Sword()
     : cltMoF_BaseMiniGame()
-    , m_bgResID(0x20000023u)
+    , m_bgResID(0x20000123u)
     , m_totalScore(0)
     , m_winMark(0)
     , m_difficultyBaseScore(0)
@@ -252,7 +246,7 @@ void cltMini_Sword::InitMiniGameImage()
     m_slotMonsterAlt  = 24;
     m_slotMissFX      = 26;
     m_slotTargetFX    = 31;
-    m_bgResID         = 0x20000023u;
+    m_bgResID         = 0x20000123u;
 
     // mofclient.c：bytes 604-609 — Draw 使用的 6 個 priority 用途 slot 索引
     //   (Init 設為 19/20/21/32/33/34，整個 cltMini_Sword 生命週期不再變動)
@@ -371,7 +365,7 @@ void cltMini_Sword::InitMiniGameImage()
 
     // mofclient.c：*((_DWORD *)this + 211) = 0（frame-local alphabox flag）
     m_drawAlphaBox = 0;
-    m_bgResID = 0x20000023u;
+    m_bgResID = 0x20000123u;
 
     g_GameSoundManager.PlayMusic((char*)"MoFData/Music/bg_minigame.ogg");
 
@@ -560,6 +554,41 @@ void cltMini_Sword::PrepareDrawing()
 // =========================================================================
 void cltMini_Sword::Draw()
 {
+    // DEBUG: 每秒印一次本幀狀態
+    static unsigned s_debugFrameCounter = 0;
+    static DWORD s_debugLastTick = 0;
+    ++s_debugFrameCounter;
+    DWORD nowTick = timeGetTime();
+    if (s_debugLastTick == 0) s_debugLastTick = nowTick;
+    if (nowTick - s_debugLastTick >= 1000) {
+        int activeSlots = 0;
+        for (int i = 0; i < kSlotCount; ++i)
+            if (m_slots[i].active) ++activeSlots;
+        int activeBtns = 0;
+        for (int i = 0; i < kButtonCount; ++i)
+            if (m_buttons[i].IsActive()) ++activeBtns;
+        // 檢查 bg 的內部狀態
+        const char* bgStatus = "null";
+        bool bgInUse = false, bgHasGIData = false, bgHasTex = false, bgProcessed = false, bgVertexAnim = false;
+        if (m_pBgImage) {
+            bgInUse = m_pBgImage->IsInUse();
+            bgHasGIData = (m_pBgImage->GetGIDataPtr() != nullptr);
+            if (bgHasGIData) {
+                bgHasTex = (m_pBgImage->GetGIDataPtr()->m_Resource.m_pTexture != nullptr);
+            }
+            bgProcessed = m_pBgImage->m_bIsProcessed;
+            bgVertexAnim = m_pBgImage->m_bVertexAnimation;
+            bgStatus = "ptr";
+        }
+        std::printf("[Sword::Draw] bg=%p(%s inUse=%d giData=%d tex=%d proc=%d vertAnim=%d) bgRes=0x%08X slots=%d btns=%d state=%u screen=(%d,%d)\n",
+                    (void*)m_pBgImage, bgStatus, bgInUse, bgHasGIData, bgHasTex, bgProcessed, bgVertexAnim,
+                    m_bgResID, activeSlots, activeBtns,
+                    (unsigned)g_cGameSwordState, m_screenX, m_screenY);
+        std::fflush(stdout);
+        s_debugFrameCounter = 0;
+        s_debugLastTick = nowTick;
+    }
+
     // mofclient.c：Draw 第一步先畫半透明底圖 (PrepareDrawing 取的那張)
     if (m_pBgImage)
         m_pBgImage->Draw();
@@ -874,12 +903,13 @@ void cltMini_Sword::SetGameDegree(uint8_t degree)
         case 1:
             m_winMark             = 50;
             m_difficultyBaseScore = 20;
+            // Easy — 對齊 GT 536871203 = 0x20000123 (minigame_sword_easy_bg.gi)
             m_spawnInterval       = 800;
             m_gameDegree          = 20;
             // 每 point > 20 後，額外加 (point-20)*2.0 分，上限 90
             m_scoreCap            = 90;
             m_bonusMultiplier     = 2.0f;   // 0x40000000
-            m_bgResID             = 0x20000023u;
+            m_bgResID             = 0x20000123u;
             break;
         case 2:
             m_winMark             = 100;
@@ -888,7 +918,8 @@ void cltMini_Sword::SetGameDegree(uint8_t degree)
             m_gameDegree          = 30;
             m_scoreCap            = 180;
             m_bonusMultiplier     = 8.0f;   // 0x41000000
-            m_bgResID             = 0x20000025u;
+            // Normal — GT 536871205 = 0x20000125 (minigame_sword_normal_bg.gi)
+            m_bgResID             = 0x20000125u;
             break;
         case 4:
             m_winMark             = 200;
@@ -897,7 +928,8 @@ void cltMini_Sword::SetGameDegree(uint8_t degree)
             m_gameDegree          = 40;
             m_scoreCap            = 360;
             m_bonusMultiplier     = 4.0f;   // 0x40800000
-            m_bgResID             = 0x20000024u;
+            // Hard — GT 536871204 = 0x20000124 (minigame_sword_hard_bg.gi)
+            m_bgResID             = 0x20000124u;
             break;
     }
 

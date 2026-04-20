@@ -11,8 +11,25 @@
 #include "Image/cltImageManager.h"
 #include "Info/cltClassKindInfo.h"
 #include "Info/cltItemKindInfo.h"
+#include "Info/cltLessonKindInfo.h"
 #include "System/cltClassSystem.h"
 #include "System/cltEquipmentSystem.h"
+#include "System/cltLessonSystem.h"
+#include "Sound/GameSound.h"
+#include "Logic/DirectInputManager.h"
+#include "Logic/cltMyCharData.h"
+#include "Util/cltTimer.h"
+// 注意: CMoFNetwork / ClientCharacterManager 只用 forward declaration
+// (來自 global.h)，避開 windows.h 已先載入後再 include winsock2.h 的衝突。
+#include "MiniGame/cltMoF_BaseMiniGame.h"
+#include "MiniGame/cltMini_Sword.h"
+#include "MiniGame/cltMini_Sword_2.h"
+#include "MiniGame/cltMini_Bow.h"
+#include "MiniGame/cltMini_Bow_2.h"
+#include "MiniGame/cltMini_Magic.h"
+#include "MiniGame/cltMini_Magic_2.h"
+#include "MiniGame/cltMini_Exorcist.h"
+#include "MiniGame/cltMini_Exorcist_2.h"
 #include "Test/Test.h"
 #include "global.h"  // 包含全域變數定義
 #include "conf.h"
@@ -209,6 +226,194 @@ void kr_printf(const char* euckr) {
 }
 
 //-----------------------------------------------------------------------------
+// MiniGame Debug Mode — 終端機選單啟動單一小遊戲以便測試
+//-----------------------------------------------------------------------------
+static DirectInputManager g_DebugInputMgr{};
+static cltMoF_BaseMiniGame* g_pDebugMiniGame = nullptr;
+
+static void InitMiniGameDebugSubsystems()
+{
+    // 0) 資源在 MoFData/nation_kor/ 下（目前僅此一國家資料），把 NationCode 切成 1
+    //    讓 cltGIResource::LoadResourceInPack 的 fallback 去 Nation_kor/ 找得到資源。
+    extern unsigned char NationCode;
+    NationCode = 1;
+
+    // 0.5) 計時器 — 小遊戲 Ready 倒數、遊戲時間皆透過 g_clTimerManager
+    //      註冊每秒 callback，不初始化 + Poll 的話倒數永遠不減。
+    cltTimerManager::InitializeStaticVariable();
+    g_clTimerManager.Initialize(0x3E8u);
+
+    // 1) 音效 + BGM
+    g_GameSoundManager.InitSound((char*)"SoundListInfo.txt");
+
+    // 2) 課程種類表（用於小遊戲內讀取訓練卡資訊、倍率計算）
+    g_clLessonKindInfo.Initialize((char*)"LessonKindInfo.txt");
+    cltLessonSystem::InitializeStaticVariable(&g_clLessonKindInfo, &g_clItemKindInfo);
+
+    // 3) DirectInput — 直接建立並取得鍵盤佈局，避開 hrInitDirectInput 於 x64
+    //    的指標算術（ppvOut[135]）會寫到物件以外的已知問題。
+    {
+        HMODULE hModule = GetModuleHandleA(nullptr);
+        DirectInput8Create(hModule, DIRECTINPUT_VERSION, IID_IDirectInput8A,
+                           reinterpret_cast<LPVOID*>(&g_DebugInputMgr.m_pDirectInput),
+                           nullptr);
+        g_DebugInputMgr.m_hkl = GetKeyboardLayout(0);
+        g_DebugInputMgr.hrInitKeyboard(g_hWnd);
+        g_DebugInputMgr.hrInitMouse(g_hWnd);
+    }
+
+    // 4) 小遊戲基底的靜態管理器指標
+    cltMoF_BaseMiniGame::InitializeStaticVariable(
+        &g_clMyCharData,
+        cltImageManager::GetInstance(),
+        &g_Network,
+        &g_ClientCharMgr,
+        &g_DebugInputMgr,
+        &g_GameSoundManager,
+        &g_DCTTextManager);
+}
+
+static cltMoF_BaseMiniGame* CreateDebugMiniGame(int choice)
+{
+    switch (choice) {
+    case 1: return new cltMini_Sword();
+    case 2: return new cltMini_Sword_2();
+    case 3: return new cltMini_Bow();
+    case 4: return new cltMini_Bow_2();
+    case 5: return new cltMini_Magic();
+    case 6: return new cltMini_Magic_2();
+    case 7: return new cltMini_Exorcist();
+    case 8: return new cltMini_Exorcist_2();
+    default: return nullptr;
+    }
+}
+
+// 回傳新建立的小遊戲，或 nullptr 表示使用者選擇離開。
+static cltMoF_BaseMiniGame* SelectAndCreateMiniGameFromConsole()
+{
+    while (true) {
+        std::printf("\n================ MiniGame Debug Menu ================\n");
+        std::printf("  1) Sword       (劍士 - 模式 A)\n");
+        std::printf("  2) Sword_2     (劍士 - 模式 B)\n");
+        std::printf("  3) Bow         (弓手 - 模式 A)\n");
+        std::printf("  4) Bow_2       (弓手 - 模式 B)\n");
+        std::printf("  5) Magic       (法師 - 模式 A)\n");
+        std::printf("  6) Magic_2     (法師 - 模式 B)\n");
+        std::printf("  7) Exorcist    (驅魔 - 模式 A)\n");
+        std::printf("  8) Exorcist_2  (驅魔 - 模式 B)\n");
+        std::printf("  0) Quit\n");
+        std::printf("※ 難度 (Easy/Normal/Hard) 於遊戲內的 SelectDegree 畫面選擇\n");
+        std::printf("Choice: ");
+        std::fflush(stdout);
+
+        int choice = 0;
+        if (std::scanf("%d", &choice) != 1) {
+            int ch; while ((ch = std::getchar()) != '\n' && ch != EOF) {}
+            continue;
+        }
+        if (choice == 0) return nullptr;
+
+        cltMoF_BaseMiniGame* game = CreateDebugMiniGame(choice);
+        if (game) {
+            // 清空輸入狀態，避免上一輪殘留
+            g_DebugInputMgr.FreeAllKey();
+            // 把遊戲視窗帶到前景，避免 console 擋住
+            if (g_hWnd) {
+                ShowWindow(g_hWnd, SW_SHOW);
+                SetForegroundWindow(g_hWnd);
+                SetFocus(g_hWnd);
+            }
+            std::printf("[minigame] 已建立第 %d 個遊戲，切換到遊戲視窗。\n", choice);
+            std::fflush(stdout);
+            return game;
+        }
+    }
+}
+
+// mofclient.c FPS_Update (0x4FEDA0)：把邏輯 clamp 到 SETTING_FRAME*30 fps。
+// 回傳 0 = 時間還沒到，略過這幀；1 = 正常推進；2 = 要追幀就略過 draw。
+static int FPS_Update()
+{
+    static DWORD s_fpsStartTime = 0;
+    static DWORD s_totalFrameCounter = 0;
+
+    DWORD target;
+    if (s_totalFrameCounter) {
+        const double elapsed = (double)(timeGetTime() - s_fpsStartTime);
+        const double frameMs = 1000.0 / ((double)SETTING_FRAME * 30.0);
+        target = (DWORD)(elapsed / frameMs);
+    } else {
+        target = 1;
+        s_fpsStartTime = timeGetTime();
+    }
+    if (target <= s_totalFrameCounter) return 0;
+    const DWORD prev = s_totalFrameCounter;
+    ++s_totalFrameCounter;
+    return (target - (prev + 1) > 1) ? 2 : 1;
+}
+
+// 主迴圈每幀呼叫：驅動輸入、推進小遊戲邏輯；遊戲結束時回選單。
+static void UpdateMiniGameDebug()
+{
+    static DWORD s_lastTick = 0;
+    static unsigned int s_frames = 0;
+    ++s_frames;
+    DWORD now = timeGetTime();
+    if (s_lastTick == 0) s_lastTick = now;
+    if (now - s_lastTick >= 1000) {
+        std::printf("[minigame] %u fps, g_cGameSwordState=%u\n", s_frames, (unsigned)g_cGameSwordState);
+        std::fflush(stdout);
+        s_frames = 0;
+        s_lastTick = now;
+    }
+
+    // 每幀 tick 計時器 — 對齊 GT main loop 210289-210290。
+    cltTimerManager::UpdateTime();
+    g_clTimerManager.Poll();
+
+    g_DebugInputMgr.hrReadInput();
+    g_DebugInputMgr.Update();
+
+    // DirectInput 讀的是相對移動量，遊戲邏輯用的是絕對座標。
+    // 直接從 Win32 取實際游標位置覆蓋上去，確保按鈕 hit-test 正確。
+    POINT cursor;
+    if (GetCursorPos(&cursor) && ScreenToClient(g_hWnd, &cursor)) {
+        g_DebugInputMgr.m_mouseX = cursor.x;
+        g_DebugInputMgr.m_mouseY = cursor.y;
+    }
+    // 同步 Win32 滑鼠按鈕狀態 (DISCL_FOREGROUND 下 DirectInput 取到的
+    // 按鈕狀態不一定即時；這裡直接用 GetAsyncKeyState 當 fallback)。
+    {
+        static bool s_lPrev = false, s_rPrev = false;
+        const bool lNow = (GetAsyncKeyState(VK_LBUTTON) & 0x8000) != 0;
+        const bool rNow = (GetAsyncKeyState(VK_RBUTTON) & 0x8000) != 0;
+        if (lNow && !s_lPrev) g_DebugInputMgr.SetLMButtonStatue(1);      // down
+        else if (!lNow && s_lPrev) g_DebugInputMgr.SetLMButtonStatue(2); // up
+        if (rNow && !s_rPrev) g_DebugInputMgr.SetRMButtonStatue(1);
+        else if (!rNow && s_rPrev) g_DebugInputMgr.SetRMButtonStatue(2);
+        s_lPrev = lNow;
+        s_rPrev = rNow;
+    }
+
+    if (!g_pDebugMiniGame) return;
+
+    if (g_pDebugMiniGame->Poll()) {
+        delete g_pDebugMiniGame;
+        g_pDebugMiniGame = SelectAndCreateMiniGameFromConsole();
+        if (!g_pDebugMiniGame) {
+            PostQuitMessage(0);
+        }
+        return;
+    }
+    g_pDebugMiniGame->PrepareDrawing();
+
+    // mofclient.c 210313：PrepareDrawing 之後、BeginScene 之前呼叫
+    // ProcessAllGameImage，把每個 GameImage 的 m_bIsProcessed 設為 true；
+    // GameImage::Draw() 會在此旗標為 false 時直接 return false。
+    cltImageManager::GetInstance()->ProcessAllGameImage();
+}
+
+//-----------------------------------------------------------------------------
 // Windows 應用程式主進入點
 //-----------------------------------------------------------------------------
 int APIENTRY  wWinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPWSTR lpCmdLine, int nCmdShow)
@@ -244,6 +449,9 @@ int APIENTRY  wWinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPWSTR lpCm
 			Setup();
 			Run_Test();
 			break;
+		case MINIGAME_DEBUG_MODE:
+			Setup();
+			break;
 		default:
 			Setup();
 			break;
@@ -258,8 +466,20 @@ int APIENTRY  wWinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPWSTR lpCm
 			}
 		}
 
+		if (CURRENT_MODE == MINIGAME_DEBUG_MODE) {
+			InitMiniGameDebugSubsystems();
+		}
+
 		ShowWindow(g_hWnd, nCmdShow);
 		UpdateWindow(g_hWnd);
+
+		if (CURRENT_MODE == MINIGAME_DEBUG_MODE) {
+			g_pDebugMiniGame = SelectAndCreateMiniGameFromConsole();
+			if (!g_pDebugMiniGame) {
+				Cleanup();
+				return 0;
+			}
+		}
 
 		MSG msg;
 		ZeroMemory(&msg, sizeof(msg));
@@ -283,6 +503,16 @@ int APIENTRY  wWinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPWSTR lpCm
 				// 測試 Update
 				if (CURRENT_MODE == TEST_MODE) {
 					UpdateTest(fElapsedTime);
+				}
+				else if (CURRENT_MODE == MINIGAME_DEBUG_MODE) {
+					// 對齊 GT main loop 210260/210276：先 Sleep(1) 讓 OS
+					// 有空排程，再用 FPS_Update 把邏輯 clamp 到 30fps。
+					Sleep(1);
+					const int fpsStep = FPS_Update();
+					if (fpsStep == 0) {
+						continue;   // 這一幀還沒到，跳過 Update/Render
+					}
+					UpdateMiniGameDebug();
 				}
 
 				// 執行 Render
@@ -375,10 +605,19 @@ VOID Render()
 		if (CURRENT_MODE == TEST_MODE) {
 			Render_Test();
 		}
+		else if (CURRENT_MODE == MINIGAME_DEBUG_MODE) {
+			if (g_pDebugMiniGame) g_pDebugMiniGame->Draw();
+		}
 		Device->EndScene();
 	}
 
 	Device->Present(NULL, NULL, NULL, NULL);
+
+	// mofclient.c 的 main loop：Present 後呼叫 ReleaseAllGameImage，把
+	// PrepareDrawing 期間取出的 5000 格 pool slot 全部歸還。不做會溢出。
+	if (CURRENT_MODE == MINIGAME_DEBUG_MODE) {
+		cltImageManager::GetInstance()->ReleaseAllGameImage();
+	}
 }
 
 

@@ -172,15 +172,22 @@ bool GameImage::Process() {
     m_baseVertices[2] = { halfWidth,  halfHeight, 0.0f };
     m_baseVertices[3] = { -halfWidth,  halfHeight, 0.0f };
 
-    // 設置四個角落的UV座標
+    // 設置四個角落的UV座標 — 對齊 mofclient.c 272555-272562：
+    //   AnimationFrameData 的 u2/v2 實際上是「寬/高」(UV 單位下的 size)，
+    //   不是右下角座標。右邊緣 = u1 + u2；下邊緣 = v1 + v2。
+    //   寫成 u2/v2 會讓 U range 變成 [u1, u2] 而非 [u1, u1+u2]，導致：
+    //   (1) u2 < u1 時視覺上整個鏡像 (數字/按鈕反過來)；
+    //   (2) sub-rect 比例錯，按鈕各 block 變黑塊。
+    const float uRight  = pFrame->u1 + pFrame->u2;
+    const float vBottom = pFrame->v1 + pFrame->v2;
     m_Vertices[0].texture_u = pFrame->u1;
     m_Vertices[0].texture_v = pFrame->v1;
-    m_Vertices[1].texture_u = pFrame->u2;
+    m_Vertices[1].texture_u = uRight;
     m_Vertices[1].texture_v = pFrame->v1;
-    m_Vertices[2].texture_u = pFrame->u2;
-    m_Vertices[2].texture_v = pFrame->v2;
+    m_Vertices[2].texture_u = uRight;
+    m_Vertices[2].texture_v = vBottom;
     m_Vertices[3].texture_u = pFrame->u1;
-    m_Vertices[3].texture_v = pFrame->v2;
+    m_Vertices[3].texture_v = vBottom;
 
     // 應用整體縮放 (m_nScale)，這是一個非線性的縮放計算
     float finalScale = (float)m_nScale * 0.01f;

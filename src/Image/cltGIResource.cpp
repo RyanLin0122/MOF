@@ -3,6 +3,8 @@
 #include "FileSystem/CMOFPacking.h"
 #include <windows.h>
 #include <cstdio> // 使用 sprintf, wsprintfA
+#include <unordered_set>
+#include <cstdint>
 
 extern unsigned char NationCode;
 
@@ -74,11 +76,20 @@ void* cltGIResource::LoadResourceInPack(unsigned int id, int a3, unsigned char a
         }
     }
 
-    // 原始碼中有對搜尋結果數量>1和找不到的錯誤彈窗，此處省略以保持簡潔
-    char errorMsg[1024];
-    sprintf_s(errorMsg, "Cannot find Resource %08X in Packfile.", id);
-    MessageBoxA(nullptr, errorMsg, "ERROR", MB_OK);
-
+    // 缺少資源：原本是 MessageBox 阻塞，除錯時改用 printf 不中斷遊戲。
+    // 某些選單 bg (Help / SelectDegree / ShowPoint) 在我們抽出的資產中
+    // 不存在 (可能韓版專屬)，缺少時只是看不到背景、按鈕還是能用。
+    // PrepareDrawing 每幀都會嘗試載入，所以每個 ID 只印一次避免洗屏。
+    {
+        static std::unordered_set<std::uint64_t> s_warned;
+        const std::uint64_t key = (static_cast<std::uint64_t>(
+            reinterpret_cast<std::uintptr_t>(m_szBasePath)) << 32) | id;
+        if (s_warned.insert(key).second) {
+            std::printf("[GI] missing resource %08X (base=%s nation=%s) — rendering without it\n",
+                        id, m_szBasePath, m_szNationPath[0] ? m_szNationPath : "(none)");
+            std::fflush(stdout);
+        }
+    }
     return nullptr;
 }
 

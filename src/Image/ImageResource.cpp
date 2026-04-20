@@ -64,48 +64,32 @@ bool ImageResource::LoadGIInPack(const char* filePathInPack, int /*packerType*/,
         cur += bytes;
     }
 
-    if (isCompressed && isV20) {
-        // v20: 影格表後立即是壓縮資料，m_imageDataSize = 解壓後大小
-        unsigned char* compressed = cur;                 // 起點即為壓縮資料
-        m_decompressedSize = m_imageDataSize;            // 目標大小
+    // 兩版本都在影格表後存一個 m_unknownFlag (1 byte)
+    // 對齊 mofclient.c LoadGIInPack (0x54B???) 的讀取順序。
+    m_unknownFlag = *cur; cur += 1;
 
-        m_pImageData = new(std::nothrow) unsigned char[m_decompressedSize];
-        if (!m_pImageData) return false;
+    const unsigned int decompressedSize = m_imageDataSize;  // header +12 欄位 = 解壓後大小
+    if (decompressedSize == 0 || decompressedSize > 0x20000000) return false;
 
-        unsigned char unit = GetPixelDepth(m_d3dFormat); // DXT* 會回 1
-        // 注意：a4（壓縮長度）給個上限即可，邏輯以 a6（輸出）為主
-        run_length_decomp(compressed, m_decompressedSize /*上限*/,
-            m_pImageData, m_decompressedSize, unit);
-        m_imageDataSize = m_decompressedSize;
-        return true;
-    }
+    m_pImageData = new(std::nothrow) unsigned char[decompressedSize];
+    if (!m_pImageData) return false;
 
-    // 非 v20（或未壓縮）— 保留原本行為
-    // 讀 unknownFlag
-    m_unknownFlag = *reinterpret_cast<unsigned char*>(cur); cur += 1;
-
-    if (isCompressed) {
-        // 舊版：檔內跟著存了解壓後大小
-        m_decompressedSize = *reinterpret_cast<unsigned int*>(cur); cur += 4;
+    if (isV20) {
+        // v20 壓縮：unknownFlag 後是 4 bytes 壓縮長度，接著壓縮資料
+        const unsigned int storedCompLen = *reinterpret_cast<unsigned int*>(cur); cur += 4;
+        m_decompressedSize = storedCompLen;  // 對齊 GT: (_DWORD*)this + 4 存的是壓縮長度
         unsigned char* compressed = cur;
 
-        m_pImageData = new(std::nothrow) unsigned char[m_decompressedSize];
-        if (!m_pImageData) return false;
+        unsigned char unit = GetPixelDepth(m_d3dFormat); // DXT* 會回 1
+        run_length_decomp(compressed, storedCompLen,
+            m_pImageData, decompressedSize, unit);
+        m_imageDataSize = decompressedSize;
+        return true;
+    }
 
-        unsigned char unit = GetPixelDepth(m_d3dFormat);
-        run_length_decomp(compressed, m_imageDataSize /*舊版此欄位為壓縮長度*/,
-            m_pImageData, m_decompressedSize, unit);
-        m_imageDataSize = m_decompressedSize;
-        return true;
-    }
-    else {
-        // 未壓縮：直接拷貝 m_imageDataSize bytes
-        if (m_imageDataSize == 0 || m_imageDataSize > 0x20000000) return false;
-        m_pImageData = new(std::nothrow) unsigned char[m_imageDataSize];
-        if (!m_pImageData) return false;
-        std::memcpy(m_pImageData, cur, m_imageDataSize);
-        return true;
-    }
+    // v10 未壓縮：直接拷貝 decompressedSize bytes
+    std::memcpy(m_pImageData, cur, decompressedSize);
+    return true;
 }
 
 bool ImageResource::LoadGI(const char* fileName, unsigned char a3) {
@@ -207,66 +191,77 @@ bool ImageResource::LoadTexture() {
 
     assert(Device != nullptr && "Direct3D Device has not been initialized!");
 
-    // 步驟 1: 建立一個空的 D3D 紋理
-    HRESULT hr = Device->CreateTexture(
-        m_width, m_height, 1, 0, m_d3dFormat, D3DPOOL_MANAGED, &m_pTexture, NULL);
-
-    if (FAILED(hr)) {
-        SafeRelease(m_pTexture);
-        delete[] m_pImageData;
-        m_pImageData = nullptr;
-        return false;
-    }
-
-    // 步驟 2: 鎖定紋理以準備寫入資料
-    D3DLOCKED_RECT lockedRect;
-    hr = m_pTexture->LockRect(0, &lockedRect, NULL, 0);
-
-    if (FAILED(hr)) {
-        SafeRelease(m_pTexture);
-        delete[] m_pImageData;
-        m_pImageData = nullptr;
-        return false;
-    }
-
-    // 步驟 3: 偵測資料類型並準備複製參數
-    bool isDDS = (m_imageDataSize > 4 && *reinterpret_cast<DWORD*>(m_pImageData) == 0x20534444); // "DDS "
-    bool isCompressed = IsCompressedFormat(m_d3dFormat);
+    // 檢測資料是否為 DDS 檔。DDS 檔含 128-byte header，之後是 level-0 像素
+    // 資料，可能再接完整 mip chain。我們的 D3D texture 只配 level 0，所以
+    // 複製資料時必須用 format + 尺寸推出的 level-0 size，而不是整個 buffer
+    // (否則 mip chain 的資料會溢出 level-0 surface，過去 v20 minigame 資源
+    // crash 的根因)。
+    const bool isDDS = (m_imageDataSize >= 4
+                        && *reinterpret_cast<DWORD*>(m_pImageData) == 0x20534444u); // 'DDS '
 
     unsigned char* pSrcData = m_pImageData;
-    size_t dataToCopySize = m_imageDataSize;
-
-    // 如果是 DDS 檔案，來源指標需要向後移動 128 位元組以跳過其標頭
+    unsigned int dataSize = m_imageDataSize;
     if (isDDS) {
-        const size_t DDS_HEADER_SIZE = 128;
-        pSrcData += DDS_HEADER_SIZE;
-        dataToCopySize -= DDS_HEADER_SIZE;
+        pSrcData += 128;           // 跳過 DDS header
+        dataSize -= 128;
     }
 
-    // 步驟 4: 根據是否為壓縮格式，選擇不同的複製策略
+    const bool isCompressed = IsCompressedFormat(m_d3dFormat);
+
+    // 推算 level-0 大小
+    unsigned int level0Size = 0;
     if (isCompressed) {
-        // 對於 DXT1-5 等塊壓縮格式，資料是連續的塊，可以直接進行一次性複製。
-        // D3D 會處理好 Pitch/Stride。
-        memcpy(lockedRect.pBits, pSrcData, dataToCopySize);
+        unsigned int blocksW = (m_width + 3) / 4;
+        unsigned int blocksH = (m_height + 3) / 4;
+        unsigned int bytesPerBlock = (m_d3dFormat == D3DFMT_DXT1) ? 8u : 16u;
+        level0Size = blocksW * blocksH * bytesPerBlock;
+    } else {
+        level0Size = m_width * m_height * GetPixelDepth(m_d3dFormat);
     }
-    else {
-        // 對於 A8R8G8B8 等非壓縮格式，必須逐行複製以應對 Pitch。
-        // Pitch 是 D3D 在記憶體中為一行像素分配的實際寬度，可能大於圖像的視覺寬度。
+    // 沒 DDS header 又沒 mip chain 的情況下資料大小應該剛好等於 level 0
+    if (level0Size > dataSize) level0Size = dataSize;
+
+    HRESULT hr = Device->CreateTexture(
+        m_width, m_height, 1, 0, m_d3dFormat, D3DPOOL_MANAGED, &m_pTexture, NULL);
+    if (FAILED(hr)) {
+        std::printf("[LoadTexture] CreateTexture FAILED hr=0x%08X %ux%u fmt=0x%08X\n",
+                    (unsigned)hr, m_width, m_height, (unsigned)m_d3dFormat);
+        std::fflush(stdout);
+        SafeRelease(m_pTexture);
+        delete[] m_pImageData;
+        m_pImageData = nullptr;
+        return false;
+    }
+
+    D3DLOCKED_RECT lockedRect;
+    hr = m_pTexture->LockRect(0, &lockedRect, NULL, 0);
+    if (FAILED(hr)) {
+        std::printf("[LoadTexture] LockRect FAILED hr=0x%08X\n", (unsigned)hr);
+        std::fflush(stdout);
+        SafeRelease(m_pTexture);
+        delete[] m_pImageData;
+        m_pImageData = nullptr;
+        return false;
+    }
+
+    if (isCompressed) {
+        // DXT 壓縮格式：level 0 為連續的 block 資料
+        memcpy(lockedRect.pBits, pSrcData, level0Size);
+    } else {
+        // 非壓縮：逐行拷貝以對應 D3D Pitch
         unsigned int bytesPerRow = m_width * GetPixelDepth(m_d3dFormat);
         unsigned char* pDestRow = static_cast<unsigned char*>(lockedRect.pBits);
         unsigned char* pSrcRow = pSrcData;
-
         for (unsigned int y = 0; y < m_height; ++y) {
-            memcpy(pDestRow, pSrcRow, bytesPerRow); // 複製一行的資料
-            pDestRow += lockedRect.Pitch;          // 目標指標移動到下一行的起始位置
-            pSrcRow += bytesPerRow;                // 來源指標也移動一行的長度
+            memcpy(pDestRow, pSrcRow, bytesPerRow);
+            pDestRow += lockedRect.Pitch;
+            pSrcRow += bytesPerRow;
         }
     }
 
-    // 步驟 5: 解鎖紋理，完成所有操作
     m_pTexture->UnlockRect(0);
 
-    // 釋放記憶體中的原始資料
+    // 對齊 GT：載入成功後立即釋放解壓後的原始資料
     delete[] m_pImageData;
     m_pImageData = nullptr;
 
