@@ -142,7 +142,7 @@ int CHospital::GetGameScore()
 
 int CHospital::Process()
 {
-    float dt = m_timer.GetCurrentFrameTime();
+    float dt = static_cast<float>(m_timer.GetCurrentFrameTime());
 
     // mofclient.c：state==0 直接結束。
     if (m_state == 0)

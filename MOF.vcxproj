@@ -365,6 +365,7 @@
     <ClCompile Include="src\Other\CAttendanceBookParser.cpp" />
     <ClCompile Include="src\Other\cltAttackAtb.cpp" />
     <ClCompile Include="src\Other\cltBaseAbility.cpp" />
+    <ClCompile Include="src\Other\DCTAbuseWordManager.cpp" />
     <ClCompile Include="src\Object\cltPetObject.cpp" />
     <ClCompile Include="src\Object\CBaseObject.cpp" />
     <ClCompile Include="src\Object\CStaticObject.cpp" />
@@ -488,6 +489,10 @@
     <ClCompile Include="src\UI\CUIBase.cpp" />
     <ClCompile Include="src\UI\CUITutorial.cpp" />
     <ClCompile Include="src\UI\CUIManager.cpp" />
+    <ClCompile Include="src\UI\CUIBasic.cpp" />
+    <ClCompile Include="src\UI\CUICircle.cpp" />
+    <ClCompile Include="src\UI\CUITradeUser.cpp" />
+    <ClCompile Include="src\UI\CInterfaceDataCommunity.cpp" />
     <ClCompile Include="src\UI\CUIWorldMap.cpp" />
     <ClCompile Include="src\UI\CControlAlphaBox.cpp" />
     <ClCompile Include="src\UI\CControlBoxAbility.cpp" />
@@ -920,6 +925,11 @@
     <ClInclude Include="inc\UI\CToolTipManager.h" />
     <ClInclude Include="inc\UI\CUIBase.h" />
     <ClInclude Include="inc\UI\CUIManager.h" />
+    <ClInclude Include="inc\UI\CUIBasic.h" />
+    <ClInclude Include="inc\UI\CUICircle.h" />
+    <ClInclude Include="inc\UI\CUITradeUser.h" />
+    <ClInclude Include="inc\UI\CInterfaceDataCommunity.h" />
+    <ClInclude Include="inc\Other\DCTAbuseWordManager.h" />
     <ClInclude Include="inc\UI\CUIMessageBoxTypes.h" />
     <ClInclude Include="inc\UI\CUITutorial.h" />
     <ClInclude Include="inc\UI\CUIWorldMap.h" />

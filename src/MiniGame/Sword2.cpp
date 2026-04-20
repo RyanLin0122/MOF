@@ -98,7 +98,7 @@ void Sword2::InitRound()
 
 int Sword2::Process()
 {
-    float dt = m_timer.GetCurrentFrameTime();
+    float dt = static_cast<float>(m_timer.GetCurrentFrameTime());
 
     // --- 狀態機 ---
     if (m_state == 2)

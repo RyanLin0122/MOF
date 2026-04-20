@@ -34,11 +34,11 @@ int ClientCharacter::GetPosY() {
 	return m_iPosY;
 }
 void ClientCharacter::SetPosX(float x) {
-	m_iPosX = x;
+	m_iPosX = static_cast<int>(x);
 }
 /// @brief 取得角色的 Y 座標
 void ClientCharacter::SetPosY(float y) {
-	m_iPosY = y;
+	m_iPosY = static_cast<int>(y);
 }
 /// @brief 取得角色的高度
 int ClientCharacter::GetCharHeight() {

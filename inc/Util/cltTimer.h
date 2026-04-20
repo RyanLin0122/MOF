@@ -12,7 +12,7 @@ class JXObject {
 public:
     virtual ~JXObject() = default;
 
-    std::uint32_t m_unk4 = 0;
+    std::uintptr_t m_unk4 = 0;
     JXObject* m_prev = nullptr;
     JXObject* m_next = nullptr;
 };
@@ -35,16 +35,16 @@ public:
 
 class cltTimer : public JXObject {
 public:
-    using TimerCallback = void(__cdecl*)(unsigned int, unsigned int);
+    using TimerCallback = void(__cdecl*)(unsigned int, std::uintptr_t);
 
     static void InitializeStaticVariable(unsigned int* a1);
 
     cltTimer();
     virtual ~cltTimer();
 
-    int Create(unsigned int a2, unsigned int a3, unsigned int a4, unsigned int a5, int a6,
+    int Create(unsigned int a2, unsigned int a3, std::uintptr_t a4, unsigned int a5, int a6,
                TimerCallback a7, TimerCallback a8, TimerCallback a9, TimerCallback a10, void* a11);
-    void ResetTimer(unsigned int a2, unsigned int a3, unsigned int a4, int a5,
+    void ResetTimer(unsigned int a2, std::uintptr_t a3, unsigned int a4, int a5,
                     TimerCallback a6, TimerCallback a7, TimerCallback a8, TimerCallback a9);
     void Release();
     unsigned int GetTimerID() const;
@@ -85,10 +85,10 @@ public:
     int Initialize(unsigned int a2);
     void Free();
 
-    unsigned int CreateTimer(unsigned int a2, unsigned int a3, unsigned int a4, int a5,
+    unsigned int CreateTimer(unsigned int a2, std::uintptr_t a3, unsigned int a4, int a5,
         cltTimer::TimerCallback a6, cltTimer::TimerCallback a7,
         cltTimer::TimerCallback a8, cltTimer::TimerCallback a9, void* a10);
-    int ResetTimer(unsigned int a2, unsigned int a3, unsigned int a4, unsigned int a5, int a6,
+    int ResetTimer(unsigned int a2, unsigned int a3, std::uintptr_t a4, unsigned int a5, int a6,
                    cltTimer::TimerCallback a7, cltTimer::TimerCallback a8,
                    cltTimer::TimerCallback a9, cltTimer::TimerCallback a10);
     void Poll();

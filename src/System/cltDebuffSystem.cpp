@@ -3,16 +3,16 @@
 
 cltDebuffKindInfo* cltDebuffSystem::m_pclDebuffKindInfo = nullptr;
 cltTimerManager* cltDebuffSystem::m_pclTimerManager = nullptr;
-void(__cdecl* cltDebuffSystem::m_pExternDebuffInitializeFuncPtr)(unsigned int, unsigned int) = nullptr;
-void(__cdecl* cltDebuffSystem::m_pExternDebuffPollFuncPtr)(unsigned int, unsigned int) = nullptr;
-void(__cdecl* cltDebuffSystem::m_pExternDebuffCustomFuncPtr)(unsigned int, unsigned int) = nullptr;
-void(__cdecl* cltDebuffSystem::m_pExternDebuffTimeOutFuncPtr)(unsigned int, unsigned int) = nullptr;
+void(__cdecl* cltDebuffSystem::m_pExternDebuffInitializeFuncPtr)(unsigned int, std::uintptr_t) = nullptr;
+void(__cdecl* cltDebuffSystem::m_pExternDebuffPollFuncPtr)(unsigned int, std::uintptr_t) = nullptr;
+void(__cdecl* cltDebuffSystem::m_pExternDebuffCustomFuncPtr)(unsigned int, std::uintptr_t) = nullptr;
+void(__cdecl* cltDebuffSystem::m_pExternDebuffTimeOutFuncPtr)(unsigned int, std::uintptr_t) = nullptr;
 
 void cltDebuffSystem::InitializeStaticVariable(cltDebuffKindInfo* debuffKindInfo, cltTimerManager* timerManager,
-    void(__cdecl* onInitialize)(unsigned int, unsigned int),
-    void(__cdecl* onPoll)(unsigned int, unsigned int),
-    void(__cdecl* onCustom)(unsigned int, unsigned int),
-    void(__cdecl* onTimeOut)(unsigned int, unsigned int)) {
+    void(__cdecl* onInitialize)(unsigned int, std::uintptr_t),
+    void(__cdecl* onPoll)(unsigned int, std::uintptr_t),
+    void(__cdecl* onCustom)(unsigned int, std::uintptr_t),
+    void(__cdecl* onTimeOut)(unsigned int, std::uintptr_t)) {
     m_pclDebuffKindInfo = debuffKindInfo;
     m_pclTimerManager = timerManager;
     m_pExternDebuffInitializeFuncPtr = onInitialize;
@@ -56,7 +56,7 @@ void cltDebuffSystem::AddDebuff(std::uint16_t debuffKind, void* target, int isBo
     const unsigned int duration = isBoss ? info->dwBossDuration : info->dwDuration;
     const unsigned int interval = isBoss ? info->dwBossRepeatCycle : info->dwRepeatCycle;
 
-    entry->timerID = m_pclTimerManager->CreateTimer(duration, static_cast<unsigned int>(reinterpret_cast<std::uintptr_t>(entry)), interval, 1,
+    entry->timerID = m_pclTimerManager->CreateTimer(duration, reinterpret_cast<std::uintptr_t>(entry), interval, 1,
         OnDebuffInitialize, OnDebuffPoll, OnDebuffTimeOuted, OnDebuffCustom, nullptr);
 
     ++debuffCount_;
@@ -99,19 +99,19 @@ void cltDebuffSystem::OnDebuffTimeOuted(unsigned int timerID) {
     }
 }
 
-void __cdecl cltDebuffSystem::OnDebuffInitialize(unsigned int timerID, unsigned int timerArg) {
+void __cdecl cltDebuffSystem::OnDebuffInitialize(unsigned int timerID, std::uintptr_t timerArg) {
     if (m_pExternDebuffInitializeFuncPtr) m_pExternDebuffInitializeFuncPtr(timerID, timerArg);
 }
 
-void __cdecl cltDebuffSystem::OnDebuffPoll(unsigned int timerID, unsigned int timerArg) {
+void __cdecl cltDebuffSystem::OnDebuffPoll(unsigned int timerID, std::uintptr_t timerArg) {
     if (m_pExternDebuffPollFuncPtr) m_pExternDebuffPollFuncPtr(timerID, timerArg);
 }
 
-void __cdecl cltDebuffSystem::OnDebuffCustom(unsigned int timerID, unsigned int timerArg) {
+void __cdecl cltDebuffSystem::OnDebuffCustom(unsigned int timerID, std::uintptr_t timerArg) {
     if (m_pExternDebuffCustomFuncPtr) m_pExternDebuffCustomFuncPtr(timerID, timerArg);
 }
 
-void __cdecl cltDebuffSystem::OnDebuffTimeOuted(unsigned int timerID, unsigned int timerArg) {
+void __cdecl cltDebuffSystem::OnDebuffTimeOuted(unsigned int timerID, std::uintptr_t timerArg) {
     cltDebuffSystem* self = reinterpret_cast<DebuffEntry*>(timerArg)->self;
     if (m_pExternDebuffTimeOutFuncPtr) m_pExternDebuffTimeOutFuncPtr(timerID, timerArg);
     self->OnDebuffTimeOuted(timerID);

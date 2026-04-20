@@ -363,11 +363,11 @@ void cltMini_Magic_2::SetGameDegree(std::uint8_t degree)
     unsigned int readyTime = GetReadyTime();
     m_dword149 = g_clTimerManager.CreateTimer(
         1000 * readyTime,
-        reinterpret_cast<unsigned int>(this),
+        reinterpret_cast<std::uintptr_t>(this),
         1000,
         1, 0, 0,
-        reinterpret_cast<void(__cdecl*)(unsigned int, unsigned int)>(OnTimer_TimeOutReadyTime),
-        reinterpret_cast<void(__cdecl*)(unsigned int, unsigned int)>(OnTimer_DecreaseReadyTime),
+        reinterpret_cast<cltTimer::TimerCallback>(OnTimer_TimeOutReadyTime),
+        reinterpret_cast<cltTimer::TimerCallback>(OnTimer_DecreaseReadyTime),
         0);
 
     m_drawNumReady.SetActive(1);
@@ -594,11 +594,11 @@ void cltMini_Magic_2::StartGame()
     unsigned int remainTime = GetRemainTime();
     m_dword148 = g_clTimerManager.CreateTimer(
         1000 * remainTime,
-        reinterpret_cast<unsigned int>(this),
+        reinterpret_cast<std::uintptr_t>(this),
         1000,
         1, 0, 0,
-        reinterpret_cast<void(__cdecl*)(unsigned int, unsigned int)>(OnTimer_StageClear),
-        reinterpret_cast<void(__cdecl*)(unsigned int, unsigned int)>(OnTimer_DecreaseRemainTime),
+        reinterpret_cast<cltTimer::TimerCallback>(OnTimer_StageClear),
+        reinterpret_cast<cltTimer::TimerCallback>(OnTimer_DecreaseRemainTime),
         0);
 
     m_startTick = timeGetTime();
@@ -1330,68 +1330,68 @@ void cltMini_Magic_2::InitMiniGameImage()
     // Create buttons
     m_buttons[0].CreateBtn(sx + 37, sy + 472, 9,
         0x2200000A, 0, 0x2200000A, 3, 0x2200000A, 6, 0x20000014, 9,
-        reinterpret_cast<void(*)(unsigned int)>(OnBtn_Start),
-        reinterpret_cast<unsigned int>(this), 1);
+        reinterpret_cast<void(*)(std::uintptr_t)>(OnBtn_Start),
+        reinterpret_cast<std::uintptr_t>(this), 1);
 
     m_buttons[1].CreateBtn(sx + 183, sy + 472, 9,
         0x2200000A, 1, 0x2200000A, 4, 0x2200000A, 7, 0x20000014, 10,
-        reinterpret_cast<void(*)(unsigned int)>(OnBtn_Ranking),
-        reinterpret_cast<unsigned int>(this), 1);
+        reinterpret_cast<void(*)(std::uintptr_t)>(OnBtn_Ranking),
+        reinterpret_cast<std::uintptr_t>(this), 1);
 
     m_buttons[2].CreateBtn(sx + 621, sy + 472, 9,
         0x2200000A, 2, 0x2200000A, 5, 0x2200000A, 8, 0x20000014, 11,
-        reinterpret_cast<void(*)(unsigned int)>(OnBtn_Exit),
-        reinterpret_cast<unsigned int>(this), 1);
+        reinterpret_cast<void(*)(std::uintptr_t)>(OnBtn_Exit),
+        reinterpret_cast<std::uintptr_t>(this), 1);
 
     m_buttons[3].CreateBtn(m_uiPos[0] + 17, m_uiPos[1] + 295, 9,
         0x2200000A, 0x0D, 0x2200000A, 0x0F, 0x2200000A, 0x11, 0x2200000A, 0x13,
-        reinterpret_cast<void(*)(unsigned int)>(OnBtn_RankingPre),
-        reinterpret_cast<unsigned int>(this), 0);
+        reinterpret_cast<void(*)(std::uintptr_t)>(OnBtn_RankingPre),
+        reinterpret_cast<std::uintptr_t>(this), 0);
 
     m_buttons[4].CreateBtn(m_uiPos[0] + 62, m_uiPos[1] + 295, 9,
         0x2200000A, 0x0E, 0x2200000A, 0x10, 0x2200000A, 0x12, 0x2200000A, 0x14,
-        reinterpret_cast<void(*)(unsigned int)>(OnBtn_RankingNext),
-        reinterpret_cast<unsigned int>(this), 0);
+        reinterpret_cast<void(*)(std::uintptr_t)>(OnBtn_RankingNext),
+        reinterpret_cast<std::uintptr_t>(this), 0);
 
     m_buttons[5].CreateBtn(m_uiPos[0] + 220, m_uiPos[1] + 295, 9,
         0x2200000A, 0x15, 0x2200000A, 0x16, 0x2200000A, 0x17, 0x2200000A, 0x18,
-        reinterpret_cast<void(*)(unsigned int)>(OnBtn_ExitPopUp),
-        reinterpret_cast<unsigned int>(this), 0);
+        reinterpret_cast<void(*)(std::uintptr_t)>(OnBtn_ExitPopUp),
+        reinterpret_cast<std::uintptr_t>(this), 0);
 
     m_buttons[6].CreateBtn(sx + 329, sy + 472, 9,
         0x1000009B, 0x0C, 0x1000009B, 0x0E, 0x1000009B, 0x10, 0x1000009B, 0x12,
-        reinterpret_cast<void(*)(unsigned int)>(OnBtn_Help),
-        reinterpret_cast<unsigned int>(this), 1);
+        reinterpret_cast<void(*)(std::uintptr_t)>(OnBtn_Help),
+        reinterpret_cast<std::uintptr_t>(this), 1);
 
     m_buttons[7].CreateBtn(sx + 475, sy + 472, 9,
         0x1000009B, 0x0D, 0x1000009B, 0x0F, 0x1000009B, 0x11, 0x1000009B, 0x13,
-        reinterpret_cast<void(*)(unsigned int)>(OnBtn_ShowPoint),
-        reinterpret_cast<unsigned int>(this), 1);
+        reinterpret_cast<void(*)(std::uintptr_t)>(OnBtn_ShowPoint),
+        reinterpret_cast<std::uintptr_t>(this), 1);
 
     m_buttons[8].CreateBtn(sx + 566, sy + 513, 9,
         0x2200000A, 0x15, 0x2200000A, 0x16, 0x2200000A, 0x17, 0x2200000A, 0x18,
-        reinterpret_cast<void(*)(unsigned int)>(OnBtn_ExitPopUp),
-        reinterpret_cast<unsigned int>(this), 0);
+        reinterpret_cast<void(*)(std::uintptr_t)>(OnBtn_ExitPopUp),
+        reinterpret_cast<std::uintptr_t>(this), 0);
 
     m_buttons[9].CreateBtn(m_uiPos[8] + 36, m_uiPos[9] + 48, 9,
         0x1000009B, 0, 0x1000009B, 3, 0x1000009B, 6, 0x1000009B, 9,
-        reinterpret_cast<void(*)(unsigned int)>(OnBtn_DegreeEasy),
-        reinterpret_cast<unsigned int>(this), 0);
+        reinterpret_cast<void(*)(std::uintptr_t)>(OnBtn_DegreeEasy),
+        reinterpret_cast<std::uintptr_t>(this), 0);
 
     m_buttons[10].CreateBtn(m_uiPos[8] + 36, m_uiPos[9] + 102, 9,
         0x1000009B, 1, 0x1000009B, 4, 0x1000009B, 7, 0x1000009B, 10,
-        reinterpret_cast<void(*)(unsigned int)>(OnBtn_DegreeNormal),
-        reinterpret_cast<unsigned int>(this), 0);
+        reinterpret_cast<void(*)(std::uintptr_t)>(OnBtn_DegreeNormal),
+        reinterpret_cast<std::uintptr_t>(this), 0);
 
     m_buttons[11].CreateBtn(m_uiPos[8] + 36, m_uiPos[9] + 156, 9,
         0x1000009B, 2, 0x1000009B, 5, 0x1000009B, 8, 0x1000009B, 11,
-        reinterpret_cast<void(*)(unsigned int)>(OnBtn_DegreeHard),
-        reinterpret_cast<unsigned int>(this), 0);
+        reinterpret_cast<void(*)(std::uintptr_t)>(OnBtn_DegreeHard),
+        reinterpret_cast<std::uintptr_t>(this), 0);
 
     m_buttons[12].CreateBtn(m_uiPos[2] + 215, m_uiPos[3] + 170, 9,
         0x2200000A, 0x15, 0x2200000A, 0x16, 0x2200000A, 0x17, 0x2200000A, 0x18,
-        reinterpret_cast<void(*)(unsigned int)>(OnBtn_ExitPopUp),
-        reinterpret_cast<unsigned int>(this), 0);
+        reinterpret_cast<void(*)(std::uintptr_t)>(OnBtn_ExitPopUp),
+        reinterpret_cast<std::uintptr_t>(this), 0);
 
     // Initialize DrawNums
     m_drawNumReady.InitDrawNum(9, 0x22000008, 0, 0);

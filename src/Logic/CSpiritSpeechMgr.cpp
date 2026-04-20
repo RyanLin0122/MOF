@@ -59,7 +59,7 @@ int CSpiritSpeechMgr::PlaySpiritSpeech()
 
     m_nTimerID = g_clTimerManager.CreateTimer(
         0xFFFFFFFF,
-        reinterpret_cast<unsigned int>(this),
+        reinterpret_cast<std::uintptr_t>(this),
         kTimerInterval,
         1, nullptr, nullptr, nullptr,
         reinterpret_cast<cltTimer::TimerCallback>(
@@ -94,7 +94,7 @@ void CSpiritSpeechMgr::UpdateQuestHunt(std::uint16_t questId)
         g_clTimerManager.ResetTimer(
             m_nTimerID,
             0xFFFFFFFF,
-            reinterpret_cast<unsigned int>(this),
+            reinterpret_cast<std::uintptr_t>(this),
             kTimerInterval,
             1, nullptr, nullptr, nullptr,
             reinterpret_cast<cltTimer::TimerCallback>(
@@ -111,7 +111,7 @@ void CSpiritSpeechMgr::UpdateQuestCollection(std::uint16_t itemKind)
         g_clTimerManager.ResetTimer(
             m_nTimerID,
             0xFFFFFFFF,
-            reinterpret_cast<unsigned int>(this),
+            reinterpret_cast<std::uintptr_t>(this),
             kTimerInterval,
             1, nullptr, nullptr, nullptr,
             reinterpret_cast<cltTimer::TimerCallback>(
@@ -128,7 +128,7 @@ void CSpiritSpeechMgr::UpdatePetEat()
         g_clTimerManager.ResetTimer(
             m_nTimerID,
             0xFFFFFFFF,
-            reinterpret_cast<unsigned int>(this),
+            reinterpret_cast<std::uintptr_t>(this),
             kTimerInterval,
             1, nullptr, nullptr, nullptr,
             reinterpret_cast<cltTimer::TimerCallback>(

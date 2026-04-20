@@ -132,9 +132,9 @@ void cltHelpMessage::Initialize(int helpKind)
         // 建立 60 秒 (0xEA60 ms) 計時器
         m_hTimer = g_clTimerManager.CreateTimer(
             0xEA60u,
-            (unsigned int)(uintptr_t)this,
+            reinterpret_cast<std::uintptr_t>(this),
             0, 1, 0, 0,
-            (void (*)(unsigned int, unsigned int))cltHelpMessage::OnTimer_TimeOutView,
+            reinterpret_cast<cltTimer::TimerCallback>(cltHelpMessage::OnTimer_TimeOutView),
             0, 0);
 
         // 只在第一次建立按鈕
@@ -148,8 +148,8 @@ void cltHelpMessage::Initialize(int helpKind)
                 0x20000064u, 1,
                 0x20000064u, 2,
                 0x20000064u, 3,
-                (void (*)(unsigned int))cltHelpMessage::OnBtn_Exit,
-                (unsigned int)(uintptr_t)this,
+                reinterpret_cast<void (*)(std::uintptr_t)>(cltHelpMessage::OnBtn_Exit),
+                reinterpret_cast<std::uintptr_t>(this),
                 0);
             m_bBtnCreated = 0;
         }

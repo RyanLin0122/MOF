@@ -131,11 +131,11 @@ void cltMini_Exorcist_2::InitMiniGameImage()
     m_uiShowPoint    = 5;
 
     // 3) 13 個按鈕（對齊 mofclient.c 的 CreateBtn 呼叫順序）
-    auto cast  = [](void (*fn)(cltMini_Exorcist_2*)) -> void (*)(unsigned int) {
-        return reinterpret_cast<void (*)(unsigned int)>(fn);
+    auto cast  = [](void (*fn)(cltMini_Exorcist_2*)) -> void (*)(std::uintptr_t) {
+        return reinterpret_cast<void (*)(std::uintptr_t)>(fn);
     };
-    auto cast2 = [](void (*fn)()) -> void (*)(unsigned int) {
-        return reinterpret_cast<void (*)(unsigned int)>(fn);
+    auto cast2 = [](void (*fn)()) -> void (*)(std::uintptr_t) {
+        return reinterpret_cast<void (*)(std::uintptr_t)>(fn);
     };
     auto make = [&](int idx, int x, int y,
                     unsigned int imageType,
@@ -143,8 +143,8 @@ void cltMini_Exorcist_2::InitMiniGameImage()
                     unsigned int r2, std::uint16_t b2,
                     unsigned int r3, std::uint16_t b3,
                     unsigned int r4, std::uint16_t b4,
-                    void (*cb)(unsigned int),
-                    unsigned int userData,
+                    void (*cb)(std::uintptr_t),
+                    std::uintptr_t userData,
                     int reserved)
     {
         m_buttons[idx].CreateBtn(x, y, imageType,
@@ -152,7 +152,7 @@ void cltMini_Exorcist_2::InitMiniGameImage()
                                  cb, userData, reserved);
     };
 
-    const unsigned int self = reinterpret_cast<unsigned int>(this);
+    const std::uintptr_t self = reinterpret_cast<std::uintptr_t>(this);
 
     // 主選單：Start / Ranking / Exit
     make(0,  m_screenX + 37,  m_screenY + 472, 9u,
@@ -627,7 +627,7 @@ void cltMini_Exorcist_2::SetGameDegree(std::uint8_t degree)
     unsigned int rt = GetReadyTime();
     m_dword149 = g_clTimerManager.CreateTimer(
         1000u * rt,
-        reinterpret_cast<unsigned int>(this),
+        reinterpret_cast<std::uintptr_t>(this),
         0x3E8u,
         1,
         nullptr, nullptr,

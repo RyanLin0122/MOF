@@ -41,8 +41,8 @@ void cltMiniGame_Button::CreateBtn(int x, int y,
                                    unsigned int resOver,     uint16_t blockOver,
                                    unsigned int resDown,     uint16_t blockDown,
                                    unsigned int resDisabled, uint16_t blockDisabled,
-                                   void (*callback)(unsigned int),
-                                   unsigned int userData,
+                                   void (*callback)(std::uintptr_t),
+                                   std::uintptr_t userData,
                                    int initialActive)
 {
     CHAR Text[256];

@@ -166,7 +166,7 @@ void clTransportObject::PrepareDrawing(int param)
 
     if (m_pImageUp->m_pGIData)
     {
-        int* blockData = reinterpret_cast<int*>(*(reinterpret_cast<int*>(m_pImageUp->m_pGIData) + 8));
+        int* blockData = reinterpret_cast<int*>(static_cast<std::uintptr_t>(*(reinterpret_cast<int*>(m_pImageUp->m_pGIData) + 8)));
         if (blockData)
         {
             const int blockOff24 = *reinterpret_cast<int*>(reinterpret_cast<char*>(blockData) + 52 * frameUp[0] + 24);
@@ -179,7 +179,7 @@ void clTransportObject::PrepareDrawing(int param)
 
     if (m_pImageDown->m_pGIData)
     {
-        int* blockData = reinterpret_cast<int*>(*(reinterpret_cast<int*>(m_pImageDown->m_pGIData) + 8));
+        int* blockData = reinterpret_cast<int*>(static_cast<std::uintptr_t>(*(reinterpret_cast<int*>(m_pImageDown->m_pGIData) + 8)));
         if (blockData)
         {
             const int blockOff24 = *reinterpret_cast<int*>(reinterpret_cast<char*>(blockData) + 52 * frameDown[0] + 24);

@@ -27,8 +27,8 @@ FORCE_MISSING_CLASSES = [
     "clClientTransportKindInfo",
     "clTransportAnilInfo",
     "clTransportKindInfo",
-    "cltChattingMgr",
     "CUIBase",
+    "CUIBasic",
     "CUIMessageBoxTypes",
     "CUIMessageBoxList",
     "CUIMessageBoxBase",
@@ -45,7 +45,11 @@ FORCE_MISSING_CLASSES = [
     "XJoyStick",
     "cltSystemMessage",
     "cltSkillKindInfo",
-    "cltRegenMonsterKindInfo"
+    "cltRegenMonsterKindInfo",
+    "DCTAbuseWordManager",
+    "CInterfaceDataCommunity",
+    "CUITradeUser",
+    "CUICircle"
 ]
 
 # 例外清單：放 class 名稱字串，這些 class 會被跳過

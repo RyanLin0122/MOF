@@ -13,6 +13,11 @@ public:
     static int IsCharActionKey(CUIManager* pMgr, int keyId);
 
     CUIBase* GetUIWindow(int id);
+    // mofclient.c: CUIManager::GetUserInterface(g_UIMgr, id, subId) — used by
+    // the chat manager to reach CUIBasic / CUITradeUser windows.  Subtype is
+    // currently ignored; the placeholder always returns nullptr because the
+    // actual UI windows are not yet restored.
+    CUIBase* GetUserInterface(int id, int subId);
     int IsOpenUserInterface(int id);
     int GetGameState();
 

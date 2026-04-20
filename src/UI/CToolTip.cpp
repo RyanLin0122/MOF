@@ -1328,7 +1328,7 @@ void CToolTip::ProcessHunt()
     int needStr = UW[50];
     if (static_cast<uint16_t>(needStr))
     {
-        if (g_clPlayerAbility.GetStr(reinterpret_cast<int>(v5), 0) >= needStr)
+        if (g_clPlayerAbility.GetStr(static_cast<int>(reinterpret_cast<std::intptr_t>(v5)), 0) >= needStr)
             AddIndexData(0x0C7Du, needStr, 0xFFFFC000);
         else
             AddIndexData(0x0C7Du, needStr, 0xFFFF4600);
@@ -1336,7 +1336,7 @@ void CToolTip::ProcessHunt()
     int needDex = UW[52];
     if (static_cast<uint16_t>(needDex))
     {
-        if (g_clPlayerAbility.GetDex(reinterpret_cast<int>(v5), 0) >= needDex)
+        if (g_clPlayerAbility.GetDex(static_cast<int>(reinterpret_cast<std::intptr_t>(v5)), 0) >= needDex)
             AddIndexData(0x0C7Eu, needDex, 0xFFFFC000);
         else
             AddIndexData(0x0C7Eu, needDex, 0xFFFF4600);
@@ -1344,7 +1344,7 @@ void CToolTip::ProcessHunt()
     int needVit = UW[51];
     if (static_cast<uint16_t>(needVit))
     {
-        if (g_clPlayerAbility.GetVit(reinterpret_cast<int>(v5), 0) >= needVit)
+        if (g_clPlayerAbility.GetVit(static_cast<int>(reinterpret_cast<std::intptr_t>(v5)), 0) >= needVit)
             AddIndexData(0x0C7Fu, needVit, 0xFFFFC000);
         else
             AddIndexData(0x0C7Fu, needVit, 0xFFFF4600);
@@ -1352,7 +1352,7 @@ void CToolTip::ProcessHunt()
     int needInt = UW[53];
     if (static_cast<uint16_t>(needInt))
     {
-        if (g_clPlayerAbility.GetInt(reinterpret_cast<int>(v5), 0) >= needInt)
+        if (g_clPlayerAbility.GetInt(static_cast<int>(reinterpret_cast<std::intptr_t>(v5)), 0) >= needInt)
             AddIndexData(0x0C80u, needInt, 0xFFFFC000);
         else
             AddIndexData(0x0C80u, needInt, 0xFFFF4600);
@@ -1365,7 +1365,7 @@ void CToolTip::ProcessHunt()
         m_innerBox.SetColor(0.18039216f, 0.070588239f, 0.34117648f, 0.82352948f);
 
     // CanEquipItemByItemKind
-    if (!dword_21BA32C->CanEquipItemByItemKind(reinterpret_cast<int>(v5), UW[0]))
+    if (!dword_21BA32C->CanEquipItemByItemKind(static_cast<int>(reinterpret_cast<std::intptr_t>(v5)), UW[0]))
         m_textTitle.m_TextColor = static_cast<DWORD>(-65536);
 
     OutputCashShopTime(v2);
@@ -1443,7 +1443,7 @@ void CToolTip::ProcessFashion()
     // CanEquipItemByItemKind（GT 用 a2@<ebp>，此處用精靈系統指標近似）
     uint16_t spiritKind = g_clSpiritSystem.GetSpiritKind(ExGetMyLevel());
     uint16_t* spiritInfo = reinterpret_cast<uint16_t*>(g_clSpiritSystem.GetSpiritInfo(spiritKind));
-    if (!dword_21BA32C->CanEquipItemByItemKind(reinterpret_cast<int>(spiritInfo), UW[0]))
+    if (!dword_21BA32C->CanEquipItemByItemKind(static_cast<int>(reinterpret_cast<std::intptr_t>(spiritInfo)), UW[0]))
         m_textTitle.m_TextColor = static_cast<DWORD>(-65536);
 
     if (UW[77])
@@ -1674,7 +1674,7 @@ void CToolTip::ProcessSkill(uint16_t a2)
             AddIndexData(0x119Fu, const_cast<char*>("%dms"), SDW[83]);
     }
 
-    PrintReqWeaponForSkill(v4, !v119);
+    PrintReqWeaponForSkill(v4, v119 ? 0 : 1);
 
     int v73 = SUW[34];
     if (static_cast<uint16_t>(v73))
@@ -1857,7 +1857,7 @@ void CToolTip::OutputCashShopTime(stItemKindInfo* a2)
             {
                 if (*(reinterpret_cast<uint8_t*>(pMyChar) + 11524) == 3)
                 {
-                    int uiWindow = reinterpret_cast<int>(g_UIMgr->GetUIWindow(48));
+                    auto uiWindow = reinterpret_cast<std::uintptr_t>(g_UIMgr->GetUIWindow(48));
                     v8 = *reinterpret_cast<uint32_t*>(uiWindow + 1956 * static_cast<uint16_t>(m_usSlotIndex) + 7924);
                 }
                 else
@@ -1874,7 +1874,7 @@ void CToolTip::OutputCashShopTime(stItemKindInfo* a2)
             unsigned int v20 = 0;
             uint16_t outKind = 0;
             uint16_t outQty = 0;
-            int uiWindow = reinterpret_cast<int>(g_UIMgr->GetUIWindow(29));
+            auto uiWindow = reinterpret_cast<std::uintptr_t>(g_UIMgr->GetUIWindow(29));
             if (*reinterpret_cast<int*>(uiWindow + 3300))
             {
                 g_clExStorageSystem.GetStorageItem(
@@ -2378,7 +2378,7 @@ void CToolTip::ProcessCharInfo(char* charName)
 void CToolTip::SetTextMainTitle(stMapInfo* pMapInfo)
 {
     // 對齊 0042C3D0：GT 使用 <= 50（允許 count == 50），即 > 50 才 return
-    if (m_nWorldMapTextCount > 50 || !pMapInfo)
+    if (m_nWorldMapTextCount >= 50 || !pMapInfo)
         return;
     const auto MW = reinterpret_cast<uint16_t*>(pMapInfo);
     const int textCode = MW[186] ? MW[186] : MW[2];
@@ -2388,7 +2388,7 @@ void CToolTip::SetTextMainTitle(stMapInfo* pMapInfo)
 void CToolTip::SetTextDungeonBasic(stMapInfo* pMapInfo)
 {
     // 對齊 0042C5B0：GT 使用 <= 50（允許 count == 50），即 > 50 才 return
-    if (m_nWorldMapTextCount > 50 || !pMapInfo)
+    if (m_nWorldMapTextCount >= 50 || !pMapInfo)
         return;
 
     const auto MW = reinterpret_cast<uint16_t*>(pMapInfo);
@@ -2445,6 +2445,7 @@ void CToolTip::SetTextDungeonBasic(stMapInfo* pMapInfo)
                     {
                         if (std::strcmp(line->GetText(), Buffer) != 0 && !line->IsStringData())
                         {
+                            if (m_nWorldMapTextCount >= 50) { found = true; break; }
                             // 寫入新行
                             m_worldMapText[m_nWorldMapTextCount].SetText(Buffer);
                             m_worldMapText[m_nWorldMapTextCount].m_TextColor = -65536; // 紅色
@@ -2491,6 +2492,7 @@ void CToolTip::SetTextDungeonBasic(stMapInfo* pMapInfo)
                 {
                     if (std::strcmp(line->GetText(), Buffer) != 0 && !line->IsStringData())
                     {
+                        if (m_nWorldMapTextCount >= 50) break;
                         m_worldMapText[m_nWorldMapTextCount].SetText(Buffer);
                         m_worldMapText[m_nWorldMapTextCount].m_TextColor = -65536;
                         ++m_nWorldMapTextCount;

@@ -287,7 +287,7 @@ int CAManager::LoadCADataIllust(char* filename)
     char buffer[256];
     char nameBuf[8];
     char kindStr[32];
-    char byteField = 0;
+    int  byteField = 0;
     int  valField  = 0;
 
     std::fgets(buffer, 256, fp);   // header

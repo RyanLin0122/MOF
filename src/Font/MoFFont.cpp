@@ -546,7 +546,7 @@ void MoFFont::GetTextLength(int* pWidth, int* pHeight, int height, const wchar_t
     HGDIOBJ oldFont = SelectObject(hdc, hFont);
 
     SIZE size;
-    GetTextExtentPoint32A(hdc, text, strlen(text), &size);
+    GetTextExtentPoint32A(hdc, text, static_cast<int>(strlen(text)), &size);
 
     SelectObject(hdc, oldFont);
     ReleaseDC(NULL, hdc);
@@ -647,7 +647,7 @@ static unsigned int GenerateFontHash(const char* str) {
 HFONT MoFFont::GetCachedOrCreateFont(int height, int width, const wchar_t* faceName, int weight) {
     // 1. 根據字型屬性組合出一個唯一的字串作為 Key。
     char keyBuffer[256];
-    sprintf_s(keyBuffer, sizeof(keyBuffer), "%d_%d_%s_%d", height, width, faceName, weight);
+    sprintf_s(keyBuffer, sizeof(keyBuffer), "%d_%d_%ls_%d", height, width, faceName, weight);
 
     // 2. 計算字串的雜湊值。
     unsigned int fontHash = GenerateFontHash(keyBuffer);

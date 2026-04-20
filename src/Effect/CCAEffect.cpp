@@ -323,7 +323,7 @@ void CCAEffect::Play(int nAnimationID, bool bLoop)
 {
     if (!m_pEffectData) return;
 
-    if (m_pEffectData->animationCount > nAnimationID)
+    if (nAnimationID >= 0 && m_pEffectData->animationCount > static_cast<uint32_t>(nAnimationID))
     {
         m_bIsPlaying = 1;
         m_bLoop = 0;

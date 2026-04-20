@@ -625,6 +625,8 @@ bool cltItemKindInfo::LoadHuntItem(const char* filename) {
 		*(reinterpret_cast<int*>(info->Equip.Hunt.m_szEquipableClass)) = equipableClassBitmask;
 	}
 next_line:;
+	g_clTextFileManager.fclose(file);
+	return true;
 }
 
 bool cltItemKindInfo::LoadFashionItem(const char* filename) {

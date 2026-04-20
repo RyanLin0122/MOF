@@ -275,8 +275,8 @@ void cltMini_Sword::InitMiniGameImage()
                     unsigned int r2, uint16_t b2,
                     unsigned int r3, uint16_t b3,
                     unsigned int r4, uint16_t b4,
-                    void (*cb)(unsigned int),
-                    unsigned int userData,
+                    void (*cb)(std::uintptr_t),
+                    std::uintptr_t userData,
                     int initialActive)
     {
         m_buttons[idx].CreateBtn(x, y, imageType,
@@ -284,14 +284,14 @@ void cltMini_Sword::InitMiniGameImage()
                                  cb, userData, initialActive);
     };
 
-    auto cast = [](void (*fn)(cltMini_Sword*)) -> void(*)(unsigned int) {
-        return reinterpret_cast<void (*)(unsigned int)>(fn);
+    auto cast = [](void (*fn)(cltMini_Sword*)) -> void(*)(std::uintptr_t) {
+        return reinterpret_cast<void (*)(std::uintptr_t)>(fn);
     };
-    auto cast2 = [](void (*fn)()) -> void(*)(unsigned int) {
-        return reinterpret_cast<void (*)(unsigned int)>(fn);
+    auto cast2 = [](void (*fn)()) -> void(*)(std::uintptr_t) {
+        return reinterpret_cast<void (*)(std::uintptr_t)>(fn);
     };
 
-    const unsigned int self = reinterpret_cast<unsigned int>(this);
+    const std::uintptr_t self = reinterpret_cast<std::uintptr_t>(this);
 
     // 主選單三顆（Start / Ranking / Exit）— GT: initialActive = 1
     make(0,  m_screenX + 37,  m_screenY + 472, 9u,
@@ -916,7 +916,7 @@ void cltMini_Sword::SetGameDegree(uint8_t degree)
     unsigned int rt = GetReadyTime();
     m_dword149 = g_clTimerManager.CreateTimer(
         1000u * rt,
-        reinterpret_cast<unsigned int>(this),
+        reinterpret_cast<std::uintptr_t>(this),
         0x3E8u,
         1,
         nullptr, nullptr,
@@ -1013,7 +1013,7 @@ void cltMini_Sword::StartGame()
     unsigned int remain = GetRemainTime();
     m_dword148 = g_clTimerManager.CreateTimer(
         1000u * remain,
-        reinterpret_cast<unsigned int>(this),
+        reinterpret_cast<std::uintptr_t>(this),
         0x3E8u,
         1,
         nullptr, nullptr,

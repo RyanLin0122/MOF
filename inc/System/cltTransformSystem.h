@@ -9,7 +9,7 @@ class cltTransformSystem {
 public:
     static void InitializeStaticVaraible(cltTransformKindInfo* transformKindInfo, cltTimerManager* timerManager,
         void(__cdecl* onBegin)(unsigned int, std::uint16_t),
-        void(__cdecl* onCustom)(unsigned int, unsigned int),
+        void(__cdecl* onCustom)(unsigned int, std::uintptr_t),
         void(__cdecl* onFinished)(unsigned int, std::uint16_t));
 
     cltTransformSystem();
@@ -36,6 +36,6 @@ private:
     static cltTransformKindInfo* m_pclTransformKindInfo;
     static cltTimerManager* m_pclTimerManager;
     static void(__cdecl* m_pExternTransformBeginFuncPtr)(unsigned int, std::uint16_t);
-    static void(__cdecl* m_pExternTransformCustomFuncPtr)(unsigned int, unsigned int);
+    static void(__cdecl* m_pExternTransformCustomFuncPtr)(unsigned int, std::uintptr_t);
     static void(__cdecl* m_pExternTransformFinishedFuncPtr)(unsigned int, std::uint16_t);
 };

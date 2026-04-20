@@ -36,7 +36,7 @@ void cltMoFC_EmoticonSystem::FindEmoticonWord(char* charName, char* chatMsg, std
             if (info->slot[slotIndex].wordCount <= 0)
                 continue;
 
-            for (int w = 0; w < info->slot[slotIndex].wordCount; ++w) {
+            for (uint32_t w = 0; w < info->slot[slotIndex].wordCount; ++w) {
                 const char* word = reinterpret_cast<const char*>(&info->slot[slotIndex]) + 22 + w * 16;
                 size_t chatLen = std::strlen(chatMsg);
                 size_t wordLen = std::strlen(word);
@@ -71,7 +71,7 @@ void cltMoFC_EmoticonSystem::FindEmoticonWord(char* charName, char* chatMsg, std
             if (info->slot[slotIndex].wordCount <= 0)
                 continue;
 
-            for (int w = 0; w < info->slot[slotIndex].wordCount; ++w) {
+            for (uint32_t w = 0; w < info->slot[slotIndex].wordCount; ++w) {
                 const char* word = reinterpret_cast<const char*>(&info->slot[slotIndex]) + 22 + w * 16;
                 size_t chatLen = std::strlen(chatMsg);
                 size_t wordLen = std::strlen(word);
@@ -120,7 +120,7 @@ void cltMoFC_EmoticonSystem::SendChattingMsg(char* chatMsg) {
             if (info->slot[slotIndex].wordCount <= 0)
                 continue;
 
-            for (int w = 0; w < info->slot[slotIndex].wordCount; ++w) {
+            for (uint32_t w = 0; w < info->slot[slotIndex].wordCount; ++w) {
                 const char* word = reinterpret_cast<const char*>(&info->slot[slotIndex]) + 22 + w * 16;
                 size_t chatLen = std::strlen(chatMsg);
                 size_t wordLen = std::strlen(word);

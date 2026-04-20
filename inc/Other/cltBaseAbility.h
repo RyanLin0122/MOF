@@ -4,7 +4,7 @@
 #include <cstdint>
 
 // 前置宣告：與反編譯碼一致
-struct cltPartySystem;
+class cltPartySystem;
 
 class cltBaseAbility
 {

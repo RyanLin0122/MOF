@@ -6,7 +6,7 @@ class GameImage;
 class ClientCharacter;
 class CCA;
 struct stTransportKindInfo;
-struct clTransportAniInfo;
+class clTransportAniInfo;
 
 // clTransportObject — 交通工具(坐騎)物件
 // 大小 60 bytes (15 DWORDs)

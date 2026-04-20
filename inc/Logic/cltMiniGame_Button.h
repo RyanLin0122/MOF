@@ -16,8 +16,8 @@ public:
                    unsigned int resOver,     uint16_t blockOver,
                    unsigned int resDown,     uint16_t blockDown,
                    unsigned int resDisabled, uint16_t blockDisabled,
-                   void (*callback)(unsigned int),
-                   unsigned int userData,
+                   void (*callback)(std::uintptr_t),
+                   std::uintptr_t userData,
                    int initialActive);
 
     void SetActive(int active);
@@ -72,7 +72,7 @@ public:
     // +80: GameImage*
     GameImage*   m_pImage;
     // +84: callback
-    void       (*m_pCallback)(unsigned int);
+    void       (*m_pCallback)(std::uintptr_t);
     // +88: userData
-    unsigned int m_userData;
+    std::uintptr_t m_userData;
 };

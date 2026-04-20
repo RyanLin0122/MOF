@@ -3,12 +3,12 @@
 cltTransformKindInfo* cltTransformSystem::m_pclTransformKindInfo = nullptr;
 cltTimerManager* cltTransformSystem::m_pclTimerManager = nullptr;
 void(__cdecl* cltTransformSystem::m_pExternTransformBeginFuncPtr)(unsigned int, std::uint16_t) = nullptr;
-void(__cdecl* cltTransformSystem::m_pExternTransformCustomFuncPtr)(unsigned int, unsigned int) = nullptr;
+void(__cdecl* cltTransformSystem::m_pExternTransformCustomFuncPtr)(unsigned int, std::uintptr_t) = nullptr;
 void(__cdecl* cltTransformSystem::m_pExternTransformFinishedFuncPtr)(unsigned int, std::uint16_t) = nullptr;
 
 void cltTransformSystem::InitializeStaticVaraible(cltTransformKindInfo* transformKindInfo, cltTimerManager* timerManager,
     void(__cdecl* onBegin)(unsigned int, std::uint16_t),
-    void(__cdecl* onCustom)(unsigned int, unsigned int),
+    void(__cdecl* onCustom)(unsigned int, std::uintptr_t),
     void(__cdecl* onFinished)(unsigned int, std::uint16_t)) {
     m_pclTransformKindInfo = transformKindInfo;
     m_pclTimerManager = timerManager;
@@ -46,7 +46,7 @@ void cltTransformSystem::TransformBegin(std::uint16_t transformKind) {
     const unsigned int interval = info ? static_cast<unsigned int>(info->influenceInterval) : 0;
 
     if (interval && m_pExternTransformCustomFuncPtr) {
-        timerID_ = m_pclTimerManager->CreateTimer(0, static_cast<unsigned int>(reinterpret_cast<std::uintptr_t>(this)), interval, 1,
+        timerID_ = m_pclTimerManager->CreateTimer(0, reinterpret_cast<std::uintptr_t>(this), interval, 1,
             nullptr, nullptr, nullptr, m_pExternTransformCustomFuncPtr, nullptr);
     }
 

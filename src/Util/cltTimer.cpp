@@ -74,7 +74,7 @@ cltTimer::cltTimer() {
 
 cltTimer::~cltTimer() = default;
 
-int cltTimer::Create(unsigned int a2, unsigned int a3, unsigned int a4, unsigned int a5, int a6,
+int cltTimer::Create(unsigned int a2, unsigned int a3, std::uintptr_t a4, unsigned int a5, int a6,
                      TimerCallback a7, TimerCallback a8, TimerCallback a9, TimerCallback a10, void* a11) {
     m_dwTimerID = a2;
     m_dwStartTime = *m_pdwtimeGetTime;
@@ -92,7 +92,7 @@ int cltTimer::Create(unsigned int a2, unsigned int a3, unsigned int a4, unsigned
     return 1;
 }
 
-void cltTimer::ResetTimer(unsigned int a2, unsigned int a3, unsigned int a4, int a5,
+void cltTimer::ResetTimer(unsigned int a2, std::uintptr_t a3, unsigned int a4, int a5,
                           TimerCallback a6, TimerCallback a7, TimerCallback a8, TimerCallback a9) {
     m_dwStartTime = *m_pdwtimeGetTime;
     m_dwEndInterval = a2;
@@ -246,7 +246,7 @@ void cltTimerManager::Free() {
     m_dwMaxTimer = 0;
 }
 
-unsigned int cltTimerManager::CreateTimer(unsigned int a2, unsigned int a3, unsigned int a4, int a5,
+unsigned int cltTimerManager::CreateTimer(unsigned int a2, std::uintptr_t a3, unsigned int a4, int a5,
     cltTimer::TimerCallback a6, cltTimer::TimerCallback a7,
     cltTimer::TimerCallback a8, cltTimer::TimerCallback a9, void* a10) {
     JXObject* node = m_list.PushBack();
@@ -259,7 +259,7 @@ unsigned int cltTimerManager::CreateTimer(unsigned int a2, unsigned int a3, unsi
     return id;
 }
 
-int cltTimerManager::ResetTimer(unsigned int a2, unsigned int a3, unsigned int a4, unsigned int a5, int a6,
+int cltTimerManager::ResetTimer(unsigned int a2, unsigned int a3, std::uintptr_t a4, unsigned int a5, int a6,
                                 cltTimer::TimerCallback a7, cltTimer::TimerCallback a8,
                                 cltTimer::TimerCallback a9, cltTimer::TimerCallback a10) {
     cltTimer* result = GetTimer(a2);

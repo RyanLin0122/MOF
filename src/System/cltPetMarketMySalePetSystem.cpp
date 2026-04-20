@@ -81,7 +81,7 @@ strPetMarketMySalePetInfo* cltPetMarketMySalePetSystem::GetPetMarketMySalePetInf
 
 int cltPetMarketMySalePetSystem::CanAcceptMoney() {
     if (!myMoney_) return 1;
-    return 106 - (moneySystem_->CanIncreaseMoney(myMoney_) & 0x96);
+    return 106 - (static_cast<int>(moneySystem_->CanIncreaseMoney(myMoney_)) & 0x96);
 }
 
 void cltPetMarketMySalePetSystem::AcceptMoney(int* acceptedMoney) {

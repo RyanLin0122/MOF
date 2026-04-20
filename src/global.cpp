@@ -70,6 +70,10 @@
 #include "Image/CDeviceManager.h"
 #include "Logic/cltCashShopItem.h"
 #include "Logic/cltChattingMgr.h"
+#include "UI/CControlAlphaBox.h"
+#include "UI/CInterfaceDataCommunity.h"
+#include "Other/DCTAbuseWordManager.h"
+#include "System/cltClientPartySystem.h"
 #include "Info/cltBasicAppearKindInfo.h"
 #include "Sound/GameSound.h"
 #include "System/cltTradeSystem.h"
@@ -184,6 +188,16 @@ cltMoFC_EffectKindInfo g_clEffectKindInfo;
 
 CMessageBoxManager* g_pMsgBoxMgr = nullptr;
 cltChattingMgr g_clChattingMgr;
+
+// Chat-related globals (mofclient.c)
+CControlAlphaBox g_Block;
+int              dword_6E17B0 = 0;
+HDC              hdc = nullptr;
+HGDIOBJ          h = nullptr;
+unsigned int     g_dwMainGameState = 0;
+DCTAbuseWordManager      g_DCTAbuseWordManager;
+CInterfaceDataCommunity* g_pInterfaceDataCommunity = nullptr;
+cltClientPartySystem     g_clPartySystem;
 
 cltCashShopItem g_clCashShopItem;
 cltBasicAppearKindInfo g_clBasicAppearKindInfo;

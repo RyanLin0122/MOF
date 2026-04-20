@@ -158,7 +158,7 @@ int cltEnchantSystem::EnchantItem(unsigned int seed, std::uint8_t weaponSlot, ch
         newItem.itemKind = enchantInfo->ResultItem;
         newItem.itemQty = 1;
         newItem.value0 = 0;
-        newItem.value1 = reinterpret_cast<std::uint32_t>(sealedState);
+        newItem.value1 = static_cast<std::uint32_t>(reinterpret_cast<std::uintptr_t>(sealedState));
         m_pInventory->AddInventoryItem(&newItem, changeSlots, nullptr);
         if (outResultItemKind)
             *outResultItemKind = enchantInfo->ResultItem;
@@ -177,7 +177,7 @@ int cltEnchantSystem::EnchantItem(unsigned int seed, std::uint8_t weaponSlot, ch
         newItem.itemKind = damagedItemKind;
         newItem.itemQty = 1;
         newItem.value0 = 0;
-        newItem.value1 = reinterpret_cast<std::uint32_t>(sealedState);
+        newItem.value1 = static_cast<std::uint32_t>(reinterpret_cast<std::uintptr_t>(sealedState));
         m_pInventory->AddInventoryItem(&newItem, changeSlots, nullptr);
         if (outResultItemKind)
             *outResultItemKind = damagedItemKind;

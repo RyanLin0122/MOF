@@ -395,7 +395,7 @@ void cltTutorialSystem::UseItem() {
             m_nWaitingUseItemResult = 0;
             m_nTimerID = g_clTimerManager.CreateTimer(
                 0x3E8u,
-                static_cast<unsigned int>(reinterpret_cast<uintptr_t>(this)),
+                reinterpret_cast<std::uintptr_t>(this),
                 0, 1,
                 nullptr, nullptr,
                 reinterpret_cast<cltTimer::TimerCallback>(cltTutorialSystem::OnTimer_EndUseItem),
@@ -488,7 +488,7 @@ void cltTutorialSystem::SendTutorialMsg(std::uint8_t msgType) {
     case 0x0E:
         m_nTimerID = g_clTimerManager.CreateTimer(
             0x7D0u,
-            static_cast<unsigned int>(reinterpret_cast<uintptr_t>(this)),
+            reinterpret_cast<std::uintptr_t>(this),
             0, 1,
             nullptr, nullptr,
             reinterpret_cast<cltTimer::TimerCallback>(cltTutorialSystem::OnTimer_StartExitMap),

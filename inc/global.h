@@ -258,6 +258,37 @@ extern CMessageBoxManager*      g_pMsgBoxMgr;
 // Chatting
 extern cltChattingMgr           g_clChattingMgr;
 
+// mofclient.c 0x6E17B0 / g_Block：聊天輸入游標上方的選取方塊
+// （輸入法組字時顯示）。原始碼使用 CControlAlphaBox 全域實體。
+class CControlAlphaBox;
+extern CControlAlphaBox         g_Block;
+extern int                      dword_6E17B0; // 控制 DrawBlockBox 是否繪製
+
+// mofclient.c: GDI font measuring handles used by cltChattingMgr::SendInputChat
+// to compute the composition block position.  In this restored build we leave
+// them as NULL placeholders — SelectObject with NULL is a no-op and
+// MoFFont::GetTextLength does not actually require them.
+extern HDC                      hdc;
+extern HGDIOBJ                  h;
+
+// mofclient.c 0x6C8CF8：主遊戲狀態（10 = InGame）。cltChattingMgr::Poll 只在
+// 狀態為 10 時才處理輸入。
+extern unsigned int             g_dwMainGameState;
+
+// 社群/髒字過濾相關全域物件（mofclient.c 直接取位址）。
+class DCTAbuseWordManager;
+extern DCTAbuseWordManager      g_DCTAbuseWordManager;
+class CInterfaceDataCommunity;
+extern CInterfaceDataCommunity* g_pInterfaceDataCommunity;
+
+// mofclient.c: the chat manager reads the party state from
+// m_pclMyChatData + 6728 (the party system embedded inside cltMyCharData).
+// Our cltMyCharData does not embed that subsystem, so we expose the same
+// cltClientPartySystem via a global instance and redirect every embedded-
+// offset access to it.
+class cltClientPartySystem;
+extern cltClientPartySystem     g_clPartySystem;
+
 // CashShop
 extern cltCashShopItem          g_clCashShopItem;
 

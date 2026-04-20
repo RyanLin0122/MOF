@@ -176,7 +176,7 @@ strInventoryItem* cltStorageSystem::CanAddItem(std::uint8_t invenSlot, std::uint
     if (!m_pclItemKindInfo->IsStorageItem(invItem->itemKind))
         return nullptr;
 
-    return reinterpret_cast<strInventoryItem*>(CanAddItemByItemKind(invItem->itemKind, qty) != 0 ? 1 : 0);
+    return reinterpret_cast<strInventoryItem*>(static_cast<std::uintptr_t>(CanAddItemByItemKind(invItem->itemKind, qty) != 0 ? 1 : 0));
 }
 
 // 反編譯對應：cltStorageSystem::AddItem

@@ -147,7 +147,7 @@ strExStorageItem* cltExStorageSystem::CanAddItem(std::uint8_t invenSlot, std::ui
     if (!m_pclItemKindInfo->IsExStorageItem(invItem->itemKind))
         return nullptr;
 
-    return reinterpret_cast<strExStorageItem*>(CanAddItemByItemKind(invItem->itemKind, qty) != 0 ? 1 : 0);
+    return reinterpret_cast<strExStorageItem*>(static_cast<std::uintptr_t>(CanAddItemByItemKind(invItem->itemKind, qty) != 0 ? 1 : 0));
 }
 
 void cltExStorageSystem::AddItem(char invenSlot, std::uint16_t qty, std::uint8_t* changeSlots) {

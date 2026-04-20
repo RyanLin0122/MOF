@@ -175,7 +175,7 @@ int DCTIMM::GetNumeric(HWND, unsigned int uMsg, unsigned int wParam, int) {
         }
         else if (wParam == VK_RIGHT) {
             int pos = *reinterpret_cast<int*>(reinterpret_cast<char*>(this) + 58 * 4);
-            int len = std::strlen(m_pTextBuffer);
+            int len = static_cast<int>(std::strlen(m_pTextBuffer));
             int maxL = *reinterpret_cast<int*>(reinterpret_cast<char*>(this) + 57 * 4);
             if (pos < len && pos < maxL) *reinterpret_cast<int*>(reinterpret_cast<char*>(this) + 58 * 4) = pos + 1;
         }
@@ -295,7 +295,7 @@ void DCTIMM::SetIMMText(char* Source) {
         std::memset(m_pTextBuffer, 0, maxL);
         std::strncpy(m_pTextBuffer, Source, maxL);
         *reinterpret_cast<BYTE*>(reinterpret_cast<char*>(this) + 4) = 0; // 清 this+4
-        *reinterpret_cast<int*>(reinterpret_cast<char*>(this) + 58*4) = std::strlen(m_pTextBuffer);
+        *reinterpret_cast<int*>(reinterpret_cast<char*>(this) + 58*4) = static_cast<int>(std::strlen(m_pTextBuffer));
     }
 }
 
@@ -839,7 +839,7 @@ void DCTIMM::InsertString(char* dest, const char* src, int pos)
     size_t dest_len = strlen(dest);
     size_t src_len = strlen(src);
 
-    if (pos > (int)dest_len) pos = dest_len;
+    if (pos > (int)dest_len) pos = static_cast<int>(dest_len);
 
     // 建立暫存區來儲存插入點之後的字串
     char* temp = new (std::nothrow) char[dest_len - pos + 1];
@@ -1033,7 +1033,7 @@ HWND DCTIMM::GetNative(HWND h)
 {
     // 反編譯用法：fdwSentence 先塞入 this，再呼叫 ImmGetConversionStatus
     DWORD conv = 0;
-    DWORD sentence = reinterpret_cast<DWORD>(this);
+    DWORD sentence = static_cast<DWORD>(reinterpret_cast<std::uintptr_t>(this));
 
     HIMC hImc = ::ImmGetContext(h);
     ::ImmGetConversionStatus(hImc, &conv, &sentence);
@@ -1043,7 +1043,7 @@ HWND DCTIMM::GetNative(HWND h)
     // ::ImmReleaseContext(h, hImc);
 
     // 反編譯把 conv 放到 a2，最後 return a2；我們直接回傳 conv 當作 HWND。
-    return reinterpret_cast<HWND>(conv);
+    return reinterpret_cast<HWND>(static_cast<std::uintptr_t>(conv));
 }
 // 反編譯 (0051FDB0) SkipComposition：把 +96 設為 1
 void DCTIMM::SkipComposition() {
