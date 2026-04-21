@@ -70,16 +70,16 @@ void cltMagic_Box::PrepareDrawing()
 
     GameImage* img = cltImageManager::GetInstance()->GetGameImage(9u, m_resID, 0, 1);
     m_pImage = img;
-    *((float*)img + 83) = m_posX;
-    *((__int16*)img + 186) = m_frame;
-    *((std::uint8_t*)img + 447) = 1;
-    *((float*)img + 84) = m_posY;
-    *((std::uint8_t*)img + 446) = 1;
-    *((std::uint8_t*)img + 444) = 0;
+    img->m_fPosX            = m_posX;
+    img->SetBlockID(static_cast<unsigned short>(m_frame));
+    img->m_bFlag_447        = true;
+    img->m_fPosY            = m_posY;
+    img->m_bFlag_446        = true;
+    img->m_bVertexAnimation = false;
 
-    *(int*)((char*)m_pImage + 380) = static_cast<int>(m_alpha);
-    *((std::uint8_t*)((char*)m_pImage + 450)) = 1;
-    *((std::uint8_t*)((char*)m_pImage + 444)) = 0;
+    img->m_dwAlpha          = static_cast<unsigned int>(m_alpha);
+    img->m_bFlag_450        = true;
+    img->m_bVertexAnimation = false;
 }
 
 void cltMagic_Box::Draw()

@@ -137,7 +137,7 @@ cltMini_Magic::cltMini_Magic()
     , m_gridBaseX(0), m_gridBaseY(0), m_goalImgX(0), m_goalImgY(0)
     , m_barEndX(0), m_timeBarWidth(0), m_bgFadeDir(0)
     , m_timeLapseStarted(0), m_gameElapsedTime(0), m_pollFrame(0)
-    , m_showTimeBarArrow(0), m_bgResID(0x20000120u)
+    , m_bgResID(0x20000120u)
     , m_prevState(100), m_rows(4), m_cols(4)
     , m_cursorRow(0), m_cursorCol(0)
 {
@@ -906,12 +906,12 @@ void cltMini_Magic::PrepareDrawing()
     GameImage* bg = m_pclImageMgr->GetGameImage(9u, m_bgResID, 0, 1);
     m_pBgImage = bg;
     if (bg) {
-        *((float*)bg + 83) = static_cast<float>(m_screenX);
-        *((float*)bg + 84) = static_cast<float>(m_screenY);
-        *((__int16*)bg + 186) = 0;
-        *((std::uint8_t*)bg + 447) = 1;
-        *((std::uint8_t*)bg + 446) = 1;
-        *((std::uint8_t*)bg + 444) = 0;
+        bg->m_fPosX = static_cast<float>(m_screenX);
+        bg->m_fPosY = static_cast<float>(m_screenY);
+        bg->m_wBlockID = 0;
+        bg->m_bFlag_447 = true;
+        bg->m_bFlag_446 = true;
+        bg->m_bVertexAnimation = false;
     }
 
     // Slot images
@@ -919,12 +919,12 @@ void cltMini_Magic::PrepareDrawing()
         if (m_slots[i].active) {
             GameImage* img = m_pclImageMgr->GetGameImage(9u, m_slots[i].resID, 0, 1);
             m_slotImages[i] = img;
-            *((float*)img + 83) = static_cast<float>(m_slots[i].x);
-            *((float*)img + 84) = static_cast<float>(m_slots[i].y);
-            *((__int16*)img + 186) = m_slots[i].blockID;
-            *((std::uint8_t*)img + 447) = 1;
-            *((std::uint8_t*)img + 446) = 1;
-            *((std::uint8_t*)img + 444) = 0;
+            img->m_fPosX = static_cast<float>(m_slots[i].x);
+            img->m_fPosY = static_cast<float>(m_slots[i].y);
+            img->m_wBlockID = m_slots[i].blockID;
+            img->m_bFlag_447 = true;
+            img->m_bFlag_446 = true;
+            img->m_bVertexAnimation = false;
         }
     }
 
@@ -939,16 +939,14 @@ void cltMini_Magic::PrepareDrawing()
 
         GameImage* gvImg = m_pclImageMgr->GetGameImage(9u, 0x100000A1u, 0, 1);
         m_pGoalValueImage = gvImg;
-        *((float*)gvImg + 83) = static_cast<float>(m_goalImgX);
-        *((__int16*)gvImg + 186) = static_cast<std::int16_t>(m_goalValue + 2);
-        *((std::uint8_t*)gvImg + 447) = 1;
-        *((float*)gvImg + 84) = static_cast<float>(m_goalImgY);
-        *((std::uint8_t*)gvImg + 446) = 1;
-        *((std::uint8_t*)gvImg + 444) = 0;
-
-        *((std::uint8_t*)((char*)m_pGoalValueImage + 450)) = 1;
-        *(int*)((char*)m_pGoalValueImage + 380) = 255 - static_cast<int>(m_bgAlpha);
-        *((std::uint8_t*)((char*)m_pGoalValueImage + 444)) = 0;
+        gvImg->m_fPosX = static_cast<float>(m_goalImgX);
+        gvImg->m_fPosY = static_cast<float>(m_goalImgY);
+        gvImg->m_wBlockID = static_cast<std::uint16_t>(m_goalValue + 2);
+        gvImg->m_bFlag_447 = true;
+        gvImg->m_bFlag_446 = true;
+        gvImg->m_bVertexAnimation = false;
+        gvImg->m_bFlag_450 = true;
+        gvImg->m_dwAlpha = static_cast<unsigned int>(255 - static_cast<int>(m_bgAlpha));
 
         PrepareDrawingCursor();
         m_timeBarBox.PrepareDrawing();
@@ -965,16 +963,17 @@ void cltMini_Magic::PrepareDrawing()
         (static_cast<unsigned int>(m_gameTime) - m_remainTime) / 10u,
         255);
 
-    // Time bar arrow
-    if (m_showTimeBarArrow) {
-        GameImage* arrow = m_pclImageMgr->GetGameImage(9u, 0x20000079u, 0, 1);
-        m_pTimeBarArrow = arrow;
-        *((__int16*)arrow + 186) = 0;
-        *((std::uint8_t*)arrow + 447) = 1;
-        *((std::uint8_t*)arrow + 446) = 1;
-        *((std::uint8_t*)arrow + 444) = 0;
-        *((float*)arrow + 83) = static_cast<float>(static_cast<unsigned short>(m_drawNumBaseX) + 509);
-        *((float*)arrow + 84) = static_cast<float>(static_cast<unsigned short>(m_drawNumBaseY) + 58);
+    // 時間小數點（dot.gi）— m_drawNumRemain active 時顯示。
+    // 對齊 mofclient.c @ 363063：*((_DWORD *)this + 610) 為 m_drawNumRemain.m_active。
+    if (m_drawNumRemain.m_active) {
+        GameImage* dot = m_pclImageMgr->GetGameImage(9u, 0x20000079u, 0, 1);
+        m_pTimeBarArrow = dot;
+        dot->m_wBlockID = 0;
+        dot->m_bFlag_447 = true;
+        dot->m_bFlag_446 = true;
+        dot->m_bVertexAnimation = false;
+        dot->m_fPosX = static_cast<float>(static_cast<unsigned short>(m_drawNumBaseX) + 509);
+        dot->m_fPosY = static_cast<float>(static_cast<unsigned short>(m_drawNumBaseY) + 58);
     }
 
     // Ready time DrawNum
@@ -1013,8 +1012,8 @@ void cltMini_Magic::Draw()
     // Remain time
     m_drawNumRemain.Draw();
 
-    // Time bar arrow
-    if (m_showTimeBarArrow && m_pTimeBarArrow)
+    // 時間小數點
+    if (m_drawNumRemain.m_active && m_pTimeBarArrow)
         m_pTimeBarArrow->Draw();
 
     // Alpha box overlay
@@ -1064,12 +1063,12 @@ void cltMini_Magic::PrepareDrawingMatrix()
             if (m_matrix[r][c] <= 100) {
                 GameImage* img = m_pclImageMgr->GetGameImage(9u, 0x100000A1u, 0, 1);
                 m_matrixImages[r][c] = img;
-                *((float*)img + 83) = static_cast<float>(xOffset + m_gridBaseX);
-                *((float*)img + 84) = static_cast<float>(yOffset + m_gridBaseY);
-                *((__int16*)img + 186) = static_cast<std::int16_t>(m_matrix[r][c] + 2);
-                *((std::uint8_t*)img + 447) = 1;
-                *((std::uint8_t*)img + 446) = 1;
-                *((std::uint8_t*)img + 444) = 0;
+                img->m_fPosX = static_cast<float>(xOffset + m_gridBaseX);
+                img->m_fPosY = static_cast<float>(yOffset + m_gridBaseY);
+                img->m_wBlockID = static_cast<std::uint16_t>(m_matrix[r][c] + 2);
+                img->m_bFlag_447 = true;
+                img->m_bFlag_446 = true;
+                img->m_bVertexAnimation = false;
             }
             xOffset += 60;
         }
@@ -1096,12 +1095,12 @@ void cltMini_Magic::PrepareDrawingCursor()
     m_pCursorImage = img;
     float y = static_cast<float>(m_gridBaseY + 60 * m_cursorRow);
     float x = static_cast<float>(m_gridBaseX + 60 * m_cursorCol);
-    *((__int16*)img + 186) = 1;
-    *((std::uint8_t*)img + 447) = 1;
-    *((std::uint8_t*)img + 446) = 1;
-    *((std::uint8_t*)img + 444) = 0;
-    *((float*)img + 83) = x;
-    *((float*)img + 84) = y;
+    img->m_wBlockID = 1;
+    img->m_bFlag_447 = true;
+    img->m_bFlag_446 = true;
+    img->m_bVertexAnimation = false;
+    img->m_fPosX = x;
+    img->m_fPosY = y;
 }
 
 void cltMini_Magic::DrawCursor()
@@ -1121,12 +1120,12 @@ void cltMini_Magic::PrepareDrawingGoal()
         m_goalImages[i] = img;
         float y = static_cast<float>(m_gridBaseY + 60 * row + 1);
         float x = static_cast<float>(m_gridBaseX + 60 * col);
-        *((__int16*)img + 186) = 9;
-        *((std::uint8_t*)img + 444) = 0;
-        *((std::uint8_t*)img + 447) = 1;
-        *((std::uint8_t*)img + 446) = 1;
-        *((float*)img + 83) = x;
-        *((float*)img + 84) = y;
+        img->m_wBlockID = 9;
+        img->m_bVertexAnimation = false;
+        img->m_bFlag_447 = true;
+        img->m_bFlag_446 = true;
+        img->m_fPosX = x;
+        img->m_fPosY = y;
     }
 }
 
@@ -1153,30 +1152,27 @@ void cltMini_Magic::PrepareDrawingBgPat()
 
     GameImage* img1 = m_pclImageMgr->GetGameImage(9u, 0x22000014u, 0, 1);
     m_pBgPat1 = img1;
-    *((__int16*)img1 + 186) = 15;
-    *((std::uint8_t*)img1 + 447) = 1;
-    *((std::uint8_t*)img1 + 446) = 1;
-    *((std::uint8_t*)img1 + 444) = 0;
-    *((float*)img1 + 83) = static_cast<float>(cx);
-    *((float*)img1 + 84) = static_cast<float>(cy);
-    *(int*)((char*)m_pBgPat1 + 376) = 300;
-    *((std::uint8_t*)((char*)m_pBgPat1 + 449)) = 1;
-    *((std::uint8_t*)((char*)m_pBgPat1 + 444)) = 0;
-    *(int*)((char*)m_pBgPat1 + 380) = static_cast<int>(m_bgAlpha) + 27;
-    *((std::uint8_t*)((char*)m_pBgPat1 + 450)) = 1;
-    *((std::uint8_t*)((char*)m_pBgPat1 + 444)) = 0;
+    img1->m_wBlockID = 15;
+    img1->m_bFlag_447 = true;
+    img1->m_bFlag_446 = true;
+    img1->m_bVertexAnimation = false;
+    img1->m_fPosX = static_cast<float>(cx);
+    img1->m_fPosY = static_cast<float>(cy);
+    img1->m_nScale = 300;
+    img1->m_bFlag_449 = true;
+    img1->m_dwAlpha = static_cast<unsigned int>(m_bgAlpha) + 27;
+    img1->m_bFlag_450 = true;
 
     GameImage* img2 = m_pclImageMgr->GetGameImage(9u, 0x22000014u, 0, 1);
     m_pBgPat2 = img2;
-    *((__int16*)img2 + 186) = 15;
-    *((std::uint8_t*)img2 + 447) = 1;
-    *((std::uint8_t*)img2 + 446) = 1;
-    *((std::uint8_t*)img2 + 444) = 0;
-    *((float*)img2 + 83) = static_cast<float>(cx);
-    *((float*)img2 + 84) = static_cast<float>(cy);
-    *(int*)((char*)m_pBgPat2 + 380) = 177 - static_cast<int>(m_bgAlpha);
-    *((std::uint8_t*)((char*)m_pBgPat2 + 450)) = 1;
-    *((std::uint8_t*)((char*)m_pBgPat2 + 444)) = 0;
+    img2->m_wBlockID = 15;
+    img2->m_bFlag_447 = true;
+    img2->m_bFlag_446 = true;
+    img2->m_bVertexAnimation = false;
+    img2->m_fPosX = static_cast<float>(cx);
+    img2->m_fPosY = static_cast<float>(cy);
+    img2->m_dwAlpha = static_cast<unsigned int>(177 - static_cast<int>(m_bgAlpha));
+    img2->m_bFlag_450 = true;
 }
 
 void cltMini_Magic::DrawBgPat()

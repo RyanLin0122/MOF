@@ -140,7 +140,7 @@ cltMini_Sword::cltMini_Sword()
     , m_botBlackBox()
     , m_byte3932(1)
     , m_gameDegree(0)
-    , m_dword3936(0)
+    , m_baseSpawnInterval(0)
     , m_dword3944(0)
     , m_byte3948(0)
     , m_slotMonsterBase(8)
@@ -904,7 +904,7 @@ void cltMini_Sword::SetGameDegree(uint8_t degree)
             m_winMark             = 50;
             m_difficultyBaseScore = 20;
             // Easy — 對齊 GT 536871203 = 0x20000123 (minigame_sword_easy_bg.gi)
-            m_spawnInterval       = 800;
+            m_baseSpawnInterval   = 800;
             m_gameDegree          = 20;
             // 每 point > 20 後，額外加 (point-20)*2.0 分，上限 90
             m_scoreCap            = 90;
@@ -914,7 +914,7 @@ void cltMini_Sword::SetGameDegree(uint8_t degree)
         case 2:
             m_winMark             = 100;
             m_difficultyBaseScore = 55;
-            m_spawnInterval       = 700;
+            m_baseSpawnInterval   = 700;
             m_gameDegree          = 30;
             m_scoreCap            = 180;
             m_bonusMultiplier     = 8.0f;   // 0x41000000
@@ -924,7 +924,7 @@ void cltMini_Sword::SetGameDegree(uint8_t degree)
         case 4:
             m_winMark             = 200;
             m_difficultyBaseScore = 40;
-            m_spawnInterval       = 600;
+            m_baseSpawnInterval   = 600;
             m_gameDegree          = 40;
             m_scoreCap            = 360;
             m_bonusMultiplier     = 4.0f;   // 0x40800000
@@ -1069,6 +1069,17 @@ void cltMini_Sword::Gamming()
 
     if (m_needNewTarget)
     {
+        // mofclient.c：在更新 m_curTarget 之前，先清掉「上一個目標」對應的
+        // 所有方向相關 slot，避免木頭人攻擊/命中/失誤 FX 殘影累積。
+        m_slots[m_slotBtnFrame    + m_curTarget].active = 0;   //  4 + curTarget
+        m_slots[m_slotMonsterBase + m_curTarget].active = 0;   //  8 + curTarget
+        m_slots[m_slotHitFX       + m_curTarget].active = 0;   // 22 + curTarget
+        m_slots[m_slotMissFX      + m_curTarget].active = 0;   // 26 + curTarget
+        // 前一次按鍵方向的 miss FX（可能與 curTarget 不同）
+        m_slots[m_slotMissFX + m_byte3948].active = 0;
+
+        m_lastSpawnTick = timeGetTime();
+
         // 四個攻擊方向中隨機挑一個（避免重複）
         int r = std::rand() % 4;
         if (m_nextTarget == r)
@@ -1077,7 +1088,8 @@ void cltMini_Sword::Gamming()
         m_nextTarget = static_cast<uint8_t>(r);
 
         m_missFlash = 0;
-        m_topBlackBox.SetColor(1.0f, 0.0f, 0.0f, 0.0f);
+        // mofclient.c offset 3508 → m_midBlackBox（覆蓋整塊遊戲區的半透明紅閃）
+        m_midBlackBox.SetColor(1.0f, 0.0f, 0.0f, 0.0f);
 
         if (m_curTarget == 2)
         {
@@ -1089,10 +1101,23 @@ void cltMini_Sword::Gamming()
             m_slots[m_slotMonsterAlt].active = 0;
             m_slots[m_slotMonsterHead].active = 1;
         }
+
+        // 啟用本次方向的木頭人基底 sprite
+        m_slots[m_slotMonsterBase + m_curTarget].active = 1;
+
+        // mofclient.c：箭頭指示 FX (slot 31) 位置 = 木頭人基底位置 - (100, 100)
+        //   之前漏掉這行，slot 31 會停留在 kSlotTable 預設的 (screenX, screenY)
+        //   導致箭頭指示圖片沒有畫在目標上方。
         m_slots[m_slotTargetFX].active = 1;
-        m_lastSpawnTick = timeGetTime();
+        m_slots[m_slotTargetFX].x = m_slots[m_slotMonsterBase + m_curTarget].x - 100;
+        m_slots[m_slotTargetFX].y = m_slots[m_slotMonsterBase + m_curTarget].y - 100;
+
         m_monsterSpawned = 1;
+        m_targetAlphaState = static_cast<uint8_t>(-106);
+        m_needNewTarget = 0;
         m_hitLocked = 0;
+        m_slots[m_slotEffectA].active = 0;
+        m_slots[m_slotEffectB].active = 0;
     }
 
     ++dwFrameCnt;
@@ -1267,11 +1292,13 @@ void cltMini_Sword::EndStage()
 void cltMini_Sword::KeyHit(uint8_t a2)
 {
     m_hitLocked = 1;
-    m_slots[m_slotMissFX].active = 0;
-    m_slots[m_slotMonsterAlt].active = 0;
-    m_slots[m_slotMonsterHead].active = 0;
-    m_slots[m_slotHitFX].active = 0;
-    m_slots[m_slotMissFX].active = 0;
+    // mofclient.c：清除「上一次按鍵方向」的 miss FX 與「本次按鍵方向」
+    //   的 hit/miss FX；原先漏掉了 +a2 / +byte3948 的位移，導致 FX slot 殘留。
+    m_slots[m_slotMissFX + m_byte3948].active = 0;   // 26 + prev a2
+    m_slots[m_slotMonsterAlt].active = 0;            // 24
+    m_slots[m_slotMonsterHead].active = 0;           // 30
+    m_slots[m_slotHitFX  + a2].active = 0;           // 22 + a2
+    m_slots[m_slotMissFX + a2].active = 0;           // 26 + a2
     m_byte3948 = a2;
 
     // 設定 effect 位置（相對於主目標）
@@ -1351,9 +1378,9 @@ void cltMini_Sword::DrawEffect(uint8_t /*slot*/)
 // =========================================================================
 void cltMini_Sword::CheckGameDegree()
 {
-    m_spawnInterval = static_cast<unsigned int>(m_gameDegree) - 0; // 原邏輯為空殼
-    // mofclient.c：m_spawnInterval = m_winMark - m_gameDegree * ((50 - remain) / 10)
+    // mofclient.c: m_spawnInterval = m_baseSpawnInterval - m_gameDegree * ((50 - remain) / 10)
+    //   基準值為 Easy=800 / Normal=700 / Hard=600，會隨剩餘時間下降而加速。
     m_spawnInterval = static_cast<unsigned int>(
-        static_cast<int>(m_winMark) -
+        m_baseSpawnInterval -
         static_cast<int>(m_gameDegree) * ((50 - static_cast<int>(GetRemainTime())) / 10));
 }

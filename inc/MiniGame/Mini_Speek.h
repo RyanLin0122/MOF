@@ -45,8 +45,8 @@ public:
     float        m_fY;            // DWORD[2]
     std::uint8_t m_state;         // BYTE[12]   0=fading-in, 1=floating-up
     std::uint8_t m_pad0[3];
-    float        m_alphaScale;    // DWORD[4]   bits 1132396544 = 255.f
-    float        m_colorScale;    // DWORD[5]   bits 1120403456 = 102.f
+    float        m_alphaScale;    // DWORD[4]   bits 1132396544 = 255.f  -> m_dwAlpha
+    float        m_scale;         // DWORD[5]   bits 1120403456 = 100.f  -> m_nScale (100 = 100%)
     std::uint8_t m_bUsed;         // BYTE[24]
     std::uint8_t m_pad1[3];
     FrameSkip    m_FrameSkip;     // DWORD[7..9] (vftable + accum + threshold=1/60)

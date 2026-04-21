@@ -189,13 +189,13 @@ void cltMagic_Target::PrepareDrawing()
 
     GameImage* img = cltImageManager::GetInstance()->GetGameImage(9u, m_resID, 0, 1);
     m_pImage = img;
-    *((float*)img + 83) = m_posX;
-    *((__int16*)img + 186) = m_currentFrame;
-    *((std::uint8_t*)img + 447) = 1;
-    *((float*)img + 84) = m_posY;
-    *((std::uint8_t*)img + 446) = 1;
-    *((std::uint8_t*)img + 444) = 0;
-    *(int*)((char*)m_pImage + 392) = m_flip;
+    img->m_fPosX            = m_posX;
+    img->SetBlockID(static_cast<unsigned short>(m_currentFrame));
+    img->m_bFlag_447        = true;
+    img->m_fPosY            = m_posY;
+    img->m_bFlag_446        = true;
+    img->m_bVertexAnimation = false;
+    img->m_bFlipX           = (m_flip != 0);
 
     m_animCounter += 0.40000001f;
     m_currentFrame = static_cast<std::int16_t>(static_cast<__int64>(m_animCounter));

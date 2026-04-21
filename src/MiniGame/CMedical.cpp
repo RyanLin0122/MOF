@@ -247,12 +247,13 @@ int CPatient::UseMedical(int medicalKind)
         float fx = m_fX + 53.0f;
         m_speekThx.InitPosition(fx, fy);
 
-        CEffect_MiniGame_Priest_Heal* pEff = nullptr;
-        void* mem = operator new(0x84u);
-        if (mem)
-        {
-            pEff = new (mem) CEffect_MiniGame_Priest_Heal();
-        }
+        // mofclient.c 原用 operator new(0x84u) + placement new（x86 下
+        // sizeof(CEffect_MiniGame_Priest_Heal) == 0x84）。x64 指標變 8 bytes
+        // 且 CCAEffect 內含 vptr，實際大小 > 0x84，直接沿用會踩壞 heap — 當
+        // CEffectManager::FrameProcess 呼叫 scalar deleting dtor 時觸發
+        // CRT「HEAP CORRUPTION DETECTED: after Normal block」。
+        // 改用 plain new，讓編譯器帶入正確的 sizeof。
+        CEffect_MiniGame_Priest_Heal* pEff = new CEffect_MiniGame_Priest_Heal();
         float ey = m_fY + 80.0f;
         float ex = m_fX + 53.0f;
         pEff->SetEffect(ex, ey);

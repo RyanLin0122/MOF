@@ -83,7 +83,7 @@ Mini_Speek_Thanks::Mini_Speek_Thanks()
     , m_fY(0.0f)
     , m_state(0)
     , m_alphaScale(bitsToFloat(1132396544u))   // 255.0
-    , m_colorScale(bitsToFloat(1120403456u))   // 102.0
+    , m_scale(bitsToFloat(1120403456u))        // 100.0
     , m_bUsed(0)
     , m_FrameSkip()                            // vftable + accum=0 + threshold=1/60
 {
@@ -98,7 +98,7 @@ void Mini_Speek_Thanks::InitPosition(float x, float y)
     m_fY         = y;
     m_state      = 0;
     m_alphaScale = bitsToFloat(1132396544u);   // 255.0
-    m_colorScale = bitsToFloat(1120403456u);   // 102.0
+    m_scale      = bitsToFloat(1120403456u);   // 100.0
     m_bUsed      = 1;
 }
 
@@ -166,11 +166,14 @@ void Mini_Speek_Thanks::Process(float dt)
         pImg->m_fPosY     = m_fY;
         pImg->m_bFlag_447 = true;
 
+        // mofclient.c：alphaScale → +380 (m_dwAlpha)，scale → +376 (m_nScale)。
+        // 先前誤寫到 +384 (m_dwColor)，使 100 被當成 color modulation (~39%)
+        // 導致特效很暗。
         pImg->m_dwAlpha   = static_cast<unsigned int>(static_cast<long long>(m_alphaScale));
         pImg->m_bFlag_450 = true;
         pImg->m_bVertexAnimation = false;
 
-        pImg->m_dwColor   = static_cast<unsigned int>(static_cast<long long>(m_colorScale));
+        pImg->m_nScale    = static_cast<int>(static_cast<long long>(m_scale));
         pImg->m_bFlag_449 = true;
         pImg->m_bVertexAnimation = false;
 

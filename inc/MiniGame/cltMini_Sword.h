@@ -110,7 +110,11 @@ public:
 
     uint8_t    m_byte3932;                // 每回合首次結束時=1
     uint8_t    m_gameDegree;              // +3940 (= 20/30/40 依難度)
-    int        m_dword3936;               // score per exp mult
+    // mofclient.c：dword 984 — 基準的 spawn interval（Easy=800 / Normal=700 / Hard=600），
+    //   由 SetGameDegree 寫入、CheckGameDegree 每幀用以重算 m_spawnInterval。
+    //   早先版本錯把 m_winMark (50/100/200) 當基準，導致目標生成間隔僅 50ms，
+    //   木頭人與箭頭每幀連續刷新。
+    int        m_baseSpawnInterval;       // +3936 (dword 984)
     int        m_dword3944;               // trainning item kind
     uint8_t    m_byte3948;                // slot hit direction
 

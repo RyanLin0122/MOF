@@ -206,8 +206,6 @@ public:
     std::uint32_t   m_gameElapsedTime;     // DWORD[727]: 遊戲經過時間(ms)
     std::uint32_t   m_pollFrame;           // DWORD[732]
 
-    int             m_showTimeBarArrow;    // DWORD[610]
-
     // --- 背景資源 ID ---
     std::uint32_t   m_bgResID;            // DWORD[4]
 };
