@@ -46,6 +46,7 @@
 #include "Logic/cltHelpMessage.h"
 #include "Logic/cltBaseInventory.h"
 #include "Logic/cltConfiguration.h"
+#include "Logic/CShortKey.h"
 #include "Logic/cltNPCManager.h"
 #include "Logic/CObjectManager.h"
 #include "Logic/cltMapTitle.h"
@@ -156,6 +157,7 @@ ClientCharacterManager g_ClientCharMgr;
 CAManager g_CAManager;
 CCAClone g_clCAClone;
 cltConfiguration* g_clConfig = nullptr;
+CShortKey* g_pShortKeyList = nullptr;
 CObjectManager g_ObjectManager;
 CObjectResourceManager g_ObjectResourceManager;
 DrawObject_All g_DrawObject_ALL;

@@ -49,7 +49,8 @@ FORCE_MISSING_CLASSES = [
     "DCTAbuseWordManager",
     "CInterfaceDataCommunity",
     "CUITradeUser",
-    "CUICircle"
+    "CUICircle",
+    "CUIMenu"
 ]
 
 # 例外清單：放 class 名稱字串，這些 class 會被跳過

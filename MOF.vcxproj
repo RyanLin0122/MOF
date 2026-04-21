@@ -490,6 +490,7 @@
     <ClCompile Include="src\UI\CUITutorial.cpp" />
     <ClCompile Include="src\UI\CUIManager.cpp" />
     <ClCompile Include="src\UI\CUIBasic.cpp" />
+    <ClCompile Include="src\UI\CUIMenu.cpp" />
     <ClCompile Include="src\UI\CUICircle.cpp" />
     <ClCompile Include="src\UI\CUITradeUser.cpp" />
     <ClCompile Include="src\UI\CInterfaceDataCommunity.cpp" />
@@ -926,6 +927,7 @@
     <ClInclude Include="inc\UI\CUIBase.h" />
     <ClInclude Include="inc\UI\CUIManager.h" />
     <ClInclude Include="inc\UI\CUIBasic.h" />
+    <ClInclude Include="inc\UI\CUIMenu.h" />
     <ClInclude Include="inc\UI\CUICircle.h" />
     <ClInclude Include="inc\UI\CUITradeUser.h" />
     <ClInclude Include="inc\UI\CInterfaceDataCommunity.h" />

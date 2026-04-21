@@ -229,6 +229,11 @@ class CCAClone;
 extern CCAClone                 g_clCAClone;
 extern cltConfiguration*        g_clConfig;
 
+// mofclient.c 0x6E1620：鍵位設定管理器 (CShortKey)。由初始化流程 `operator new(0x1C0u)`
+// 建立後，隨即呼叫 CShortKey::InitStaticDefaultKey / ReadKeySetting 填入預設鍵位。
+class CShortKey;
+extern CShortKey*               g_pShortKeyList;
+
 // Object
 extern CObjectManager           g_ObjectManager;
 extern CObjectResourceManager   g_ObjectResourceManager;
