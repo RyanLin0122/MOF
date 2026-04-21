@@ -108,9 +108,12 @@ public:
     std::uint8_t m_uiWin;                    // byte 2783 : slot idx 1
     std::uint8_t m_uiLose;                   // byte 2784 : slot idx 2
 
-    // --- Sword2 子物件 + 捲動背景 ---
+    // --- Sword2 子物件 ---
+    // 原始 mofclient.c 以 offset 4064 存取 BackGroundMgr，但那其實就是
+    // m_sword2.m_bgMgr（Sword2 at +2788，內部 m_bgMgr at +1276，兩者相加
+    // 就是 +4064）。整個類別只有這一個 BackGroundMgr，在 cltMini_Sword_2
+    // 端透過 m_sword2.m_bgMgr 存取。
     Sword2        m_sword2;                  // +2788
-    BackGroundMgr m_bgMgr;                   // +4064
 
     // --- 其他 per-class 欄位 ---
     std::uint8_t  m_showTime2;               // byte 568 : 主選單 Start 按鈕 state（4=已打完）

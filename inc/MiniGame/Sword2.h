@@ -41,7 +41,14 @@ private:
     PowerBar        m_powerBar;       // +608
     AccuracyBar     m_accBar;         // +688
     BoardMgr        m_board;          // +780
+
+public:
+    // mofclient.c 裡 cltMini_Sword_2 會直接以 offset 4064（= Sword2 +1276）存取
+    // 這個 BackGroundMgr 做 Init/Process/Render；Sword2 自己則在 Process 裡用
+    // Image_UP/Image_DOWN 更新它的 y。兩邊操作的是同一個物件，所以此處公開。
     BackGroundMgr   m_bgMgr;          // +1276
+
+private:
     BackGroundImage m_blackTop;       // +1328
     BackGroundImage m_blackBottom;    // +1632
     Mini_Timer      m_timer;          // +1936

@@ -77,7 +77,6 @@ cltMini_Sword_2::cltMini_Sword_2()
     , m_uiWin(1)
     , m_uiLose(2)
     , m_sword2()
-    , m_bgMgr()
     , m_showTime2(0)
     , m_difficulty(0)
     , m_finalReady(0)
@@ -247,7 +246,7 @@ void cltMini_Sword_2::InitMiniGameImage()
 
     float bx = static_cast<float>(m_screenX);
     float by = static_cast<float>(m_screenY) - 140.0f;
-    m_bgMgr.InitBackGroundMgr(0, bx, by);
+    m_sword2.m_bgMgr.InitBackGroundMgr(0, bx, by);
 
     Init_Wait();
 }
@@ -342,7 +341,7 @@ int cltMini_Sword_2::Poll()
 // =========================================================================
 void cltMini_Sword_2::PrepareDrawing()
 {
-    m_bgMgr.Process(0.0f);
+    m_sword2.m_bgMgr.Process(0.0f);
 
     // 原始：在 Gamming 階段同樣會在 PrepareDrawing 內驅動 Sword2::Process
     // （不是只有 Gamming() 被呼叫時），以保證每一幀都推進子遊戲。
@@ -397,7 +396,7 @@ void cltMini_Sword_2::PrepareDrawing()
 // =========================================================================
 void cltMini_Sword_2::Draw()
 {
-    m_bgMgr.Render();
+    m_sword2.m_bgMgr.Render();
     m_sword2.Render();
 
     // mofclient.c：Draw 依 *((_DWORD *)this + 211) 決定是否畫整塊半透明遮罩
@@ -616,7 +615,7 @@ void cltMini_Sword_2::SetGameDegree(std::uint8_t degree)
             m_maxScore            = 90;
             m_incrementFactor     = 5.0f;            // IEEE 754 1084227584
             m_sword2Degree        = 1;
-            m_bgMgr.InitBackGroundMgr(0, bgX, bgY);
+            m_sword2.m_bgMgr.InitBackGroundMgr(0, bgX, bgY);
             break;
 
         case 2: // Normal
@@ -625,7 +624,7 @@ void cltMini_Sword_2::SetGameDegree(std::uint8_t degree)
             m_maxScore            = 180;
             m_incrementFactor     = 8.0f;            // IEEE 754 1090519040
             m_sword2Degree        = 2;
-            m_bgMgr.InitBackGroundMgr(1, bgX, bgY);
+            m_sword2.m_bgMgr.InitBackGroundMgr(1, bgX, bgY);
             break;
 
         case 4: // Hard
@@ -634,7 +633,7 @@ void cltMini_Sword_2::SetGameDegree(std::uint8_t degree)
             m_maxScore            = 360;
             m_incrementFactor     = 40.0f;           // IEEE 754 1101004800
             m_sword2Degree        = 2;
-            m_bgMgr.InitBackGroundMgr(2, bgX, bgY);
+            m_sword2.m_bgMgr.InitBackGroundMgr(2, bgX, bgY);
             break;
 
         default:
