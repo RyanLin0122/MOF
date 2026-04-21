@@ -12,4 +12,4 @@ enum TestMode {
 #define MINIGAME_DEBUG_MODE  (3)
 
 // 設定要執行的測試
-const TestMode G_CURRENT_TEST = TEST_IMAGE;
+const TestMode G_CURRENT_TEST = TEST_EFFECT;

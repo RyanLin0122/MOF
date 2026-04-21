@@ -227,8 +227,8 @@ void cltMini_Exorcist_2::InitMiniGameImage()
                       0.0f, 0.0f, 0.0f, 0.5f, nullptr);
     m_drawAlphaBox = 0;
 
-    // 預設背景資源 = Easy 的 0x2000005A
-    m_bgResID = 0x2000005Au;
+    // 預設背景資源 = Easy 的 0x2000011A
+    m_bgResID = 0x2000011Au;
 
     m_pGameSoundMgr->PlayMusic((char*)"MoFData/Music/bg_minigame_01.ogg");
     Init_Wait();
@@ -588,7 +588,7 @@ void cltMini_Exorcist_2::SetGameDegree(std::uint8_t degree)
             m_difficultyBaseScore = 10;
             m_maxScore            = 90;
             m_incrementFactor     = 4.0f;          // 1082130432
-            m_bgResID             = 0x2000005Au;   // 536871194
+            m_bgResID             = 0x2000011Au;   // exor_2nd_01
             m_difficulty          = 0;
             break;
 
@@ -597,7 +597,7 @@ void cltMini_Exorcist_2::SetGameDegree(std::uint8_t degree)
             m_difficultyBaseScore = 25;
             m_maxScore            = 180;
             m_incrementFactor     = 8.0f;          // 1090519040
-            m_bgResID             = 0x2000005Bu;   // 536871195
+            m_bgResID             = 0x2000011Bu;   // exor_2nd_02
             m_difficulty          = 1;
             break;
 
@@ -606,7 +606,7 @@ void cltMini_Exorcist_2::SetGameDegree(std::uint8_t degree)
             m_difficultyBaseScore = 40;
             m_maxScore            = 360;
             m_incrementFactor     = 16.0f;         // 1098907648
-            m_bgResID             = 0x2000005Cu;   // 536871196
+            m_bgResID             = 0x2000011Cu;   // exor_2nd_03
             m_difficulty          = 2;
             break;
 

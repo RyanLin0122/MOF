@@ -142,6 +142,25 @@ bool GameImage::Process() {
     m_pGIData->m_Resource.LoadTexture(); // 確保紋理已載入到 VRAM
     m_bIsProcessed = true; // 先假設能處理成功
 
+    // mofclient.c 272520-272534：若 m_bVertexAnimation（byte +444）為 true，
+    // 表示頂點由 CCAEffect::Process 透過 VertexAnimationCalculator 外部設定。
+    // 直接把 m_Vertices re-upload 到 VB 後立刻 return，不可重新計算頂點
+    // 位置，否則特效會被 ProcessAllGameImage 回推成 (m_fPosX, m_fPosY) 的
+    // block-based 位置（通常是 0,0），整個特效畫錯位置。
+    // Flag 每次 Process 後重置，下一幀由 VertexAnimationCalculator 再補上。
+    if (m_bVertexAnimation) {
+        if (m_pVBData && m_pVBData->pVertexBuffer) {
+            void* pV = nullptr;
+            HRESULT hr = m_pVBData->pVertexBuffer->Lock(0, sizeof(m_Vertices), &pV, D3DLOCK_DISCARD);
+            if (SUCCEEDED(hr) && pV) {
+                memcpy(pV, m_Vertices, sizeof(m_Vertices));
+                m_pVBData->pVertexBuffer->Unlock();
+            }
+        }
+        m_bVertexAnimation = false;
+        return true;
+    }
+
     if (m_wBlockID >= m_pGIData->m_Resource.m_animationFrameCount) { // 檢查動畫影格ID是否有效
         m_bIsProcessed = false;
         return false;

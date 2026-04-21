@@ -952,7 +952,7 @@ void cltMini_Bow::PrepareDrawing()
     m_drawNumReady.PrepareDrawing(m_screenX + 450, m_screenY + 220, readyT, 255);
     m_drawNumPoint.PrepareDrawing(m_screenX + 480, m_screenY + 59,
                                   m_totalPoint, 255);
-    m_drawNumFinal.PrepareDrawing(m_uiPos[8], m_uiPos[9], m_displayScore, 255);
+    m_drawNumFinal.PrepareDrawing(m_uiPos[4], m_uiPos[5], m_displayScore, 255);
 
     // AlphaBox
     m_topBlackBox.PrepareDrawing();
@@ -1053,13 +1053,13 @@ void cltMini_Bow::InitMiniGameImage()
 
     // --- 填入 slot 資料 ---
     // Slot 0: 靶（左）
-    m_slots[0].resID   = 0x10000022u;
+    m_slots[0].resID   = 0x100000A2u;
     m_slots[0].blockID = 9;
     m_slots[0].x       = m_screenX + 200;
     m_slots[0].y       = m_hitTargetY;
 
     // Slot 1: 靶（右）
-    m_slots[1].resID   = 0x10000022u;
+    m_slots[1].resID   = 0x100000A2u;
     m_slots[1].blockID = 10;
     m_slots[1].x       = m_initArrowX;
     m_slots[1].y       = m_hitTargetY;
@@ -1067,13 +1067,13 @@ void cltMini_Bow::InitMiniGameImage()
     // Slots 2-10: 箭（block 8, 0-7）
     std::uint16_t arrowXInit = static_cast<std::uint16_t>(m_arrowX);
     std::uint16_t arrowYInit = static_cast<std::uint16_t>(m_arrowY);
-    m_slots[2].resID   = 0x10000022u;
+    m_slots[2].resID   = 0x100000A2u;
     m_slots[2].blockID = 8;
     m_slots[2].x       = arrowXInit;
     m_slots[2].y       = arrowYInit;
     for (int i = 3; i <= 10; ++i)
     {
-        m_slots[i].resID   = 0x10000022u;
+        m_slots[i].resID   = 0x100000A2u;
         m_slots[i].blockID = static_cast<std::uint16_t>(i - 3);
         m_slots[i].x       = arrowXInit;
         m_slots[i].y       = arrowYInit;
@@ -1110,14 +1110,14 @@ void cltMini_Bow::InitMiniGameImage()
     // Slot 17: Win popup (0x20000002)
     m_slots[17].resID   = 0x20000002u;
     m_slots[17].blockID = 0;
-    m_slots[17].x       = m_uiPos[4];
-    m_slots[17].y       = m_uiPos[5];
+    m_slots[17].x       = m_uiPos[2];
+    m_slots[17].y       = m_uiPos[3];
 
     // Slot 18: Lose popup
     m_slots[18].resID   = 0x20000002u;
     m_slots[18].blockID = 1;
-    m_slots[18].x       = m_uiPos[4];
-    m_slots[18].y       = m_uiPos[5];
+    m_slots[18].x       = m_uiPos[2];
+    m_slots[18].y       = m_uiPos[3];
 
     // Slot 19: Ranking BG (0x2200000A)
     m_slots[19].resID   = 0x2200000Au;
@@ -1125,20 +1125,20 @@ void cltMini_Bow::InitMiniGameImage()
     m_slots[19].x       = m_uiPos[0];
     m_slots[19].y       = m_uiPos[1];
 
-    // Slot 20: Select degree (0x1000001B)
-    m_slots[20].resID   = 0x1000001Bu;
+    // Slot 20: Select degree (0x1000009B)
+    m_slots[20].resID   = 0x1000009Bu;
     m_slots[20].blockID = 20;
     m_slots[20].x       = m_uiPos[8];
     m_slots[20].y       = m_uiPos[9];
 
-    // Slot 21: Help (0x10000019)
-    m_slots[21].resID   = 0x10000019u;
+    // Slot 21: Help (0x10000099)
+    m_slots[21].resID   = 0x10000099u;
     m_slots[21].blockID = 0;
     m_slots[21].x       = m_uiPos[6];
     m_slots[21].y       = m_uiPos[7];
 
-    // Slot 22: ShowPoint (0x10000020)
-    m_slots[22].resID   = 0x10000020u;
+    // Slot 22: ShowPoint (0x100000A0)
+    m_slots[22].resID   = 0x100000A0u;
     m_slots[22].blockID = 0;
     m_slots[22].x       = m_uiPos[10];
     m_slots[22].y       = m_uiPos[11];
@@ -1242,7 +1242,7 @@ void cltMini_Bow::InitMiniGameImage()
 
     // Button 12: EndGame ExitPopUp
     m_buttons[12].CreateBtn(
-        m_uiPos[4] + 215, m_uiPos[5] + 170, 9u,
+        m_uiPos[2] + 215, m_uiPos[3] + 170, 9u,
         0x2200000Au, 0x15u, 0x2200000Au, 0x16u, 0x2200000Au, 0x17u,
         0x2200000Au, 0x18u,
         reinterpret_cast<void(__cdecl*)(std::uintptr_t)>(OnBtn_ExitPopUp),

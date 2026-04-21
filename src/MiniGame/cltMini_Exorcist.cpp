@@ -338,7 +338,7 @@ void cltMini_Exorcist::InitMiniGameImage()
     m_drawAlphaBox = 0;
 
     // 預設背景資源
-    m_bgResID = 0x2000005Du;
+    m_bgResID = 0x2000011Du;
 
     m_pGameSoundMgr->PlayMusic((char*)"MoFData/Music/bg_minigame_01.ogg");
 }
@@ -861,21 +861,21 @@ void cltMini_Exorcist::SetGameDegree(std::uint8_t degree)
             m_difficultyBaseScore = 10;
             m_maxScore            = 90;
             m_incrementFactor     = 2.0f;          // 0x40000000
-            m_bgResID             = 0x2000005Du;   // 536871197
+            m_bgResID             = 0x2000011Du;   // exor_easy_bg
             break;
         case 2u:  // Normal
             m_winMark             = 100;
             m_difficultyBaseScore = 45;
             m_maxScore            = 180;
             m_incrementFactor     = 4.0f;          // 0x40800000 (1082130432)
-            m_bgResID             = 0x2000005Fu;   // 536871199
+            m_bgResID             = 0x2000011Fu;   // exor_normal_bg
             break;
         case 4u:  // Hard
             m_winMark             = 200;
             m_difficultyBaseScore = 75;
             m_maxScore            = 360;
             m_incrementFactor     = 16.0f;         // 0x41800000 (1098907648)
-            m_bgResID             = 0x2000005Eu;   // 536871198
+            m_bgResID             = 0x2000011Eu;   // exor_hard_bg
             break;
         default:
             break;

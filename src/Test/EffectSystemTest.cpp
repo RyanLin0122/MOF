@@ -170,19 +170,19 @@ void EffectSystemTest::Render()
 void EffectSystemTest::InitializeRenderTestCases()
 {
     m_renderTestCases = {
-        //{ "Battle_DownCut", &EffectSystemTest::SpawnDownCutEffect },
-        //{ "Battle_Hit_Normal", &EffectSystemTest::SpawnHitNormalEffect },
-        //{ "Battle_UpperCut", &EffectSystemTest::SpawnUpperCutEffect },
-        //{ "Battle_HorizonCut", &EffectSystemTest::SpawnHorizenCutEffect },
-        //{ "Battle_MagicBook", &EffectSystemTest::SpawnMagicBookEffect },
-        //{ "Battle_TwoHandCut", &EffectSystemTest::SpawnTwoHandCutEffect },
-        //{ "Battle_Pierce", &EffectSystemTest::SpawnPierceEffect },
-        //{ "Battle_GunSpark", &EffectSystemTest::SpawnGunSparkEffect },
-        //{ "Hit_Critical", &EffectSystemTest::SpawnHitCriticalEffect },
-        //{ "Field_AttackMiss", &EffectSystemTest::SpawnFieldAttackMissEffect },
-        //{ "Field_Miss", &EffectSystemTest::SpawnFieldMissEffect }, //沒東西
-        //{ "Skill_Hit", &EffectSystemTest::SpawnSkillHitEffect }, //OK 
-        //{ "Use_Hit", &EffectSystemTest::SpawnUseHitEffect }, //OK
+        { "Battle_DownCut", &EffectSystemTest::SpawnDownCutEffect },
+        { "Battle_Hit_Normal", &EffectSystemTest::SpawnHitNormalEffect },
+        { "Battle_UpperCut", &EffectSystemTest::SpawnUpperCutEffect },
+        { "Battle_HorizonCut", &EffectSystemTest::SpawnHorizenCutEffect },
+        { "Battle_MagicBook", &EffectSystemTest::SpawnMagicBookEffect },
+        { "Battle_TwoHandCut", &EffectSystemTest::SpawnTwoHandCutEffect },
+        { "Battle_Pierce", &EffectSystemTest::SpawnPierceEffect },
+        { "Battle_GunSpark", &EffectSystemTest::SpawnGunSparkEffect },
+        { "Hit_Critical", &EffectSystemTest::SpawnHitCriticalEffect },
+        { "Field_AttackMiss", &EffectSystemTest::SpawnFieldAttackMissEffect },
+        { "Field_Miss", &EffectSystemTest::SpawnFieldMissEffect }, //沒東西
+        { "Skill_Hit", &EffectSystemTest::SpawnSkillHitEffect }, //OK 
+        { "Use_Hit", &EffectSystemTest::SpawnUseHitEffect }, //OK
 
         //{ "MiniGame_Archer_String", &EffectSystemTest::SpawnMiniGameArcherStringEffect }, //有bug，截掉右邊
         //{ "MiniGame_Fighter_Break", &EffectSystemTest::SpawnMiniGameFighterBreakEffect },

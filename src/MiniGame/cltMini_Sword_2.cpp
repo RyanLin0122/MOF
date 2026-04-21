@@ -38,17 +38,17 @@ struct SlotDef
 //   { 0x2200000A, 12, m_uiPos[0..1] },   // ranking 底板
 //   { 0x20000002,  0, m_uiPos[2..3] },   // Win banner
 //   { 0x20000002,  1, m_uiPos[2..3] },   // Lose banner
-//   { 0x1000001B, 20, m_uiPos[8..9] },   // 難度選擇底圖
+//   { 0x1000009B, 20, m_uiPos[8..9] },   // 難度選擇底圖
 //   { 0x20000050,  0, m_uiPos[6..7] },   // Help 底圖
-//   { 0x10000020,  0, m_uiPos[10..11] }, // ShowPoint 底圖
+//   { 0x100000A0, 0, m_uiPos[10..11] }, // ShowPoint 底圖
 // }
 static const SlotDef kSlotTable[cltMini_Sword_2::kSlotCount] = {
     { 0x2200000Au, 12, 0 },
     { 0x20000002u,  0, 1 },
     { 0x20000002u,  1, 1 },
-    { 0x1000001Bu, 20, 4 },
+    { 0x1000009Bu, 20, 4 },
     { 0x20000050u,  0, 3 },
-    { 0x10000020u,  0, 5 },
+    { 0x100000A0u,  0, 5 },
 };
 
 } // namespace
@@ -714,7 +714,7 @@ void cltMini_Sword_2::Init_Wait()
     m_drawNumFinal.SetActive(0);
     m_serverTimeMs = 0;
 
-    g_cGameSword_2State = 0;
+    g_cGameSword_2State = 0;  
 }
 
 // =========================================================================

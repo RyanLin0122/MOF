@@ -226,7 +226,30 @@ int           g_stGsGameFieldArg = 0;
 unsigned int  dwFrameCnt = 0;
 int           MonPosY[10] = { 0, 0, 0, 0, 0, 0, 0, 0, 0, 0 };
 int           g_GAMESCORE = 0;
-float         g_fBowSpearTable[34] = { 0 };
+// mofclient.c .data @ 0x6CDB80 — cltBow2_Spear::Create 讀取的 17 組
+// (xOff, yOff) 生成偏移，近似分布在半徑 ~210 的四分之一弧上，
+// 搭配 direction 1..4 投影到四個象限。IDA 反編譯把這張 float[17][2]
+// 拆成 g_fPoint + dword_6CDB84 兩個 "weak" 符號，只保留第一個值，
+// 其餘由直接讀 .data hex dump 還原。
+float         g_fBowSpearTable[34] = {
+    0.0f,   210.0f,  //  0
+    26.0f,  208.0f,  //  1
+    51.0f,  204.0f,  //  2
+    74.0f,  197.0f,  //  3
+    94.0f,  188.0f,  //  4
+    111.0f, 178.0f,  //  5
+    126.0f, 168.0f,  //  6
+    138.0f, 158.0f,  //  7
+    148.0f, 148.0f,  //  8
+    158.0f, 138.0f,  //  9
+    168.0f, 126.0f,  // 10
+    178.0f, 111.0f,  // 11
+    188.0f, 94.0f,   // 12
+    197.0f, 74.0f,   // 13
+    204.0f, 51.0f,   // 14
+    208.0f, 26.0f,   // 15
+    210.0f, 0.0f,    // 16
+};
 int dword_AFD34C = 0;
 int dword_AFD344 = 0;
 int cHeight = 0;

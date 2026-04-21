@@ -19,6 +19,7 @@
 #include "Logic/DirectInputManager.h"
 #include "Logic/cltMyCharData.h"
 #include "Util/cltTimer.h"
+#include "Effect/CEffectManager.h"
 // 注意: CMoFNetwork / ClientCharacterManager 只用 forward declaration
 // (來自 global.h)，避開 windows.h 已先載入後再 include winsock2.h 的衝突。
 #include "MiniGame/cltMoF_BaseMiniGame.h"
@@ -230,6 +231,7 @@ void kr_printf(const char* euckr) {
 //-----------------------------------------------------------------------------
 static DirectInputManager g_DebugInputMgr{};
 static cltMoF_BaseMiniGame* g_pDebugMiniGame = nullptr;
+static int g_iDebugMiniGameChoice = 0;  // 1..8 對應 CreateDebugMiniGame 選單
 
 static void InitMiniGameDebugSubsystems()
 {
@@ -244,6 +246,12 @@ static void InitMiniGameDebugSubsystems()
     g_clTimerManager.Initialize(0x3E8u);
 
     // 1) 音效 + BGM
+    // 開發環境下 mofdata/sound/*.wav 與 mofdata/music/*.ogg 通常是散檔，
+    // 沒有被打包進 mof.nfs；若走 pack 路徑會讀回 size=0 導致 GameSound
+    // 與 COgg 都 silent fail（PlaySoundA 的 CreateFromMemory 回 E_INVALIDARG，
+    // COgg::OpenStreem 則 m_pStream = nullptr）。此處強迫走 direct-file。
+    extern int g_bLoadOggFromMofPack;
+    g_bLoadOggFromMofPack = 0;
     g_GameSoundManager.InitSound((char*)"SoundListInfo.txt");
 
     // 2) 課程種類表（用於小遊戲內讀取訓練卡資訊、倍率計算）
@@ -315,6 +323,7 @@ static cltMoF_BaseMiniGame* SelectAndCreateMiniGameFromConsole()
 
         cltMoF_BaseMiniGame* game = CreateDebugMiniGame(choice);
         if (game) {
+            g_iDebugMiniGameChoice = choice;
             // 清空輸入狀態，避免上一輪殘留
             g_DebugInputMgr.FreeAllKey();
             // 把遊戲視窗帶到前景，避免 console 擋住
@@ -353,7 +362,7 @@ static int FPS_Update()
 }
 
 // 主迴圈每幀呼叫：驅動輸入、推進小遊戲邏輯；遊戲結束時回選單。
-static void UpdateMiniGameDebug()
+static void UpdateMiniGameDebug(float fElapsedTime)
 {
     static DWORD s_lastTick = 0;
     static unsigned int s_frames = 0;
@@ -361,7 +370,20 @@ static void UpdateMiniGameDebug()
     DWORD now = timeGetTime();
     if (s_lastTick == 0) s_lastTick = now;
     if (now - s_lastTick >= 1000) {
-        std::printf("[minigame] %u fps, g_cGameSwordState=%u\n", s_frames, (unsigned)g_cGameSwordState);
+        const char* name = "(none)";
+        unsigned state = 0;
+        switch (g_iDebugMiniGameChoice) {
+        case 1: name = "g_cGameSwordState";      state = g_cGameSwordState;      break;
+        case 2: name = "g_cGameSword_2State";    state = g_cGameSword_2State;    break;
+        case 3: name = "g_cGameBowState";        state = g_cGameBowState;        break;
+        case 4: name = "g_cGameBow_2State";      state = g_cGameBow_2State;      break;
+        case 5: name = "g_cGameMagicState";      state = g_cGameMagicState;      break;
+        case 6: name = "g_cGameMagic_2State";    state = g_cGameMagic_2State;    break;
+        case 7: name = "g_cGameExorcistState";   state = g_cGameExorcistState;   break;
+        case 8: name = "g_cGameExorcist_2State"; state = g_cGameExorcist_2State; break;
+        default: break;
+        }
+        std::printf("[minigame] %u fps, %s=%u\n", s_frames, name, state);
         std::fflush(stdout);
         s_frames = 0;
         s_lastTick = now;
@@ -370,6 +392,10 @@ static void UpdateMiniGameDebug()
     // 每幀 tick 計時器 — 對齊 GT main loop 210289-210290。
     cltTimerManager::UpdateTime();
     g_clTimerManager.Poll();
+
+    // 對齊 GT main loop 210272：推進特效管理器的生命週期，
+    // 讓 Ani_Board::Play 加入的 CEffect_MiniGame_Fighter_Break 會被 tick 與清理。
+    g_EffectManager_MiniGame.FrameProcess(fElapsedTime, false);
 
     g_DebugInputMgr.hrReadInput();
     g_DebugInputMgr.Update();
@@ -406,6 +432,10 @@ static void UpdateMiniGameDebug()
         return;
     }
     g_pDebugMiniGame->PrepareDrawing();
+
+    // 對齊 GT main loop 210309：在 PrepareDrawing 之後更新特效位置，
+    // 讓 Draw 取到當幀最新的變換資料。
+    g_EffectManager_MiniGame.Process();
 
     // mofclient.c 210313：PrepareDrawing 之後、BeginScene 之前呼叫
     // ProcessAllGameImage，把每個 GameImage 的 m_bIsProcessed 設為 true；
@@ -486,6 +516,12 @@ int APIENTRY  wWinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPWSTR lpCm
 
 		// 初始化時間
 		lastTime = timeGetTime(); // 使用 timeGetTime() 取得當前時間
+		// MiniGame 模式下 FPS_Update 會把邏輯 clamp 到 30fps，所以實際的
+		// UpdateMiniGameDebug 兩次呼叫之間可能經過了很多個 Sleep(1) 迴圈。
+		// 這裡累計期間經過的時間，讓特效管理器拿到「真實」的 dt，而不是
+		// 每次 Sleep 後的 ~1ms 片段（否則動畫會被放慢 30 倍以上，導致
+		// CCAEffect 永遠跑不完、舊特效卡在畫面上）。
+		float fAccumulatedDt = 0.0f;
 		while (msg.message != WM_QUIT)
 		{
 			if (PeekMessage(&msg, NULL, 0U, 0U, PM_REMOVE))
@@ -499,10 +535,12 @@ int APIENTRY  wWinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPWSTR lpCm
 				DWORD currentTime = timeGetTime();
 				float fElapsedTime = (currentTime - lastTime) / 1000.0f;
 				lastTime = currentTime;
+				fAccumulatedDt += fElapsedTime;
 
 				// 測試 Update
 				if (CURRENT_MODE == TEST_MODE) {
 					UpdateTest(fElapsedTime);
+					fAccumulatedDt = 0.0f;
 				}
 				else if (CURRENT_MODE == MINIGAME_DEBUG_MODE) {
 					// 對齊 GT main loop 210260/210276：先 Sleep(1) 讓 OS
@@ -512,7 +550,8 @@ int APIENTRY  wWinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPWSTR lpCm
 					if (fpsStep == 0) {
 						continue;   // 這一幀還沒到，跳過 Update/Render
 					}
-					UpdateMiniGameDebug();
+					UpdateMiniGameDebug(fAccumulatedDt);
+					fAccumulatedDt = 0.0f;
 				}
 
 				// 執行 Render
@@ -607,6 +646,9 @@ VOID Render()
 		}
 		else if (CURRENT_MODE == MINIGAME_DEBUG_MODE) {
 			if (g_pDebugMiniGame) g_pDebugMiniGame->Draw();
+			// 對齊 GT GsGame_MiniGame_Draw 369186：小遊戲主畫面繪製完後，
+			// 疊上 g_EffectManager_MiniGame 的所有特效（例：擊碎板子的碎片）。
+			g_EffectManager_MiniGame.Draw();
 		}
 		Device->EndScene();
 	}

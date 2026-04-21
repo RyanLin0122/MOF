@@ -213,8 +213,8 @@ void cltMini_Magic_2::Init_Help()
     // ExitPopUp 按鈕 (button 8 at offset 1584)
     m_buttons[8].SetActive(1);
     m_buttons[8].SetPosition(
-        m_uiPos[4] + 402,   // WORD[311] + 402
-        m_uiPos[5] + 475);  // WORD[312] + 475
+        m_uiPos[6] + 402,   // WORD[311] + 402
+        m_uiPos[7] + 475);  // WORD[312] + 475
 
     m_slots[m_uiSlotHelp].active = 1;
     g_cGameMagic_2State = 2;
@@ -239,8 +239,8 @@ void cltMini_Magic_2::Init_ShowPoint()
 
     m_buttons[8].SetActive(1);
     m_buttons[8].SetPosition(
-        m_uiPos[8] + 380,   // WORD[315] + 380
-        m_uiPos[9] + 216);  // WORD[316] + 216
+        m_uiPos[10] + 380,   // WORD[315] + 380
+        m_uiPos[11] + 216);  // WORD[316] + 216
 
     m_slots[m_uiSlotShowPoint].active = 1;
     g_cGameMagic_2State = 3;
@@ -1008,27 +1008,27 @@ void cltMini_Magic_2::ShowPointText()
     g_MoFFont.SetFont("MiniShowGetPointTitle");
     const char* title = m_pDCTTextManager->GetText(3342);
     g_MoFFont.SetTextLineA(
-        m_uiPos[8] + 70, m_uiPos[9] + 50, 0xFFFFFFFF, title, 0, -1, -1);
+        m_uiPos[10] + 70, m_uiPos[11] + 50, 0xFFFFFFFF, title, 0, -1, -1);
 
     g_MoFFont.SetFont("MiniShowGetPoint");
     g_MoFFont.SetTextLineA(
-        m_uiPos[8] + 143, m_uiPos[9] + 127, 0xFFFFFFFF, "20", 1, -1, -1);
+        m_uiPos[10] + 143, m_uiPos[11] + 127, 0xFFFFFFFF, "20", 1, -1, -1);
     g_MoFFont.SetTextLineA(
-        m_uiPos[8] + 143, m_uiPos[9] + 157, 0xFFFFFFFF, "55", 1, -1, -1);
+        m_uiPos[10] + 143, m_uiPos[11] + 157, 0xFFFFFFFF, "55", 1, -1, -1);
     g_MoFFont.SetTextLineA(
-        m_uiPos[8] + 143, m_uiPos[9] + 187, 0xFFFFFFFF, "85", 1, -1, -1);
+        m_uiPos[10] + 143, m_uiPos[11] + 187, 0xFFFFFFFF, "85", 1, -1, -1);
     g_MoFFont.SetTextLineA(
-        m_uiPos[8] + 265, m_uiPos[9] + 127, 0xFFFFFFFF, " 50 ~  90", 1, -1, -1);
+        m_uiPos[10] + 265, m_uiPos[11] + 127, 0xFFFFFFFF, " 50 ~  90", 1, -1, -1);
     g_MoFFont.SetTextLineA(
-        m_uiPos[8] + 265, m_uiPos[9] + 157, 0xFFFFFFFF, "100 ~ 180", 1, -1, -1);
+        m_uiPos[10] + 265, m_uiPos[11] + 157, 0xFFFFFFFF, "100 ~ 180", 1, -1, -1);
     g_MoFFont.SetTextLineA(
-        m_uiPos[8] + 265, m_uiPos[9] + 187, 0xFFFFFFFF, "200 ~ 360", 1, -1, -1);
+        m_uiPos[10] + 265, m_uiPos[11] + 187, 0xFFFFFFFF, "200 ~ 360", 1, -1, -1);
     g_MoFFont.SetTextLineA(
-        m_uiPos[8] + 405, m_uiPos[9] + 127, 0xFFFFFFFF, "30", 1, -1, -1);
+        m_uiPos[10] + 405, m_uiPos[11] + 127, 0xFFFFFFFF, "30", 1, -1, -1);
     g_MoFFont.SetTextLineA(
-        m_uiPos[8] + 405, m_uiPos[9] + 157, 0xFFFFFFFF, "30", 1, -1, -1);
+        m_uiPos[10] + 405, m_uiPos[11] + 157, 0xFFFFFFFF, "30", 1, -1, -1);
     g_MoFFont.SetTextLineA(
-        m_uiPos[8] + 405, m_uiPos[9] + 187, 0xFFFFFFFF, "30", 1, -1, -1);
+        m_uiPos[10] + 405, m_uiPos[11] + 187, 0xFFFFFFFF, "30", 1, -1, -1);
 }
 
 // ---------------------------------------------------------------------------
@@ -1118,7 +1118,8 @@ void cltMini_Magic_2::PrepareDrawing()
 
     m_drawNumScore.PrepareDrawing(m_screenX + 742, m_screenY + 52, m_gameScore, 255);
 
-    m_drawNumFinal.PrepareDrawing(m_uiPos[2], m_uiPos[3], m_displayScore, 255);
+    // mofclient.c 365608：結算數字位置用 m_uiPos[4]/[5]，與 Pass/Fail 面板 (m_uiPos[2]/[3]) 不同。
+    m_drawNumFinal.PrepareDrawing(m_uiPos[4], m_uiPos[5], m_displayScore, 255);
 
     PrepareDrawingTarget();
     PrepareDrawingBox();

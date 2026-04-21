@@ -123,15 +123,14 @@ int cltTimer::IsTimeOut() const {
         return 0;
     }
 
+    // 原始 GT 用無號比較；若把 v1 轉成 int，duration = 0xFFFFFFFF（表示
+    // 永不 timeout）會被誤判成 -1，任何 elapsed 都「>=」它，IsTimeOut 會
+    // 立刻回傳 1，導致 StartGame 建的 IncreaseLiveTime / CreateNormalSpear
+    // timer 一建立就被釋放，飛矛與計時都不會動。
     unsigned int v3 = m_dwStartTime;
-    int v4 = *m_pdwtimeGetTime;
-    int v5;
-    if (*m_pdwtimeGetTime < v3) {
-        v5 = -(v4 - static_cast<int>(v3) - 1 < static_cast<int>(v1));
-    } else {
-        v5 = -(v4 - static_cast<int>(v3) < static_cast<int>(v1));
-    }
-    return v5 + 1;
+    unsigned int v4 = *m_pdwtimeGetTime;
+    unsigned int elapsed = (v4 < v3) ? (v4 - v3 - 1) : (v4 - v3);
+    return (elapsed >= v1) ? 1 : 0;
 }
 
 BOOL cltTimer::IsUsing() const { return m_dwTimerID != 0; }
