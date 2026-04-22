@@ -1,105 +1,105 @@
-class	lines	parents
-CUIBase	893	
-CUIClassTree	31	
-CUIHelper	721	
-CUIManager	2677	
-CUIPet	40	
-CUIAcademy	1024	CUIBase
-CUIBasic	15494	CUIBase
-CUIBoard	357	CUIBase
-CUIBuySpecialty	500	CUIBase
-CUICallPartyMember	330	CUIBase
-CUICashShop	4405	CUIBase
-CUICashShopConfirm	1517	CUIBase
-CUICashShopHelp	125	CUIBase
-CUICashShopPackageItemInfo	529	CUIBase
-CUICashShopResult	291	CUIBase
-CUIChangeSex	319	CUIBase
-CUICharInfo	1224	CUIBase
-CUIChatWindowRegulation	77	CUIBase
-CUICircle	1898	CUIBase
-CUICommonWeddingWindow	576	CUIBase
-CUIDiary	6411	CUIBase
-CUIDied	233	CUIBase
-CUIDivideMap	2036	CUIBase
-CUIEmoticon	595	CUIBase
-CUIEnchantHelp	155	CUIBase
-CUIEnchantItem	922	CUIBase
-CUIEquip	1289	CUIBase
-CUIFightMakeRoom	1283	CUIBase
-CUIFightRoom	2372	CUIBase
-CUIFightRoomChannel	1566	CUIBase
-CUIFightRoomResult	583	CUIBase
-CUIFriend	3336	CUIBase
-CUIGetIndunInfo	321	CUIBase
-CUIHelp	463	CUIBase
-CUIInventory	945	CUIBase
-CUIItemSeal	450	CUIBase
-CUIJobChange	823	CUIBase
-CUIKeyMap	441	CUIBase
-CUILobbyLogin	564	CUIBase
-CUILobbyMakeChar	650	CUIBase
-CUILobbySelChannel	1475	CUIBase
-CUILobbySelChar	944	CUIBase
-CUIMakeAvi	198	CUIBase
-CUIMaking	963	CUIBase
-CUIMapConqueror	337	CUIBase
-CUIMapConquest	234	CUIBase
-CUIMarryBoard	820	CUIBase
-CUIMarryPetition	748	CUIBase
-CUIMenu	432	CUIBase
-CUIMessageBoxBase	180	CUIBase
-CUIMyItem	281	CUIBase
-CUINPC	3158	CUIBase
-CUINPCLessonEnd	131	CUIBase
-CUINPCMarketPetInfo	728	CUIBase
-CUINPCMeritorious	351	CUIBase
-CUINPCPetInfo	900	CUIBase
-CUINPCPetShop	549	CUIBase
-CUINPCQuest	869	CUIBase
-CUINPCTest	642	CUIBase
-CUIOption	1106	CUIBase
-CUIPartyInfo	793	CUIBase
-CUIPetInfo	1657	CUIBase
-CUIPetKeeping	507	CUIBase
-CUIPetMarketInfo	1041	CUIBase
-CUIPetMarketRegister	473	CUIBase
-CUIPetRelease	347	CUIBase
-CUIPetSellInfo	303	CUIBase
-CUIPopMenu	542	CUIBase
-CUIPostIt	497	CUIBase
-CUIPrivateShop	1648	CUIBase
-CUIQuest	1550	CUIBase
-CUIQuestAlarm	1172	CUIBase
-CUIQuickChatting	1170	CUIBase
-CUIRecall	253	CUIBase
-CUIReceivePet	282	CUIBase
-CUISalesAgencyMyList	290	CUIBase
-CUISalesAgencyReceive	383	CUIBase
-CUISalesAgencyRegist	571	CUIBase
-CUISalesAgencySearch	1214	CUIBase
-CUIScholarShip	250	CUIBase
-CUISetEmoticon	226	CUIBase
-CUIShopNPC	3302	CUIBase
-CUIShopNPCEmblem	393	CUIBase
-CUISkill	412	CUIBase
-CUISkillShop	561	CUIBase
-CUIStorage	1838	CUIBase
-CUITitleMsgBox	169	CUIBase
-CUITradeUser	865	CUIBase
-CUIUserInfo	290	CUIBase
-CUIViewInstanceProject	611	CUIBase
-CUIWarMeritorious	580	CUIBase
-CUIWeddingInvitation	516	CUIBase
-CUIWishTree	82	CUIBase
-CUIWorldMap	1521	CUIBase
-CUIMessageBoxCalc	469	CUIMessageBoxBase
-CUIMessageBoxEdit	604	CUIMessageBoxBase
-CUIMessageBoxList	529	CUIMessageBoxBase
-CUIMessageBoxMultLineOK	172	CUIMessageBoxBase
-CUIMessageBoxMultLineOKLarge	172	CUIMessageBoxBase
-CUIMessageBoxNotice	95	CUIMessageBoxBase
-CUIMessageBoxOK	530	CUIMessageBoxBase
-CUIMessageBoxRadioList	203	CUIMessageBoxBase
-CUIMessageBoxSortList	199	CUIMessageBoxBase
-CUITutorial	330	CUIMessageBoxBase
+class	lines	parents	depends_on_text	text_sources
+CUIBase	893		Y	MoFTexts.txt
+CUIClassTree	31		N	
+CUIHelper	721		N	
+CUIManager	2677		Y	cltMapCollisonInfo
+CUIPet	40		N	
+CUIAcademy	1024	CUIBase	Y	MoFTexts.txt, cltItemKindInfo, cltLessonKindInfo
+CUIBasic	15494	CUIBase	Y	MoFTexts.txt, cltCharKindInfo, cltClassKindInfo, cltClientCharKindInfo, cltClientPortalInfo, cltEmblemKindInfo, cltItemKindInfo, cltMapUseItemInfoKindInfo, cltPetKindInfo, cltSpecialtyKindInfo
+CUIBoard	357	CUIBase	N	
+CUIBuySpecialty	500	CUIBase	Y	MoFTexts.txt, cltSpecialtyKindInfo
+CUICallPartyMember	330	CUIBase	N	
+CUICashShop	4405	CUIBase	Y	MoFTexts.txt, cltEmoticonKindInfo, cltItemKindInfo, cltMapUseItemInfoKindInfo, cltPetKindInfo, cltPetSkillKindInfo
+CUICashShopConfirm	1517	CUIBase	Y	MoFTexts.txt, cltItemKindInfo
+CUICashShopHelp	125	CUIBase	N	
+CUICashShopPackageItemInfo	529	CUIBase	Y	MoFTexts.txt, cltItemKindInfo
+CUICashShopResult	291	CUIBase	Y	MoFTexts.txt, cltItemKindInfo
+CUIChangeSex	319	CUIBase	N	
+CUICharInfo	1224	CUIBase	Y	MoFTexts.txt, cltClassKindInfo
+CUIChatWindowRegulation	77	CUIBase	N	
+CUICircle	1898	CUIBase	Y	MoFTexts.txt
+CUICommonWeddingWindow	576	CUIBase	Y	MoFTexts.txt
+CUIDiary	6411	CUIBase	Y	MoFTexts.txt, cltEmblemKindInfo, cltItemKindInfo, cltMonsterAniInfo, cltNPCInfo, cltPKRankKindInfo, cltQuestKindInfo, cltSpecialtyKindInfo
+CUIDied	233	CUIBase	N	
+CUIDivideMap	2036	CUIBase	Y	MoFTexts.txt, cltMapInfo, cltNPCInfo, cltQuestKindInfo, cltRegenMonsterKindInfo, cltWorldMapColorInfo
+CUIEmoticon	595	CUIBase	Y	cltEmoticonKindInfo
+CUIEnchantHelp	155	CUIBase	Y	MoFTexts.txt, cltItemKindInfo
+CUIEnchantItem	922	CUIBase	Y	MoFTexts.txt, cltEnchantKindInfo, cltItemKindInfo
+CUIEquip	1289	CUIBase	Y	MoFTexts.txt, cltCoupleRingKindInfo, cltItemKindInfo
+CUIFightMakeRoom	1283	CUIBase	Y	MoFTexts.txt
+CUIFightRoom	2372	CUIBase	Y	MoFTexts.txt, cltClassKindInfo, cltPKRankKindInfo
+CUIFightRoomChannel	1566	CUIBase	Y	MoFTexts.txt
+CUIFightRoomResult	583	CUIBase	Y	MoFTexts.txt
+CUIFriend	3336	CUIBase	Y	MoFTexts.txt
+CUIGetIndunInfo	321	CUIBase	Y	MoFTexts.txt, cltInstantDungeonKindInfo, cltItemKindInfo
+CUIHelp	463	CUIBase	N	
+CUIInventory	945	CUIBase	Y	MoFTexts.txt, cltItemKindInfo
+CUIItemSeal	450	CUIBase	Y	MoFTexts.txt, cltItemKindInfo
+CUIJobChange	823	CUIBase	Y	MoFTexts.txt, cltClassKindInfo, cltItemKindInfo
+CUIKeyMap	441	CUIBase	N	
+CUILobbyLogin	564	CUIBase	Y	MoFTexts.txt
+CUILobbyMakeChar	650	CUIBase	Y	MoFTexts.txt, cltClassKindInfo
+CUILobbySelChannel	1475	CUIBase	Y	MoFTexts.txt
+CUILobbySelChar	944	CUIBase	Y	MoFTexts.txt
+CUIMakeAvi	198	CUIBase	Y	MoFTexts.txt
+CUIMaking	963	CUIBase	Y	MoFTexts.txt, cltItemKindInfo, cltMakingItemKindInfo, cltSpecialtyKindInfo
+CUIMapConqueror	337	CUIBase	Y	cltClassKindInfo
+CUIMapConquest	234	CUIBase	Y	MoFTexts.txt
+CUIMarryBoard	820	CUIBase	Y	MoFTexts.txt
+CUIMarryPetition	748	CUIBase	Y	MoFTexts.txt, cltClassKindInfo, cltItemKindInfo, cltWeddingHallKindInfo
+CUIMenu	432	CUIBase	Y	MoFTexts.txt
+CUIMessageBoxBase	180	CUIBase	N	
+CUIMyItem	281	CUIBase	Y	MoFTexts.txt, cltMyItemKindInfo
+CUINPC	3158	CUIBase	Y	MoFTexts.txt, cltInstantDungeonKindInfo, cltItemKindInfo, cltNPCInfo, cltQuestKindInfo
+CUINPCLessonEnd	131	CUIBase	Y	MoFTexts.txt
+CUINPCMarketPetInfo	728	CUIBase	Y	MoFTexts.txt, cltClientPetKindInfo, cltItemKindInfo, cltPetKindInfo, cltPetSkillKindInfo
+CUINPCMeritorious	351	CUIBase	Y	MoFTexts.txt, cltItemKindInfo
+CUINPCPetInfo	900	CUIBase	Y	MoFTexts.txt, cltClientPetKindInfo, cltItemKindInfo, cltPetKindInfo, cltPetSkillKindInfo
+CUINPCPetShop	549	CUIBase	Y	MoFTexts.txt, cltItemKindInfo
+CUINPCQuest	869	CUIBase	Y	MoFTexts.txt, cltNPCInfo, cltQuestKindInfo
+CUINPCTest	642	CUIBase	Y	MoFTexts.txt, cltNPCInfo, cltQuestionKindInfo
+CUIOption	1106	CUIBase	Y	MoFTexts.txt
+CUIPartyInfo	793	CUIBase	Y	MoFTexts.txt, cltSkillKindInfo
+CUIPetInfo	1657	CUIBase	Y	MoFTexts.txt, cltClientPetKindInfo, cltItemKindInfo, cltPetKindInfo, cltPetSkillKindInfo
+CUIPetKeeping	507	CUIBase	Y	MoFTexts.txt, cltClientPetKindInfo, cltPetKindInfo
+CUIPetMarketInfo	1041	CUIBase	Y	MoFTexts.txt, cltClientPetKindInfo, cltPetKindInfo
+CUIPetMarketRegister	473	CUIBase	Y	MoFTexts.txt, cltClientPetKindInfo, cltPetKindInfo
+CUIPetRelease	347	CUIBase	Y	MoFTexts.txt, cltClientPetKindInfo, cltPetKindInfo
+CUIPetSellInfo	303	CUIBase	Y	MoFTexts.txt, cltClientPetKindInfo, cltPetKindInfo
+CUIPopMenu	542	CUIBase	N	
+CUIPostIt	497	CUIBase	N	
+CUIPrivateShop	1648	CUIBase	Y	MoFTexts.txt, cltItemKindInfo
+CUIQuest	1550	CUIBase	Y	MoFTexts.txt, cltNPCInfo, cltQuestKindInfo, cltRegenMonsterKindInfo
+CUIQuestAlarm	1172	CUIBase	Y	MoFTexts.txt, cltInstantDungeonKindInfo, cltInstantDungeonMapKindInfo, cltItemKindInfo, cltQuestKindInfo
+CUIQuickChatting	1170	CUIBase	Y	MoFTexts.txt
+CUIRecall	253	CUIBase	Y	MoFTexts.txt
+CUIReceivePet	282	CUIBase	Y	MoFTexts.txt, cltClientPetKindInfo, cltPetKindInfo
+CUISalesAgencyMyList	290	CUIBase	Y	cltItemKindInfo
+CUISalesAgencyReceive	383	CUIBase	Y	MoFTexts.txt, cltItemKindInfo
+CUISalesAgencyRegist	571	CUIBase	Y	MoFTexts.txt, cltItemKindInfo
+CUISalesAgencySearch	1214	CUIBase	Y	MoFTexts.txt, cltItemKindInfo
+CUIScholarShip	250	CUIBase	Y	MoFTexts.txt
+CUISetEmoticon	226	CUIBase	Y	cltEmoticonKindInfo
+CUIShopNPC	3302	CUIBase	Y	MoFTexts.txt, cltClassKindInfo, cltItemKindInfo
+CUIShopNPCEmblem	393	CUIBase	Y	MoFTexts.txt, cltEmblemKindInfo
+CUISkill	412	CUIBase	Y	MoFTexts.txt, cltSkillKindInfo, cltSpecialtyKindInfo
+CUISkillShop	561	CUIBase	Y	MoFTexts.txt, cltClassKindInfo, cltSkillKindInfo
+CUIStorage	1838	CUIBase	Y	MoFTexts.txt, cltItemKindInfo
+CUITitleMsgBox	169	CUIBase	Y	MoFTexts.txt
+CUITradeUser	865	CUIBase	Y	MoFTexts.txt, cltItemKindInfo
+CUIUserInfo	290	CUIBase	Y	MoFTexts.txt, cltClassKindInfo, cltPKRankKindInfo
+CUIViewInstanceProject	611	CUIBase	Y	MoFTexts.txt, cltInstantDungeonKindInfo, cltInstantDungeonMapKindInfo, cltItemKindInfo
+CUIWarMeritorious	580	CUIBase	Y	MoFTexts.txt
+CUIWeddingInvitation	516	CUIBase	Y	MoFTexts.txt
+CUIWishTree	82	CUIBase	N	
+CUIWorldMap	1521	CUIBase	Y	cltMapInfo, cltNPCInfo, cltQuestKindInfo, cltRegenMonsterKindInfo
+CUIMessageBoxCalc	469	CUIMessageBoxBase	Y	MoFTexts.txt
+CUIMessageBoxEdit	604	CUIMessageBoxBase	N	
+CUIMessageBoxList	529	CUIMessageBoxBase	N	
+CUIMessageBoxMultLineOK	172	CUIMessageBoxBase	Y	MoFTexts.txt
+CUIMessageBoxMultLineOKLarge	172	CUIMessageBoxBase	Y	MoFTexts.txt
+CUIMessageBoxNotice	95	CUIMessageBoxBase	N	
+CUIMessageBoxOK	530	CUIMessageBoxBase	Y	MoFTexts.txt
+CUIMessageBoxRadioList	203	CUIMessageBoxBase	Y	MoFTexts.txt
+CUIMessageBoxSortList	199	CUIMessageBoxBase	N	
+CUITutorial	330	CUIMessageBoxBase	Y	MoFTexts.txt
