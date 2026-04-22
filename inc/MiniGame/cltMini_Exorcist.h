@@ -157,10 +157,8 @@ public:
     std::uint8_t     m_difficultyByte;  // BYTE[588]：1/2/4
     std::uint8_t     m_prevState;       // BYTE[2061]
 
+    // m_serverAck / m_serverResult / m_serverValid 由 base class 提供。
     std::uint32_t    m_finalReady;      // DWORD[138]
-    std::uint32_t    m_serverAck;       // DWORD[139]
-    std::uint32_t    m_serverResult;    // DWORD[140]
-    std::uint32_t    m_serverValid;     // DWORD[141]
     std::uint32_t    m_startTick;       // DWORD[145]
     std::uint32_t    m_serverTimeMs;    // DWORD[146]
     std::uint32_t    m_exitTick;        // DWORD[150]

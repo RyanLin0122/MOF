@@ -154,10 +154,11 @@ public:
     std::uint8_t  m_difficulty;            // 1/2/4 = Easy/Normal/Hard
 
     // --- 與結算相關 ---
+    // m_serverAck / m_serverResult / m_serverValid 由 base class 提供，
+    // 且實際 writer 是 cltMoF_MiniGame_Mgr::SetMiniGameResult（以 base
+    // pointer 存取）。不在 derived 重新宣告，避免 field shadowing 造成
+    // 伺服器 ACK 打不到 derived EndStage 讀取點。
     std::uint32_t m_finalReady;
-    std::uint32_t m_serverAck;
-    std::uint32_t m_serverResult;
-    std::uint32_t m_serverValid;
     std::uint32_t m_startTick;
     std::uint32_t m_serverTimeMs;
     std::uint32_t m_exitTick;

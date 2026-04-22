@@ -74,6 +74,16 @@ void COgg::Play(const char* filePath) {
         m_pMemoryBuffer = nullptr;
     }
 
+    // GameSound 是 global，其建構子於 static-init 跑 Initalize()，當時讀到的
+    // g_bLoadOggFromMofPack 可能與 Play 當下不一致（例如 MiniGame debug mode
+    // 會在 main() 才把旗標改成 0）。依現值修正 LOADMEMORY bit，避免走 file-path
+    // 分支時殘留 FSOUND_LOADMEMORY 造成 FSOUND_Stream_Open silent fail。
+    if (g_bLoadOggFromMofPack) {
+        m_nStreamOpenMode |= FSOUND_LOADMEMORY;
+    } else {
+        m_nStreamOpenMode &= ~FSOUND_LOADMEMORY;
+    }
+
     // 根據模式載入
     if (g_bLoadOggFromMofPack) {
         OpenStreem(filePath);

@@ -108,10 +108,8 @@ public:
     int             m_displayScore;        // DWORD[10]: 最終得分
 
     // --- 控制旗標 ---
+    // m_serverAck / m_serverResult / m_serverValid 由 base class 提供。
     int             m_gameActive;          // DWORD[138]
-    int             m_serverAck;           // DWORD[139]
-    int             m_serverResult;        // DWORD[140]
-    int             m_serverValid;         // DWORD[141]
     std::uint32_t   m_startTick;           // DWORD[145]
     int             m_drawAlphaBox;        // DWORD[211]
     std::uint32_t   m_timerId;             // DWORD[149]

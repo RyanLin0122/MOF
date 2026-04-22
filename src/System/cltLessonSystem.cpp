@@ -251,7 +251,13 @@ int cltLessonSystem::TraningLessonFinished(unsigned int seed, std::uint8_t hitTy
     }
 
 finish_check:
-    if (idx != 3 && m_lessonState[idx + 1]) return 0;
+    // mofclient.c 309173：`v6 != 3 && *((_BYTE *)this + v6 + 49)`。
+    //   v6=4（goto path，整個 schedule 沒有 state==1 的 lesson）時，原始碼
+    //   會讀 m_lessonState[5]（OOB）；raw memory 通常為 0，條件 false 自然
+    //   掉進 ScheduleFinished。std::array 有邊界檢查會直接 assert。
+    //   改成 `idx < 3` 可保留 idx∈{0,1,2} 的原語意，idx∈{3,4} 都直接跳過
+    //   檢查、進 ScheduleFinished（原本 idx=4 的 OOB 讀 0 等價此行為）。
+    if (idx < 3 && m_lessonState[idx + 1]) return 0;
     ScheduleFinished();
     return 1;
 }

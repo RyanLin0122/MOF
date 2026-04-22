@@ -166,10 +166,8 @@ public:
     std::uint32_t m_pollFrame;             // DWORD[3949] poll frame 計數
 
     // --- 與結算相關 ---
+    // m_serverAck / m_serverResult / m_serverValid 由 base class 提供。
     int           m_firstTimeEnd;          // DWORD[138]
-    std::uint32_t m_serverAck;             // DWORD[139]
-    std::uint32_t m_serverResult;          // DWORD[140]
-    std::uint32_t m_serverValid;           // DWORD[141]
     std::uint32_t m_startTick;             // DWORD[145]
     std::uint32_t m_exitTick;              // DWORD[150]
 

@@ -157,10 +157,8 @@ public:
     int        m_drawAlphaBox;
 
     // 與結算 popup 相關
+    // m_serverAck / m_serverResult / m_serverValid 由 base class 提供。
     uint32_t   m_finalReady;              // dword 138
-    uint32_t   m_serverAck;               // dword 139
-    uint32_t   m_serverResult;            // dword 140
-    uint32_t   m_serverValid;             // dword 141
     uint32_t   m_serverTimeMs;            // dword 146
     uint32_t   m_exitTick;                // dword 150
 

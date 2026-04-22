@@ -423,6 +423,49 @@ static void UpdateMiniGameDebug(float fElapsedTime)
 
     if (!g_pDebugMiniGame) return;
 
+    // Debug mode 沒有真正的 server，但各 minigame 的 EndStage 需要 server ACK
+    // 才能顯示結果 popup 並最終 Init_Wait 回主選單（見
+    // cltMoF_MiniGame_Mgr::SetMiniGameResult 0x5BF4E0）。這裡在進入 state 6
+    // 之後延遲約 300ms 模擬一次 server ACK，對齊 real play 的網路延遲感。
+    {
+        unsigned state = 0;
+        switch (g_iDebugMiniGameChoice) {
+        case 1: state = g_cGameSwordState;      break;
+        case 2: state = g_cGameSword_2State;    break;
+        case 3: state = g_cGameBowState;        break;
+        case 4: state = g_cGameBow_2State;      break;
+        case 5: state = g_cGameMagicState;      break;
+        case 6: state = g_cGameMagic_2State;    break;
+        case 7: state = g_cGameExorcistState;   break;
+        case 8: state = g_cGameExorcist_2State; break;
+        default: break;
+        }
+
+        static cltMoF_BaseMiniGame* s_lastGame = nullptr;
+        static DWORD s_state6EnterTick = 0;
+        if (s_lastGame != g_pDebugMiniGame) {
+            s_lastGame = g_pDebugMiniGame;
+            s_state6EnterTick = 0;
+        }
+
+        if (state == 6) {
+            if (s_state6EnterTick == 0) {
+                s_state6EnterTick = now;
+            }
+            if (now - s_state6EnterTick > 300 && !g_pDebugMiniGame->m_serverAck) {
+                // 對齊 SetMiniGameResult：v3[140]=result, v3[522]=seed,
+                // v3[139]=1, v3[141]=1
+                g_pDebugMiniGame->m_serverResult = 1;
+                g_pDebugMiniGame->m_dword522     = 0;
+                g_pDebugMiniGame->m_serverAck    = 1;
+                g_pDebugMiniGame->m_serverValid  = 1;
+            }
+        }
+        else {
+            s_state6EnterTick = 0;
+        }
+    }
+
     if (g_pDebugMiniGame->Poll()) {
         delete g_pDebugMiniGame;
         g_pDebugMiniGame = SelectAndCreateMiniGameFromConsole();

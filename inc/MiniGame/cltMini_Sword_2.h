@@ -119,10 +119,8 @@ public:
     std::uint8_t  m_showTime2;               // byte 568 : 主選單 Start 按鈕 state（4=已打完）
     std::uint8_t  m_difficulty;              // byte 588 : 1/2/4 = easy/normal/hard
 
+    // m_serverAck / m_serverResult / m_serverValid 由 base class 提供。
     std::uint32_t m_finalReady;              // DWORD[138]：首次進 EndStage 需算分
-    std::uint32_t m_serverAck;               // DWORD[139]
-    std::uint32_t m_serverResult;            // DWORD[140]
-    std::uint32_t m_serverValid;             // DWORD[141]
     std::uint32_t m_startTick;               // DWORD[145]：開始時間
     std::uint32_t m_serverTimeMs;            // DWORD[146]：本局耗時
     std::uint32_t m_exitTick;                // DWORD[150]：結算開始 tick
