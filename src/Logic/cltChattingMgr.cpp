@@ -106,36 +106,30 @@ void cltChattingMgr::Initialize(DCTIMMList* pIMMList, DirectInputManager* pInput
     std::memset(m_szWritedHistory, 0, sizeof(m_szWritedHistory));
     std::memset(m_szCmdPrefix, 0, sizeof(m_szCmdPrefix));
 
-    // Localised channel prefixes.
-    struct { int idx; int textId; bool trailingSpace; } kPrefixes[] = {
-        { PREFIX_PARTY,   3661, true  },
-        { PREFIX_WHISPER, 3076, true  },
-        { PREFIX_CIRCLE,  3382, true  },
-        { PREFIX_INVITE,  4602, true  },
-        { PREFIX_BAN,     4603, true  },
-        { PREFIX_USER,    3478, true  },
-        { PREFIX_HELP,    3623, false },
-        { PREFIX_CJOIN,   3719, true  },
-        { PREFIX_CKICK,   3752, true  },
-        { PREFIX_COUT,    3720, false },
-        { PREFIX_POUT,    3074, false },
-        { PREFIX_REPLY,   3934, true  },
-        { PREFIX_PARTNER, 8355, false },
-    };
-    for (auto& p : kPrefixes) {
-        const char* src = g_DCTTextManager.GetText(p.textId);
-        if (src) {
-            std::strncpy(m_szCmdPrefix[p.idx], src, sizeof(m_szCmdPrefix[p.idx]) - 1);
-            m_szCmdPrefix[p.idx][sizeof(m_szCmdPrefix[p.idx]) - 1] = '\0';
-        }
-        if (p.trailingSpace) {
-            size_t len = std::strlen(m_szCmdPrefix[p.idx]);
-            if (len + 1 < sizeof(m_szCmdPrefix[p.idx])) {
-                m_szCmdPrefix[p.idx][len]     = ' ';
-                m_szCmdPrefix[p.idx][len + 1] = '\0';
-            }
-        }
-    }
+    // Localised channel prefixes.  Ground truth uses raw strcpy/strcat into
+    // fixed-20-byte slots (no length protection).
+    std::strcpy(m_szCmdPrefix[PREFIX_PARTY],   g_DCTTextManager.GetText(3661));
+    std::strcpy(m_szCmdPrefix[PREFIX_WHISPER], g_DCTTextManager.GetText(3076));
+    std::strcpy(m_szCmdPrefix[PREFIX_CIRCLE],  g_DCTTextManager.GetText(3382));
+    std::strcpy(m_szCmdPrefix[PREFIX_INVITE],  g_DCTTextManager.GetText(4602));
+    std::strcpy(m_szCmdPrefix[PREFIX_BAN],     g_DCTTextManager.GetText(4603));
+    std::strcpy(m_szCmdPrefix[PREFIX_USER],    g_DCTTextManager.GetText(3478));
+    std::strcpy(m_szCmdPrefix[PREFIX_HELP],    g_DCTTextManager.GetText(3623));
+    std::strcpy(m_szCmdPrefix[PREFIX_CJOIN],   g_DCTTextManager.GetText(3719));
+    std::strcpy(m_szCmdPrefix[PREFIX_CKICK],   g_DCTTextManager.GetText(3752));
+    std::strcpy(m_szCmdPrefix[PREFIX_COUT],    g_DCTTextManager.GetText(3720));
+    std::strcpy(m_szCmdPrefix[PREFIX_POUT],    g_DCTTextManager.GetText(3074));
+    std::strcpy(m_szCmdPrefix[PREFIX_REPLY],   g_DCTTextManager.GetText(3934));
+    std::strcpy(m_szCmdPrefix[PREFIX_PARTNER], g_DCTTextManager.GetText(8355));
+    std::strcat(m_szCmdPrefix[PREFIX_PARTY],   " ");
+    std::strcat(m_szCmdPrefix[PREFIX_WHISPER], " ");
+    std::strcat(m_szCmdPrefix[PREFIX_CIRCLE],  " ");
+    std::strcat(m_szCmdPrefix[PREFIX_INVITE],  " ");
+    std::strcat(m_szCmdPrefix[PREFIX_BAN],     " ");
+    std::strcat(m_szCmdPrefix[PREFIX_USER],    " ");
+    std::strcat(m_szCmdPrefix[PREFIX_CJOIN],   " ");
+    std::strcat(m_szCmdPrefix[PREFIX_CKICK],   " ");
+    std::strcat(m_szCmdPrefix[PREFIX_REPLY],   " ");
 }
 
 //----- (004F6E50) -----------------------------------------------------------
@@ -228,20 +222,18 @@ int cltChattingMgr::GetChatWritedString(int direction, char* out) {
 
 //----- (004F71A0) -----------------------------------------------------------
 void cltChattingMgr::Poll() {
-    // Ground truth outer gate (byte-for-byte):
+    // Ground truth outer gate (byte-for-byte, no null guard):
     //   if ( *((_DWORD *)this + 6702)               -- m_bChatEnabled
     //     && g_dwMainGameState == 10
     //     && !*((_DWORD *)m_pclMyChatData + 19) )   -- cltMyCharData + 76
     //   { ... }
-    // cltMyCharData is opaque so the +76 DWORD is read via raw offset.
-    auto isChatBlocked = [](const cltMyCharData* data) -> bool {
-        if (!data) return true;
-        return *reinterpret_cast<const std::uint32_t*>(
-                   reinterpret_cast<const char*>(data) + 76) != 0;
-    };
+    // cltMyCharData is opaque so the +76 DWORD is read via raw offset.  The
+    // ground truth dereferences m_pclMyChatData without a null check; the
+    // Initialize() call sets it before Poll can run.
+    const std::uint32_t chatBanned = *reinterpret_cast<const std::uint32_t*>(
+        reinterpret_cast<const char*>(m_pclMyChatData) + 76);
 
-    if (!m_bChatEnabled || g_dwMainGameState != 10 ||
-        isChatBlocked(m_pclMyChatData)) {
+    if (!m_bChatEnabled || g_dwMainGameState != 10 || chatBanned) {
         return;
     }
 
@@ -303,7 +295,9 @@ void cltChattingMgr::Poll() {
                         if (!DispatchChatOrder(rawText + 1)) {
                             char* err = g_DCTTextManager.GetText(58064);
                             cltSystemMessage::SetSystemMessage(&g_clSysemMessage, err, 0, 0, 0);
-                            if (m_pNetwork) m_pNetwork->SysCommand(rawText);
+                            // Ground truth: CMoFNetwork::SysCommand(m_pNetwork, ...)
+                            // with no null check on m_pNetwork.
+                            m_pNetwork->SysCommand(rawText);
                         }
                     } else {
                         // mofclient.c: when the basic UI's "remember last chat"
@@ -924,31 +918,41 @@ int cltChattingMgr::DispatchChatOrder(char* text) {
         return 1;
     }
 
-    auto try_prefix = [&](const char* english, int localIdx, void (cltChattingMgr::*handler)(char*)) -> bool {
+    // Ground truth compares English prefixes with _strnicmp (case-insensitive)
+    // and local prefixes with a MIX of _strncmp / _strnicmp depending on which
+    // command they alias:
+    //   case-sensitive (_strncmp): PARTY, WHISPER, INVITE, BAN, USER, HELP
+    //   case-insensitive (_strnicmp): CIRCLE, CJOIN, CKICK, COUT, POUT, REPLY, PARTNER
+    auto try_prefix = [&](const char* english, int localIdx,
+                          bool localCaseSensitive,
+                          void (cltChattingMgr::*handler)(char*)) -> bool {
         if (StartsWithI(text, english)) {
             (this->*handler)(text + std::strlen(english));
             return true;
         }
-        if (StartsWith(text, m_szCmdPrefix[localIdx])) {
+        bool hit = localCaseSensitive
+                       ? StartsWith(text, m_szCmdPrefix[localIdx])
+                       : StartsWithI(text, m_szCmdPrefix[localIdx]);
+        if (hit) {
             (this->*handler)(text + std::strlen(m_szCmdPrefix[localIdx]));
             return true;
         }
         return false;
     };
 
-    if (try_prefix("P ",      PREFIX_PARTY,   &cltChattingMgr::DispatchChatOrder_PartyChat))    return 1;
-    if (try_prefix("W ",      PREFIX_WHISPER, &cltChattingMgr::DispatchChatOrder_Whisper))      return 1;
-    if (try_prefix("invite ", PREFIX_INVITE,  &cltChattingMgr::DispatchChatOrder_JoinParty))    return 1;
-    if (try_prefix("ban ",    PREFIX_BAN,     &cltChattingMgr::DispatchChatOrder_KickoutParty)) return 1;
-    if (try_prefix("user ",   PREFIX_USER,    &cltChattingMgr::DispatchChatOrder_DetailCharInfo)) return 1;
-    if (try_prefix("?",       PREFIX_HELP,    &cltChattingMgr::DispatchChatOrder_Help))         return 1;
-    if (try_prefix("CI ",     PREFIX_CJOIN,   &cltChattingMgr::DispatchChatOrder_JoinCircle))   return 1;
-    if (try_prefix("CB ",     PREFIX_CKICK,   &cltChattingMgr::DispatchChatOrder_KickoutCircle)) return 1;
-    if (try_prefix("CE",      PREFIX_COUT,    &cltChattingMgr::DispatchChatOrder_OutCircle))    return 1;
-    if (try_prefix("PE",      PREFIX_POUT,    &cltChattingMgr::DispatchChatOrder_OutParty))     return 1;
-    if (try_prefix("C ",      PREFIX_CIRCLE,  &cltChattingMgr::DispatchChatOrder_CircleChat))   return 1;
-    if (try_prefix("R ",      PREFIX_REPLY,   &cltChattingMgr::DispatchChatOrder_ResWhisper))   return 1;
-    if (try_prefix("honey",   PREFIX_PARTNER, &cltChattingMgr::DispatchChatOrder_PartnerRecall)) return 1;
+    if (try_prefix("P ",      PREFIX_PARTY,   true,  &cltChattingMgr::DispatchChatOrder_PartyChat))    return 1;
+    if (try_prefix("W ",      PREFIX_WHISPER, true,  &cltChattingMgr::DispatchChatOrder_Whisper))      return 1;
+    if (try_prefix("invite ", PREFIX_INVITE,  true,  &cltChattingMgr::DispatchChatOrder_JoinParty))    return 1;
+    if (try_prefix("ban ",    PREFIX_BAN,     true,  &cltChattingMgr::DispatchChatOrder_KickoutParty)) return 1;
+    if (try_prefix("user ",   PREFIX_USER,    true,  &cltChattingMgr::DispatchChatOrder_DetailCharInfo)) return 1;
+    if (try_prefix("?",       PREFIX_HELP,    true,  &cltChattingMgr::DispatchChatOrder_Help))         return 1;
+    if (try_prefix("CI ",     PREFIX_CJOIN,   false, &cltChattingMgr::DispatchChatOrder_JoinCircle))   return 1;
+    if (try_prefix("CB ",     PREFIX_CKICK,   false, &cltChattingMgr::DispatchChatOrder_KickoutCircle)) return 1;
+    if (try_prefix("CE",      PREFIX_COUT,    false, &cltChattingMgr::DispatchChatOrder_OutCircle))    return 1;
+    if (try_prefix("PE",      PREFIX_POUT,    false, &cltChattingMgr::DispatchChatOrder_OutParty))     return 1;
+    if (try_prefix("C ",      PREFIX_CIRCLE,  false, &cltChattingMgr::DispatchChatOrder_CircleChat))   return 1;
+    if (try_prefix("R ",      PREFIX_REPLY,   false, &cltChattingMgr::DispatchChatOrder_ResWhisper))   return 1;
+    if (try_prefix("honey",   PREFIX_PARTNER, false, &cltChattingMgr::DispatchChatOrder_PartnerRecall)) return 1;
     return 0;
 }
 
