@@ -133,17 +133,19 @@ unsigned char cltClientCharKindInfo::GetCharLevel(unsigned short a2)
 }
 
 // (0x004015B0)
-void* cltClientCharKindInfo::IsFieldItemBox(unsigned short a2)
+stCharKindInfo* cltClientCharKindInfo::IsFieldItemBox(unsigned short a2)
 {
     // mofclient.c:
     //   result = GetCharKindInfo(this, a2);
     //   if ( result )
     //     result = *((_DWORD *)GetCharKindInfo(this, a2) + 59);  // offset 236
     //   return result;
-    void* result = cltCharKindInfo::GetCharKindInfo(a2);
+    stCharKindInfo* result =
+        reinterpret_cast<stCharKindInfo*>(cltCharKindInfo::GetCharKindInfo(a2));
     if (result) {
         void* inner = cltCharKindInfo::GetCharKindInfo(a2);
-        result = *(reinterpret_cast<void**>(reinterpret_cast<char*>(inner) + 236));
+        result = *reinterpret_cast<stCharKindInfo**>(
+            reinterpret_cast<char*>(inner) + 236);
     }
     return result;
 }

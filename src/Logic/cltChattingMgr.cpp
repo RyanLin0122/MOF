@@ -228,13 +228,22 @@ int cltChattingMgr::GetChatWritedString(int direction, char* out) {
 //----- (004F71A0) -----------------------------------------------------------
 void cltChattingMgr::Poll() {
     // Ground truth gate: chat is only active in-game (main-state 10) and when
-    // cltMyCharData is not in a "no-chat" state.  The latter is stored at
-    // offset 76 of cltMyCharData in the decompiled struct; our restored
-    // cltMyCharData does not expose it, so we behave as if it were always 0.
-    if (!m_bChatPostReady || g_dwMainGameState != 10 || !m_pclMyChatData) {
+    // the "no-chat" flag at cltMyCharData + 76 (*(DWORD*)((char*)self + 76),
+    // equivalently *((DWORD*)self + 19)) is zero.  cltMyCharData is opaque in
+    // this restoration, so we read that DWORD via raw offset — matching the
+    // decompiled `!*((_DWORD *)cltChattingMgr::m_pclMyChatData + 19)` gate.
+    auto isChatBlocked = [](const cltMyCharData* data) -> bool {
+        if (!data) return true;
+        return *reinterpret_cast<const std::uint32_t*>(
+                   reinterpret_cast<const char*>(data) + 76) != 0;
+    };
+
+    if (!m_bChatPostReady || g_dwMainGameState != 10 ||
+        !m_pclMyChatData || isChatBlocked(m_pclMyChatData)) {
         // Still drive the live input-line redraw even when submission is not
         // pending, so the cursor keeps blinking.
-        if (g_dwMainGameState == 10 && m_pclMyChatData) {
+        if (g_dwMainGameState == 10 && m_pclMyChatData &&
+            !isChatBlocked(m_pclMyChatData)) {
             SendInputChat();
         }
         return;
@@ -304,9 +313,18 @@ void cltChattingMgr::Poll() {
                         if (m_pNetwork) m_pNetwork->SysCommand(rawText);
                     }
                 } else {
-                    // mofclient.c: when the basic UI is in "remember last
-                    // chat" mode, snapshot the outgoing text.  The UI window
-                    // is not restored yet, so we skip the snapshot.
+                    // mofclient.c: when the basic UI's "remember last chat"
+                    // flag at offset 449284 is 1, snapshot the outgoing text
+                    // into this+79944 (m_szLastChatSent).  CUIBasic is not
+                    // fully restored, so reach the flag via raw offset.
+                    CUIBase* pUIWindow = g_UIMgr ? g_UIMgr->GetUIWindow(0) : nullptr;
+                    if (pUIWindow &&
+                        *reinterpret_cast<const std::uint32_t*>(
+                            reinterpret_cast<const char*>(pUIWindow) + 449284) == 1) {
+                        std::strncpy(m_szLastChatSent, rawText,
+                                     sizeof(m_szLastChatSent) - 1);
+                        m_szLastChatSent[sizeof(m_szLastChatSent) - 1] = '\0';
+                    }
                     SendChattingMsg(rawText);
                 }
             }
@@ -880,10 +898,13 @@ int cltChattingMgr::DispatchChatOrder(char* text) {
     ClientCharacter* me = m_pClientCharMgr ? m_pClientCharMgr->GetMyCharacterPtr() : nullptr;
     if (!me) return 0;
 
-    // The ground truth reads offset +11540 (= *(_DWORD*)me + 2885) for a
-    // "skip validation" flag that GMs set.  Until it's restored we always run
-    // the name-length validation.
-    if (!IsValidCharName(text)) {
+    // Ground truth: skip the IsValidCharName check when the GM / special-auth
+    // flag at ClientCharacter + 11540 (= *((_DWORD*)me + 2885)) is non-zero.
+    // ClientCharacter doesn't expose the field so we read it via raw offset.
+    const std::uint32_t gmBypass =
+        *reinterpret_cast<const std::uint32_t*>(
+            reinterpret_cast<const char*>(me) + 11540);
+    if (!gmBypass && !IsValidCharName(text)) {
         const char* err = g_DCTTextManager.GetText(4745);
         cltSystemMessage::SetSystemMessage(&g_clSysemMessage, err, 0, 0, 0);
         return 1;
