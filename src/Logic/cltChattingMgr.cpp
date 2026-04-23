@@ -230,6 +230,16 @@ void cltChattingMgr::Poll() {
     // cltMyCharData is opaque so the +76 DWORD is read via raw offset.  The
     // ground truth dereferences m_pclMyChatData without a null check; the
     // Initialize() call sets it before Poll can run.
+    //
+    // TODO(raw-offset #1): cltMyCharData + 76 (= *((_DWORD*)this + 19)).
+    //   Known : DWORD; non-zero blocks Poll from processing any chat.
+    //   Distinct from the +104 "CanNotChatting" flag (that one is checked
+    //   inside SetChatState below via the wrapper).
+    //   Unknown: semantic name, setter.  Resolve by grepping mofclient.c /
+    //   xrefing IDA for writes to `cltMyCharData + 76` — likely a
+    //   chat-disable toggle distinct from the mute/ban flag.  Until then we
+    //   have to keep reading via raw offset because the field is not part
+    //   of the restored cltMyCharData layout.
     const std::uint32_t chatBanned = *reinterpret_cast<const std::uint32_t*>(
         reinterpret_cast<const char*>(m_pclMyChatData) + 76);
 
@@ -300,10 +310,23 @@ void cltChattingMgr::Poll() {
                             m_pNetwork->SysCommand(rawText);
                         }
                     } else {
-                        // mofclient.c: when the basic UI's "remember last chat"
-                        // flag at offset 449284 is 1, snapshot the outgoing text
-                        // into this+79944 (m_szLastChatSent).  CUIBasic is not
-                        // fully restored, so reach the flag via raw offset.
+                        // Shout-Event answer capture.  When a GM-driven Shout
+                        // Event is active, CUIBasic's flag at +449284 is 1 (the
+                        // same flag CUIBasic::OnShoutEventTimer_Poll reads at
+                        // mofclient.c:171718 to know whether to paint the event
+                        // UI and call CMoFNetwork::ShoutEventAnswer).  While
+                        // that flag is set, every chat line the player sends is
+                        // snapshotted into m_szLastChatSent as the candidate
+                        // answer.  CUIBasic is not fully restored, so we read
+                        // the flag via raw offset.
+                        //
+                        // TODO(raw-offset #3): CUIBasic + 0x6DB04 (= 449284).
+                        //   Known : DWORD; non-zero = Shout Event active.
+                        //   Unknown: CUIBasic member name, setter location.
+                        //   xref `+ 449284` / `+ 6DB04h` writes in IDA — the
+                        //   setter sits in the Shout-Event packet handler
+                        //   (likely alongside the +449028 question-text buffer
+                        //   that OnShoutEventTimer_Poll also touches).
                         CUIBase* pUIWindow = g_UIMgr ? g_UIMgr->GetUIWindow(0) : nullptr;
                         if (pUIWindow &&
                             *reinterpret_cast<const std::uint32_t*>(
@@ -701,6 +724,9 @@ void cltChattingMgr::SetChatBuffer(std::uint16_t channel, char* name, char* mess
     //       v10 = -16776961;
     // ClientCharacter does not expose the offset-11540 flag through a named
     // member, so read it via raw offset like the other call sites do.
+    //
+    // TODO(raw-offset #2): see the single-site explanation in
+    // DispatchChatOrder (below).  Same field, different consumer.
     if (name) {
         ClientCharacter* target = g_ClientCharMgr.GetCharByName(name);
         if (target && *reinterpret_cast<const std::uint32_t*>(
@@ -909,6 +935,16 @@ int cltChattingMgr::DispatchChatOrder(char* text) {
     // Ground truth: skip the IsValidCharName check when the GM / special-auth
     // flag at ClientCharacter + 11540 (= *((_DWORD*)me + 2885)) is non-zero.
     // ClientCharacter doesn't expose the field so we read it via raw offset.
+    //
+    // TODO(raw-offset #2): ClientCharacter + 0x2D14 (= 11540).
+    //   Known : DWORD; non-zero = GM or other privileged account (bypass
+    //           IsValidCharName in the slash-command path, and paint PK
+    //           chat bubbles bright blue — see SetChatBuffer).
+    //   Unknown: semantic name (almost certainly m_bIsGM / m_nAuthLevel),
+    //           setter.  The setter is expected in the login / character-
+    //           spawn packet handler; xref `+ 11540` / `+ 0x2D14` writes in
+    //           IDA to confirm and promote the field to a named member on
+    //           ClientCharacter.
     const std::uint32_t gmBypass =
         *reinterpret_cast<const std::uint32_t*>(
             reinterpret_cast<const char*>(me) + 11540);

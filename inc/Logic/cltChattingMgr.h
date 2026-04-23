@@ -192,7 +192,14 @@ private:
     // Embedded emoticon-system (original had it at offset 79676).
     cltMoFC_EmoticonSystem m_EmoticonSystem{};
 
-    // Last chat line sent (saved when the basic UI is in "remember" mode).
+    // Shout-Event answer buffer (ground-truth offset this+79944).  While a
+    // GM-driven Shout Event is active (CUIBasic +449284 == 1), Poll snapshots
+    // every outgoing chat line here as the candidate answer — see the
+    // TODO(raw-offset #3) block in cltChattingMgr.cpp.  The identifier is
+    // retained as m_szLastChatSent because the symbol name is not yet known
+    // from the decompilation; rename to m_szShoutEventAnswer once the
+    // containing CUIBasic flag is identified and the Shout-Event path is
+    // fully restored.
     char         m_szLastChatSent[256]{};
 
     // Function-static counter from mofclient.c

@@ -22,13 +22,69 @@ int CShortKey::m_nDefaultKey[CShortKey::KEY_COUNT] = { 0 };
 strBoardKey CShortKey::m_strBoardKey[CShortKey::BOARD_CAPACITY];
 
 // Text IDs used by DCTTextManager::GetParsedText to print localized labels
-// for each of the 56 short-key slots.  Only the first two entries are visible
-// in the decompiled `m_wUserKeyName = 243928713` (= 0x0E8A0E89, little-endian:
-// low uint16 = 0x0E89 = 3721, high uint16 = 0x0E8A = 3722).  The remaining 54
-// entries live in the data section beyond what the decompilation captured; we
-// leave them at 0 so GetText returns the default "no text" string.
+// for each of the 56 short-key slots (recovered from the binary data section
+// at VA 0x006C86AC — Hex-Rays collapsed the whole 112-byte uint16 array into
+// the bogus `int m_wUserKeyName = 243928713` declaration at mofclient.c:21630,
+// but the raw bytes are intact).  GetUserKeyName() skips index -1 and 42.
+// Label column is the Korean string the ID resolves to in MoFTexts.txt; the
+// slot order matches the KEYTYPE_* assignments in InitStaticDefaultKey below.
 uint16_t CShortKey::m_wUserKeyName[CShortKey::KEY_COUNT] = {
-    0x0E89, 0x0E8A,
+    0x0E89,  // [ 0] 메뉴          — 選單        / Menu               (KEYTYPE_MENU)
+    0x0E8A,  // [ 1] 도움말        — 說明        / Help               (KEYTYPE_HELP)
+    0x0E8B,  // [ 2] 키입력        — 按鍵設定    / Key setting        (KEYTYPE_KEYSETTING)
+    0x0E8C,  // [ 3] 스샷          — 螢幕截圖    / Screenshot         (KEYTYPE_SCREENCAPTURE)
+    0x20B8,  // [ 4] 동영상 찍기   — 錄影        / Record video (AVI) (KEYTYPE_MAKEAVI)
+    0x0E8D,  // [ 5] 슬롯1         — 快捷列 1    / QSL slot 1         (KEYTYPE_QSL1)
+    0x0E8E,  // [ 6] 슬롯2         — 快捷列 2    / QSL slot 2
+    0x0E8F,  // [ 7] 슬롯3         — 快捷列 3    / QSL slot 3
+    0x0E90,  // [ 8] 슬롯4         — 快捷列 4    / QSL slot 4
+    0x0E91,  // [ 9] 슬롯5         — 快捷列 5    / QSL slot 5
+    0x0E92,  // [10] 슬롯6         — 快捷列 6    / QSL slot 6
+    0x0E93,  // [11] 슬롯7         — 快捷列 7    / QSL slot 7
+    0x0E94,  // [12] 슬롯8         — 快捷列 8    / QSL slot 8
+    0x1FF2,  // [13] 슬롯9         — 快捷列 9    / QSL slot 9
+    0x1FF3,  // [14] 슬롯 10       — 快捷列 10   / QSL slot 10
+    0x1FF4,  // [15] 슬롯 11       — 快捷列 11   / QSL slot 11
+    0x1FF5,  // [16] 슬롯 12       — 快捷列 12   / QSL slot 12        (KEYTYPE_QSL12)
+    0x0E95,  // [17] 퀘스트        — 任務        / Quest              (KEYTYPE_QUEST)
+    0x0E96,  // [18] 월드맵        — 世界地圖    / World map          (KEYTYPE_WORLDMAP)
+    0x0E97,  // [19] 장비          — 裝備        / Equipment          (KEYTYPE_EQUIP)
+    0x0E98,  // [20] 내보관함      — 倉庫        / Inventory          (KEYTYPE_INVEN)
+    0x0E99,  // [21] 환경설정      — 環境設定    / Options            (KEYTYPE_OPTION)
+    0x0E9A,  // [22] 친구          — 好友        / Friend             (KEYTYPE_FRIEND)
+    0x0E9B,  // [23] 다이어리      — 日記        / Diary              (KEYTYPE_DIARY)
+    0x0E9C,  // [24] 스킬          — 技能        / Skill              (KEYTYPE_SKILL)
+    0x0E9E,  // [25] 내정보        — 角色資訊    / My info            (KEYTYPE_MYINFO)
+    0x0E9F,  // [26] 미니맵        — 小地圖      / Minimap            (KEYTYPE_MINIMAP)
+    0x0EA2,  // [27] 채팅창        — 開啟聊天    / Chat start         (KEYTYPE_CHATSTART)
+    0x0EA7,  // [28] 채팅닫기      — 關閉聊天    / Chat end           (KEYTYPE_CHATEND)
+    0xE2D5,  // [29] 기본대화      — 一般聊天    / Basic chat         (KEYTYPE_BASICCHAT)
+    0x0F5C,  // [30] 파티대화      — 組隊聊天    / Party chat         (KEYTYPE_PARTYCHAT)
+    0x0F5D,  // [31] 서클대화      — 公會聊天    / Circle/guild chat  (KEYTYPE_CIRCLECHAT)
+    0x0F5E,  // [32] 대답          — 悄悄話回覆  / Whisper reply      (KEYTYPE_WHISPERCHAT)
+    0x10E2,  // [33] 슬롯↑         — 快捷列上頁  / QSL page up        (KEYTYPE_QSLPAGEUP)
+    0x10E3,  // [34] 슬롯↓         — 快捷列下頁  / QSL page down      (KEYTYPE_QSLPAGEDOWN)
+    0x1184,  // [35] 달리기        — 跑步切換    / Run toggle         (KEYTYPE_RUN)
+    0x1185,  // [36] 정보          — 資訊        / Info               (KEYTYPE_INFO)
+    0x1186,  // [37] 서클          — 公會視窗    / Circle/guild       (KEYTYPE_CIRCLE)
+    0x1187,  // [38] 전공          — 專精        / Major / profession (KEYTYPE_MAJOR)
+    0x1188,  // [39] 공적          — 功績        / Meritorious deeds  (KEYTYPE_MERITORIOUS)
+    0x1189,  // [40] 대항전        — 對抗戰      / Hunt / PvP         (KEYTYPE_HUNT)
+    0x118A,  // [41] 엠블렘        — 徽章        / Emblem             (KEYTYPE_EMBLEM)
+    0x12AF,  // [42] 타겟변경      — 切換目標    / Change mob target  (KEYTYPE_CHANGEMOPTARGET — GetUserKeyName skips this slot)
+    0x133E,  // [43] 퀵채팅        — 快捷聊天    / Quick chat         (KEYTYPE_QUICKCHAT)
+    0x0F7B,  // [44] 펫            — 寵物        / Pet                (KEYTYPE_PET)
+    0x1FAE,  // [45] 마이템        — 我的道具    / My item            (KEYTYPE_MYITEM)
+    0x1FD7,  // [46] UI 숨기기     — 隱藏 UI     / Hide UI            (KEYTYPE_HIDEUI)
+    0x1FF1,  // [47] 수업          — 技能修練    / Academy / lesson   (KEYTYPE_ACADEMY)
+    0x11AB,  // [48] 퀘스트알리미  — 任務提示    / Quest alarm        (KEYTYPE_QUESTALARM)
+    0x0EA1,  // [49] 동료지정      — 指定僚機    / Change companion   (KEYTYPE_CHANGETARGET)
+    0x0E9D,  // [50] 줍기          — 拾取        / Pick up / Get item (KEYTYPE_GETITEM)
+    0x0EA0,  // [51] 공격          — 攻擊        / Attack             (KEYTYPE_ATTACK)
+    0x0EA3,  // [52] 상            — 上          / Move up            (KEYTYPE_MOVEUP)
+    0x0EA4,  // [53] 좌            — 左          / Move left          (KEYTYPE_MOVELEFT)
+    0x0EA5,  // [54] 우            — 右          / Move right         (KEYTYPE_MOVERIGHT)
+    0x0EA6,  // [55] 하            — 下          / Move down          (KEYTYPE_MOVEDOWN)
 };
 
 int CShortKey::s_nKeyCount = 0;
