@@ -62,6 +62,7 @@ cltChattingMgr::cltChattingMgr() {
     m_ChatState = 0;
     m_nChatBufferCount = 0;
     std::memset(m_ChatBuffer, 0, sizeof(m_ChatBuffer));
+    m_bChatEnabled = 1;            // ground truth: *((_DWORD*)this + 6702) = 1
     m_bChatPostReady = 0;
     m_cChatFilter = 1;
     m_dwLastTime = timeGetTime();
@@ -227,115 +228,109 @@ int cltChattingMgr::GetChatWritedString(int direction, char* out) {
 
 //----- (004F71A0) -----------------------------------------------------------
 void cltChattingMgr::Poll() {
-    // Ground truth gate: chat is only active in-game (main-state 10) and when
-    // the "no-chat" flag at cltMyCharData + 76 (*(DWORD*)((char*)self + 76),
-    // equivalently *((DWORD*)self + 19)) is zero.  cltMyCharData is opaque in
-    // this restoration, so we read that DWORD via raw offset — matching the
-    // decompiled `!*((_DWORD *)cltChattingMgr::m_pclMyChatData + 19)` gate.
+    // Ground truth outer gate (byte-for-byte):
+    //   if ( *((_DWORD *)this + 6702)               -- m_bChatEnabled
+    //     && g_dwMainGameState == 10
+    //     && !*((_DWORD *)m_pclMyChatData + 19) )   -- cltMyCharData + 76
+    //   { ... }
+    // cltMyCharData is opaque so the +76 DWORD is read via raw offset.
     auto isChatBlocked = [](const cltMyCharData* data) -> bool {
         if (!data) return true;
         return *reinterpret_cast<const std::uint32_t*>(
                    reinterpret_cast<const char*>(data) + 76) != 0;
     };
 
-    if (!m_bChatPostReady || g_dwMainGameState != 10 ||
-        !m_pclMyChatData || isChatBlocked(m_pclMyChatData)) {
-        // Still drive the live input-line redraw even when submission is not
-        // pending, so the cursor keeps blinking.
-        if (g_dwMainGameState == 10 && m_pclMyChatData &&
-            !isChatBlocked(m_pclMyChatData)) {
-            SendInputChat();
-        }
+    if (!m_bChatEnabled || g_dwMainGameState != 10 ||
+        isChatBlocked(m_pclMyChatData)) {
         return;
     }
 
-    if (!m_pDCTIMMList) {
-        m_bChatPostReady = 0;
-        SendInputChat();
-        return;
-    }
+    // Process pending Enter-press only when one is queued; SendInputChat below
+    // still runs every frame so the cursor keeps blinking.
+    if (m_bChatPostReady) {
+        if (m_ChatState) {
+            if (m_pDCTIMMList && m_pDCTIMMList->IsActive(m_nIMEIndex) == 1) {
+                char rawText[1026]{};
+                m_pDCTIMMList->SetAutoDelete(m_nIMEIndex, 1);
+                m_pDCTIMMList->GetIMMText(m_nIMEIndex, rawText, m_nIMELength);
+                m_pDCTIMMList->SetAutoDelete(m_nIMEIndex, 0);
+                SetChatState(0);
 
-    if (m_ChatState) {
-        if (m_pDCTIMMList->IsActive(m_nIMEIndex) == 1) {
-            char rawText[1026]{};
-            m_pDCTIMMList->SetAutoDelete(m_nIMEIndex, 1);
-            m_pDCTIMMList->GetIMMText(m_nIMEIndex, rawText, m_nIMELength);
-            m_pDCTIMMList->SetAutoDelete(m_nIMEIndex, 0);
-            SetChatState(0);
+                char normalized[1026]{};
+                std::strcpy(normalized, rawText);
 
-            char normalized[1026]{};
-            std::strcpy(normalized, rawText);
+                if (DispatchChatOrderCheck(normalized) && rawText[0] == '/') {
+                    // Slash-command path: run every token except the target name
+                    // through the abuse filter, then reassemble.
+                    char tokens[1026]{};
+                    char piece[1026]{};
+                    char work[1026]{};
+                    std::strcpy(work, rawText);
 
-            if (DispatchChatOrderCheck(normalized) && rawText[0] == '/') {
-                // Slash-command path: run every token except the target name
-                // through the abuse filter, then reassemble.
-                char tokens[1026]{};
-                char piece[1026]{};
-                char work[1026]{};
-                std::strcpy(work, rawText);
-
-                char* tok = std::strtok(work, " ");
-                int idx = 0;
-                while (tok && idx < 5) {
-                    std::memset(piece, 0, sizeof(piece));
-                    if (idx == 1) {
-                        std::strcpy(piece, tok);   // target name — keep raw
-                    } else {
-                        g_DCTAbuseWordManager.ChangeString(tok, piece);
+                    char* tok = std::strtok(work, " ");
+                    int idx = 0;
+                    while (tok && idx < 5) {
+                        std::memset(piece, 0, sizeof(piece));
+                        if (idx == 1) {
+                            std::strcpy(piece, tok);   // target name — keep raw
+                        } else {
+                            g_DCTAbuseWordManager.ChangeString(tok, piece);
+                        }
+                        std::strcat(piece, " ");
+                        std::strcat(tokens, piece);
+                        const char* delim = (idx++ >= 2) ? "" : " ";
+                        tok = std::strtok(nullptr, delim);
                     }
-                    std::strcat(piece, " ");
-                    std::strcat(tokens, piece);
-                    const char* delim = (idx++ >= 2) ? "" : " ";
-                    tok = std::strtok(nullptr, delim);
-                }
-                std::strcpy(normalized, tokens);
-                std::strcpy(rawText, normalized);
-            } else {
-                g_DCTAbuseWordManager.ChangeString(rawText, normalized);
-                std::strcpy(rawText, normalized);
-            }
-
-            SetChatWritedString(rawText);
-            if (IsValidChat(rawText)) {
-                bool slash = (rawText[0] == '/');
-                if (!slash) {
-                    // m_bChatPostReady acts as the channel filter here: if the
-                    // user pressed Enter in /P, /C or /R mode, rewrite the
-                    // message in place to the corresponding slash command.
-                    SetAutoChatMode(rawText, m_bChatPostReady);
-                    slash = (rawText[0] == '/');
-                }
-
-                if (slash) {
-                    if (!DispatchChatOrder(rawText + 1)) {
-                        char* err = g_DCTTextManager.GetText(58064);
-                        cltSystemMessage::SetSystemMessage(&g_clSysemMessage, err, 0, 0, 0);
-                        if (m_pNetwork) m_pNetwork->SysCommand(rawText);
-                    }
+                    std::strcpy(normalized, tokens);
+                    std::strcpy(rawText, normalized);
                 } else {
-                    // mofclient.c: when the basic UI's "remember last chat"
-                    // flag at offset 449284 is 1, snapshot the outgoing text
-                    // into this+79944 (m_szLastChatSent).  CUIBasic is not
-                    // fully restored, so reach the flag via raw offset.
-                    CUIBase* pUIWindow = g_UIMgr ? g_UIMgr->GetUIWindow(0) : nullptr;
-                    if (pUIWindow &&
-                        *reinterpret_cast<const std::uint32_t*>(
-                            reinterpret_cast<const char*>(pUIWindow) + 449284) == 1) {
-                        std::strncpy(m_szLastChatSent, rawText,
-                                     sizeof(m_szLastChatSent) - 1);
-                        m_szLastChatSent[sizeof(m_szLastChatSent) - 1] = '\0';
-                    }
-                    SendChattingMsg(rawText);
+                    g_DCTAbuseWordManager.ChangeString(rawText, normalized);
+                    std::strcpy(rawText, normalized);
                 }
+
+                SetChatWritedString(rawText);
+                if (IsValidChat(rawText)) {
+                    bool slash = (rawText[0] == '/');
+                    if (!slash) {
+                        // m_bChatPostReady acts as the channel filter here: if the
+                        // user pressed Enter in /P, /C or /R mode, rewrite the
+                        // message in place to the corresponding slash command.
+                        SetAutoChatMode(rawText, m_bChatPostReady);
+                        slash = (rawText[0] == '/');
+                    }
+
+                    if (slash) {
+                        if (!DispatchChatOrder(rawText + 1)) {
+                            char* err = g_DCTTextManager.GetText(58064);
+                            cltSystemMessage::SetSystemMessage(&g_clSysemMessage, err, 0, 0, 0);
+                            if (m_pNetwork) m_pNetwork->SysCommand(rawText);
+                        }
+                    } else {
+                        // mofclient.c: when the basic UI's "remember last chat"
+                        // flag at offset 449284 is 1, snapshot the outgoing text
+                        // into this+79944 (m_szLastChatSent).  CUIBasic is not
+                        // fully restored, so reach the flag via raw offset.
+                        CUIBase* pUIWindow = g_UIMgr ? g_UIMgr->GetUIWindow(0) : nullptr;
+                        if (pUIWindow &&
+                            *reinterpret_cast<const std::uint32_t*>(
+                                reinterpret_cast<const char*>(pUIWindow) + 449284) == 1) {
+                            std::strncpy(m_szLastChatSent, rawText,
+                                         sizeof(m_szLastChatSent) - 1);
+                            m_szLastChatSent[sizeof(m_szLastChatSent) - 1] = '\0';
+                        }
+                        SendChattingMsg(rawText);
+                    }
+                }
+            } else if (m_pDCTIMMList) {
+                m_pDCTIMMList->SetActive(m_nIMEIndex, 1, g_hWnd);
             }
         } else {
-            m_pDCTIMMList->SetActive(m_nIMEIndex, 1, g_hWnd);
+            SetChatState(1);
         }
-    } else {
-        SetChatState(1);
+        m_bChatPostReady = 0;
     }
 
-    m_bChatPostReady = 0;
+    // SendInputChat runs every poll while the gate is open (drives cursor blink).
     SendInputChat();
 }
 
@@ -484,9 +479,23 @@ int cltChattingMgr::IsValidChat(char* text) {
 
 //----- (004F7BF0) -----------------------------------------------------------
 void cltChattingMgr::SetChatState(int state) {
-    // ClientCharacterManager::CanNotChatting is not yet restored; in the
-    // ground truth it returns nonzero when the player is muted/dead etc.
-    // Until the check is back we treat it as "can chat" and skip the branch.
+    // Ground truth gate (mofclient.c 0x4F7BF0):
+    //   if ( ClientCharacterManager::CanNotChatting(m_pClientCharMgr) ) {
+    //       v3 = DCTTextManager::GetText(58217);
+    //       cltSystemMessage::SetSystemMessage(..., v3, 0, 0, 0);
+    //       return;
+    //   }
+    // CanNotChatting is a thin wrapper that returns
+    // *((_DWORD*)g_clMyCharData + 26)  (i.e. byte offset 104).  cltMyCharData
+    // is opaque in this restoration, so read the flag via raw offset.
+    const std::uint32_t banFlag = *reinterpret_cast<const std::uint32_t*>(
+        reinterpret_cast<const char*>(&g_clMyCharData) + 104);
+    if (banFlag) {
+        const char* msg = g_DCTTextManager.GetText(58217);
+        cltSystemMessage::SetSystemMessage(&g_clSysemMessage, msg, 0, 0, 0);
+        return;
+    }
+
     m_ChatState = state;
     if (!m_pDCTIMMList) return;
 
