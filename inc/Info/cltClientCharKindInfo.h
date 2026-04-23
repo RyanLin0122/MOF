@@ -33,6 +33,7 @@ public:
     void* IsFieldItemBox(unsigned short kindCode);
 
 private:
-    // 65535 pointer slots；對齊反編譯 (char*)this + 0x40008 開始之資料。
+    // 65535 pointer slots (0xFFFF)；對齊反編譯 (char*)this + 0x40008 開始之
+    // 0x3FFFC 位元組資料 (= 65535 * sizeof(cltMonsterAniInfo*))。
     cltMonsterAniInfo** m_ppMonsterAniInfoTable;
 };

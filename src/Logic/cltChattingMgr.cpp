@@ -931,45 +931,39 @@ void cltChattingMgr::DispatchChatOrder_PartyChat(char* text) {
 
 //----- (004F90E0) -----------------------------------------------------------
 void cltChattingMgr::DispatchChatOrder_JoinParty(char* text) {
-    if (!text) return;
-    char temp[1024]{};
-    std::strncpy(temp, text, sizeof(temp) - 1);
-    temp[sizeof(temp) - 1] = '\0';
-    char* tok = std::strtok(temp, " ");
-    if (tok && g_pInterfaceDataCommunity) {
-        char name[128]{};
-        std::strncpy(name, tok, sizeof(name) - 1);
+    // Ground truth: strtok mutates the input directly.  Callers pass a local
+    // stack buffer, so the mutation is self-contained.
+    char delim[2] = " ";
+    char* tok = std::strtok(text, delim);
+    if (tok) {
+        char name[128];
+        std::strcpy(name, tok);
         g_pInterfaceDataCommunity->ChatOrderPartyInvite(name);
     }
 }
 
 //----- (004F9150) -----------------------------------------------------------
 void cltChattingMgr::DispatchChatOrder_KickoutParty(char* text) {
-    if (!text) return;
-    char temp[1024]{};
-    std::strncpy(temp, text, sizeof(temp) - 1);
-    temp[sizeof(temp) - 1] = '\0';
-    char* tok = std::strtok(temp, " ");
-    if (tok && g_pInterfaceDataCommunity) {
-        char name[128]{};
-        std::strncpy(name, tok, sizeof(name) - 1);
+    char delim[2] = " ";
+    char* tok = std::strtok(text, delim);
+    if (tok) {
+        char name[128];
+        std::strcpy(name, tok);
         g_pInterfaceDataCommunity->ChatOrderPartyKickOut(name);
     }
 }
 
 //----- (004F91C0) -----------------------------------------------------------
 void cltChattingMgr::DispatchChatOrder_Whisper(char* text) {
-    if (!text) return;
-    char temp[1024]{};
-    std::strncpy(temp, text, sizeof(temp) - 1);
-    temp[sizeof(temp) - 1] = '\0';
-    char* tok = std::strtok(temp, " ");
-    if (!tok) return;
-    char name[128]{};
-    std::strncpy(name, tok, sizeof(name) - 1);
-    // The remainder of `text` starts right after the space we just replaced.
-    char* body = text + std::strlen(tok) + 1;
-    SendWhisper(name, body);
+    char delim[2] = " ";
+    char* tok = std::strtok(text, delim);
+    if (tok) {
+        char name[128];
+        std::strcpy(name, tok);
+        // Remainder of `text` starts right after the space we just replaced
+        // (ground truth: &text[strlen(tok) + 1]).
+        SendWhisper(name, &text[std::strlen(tok) + 1]);
+    }
 }
 
 //----- (004F9250) -----------------------------------------------------------
@@ -1020,28 +1014,22 @@ void cltChattingMgr::SendWhisper(char* targetName, char* message) {
 
 //----- (004F93A0) -----------------------------------------------------------
 void cltChattingMgr::DispatchChatOrder_JoinCircle(char* text) {
-    if (!text) return;
-    char temp[1024]{};
-    std::strncpy(temp, text, sizeof(temp) - 1);
-    temp[sizeof(temp) - 1] = '\0';
-    char* tok = std::strtok(temp, " ");
-    if (tok && g_pInterfaceDataCommunity) {
-        char name[128]{};
-        std::strncpy(name, tok, sizeof(name) - 1);
+    char delim[2] = " ";
+    char* tok = std::strtok(text, delim);
+    if (tok) {
+        char name[128];
+        std::strcpy(name, tok);
         g_pInterfaceDataCommunity->ChatOrderCircleInvite(name);
     }
 }
 
 //----- (004F9410) -----------------------------------------------------------
 void cltChattingMgr::DispatchChatOrder_KickoutCircle(char* text) {
-    if (!text) return;
-    char temp[1024]{};
-    std::strncpy(temp, text, sizeof(temp) - 1);
-    temp[sizeof(temp) - 1] = '\0';
-    char* tok = std::strtok(temp, " ");
-    if (tok && g_pInterfaceDataCommunity) {
-        char name[128]{};
-        std::strncpy(name, tok, sizeof(name) - 1);
+    char delim[2] = " ";
+    char* tok = std::strtok(text, delim);
+    if (tok) {
+        char name[128];
+        std::strcpy(name, tok);
         g_pInterfaceDataCommunity->ChatOrderCircleKickOut(name);
     }
 }
@@ -1087,27 +1075,24 @@ void cltChattingMgr::DispatchChatOrder_Help(char* /*text*/) {
 
 //----- (004F9760) -----------------------------------------------------------
 void cltChattingMgr::DispatchChatOrder_DetailCharInfo(char* text) {
-    if (!text) return;
-    char temp[1024]{};
-    std::strncpy(temp, text, sizeof(temp) - 1);
-    temp[sizeof(temp) - 1] = '\0';
-    char* tok = std::strtok(temp, " ");
-    if (tok && g_pInterfaceDataCommunity) {
-        char name[128]{};
-        std::strncpy(name, tok, sizeof(name) - 1);
+    char delim[2] = " ";
+    char* tok = std::strtok(text, delim);
+    if (tok) {
+        char name[128];
+        std::strcpy(name, tok);
         g_pInterfaceDataCommunity->OpenUserInfo(name);
     }
 }
 
 //----- (004F97D0) -----------------------------------------------------------
 void cltChattingMgr::FindEmoticonWord(unsigned int accountId, char* message, std::uint16_t emoticonId) {
-    if (!message) return;
+    // Ground truth forwards unconditionally; no null checks.
     m_EmoticonSystem.FindEmoticonWord(accountId, message, emoticonId);
 }
 
 //----- (004F97F0) -----------------------------------------------------------
 void cltChattingMgr::FindEmoticonWord(char* name, char* message, std::uint16_t emoticonId) {
-    if (!name || !message) return;
+    // Ground truth forwards unconditionally; no null checks.
     m_EmoticonSystem.FindEmoticonWord(name, message, emoticonId);
 }
 

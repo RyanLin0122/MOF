@@ -18,9 +18,10 @@ cltClientCharKindInfo::cltClientCharKindInfo()
     //   cltCharKindInfo::cltCharKindInfo(this);             // parent ctor
     //   *(_DWORD *)this = &cltClientCharKindInfo::vftable;  // set derived vtable
     //   memset((char *)this + 262152, 0, 0x3FFFCu);          // zero ani table
-    m_ppMonsterAniInfoTable = new cltMonsterAniInfo*[0x10000];
+    // 0x3FFFC / sizeof(void*) == 0xFFFF slots.
+    m_ppMonsterAniInfoTable = new cltMonsterAniInfo*[0xFFFF];
     std::memset(m_ppMonsterAniInfoTable, 0,
-                sizeof(cltMonsterAniInfo*) * 0x10000);
+                sizeof(cltMonsterAniInfo*) * 0xFFFF);
 }
 
 // (0x00401380) '`scalar deleting destructor'
