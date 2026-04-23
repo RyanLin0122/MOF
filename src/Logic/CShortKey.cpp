@@ -23,13 +23,12 @@ strBoardKey CShortKey::m_strBoardKey[CShortKey::BOARD_CAPACITY];
 
 // Text IDs used by DCTTextManager::GetParsedText to print localized labels
 // for each of the 56 short-key slots.  Only the first two entries are visible
-// in the decompiled `m_wUserKeyName = 243928713` (= 0x0E8B0D89), so we recover
-// those and leave the remainder at 0 (GetText will then return the default
-// "no text" string from the DCT table).
+// in the decompiled `m_wUserKeyName = 243928713` (= 0x0E8A0E89, little-endian:
+// low uint16 = 0x0E89 = 3721, high uint16 = 0x0E8A = 3722).  The remaining 54
+// entries live in the data section beyond what the decompilation captured; we
+// leave them at 0 so GetText returns the default "no text" string.
 uint16_t CShortKey::m_wUserKeyName[CShortKey::KEY_COUNT] = {
-    0x0D89, 0x0E8B,   // recovered from mofclient.c int-init; remaining 54
-                      // entries come from the data section and are not
-                      // observable from the decompilation.
+    0x0E89, 0x0E8A,
 };
 
 int CShortKey::s_nKeyCount = 0;

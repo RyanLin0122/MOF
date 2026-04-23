@@ -28,9 +28,10 @@ public:
     // 取得指定 char kind 的等級 (char kind info offset 146, BYTE)
     unsigned char GetCharLevel(unsigned short kindCode);
 
-    // 回傳 (void*) — 對齊反編譯：若 IsFieldItemBox 旗標設定則非 null。
-    // 原始 binary 從 char kind info offset 236 (DWORD) 讀取。
-    void* IsFieldItemBox(unsigned short kindCode);
+    // 回傳 stCharKindInfo*（對齊 mofclient.c 反編譯簽名）。
+    // 原始 binary 從 char kind info offset 236 (DWORD) 讀取一個指標值，
+    // IDA 將其還原為 stCharKindInfo*；呼叫端實際只做 non-null 判定。
+    stCharKindInfo* IsFieldItemBox(unsigned short kindCode);
 
 private:
     // 65535 pointer slots (0xFFFF)；對齊反編譯 (char*)this + 0x40008 開始之
