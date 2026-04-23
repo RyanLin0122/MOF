@@ -101,11 +101,9 @@ void CShortKey::SaveKeySetting() {
 // index-tagged sentinel, and falls back to the default table when required
 // bindings (movement keys) have been lost.
 void CShortKey::ProcessInvalidKey() {
-    // Original uses a 1020-byte stack flag table keyed by scan code.  Our
-    // buffer rounds up to 256 ints (1024 bytes) which covers every valid
-    // DirectInput scan code; anything >= 0xFFFFFF is the "unbound" sentinel
-    // and never reaches this path.
-    int seen[256] = { 0 };
+    // 1:1 with mofclient.c: `int v8; char v9[1016];` on the stack forms a
+    // 1020-byte (= 255 int) seen-flag table indexed by the scan code value.
+    int seen[255] = { 0 };
     int anyFixed = 0;
 
     for (unsigned int i = 0; i < KEY_COUNT; ++i) {
@@ -297,11 +295,14 @@ void CShortKey::AdjustClientKey() {
     // GetUserKeySettingName(48, 1) call so the ground-truth call chain runs.
     CUIBase* pW84 = g_UIMgr ? g_UIMgr->GetUIWindow(84) : nullptr;
     if (pW84) {
+        // Ground truth: 64-byte stack buffer cleared then strcpy'd to both the
+        // local copy and the window+140956 slot.
         char buf[64];
-        std::memset(buf, 0, sizeof(buf));
+        buf[0] = '\0';
+        std::memset(buf + 1, 0, sizeof(buf) - 1);
         const char* label = GetUserKeySettingName(48, 1);
-        std::strncpy(buf, label, sizeof(buf) - 1);
-        std::memcpy(reinterpret_cast<char*>(pW84) + 140956, buf, sizeof(buf));
+        std::strcpy(buf, label);
+        std::strcpy(reinterpret_cast<char*>(pW84) + 140956, buf);
     }
 }
 
@@ -370,9 +371,9 @@ void CShortKey::InitStaticDefaultKey() {
     m_nDefaultKey[47] = 20;         // T              (KEYTYPE_ACADEMY)
     m_nDefaultKey[48] = 30;         // A              (KEYTYPE_QUESTALARM)
 
-    // On-screen keyboard layout.  The counter must start at 0 so slots map to
-    // the exact indices the ground truth stores them in.
-    s_nKeyCount = 0;
+    // On-screen keyboard layout.  Ground truth does NOT reset _nKeyCount here —
+    // it relies on the BSS-zero initial value and on InitStaticDefaultKey being
+    // called only once at program startup.  Match that behaviour exactly.
     AddKeyboard(1,   16,  39, "ESC",   0, 0x25u, 0x25u);
     AddKeyboard(59,  94,  39, "F1",    1, 0x25u, 0x25u);
     AddKeyboard(60,  133, 39, "F2",    1, 0x25u, 0x25u);
