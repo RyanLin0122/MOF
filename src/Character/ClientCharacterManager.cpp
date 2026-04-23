@@ -139,6 +139,13 @@ char* ClientCharacterManager::GetMyCharName() {
     return pMyChar ? pMyChar->m_szName : nullptr;
 }
 
+// mofclient.c 0x0040F3E0
+char* ClientCharacterManager::GetCharName(unsigned int accountId) {
+    static char s_empty[1] = { '\0' };
+    ClientCharacter* pChar = GetCharByAccount(accountId);
+    return pChar ? pChar->m_szName : s_empty;
+}
+
 ClientCharacter* ClientCharacterManager::GetCharByName(char* name) {
     if (!name) {
         return nullptr;

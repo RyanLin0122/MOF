@@ -567,11 +567,10 @@ void cltChattingMgr::SetChatBuffer(std::uint16_t channel, unsigned int accountId
 
     switch (channel) {
         case 1u: {
-            const char* name = m_pClientCharMgr ? nullptr : nullptr;
-            // The real GetCharName takes an account id; restored manager
-            // doesn't expose that yet, so fall back to the empty string.
-            (void)accountId;
-            (void)name;
+            // mofclient.c: strcpy(&v18, ClientCharacterManager::GetCharName(m_pClientCharMgr, a3));
+            const char* name = m_pClientCharMgr ? m_pClientCharMgr->GetCharName(accountId) : "";
+            std::strncpy(nameField, name ? name : "", sizeof(nameField) - 1);
+            nameField[sizeof(nameField) - 1] = '\0';
             filterCode = 1;
             color = static_cast<std::uint32_t>(-1);
             break;
@@ -702,11 +701,17 @@ void cltChattingMgr::SetChatBuffer(std::uint16_t channel, char* name, char* mess
     }
 
     // PK / war opponent bubble — override colour to bright blue.
-    if (m_pClientCharMgr && name) {
+    // mofclient.c:
+    //   v16 = GetCharByName(&g_ClientCharMgr, String2);
+    //   if ( v16 && *((_DWORD *)v16 + 2885) )
+    //       v10 = -16776961;
+    // ClientCharacter does not expose the offset-11540 flag through a named
+    // member, so read it via raw offset like the other call sites do.
+    if (name) {
         ClientCharacter* target = g_ClientCharMgr.GetCharByName(name);
-        if (target) {
-            // mofclient.c checks offset 2885*4 = 11540 (an "is-pk-enemy" flag).
-            // Our ClientCharacter does not expose the field; skip the override.
+        if (target && *reinterpret_cast<const std::uint32_t*>(
+                          reinterpret_cast<const char*>(target) + 11540)) {
+            color = static_cast<std::uint32_t>(-16776961);
         }
     }
 

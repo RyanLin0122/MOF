@@ -30,6 +30,10 @@ public:
 	void DeleteAllChar();
 	void SetMyCAClone();
 	char* GetMyCharName();
+	// mofclient.c 0x0040F3E0: returns pointer to the character's m_szName
+	// (offset +460) for the given account id, or an empty string if no
+	// character is currently assigned that account id.
+	char* GetCharName(unsigned int accountId);
 
 	// 繪製相關
 	void PrepareDrawingEtcMark();
