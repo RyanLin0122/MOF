@@ -167,6 +167,12 @@ private:
     unsigned int m_dwTimerHandle2 = 0;
     std::uint16_t m_wChatMsgCount = 0;
 
+    // Module-enabled flag. Ground truth: *((_DWORD*)this + 6702) (byte 26808),
+    // initialised to 1 in the ctor and used by Poll as the outer gate. The
+    // ground truth never writes it after construction, so it is effectively a
+    // constant 1, but it is still modelled here to preserve Poll's semantics.
+    int          m_bChatEnabled = 1;
+
     // IME state.
     std::uint8_t m_bChatPostReady = 0;   // Enter pressed this frame
     std::uint8_t m_cChatFilter = 1;      // currently selected channel (1 = all)
