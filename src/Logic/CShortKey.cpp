@@ -145,10 +145,10 @@ void CShortKey::SetAllDefaultKey() {
 // 004E0230 — marks the indicated setting slot as unbound, using an index-tagged
 // sentinel (high byte = slot index) so later passes can tell different slots
 // apart when comparing against each other.
+// Ground truth does NOT bounds-check a2 — writes *((_DWORD*)this + a2 + 56)
+// directly.  Callers (ProcessInvalidKey) always pass a valid slot.
 void CShortKey::SendExtraKeySpace(int a2) {
-    if (a2 >= 0 && a2 < KEY_COUNT) {
-        m_nSettingKey[a2] = static_cast<int>(INVALID_KEY | (static_cast<unsigned int>(a2) << 24));
-    }
+    m_nSettingKey[a2] = static_cast<int>(INVALID_KEY | (static_cast<unsigned int>(a2) << 24));
 }
 
 // 004E0260
