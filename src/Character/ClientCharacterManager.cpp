@@ -19,7 +19,7 @@ ClientCharacterManager::~ClientCharacterManager() {
 ClientCharacter* ClientCharacterManager::GetCharByAccount(unsigned int account) {
     for (int i = 1; i < 300; ++i) {
         ClientCharacter* pChar = &unk_1409D80[i];
-        if (reinterpret_cast<unsigned int*>(pChar)[1109] && pChar->m_dwAccountID == account) {
+        if (pChar->m_dwSlotAlive && pChar->m_dwAccountID == account) {
             return pChar;
         }
     }
@@ -28,6 +28,31 @@ ClientCharacter* ClientCharacterManager::GetCharByAccount(unsigned int account) 
 
 bool ClientCharacterManager::IsMapConqueror(char* /*Name*/) {
     return true;
+}
+
+// mofclient.c 39000: delegates to cltCharKindInfo::IsMonsterChar on the static
+// ClientCharacter::m_pClientCharKindInfo (when present).  Returns false when
+// the kind-info has not been initialised yet.
+bool ClientCharacterManager::IsMonster(unsigned short kindCode) {
+    if (!ClientCharacter::m_pClientCharKindInfo) return false;
+    return ClientCharacter::m_pClientCharKindInfo->IsMonsterChar(kindCode) != 0;
+}
+
+bool ClientCharacterManager::IsPlayer(unsigned short kindCode) {
+    if (!ClientCharacter::m_pClientCharKindInfo) return false;
+    return ClientCharacter::m_pClientCharKindInfo->IsPlayerChar(kindCode) != 0;
+}
+
+// mofclient.c 35772: clears the "currently-auto-attacking" flag for the slot
+// whose m_dwAccountID matches.  The real implementation also nudges the CCA
+// animation; we only update the state because auto-attack bookkeeping lives
+// in the not-yet-ported combat path.
+void ClientCharacterManager::ResetAutoAttack(unsigned int accountID) {
+    ClientCharacter* pChar = GetCharByAccount(accountID);
+    if (pChar) {
+        // DWORD+161 in InitFlag defaults to 1 — the "auto-attack ready" flag.
+        pChar->m_iInitFlag_153_176[161 - 153] = 0;
+    }
 }
 
 void ClientCharacterManager::ResetMoveTarget() {
@@ -72,7 +97,7 @@ void ClientCharacterManager::AddCharacter(
 
     int slot = 1;
     for (; slot < 300; ++slot) {
-        if (!reinterpret_cast<unsigned int*>(&unk_1409D80[slot])[1109]) {
+        if (!unk_1409D80[slot].m_dwSlotAlive) {
             break;
         }
     }
@@ -96,8 +121,8 @@ void ClientCharacterManager::AddCharacter(
     } else {
         dst.m_szName[0] = '\0';
     }
-    reinterpret_cast<unsigned int*>(&dst)[1109] = 1;
-    reinterpret_cast<int*>(&dst)[112] = hp;
+    dst.m_dwSlotAlive = 1;
+    (void)hp;  // TODO: real ground truth stores HP via SetHP/UseHPPotionEffect; slot +448 offset is a custom shortcut retained from pre-restoration code.
 }
 
 void ClientCharacterManager::SetMyAccount(unsigned int account) {
@@ -119,9 +144,9 @@ void ClientCharacterManager::SetItem(unsigned int account, unsigned short itemKi
 void ClientCharacterManager::DeleteAllChar() {
     for (int i = 1; i < 300; ++i) {
         ClientCharacter* pChar = &unk_1409D80[i];
-        if (reinterpret_cast<unsigned int*>(pChar)[1109]) {
+        if (pChar->m_dwSlotAlive) {
             pChar->DeleteCharacter();
-            reinterpret_cast<unsigned int*>(pChar)[1109] = 0;
+            pChar->m_dwSlotAlive = 0;
         }
     }
     ResetMoveTarget();
@@ -153,7 +178,7 @@ ClientCharacter* ClientCharacterManager::GetCharByName(char* name) {
 
     for (int i = 1; i < 300; ++i) {
         ClientCharacter* pChar = &unk_1409D80[i];
-        if (!reinterpret_cast<unsigned int*>(pChar)[1109]) {
+        if (!pChar->m_dwSlotAlive) {
             continue;
         }
         if (pChar->m_dwAccountID == 0) {

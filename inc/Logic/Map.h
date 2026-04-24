@@ -37,6 +37,10 @@ public:
     void DrawClimate();
     struct strClimateInfo* GetClimateKindByMapId(uint16_t mapId);
 
+    // mofclient.c: used by ClientCharacter::CreateCharacter to decide whether
+    // a hp=0 spawn should auto-push a Died order (non-lobby only).
+    bool IsMatchLobbyMap(uint16_t mapId);
+
     // Coord conversion
     int MapXtoScreenX(int x);
     int MapYtoScreenY(int y);

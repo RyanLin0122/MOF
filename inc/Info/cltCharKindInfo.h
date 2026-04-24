@@ -46,6 +46,15 @@ public:
     // Checks whether a given kind code represents a monster character.
     int IsMonsterChar(uint16_t kindCode);
 
+    // mofclient.c 292838: bit 0 of DWORD+26 (offset 104) in stCharKindInfo.
+    int IsPlayerChar(uint16_t kindCode);
+
+    // mofclient.c: auxiliary kind lookups used by Order*/monster death paths.
+    // Implemented as minimal stubs until the stCharKindInfo layout is fully
+    // mapped.  Return 0 / nullptr when the record is missing.
+    int  GetDieDelayAniByKind(uint16_t kindCode);
+    char* GetDeadSound(uint16_t kindCode);
+
     // Returns boss info for the given kind, or nullptr if not a boss.
     void* GetBossInfoByKind(uint16_t kindCode);
 

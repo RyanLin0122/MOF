@@ -134,6 +134,16 @@ extern int   kAtlasIdByStyle[]; //dword_6C6C5C
 // Camera/scroll offset (world coordinate of the top-left screen corner)
 extern int dword_A73088;  // camera scroll X
 extern int dword_A7308C;  // camera scroll Y
+// (dword_21B8DFC declared below)
+
+// mofclient.c 0x21B8DFC: PK-mode flag (non-zero = PvP map, HP bars visible
+// on all chars, dead effect spawns pop a different respawn UI).
+extern int dword_21B8DFC;
+
+// mofclient.c 0x6DD7CC: debug-info overlay flag.  When set, InitScreenName
+// formats the char's HUD name as "acct:name:x:y:hp:mp" instead of the
+// normal "[Lv.N] name" / "name" forms.  Toggled by the ~ debug key.
+extern int fInfoFlag;
 
 extern unsigned int D3DRS_BLENDOP_TYPE[8];
 extern unsigned int D3DRS_SRCBLEND_TYPE[8];

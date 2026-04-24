@@ -77,14 +77,15 @@ DrawObject_All::~DrawObject_All() {}
 
 void DrawObject_All::PrepareDrawing()
 {
-    // Ground truth: do-while 迴圈結構
-    ClientCharacter* pChar = &unk_1409D80[0];
-    do
+    // Ground truth iterates with a hard-coded 14824-byte stride; in this
+    // restored build sizeof(ClientCharacter) is set by the C++ compiler, so
+    // we use the natural array stride via &unk_1409D80[i] instead.
+    for (int i = 0; i < 1000; ++i)
     {
-        if (reinterpret_cast<unsigned int*>(pChar)[1109])
+        ClientCharacter* pChar = &unk_1409D80[i];
+        if (pChar->m_dwSlotAlive)
             pChar->PrepareDrawingChar();
-        pChar = reinterpret_cast<ClientCharacter*>(reinterpret_cast<char*>(pChar) + 14824);
-    } while (pChar < reinterpret_cast<ClientCharacter*>(&dword_1843F78));
+    }
 
     g_ObjectManager.Process();
     g_clFieldItemMgr.PrepareDrawing();

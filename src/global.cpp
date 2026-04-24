@@ -111,6 +111,8 @@ int   kAtlasIdByStyle[] = { 570425345 };
 
 int dword_A73088 = 0;
 int dword_A7308C = 0;
+int dword_21B8DFC = 0;
+int fInfoFlag = 0;
 
 unsigned int D3DRS_BLENDOP_TYPE[8] = { 1u, 1u, 1u, 5u, 4u, 1u, 2u, 1u };
 unsigned int D3DRS_SRCBLEND_TYPE[8] = { 5u, 10u, 9u, 2u, 2u, 2u, 2u, 9u };

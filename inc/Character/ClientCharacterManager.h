@@ -11,6 +11,13 @@ public:
 	bool IsMapConqueror(char* Name);
 	void ResetMoveTarget();
 
+	// mofclient.c 39000-39010 / 35772: character-kind and auto-attack helpers.
+	// IsMonster/IsPlayer delegate to cltCharKindInfo via the static
+	// ClientCharacter::m_pClientCharKindInfo pointer.
+	bool IsMonster(unsigned short kindCode);
+	bool IsPlayer(unsigned short kindCode);
+	void ResetAutoAttack(unsigned int accountID);
+
 	// Tutorial / world-setup helpers
 	void AddCharacter(ClientCharacter* account, int x, int y,
 	                  unsigned short charKind, unsigned short mapKind,

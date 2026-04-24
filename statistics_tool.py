@@ -49,7 +49,6 @@ FORCE_MISSING_CLASSES = [
     "CMessageBoxManager",
     "cltShopInfo",
     "CQuizEventParser",
-    "CShortKey",
     "XJoyStick",
     "cltSystemMessage",
     "cltSkillKindInfo",

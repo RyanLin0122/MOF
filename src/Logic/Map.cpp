@@ -26,6 +26,13 @@ void Map::PrepareDrawingClimate() {}
 void Map::DrawClimate() {}
 strClimateInfo* Map::GetClimateKindByMapId(uint16_t /*mapId*/) { return nullptr; }
 
+// mofclient.c: match-lobby map recognition is checked via a map-kind flag
+// bit.  Until cltMapInfo is fully mapped, return false (treat every map as
+// a normal field map); ClientCharacter::CreateCharacter only uses this to
+// decide whether a hp=0 spawn should push a Died order — on a true lobby
+// map the server never sends hp=0 in the first place.
+bool Map::IsMatchLobbyMap(uint16_t /*mapId*/) { return false; }
+
 int Map::MapXtoScreenX(int x) { return x; }
 int Map::MapYtoScreenY(int y) { return y; }
 

@@ -114,10 +114,44 @@ int cltCharKindInfo::GetMonsterCharKinds(int /*a2*/, int /*a3*/, int /*a4*/, int
     return 0;
 }
 
-int cltCharKindInfo::IsMonsterChar(uint16_t /*kindCode*/)
+int cltCharKindInfo::IsMonsterChar(uint16_t kindCode)
 {
-    // Placeholder.
-    return 0;
+    // mofclient.c 292849: return bit 1 of (DWORD+26)/(byte offset 104) of
+    // the record, or 0 when the kind is unknown.
+    stCharKindInfo* info = static_cast<stCharKindInfo*>(GetCharKindInfo(kindCode));
+    if (!info) return 0;
+    const unsigned int flags = *reinterpret_cast<unsigned int*>(reinterpret_cast<unsigned char*>(info) + 104);
+    return static_cast<int>((flags >> 1) & 1u);
+}
+
+int cltCharKindInfo::IsPlayerChar(uint16_t kindCode)
+{
+    // mofclient.c 292838: return bit 0 of (DWORD+26).
+    stCharKindInfo* info = static_cast<stCharKindInfo*>(GetCharKindInfo(kindCode));
+    if (!info) return 0;
+    const unsigned int flags = *reinterpret_cast<unsigned int*>(reinterpret_cast<unsigned char*>(info) + 104);
+    return static_cast<int>(flags & 1u);
+}
+
+int cltCharKindInfo::GetDieDelayAniByKind(uint16_t kindCode)
+{
+    // mofclient.c: reads a byte at a fixed offset in the char-kind record.
+    // Until the record is fully mapped we return 0 (no delay) when unknown.
+    stCharKindInfo* info = static_cast<stCharKindInfo*>(GetCharKindInfo(kindCode));
+    if (!info) return 0;
+    // The decomp indexes DWORD+50 (offset 200); gate on a plausible range.
+    return static_cast<int>(
+        *reinterpret_cast<unsigned char*>(reinterpret_cast<unsigned char*>(info) + 200));
+}
+
+char* cltCharKindInfo::GetDeadSound(uint16_t kindCode)
+{
+    // mofclient.c: returns char* to a sound-id string embedded in the record.
+    // Returning an empty static string here keeps GameSound::PlaySoundA safe
+    // until the exact string-field offset is restored.
+    (void)kindCode;
+    static char s_empty[1] = { '\0' };
+    return s_empty;
 }
 
 void* cltCharKindInfo::GetBossInfoByKind(uint16_t /*kindCode*/)
