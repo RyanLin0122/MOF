@@ -47,6 +47,27 @@ public:
 
     // mofclient.c 0x5190A0：根據 NPC 類型決定目前小遊戲類型（1=劍/2=弓/3=魔/4=驅魔）。
     uint16_t GetMiniGameKind();
+
+    // mofclient.c 0x5198F0：自動攻擊狀態 setter，原本寫入 *((DWORD*)this+30)。
+    static void SetAutoAttack(cltMyCharData* self, int active);
+    // 補：取得自動攻擊狀態（僅 ClientCharacterManager 內部需要）。
+    static int  GetAutoAttack(cltMyCharData* self);
+
+    // mofclient.c 0x5196E0 / 0x5196F0：禁言狀態 setter / getter，
+    // 原本寫入/讀取 *((DWORD*)this+26)。
+    static void SetCanNotChatting(cltMyCharData* self, unsigned char active);
+    static int  GetCanNotChatting(cltMyCharData* self);
+
+    // mofclient.c 0x519590：刪角色時取消進行中交易。
+    //   cltTradeSystem::Free((cltMyCharData *)((char *)this + 7152));
+    //   v1 = (CUITradeUser *)CUIManager::GetUIWindow(g_UIMgr, 16);
+    //   CUITradeUser::CompleteTradeCanceled(v1, 1u);
+    static void DelCharCancelTrade(cltMyCharData* self);
+
+    // mofclient.c 0x519230：地面物品拾取請求。
+    //   完整流程：判定 m_bRequestPickUp(+15) → 取角色座標 → 找最近 FieldItem
+    //   → 檢查可放入背包 → 送 CMoFNetwork::PickUpItem → 清旗標。
+    static void RequestPickUpItem(cltMyCharData* self);
 };
 
 extern cltMyCharData g_clMyCharData;

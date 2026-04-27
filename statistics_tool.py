@@ -11,19 +11,9 @@ FORCE_IMPLEMENTED_CLASSES = [
     "Device_Reset_Manager"
 ]
 
-"""
-還沒驗:
-info x 2 (cltClientCharKindInfo、cltClientPortalInfo)
-CCA x 5 (CAManager、CCAClone、CCANormal、CCAillust、CCA)
-cltChattingMgr
-CShortKey
-"""
-
 # 手動指定「一定算未完成」的 class 清單
 # 只要 class 名稱在這裡，就直接視為未完成
 FORCE_MISSING_CLASSES = [
-    "ClientCharacter",
-    "ClientCharacterManager",
     "cltUsingSkillSystem",
     "cltCharKindInfo",
     "cltNPCManager",

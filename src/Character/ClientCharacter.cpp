@@ -1,6 +1,19 @@
+// winsock2.h must be pulled in (via CMoFNetwork → DCTNetwork) before any
+// transitive include of <windows.h> (d3dx9math via ClientCharacter.h).
+// Otherwise the older bundled <winsock.h> conflicts with <winsock2.h>.
+#ifndef WIN32_LEAN_AND_MEAN
+#define WIN32_LEAN_AND_MEAN
+#endif
+#include "Network/CMoFNetwork.h"
+
 #include "Character/ClientCharacter.h"
 #include "Character/ClientCharacterManager.h"
 #include "Character/CCA.h"
+#include "Character/CCANormal.h"
+#include "Logic/Map.h"
+#include "Info/cltClimateKindInfo.h"
+#include "System/cltPlayerAbility.h"
+#include "Effect/CEffect_Player_EnchantLevel.h"
 
 #include "Info/cltClassKindInfo.h"
 #include "Info/cltCharKindInfo.h"
@@ -350,7 +363,7 @@ void ClientCharacter::PrepareDrawingMonster() {
                 static_cast<float>(screenY);
             *(reinterpret_cast<unsigned char*>(m_pCCANormal) + 308) =
                 m_dwLR_Flag ? 0 : 1;
-            m_pCCANormal->Process();
+            m_pCCANormal->Process(0);
         }
     } else {
         unsigned int resID = 0;
@@ -620,7 +633,7 @@ void ClientCharacter::SetNameTagInfo(unsigned char /*classMark*/, int /*updateNa
 
 // mofclient.c 32593: returns DWORD+1847 (last searched monster's account id).
 unsigned int ClientCharacter::GetSearchMonster() {
-    return Decomp<unsigned int>(4 * 1847);
+    return m_dwAttackSearchTarget;
 }
 
 // =============================================================================
@@ -970,10 +983,10 @@ void ClientCharacter::OrderAttack() {
                         static_cast<char>(v32), v3, 0,
                         v36 ? 1 : 0, motion, v35, v34);
                 } else {
+                    stCharOrder hit{};
                     if (v32 == 2) {
                         pTarget->HitMissed();
                     } else {
-                        stCharOrder hit{};
                         SetOrderHitted(&hit, v32, v3, 0,
                                        v36 ? 1 : 0, motion, v35, v34);
                         pTarget->PushOrder(&hit);
@@ -1403,7 +1416,7 @@ void ClientCharacter::InitFlag() {
 
     // Byte / word scatter writes.
     m_ucUnknown_4400    = 0;
-    Decomp<unsigned char>(11524) = 2;
+    m_ucTradeState = 2;
     Decomp<unsigned int>(4 * 2889) = 0;   // DWORD+2889 (offset 11556)
     m_isPCRoomPremium   = false;
     Decomp<uint16_t>(2 * 2221) = 0;       // WORD+2221 (offset 4442)
@@ -1457,10 +1470,10 @@ void ClientCharacter::DeleteCharacter() {
     InitFlag();
 
     Decomp<uint16_t>(2 * 3714) = 0;
-    Decomp<int>(4 * 1847) = 0;
-    Decomp<int>(4 * 1848) = 0;
+    m_dwAttackSearchTarget = 0;
+    m_dwAttackTargetAccount = 0;
     m_ucAttackMotionType = 0;
-    Decomp<int>(4 * 1849) = 0;
+    m_iAttackTargetHP = 0;
     m_wUnknown_64        = 0;
     m_dwAttackSpeed      = 0;
     m_wTotalFrame        = 0;
@@ -1613,7 +1626,7 @@ void ClientCharacter::CreateCharacter(
     SetSearchMonster(0);
     SetAttackMonster(0);
     SetCircleName(circleName);
-    Decomp<unsigned char>(11524) = static_cast<unsigned char>(nation);
+    m_ucTradeState = static_cast<unsigned char>(nation);
     SetCharHide(reinterpret_cast<intptr_t>(this) & 0x7FFFFFFF, ucUnknown25);
     SetPCRoomUser(iUnknown20, static_cast<unsigned char>(ucPCRoom & 0xFF));
 
@@ -1627,7 +1640,7 @@ void ClientCharacter::CreateCharacter(
     // back to a null-map path (tutorial / offline test runs).
     Decomp<void*>(4 * 5) = nullptr;
 
-    Decomp<int>(4 * 1849) = 0;
+    m_iAttackTargetHP = 0;
     Decomp<int>(4 * 15)   = 0;
     m_ucAttackMotionType = 0;
     Decomp<int>(4 * 1843) = 0;
@@ -1637,7 +1650,7 @@ void ClientCharacter::CreateCharacter(
     Decomp<uint16_t>(2 * 37) = 0;
     m_ucUnknown_11260 = 1;
     Decomp<uint16_t>(2 * 4840) = 0;
-    Decomp<int>(4 * 1856) = 0;
+    m_dwGainExpDisplay = 0;
     m_someOtherState  = 0;
     m_ucUnknown_7435  = 0;
     m_ucUnknown_7434  = 0;
@@ -2254,11 +2267,11 @@ void ClientCharacter::SetCharState(char state) {
 }
 
 void ClientCharacter::SetGainExp(unsigned int exp) {
-    Decomp<unsigned int>(4 * 1856) += exp;
+    m_dwGainExpDisplay += exp;
 }
 
 void ClientCharacter::ResetGainExp() {
-    Decomp<unsigned int>(4 * 1856) = 0;
+    m_dwGainExpDisplay = 0;
 }
 
 // mofclient.c 30472: floats an exp-value number above the player and posts a
@@ -2283,8 +2296,9 @@ void ClientCharacter::SetUseSkillKind(unsigned short skillKind, unsigned int* co
     unsigned char count = 0;
     if (targets) {
         unsigned int* dst = reinterpret_cast<unsigned int*>(m_acEquipKind);
-        while (*targets) {
-            *dst++ = *targets++;
+        unsigned int* src = targets;
+        while (*src) {
+            *dst++ = *src++;
             ++count;
         }
     }
@@ -2393,18 +2407,18 @@ void ClientCharacter::SetNormalHitInfo(unsigned char a2, unsigned int casterAcco
 
 void ClientCharacter::ResetAttackFlag() {
     m_iInitFlag_153_176[154 - 153] = 0;
-    Decomp<int>(4 * 1847) = 0;  // search target
-    Decomp<int>(4 * 1848) = 0;  // attack target
+    m_dwAttackSearchTarget = 0;  // search target
+    m_dwAttackTargetAccount = 0;  // attack target
 }
 
 // mofclient.c 32508.  When the local player has an attack target still in
 // range, pings the server via CMoFNetwork::ATTACK; otherwise clears the
 // target and arms the 5-second re-attack timer.
 void ClientCharacter::AttackMonster() {
-    if (Decomp<int>(4 * 1849) < 1) m_iInitFlag_153_176[154 - 153] = 0;
+    if (m_iAttackTargetHP < 1) m_iInitFlag_153_176[154 - 153] = 0;
     if (m_iInitFlag_153_176[154 - 153]) {
         ClientCharacter* target = m_pCharMgr
-            ? m_pCharMgr->GetCharByAccount(Decomp<unsigned int>(4 * 1848))
+            ? m_pCharMgr->GetCharByAccount(m_dwAttackTargetAccount)
             : nullptr;
         if (target) {
             const int dx = std::abs(m_iDestX - target->m_iPosX);
@@ -2413,7 +2427,7 @@ void ClientCharacter::AttackMonster() {
             const uint16_t atkX = Decomp<uint16_t>(2 * 3690);
             const uint16_t atkY = Decomp<uint16_t>(2 * 3691);
             if (dx <= atkX && dy <= atkY) {
-                unsigned int target1 = Decomp<unsigned int>(4 * 1848);
+                unsigned int target1 = m_dwAttackTargetAccount;
                 const unsigned int advantage =
                     g_clPlayerAbility.GetAttackSpeedAdvantage();
                 if (g_Network.ATTACK(m_dwAttackSpeed, advantage,
@@ -2430,24 +2444,24 @@ void ClientCharacter::AttackMonster() {
 }
 
 void ClientCharacter::SetSearchMonster(unsigned int accountID) {
-    Decomp<unsigned int>(4 * 1847) = accountID;
+    m_dwAttackSearchTarget = accountID;
 }
 
 void ClientCharacter::SetAttackMonster(unsigned int accountID) {
     if (accountID) {
-        Decomp<unsigned int>(4 * 1848) = accountID;
+        m_dwAttackTargetAccount = accountID;
         ClientCharacter* target = m_pCharMgr
             ? m_pCharMgr->GetCharByAccount(accountID)
             : nullptr;
-        Decomp<int>(4 * 1849) = target ? target->GetHP() : 0;
+        m_iAttackTargetHP = target ? target->GetHP() : 0;
     } else {
-        Decomp<unsigned int>(4 * 1848) = 0;
-        Decomp<int>(4 * 1849)          = 0;
+        m_dwAttackTargetAccount = 0;
+        m_iAttackTargetHP          = 0;
     }
 }
 
 unsigned int ClientCharacter::GetAttackMonster() {
-    return Decomp<unsigned int>(4 * 1848);
+    return m_dwAttackTargetAccount;
 }
 
 void ClientCharacter::SetWeaponRange(unsigned short searchX, unsigned short searchY,
@@ -3900,7 +3914,9 @@ int  ClientCharacter::IsMyChar() {
     return (m_dwAccountID != 0 && m_dwAccountID == g_dwMyAccountID) ? 1 : 0;
 }
 
-// IsTransformed() is defined inline in the header.
+// IsTransformed() / GetCAData() 改為 inline 定義於 ClientCharacter.h，
+// 以滿足 VS code review 工具的 VCR001 檢查（要求標頭內函式宣告必須能直接
+// 找到定義）。
 
 // mofclient.c 32212.  The collision check (cltMapCollisonInfo::IsCollison)
 // prevents setting the destination to an unwalkable tile.  When the hidden-
@@ -4239,7 +4255,7 @@ void ClientCharacter::DrawTextA(int a2) {
                            Decomp<int>(4 * 1104),
                            colour, m_szScreenName, 1, -1, -1);
 }
-// GetActionState() / IsTransformed() are defined inline in the header.
+// GetActionState() / IsTransformed() / GetCAData() 全部 inline 定義於 header。
 int ClientCharacter::GetPositionX() { return m_iPosX; }
 int ClientCharacter::GetPositionY() { return m_iPosY; }
 int ClientCharacter::GetPosX() const { return m_iPosX; }
@@ -4265,8 +4281,12 @@ int ClientCharacter::GetActionSide() const { return m_dwLR_Flag; }
 // Returns 1 only when the character has been marked for removal (self == null
 // or OrderDie finished); 0 on a normal tick.
 // =============================================================================
-int ClientCharacter::Poll(int a2) {
+int ClientCharacter::Poll(void* targetMark) {
     if (!this) return 1;
+    // mofclient.c 32236：a2 在 ebp，代表 cltTargetMark* 強轉成 int。
+    // 後續 OrderHitted / PollHPBox 也接 int alpha/tick 參數，但僅將值
+    // 沿用未做位元解讀，因此 x64 下截斷高位不影響原本的視覺輸出。
+    int a2 = static_cast<int>(reinterpret_cast<uintptr_t>(targetMark) & 0xFFFFFFFFu);
 
     const uintptr_t vflag = reinterpret_cast<uintptr_t>(m_pVftable);
     const bool isSelfPlayer = vflag && m_pCharMgr

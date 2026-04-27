@@ -55,6 +55,7 @@
 #include "Logic/cltPKManager.h"
 #include "Logic/cltPKFlagManager.h"
 #include "Logic/CSpiritSpeechMgr.h"
+#include "System/cltHelpSystem.h"
 #include "Logic/SpiritSpeechParser.h"
 #include "Logic/SpiritGossipParser.h"
 #include "Info/cltQuestKindInfo.h"
@@ -70,6 +71,7 @@
 #include "Effect/CEffectManager.h"
 #include "Image/CDeviceManager.h"
 #include "Logic/cltCashShopItem.h"
+#include "System/cltBasicAppearSystem.h"
 #include "Logic/cltChattingMgr.h"
 #include "UI/CControlAlphaBox.h"
 #include "UI/CInterfaceDataCommunity.h"
@@ -173,6 +175,7 @@ cltMatchManager g_clMatchManager;
 cltPKManager g_clPKManager;
 cltPKFlagManager g_clPKFlagManager;
 CSpiritSpeechMgr g_clSpiritSpeechMgr;
+cltHelpSystem g_clHelpSystem;
 CSpiritSpeechParser g_clSpiritSpeechParser;
 CSpiritGossipParser g_clSpiritGossipParser;
 clTransportKindInfo g_clTransportKindInfo;
@@ -260,6 +263,76 @@ int dword_73D154 = 0;
 int dword_B4BAB4 = 0;
 char byte_21CB35D = 0;
 int dword_829254 = 1;   // default: prefer packed .ca loads
+
+// -----------------------------------------------------------------------------
+// mofclient.c 雜項全域旗標（由 ClientCharacterManager / ClientCharacter 取用）
+//
+// 全部對齊 ground truth 為 BSS 弱符號（默認 0），命名規則：
+//   - 已具備 g_/g_dw/g_b 前綴且名稱明確者，保留 mofclient.c 原名
+//   - dword_xxxxxx / fXxx / dwXxx 等 IDA 自動命名，全部改為有意義名稱，
+//     於旁註保留 mofclient.c 原始符號以利對照
+// -----------------------------------------------------------------------------
+
+// 主遊戲子狀態機（mofclient.c：g_dwSubGameState @ 0xB3D6FC）。
+// 取值：1/2=Login, 3/4=FieldGame, 5/6=MoveMap, 7/8=MiniGame, 11/12=Tutorial。
+unsigned int   g_dwSubGameState         = 0;
+
+// NPC 對話中旗標（mofclient.c：dword_21B8DC4 @ 0x21B8DC4）。
+// CUINPC::NotifyMeetNPC 設 1，NotifyEndMeetNPC 設 0；
+// 為 1 時阻擋角色 Poll/CharKeyInputProcess/SearchAttackMonster/SearchPlayer。
+int            g_iNPCDialogActive       = 0;
+
+// 復活後立即傳送旗標（mofclient.c：dword_21B8DE4 @ 0x21B8DE4）。
+// Sca_Resurrection 處理特殊副本死亡時設 1，IsInPortralArea 在 case 4 判讀。
+int            g_iResurrectInstantWarp  = 0;
+
+// 自動攻擊主開關（mofclient.c：dword_21B8DF0 @ 0x21B8DF0）。
+// ProcAutoAttack/SetContinueAutoAttack/SearchAttackMonster 的閘門。
+// 預設 0：未啟用自動攻擊；於戰鬥相關設定流程中切換。
+int            g_iAutoAttackEnabled     = 0;
+
+// 副本目標地圖 kind（mofclient.c：dword_21C9C64 @ 0x21C9C64）。
+// 非 0 表示玩家正進入/位於副本；IsInPortralArea 與封包處理 (Sca_*) 寫入。
+unsigned int   g_wInstantDungeonMapKind = 0;
+
+// 滑鼠目標啟用旗標（mofclient.c：dword_73E30C @ 0x73E30C）。
+// MouseTargetMonster 僅在此旗標非 0 時啟動滑鼠 hover 角色檢測。
+int            g_iMouseTargetEnabled    = 0;
+
+// 地圖切換中旗標（mofclient.c：g_bIsMoveMap @ 0x22F2A24）。已具備有意義名稱。
+int            g_bIsMoveMap             = 0;
+
+// 上次送出移動座標（mofclient.c：dwlastsentx/dwlastsenty @ 0x6C68DC/0x6C68DE）。
+// CharKeyInputProcess 用以避免每幀重送相同座標的 CMoFNetwork::Move。
+unsigned short g_wLastSentMoveX         = 0;
+unsigned short g_wLastSentMoveY         = 0;
+
+// 雙擊偵測時間戳（mofclient.c：dwKeyDown_1/dwKeyDown_2 @ 0x6DD7BC/0x6DD7C0）。
+// 兩次方向鍵按下的 timeGetTime() 結果，差距 < 600ms 才觸發 ProcRunState。
+unsigned int   g_dwDoubleTapTime1       = 0;
+unsigned int   g_dwDoubleTapTime2       = 0;
+
+// 雙擊偵測狀態旗標（mofclient.c：fUpFlag/fDownFlag @ 0x6DD7C4/0x6DD7C8）。
+// fUpFlag = 上一回方向鍵已被釋放；fDownFlag = 第一次按下尚未釋放。
+int            g_iDoubleTapKeyUp        = 0;
+int            g_iDoubleTapKeyDown      = 0;
+
+// 除錯 /warp 用地圖索引（mofclient.c：g_wMapid @ 0x6DD7D0）。已具備有意義名稱。
+unsigned short g_wMapid                 = 0;
+
+// 地圖像素高度（mofclient.c：dword_A7311C @ 0xA7311C）。CharKeyInputProcess
+// 用作向下移動的 clamp 上限。
+int            g_iMapPixelHeight        = 0;
+
+// 拾取按鍵按住旗標（mofclient.c：dword_AFD350 @ 0xAFD350）。CUI 在偵測到拾取
+// 鍵被按住時設 1，CharKeyInputProcess 讀取後送出 RequestPickUpItem。
+int            g_iPickupKeyHeld         = 0;
+
+// 開發者本地資料模式旗標（mofclient.c：g_bLocalData @ 0xB8BB9C）。已具備有意義名稱。
+int            g_bLocalData             = 0;
+
+// 玩家外觀系統（mofclient.c 0x21BA7B4：cltBasicAppearSystem）。
+cltBasicAppearSystem g_clBasicAppearSystem;
 
 // CCA / CCAClone per-slot fallback case maps (mofclient.c 0x525EB4 / 0x5280FC).
 // Both are zero in the shipped binary (weak single-zero arrays), meaning every

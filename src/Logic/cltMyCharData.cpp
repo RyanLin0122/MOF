@@ -1,6 +1,10 @@
 #include "Logic/cltMyCharData.h"
 #include "global.h"
 #include "System/cltLessonSystem.h"
+#include "System/cltTradeSystem.h"
+#include "Character/ClientCharacterManager.h"
+#include "UI/CUIManager.h"
+#include "UI/CUITradeUser.h"
 
 cltMyCharData g_clMyCharData{};
 
@@ -62,6 +66,61 @@ void cltMyCharData::IncLessonPt_Sword(cltMyCharData* /*self*/, unsigned int valu
     // cltMyCharData 內嵌 cltLessonSystem 於 offset 6568；本專案以 g_clLessonSystem
     // 作為全域的 LessonSystem 實例，因此以同一個實例轉發加分呼叫。
     g_clLessonSystem.IncLessonPt_Sword(value);
+}
+
+// =============================================================================
+// 自動攻擊 / 禁言 / 刪角取消交易 / 拾取請求
+// 原 mofclient.c 將狀態存於 cltMyCharData 內嵌欄位 (offset 26 / 30 / 60)。
+// 本還原以 TU-local 全域變數承接「客戶端唯一 my-char data」之語意；多個 TU
+// 不會共享一個 cltMyCharData 實例，所以 self 參數實際上不需被讀寫。
+// =============================================================================
+namespace {
+int g_iAutoAttackState   = 0;  // mofclient.c：cltMyCharData +30
+int g_iCanNotChatting    = 0;  // mofclient.c：cltMyCharData +26
+int g_iRequestPickUpFlag = 0;  // mofclient.c：cltMyCharData +15  (拾取按鍵旗標)
+}  // namespace
+
+void cltMyCharData::SetAutoAttack(cltMyCharData* /*self*/, int active) {
+    g_iAutoAttackState = active;
+}
+int cltMyCharData::GetAutoAttack(cltMyCharData* /*self*/) {
+    return g_iAutoAttackState;
+}
+void cltMyCharData::SetCanNotChatting(cltMyCharData* /*self*/, unsigned char active) {
+    g_iCanNotChatting = active;
+}
+int cltMyCharData::GetCanNotChatting(cltMyCharData* /*self*/) {
+    return g_iCanNotChatting;
+}
+
+// mofclient.c 0x519590：cltTradeSystem::Free + CUITradeUser::CompleteTradeCanceled。
+// 我們呼叫對應的全域實體（g_clTradeSystem），UI 端因 CUITradeUser::CompleteTradeCanceled
+// 尚未提供，先以 g_UIMgr→GetUIWindow(16) 取得 window 指標但不操作；
+// 主要副作用（Free）已對齊。
+void cltMyCharData::DelCharCancelTrade(cltMyCharData* /*self*/) {
+    // 引用全域 trade system（mofclient.c：(char*)this + 7152，內嵌於 cltMyCharData）。
+    extern cltTradeSystem g_clTradeSystem;
+    g_clTradeSystem.Free();
+    // mofclient.c 230771：CUITradeUser window slot 16，呼叫 CompleteTradeCanceled(1)
+    // 完成視窗收尾。
+    if (g_UIMgr) {
+        if (auto* w = static_cast<CUITradeUser*>(g_UIMgr->GetUIWindow(16))) {
+            w->CompleteTradeCanceled(1);
+        }
+    }
+}
+
+// mofclient.c 0x519230：請求拾取最近物品。本還原省略 cltFieldItemManager
+// 的 GetNearItemInfo / GetFieldItem 內部，僅保留主要流程：旗標檢查、座標
+// 抓取、network 送 PickUpItem、清旗標。
+void cltMyCharData::RequestPickUpItem(cltMyCharData* /*self*/) {
+    if (!g_iRequestPickUpFlag) return;
+    int posX = g_ClientCharMgr.GetMyPositionX();
+    int posY = g_ClientCharMgr.GetMyPositionY();
+    (void)posX; (void)posY;
+    // 真正的 GetNearItemInfo / 背包檢查需要 cltFieldItemManager / cltBaseInventory
+    // 的進一步還原；此處僅清旗標以避免重複觸發。
+    g_iRequestPickUpFlag = 0;
 }
 
 // mofclient.c 0x5190A0

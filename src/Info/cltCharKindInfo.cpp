@@ -133,6 +133,14 @@ int cltCharKindInfo::IsPlayerChar(uint16_t kindCode)
     return static_cast<int>(flags & 1u);
 }
 
+// mofclient.c 0x00565830：分身(Clone)旗標 = stCharKindInfo +209 byte。
+unsigned char cltCharKindInfo::GetIsClone(uint16_t kindCode)
+{
+    stCharKindInfo* info = static_cast<stCharKindInfo*>(GetCharKindInfo(kindCode));
+    if (!info) return 0;
+    return *(reinterpret_cast<unsigned char*>(info) + 209);
+}
+
 int cltCharKindInfo::GetDieDelayAniByKind(uint16_t kindCode)
 {
     // mofclient.c: reads a byte at a fixed offset in the char-kind record.

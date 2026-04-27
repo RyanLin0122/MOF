@@ -1,6 +1,7 @@
 #include "Logic/Map.h"
 #include "Info/cltMapInfo.h"
 #include "Info/cltClimateKindInfo.h"
+#include "global.h"
 
 Map::Map() {}
 Map::~Map() {}
@@ -35,6 +36,12 @@ bool Map::IsMatchLobbyMap(uint16_t /*mapId*/) { return false; }
 
 int Map::MapXtoScreenX(int x) { return x; }
 int Map::MapYtoScreenY(int y) { return y; }
+
+// mofclient.c：螢幕捲動偏移儲存在 Map 物件 +19592 / +19596。
+// 本還原以 dword_A73088 / dword_A7308C 全域承接（同一塊資料，
+// ObjectManager / Camera 等已存在的程式碼也是寫入這兩個全域）。
+int Map::GetScrollX() const { return dword_A73088; }
+int Map::GetScrollY() const { return dword_A7308C; }
 
 // --- 地圖區域標題資源 (從 mofclient.c 還原) ---
 

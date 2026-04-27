@@ -57,6 +57,7 @@ void clTransportObject::InitTransport(ClientCharacter* pOwner, CCA* pCCA, std::u
 
     m_pOwner = pOwner;
     m_pCCA = pCCA;
+    m_wKind = transportKind;
     m_pKindInfo = g_clTransportKindInfo.GetTransportKindInfo(transportKind);
     if (m_pKindInfo)
     {

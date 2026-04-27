@@ -19,6 +19,11 @@ public:
     void InitTransport(ClientCharacter* pOwner, CCA* pCCA, std::uint16_t transportKind);
     void SetActive(int active);
     int  GetActive();
+
+    // mofclient.c：clTransportObject 物件首兩個 byte 即為當前坐騎 kind code，
+    // ClientCharacterManager::SetTransport 會比對「請求的 kind ≠ 當前 kind」
+    // 來決定是 InitTransport 換騎還是 SetActive(0) 下馬。
+    std::uint16_t GetTransportKind() const { return m_wKind; }
     void PrepareDrawing(int param);
     void DrawUp(int param);
     void DrawDown(int param);
@@ -32,6 +37,11 @@ public:
     void SetActionState(unsigned int actionState);
 
 private:
+    // mofclient.c：clTransportObject 物件第 0、1 byte 是 kind code（IDA 將它
+    // 直接當 *v7 比對使用）。本還原把它顯式儲存於 m_wKind，由 InitTransport
+    // 寫入；上層 SetTransport 透過 GetTransportKind() 比對。
+    std::uint16_t        m_wKind{ 0 };     // (邏輯上對應 decomp 物件 +0)
+    std::uint16_t        _padKind{ 0 };
     GameImage*           m_pImageUp;       // DWORD offset 1 (byte 4)
     GameImage*           m_pImageDown;     // DWORD offset 2 (byte 8)
     ClientCharacter*     m_pOwner;         // DWORD offset 3 (byte 12)

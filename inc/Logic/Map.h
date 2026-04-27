@@ -45,6 +45,13 @@ public:
     int MapXtoScreenX(int x);
     int MapYtoScreenY(int y);
 
+    // 螢幕捲動偏移（mofclient.c：m_pMap+19592 / +19596）。
+    // 反編譯版本將兩個整數內嵌於 Map 物件中；本還原把它們存於全域
+    // dword_A73088 / dword_A7308C，以便 ObjectManager / ScreenChange
+    // 等已存在的呼叫面共用同一塊資料。
+    int GetScrollX() const;
+    int GetScrollY() const;
+
     // Map title resource (從 stMapInfo 取得地圖區域標題資源)
     unsigned int   GetMapAreaTitleResourceID(unsigned short mapID);
     unsigned short GetMapAreaTitleBlockID(unsigned short mapID);

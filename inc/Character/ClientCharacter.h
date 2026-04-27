@@ -135,7 +135,12 @@ public:
     // =========================================================================
     // Core update / draw
     // =========================================================================
-    int   Poll(int tick);
+    // mofclient.c 0x004A2854：tick 參數實際上是 cltTargetMark* 強轉成 int
+    // (manager Poll 把 m_clTargetMark 位址傳進來當 ebp 參數)。在 32 位元
+    // 反編譯下指標寬度等於 int，不會遺失資料；在 x64 下則會。
+    // 這裡改成顯式接 void* 以避免 64-bit 截斷；body 內把它再轉回 int 後
+    // 沿原語意傳給 OrderHitted / PollHPBox。
+    int   Poll(void* targetMark);
     void  PollHPBox(int tick);
     void  PrepareDrawingChar();
     void  PrepareDrawingPlayer();
@@ -318,7 +323,8 @@ public:
     void  ReleaseEmoticon();
     void  SetTransformation(unsigned short transformKind);
     void  ReleaseTransformation();
-    int   IsTransformed() const;
+    // mofclient.c 32208：玩家是否處於變身狀態（DWORD+169 != 0）。
+    int   IsTransformed() const { return m_iInitFlag_153_176[169 - 153]; }
     void  SetDied();
     void  SetPetKind(unsigned short petKind, int a3);
     void  CreatePet(unsigned short petKind, int a3);
@@ -393,8 +399,18 @@ public:
     void  SetItem(unsigned short itemKind, int qty);
     void  ResetItem(unsigned char slot);
     void  SetCAClone();
-    struct CCA* GetCAData(unsigned char* outSex, int* outA3, int* outA4,
-                          unsigned int* outA5, unsigned short* outA6);
+
+    // mofclient.c 30303：把這個 ClientCharacter 的 CA 描述資訊回填到輸出指標
+    // （sex / posX / posY / accountID / kind），回傳 m_pCCA。
+    CCA*  GetCAData(unsigned char* outSex, int* outA3, int* outA4,
+                    unsigned int* outA5, unsigned short* outA6) {
+        if (outSex) *outSex = m_ucSex;
+        if (outA3)  *outA3  = m_iPosX;
+        if (outA4)  *outA4  = m_iPosY;
+        if (outA5)  *outA5  = m_dwAccountID;
+        if (outA6)  *outA6  = m_wKind;
+        return m_pCCA;
+    }
     int   GetAccountID();
     int   IsMyChar();
     bool  IsHide();
@@ -513,6 +529,17 @@ public:
     int              m_iUnknown_7376;              // +7376
     int              m_iUnknown_7380;              // +7380
     unsigned char    m_ucUnknown_7384;             // +7384 (initialised to 2)
+
+    // 自動攻擊鎖定狀態（decomp DWORD+1847..+1849 / +1854..+1856）。
+    // 由 ClientCharacterManager::ProcAutoAttack / SearchAttackMonster /
+    // CharKeyInputProcess / ClientCharacter::AttackMonster 取讀。
+    unsigned int     m_dwAttackSearchTarget;       // +7388 (DWORD+1847) — 鎖定的搜尋目標 account
+    unsigned int     m_dwAttackTargetAccount;      // +7392 (DWORD+1848) — 實際攻擊中的 account
+    int              m_iAttackTargetHP;            // +7396 (DWORD+1849) — 鎖定目標 HP 暫存
+    int              m_iMoveDirX;                  // +7416 (DWORD+1854) — 鍵盤左右方向 -1/0/1
+    int              m_iMoveDirY;                  // +7420 (DWORD+1855) — 鍵盤上下方向 -1/0/1
+    unsigned int     m_dwGainExpDisplay;           // +7424 (DWORD+1856) — 待顯示的 GainExp 值
+
     unsigned char    m_ucUnknown_7434;             // +7434
     unsigned char    m_ucUnknown_7435;             // +7435
     unsigned char    m_ucUnknown_7436;             // +7436
@@ -541,12 +568,27 @@ public:
     unsigned int     m_dwUnknown_11256;            // +11256
     unsigned int     m_dwUnknown_11264;            // +11264
     unsigned char    m_ucUnknown_11260;            // +11260
+
+    // 私販 / 交易狀態 (decomp BYTE+11524)。值意義（mofclient.c CreateCharacter
+    // 寫入；CanCreatePrivateMarket / CanJoinPrivateMarket 讀取）：
+    //   0 = 無；1 = 私販關閉中；2 = 私販開啟中；3 = 一般交易進行中
+    unsigned char    m_ucTradeState;               // +11524
+
     unsigned int     m_dwGM_Level;                 // +11540
     bool             m_isPCRoomUser;               // +11556
     bool             m_isPCRoomPremium;            // +11560
 
     // --- Transport / tail state (decomp +14616..+14820) ---------------------
     unsigned int     m_dwUnknown_14684;            // +14684
+
+    // 配偶名稱（decomp char[]+14690）。CreateCharacter 由參數 a9 strcpy 進來。
+    // ClientCharacterManager::CreateCoupleEffect / DeleteCoupleEffect / 婚禮
+    // 系統用 strcmp 比對另一角色的 m_szName 來找配偶 slot。
+    char             m_szCoupleName[128];          // +14690
+
+    // 配偶戒指 kind code（decomp WORD+7409 = +14818）。
+    unsigned short   m_wCoupleRingKind;            // +14818
+
     unsigned int     m_dwUnknown_14820;            // +14820
     bool             m_preparingSpeedUp;           // *((_DWORD *)a2 + 174)
     bool             m_canSpeedUp;                 // *(_DWORD *)(v3 + 696)

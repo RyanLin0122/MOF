@@ -49,6 +49,11 @@ public:
     // mofclient.c 292838: bit 0 of DWORD+26 (offset 104) in stCharKindInfo.
     int IsPlayerChar(uint16_t kindCode);
 
+    // mofclient.c 0x00565830：依 kind code 判定是否為「分身」(Clone) 角色。
+    // 讀 stCharKindInfo +209 byte；ClientCharacterManager 在自動鎖敵時跳過
+    // 玩家分身（mofclient.c 37604 / 38023+）以避免誤判為怪物。
+    unsigned char GetIsClone(uint16_t kindCode);
+
     // mofclient.c: auxiliary kind lookups used by Order*/monster death paths.
     // Implemented as minimal stubs until the stCharKindInfo layout is fully
     // mapped.  Return 0 / nullptr when the record is missing.

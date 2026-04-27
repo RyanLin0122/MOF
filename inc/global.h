@@ -145,6 +145,34 @@ extern int dword_21B8DFC;
 // normal "[Lv.N] name" / "name" forms.  Toggled by the ~ debug key.
 extern int fInfoFlag;
 
+// -----------------------------------------------------------------------------
+// 由 ClientCharacterManager / ClientCharacter 取用的 mofclient.c 雜項全域旗標。
+// 全部對齊 ground truth BSS 弱符號（默認 0）。原 IDA 自動命名於 .cpp 註解保留。
+// -----------------------------------------------------------------------------
+extern unsigned int   g_dwSubGameState;          // mofclient.c：g_dwSubGameState @ 0xB3D6FC
+extern int            g_iNPCDialogActive;        // mofclient.c：dword_21B8DC4
+extern int            g_iResurrectInstantWarp;   // mofclient.c：dword_21B8DE4
+extern int            g_iAutoAttackEnabled;      // mofclient.c：dword_21B8DF0
+extern unsigned int   g_wInstantDungeonMapKind;  // mofclient.c：dword_21C9C64
+extern int            g_iMouseTargetEnabled;     // mofclient.c：dword_73E30C
+extern int            g_bIsMoveMap;              // mofclient.c：g_bIsMoveMap @ 0x22F2A24
+extern unsigned short g_wLastSentMoveX;          // mofclient.c：dwlastsentx
+extern unsigned short g_wLastSentMoveY;          // mofclient.c：dwlastsenty
+extern unsigned int   g_dwDoubleTapTime1;        // mofclient.c：dwKeyDown_1
+extern unsigned int   g_dwDoubleTapTime2;        // mofclient.c：dwKeyDown_2
+extern int            g_iDoubleTapKeyUp;         // mofclient.c：fUpFlag
+extern int            g_iDoubleTapKeyDown;       // mofclient.c：fDownFlag
+extern unsigned short g_wMapid;                  // mofclient.c：g_wMapid @ 0x6DD7D0
+extern int            g_iMapPixelHeight;         // mofclient.c：dword_A7311C
+extern int            g_iPickupKeyHeld;          // mofclient.c：dword_AFD350
+extern int            g_bLocalData;              // mofclient.c：g_bLocalData @ 0xB8BB9C
+
+// mofclient.c 0x21BA7B4：cltBasicAppearSystem 在原始 binary 是 cltMyCharData
+// 內嵌欄位；本還原把它升級為獨立全域以便 ClientCharacterManager::ChangeMySex
+// 與其他系統共享同一份外觀資料。
+class cltBasicAppearSystem;
+extern cltBasicAppearSystem g_clBasicAppearSystem;
+
 extern unsigned int D3DRS_BLENDOP_TYPE[8];
 extern unsigned int D3DRS_SRCBLEND_TYPE[8];
 extern unsigned int D3DRS_DESTBLEND_TYPE[8];
@@ -228,6 +256,11 @@ extern cltMatchManager          g_clMatchManager;
 extern cltPKManager             g_clPKManager;
 extern cltPKFlagManager         g_clPKFlagManager;
 extern CSpiritSpeechMgr         g_clSpiritSpeechMgr;
+
+// 玩家操作引導系統（mofclient.c 0x21B8E1C：unk_21B8E1C）。
+// ClientCharacterManager::Attack 與 CharKeyInputProcess 在玩家攻擊／擊殺時呼叫。
+class cltHelpSystem;
+extern cltHelpSystem            g_clHelpSystem;
 extern CSpiritSpeechParser      g_clSpiritSpeechParser;
 extern CSpiritGossipParser      g_clSpiritGossipParser;
 extern clTransportKindInfo      g_clTransportKindInfo;
