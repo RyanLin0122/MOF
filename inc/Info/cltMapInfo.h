@@ -127,7 +127,7 @@ struct stMapInfo {                          // Offset: 項目名稱
 static_assert(sizeof(stMapInfo) == 376, "stMapInfo size must be 376 bytes");
 
 
-class cltMapInfo : cltClimateKindInfo {
+class cltMapInfo : public cltClimateKindInfo {
 public:
     cltMapInfo();
     virtual ~cltMapInfo();

@@ -874,11 +874,115 @@ void ClientCharacter::OrderTransformation() {
     PushOrder(&order);
 }
 
-// mofclient.c 30101: simplified port of OrderHitted.  Ground truth handles
-// monster-specific knockback physics (Walkdust effect + collision bounces);
-// we port the terminal behaviour (enqueue stop + clear HitedSkillKind + reset
-// the death animation delay) which is what non-monster callers depend on.
+// mofclient.c 30101 (0x4066C0)：被擊（hitted）反應的逐 tick 推進。
+//
+// 完整流程：
+//   1) 角色非怪物：直接跳到結尾（最後一影格）的收尾邏輯。
+//   2) 怪物：第一次進入時依 BYTE+740 / DWORD+83 決定撞擊型態（v4 是
+//      原始 binary 中弱符號 iYpos_1..7 的指標，原表全為 0，所以下面
+//      的 Y 反彈讀出來都是 0 — 在還原版我們直接省略 Y 表查閱）。
+//   3) DWORD+180（剩餘血量資訊）非 0 → 第一影格播一次死亡音效，沒有撞擊推進。
+//   4) DWORD+180 為 0 → 撞擊推進路徑：
+//      - DWORD+88 計時 ≥ SETTING_FRAME 才繼續；
+//      - 非 IsFieldItemBox：v24 = m_iPosX 沿 DWORD+86 方向以 max(DWORD+84, 5)
+//        前進；若新 X 碰撞 → 反向、再走一步。
+//      - Y 反彈表全為 0，等價於 a2 維持 m_iUnknown_85（Y baseline）。
+//      - WORD+4847 == _s_PutDieSound 時播一次死亡音；
+//        BYTE+9694 & 1 → DWORD+84-- 緩慢衰減撞擊步幅。
+//      - 最終 IsCollison(v24, v25)：未碰 → 寫入 m_iPosX/Y；
+//        碰撞時保留原位（卡牆）。
+//   5) 最後一影格：清 m_currentOrder、推送 stop、ResetHittedSkillKind、
+//      WORD+4840 = 0、DWORD+84 = 10。
+//
+// 視覺特效（CEffect_Field_Walkdust / Skill_SpeedUP）暫不還原。
 void ClientCharacter::OrderHitted(int /*alpha*/) {
+    const bool isMonster =
+        m_pCharMgr && m_pCharMgr->IsMonster(m_wKind);
+
+    cltMapCollisonInfo* coll = m_pMap ? m_pMap->GetMapCollisonInfo() : nullptr;
+    const bool hidden = m_someOtherState != 0;
+
+    if (isMonster) {
+        int v24 = m_iPosX;                              // 工作 X
+        int a2  = m_iPosY;                              // 工作 Y（Y 表全 0 → 不變動）
+        int v25 = a2;
+
+        // 第一影格初始化（WORD+4847 == 0）：knockback 大小／方向。
+        if (m_wCurrentFrame == 0) {
+            Decomp<int>(340) = m_iPosY;                 // DWORD+85 (baseline Y)
+            const unsigned short cw = GetCharWidthA();
+            const double initStep = (cw > 0) ? (1.0 / static_cast<double>(cw) * 200.0) : 0.0;
+            Decomp<int>(336) = static_cast<int>(initStep);  // DWORD+84
+            // BYTE+739 (face direction): 1 → -1, 0 → +1
+            Decomp<int>(344) = Decomp<unsigned char>(739) ? -1 : 1;  // DWORD+86
+        }
+
+        if (Decomp<int>(720) != 0) {                    // DWORD+180 (remain HP info)
+            // 死亡音效路徑（不做撞擊推進）。
+            if (m_wCurrentFrame == 0) {
+                if (auto* ck = m_pClientCharKindInfo) {
+                    const char* ds = ck->GetDeadSound(m_wKind);
+                    if (ds) {
+                        g_GameSoundManager.PlaySoundA(
+                            const_cast<char*>(ds), m_iPosX, m_iPosY);
+                    }
+                }
+            }
+        } else {
+            // 撞擊推進路徑（gated by SETTING_FRAME）。
+            int& gate = m_iUnknown_352;                 // DWORD+88
+            ++gate;
+            if (gate < SETTING_FRAME) return;
+            gate = 0;
+
+            // Walkdust 特效：略。
+
+            cltClientCharKindInfo* cinfo =
+                static_cast<cltClientCharKindInfo*>(m_pClientCharKindInfo);
+            const bool isBox = cinfo && cinfo->IsFieldItemBox(m_wKind) != nullptr;
+            if (!isBox) {
+                int kbStep = Decomp<int>(336);          // DWORD+84
+                if (kbStep <= 5) kbStep = 5;
+                v24 += kbStep * Decomp<int>(344);       // *= direction
+
+                const bool collidedX = coll && coll->IsCollison(
+                    static_cast<unsigned short>(v24),
+                    static_cast<unsigned short>(a2)) == 1;
+                if (collidedX) {
+                    int dir = -Decomp<int>(344);
+                    Decomp<int>(344) = dir;
+                    int kbStep2 = Decomp<int>(336);
+                    if (kbStep2 <= 5) kbStep2 = 5;
+                    v24 += kbStep2 * dir;
+                }
+
+                // Y 反彈表全為零 → a2 ≈ m_iUnknown_85；等於 baseline。
+                a2  = Decomp<int>(340);                 // DWORD+85
+                v25 = a2;
+            }
+
+            // 死亡音效（倒數第二影格）：mofclient.c 用全域變數
+            // _s_PutDieSound__1__OrderHitted 紀錄目標影格；本還原省略追蹤。
+
+            // BYTE+9694 & 1 → 衰減 DWORD+84
+            if ((Decomp<unsigned char>(9694) & 1u) != 0) {
+                --Decomp<int>(336);
+            }
+
+            // 最終撞擊位置：未碰才寫入。
+            const bool collidedFinal = coll && coll->IsCollison(
+                static_cast<unsigned short>(v24),
+                static_cast<unsigned short>(v25)) == 1;
+            if (!collidedFinal || hidden) {
+                m_iPosY = a2;
+                m_iPosX = v24;
+            }
+
+            // DeadProcSustainEffect / 倒數第二影格 reset：略。
+        }
+    }
+
+    // 最後一影格：清 order、push stop、重置 hitted skill 狀態。
     if (m_wCurrentFrame == static_cast<unsigned short>(m_wTotalFrame - 1)) {
         std::memset(&m_currentOrder, 0, sizeof(m_currentOrder));
         stCharOrder order{};
@@ -1145,10 +1249,20 @@ void ClientCharacter::OrderHit() {
     }
 }
 
+// mofclient.c 32223 (0x409860): if (x,y) is collidable AND the hidden-self
+// bypass (DWORD+2882 / m_someOtherState) is clear, the write is suppressed.
+// 兩組座標（pos 與 dest）在 ground truth 同步寫入。
 void ClientCharacter::SetCurPosition(ClientCharacter* pChar, int x, int y) {
     if (!pChar) return;
-    pChar->m_iPosX = x;
-    pChar->m_iPosY = y;
+    cltMapCollisonInfo* coll = m_pMap ? m_pMap->GetMapCollisonInfo() : nullptr;
+    const bool collided = coll && coll->IsCollison(
+        static_cast<unsigned short>(x), static_cast<unsigned short>(y)) == 1;
+    if (!collided || pChar->m_someOtherState) {
+        pChar->m_iPosX  = x;
+        pChar->m_iDestX = x;
+        pChar->m_iPosY  = y;
+        pChar->m_iDestY = y;
+    }
 }
 
 // mofclient.c 32630.  My-char reads through cltPlayerAbility (the restored
@@ -3918,15 +4032,17 @@ int  ClientCharacter::IsMyChar() {
 // 以滿足 VS code review 工具的 VCR001 檢查（要求標頭內函式宣告必須能直接
 // 找到定義）。
 
-// mofclient.c 32212.  The collision check (cltMapCollisonInfo::IsCollison)
-// prevents setting the destination to an unwalkable tile.  When the hidden-
-// self flag (DWORD+2882) is set, the collision check is bypassed.
+// mofclient.c 32212 (0x409820)：碰撞檢查阻擋目的格設定，
+// 但當 hidden-self 旗標（DWORD+2882 / m_someOtherState）非 0 時略過。
 void ClientCharacter::SetEndPosition(ClientCharacter* pChar, int x, int y) {
     if (!pChar) return;
-    // Collision gate deferred — cltMapCollisonInfo not yet restored.  Accept
-    // all moves; the server echoes back a correction via the network layer.
-    pChar->m_iDestX = x;
-    pChar->m_iDestY = y;
+    cltMapCollisonInfo* coll = m_pMap ? m_pMap->GetMapCollisonInfo() : nullptr;
+    const bool collided = coll && coll->IsCollison(
+        static_cast<unsigned short>(x), static_cast<unsigned short>(y)) == 1;
+    if (!collided || pChar->m_someOtherState) {
+        pChar->m_iDestX = x;
+        pChar->m_iDestY = y;
+    }
 }
 
 // Static timer callbacks — decomp 33457-33475.
@@ -4425,17 +4541,18 @@ void ClientCharacter::PollHPBox(int /*a2*/) {
 }
 
 // =============================================================================
-// MoveCharacter (mofclient.c 32656, ~500 lines)
+// MoveCharacter (mofclient.c 32656, 0x40A1B0；~500 lines)
 //
-// Per-frame position update:
-//   - Skip when action state is 2/3/4 (die / attack / hit).
-//   - Respect SETTING_FRAME halving (every other tick when frame-rate is 2).
-//   - Compute step = m_fMoveSpeed toward (m_iDestX, m_iDestY), clamped so we
-//     don't overshoot the destination.
-//   - Collision check against g_Map keeps the character on walkable tiles.
-//   - Facing (m_dwLR_Flag) flips to the last non-zero horizontal delta.
-//   - Walkdust / goggle / speed-up effect spawns are TODO (Phase D visual
-//     polish) — the control flow / position math is preserved.
+// 簡化版位置更新（整段保留 LABEL_85 與 LABEL_99 兩處碰撞檢查邏輯）：
+//   - action state 2/3/4（die / attack / hit）直接跳到 LABEL_103。
+//   - SETTING_FRAME==2 時每兩 tick 才推進。
+//   - 一次性對 (dx, dy) 求 diamond step。原版逐軸 float 推進，兩者最終都進到
+//     LABEL_85 做新位置碰撞檢查。
+//   - LABEL_85：新位置可走或處於隱身（m_someOtherState）→ commit prev=new。
+//   - 否則回退到 pre-move 位置，沿 m_iPrevPosX/Y → m_iDestX/Y 嘗試一階滑行
+//     （LABEL_92 / LABEL_98 為夾到 dest），並在 LABEL_99 再做一次碰撞檢查。
+//     若滑行格可達：SetEnd / SetCur(prev) + push stop order。
+//   - Walkdust / SpeedUP / Goggle 特效屬 Phase-D 視覺，沿用 TODO。
 // =============================================================================
 void ClientCharacter::MoveCharacter() {
     const unsigned int as = m_dwActionState;
@@ -4472,19 +4589,77 @@ void ClientCharacter::MoveCharacter() {
     const int stepX = static_cast<int>(static_cast<float>(dx) * step / dist);
     const int stepY = static_cast<int>(static_cast<float>(dy) * step / dist);
 
-    const int newX = m_iPosX + stepX;
-    const int newY = m_iPosY + stepY;
+    // 保存 pre-move 位置（mofclient.c v88 / v89）。
+    const int saved_PosX = m_iPosX;
+    const int saved_PosY = m_iPosY;
 
-    // Collision check against Map::IsCollison — when the Map interface is
-    // wired we query; until then we just accept the move.
-    (void)m_pMap;
+    // Apply tentative move.
+    m_iPosX = saved_PosX + stepX;
+    m_iPosY = saved_PosY + stepY;
 
-    m_iPrevPosX = m_iPosX;
-    m_iPrevPosY = m_iPosY;
-    m_iPosX = newX;
-    m_iPosY = newY;
+    cltMapCollisonInfo* coll = m_pMap ? m_pMap->GetMapCollisonInfo() : nullptr;
+    const bool hidden = m_someOtherState != 0;
 
-    // Walkdust / speed-up / goggle effects: decomp spawns a CEffect_Field_
-    // Walkdust periodically when running.  Not crucial for behaviour — the
-    // visual is Phase-D scope.
+    // ---- LABEL_85: 新位置碰撞檢查 ---------------------------------------
+    const bool collidedNew = coll && coll->IsCollison(
+        static_cast<unsigned short>(m_iPosX),
+        static_cast<unsigned short>(m_iPosY)) == 1;
+    if (!collidedNew || hidden) {
+        // commit：prev = new position
+        m_iPrevPosX = m_iPosX;
+        m_iPrevPosY = m_iPosY;
+        return;
+    }
+
+    // ---- 碰撞回應：滑行嘗試 ---------------------------------------------
+    // 把 m_iPosX/Y 還原至 pre-move，並用 m_iPrevPosX/Y 作為「向 dest 推進
+    // 一階」的暫存位置。原版逐軸求解，下面照搬其分支結構。
+    const int prevSavedX = m_iPrevPosX;            // v39
+    const int prevSavedY = m_iPrevPosY;            // v90 (read after X branch in decomp)
+    m_iPosX = saved_PosX;
+    m_iPosY = saved_PosY;
+
+    const int destX = m_iDestX;                    // v40
+    const int destY = m_iDestY;                    // v44
+    const float v87 = 0.0f;                        // 反編譯 frame-parity offset；簡化為 0
+
+    // X 軸夾值（LABEL_92 為 m_iPrevPosX = destX）。
+    const double dxPrev = static_cast<double>(prevSavedX - destX);
+    if (dxPrev < 0.0) {
+        const int v42 = static_cast<int>(static_cast<double>(prevSavedX) + speed + v87);
+        m_iPrevPosX = (v42 < destX) ? v42 : destX;
+    } else if (dxPrev <= 0.0) {
+        m_iPrevPosX = destX;                       // already at dest
+    } else {
+        const int v43 = static_cast<int>(static_cast<double>(prevSavedX) - speed - v87);
+        m_iPrevPosX = (v43 > destX) ? v43 : destX;
+    }
+
+    // Y 軸夾值（LABEL_98 為 m_iPrevPosY = destY）。
+    const double dyPrev = static_cast<double>(prevSavedY - destY);
+    if (dyPrev >= 0.0) {
+        if (dyPrev == 0.0) {
+            m_iPrevPosY = destY;
+        } else {
+            const int v47 = static_cast<int>(static_cast<double>(prevSavedY) - speed - v87);
+            m_iPrevPosY = (v47 > destY) ? v47 : destY;
+        }
+    } else {
+        const int v46 = static_cast<int>(static_cast<double>(prevSavedY) + speed + v87);
+        m_iPrevPosY = (v46 < destY) ? v46 : destY;
+    }
+
+    // ---- LABEL_99: 滑行格碰撞檢查 ---------------------------------------
+    const bool collidedSlid = coll && coll->IsCollison(
+        static_cast<unsigned short>(m_iPrevPosX),
+        static_cast<unsigned short>(m_iPrevPosY)) == 1;
+    if (!collidedSlid || hidden) {
+        SetEndPosition(this, m_iPrevPosX, m_iPrevPosY);
+        SetCurPosition(this, m_iPrevPosX, m_iPrevPosY);
+        stCharOrder ord{};
+        SetOrderStop(&ord);
+        PushOrder(&ord);
+    }
+    // 否則卡牆：保持 pre-move 位置，下個 tick 再試。LABEL_103 段
+    // （影格動畫 / Goggle 特效）暫不重現。
 }

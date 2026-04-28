@@ -560,9 +560,24 @@ void ClientCharacterManager::MoveForAttack(unsigned short skillKind) {
     if (!needX && !needY) return;
     int stepX = needX ? (dx >= 0 ? -1 : 1) * static_cast<int>(my->m_fMoveSpeed) : 0;
     int stepY = needY ? (dy >= 0 ? -1 : 1) * static_cast<int>(my->m_fMoveSpeed) : 0;
-    stCharOrder ord{};
-    my->SetOrderMove(&ord, my->m_iDestX + stepX, my->m_iDestY + stepY, 0);
-    my->PushOrder(&ord);
+
+    // mofclient.c 36210：碰撞檢查；若新格不可行走且角色未處於隱身（DWORD+2882），
+    // 中止 move-target、清除 m_dwUnknown_14820、解除搜怪鎖定。
+    const int newX = my->m_iDestX + stepX;
+    const int newY = my->m_iDestY + stepY;
+    cltMapCollisonInfo* coll =
+        ClientCharacter::m_pMap ? ClientCharacter::m_pMap->GetMapCollisonInfo() : nullptr;
+    const bool collided = coll && coll->IsCollison(
+        static_cast<unsigned short>(newX), static_cast<unsigned short>(newY)) == 1;
+    if (!collided || my->m_someOtherState) {
+        stCharOrder ord{};
+        my->SetOrderMove(&ord, newX, newY, 0);
+        my->PushOrder(&ord);
+    } else {
+        ResetMoveTarget();
+        my->m_dwUnknown_14820 = 0;
+        my->SetSearchMonster(0);
+    }
 }
 
 // -------------------------------------------------------------------------
@@ -762,6 +777,21 @@ void ClientCharacterManager::CharKeyInputProcess() {
     }
 
     SetContinueAutoAttack();
+
+    // mofclient.c 37189：方向鍵調整後的 (destX, destY) 若落在碰撞格上，
+    // 且角色不在隱身狀態 (DWORD+2882)：把目的還原成 m_iDestX/Y、解除
+    // move target、清除 m_dwUnknown_14820 與搜怪鎖。
+    cltMapCollisonInfo* coll =
+        ClientCharacter::m_pMap ? ClientCharacter::m_pMap->GetMapCollisonInfo() : nullptr;
+    if (coll && coll->IsCollison(static_cast<unsigned short>(destX),
+                                 static_cast<unsigned short>(destY)) == 1
+        && !my->m_someOtherState) {
+        destX = my->m_iDestX;
+        destY = my->m_iDestY;
+        ResetMoveTarget();
+        my->m_dwUnknown_14820 = 0;
+        my->SetSearchMonster(0);
+    }
 
     if (destX == my->m_iDestX && destY == my->m_iDestY) {
         MoveForAttack(0);

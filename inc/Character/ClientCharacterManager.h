@@ -327,6 +327,11 @@ public:
     void SetTransport(unsigned int account, unsigned short transportKind,
                       unsigned char a4);
 
+    // mofclient.c：cltInstansDungeonPortal 在原始 binary 是 manager 內嵌
+    //   成員（unk_18C4D0C 即此實體位址）。Map::CreateMap 等外部需要呼叫
+    //   Init/AddPortal 時透過此 getter 拿到參考。
+    cltInstansDungeonPortal& GetInstansDungeonPortal() { return m_clInstansDungeonPortal; }
+
     // --- 對齊舊有 callsite 的 helper -------------------------------------
     bool GetMyTransformationed() const {
         return const_cast<ClientCharacterManager*>(this)

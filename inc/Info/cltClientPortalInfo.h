@@ -46,6 +46,10 @@ public:
                                  uint16_t* a5, unsigned char* a6,
                                  uint16_t* a7, int a8);
 
+    // 取得目前快取的 portal 數量（mofclient.c：dword_AF4244 等位置會直接讀
+    // m_nPortalCount，本還原以 getter 暴露）。
+    int GetPortalCount() const { return m_nPortalCount; }
+
     // 直接存取 buffer 中第 a3 筆 portal 的欄位
     int       GetPosX(uint16_t a2, uint16_t a3);
     int       GetPosY(uint16_t a2, uint16_t a3);

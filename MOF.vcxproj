@@ -281,6 +281,7 @@
     <ClCompile Include="src\Info\cltLessonKindInfo.cpp" />
     <ClCompile Include="src\Info\cltMakingItemKindInfo.cpp" />
     <ClCompile Include="src\Info\cltMapAreaKindInfo.cpp" />
+    <ClCompile Include="src\Info\cltMapCollisonInfo.cpp" />
     <ClCompile Include="src\Info\cltMapInfo.cpp" />
     <ClCompile Include="src\Info\cltRegenMonsterKindInfo.cpp" />
     <ClCompile Include="src\Info\cltMapUseItemInfoKindInfo.cpp" />
@@ -356,6 +357,10 @@
     <ClCompile Include="src\Logic\DirectInputManager.cpp" />
     <ClCompile Include="src\Logic\XJoyStick.cpp" />
     <ClCompile Include="src\Logic\Map.cpp" />
+    <ClCompile Include="src\Logic\cltMap_Climate.cpp" />
+    <ClCompile Include="src\Logic\cltMap_WeddingFlower.cpp" />
+    <ClCompile Include="src\Logic\CItemClimateUnit.cpp" />
+    <ClCompile Include="src\Logic\CMap_Item_Climate.cpp" />
     <ClCompile Include="src\Logic\cltCashShopItem.cpp" />
     <ClCompile Include="src\Logic\CMeritoriousParsers.cpp" />
     <ClCompile Include="src\Logic\CMonsterGroupPerLevel.cpp" />
@@ -682,6 +687,7 @@
     <ClInclude Include="inc\Info\cltLessonKindInfo.h" />
     <ClInclude Include="inc\Info\cltMakingItemKindInfo.h" />
     <ClInclude Include="inc\Info\cltMapAreaKindInfo.h" />
+    <ClInclude Include="inc\Info\cltMapCollisonInfo.h" />
     <ClInclude Include="inc\Info\cltMapInfo.h" />
     <ClInclude Include="inc\Info\cltMapUseItemInfoKindInfo.h" />
     <ClInclude Include="inc\Info\cltMineKindInfo.h" />
@@ -768,6 +774,10 @@
     <ClInclude Include="inc\Logic\DirectInputManager.h" />
     <ClInclude Include="inc\Logic\XJoyStick.h" />
     <ClInclude Include="inc\Logic\Map.h" />
+    <ClInclude Include="inc\Logic\cltMap_Climate.h" />
+    <ClInclude Include="inc\Logic\cltMap_WeddingFlower.h" />
+    <ClInclude Include="inc\Logic\CItemClimateUnit.h" />
+    <ClInclude Include="inc\Logic\CMap_Item_Climate.h" />
     <ClInclude Include="inc\Logic\SpiritGossipParser.h" />
     <ClInclude Include="inc\Logic\SpiritSpeechParser.h" />
     <ClInclude Include="inc\Object\cltNPC_Taxi.h" />

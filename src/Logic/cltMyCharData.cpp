@@ -47,6 +47,15 @@ void cltMyCharData::SetMapID(cltMyCharData* /*self*/, unsigned short /*mapKind*/
     // Stub: real implementation updates the current map ID field.
 }
 
+// mofclient.c：idb-only 宣告，本體未被反編譯出來。原始 binary 大概率是
+// 空函式或僅做 CA 影像預載。本還原以 no-op 實作。
+void cltMyCharData::LoadEffectImage(cltMyCharData* /*self*/) {}
+
+// mofclient.c：idb-only 宣告，本體未在反編譯中出現。原始 binary 為遍歷
+// 玩家任務 list 並呼叫 g_clNPCObject.AddQuestMark。本還原以 no-op 實作；
+// 待玩家任務 list 還原後再串接。
+void cltMyCharData::AddQuestMark(cltMyCharData* /*self*/) {}
+
 void cltMyCharData::SetMyCharName(cltMyCharData* /*self*/, const char* /*name*/) {
     // Stub: real implementation stores the character name.
 }

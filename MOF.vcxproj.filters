@@ -615,6 +615,9 @@
     <ClCompile Include="src\Info\cltMapAreaKindInfo.cpp">
       <Filter>來源檔案</Filter>
     </ClCompile>
+    <ClCompile Include="src\Info\cltMapCollisonInfo.cpp">
+      <Filter>來源檔案</Filter>
+    </ClCompile>
     <ClCompile Include="src\Info\cltPetKindInfo.cpp">
       <Filter>來源檔案</Filter>
     </ClCompile>
@@ -865,6 +868,18 @@
       <Filter>來源檔案</Filter>
     </ClCompile>
     <ClCompile Include="src\Logic\Map.cpp">
+      <Filter>來源檔案</Filter>
+    </ClCompile>
+    <ClCompile Include="src\Logic\cltMap_Climate.cpp">
+      <Filter>來源檔案</Filter>
+    </ClCompile>
+    <ClCompile Include="src\Logic\cltMap_WeddingFlower.cpp">
+      <Filter>來源檔案</Filter>
+    </ClCompile>
+    <ClCompile Include="src\Logic\CItemClimateUnit.cpp">
+      <Filter>來源檔案</Filter>
+    </ClCompile>
+    <ClCompile Include="src\Logic\CMap_Item_Climate.cpp">
       <Filter>來源檔案</Filter>
     </ClCompile>
     <ClCompile Include="src\Logic\CMonsterGroupPerLevel.cpp">
@@ -1745,6 +1760,9 @@
     <ClInclude Include="inc\Info\cltMapAreaKindInfo.h">
       <Filter>標頭檔</Filter>
     </ClInclude>
+    <ClInclude Include="inc\Info\cltMapCollisonInfo.h">
+      <Filter>標頭檔</Filter>
+    </ClInclude>
     <ClInclude Include="inc\Info\cltPetKindInfo.h">
       <Filter>標頭檔</Filter>
     </ClInclude>
@@ -2001,6 +2019,18 @@
       <Filter>標頭檔</Filter>
     </ClInclude>
     <ClInclude Include="inc\Logic\Map.h">
+      <Filter>標頭檔</Filter>
+    </ClInclude>
+    <ClInclude Include="inc\Logic\cltMap_Climate.h">
+      <Filter>標頭檔</Filter>
+    </ClInclude>
+    <ClInclude Include="inc\Logic\cltMap_WeddingFlower.h">
+      <Filter>標頭檔</Filter>
+    </ClInclude>
+    <ClInclude Include="inc\Logic\CItemClimateUnit.h">
+      <Filter>標頭檔</Filter>
+    </ClInclude>
+    <ClInclude Include="inc\Logic\CMap_Item_Climate.h">
       <Filter>標頭檔</Filter>
     </ClInclude>
     <ClInclude Include="inc\System\cltMakingItemSystem.h">

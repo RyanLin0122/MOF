@@ -142,6 +142,15 @@ MoFFont g_MoFFont;
 DCTIMMList g_IMMList;
 Map g_Map;
 unsigned short dword_21B8DF4 = 0; // current map ID (ground truth: 0x21B8DF4)
+int g_bDir = 0;
+int g_iNotInFightRoomSession = 0;
+unsigned short g_wLetterboxAW = 0;
+unsigned short g_wLetterboxAH = 0;
+unsigned short g_wLetterboxBW = 0;
+unsigned short g_wLetterboxBH = 0;
+CControlAlphaBox g_clAlphaClipBox_L;
+CControlAlphaBox g_clAlphaClipBox_R;
+ClientCharacter* g_pLastSetViewChar = nullptr;
 CMoFNetwork g_Network;
 cltClassKindInfo g_clClassKindInfo;
 cltItemKindInfo g_clItemKindInfo;

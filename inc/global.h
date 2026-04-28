@@ -228,6 +228,36 @@ extern DCTIMMList               g_IMMList;
 extern Map                      g_Map;
 extern unsigned short           dword_21B8DF4; // current map ID (ground truth: 0x21B8DF4)
 extern cltMapTitle              g_clMapTitle;
+// mofclient.c 0x6E16C8：天氣風向旗標。InitClimate 隨機翻轉，cltClimateUnit
+// 在繪製粒子時讀取 g_bDir 寫入 GameImage 的 flip 欄位。
+extern int                      g_bDir;
+
+// mofclient.c 0x21B8E08：fight-room session 旗標。
+//   - Map::CreateMap 進入非 PvP 地圖時 = 1
+//   - CUIFightRoomChannel::CompleteJoin / FailJoin 時 = (dword_AFAF5C == 0)
+// 即「目前不在 fight room session」之布林。原 binary 名稱：dword_21B8E08。
+extern int                      g_iNotInFightRoomSession;
+
+// mofclient.c 0x230BB48 / 0x230BB4A：寬螢幕 letterbox 區塊（pair A）的
+// 螢幕寬高暫存。Map::CreateMap 在 sysW>800 且地圖比螢幕窄時寫入。
+// 原 binary 名稱：word_230BB48 / word_230BB4A。
+extern unsigned short           g_wLetterboxAW;
+extern unsigned short           g_wLetterboxAH;
+
+// mofclient.c 0x230B8D8 / 0x230B8DA：letterbox 區塊（pair B）的鏡射暫存；
+// 與 pair A 同步寫入相同值。原 binary 名稱：word_230B8D8 / word_230B8DA。
+extern unsigned short           g_wLetterboxBW;
+extern unsigned short           g_wLetterboxBH;
+
+// mofclient.c：寬螢幕 letterbox 兩側的半透明遮罩 box。Map::CreateMap 與
+// 繪製管線會操作這兩個 CControlAlphaBox 實體。
+class CControlAlphaBox;
+extern CControlAlphaBox         g_clAlphaClipBox_L;
+extern CControlAlphaBox         g_clAlphaClipBox_R;
+
+// mofclient.c 0x7C368C：SetViewChar 將目前 view char 指標也鏡射到此全域，
+// 供 ObjectManager / 其他系統共用。原 binary 名稱：dword_7C368C。
+extern ClientCharacter*         g_pLastSetViewChar;
 
 // Network
 extern CMoFNetwork              g_Network;

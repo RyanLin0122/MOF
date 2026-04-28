@@ -30,6 +30,15 @@ public:
 
     static void SetMapID(cltMyCharData* self, unsigned short mapKind);
 
+    // mofclient.c：在進入特定地圖型態（V/F type ∉ {2,4,5,6}）時呼叫，
+    // 用來預載角色特效圖（CA/Effect 系統）。原 binary 的本體未在反編譯
+    // 中出現（IDA idb-only 宣告），於還原版以 no-op 方式實作。
+    static void LoadEffectImage(cltMyCharData* self);
+
+    // mofclient.c：CreateMap / OrderPray 等流程結束時呼叫，遍歷玩家任務 list
+    // 並對相應 NPC 標記任務圖示。idb-only 宣告，本還原以 no-op 處理。
+    static void AddQuestMark(cltMyCharData* self);
+
     static void SetMyCharName(cltMyCharData* self, const char* name);
 
     // mofclient.c 0x518610：此函式在原始程式碼實際上只是 `return this;`
