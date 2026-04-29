@@ -15,11 +15,9 @@ FORCE_IMPLEMENTED_CLASSES = [
 # 只要 class 名稱在這裡，就直接視為未完成
 FORCE_MISSING_CLASSES = [
     "cltUsingSkillSystem",
-    "cltCharKindInfo",
     "cltNPCManager",
     "CUIManager",
     "CUITutorial",
-    "cltMyCharData",
     "cltWorkingPassiveSkillSystem",
     "clClientTransportKindInfo",
     "clTransportAnilInfo",
