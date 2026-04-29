@@ -2,6 +2,8 @@
 #include <cstdint>
 #include <cstddef>
 
+class DCTTextManager;
+
 // stCharKindInfo — 還原自 mofclient.c 0x005644D0 (cltCharKindInfo::Initialize)。
 // Layout 由解析器逐欄寫入位移推導；總大小恰為 0x118 bytes。
 // 所有現存呼叫端 (CToolTip / cltQuestSystem / cltDropItemKindInfo / ...)
@@ -92,14 +94,46 @@ public:
 
     // 字串 → 速度型別 enum (對應 mofclient.c 0x00565570 / 0x005655E0)
     static uint8_t GetMoveSpeedType(const char* s);
-    static uint8_t GetAttackSpeedType(const char* s);
+    // GT 0x005655E0 回傳 int (FASTEST=5、SLOWEST=1、SLOW=2、NORMAL=3、FAST=4)。
+    static int     GetAttackSpeedType(const char* s);
+
+    // GT 0x005655A0 / 0x00565660：speedType → 移動 / 攻擊延遲常數。
+    static uint8_t      GetMoveSpeedConstantByType(uint8_t a1);
+    static unsigned int GetAttackDelayTimeByAttackSpeedType(uint8_t a1);
 
     // 保持與 IDA 還原呼叫面一致；具體資料版型由原始客戶端定義。
     void* GetCharKindInfo(uint16_t kindCode);
     uint16_t GetRealCharID(uint16_t charKind);
 
+    // GT 0x00565270：return (stCharKindInfo**)((char*)this + 4) — table head ptr。
+    stCharKindInfo** GetCharInfo();
+
+    // GT 0x00565330：5 碼字串 → cltItemKindInfo::TranslateKindCode → table lookup。
+    stCharKindInfo* GetCharKindInfoByStringKindCode(char* a2);
+
+    // GT 0x00565410..0x00565470：char kind 個別欄位 helper。
+    uint16_t GetCharWidthA(uint16_t kindCode);
+    uint16_t GetCharHeight(uint16_t kindCode);
+    uint16_t GetCharInfoPosY(uint16_t kindCode);
+    uint8_t  GetMoveSpeedConstant(uint16_t kindCode);
+
+    // GT 0x005656B0 / 0x005656D0：return (stCharKindInfo*)((char*)info + 147 / 163)。
+    // 呼叫端只當作 char* 拿來播放音效；回 char* 即可。
+    char* GetAttackSound(uint16_t kindCode);
+    char* GetDeadSound(uint16_t kindCode);
+
     // Returns monster name/info block for the given kind code.
     stCharKindInfo* GetMonsterNameByKind(unsigned short kind);
+
+    // GT 0x005656F0 .. 0x005657B0：怪物 AI / 範圍欄位讀取 helpers。
+    uint16_t GetMonsterAIAttr(uint16_t kindCode);
+    uint16_t GetFirstHitMonsterRangeX(uint16_t kindCode);
+    uint16_t GetFirstHitMonsterRangeY(uint16_t kindCode);
+    uint16_t GetMonsterHelpReqRangeX(uint16_t kindCode);
+    uint16_t GetMonsterHelpReqRangeY(uint16_t kindCode);
+
+    // GT 0x005657E0：byte+208 = mineCheck，但 IDA 命名為 GetFlyMonsterByKind。
+    uint8_t GetFlyMonsterByKind(uint16_t kindCode);
 
     // Returns all char kind infos that reference the given drop item kind code.
     // outChars must point to an array of at least 65535 stCharKindInfo* elements.
@@ -107,6 +141,7 @@ public:
     int GetCharKindInfoByDropItemKind(uint16_t dropItemKindCode, stCharKindInfo** outChars);
 
     // Retrieves monster char kinds within level range [minLv, maxLv] matching nation type.
+    // a2 = continent (1 or 2), a3..a4 = level range, a5 = excludeBosses (1)。
     int GetMonsterCharKinds(int a2, int a3, int a4, int a5, uint16_t* a6);
 
     // Checks whether a given kind code represents a monster character.
@@ -122,14 +157,30 @@ public:
     // mofclient.c 0x00565860：return *((DWORD*)info + 54) = info+216 (deadDelay)。
     // 反編譯把回傳值還原為 stCharKindInfo*；呼叫端只做 non-null 判定。
     int  GetDieDelayAniByKind(uint16_t kindCode);
-    char* GetDeadSound(uint16_t kindCode);
 
     // Returns boss info for the given kind, or nullptr if not a boss.
     void* GetBossInfoByKind(uint16_t kindCode);
 
+    // GT 0x00565880：根據 plannerName(strcmp) 線性搜尋第一個對應的 kind index。
+    uint16_t GetCharID(char* String1);
+    // GT 0x005658D0：根據 DCTText 字串 (透過 nameTextCode 查表) 比對 + 跳過 isClone。
+    uint16_t GetCharID2(DCTTextManager* a2, char* a3);
+
+    // GT 0x00565960：取出 boss list / boss count。
+    int GetAllBossKinds(stCharKindInfo*** a2);
+
+    // GT 0x00565980：return *((BYTE*)info + 221) = continent (LiveArea)。
+    uint8_t GetLiveAreaInfo(uint16_t kindCode);
+
+    // GT 0x005659B0：'|' 分隔 5 碼 J-code 字串 → uint16_t 陣列。
+    static int GetCharKinds(char* a1, uint16_t* a2);
+
     // mofclient.c 0x005657F0：載入 charkindinfo.txt 全表後，逐筆載入怪物動畫
     // 並回填 aniTotalFrames[8]。對玩家角色不執行。
     void InitMonsterAinFrame();
+
+    // GT 0x00565B50：讀 stCharKindInfo::aniTotalFrames[a3]。
+    uint16_t GetAniTotalFrame(uint16_t kindCode, int a3);
 
 protected:
     // Storage layout logically equivalent to mofclient.c:

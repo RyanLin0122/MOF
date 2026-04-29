@@ -1,8 +1,10 @@
 #include "Info/cltCharKindInfo.h"
 #include "Info/cltDropItemKindInfo.h"
+#include "Info/cltItemKindInfo.h"
 #include "Info/cltMonsterAniInfo.h"
 #include "Info/cltSkillKindInfo.h"
 #include "Other/cltAttackAtb.h"
+#include "Text/DCTTextManager.h"
 #include "Text/cltTextFileManager.h"
 #include "global.h"
 
@@ -455,13 +457,39 @@ uint8_t cltCharKindInfo::GetMoveSpeedType(const char* s)
 
 // mofclient.c 0x005655E0：原始 binary 對 FASTEST 回 5；對非五個已知字串會落入
 // 一段 LOBYTE 位元魔術，但實務上欄位值僅有 SLOWEST/SLOW/NORMAL/FAST/FASTEST。
-uint8_t cltCharKindInfo::GetAttackSpeedType(const char* s)
+// GT 回傳 int (儘管欄位仍只用 8 bit)。
+int cltCharKindInfo::GetAttackSpeedType(const char* s)
 {
     if (!_stricmp(s, "SLOWEST")) return 1;
     if (!_stricmp(s, "SLOW"))    return 2;
     if (!_stricmp(s, "NORMAL"))  return 3;
     if (!_stricmp(s, "FAST"))    return 4;
     return 5;  // FASTEST 與未知字串
+}
+
+// mofclient.c 0x005655A0：moveSpeedType (1..6) → 移動常數。
+uint8_t cltCharKindInfo::GetMoveSpeedConstantByType(uint8_t a1)
+{
+    switch (a1) {
+        case 1u: return 0;
+        case 2u: return 1;
+        case 4u: return 5;
+        case 5u: return 7;
+        case 6u: return 10;
+        default: return 3;     // 含 case 3 (SLOW)
+    }
+}
+
+// mofclient.c 0x00565660：attackSpeedType (1..5) → 攻擊延遲 ms。
+unsigned int cltCharKindInfo::GetAttackDelayTimeByAttackSpeedType(uint8_t a1)
+{
+    switch (a1) {
+        case 1u: return 3000;
+        case 2u: return 2500;
+        case 4u: return 1500;
+        case 5u: return 1000;
+        default: return 2000;  // 含 case 3 (NORMAL)
+    }
 }
 
 // ---------------------------------------------------------------------------
@@ -502,10 +530,43 @@ int cltCharKindInfo::GetCharKindInfoByDropItemKind(uint16_t dropItemKindCode, st
     return count;
 }
 
-int cltCharKindInfo::GetMonsterCharKinds(int /*a2*/, int /*a3*/, int /*a4*/, int /*a5*/, uint16_t* /*a6*/)
+// mofclient.c 0x00565280：對所有 slot 篩選「primary 怪物 entry」(kindCode ==
+// monsterRegistryKind & IsMonsterChar)，並依 continent / level / 排除 boss flag
+// 篩出符合的 kindCode 寫入 a6，回傳寫入筆數。
+//   a2 = 1 → continent==1，否則 continent==2
+//   a3..a4 = level 範圍 (含)
+//   a5 = 1 → 排除 boss
+int cltCharKindInfo::GetMonsterCharKinds(int a2, int a3, int a4, int a5, uint16_t* a6)
 {
-    // Placeholder（不在當前任務範圍）
-    return 0;
+    if (!m_ppCharKindTable || !a6) return 0;
+
+    int written = 0;
+    for (int idx = 0; idx < 0xFFFF; ++idx) {
+        stCharKindInfo* r = m_ppCharKindTable[idx];
+        if (!r) continue;
+        // GT: v8 == v10[3] — 迭代索引 == monsterRegistryKind
+        // (slot index 即 kindCode；條件等同 kindCode == monsterRegistryKind)
+        if (static_cast<uint16_t>(idx) != r->monsterRegistryKind) continue;
+        if (!IsMonsterChar(r->kindCode)) continue;
+
+        // continent 過濾 (GT byte+220 = isMerit；下一格 byte+221 = continent。
+        // GT 用的是 +220 (isMerit) 但欄位語義其實是 continent；mofclient.c 反編譯
+        // 用 `*((_BYTE *)*v9 + 220)` 與 a2 比較 — 這對應到 stCharKindInfo::isMerit。
+        // 為與 GT byte-equal，沿用 isMerit 比較。)
+        const uint8_t merit = r->isMerit;
+        if (a2 == 1) {
+            if (merit != 1) continue;
+        } else {
+            if (merit != 2) continue;
+        }
+
+        const int lv = static_cast<int>(r->level);
+        if (lv < a3 || lv > a4) continue;
+        if (a5 == 1 && GetBossInfoByKind(r->kindCode)) continue;
+
+        a6[written++] = r->kindCode;
+    }
+    return written;
 }
 
 int cltCharKindInfo::IsMonsterChar(uint16_t kindCode)
@@ -578,6 +639,181 @@ void cltCharKindInfo::InitMonsterAinFrame()
         }
         // ani 在 scope 結束時自動解構，等價於原始 binary 的 stack-local 物件。
     }
+}
+
+// ---------------------------------------------------------------------------
+// 補齊 mofclient.c 的 cltCharKindInfo 取值 helpers (0x00565270 .. 0x00565B50)
+// 全部都是 GetCharKindInfo + 單欄位讀取。對齊 GT byte-offset 取址。
+// ---------------------------------------------------------------------------
+stCharKindInfo** cltCharKindInfo::GetCharInfo()
+{
+    // GT: return (stCharKindInfo**)((char*)this + 4);
+    return m_ppCharKindTable;
+}
+
+stCharKindInfo* cltCharKindInfo::GetCharKindInfoByStringKindCode(char* a2)
+{
+    // GT 0x00565330：呼叫的是 cltItemKindInfo::TranslateKindCode (與
+    // cltCharKindInfo::TranslateKindCode 演算法相同：5 字元 → 16-bit code)。
+    if (!a2) return nullptr;
+    uint16_t v3 = cltItemKindInfo::TranslateKindCode(a2);
+    if (!v3) return nullptr;
+    return static_cast<stCharKindInfo*>(GetCharKindInfo(v3));
+}
+
+uint16_t cltCharKindInfo::GetCharWidthA(uint16_t a2)
+{
+    // GT 0x00565410：return *((WORD*)info + 55) = info+110 (width)。
+    stCharKindInfo* info = static_cast<stCharKindInfo*>(GetCharKindInfo(a2));
+    return info ? info->width : static_cast<uint16_t>(0);
+}
+
+uint16_t cltCharKindInfo::GetCharHeight(uint16_t a2)
+{
+    // GT 0x00565430：return *((WORD*)info + 56) = info+112 (height)。
+    stCharKindInfo* info = static_cast<stCharKindInfo*>(GetCharKindInfo(a2));
+    return info ? info->height : static_cast<uint16_t>(0);
+}
+
+uint16_t cltCharKindInfo::GetCharInfoPosY(uint16_t a2)
+{
+    // GT 0x00565450：return *((WORD*)info + 57) = info+114 (maxHeight 中점y)。
+    stCharKindInfo* info = static_cast<stCharKindInfo*>(GetCharKindInfo(a2));
+    return info ? info->maxHeight : static_cast<uint16_t>(0);
+}
+
+uint8_t cltCharKindInfo::GetMoveSpeedConstant(uint16_t a2)
+{
+    // GT 0x00565470：GetMoveSpeedConstantByType(*((BYTE*)info + 144)) = moveSpeedType。
+    stCharKindInfo* info = static_cast<stCharKindInfo*>(GetCharKindInfo(a2));
+    if (!info) return 0;
+    return GetMoveSpeedConstantByType(info->moveSpeedType);
+}
+
+char* cltCharKindInfo::GetAttackSound(uint16_t a2)
+{
+    // GT 0x005656B0：return (char*)info + 147 = atkSound[]。
+    stCharKindInfo* info = static_cast<stCharKindInfo*>(GetCharKindInfo(a2));
+    if (!info) {
+        static char s_empty[1] = { '\0' };
+        return s_empty;
+    }
+    return info->atkSound;
+}
+
+uint16_t cltCharKindInfo::GetMonsterAIAttr(uint16_t a2)
+{
+    // GT 0x005656F0：return *((WORD*)info + 90) = info+180 (ai)。
+    stCharKindInfo* info = static_cast<stCharKindInfo*>(GetCharKindInfo(a2));
+    return info ? info->ai : static_cast<uint16_t>(0);
+}
+
+uint16_t cltCharKindInfo::GetFirstHitMonsterRangeX(uint16_t a2)
+{
+    // GT 0x00565720：return *((WORD*)info + 92) = info+184 (aggroRangeX)。
+    stCharKindInfo* info = static_cast<stCharKindInfo*>(GetCharKindInfo(a2));
+    return info ? info->aggroRangeX : static_cast<uint16_t>(0);
+}
+
+uint16_t cltCharKindInfo::GetFirstHitMonsterRangeY(uint16_t a2)
+{
+    // GT 0x00565750：return *((WORD*)info + 93) = info+186 (aggroRangeY)。
+    stCharKindInfo* info = static_cast<stCharKindInfo*>(GetCharKindInfo(a2));
+    return info ? info->aggroRangeY : static_cast<uint16_t>(0);
+}
+
+uint16_t cltCharKindInfo::GetMonsterHelpReqRangeX(uint16_t a2)
+{
+    // GT 0x00565780：return *((WORD*)info + 94) = info+188 (helpRangeX)。
+    stCharKindInfo* info = static_cast<stCharKindInfo*>(GetCharKindInfo(a2));
+    return info ? info->helpRangeX : static_cast<uint16_t>(0);
+}
+
+uint16_t cltCharKindInfo::GetMonsterHelpReqRangeY(uint16_t a2)
+{
+    // GT 0x005657B0：return *((WORD*)info + 95) = info+190 (helpRangeY)。
+    stCharKindInfo* info = static_cast<stCharKindInfo*>(GetCharKindInfo(a2));
+    return info ? info->helpRangeY : static_cast<uint16_t>(0);
+}
+
+uint8_t cltCharKindInfo::GetFlyMonsterByKind(uint16_t a2)
+{
+    // GT 0x005657E0：return *((BYTE*)info + 208) = mineCheck。
+    stCharKindInfo* info = static_cast<stCharKindInfo*>(GetCharKindInfo(a2));
+    return info ? info->mineCheck : static_cast<uint8_t>(0);
+}
+
+uint16_t cltCharKindInfo::GetCharID(char* String1)
+{
+    // GT 0x00565880：線性搜尋表，比對 plannerName(strcmp)；找到回 slot index (kindCode)。
+    if (!m_ppCharKindTable || !String1) return 0;
+    for (int i = 0; i < 0xFFFF; ++i) {
+        stCharKindInfo* rec = m_ppCharKindTable[i];
+        if (rec && _stricmp(String1, rec->plannerName) == 0)
+            return static_cast<uint16_t>(i);
+    }
+    return 0;
+}
+
+uint16_t cltCharKindInfo::GetCharID2(DCTTextManager* a2, char* a3)
+{
+    // GT 0x005658D0：線性搜尋；對每個非 clone (isClone != 1) 的 entry，
+    // 透過 nameTextCode 查 DCTText，比對與 a3 字串相等者回傳 slot index。
+    if (!m_ppCharKindTable || !a2 || !a3) return 0;
+    for (int i = 0; i < 0xFFFF; ++i) {
+        stCharKindInfo* rec = m_ppCharKindTable[i];
+        if (!rec) continue;
+        char* name = a2->GetText(rec->nameTextCode);
+        if (!name) continue;
+        if (rec->isClone != 1 && std::strcmp(a3, name) == 0)
+            return static_cast<uint16_t>(i);
+    }
+    return 0;
+}
+
+int cltCharKindInfo::GetAllBossKinds(stCharKindInfo*** a2)
+{
+    // GT 0x00565960：*a2 = boss list head；回傳 m_nBossCount。
+    if (a2) *a2 = m_pBossList;
+    return m_nBossCount;
+}
+
+uint8_t cltCharKindInfo::GetLiveAreaInfo(uint16_t a2)
+{
+    // GT 0x00565980：return *((BYTE*)info + 221) = continent。
+    stCharKindInfo* info = static_cast<stCharKindInfo*>(GetCharKindInfo(a2));
+    return info ? info->continent : static_cast<uint8_t>(0);
+}
+
+int cltCharKindInfo::GetCharKinds(char* a1, uint16_t* a2)
+{
+    // GT 0x005659B0：以 '|' 切割 5 碼字串並 TranslateKindCode；遇到無法翻譯時
+    // 回 0 (GT 一旦 v5==0 即 break 並 return 0；正常結束時 return 累計筆數)。
+    if (!a1 || !a2) return 0;
+
+    char buf[1024];
+    std::strncpy(buf, a1, sizeof(buf) - 1);
+    buf[sizeof(buf) - 1] = '\0';
+
+    int count = 0;
+    char* tok = std::strtok(buf, "|");
+    if (!tok) return 0;
+    while (tok) {
+        uint16_t v = TranslateKindCode(tok);
+        if (!v) return 0;     // GT: 失敗 → 回 0 (放棄目前計數)
+        a2[count++] = v;
+        tok = std::strtok(nullptr, "|");
+        if (!tok) return count;
+    }
+    return count;
+}
+
+uint16_t cltCharKindInfo::GetAniTotalFrame(uint16_t a2, int a3)
+{
+    // GT 0x00565B50：a3 >= 8 → 0；否則回 stCharKindInfo::aniTotalFrames[a3]。
+    if (a3 >= 8 || a3 < 0) return 0;
+    stCharKindInfo* info = static_cast<stCharKindInfo*>(GetCharKindInfo(a2));
+    return info ? info->aniTotalFrames[a3] : static_cast<uint16_t>(0);
 }
 
 // 不再保留 cltCharKindInfo g_clCharKindInfo 全域實例。
