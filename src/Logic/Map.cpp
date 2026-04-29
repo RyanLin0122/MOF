@@ -5,6 +5,7 @@
 #include "Network/CMoFNetwork.h"
 
 #include "Logic/Map.h"
+#include "Logic/MapFileInfoHead.h"
 #include "Info/cltMapInfo.h"
 #include "Info/cltClimateKindInfo.h"
 #include "Info/cltItemKindInfo.h"
@@ -180,7 +181,8 @@ void Map::UnInitMap() {
 
 void Map::CheckMap() {
     // mofclient.c 0x4E1D00：debug 工具，逐張地圖開檔讀檔頭並輸出至
-    // MapFileInfo.txt。
+    // MapFileInfo.txt。原 binary 在 stack 上配置一個 MapFileInfoHead，
+    // 用 fread 把 .map 開頭 28 bytes 讀進來，再從中取 width/height。
     FILE* out = std::fopen("MapFileInfo.txt", "wb");
     if (!out) return;
 
@@ -193,19 +195,20 @@ void Map::CheckMap() {
         FILE* fp = path ? std::fopen(path, "rb") : nullptr;
         char buf[512];
         if (fp) {
-            unsigned int hdr0 = 0, hdr1 = 0;
-            unsigned short hdr2 = 0, hdr3 = 0;
-            unsigned short w = 0, h = 0;
-            std::fread(&hdr0, 4, 1, fp);
-            std::fread(&hdr1, 4, 1, fp);
-            std::fread(&hdr2, 2, 1, fp);
-            std::fread(&hdr3, 2, 1, fp);
-            std::fread(&w, 2, 1, fp);
-            std::fread(&h, 2, 1, fp);
+            // 對齊 mofclient.c：把 .map 的前 16 bytes 讀進 MapFileInfoHead。
+            // 後面的 m_pTileBuffer / m_pPortalBuffer 在 CheckMap 階段不填，
+            // 因此其 dtor 釋放兩個 nullptr 是 noop（行為等價）。
+            MapFileInfoHead head{};
+            std::fread(&head.m_wMapID,    sizeof(head.m_wMapID),    1, fp);
+            std::fread(&head.m_wMapKind,  sizeof(head.m_wMapKind),  1, fp);
+            std::fread(&head.m_wWidth,    sizeof(head.m_wWidth),    1, fp);
+            std::fread(&head.m_wHeight,   sizeof(head.m_wHeight),   1, fp);
+            std::fread(&head.m_dwReserved,  sizeof(head.m_dwReserved),  1, fp);
+            std::fread(&head.m_dwReserved2, sizeof(head.m_dwReserved2), 1, fp);
             if (info->m_wID > maxID) maxID = info->m_wID;
             std::snprintf(buf, sizeof(buf),
                           "%5u:%s : Width:%3u, Height:%3u\n",
-                          info->m_wID, path, w, h);
+                          info->m_wID, path, head.m_wWidth, head.m_wHeight);
             std::fwrite(buf, std::strlen(buf), 1, out);
             std::fclose(fp);
         } else {

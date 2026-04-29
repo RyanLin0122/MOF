@@ -592,3 +592,21 @@ extern size_t                   NumOfElements;
 // CControlChatBallon 九宮格樣式表（每種樣式 11 個 uint16 block ID）
 // 對齊反編譯位址 0x6C6AD0
 extern const uint16_t           g_ChatBallonStyleTable[];
+
+// -----------------------------------------------------------------------------
+// 由 mofclient.c 還原之新增全域 (CLog/CLogWriter/cltRegistry/CDeleteCash...)。
+// 把宣告集中在這裡以遵守「全域變數必須宣告在 global.h/.cpp」的專案規定。
+// -----------------------------------------------------------------------------
+class CDeleteCashItemManager;
+extern CDeleteCashItemManager   g_DeleteCashItemManager; // mofclient.c 0x...
+
+class cltRegistry;
+extern cltRegistry              g_clRegistry;             // mofclient.c 0x... 約 264 bytes
+
+class CCmdLine;
+extern CCmdLine                 g_CmdLine;                // mofclient.c 0x...
+
+class MainTitleBG;
+extern MainTitleBG*             g_pLobbyBackground;       // mofclient.c 0x...
+
+extern float                    flt_21CB358;              // mofclient.c 全域 deltaTime

@@ -114,6 +114,12 @@
 #include "System/cltWorkingPassiveSkillSystem.h"
 #include "Info/cltMoFC_EquipmentInfo.h"
 
+// 由 mofclient.c 還原之新增頭檔（CLog/CLogWriter/cltRegistry/CDeleteCash...）
+#include "Logic/CDeleteCashItemManager.h"  // 商城物品刪除（遊戲邏輯）
+#include "Util/cltRegistry.h"               // Win32 registry 包裝
+#include "Util/CCmdLine.h"                  // 命令列參數 holder
+#include "Effect/MainTitleBG.h"             // CCAEffect 子類，Lobby 背景
+
 
 CDeviceManager& g_clDeviceManager = *CDeviceManager::GetInstance();
 
@@ -466,6 +472,20 @@ unsigned int ExGetMyAccount()
 {
     return g_dwMyAccountID;
 }
+
+// -----------------------------------------------------------------------------
+// 由 mofclient.c 還原之新增全域：
+//   - g_DeleteCashItemManager  : 0x4DB9B0 等 InitDeleteCashItem 透過此取 owner
+//   - g_clRegistry             : 0x519930 ctor
+//   - g_CmdLine                : 0x4FA080 ctor
+//   - g_pLobbyBackground       : Lobby 場景常駐之 MainTitleBG 指標
+//   - flt_21CB358              : MainTitleBG::FrameProcess 用 deltaTime
+// -----------------------------------------------------------------------------
+CDeleteCashItemManager g_DeleteCashItemManager;
+cltRegistry            g_clRegistry;
+CCmdLine               g_CmdLine;
+MainTitleBG*           g_pLobbyBackground = nullptr;
+float                  flt_21CB358 = 1.0f / 60.0f;
 
 // CControlChatBallon 九宮格樣式表（對齊反編譯 0x6C6AD0）
 // 每種樣式 11 個 uint16 block ID，順序：TL, TM, TR, ML, MM, MC, BL, BM, BR, Arrow, ArrowTail

@@ -35,6 +35,14 @@
 #include "global.h"  // 包含全域變數定義
 #include "conf.h"
 
+// mofclient.c 還原之新增類別 — 提供 wWinMain 階段的 init 接點
+#include "Util/CLog.h"
+#include "Util/cltRegistry.h"
+#include "Util/CCmdLine.h"
+#include "Logic/CDeleteCashItemManager.h"
+#include "UI/CUIManager.h"
+#include "Effect/MainTitleBG.h"
+
 
 
 extern cltTextFileManager g_clTextFileManager;
@@ -122,7 +130,53 @@ void CreateDebugConsole()
 #endif
 }
 
+// -----------------------------------------------------------------------------
+// BootstrapMofClientGlobals — 對齊 mofclient.c 0x4307E0~0x433D40 的 Auth/Log
+// 初始化序列：
+//   1. CCmdLine::SetCmdLine(lpCmdLine)            ← 0x4FA0A0
+//   2. cltRegistry::Open(<NationCode 對應 SubKey>) ← 0x519980
+//   3. CUIManager::OpenLogWindow → CLog::CLog       ← 0x433CC0
+// 由於本 codebase 走的是 test/debug harness（並非 mofclient.c 的 GameState
+// 機制），把這三個 init 集中到單一 helper、在 Setup() 開頭呼叫。
+// -----------------------------------------------------------------------------
+static void BootstrapMofClientGlobals(const char* commandLine)
+{
+    // 1) CCmdLine — 把整個 lpCmdLine 拷進 g_CmdLine
+    g_CmdLine.SetCmdLine(commandLine ? commandLine : "");
+
+    // 2) cltRegistry — 依 NationCode 開對應 HKCU/HKLM Software 路徑
+    //    對齊 mofclient.c 0x59E700：
+    //      case 1/2/4: "Software\\BuddyGame\\MOF"
+    //      case 3:     "Software\\Unalis\\MOF"
+    //      case 5:     "Software\\URGAME\\MOF"
+    const char* regPath = "Software\\BuddyGame\\MOF";
+    switch (NationCode) {
+        case 3: regPath = "Software\\Unalis\\MOF"; break;
+        case 5: regPath = "Software\\URGAME\\MOF"; break;
+        default: break; // 1/2/4 走預設
+    }
+    g_clRegistry.Open(regPath);
+
+    // 3) CLog — 走 CUIManager::OpenLogWindow 的真實路徑
+    //    （只在 MoFData/log.dat 存在時才實際輸出，否則 CLog 會以 kQuiet 模式建立）
+    if (!g_UIMgr) {
+        g_UIMgr = new CUIManager();
+    }
+    g_UIMgr->OpenLogWindow();
+
+    // 4) CDeleteCashItemManager — 對齊 mofclient.c CUIManager::CreateLobbySelChannel
+    //    (0x430A70) 開場時呼叫的 InitDeleteCashItem。沒有 lobby UI 也無妨：
+    //    讓 owner 早期生效，AddDeleteCashitem 才有 vector 可用。
+    g_DeleteCashItemManager.InitDeleteCashItem();
+
+    if (logger) {
+        logger->Log("MoFClient bootstrap complete (registry=%s)", regPath);
+    }
+}
+
 void Setup() {
+	BootstrapMofClientGlobals("");
+
 	g_clClassKindInfo.Initialize((char*)"classkindinfo.txt");
 	cltItemKindInfo::InitializeStaticVariable(&g_clClassKindInfo, nullptr);
 	cltClassSystem::InitializeStaticVariable(&g_clClassKindInfo, &g_clItemKindInfo);
@@ -579,6 +633,10 @@ int APIENTRY  wWinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPWSTR lpCm
 				float fElapsedTime = (currentTime - lastTime) / 1000.0f;
 				lastTime = currentTime;
 				fAccumulatedDt += fElapsedTime;
+
+				// mofclient.c 對齊：MainTitleBG::FrameProcess、CCAEffect 等動畫實體
+				// 都從 flt_21CB358 取「前一幀的秒數」。在主迴圈這裡一次更新。
+				flt_21CB358 = fElapsedTime;
 
 				// 測試 Update
 				if (CURRENT_MODE == TEST_MODE) {
