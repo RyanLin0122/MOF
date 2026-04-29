@@ -9,7 +9,7 @@
 #include "MiniGame/cltMini_Magic_2.h"
 #include "MiniGame/cltMini_Exorcist.h"
 #include "MiniGame/cltMini_Exorcist_2.h"
-#include "Logic/cltMyCharData.h"
+#include "Character/cltMyCharData.h"
 #include "System/cltLessonSystem.h"
 #include "Info/cltLessonKindInfo.h"
 #include "Logic/DirectInputManager.h"
@@ -41,7 +41,7 @@ void cltMoF_MiniGame_Mgr::InitMiniGame()
 {
     cltMoF_BaseMiniGame::m_pInputMgr->FreeAllKey();
 
-    m_gameKind = g_clMyCharData.GetMiniGameKind();
+    m_gameKind = cltMyCharData::GetMiniGameKind(&g_clMyCharData);
     if (!m_gameKind)
         return;
 

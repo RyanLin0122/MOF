@@ -287,6 +287,7 @@
     <ClCompile Include="src\Info\cltMapUseItemInfoKindInfo.cpp" />
     <ClCompile Include="src\Info\cltMineKindInfo.cpp" />
     <ClCompile Include="src\Info\cltMoFC_EffectKindInfo.cpp" />
+    <ClCompile Include="src\Info\cltMoFC_EquipmentInfo.cpp" />
     <ClCompile Include="src\Info\cltMoF_ChatBallonInfo.cpp" />
     <ClCompile Include="src\Info\cltMoF_NameTagInfo.cpp" />
     <ClCompile Include="src\Info\cltMonsterAniInfo.cpp" />
@@ -441,7 +442,7 @@
     <ClCompile Include="src\Logic\CShortKey.cpp" />
     <ClCompile Include="src\Logic\cltChattingMgr.cpp" />
     <ClCompile Include="src\Logic\cltSystemMessage.cpp" />
-    <ClCompile Include="src\Logic\cltMyCharData.cpp" />
+    <ClCompile Include="src\Character\cltMyCharData.cpp" />
     <ClCompile Include="src\Logic\cltFieldItemManager.cpp" />
     <ClCompile Include="src\Logic\cltHelpMessage.cpp" />
     <ClCompile Include="src\Logic\cltConfiguration.cpp" />
@@ -692,6 +693,7 @@
     <ClInclude Include="inc\Info\cltMapUseItemInfoKindInfo.h" />
     <ClInclude Include="inc\Info\cltMineKindInfo.h" />
     <ClInclude Include="inc\Info\cltMoFC_EffectKindInfo.h" />
+    <ClInclude Include="inc\Info\cltMoFC_EquipmentInfo.h" />
     <ClInclude Include="inc\Info\cltMoF_ChatBallonInfo.h" />
     <ClInclude Include="inc\Info\cltMoF_NameTagInfo.h" />
     <ClInclude Include="inc\Info\cltMonsterAniInfo.h" />
@@ -765,7 +767,7 @@
     <ClInclude Include="inc\Logic\CPlayerSpirit.h" />
     <ClInclude Include="inc\Logic\CShortKey.h" />
     <ClInclude Include="inc\Logic\cltSystemMessage.h" />
-    <ClInclude Include="inc\Logic\cltMyCharData.h" />
+    <ClInclude Include="inc\Character\cltMyCharData.h" />
     <ClInclude Include="inc\Logic\CQuizEventParser.h" />
     <ClInclude Include="inc\Logic\CSpiritGossip.h" />
     <ClInclude Include="inc\Logic\CSpiritQuestSpeech.h" />

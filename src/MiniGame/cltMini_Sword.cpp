@@ -14,7 +14,7 @@
 #include "Sound/GameSound.h"
 #include "Logic/DirectInputManager.h"
 #include "Logic/cltSystemMessage.h"
-#include "Logic/cltMyCharData.h"
+#include "Character/cltMyCharData.h"
 #include "System/cltLessonSystem.h"
 #include "Text/DCTTextManager.h"
 #include "Font/MoFFont.h"

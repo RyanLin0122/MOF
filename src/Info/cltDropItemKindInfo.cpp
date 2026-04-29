@@ -235,16 +235,18 @@ int cltDropItemKindInfo::Initialize(char* fileName) {
                                             // ground truth: 不檢查 null，直接使用
                                             const stCharKindInfo* charInfo = relatedChars[static_cast<std::size_t>(i)];
 
-                                            if (charInfo->moneyRule == 0) {
-                                                if (record->moneyDropAmount != 2 * charInfo->levelOrRankBase + 10) {
+                                            // mofclient.c 295648-295666：依 stCharKindInfo +212 (bossKind)
+                                            // 判定金幣公式，搭配 +146 (level, BYTE) 算出期望數值。
+                                            if (charInfo->bossKind == 0) {
+                                                if (record->moneyDropAmount != 2 * static_cast<int>(charInfo->level) + 10) {
                                                     goto parse_failed;
                                                 }
-                                            } else if (charInfo->moneyRule == 1) {
-                                                if (record->moneyDropAmount != 20 * charInfo->levelOrRankBase) {
+                                            } else if (charInfo->bossKind == 1) {
+                                                if (record->moneyDropAmount != 20 * static_cast<int>(charInfo->level)) {
                                                     goto parse_failed;
                                                 }
-                                            } else if (charInfo->moneyRule == 2) {
-                                                if (record->moneyDropAmount != 15 * charInfo->levelOrRankBase) {
+                                            } else if (charInfo->bossKind == 2) {
+                                                if (record->moneyDropAmount != 15 * static_cast<int>(charInfo->level)) {
                                                     goto parse_failed;
                                                 }
                                             }

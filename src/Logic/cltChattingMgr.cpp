@@ -18,7 +18,7 @@
 #include "Network/CMoFNetwork.h"
 #include "Character/ClientCharacter.h"
 #include "Character/ClientCharacterManager.h"
-#include "Logic/cltMyCharData.h"
+#include "Character/cltMyCharData.h"
 #include "Logic/cltSystemMessage.h"
 #include "System/cltMarriageSystem.h"
 #include "System/cltQuestSystem.h"
@@ -222,26 +222,15 @@ int cltChattingMgr::GetChatWritedString(int direction, char* out) {
 
 //----- (004F71A0) -----------------------------------------------------------
 void cltChattingMgr::Poll() {
-    // Ground truth outer gate (byte-for-byte, no null guard):
+    // Ground truth outer gate:
     //   if ( *((_DWORD *)this + 6702)               -- m_bChatEnabled
     //     && g_dwMainGameState == 10
     //     && !*((_DWORD *)m_pclMyChatData + 19) )   -- cltMyCharData + 76
-    //   { ... }
-    // cltMyCharData is opaque so the +76 DWORD is read via raw offset.  The
-    // ground truth dereferences m_pclMyChatData without a null check; the
-    // Initialize() call sets it before Poll can run.
-    //
-    // TODO(raw-offset #1): cltMyCharData + 76 (= *((_DWORD*)this + 19)).
-    //   Known : DWORD; non-zero blocks Poll from processing any chat.
-    //   Distinct from the +104 "CanNotChatting" flag (that one is checked
-    //   inside SetChatState below via the wrapper).
-    //   Unknown: semantic name, setter.  Resolve by grepping mofclient.c /
-    //   xrefing IDA for writes to `cltMyCharData + 76` — likely a
-    //   chat-disable toggle distinct from the mute/ban flag.  Until then we
-    //   have to keep reading via raw offset because the field is not part
-    //   of the restored cltMyCharData layout.
-    const std::uint32_t chatBanned = *reinterpret_cast<const std::uint32_t*>(
-        reinterpret_cast<const char*>(m_pclMyChatData) + 76);
+    // cltMyCharData 在 Initialize() 中把 (DWORD index 19, byte 76) 寫 0。
+    // 該欄位的具體語意目前未知（與 byte 104 的 CanNotChatting 不同），
+    // 在 cltMyCharData::cltMyCharData 中以 m_iSomething19 命名持有，
+    // 此處改用具型別存取避免 layout-dependent 讀取。
+    const int chatBanned = m_pclMyChatData->m_iSomething19;
 
     if (!m_bChatEnabled || g_dwMainGameState != 10 || chatBanned) {
         return;
@@ -502,11 +491,10 @@ void cltChattingMgr::SetChatState(int state) {
     //       cltSystemMessage::SetSystemMessage(..., v3, 0, 0, 0);
     //       return;
     //   }
-    // CanNotChatting is a thin wrapper that returns
-    // *((_DWORD*)g_clMyCharData + 26)  (i.e. byte offset 104).  cltMyCharData
-    // is opaque in this restoration, so read the flag via raw offset.
-    const std::uint32_t banFlag = *reinterpret_cast<const std::uint32_t*>(
-        reinterpret_cast<const char*>(&g_clMyCharData) + 104);
+    // CanNotChatting is a thin wrapper that returns *((_DWORD*)+26).  Now that
+    // cltMyCharData is restored as a typed class, use the proper accessor
+    // instead of the byte-offset poke we used while the class was opaque.
+    const int banFlag = cltMyCharData::GetCanNotChatting(&g_clMyCharData);
     if (banFlag) {
         const char* msg = g_DCTTextManager.GetText(58217);
         cltSystemMessage::SetSystemMessage(&g_clSysemMessage, msg, 0, 0, 0);

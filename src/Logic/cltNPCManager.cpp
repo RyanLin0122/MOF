@@ -23,3 +23,16 @@ std::uint16_t cltNPCManager::GetMapName(std::uint16_t npcID) {
     std::uint16_t mapId = g_clNPCInfo.GetMapID(npcID);
     return g_Map.GetMapAreaName(mapId);
 }
+
+// GT 0x413DE0 / 0x413FA0 — stubbed until cltClient_NPC is restored. Returning
+// 0 / static zero buffer means cltMyCharData::GetMiniGameKind reports 0 (no
+// mini-game NPC selected) and AddQuestMark walks zero entries — safe no-op
+// behavior that does not crash callers.
+std::uint16_t cltNPCManager::GetNPCID(int /*index*/) {
+    return 0;
+}
+
+std::uint8_t* cltNPCManager::GetNPCType() {
+    static std::uint8_t kZeroNPCType[8] = {};
+    return kZeroNPCType;
+}

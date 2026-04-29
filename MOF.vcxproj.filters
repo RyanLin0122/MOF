@@ -639,6 +639,9 @@
     <ClCompile Include="src\Info\cltMoFC_EffectKindInfo.cpp">
       <Filter>來源檔案</Filter>
     </ClCompile>
+    <ClCompile Include="src\Info\cltMoFC_EquipmentInfo.cpp">
+      <Filter>來源檔案</Filter>
+    </ClCompile>
     <ClCompile Include="src\Info\cltTransformKindInfo.cpp">
       <Filter>來源檔案</Filter>
     </ClCompile>
@@ -738,7 +741,7 @@
     <ClCompile Include="src\Logic\cltSystemMessage.cpp">
       <Filter>來源檔案</Filter>
     </ClCompile>
-    <ClCompile Include="src\Logic\cltMyCharData.cpp">
+    <ClCompile Include="src\Character\cltMyCharData.cpp">
       <Filter>來源檔案</Filter>
     </ClCompile>
     <ClCompile Include="src\Network\CMofMsg.cpp">
@@ -1784,6 +1787,9 @@
     <ClInclude Include="inc\Info\cltMoFC_EffectKindInfo.h">
       <Filter>標頭檔</Filter>
     </ClInclude>
+    <ClInclude Include="inc\Info\cltMoFC_EquipmentInfo.h">
+      <Filter>標頭檔</Filter>
+    </ClInclude>
     <ClInclude Include="inc\Info\cltTransformKindInfo.h">
       <Filter>標頭檔</Filter>
     </ClInclude>
@@ -1997,7 +2003,7 @@
     <ClInclude Include="inc\Logic\cltSystemMessage.h">
       <Filter>標頭檔</Filter>
     </ClInclude>
-    <ClInclude Include="inc\Logic\cltMyCharData.h">
+    <ClInclude Include="inc\Character\cltMyCharData.h">
       <Filter>標頭檔</Filter>
     </ClInclude>
     <ClInclude Include="inc\Logic\cltConfiguration.h">

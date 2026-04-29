@@ -9,7 +9,7 @@
 #include <cstdio>
 #include <cstring>
 
-#include "Logic/cltMyCharData.h"
+#include "Character/cltMyCharData.h"
 #include "Image/cltImageManager.h"
 #include "Logic/DirectInputManager.h"
 #include "Sound/GameSound.h"

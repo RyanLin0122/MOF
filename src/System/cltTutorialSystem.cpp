@@ -16,7 +16,8 @@
 #include "Logic/cltFieldItemManager.h"
 #include "Logic/cltHelpMessage.h"
 #include "Logic/cltItemList.h"
-#include "Logic/cltMyCharData.h"
+#include "Character/cltMyCharData.h"
+#include "System/cltEquipmentSystem.h"   // stEquipItemInfo full definition
 #include "Logic/cltNPCManager.h"
 #include "Logic/cltSystemMessage.h"
 #include "Util/cltTimer.h"
@@ -87,23 +88,50 @@ int cltTutorialSystem::InitalizeTutorialSystem(std::uint8_t tutorialType) {
     }
 
     // 8. cltMyCharData::Initialize
+    //   呼叫對齊 mofclient.c 0x517CF0：cltMyCharData::Initialize 共 60 個參數
+    //   (a2..a61)。本還原使用 typed signature；tutorial 模式下大部分欄位填 0
+    //   (沒有任務 / 制造素材 / merit / emblem / quiz / title 等狀態)。
     cltMyCharData::Initialize(
         &g_clMyCharData,
-        word_23158EC[48 * tutorialType],
-        static_cast<std::uint8_t>(byte_23158F4[stride]),
-        /*a3*/0LL,
-        /*hp*/100, /*maxHp*/100,
-        0,0,0,0,0,
-        /*teamKind*/2,
-        &itemList,
-        0,0,0,
-        equip1, equip2,
-        0,0,0,0,0,0,0,0,0,0,0,0,
-        static_cast<std::uint8_t>(byte_23158EA[stride]),
-        static_cast<std::uint8_t>(byte_23158EE[stride]),
-        static_cast<std::uint8_t>(byte_23158EF[stride]),
-        dword_23158F0[24 * tutorialType],
-        0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0
+        word_23158EC[48 * tutorialType],                                 // a2  charKind
+        static_cast<char>(byte_23158F4[stride]),                         // a3  classKind
+        /*a4 expValue*/ 0LL,
+        /*a5 hp*/ 100, /*a6 mp*/ 100,
+        /*a7 str*/ 0, /*a8 dex*/ 0, /*a9 int*/ 0, /*a10 vit*/ 0, /*a11 bonusPoint*/ 0,
+        /*a12 teamKind*/ 2,
+        /*a13 itemList*/ &itemList,
+        /*a14 initialMoney*/ 0,
+        /*a15 skillCount*/ 0,
+        /*a16 skillKinds*/ nullptr,
+        /*a17 equip1*/ equip1,
+        /*a18 equip2*/ equip2,
+        /*a19 lessonItemKind*/ 0,
+        /*a20 lessonRecord1*/ nullptr,
+        /*a21 lessonRecord2*/ nullptr,
+        /*a22..a25 lessonExp*/ 0u, 0u, 0u, 0u,
+        /*a26..a29 lessonAmount*/ 0u, 0u, 0u, 0u,
+        /*a30 lessonHistory*/ nullptr,
+        /*a31 sex*/        static_cast<std::uint8_t>(byte_23158EA[stride]),
+        /*a32 appearKind*/ static_cast<char>(byte_23158EE[stride]),
+        /*a33 hairKind*/   static_cast<char>(byte_23158EF[stride]),
+        /*a34 appearLook*/ static_cast<unsigned int>(dword_23158F0[24 * tutorialType]),
+        /*a35 questData*/ nullptr,
+        /*a36 specialtyA*/ 0,
+        /*a37 specialtyB*/ 0,
+        /*a38 specialtyC*/ nullptr,
+        /*a39 makingItemA*/ 0,
+        /*a40 makingItemB*/ nullptr,
+        /*a41 grade*/ 0,
+        /*a42 meritExp*/ 0u, /*a43 meritScore*/ 0u,
+        /*a44 meritA*/ 0, /*a45 meritB*/ 0,
+        /*a46 meritFlag*/ 0, /*a47 meritC*/ 0, /*a48 meritD*/ 0,
+        /*a49 meritE*/ nullptr, /*a50 meritF*/ nullptr,
+        /*a51 emblemNum*/ 0, /*a52 emblemKinds*/ nullptr, /*a53 emblemUsingKind*/ 0,
+        /*a54 quizID*/ 0, /*a55 quizPlayed*/ 0,
+        /*a56 quizAnswerSize*/ 0, /*a57 quizAnswerPos*/ nullptr, /*a58 quizAnswerItem*/ nullptr,
+        /*a59 currentTitle*/ 0,
+        /*a60 indunMode*/ 0,
+        /*a61 msg*/ nullptr
     );
 
     // 9. Free quest / meritorious systems
@@ -448,7 +476,10 @@ int cltTutorialSystem::ExitTutorialMap() {
 void cltTutorialSystem::SendTutorialMsg(std::uint8_t msgType) {
     switch (msgType) {
     case 7: {
-        stCharKindInfo* ki = g_clCharKindInfo.GetMonsterNameByKind(0x4801);
+        // mofclient.c 對應 g_pcltCharKindInfo (cltCharKindInfo.cpp ctor 設定)。
+        stCharKindInfo* ki = g_pcltCharKindInfo
+                                 ? g_pcltCharKindInfo->GetMonsterNameByKind(0x4801)
+                                 : nullptr;
         const char* nameFmt = g_DCTTextManager.GetText(static_cast<int>(reinterpret_cast<intptr_t>(ki)));
         char monName[128];
         wsprintfA(monName, nameFmt, 100);

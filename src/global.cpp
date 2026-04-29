@@ -61,7 +61,7 @@
 #include "Info/cltQuestKindInfo.h"
 #include "Logic/clTransportKindInfo.h"
 #include "Logic/clClientTransportKindInfo.h"
-#include "Logic/cltMyCharData.h"
+#include "Character/cltMyCharData.h"
 #include "Logic/cltSystemMessage.h"
 #include "UI/CUITutorial.h"
 #include "UI/CUIManager.h"
@@ -85,6 +85,34 @@
 #include "System/cltLessonSystem.h"
 #include "MiniGame/cltMoF_BaseMiniGame.h"
 #include "MiniGame/cltMoF_MiniGame_Mgr.h"
+
+// cltMyCharData 內嵌子系統的全域實例 — 對應 mofclient.c 內 cltMyCharData
+// byte offsets +5252 / +5556 / +9524 / +12604 / +14660 / +16900 ... +69084 等。
+#include "Logic/CPlayerSpirit.h"
+#include "System/CQuizEventSystem.h"
+#include "System/cltCashshopSystem.h"
+#include "System/cltEmblemSystem.h"
+#include "System/cltEmoticonSystem.h"
+#include "System/cltEnchantSystem.h"
+#include "System/cltEquipmentSystem.h"
+#include "System/cltGradeSystem.h"
+#include "System/cltMakingItemSystem.h"
+#include "System/cltMarriageSystem.h"
+#include "System/cltMonsterToleranceSystem.h"
+#include "System/cltMyItemSystem.h"
+#include "System/cltNPCRecallSystem.h"
+#include "System/cltOverMindSystem.h"
+#include "System/cltPKRankSystem.h"
+#include "System/cltPetKeepingSystem.h"
+#include "System/cltPetMarketMySalePetSystem.h"
+#include "System/cltQuickSlotSystem.h"
+#include "System/cltStorageSystem.h"
+#include "System/cltTASSystem.h"
+#include "System/cltTestingSystem.h"
+#include "System/cltTitleSystem.h"
+#include "System/cltTransformSystem.h"
+#include "System/cltWorkingPassiveSkillSystem.h"
+#include "Info/cltMoFC_EquipmentInfo.h"
 
 
 CDeviceManager& g_clDeviceManager = *CDeviceManager::GetInstance();
@@ -199,7 +227,9 @@ cltClientPortalInfo g_clClientPortalInfo;
 cltPetSystem g_clPetSystem;
 cltMoneySystem g_clMoneySystem;
 cltMoFC_EffectKindInfo g_clEffectKindInfo;
-// cltMyCharData g_clMyCharData is defined in Logic/cltMyCharData.cpp
+// cltMyCharData global instance — moved here from src/Logic/cltMyCharData.cpp.
+// All globals now live in global.cpp per the project rule.
+cltMyCharData g_clMyCharData;
 // cltSystemMessage g_clSysemMessage is defined in Logic/cltSystemMessage.cpp
 
 CMessageBoxManager* g_pMsgBoxMgr = nullptr;
@@ -374,15 +404,53 @@ cltMapUseItemInfoKindInfo g_clMapUseItemInfoKindInfo;
 cltMapInfo* g_pcltMapInfo = nullptr;
 
 // System (additional)
-cltEquipmentSystem* dword_21BA32C = nullptr;
 cltSkillSystem g_clSkillSystem;
 cltSpecialtySystem g_clSpecialtySystem;
 cltUsingItemSystem g_clUsingItemSystem;
 cltSexSystem g_clSexSystem;
 cltPlayerAbility g_clPlayerAbility;
 cltUsingSkillSystem g_clUsingSkillSystem;
-cltMarriageSystem* g_clMarriageSystem = nullptr;
-cltStorageSystem* dword_21BB2AC = nullptr;
+
+// -----------------------------------------------------------------------------
+// cltMyCharData 內嵌子系統全域實例（對齊 mofclient.c 偏移）：
+//   - 預設 default-construct；wire-up（pointer-to-instance、互引用、初值）由
+//     cltMyCharData::Initialize 負責。
+//   - dword_21BA32C / dword_21BB2AC / g_clMarriageSystem 是原 binary 的 pointer
+//     全域，於本檔 wiring 區段直接指向對應實體。
+// -----------------------------------------------------------------------------
+cltQuickSlotSystem            g_clQuickSlotSystem;
+cltEquipmentSystem            g_clEquipmentSystem;
+cltGradeSystem                g_clGradeSystem;
+cltTestingSystem              g_clTestingSystem;
+cltMakingItemSystem           g_clMakingItemSystem;
+cltTransformSystem            g_clTransformSystem;
+cltEnchantSystem              g_clEnchantSystem;
+cltCashshopSystem             g_clCashshopSystem;
+cltOverMindSystem             g_clOverMindSystem;
+cltEmblemSystem               g_clEmblemSystem;
+CQuizEventSystem              g_clQuizEventSystem;
+cltTASSystem                  g_clTASSystem;
+cltWorkingPassiveSkillSystem  g_clWorkingPassiveSkillSystem;
+cltMonsterToleranceSystem     g_clMonsterToleranceSystem;
+cltMoFC_EquipmentInfo         g_clMoFC_EquipmentInfo;
+cltNPCRecallSystem            g_clNPCRecallSystem;
+cltTitleSystem                g_clTitleSystem;
+cltPetKeepingSystem           g_clPetKeepingSystem;
+cltPetMarketMySalePetSystem   g_clPetMarketMySalePetSystem;
+cltPKRankSystem               g_clPKRankSystem;
+cltMyItemSystem               g_clMyItemSystem;
+cltStorageSystem              g_clStorageSystem;
+cltEmoticonSystem             g_clEmoticonSystem;
+CPlayerSpirit                 g_clPlayerSpirit;
+
+// 針對 marriage 採 pointer 形式（GT 內 cltMarriageSystem 是 init 後才會有
+// 內容；本還原直接指向實體，與 g_clMyCharData::Initialize 寫法保持等價）。
+namespace {
+cltMarriageSystem g_clMarriageSystemStorage;
+}
+cltMarriageSystem*  g_clMarriageSystem = &g_clMarriageSystemStorage;
+cltEquipmentSystem* dword_21BA32C      = &g_clEquipmentSystem;
+cltStorageSystem*   dword_21BB2AC      = &g_clStorageSystem;
 
 // OutputCashShopTime 用的外部符號（對齊反編譯）
 unsigned short dword_21C9C54[8] = {};

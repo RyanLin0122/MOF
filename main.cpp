@@ -17,7 +17,7 @@
 #include "System/cltLessonSystem.h"
 #include "Sound/GameSound.h"
 #include "Logic/DirectInputManager.h"
-#include "Logic/cltMyCharData.h"
+#include "Character/cltMyCharData.h"
 #include "Util/cltTimer.h"
 #include "Effect/CEffectManager.h"
 // 注意: CMoFNetwork / ClientCharacterManager 只用 forward declaration

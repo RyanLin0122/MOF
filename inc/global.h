@@ -456,6 +456,44 @@ extern cltPlayerAbility         g_clPlayerAbility;         // unk_21B9F30
 extern cltUsingSkillSystem      g_clUsingSkillSystem;      // unk_21BA578
 extern cltMarriageSystem*       g_clMarriageSystem;        // dword_21C9C04
 
+// -----------------------------------------------------------------------------
+// cltMyCharData 內嵌子系統 (mofclient.c 把它們塞在 cltMyCharData byte offset
+// 4512..69260 之間)。本還原採用「外掛全域」設計，這些全域既支援
+// cltMyCharData::Initialize 的扇形 wire-up，也讓其他模組能直接取用同一份
+// 玩家狀態，無需穿透 cltMyCharData。
+// -----------------------------------------------------------------------------
+class cltQuickSlotSystem;       extern cltQuickSlotSystem        g_clQuickSlotSystem;       // GT cltMyCharData +5252
+class cltEquipmentSystem;       extern cltEquipmentSystem        g_clEquipmentSystem;       // GT +5556 (back of dword_21BA32C)
+class cltGradeSystem;           extern cltGradeSystem            g_clGradeSystem;           // GT +16900
+class cltTestingSystem;         extern cltTestingSystem          g_clTestingSystem;         // GT +16996
+class cltMakingItemSystem;      extern cltMakingItemSystem       g_clMakingItemSystem;      // GT +17032
+class cltTransformSystem;       extern cltTransformSystem        g_clTransformSystem;       // GT +19044
+class cltEnchantSystem;         extern cltEnchantSystem          g_clEnchantSystem;         // GT +19056
+class cltCashshopSystem;        extern cltCashshopSystem         g_clCashshopSystem;        // GT +19072
+class cltOverMindSystem;        extern cltOverMindSystem         g_clOverMindSystem;        // GT +39240
+class cltEmblemSystem;          extern cltEmblemSystem           g_clEmblemSystem;          // GT +39308
+class CQuizEventSystem;         extern CQuizEventSystem          g_clQuizEventSystem;       // GT +39544
+class cltTASSystem;             extern cltTASSystem              g_clTASSystem;             // GT +39616
+class cltWorkingPassiveSkillSystem;
+                                extern cltWorkingPassiveSkillSystem g_clWorkingPassiveSkillSystem;  // GT +40384
+class cltMonsterToleranceSystem;extern cltMonsterToleranceSystem g_clMonsterToleranceSystem;// GT +40568
+class cltMoFC_EquipmentInfo;    extern cltMoFC_EquipmentInfo     g_clMoFC_EquipmentInfo;    // GT +40576
+class cltNPCRecallSystem;       extern cltNPCRecallSystem        g_clNPCRecallSystem;       // GT +40712
+class cltTitleSystem;           extern cltTitleSystem            g_clTitleSystem;           // GT +40720
+class cltPetKeepingSystem;      extern cltPetKeepingSystem       g_clPetKeepingSystem;      // GT +42048
+class cltPetMarketMySalePetSystem;
+                                extern cltPetMarketMySalePetSystem g_clPetMarketMySalePetSystem;  // GT +67752
+class cltPKRankSystem;          extern cltPKRankSystem           g_clPKRankSystem;          // GT +69044
+class cltMyItemSystem;          extern cltMyItemSystem           g_clMyItemSystem;          // GT +69084
+class cltStorageSystem;         extern cltStorageSystem          g_clStorageSystem;         // GT +9524 (back of dword_21BB2AC)
+class cltExStorageSystem;       /* g_clExStorageSystem 在 inc/System/cltExStorageSystem.h 已宣告 */
+class cltEmoticonSystem;        extern cltEmoticonSystem         g_clEmoticonSystem;        // GT unk_82723C
+class CPlayerSpirit;            extern CPlayerSpirit             g_clPlayerSpirit;          // GT cltMyCharData +14660
+
+// 與 dword_21BA32C / dword_21BB2AC 配對：兩個 pointer 全域於啟動後指向上方
+// g_clEquipmentSystem / g_clStorageSystem 實體（global.cpp 進行 wiring）。
+extern cltStorageSystem*        dword_21BB2AC;
+
 // Free helper functions (ground truth: mofclient.c)
 unsigned int ExGetTextCodeHuntItemType(unsigned int a1);
 unsigned int ExGetTextCodeFashionItemType(unsigned int a1);

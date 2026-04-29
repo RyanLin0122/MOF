@@ -113,6 +113,21 @@ public:
     bool GetMaxFreezingInfo(int* a2, int* a3, int a4, std::uint16_t* a5) const;
     int GetMaxHP(std::uint16_t vit);
     int GetMaxMP(std::uint16_t intel);
+
+    // GT 0x588D00 / 0x588D20 — userpurge overloads.  In the binary they take
+    // `(this@ecx, a2@ebp, party@stack)` and internally do
+    //     return GetMaxHP(this, GetVit(this, a2, party));
+    // (resp. GetMaxMP / GetInt).  Used by `cltBaseAbility::IncreaseHP` and
+    // `cltMyCharData::LevelUpProcess` to refresh max HP/MP with party
+    // advantage folded in.
+    int GetMaxHP(int a2, void* party);
+    int GetMaxMP(int a2, void* party);
+
+    // GT cltBaseAbility::SetHP @ 0x55F500 — single-DWORD store of the current
+    // HP field (in mofclient.c the field lives at *((_DWORD*)this + 1) inside
+    // the cltBaseAbility prefix; in our C++ port cltPlayerAbility owns m_hp).
+    // Used by cltMyCharData::LevelUpProcess to refill HP back to full max.
+    void SetHP(int v);
     int CanResetAbility() const;
     int GetNeedManaForUsingSkill(int baseSkillMana) const;
 

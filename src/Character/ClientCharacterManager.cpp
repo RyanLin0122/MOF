@@ -28,7 +28,7 @@
 #include "Info/cltClientPortalInfo.h"
 #include "Info/cltMapInfo.h"
 #include "Logic/Map.h"
-#include "Logic/cltMyCharData.h"
+#include "Character/cltMyCharData.h"
 #include "Logic/cltSystemMessage.h"
 #include "Logic/cltPKManager.h"
 #include "Logic/cltMoF_MineManager.h"

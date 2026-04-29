@@ -11,7 +11,7 @@
 #include "Info/cltMapUseItemInfoKindInfo.h"
 #include "Info/cltClientPortalInfo.h"
 #include "Info/cltPortalInfo.h"
-#include "Logic/cltMyCharData.h"
+#include "Character/cltMyCharData.h"
 #include "Logic/CMap_Item_Climate.h"
 #include "Character/ClientCharacter.h"
 #include "Character/ClientCharacterManager.h"

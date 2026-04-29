@@ -21,7 +21,6 @@ FORCE_MISSING_CLASSES = [
     "CUITutorial",
     "cltMyCharData",
     "cltWorkingPassiveSkillSystem",
-    "Map",
     "clClientTransportKindInfo",
     "clTransportAnilInfo",
     "clTransportKindInfo",

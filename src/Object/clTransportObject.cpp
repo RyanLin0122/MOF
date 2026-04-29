@@ -6,7 +6,7 @@
 #include "Logic/clTransportKindInfo.h"
 #include "Logic/clClientTransportKindInfo.h"
 #include "Logic/clTransportAniInfo.h"
-#include "Logic/cltMyCharData.h"
+#include "Character/cltMyCharData.h"
 #include "global.h"
 #include <cmath>
 

@@ -138,14 +138,14 @@ stCharKindInfo* cltClientCharKindInfo::IsFieldItemBox(unsigned short a2)
     // mofclient.c:
     //   result = GetCharKindInfo(this, a2);
     //   if ( result )
-    //     result = *((_DWORD *)GetCharKindInfo(this, a2) + 59);  // offset 236
+    //     result = *((_DWORD *)result + 59);  // offset 236 = fieldItemBoxKind (DWORD)
     //   return result;
-    stCharKindInfo* result =
-        reinterpret_cast<stCharKindInfo*>(cltCharKindInfo::GetCharKindInfo(a2));
-    if (result) {
-        void* inner = cltCharKindInfo::GetCharKindInfo(a2);
-        result = *reinterpret_cast<stCharKindInfo**>(
-            reinterpret_cast<char*>(inner) + 236);
-    }
-    return result;
+    // 原始 binary 將 DWORD 直接當作 stCharKindInfo* 回傳；呼叫端只做 non-null
+    // 判定。x64 上指標寬度 = 8 bytes，但 stCharKindInfo +236 仍是 32-bit DWORD，
+    // 因此這裡只讀 32 bits，再封裝為指標形式以保留呼叫面。
+    stCharKindInfo* info =
+        static_cast<stCharKindInfo*>(cltCharKindInfo::GetCharKindInfo(a2));
+    if (!info) return nullptr;
+    return reinterpret_cast<stCharKindInfo*>(
+        static_cast<uintptr_t>(info->fieldItemBoxKind));
 }

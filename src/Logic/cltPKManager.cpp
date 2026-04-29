@@ -1,5 +1,5 @@
 #include "Logic/cltPKManager.h"
-#include "Logic/cltMyCharData.h"
+#include "Character/cltMyCharData.h"
 #include "global.h"
 #include <cstring>
 #include <cstdlib>

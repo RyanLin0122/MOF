@@ -24,7 +24,7 @@
 #include "Logic/cltFieldItem.h"
 #include "Logic/cltFieldItemManager.h"
 #include "Logic/CSpiritSpeechMgr.h"
-#include "Logic/cltMyCharData.h"
+#include "Character/cltMyCharData.h"
 #include "Logic/cltSystemMessage.h"
 #include "Object/clTransportObject.h"
 #include "System/cltMoneySystem.h"

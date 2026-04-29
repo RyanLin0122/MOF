@@ -223,6 +223,32 @@ int cltPlayerAbility::GetMaxMP(std::uint16_t intel) {
     return base + base * adv / 100;
 }
 
+// GT 0x588D00 / 0x588D20 — userpurge overloads of GetMaxHP / GetMaxMP.
+// Decompiled body:
+//     v4 = cltPlayerAbility::GetVit(this, a2, a3);
+//     return cltPlayerAbility::GetMaxHP(this, v4);
+// (resp. GetInt / GetMaxMP).
+//
+// `a2` is an "include passive" flag forwarded to GetVit/GetInt; default
+// callers pass 0 (level-up flow does so via ebp=0 at the call site).
+int cltPlayerAbility::GetMaxHP(int a2, void* party) {
+    const std::uint16_t vit = GetVit(a2, party);
+    return GetMaxHP(vit);
+}
+
+int cltPlayerAbility::GetMaxMP(int a2, void* party) {
+    const std::uint16_t intel = GetInt(a2, party);
+    return GetMaxMP(intel);
+}
+
+// GT cltBaseAbility::SetHP @ 0x55F500 — `*((_DWORD *)this + 1) = a2;`
+// In our restoration cltPlayerAbility owns the HP field directly (m_hp),
+// so we update it in place.  Used by cltMyCharData::LevelUpProcess to
+// restore HP to the freshly-recomputed max-HP after a level up.
+void cltPlayerAbility::SetHP(int v) {
+    m_hp = v;
+}
+
 int cltPlayerAbility::CanResetAbility() const {
     return m_baseStr != 4
         || m_baseDex != 4
