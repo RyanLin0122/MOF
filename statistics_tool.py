@@ -11,6 +11,22 @@ FORCE_IMPLEMENTED_CLASSES = [
     "Device_Reset_Manager"
 ]
 
+"""
+要驗的:
+ClientCharacter
+ClientCharacterManager
+cltCharKindInfo
+cltMyCharData
+Map
+cltClimateUnit
+cltMap_Climate
+cltMap_WeddingFlower
+CItemClimateUnit
+CMap_Item_Climate
+cltMapCollisonInfo
+"""
+# 排除UI正則表達式: CUI[a-zA-Z =0-9]+
+
 # 手動指定「一定算未完成」的 class 清單
 # 只要 class 名稱在這裡，就直接視為未完成
 FORCE_MISSING_CLASSES = [
@@ -44,7 +60,8 @@ FORCE_MISSING_CLASSES = [
     "CInterfaceDataCommunity",
     "CUITradeUser",
     "CUICircle",
-    "CUIMenu"
+    "CUIMenu",
+    "cltMoFC_EquipmentInfo"
 ]
 
 # 例外清單：放 class 名稱字串，這些 class 會被跳過
@@ -69,7 +86,24 @@ EXCLUDE_CLASSES = [
     "D3DXVECTOR3",
     "D3DXCOLOR",
     "D3DXMATRIX",
-    "ATL"
+    "ATL",
+    "XTrap4Client_ClientPart",
+    "CTcpLine",
+    "CBase64",
+    "CBandiCaptureLibrary",
+    "BCAP_CONFIG",
+    "CHsMonitor",
+    "CBBNPort",
+    "WebWindow",
+    "CIESink",
+    "MoF_CBase64",
+    "IUnknown",
+    "_com_error",
+    "_variant_t",
+    "_bstr_t",
+    "type_info",
+    "F32vec4",
+    "F32vec1",
 ]
 
 # sort 方式：
