@@ -160,8 +160,10 @@ dump 中此類共 181 個，以下列前綴／命名規則歸屬：
 | 檔名 | 解析類別（推定） | 來源 |
 |---|---|---|
 | `mapareakindinfo.txt` | `cltMapAreaKindInfo::Initialize` | inc/Info/cltMapAreaKindInfo.h；mofclient.c:310172 |
-| `opposition.txt` | `cltExtraRegenMonsterKindInfo::Initialize` | inc/Info/cltExtraRegenMonsterKindInfo.h（欄位完全吻合：ID/Level/MonsterID/X/Y/W/H/RegenType…） |
+| `extraregenmonster.txt` | `cltExtraRegenMonsterKindInfo::Initialize` | mofclient.c:303359；標頭「필드아이템박스」與解析欄位完全吻合：ID/map_secter_ID(기획자용)/map_secter_ID/초기 리젠 개수/min_regen/max_regen/interval/TYPE/charkind_1_ID/hp/…/charkind_20_ID/hp |
+| `RegenMonsterInfo.txt` | `cltRegenMonsterKindInfo::Initialize` | mofclient.c:9658；標頭「맵 상 몬스터 정보」，欄位 ID/이름/ID/맵 이름/맵 아이디/x/y/w/h/最大数/리젠 간격 |
 | `resurrectinfo.txt` | `cltResurrectInfo::Initialize` | mofclient.c:329662；經 `cltMapInfo::Initialize` 內 `cltResurrectInfo::TranslateKindCode` 引用（mofclient.c:311008） |
+| `opposition.txt` | **解析類別未確認**（「대항전 몬스터 리젠」對抗戰用，欄位 ID/Level/MonsterName/MonsterID/m1 X·Y·W·H/m2 X·Y·W·H/RegenType/RegenMonsterSize/RegenTime；mofclient.c 內無 `opposition` 字面值） | 待追：原文件版本將其錯誤對應到 `cltExtraRegenMonsterKindInfo`；該類別實際解析的是 `extraregenmonster.txt`（見上一列），格式完全不同。 |
 
 ---
 
@@ -212,7 +214,7 @@ cltDebuffKindInfo             ← debuffinfo (不在 dump)
 cltEmblemKindInfo             ← EmblemList
 cltEmoticonKindInfo           ← EmoticonList
 cltEnchantKindInfo            ← Enchant (不在 dump)
-cltExtraRegenMonsterKindInfo  ← opposition
+cltExtraRegenMonsterKindInfo  ← extraregenmonster
 cltInstantDungeonKindInfo     ← indunkindinfo (不在 dump)
 cltInstantDungeonMapKindInfo  ← indunmapkindinfo (不在 dump)
 cltItemKindInfo               ← itemkindinfo / item_fashion / TrainningCardInfo / Old_itemkindinfo / Old_item_fashion / item_instant / item_hunt / koreatext
@@ -238,7 +240,7 @@ cltPetSkillKindInfo           ← petskillkindinfo (不在 dump)
 cltPortalInfo                 ← PortalList (不在 dump)
 cltQuestKindInfo              ← QuestKindInfo + Collection/Delivery/Hunt/OnewayDelivery/IndunInfo (不在 dump)
 cltQuestionKindInfo           ← question
-cltRegenMonsterKindInfo       ← RegenMonsterInfo (不在 dump)
+cltRegenMonsterKindInfo       ← RegenMonsterInfo
 cltResurrectInfo              ← resurrectinfo
 cltShopInfo                   ← shoplist / packageshoplist
 cltSkillKindInfo              ← p_skillinfo (+ a_skillinfo, 不在 dump) / ma_skillkindinfo / mp_skillkindinfo
@@ -259,4 +261,4 @@ cltWeddingHallKindInfo        ← weddinghallkindinfo
 - `cltPetAniInfo` 解析（寵物動畫）：**181**
 - 主資料檔（節 1）：約 **44**（其中部分檔名於程式內為其他大小寫拼法，如 `Mine`/`mine`、`EmblemList`/`Emblemlist`、`character_chatballon`/`Character_ChatBallon`）
 
-> 有少量主資料檔在 `mofclient.c` 內被 `Initialize`，但 dump 並未包含：`charkindinfo.txt`、`PortalList.txt`、`SoundListInfo.txt`、`SkillEffect.txt`、`EffectObjectList.txt`、`a_skillinfo.txt`、`Enchant.txt`、`QuestKindInfo.txt`（與五個 Quest 子表）、`RegenMonsterInfo.txt`、`character_nametag.txt`、`PetDyeKindInfo.txt`、`PetSkillKindInfo`、`debuffinfo.txt`、`coupleringkindinfo.txt`、`indun*kindinfo.txt`、`achievement_*.txt`、`quizinfo.txt`。
+> 有少量主資料檔在 `mofclient.c` 內被 `Initialize`，但 dump 並未包含：`charkindinfo.txt`、`PortalList.txt`、`SoundListInfo.txt`、`SkillEffect.txt`、`EffectObjectList.txt`、`a_skillinfo.txt`、`Enchant.txt`、`QuestKindInfo.txt`（與五個 Quest 子表）、`character_nametag.txt`、`PetDyeKindInfo.txt`、`PetSkillKindInfo`、`debuffinfo.txt`、`coupleringkindinfo.txt`、`indun*kindinfo.txt`、`achievement_*.txt`、`quizinfo.txt`。

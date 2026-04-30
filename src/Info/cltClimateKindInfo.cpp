@@ -36,8 +36,8 @@ cltClimateKindInfo::cltClimateKindInfo() : m_count(0), m_items(nullptr) {}
 // 反編譯：mofclient.c:294703
 //   v2 = (toupper(s[0]) + 31) << 11;
 //   v3 = atoi(s+1) (當 WORD 截斷)；若 v3 < 0x800 → 回 v2 | v3 (再以 WORD 截斷)；否則 0
+// GT 直接 strlen，無 null check（呼叫端皆為 strtok 結果，不會傳 null）。
 uint16_t cltClimateKindInfo::TranslateKindCode(char* s) {
-    if (!s) return 0;
     if (std::strlen(s) != 5) return 0;
     int hi = (std::toupper(static_cast<unsigned char>(s[0])) + 31) << 11;
     uint16_t num = static_cast<uint16_t>(std::atoi(s + 1));

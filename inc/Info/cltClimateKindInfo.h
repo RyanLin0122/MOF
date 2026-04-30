@@ -84,6 +84,9 @@ class cltClimateKindInfo {
 public:
     cltClimateKindInfo();
 
+    // 反編譯：mofclient.c:8350 / cltMapInfo::~cltMapInfo 於 Free 後呼叫此 dtor
+    ~cltClimateKindInfo() { Free(); }
+
     // 反編譯：int Initialize(this, char* filename)；成功回傳 1
     int  Initialize(char* filename);
 
