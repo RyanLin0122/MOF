@@ -1,207 +1,199 @@
-﻿#include "Info/cltEmoticonKindInfo.h"
+#include "Info/cltEmoticonKindInfo.h"
 #include <cstring>
 #include <cstdlib>
+#include <cstdio>
 #include <cctype>
 
+// ----------------------------------------------------------------------------
+// 反編譯來源：mofclient.c:299162（ctor）/ 299183（dtor）/ 299191（Initialize）
+//                 299339（InitEmoticonItem）/ 299545..299636（Get*）/ 299645（Free）
+// 嚴格保留 GT 的下列特殊行為：
+//   * Initialize 在 parse 失敗（任一 strtok 回 NULL、'+' 出現於 resID、
+//     wordsTextId==0 等）後 **不**呼叫 Free()，僅 fclose + return 0。
+//   * Free() 只把 m_rows / m_items 置 0，**不**動 m_rowCnt / m_itemCnt。
+//   * Initialize 配置 m_rows 後 **不** memset(0)；每列依解析流程逐欄寫入；
+//     若中途 break，未寫到的欄位會保留 heap 殘值。
+//   * 詞條解析直接把 DCTTextManager.GetText() 結果以 sprintf 寫回 strtok 槽
+//     （同 GT _wsprintfA），再以 "/" 切分後 strcpy 至 word0..word9（無長度
+//     檢查），詞數 v19 無上限累加 — 詞數>10 會踩進 +182(_padB)/+184(wordCount)。
+//   * GetEmoticonItemInfoByIndex 用 int 比對 m_itemCnt（u8 → 經 integer
+//     promotion → int），不做 u8 截斷。
+//   * TranslateKindCode 不做 nullptr 防護。
+// ----------------------------------------------------------------------------
+
 cltEmoticonKindInfo::cltEmoticonKindInfo() {
-    // vftable 由編譯器處理；其餘初始化按反編譯：m_rowCnt=0
+    // GT (mofclient.c:299167-299168)：vftable + *((DWORD*)this+2)=0
+    // 對應這裡的 m_rowCnt = 0；其餘成員交由 default-member-initializer
+    // 在類別宣告處設為 nullptr / 0（與 BSS-allocated g_clEmoticonKindInfo 等價）。
     m_rowCnt = 0;
 }
 
 cltEmoticonKindInfo::~cltEmoticonKindInfo() {
-    // 反編譯：先設 vftable，再呼叫 Free；C++ 自動處理 vptr，這裡直接 Free()
+    // GT (mofclient.c:299185-299186)：vftable + Free()
     Free();
 }
 
+// ===== mofclient.c:299660 — TranslateKindCode =====
+// 直接 strlen，無 null check（呼叫端皆為 strtok 結果，不會傳 null）。
 uint16_t cltEmoticonKindInfo::TranslateKindCode(char* s) {
-    if (!s) return 0;
     if (std::strlen(s) != 5) return 0;
-    const int hi = (std::toupper(static_cast<unsigned char>(s[0])) + 31) << 11;
-    const unsigned int num = static_cast<unsigned int>(std::atoi(s + 1));
-    if (num < 0x800u) return static_cast<uint16_t>(hi | num);
+    const int v3 = (std::toupper(static_cast<unsigned char>(s[0])) + 31) << 11;
+    const uint16_t v4 = static_cast<uint16_t>(std::atoi(s + 1));
+    if (v4 < 0x800u) return static_cast<uint16_t>(v3 | v4);
     return 0;
 }
 
+// ===== mofclient.c:299191 — Initialize =====
 int cltEmoticonKindInfo::Initialize(char* filename) {
-    if (!filename) return 0;
+    char Delimiter[6] = { '\t', '\n', '\0', '\0', '\0', '\0' };
+    char WordDelim[2] = { '/',  '\0' };
+    int  v28 = 0;                 // 預設回傳值（失敗路徑保持為 0）
+    char Buffer[1024];
+    std::memset(Buffer, 0, sizeof(Buffer));
 
-    m_rowCnt = 0;
-    const char* DELIMS = "\t\n";
-    char line[1024] = { 0 };
+    m_rowCnt = 0;                 // GT line 299236: *((DWORD*)this+2) = 0;
 
     FILE* fp = g_clTextFileManager.fopen(filename);
     if (!fp) return 0;
 
-    // 跳過表頭三行
-    if (!std::fgets(line, sizeof(line), fp) ||
-        !std::fgets(line, sizeof(line), fp) ||
-        !std::fgets(line, sizeof(line), fp)) {
-        g_clTextFileManager.fclose(fp);
-        return 0;
-    }
+    if (std::fgets(Buffer, 1023, fp)
+        && std::fgets(Buffer, 1023, fp)
+        && std::fgets(Buffer, 1023, fp))
+    {
+        fpos_t Position{};
+        std::fgetpos(fp, &Position);
 
-    // 記錄資料起點並預掃行數
-    fpos_t pos{};
-    std::fgetpos(fp, &pos);
-    while (std::fgets(line, sizeof(line), fp)) ++m_rowCnt;
+        // 預掃資料列數
+        for (; std::fgets(Buffer, 1023, fp); ) ++m_rowCnt;
 
-    // 配置原始列緩衝（188 bytes/列）
-    if (m_rowCnt > 0) {
-        m_rows = static_cast<stEmoticonWordInfo*>(operator new(sizeof(stEmoticonWordInfo) * m_rowCnt));
-        std::memset(m_rows, 0, sizeof(stEmoticonWordInfo) * m_rowCnt);
-    }
+        // 配置 m_rows（不 memset；GT 沒做）
+        m_rows = static_cast<stEmoticonWordInfo*>(
+            operator new(sizeof(stEmoticonWordInfo) * static_cast<size_t>(m_rowCnt)));
 
-    // 回到資料起點，開始逐列剖析
-    std::fsetpos(fp, &pos);
+        std::fsetpos(fp, &Position);
 
-    int idx = 0;
-    // ok 只在「fgets 自然讀到 EOF（在成功處理一列之後）」時才為 true，
-    // 對應反編譯 LABEL_32：v28 = InitEmoticonItem(); fclose; return v28。
-    // 任何 break（缺欄、'+' 出現在 resID、wordsTextId==0 等）都會讓 ok 維持 false，
-    // 落入 fclose; return 0; 路徑（GT v28 預設為 0）。
-    bool ok = false;
+        char* v5 = reinterpret_cast<char*>(m_rows);
 
-    if (std::fgets(line, sizeof(line), fp)) {
-        bool advanced = false;
-        do {
-            advanced = false;
-            // 1) 說明（丟棄）
-            if (!std::strtok(line, DELIMS)) break;
+        if (!std::fgets(Buffer, 1023, fp)) {
+            // 無資料列：直接走 LABEL_32（成功路徑）
+            v28 = InitEmoticonItem();
+            g_clTextFileManager.fclose(fp);
+            return v28;
+        }
 
-            // 2) 이모티콘 이름 -> +0 WORD（數字）
-            char* tok = std::strtok(nullptr, DELIMS);
-            if (!tok) break;
-            uint16_t nameId = static_cast<uint16_t>(std::atoi(tok));
+        // 外層 while 條件：strtok(Buffer, Delimiter) — 第一個 token (描述) 直接丟棄
+        while (std::strtok(Buffer, Delimiter)) {
+            // [1] 이모티콘 이름 -> +0 WORD
+            char* v6 = std::strtok(nullptr, Delimiter);
+            if (!v6) break;
+            *reinterpret_cast<uint16_t*>(v5 + 0) = static_cast<uint16_t>(std::atoi(v6));
 
-            // 3) 이모티콘 종류 -> +8 DWORD
-            tok = std::strtok(nullptr, DELIMS);
-            if (!tok) break;
-            uint32_t kind = static_cast<uint32_t>(std::atoi(tok));
+            // [2] 이모티콘 종류 -> +8 DWORD
+            char* v7 = std::strtok(nullptr, Delimiter);
+            if (!v7) break;
+            *reinterpret_cast<uint32_t*>(v5 + 8) = static_cast<uint32_t>(std::atoi(v7));
 
-            // 4) 아이템 아이디（Ixxxx 或 "0"）-> +4 WORD (Translate or 0)
-            tok = std::strtok(nullptr, DELIMS);
-            if (!tok) break;
-            uint16_t itemKind = (std::strcmp(tok, "0") == 0) ? 0 : TranslateKindCode(tok);
+            // [3] 아이템 아이디 -> +4 WORD ("0" → 0; 否則 TranslateKindCode)
+            char* v8 = std::strtok(nullptr, Delimiter);
+            if (!v8) break;
+            *reinterpret_cast<uint16_t*>(v5 + 4) =
+                (std::strcmp(v8, "0") == 0) ? 0 : TranslateKindCode(v8);
 
-            // 5) 대표 아이템 아이디（Ixxxx 或 "0"）-> +2 WORD
-            tok = std::strtok(nullptr, DELIMS);
-            if (!tok) break;
-            uint16_t repItemKind = (std::strcmp(tok, "0") == 0) ? 0 : TranslateKindCode(tok);
+            // [4] 대표 아이템 아이디 -> +2 WORD ("0" → 0; 否則 TranslateKindCode)
+            char* v9 = std::strtok(nullptr, Delimiter);
+            if (!v9) break;
+            *reinterpret_cast<uint16_t*>(v5 + 2) =
+                (std::strcmp(v9, "0") == 0) ? 0 : TranslateKindCode(v9);
 
-            // 6) 리소스 ID（十六進字串；不得含 '+'）
-            tok = std::strtok(nullptr, DELIMS);
-            if (!tok) break;
-            if (std::strstr(tok, "+")) { ok = false; break; }
-            uint32_t resId = 0;
-            std::sscanf(tok, "%x", &resId);
+            // [5] 리소스 ID（hex；含 '+' 視為 parse error）
+            char* v10 = std::strtok(nullptr, Delimiter);
+            if (!v10) break;
+            if (std::strstr(v10, "+")) break;
+            unsigned int v27 = 0;
+            std::sscanf(v10, "%x", &v27);
+            *reinterpret_cast<uint32_t*>(v5 + 12) = v27;
 
-            // 7) 블록 ID -> +16 WORD
-            tok = std::strtok(nullptr, DELIMS);
-            if (!tok) break;
-            uint16_t blockId = static_cast<uint16_t>(std::atoi(tok));
+            // [6] 블록 ID -> +16 WORD
+            char* v12 = std::strtok(nullptr, Delimiter);
+            if (!v12) break;
+            *reinterpret_cast<uint16_t*>(v5 + 16) = static_cast<uint16_t>(std::atoi(v12));
 
-            // 8) 툴팁 ID -> +18 WORD
-            tok = std::strtok(nullptr, DELIMS);
-            if (!tok) break;
-            uint16_t tooltipId = static_cast<uint16_t>(std::atoi(tok));
+            // [7] 툴팁 ID -> +18 WORD
+            char* v13 = std::strtok(nullptr, Delimiter);
+            if (!v13) break;
+            *reinterpret_cast<uint16_t*>(v5 + 18) = static_cast<uint16_t>(std::atoi(v13));
 
-            // 9) 표현 낱말 리스트（文字ID；以 DCTTextManager 取字串後用 '/' 分割）
-            tok = std::strtok(nullptr, DELIMS);
-            if (!tok) break;
-            uint16_t wordsTextId = static_cast<uint16_t>(std::atoi(tok));
-            if (wordsTextId == 0) break;
+            // [8] 표현 낱말 리스트 ID -> +20 WORD（==0 視為 parse error）
+            char* v15 = std::strtok(nullptr, Delimiter);
+            if (!v15) break;
+            const uint16_t v16 = static_cast<uint16_t>(std::atoi(v15));
+            *reinterpret_cast<uint16_t*>(v5 + 20) = v16;
+            if (!v16) break;
 
-            const char* phrase = g_DCTTextManager.GetText(wordsTextId);
-            if (!phrase) phrase = "";
+            // ===== GT 詞條解析（mofclient.c:299300-299322）=====
+            //   _wsprintfA(v15, "%s", DCTTextManager::GetText(v16))
+            //   v15 是上一個 strtok 取得的指標（落在 Buffer[1024] 內）；
+            //   等同把 phrase 直接覆寫回該 token 槽，再用 "/" 二次 strtok。
+            //   word0..word9 各 16 bytes 槽；GT 用 strcpy 不檢查長度。
+            //   v19 (wordCount) 不檢查上限，>10 詞會位移寫入 +182/+184。
+            const char* v17 = g_DCTTextManager.GetText(v16);
+            if (!v17) v17 = "";
+            std::sprintf(v15, "%s", v17);   // 等同 _wsprintfA(v15, "%s", v17)
 
-            // 以 '/' 切詞（最多 10 個，每格 16 bytes）
-            char buf[512];
-            std::strncpy(buf, phrase, sizeof(buf) - 1);
-            buf[sizeof(buf) - 1] = '\0';
+            char* v18 = std::strtok(v15, WordDelim);
+            if (!v18) break;
 
-            int wordCount = 0;
-            char* w = std::strtok(buf, "/");
-            stEmoticonWordInfo rec{};
-            rec.nameId = nameId;
-            rec.repItemKind = repItemKind;
-            rec.itemKind = itemKind;
-            rec.kind = kind;
-            rec.resIdHex = resId;
-            rec.blockId = blockId;
-            rec.tooltipId = tooltipId;
-            rec.wordsTextId = wordsTextId;
+            int v19 = 1;
+            std::strcpy(v5 + 22, v18);      // word0
 
-            auto copyWord = [](char dst[16], const char* src) {
-                if (!src) { dst[0] = '\0'; return; }
-                std::strncpy(dst, src, 15);
-                dst[15] = '\0';
-                };
-
-            if (w) { copyWord(rec.word0, w); ++wordCount; }
-            char* nxt = nullptr;
-            char* cursor = nullptr; // 為了可讀性
-            (void)cursor;
-
-            char* p = nullptr;
-            // 使用 strtok(nullptr,"/") 取後續詞
-            for (int slot = 1; slot < 10 && (nxt = std::strtok(nullptr, "/")); ++slot) {
-                switch (slot) {
-                case 1: copyWord(rec.word1, nxt); break;
-                case 2: copyWord(rec.word2, nxt); break;
-                case 3: copyWord(rec.word3, nxt); break;
-                case 4: copyWord(rec.word4, nxt); break;
-                case 5: copyWord(rec.word5, nxt); break;
-                case 6: copyWord(rec.word6, nxt); break;
-                case 7: copyWord(rec.word7, nxt); break;
-                case 8: copyWord(rec.word8, nxt); break;
-                case 9: copyWord(rec.word9, nxt); break;
-                }
-                ++wordCount;
-            }
-            rec.wordCount = static_cast<uint32_t>(wordCount);
-
-            if (idx < m_rowCnt) {
-                // 直接以位元拷貝語意模擬 qmemcpy(v5+44, rec, 0xBC)
-                std::memcpy(&m_rows[idx], &rec, sizeof(stEmoticonWordInfo));
-                ++idx;
+            char* v20 = std::strtok(nullptr, WordDelim);
+            if (v20) {
+                char* v21 = v5 + 38;        // word1 起點，每次 +16
+                do {
+                    std::strcpy(v21, v20);  // 不檢查長度（GT 行為）
+                    ++v19;                   // 不上限累加
+                    v21 += 16;
+                    v20 = std::strtok(nullptr, WordDelim);
+                } while (v20);
             }
 
-            // 反編譯：寫完一列後才會 fgets 下一列；若 fgets 失敗則 goto LABEL_32（成功）。
-            advanced = true;
-        } while (std::fgets(line, sizeof(line), fp));
-        // 只有「上一輪有成功寫入一列且 fgets 失敗」才是 GT 的成功路徑。
-        // 任何中途 break 都會讓 advanced 在那一輪維持 false，最終 ok 為 false。
-        ok = advanced;
-    }
-    else {
-        // 反編譯：fsetpos 後第一次 fgets 即失敗（沒有資料列）→ goto LABEL_32 → InitEmoticonItem。
-        ok = true;
+            *reinterpret_cast<uint32_t*>(v5 + 184) = static_cast<uint32_t>(v19);
+
+            v5 += 188;
+
+            if (!std::fgets(Buffer, 1023, fp)) {
+                // LABEL_32 成功路徑：呼叫 InitEmoticonItem 並回傳其結果
+                v28 = InitEmoticonItem();
+                g_clTextFileManager.fclose(fp);
+                return v28;
+            }
+        }
+        // 外層 while 條件失敗 或 內部 break：fall through 到 fclose / return 0
     }
 
     g_clTextFileManager.fclose(fp);
-
-    if (!ok) {
-        Free();
-        return 0;
-    }
-
-    // 建立 984B 組資料
-    return InitEmoticonItem();
+    return v28;  // 失敗路徑：v28 仍為 0；不呼叫 Free()
 }
 
+// ===== mofclient.c:299645 — Free =====
+//   只把 m_rows / m_items 置 0；不動 m_rowCnt / m_itemCnt（GT 行為）。
 void cltEmoticonKindInfo::Free() {
-    if (m_rows) { operator delete(static_cast<void*>(m_rows));  m_rows = nullptr; }
-    if (m_items) { operator delete(static_cast<void*>(m_items)); m_items = nullptr; }
-    m_rowCnt = 0;
-    m_itemCnt = 0;
+    if (m_rows) {
+        operator delete(static_cast<void*>(m_rows));
+        m_rows = nullptr;
+    }
+    if (m_items) {
+        operator delete(static_cast<void*>(m_items));
+        m_items = nullptr;
+    }
 }
 
-// === 組裝：嚴格對照反編譯版位與流程 ===
+// ===== mofclient.c:299339 — InitEmoticonItem =====
 int cltEmoticonKindInfo::InitEmoticonItem() {
     const int rc = m_rowCnt;
     if (rc % 5) return 0; // 必須為 5 的倍數
 
-    // 依「代表道具ID」的變更次數估計組數（+1）
+    // Phase 0：依「대표 아이템 아이디」變更次數估計群組數（+1）
     int groupsMinusOne = 0;
     uint16_t prevRep = 0;
     if (rc > 0) {
@@ -216,30 +208,28 @@ int cltEmoticonKindInfo::InitEmoticonItem() {
         }
     }
 
-    m_itemCnt = groupsMinusOne + 1; // 反編譯：*((this)+4) = v6 + 1;
+    m_itemCnt = groupsMinusOne + 1;
     m_items = static_cast<stEmoticonItemInfo*>(operator new(sizeof(stEmoticonItemInfo) * m_itemCnt));
     std::memset(m_items, 0, sizeof(stEmoticonItemInfo) * m_itemCnt);
 
-    // 第一段：把 repItemKind==0 的列，依序拷到「每組」的第一筆 slot（+44）
+    // Phase 1：把 repItemKind==0 的列依序拷到「每組」的第一筆 slot（+44）
     int copiedZero = 0;
     for (int i = 0; i < rc; ++i) {
         const stEmoticonWordInfo* src = reinterpret_cast<const stEmoticonWordInfo*>(
             reinterpret_cast<const uint8_t*>(m_rows) + i * 188
             );
         if (src->repItemKind == 0) {
-            // 對應：qmemcpy(dest + 44, src, 0xBC)
             std::memcpy(reinterpret_cast<uint8_t*>(m_items) + copiedZero * 188 + 44,
                 src, sizeof(stEmoticonWordInfo));
             ++copiedZero;
         }
     }
-    int baseIndex = copiedZero; // v14/v35
+    int baseIndex = copiedZero;
 
-    // 第二段：將每組的「代表道具ID」寫到組頭 +40
+    // Phase 2：將每組的「대표 아이템 아이디」寫到組頭 +40
     if (m_itemCnt > 1) {
         for (int g = 1; g < m_itemCnt; ++g) {
             const int groupOfs = g * sizeof(stEmoticonItemInfo);
-            // 從 baseIndex 起掃至尾，每列的 repItemKind 複寫到該組 +40
             for (int r = baseIndex; r < rc; ++r) {
                 const uint16_t rep = *reinterpret_cast<const uint16_t*>(
                     reinterpret_cast<const uint8_t*>(m_rows) + r * 188 + 2
@@ -251,17 +241,10 @@ int cltEmoticonKindInfo::InitEmoticonItem() {
         }
     }
 
-    // 第三段：對每一組：
-    //  - 找到「代表道具ID」相符的 5 連列
-    //  - 將其「아이템 아이디」(record +4) 依序寫入組頭 idList[20] 的當頁區段
-    //  - 並把 5 列的 188B 區塊拷到該組 +44 起，連續 5 次
-    //
-    // 反編譯重點：v34（writeCountTotal）只在進入第三段前歸 0，整個外層 for(g) 都不重置；
-    // 每個群組的 idList 寫入位置 = m_items + 2*(v34 + v33) bytes，其中 v33 = 492*g。
-    // 因此前一群組累積的匹配數，會把後一群組的 idList 寫入位置整體往後位移。
+    // Phase 3：v34（writeCountTotal）跨群組累計，永不重置
     if (m_itemCnt > 1) {
-        int wordOffsetWords = 492; // v33：以 WORD 計算的群組起點偏移；等於 984 bytes/group
-        int writeCountTotal = 0;   // v34：跨群組累計的匹配計數，永不重置
+        int wordOffsetWords = 492;
+        int writeCountTotal = 0;
         for (int g = 1; g < m_itemCnt; ++g) {
             const int groupOfs = g * sizeof(stEmoticonItemInfo);
 
@@ -274,14 +257,11 @@ int cltEmoticonKindInfo::InitEmoticonItem() {
                 const uint16_t repOfRow = *reinterpret_cast<const uint16_t*>(rowPtr + 2);
 
                 if (repInGroup == repOfRow) {
-                    // 寫入 idList（WORD*）：位置 = 2 * (writeCountTotal + wordOffsetWords) bytes，
-                    // 即 idList[writeCountTotal + 492*g] WORD（writeCountTotal 跨群組累計）
                     uint16_t* idListBase = reinterpret_cast<uint16_t*>(m_items);
                     uint16_t itemIdCode = *reinterpret_cast<const uint16_t*>(rowPtr + 4);
                     idListBase[writeCountTotal + wordOffsetWords] = itemIdCode;
                     ++writeCountTotal;
 
-                    // 連續拷 5 次 188B 到組區（+44 起）
                     int times = 5;
                     int ofs = groupOfs + 44;
                     int srcOfs = r * 188;
@@ -292,15 +272,12 @@ int cltEmoticonKindInfo::InitEmoticonItem() {
                         ofs += 188;
                         srcOfs += 188;
                     }
-                    // 配合反編譯的位移復原
-                    r += 5; // i = i + 4; 然後 ++ 變成 +5
+                    r += 5;
                 }
                 else {
                     ++r;
                 }
             }
-
-            // 下一組切到下一頁（等效 v33 += 492）
             wordOffsetWords += 492;
         }
     }
@@ -308,18 +285,17 @@ int cltEmoticonKindInfo::InitEmoticonItem() {
     return 1;
 }
 
-// ===== 查詢（對照反編譯） =====
+// ===== 查詢介面 =====
 
 stEmoticonItemInfo* cltEmoticonKindInfo::GetEmoticonItemInfoByID(uint16_t a2) {
-    if (a2 == 0) return m_items; // 索引 0 的組
+    if (a2 == 0) return m_items;
     const int cnt = m_itemCnt;
-    int idx = 1; // 從 1 開始掃
+    int idx = 1;
     if (cnt > 1) {
         uint16_t* p = reinterpret_cast<uint16_t*>(
-            reinterpret_cast<uint8_t*>(m_items) + sizeof(stEmoticonItemInfo) /*+984*/
+            reinterpret_cast<uint8_t*>(m_items) + sizeof(stEmoticonItemInfo)
             );
         while (idx < cnt) {
-            // 檢查當組開頭 20 個 WORD
             for (int j = 0; j < 20; ++j) {
                 if (p[j] == a2) {
                     return reinterpret_cast<stEmoticonItemInfo*>(
@@ -329,18 +305,22 @@ stEmoticonItemInfo* cltEmoticonKindInfo::GetEmoticonItemInfoByID(uint16_t a2) {
             }
             ++idx;
             p = reinterpret_cast<uint16_t*>(
-                reinterpret_cast<uint8_t*>(p) + sizeof(stEmoticonItemInfo) // +984 bytes -> 下一組頁面的 id 區
+                reinterpret_cast<uint8_t*>(p) + sizeof(stEmoticonItemInfo)
                 );
         }
     }
     return nullptr;
 }
 
+// ===== mofclient.c:299545 — GetEmoticonItemInfoByIndex =====
+//   GT: if (a2 < *((int*)this+4)) — a2(u8) 經 integer promotion 變 int，
+//   再與完整 m_itemCnt(int) 比較，**不做 u8 截斷**。
 stEmoticonItemInfo* cltEmoticonKindInfo::GetEmoticonItemInfoByIndex(uint8_t a2) {
-    if (a2 < static_cast<uint8_t>(m_itemCnt))
+    if (static_cast<int>(a2) < m_itemCnt) {
         return reinterpret_cast<stEmoticonItemInfo*>(
             reinterpret_cast<uint8_t*>(m_items) + sizeof(stEmoticonItemInfo) * a2
             );
+    }
     return nullptr;
 }
 
@@ -349,12 +329,11 @@ stEmoticonItemInfo* cltEmoticonKindInfo::GetEmoticonItemInfoByKind(int a2) {
     const int cnt = m_itemCnt;
     for (int i = 0; i < cnt; ++i) {
         uint8_t* base = reinterpret_cast<uint8_t*>(m_items) + sizeof(stEmoticonItemInfo) * i;
-        // 檢查五個 slot 的 kind（偏移 base + 44 + 8，再每 188B 一筆）
         const uint32_t* p = reinterpret_cast<const uint32_t*>(base + 52);
         for (int s = 0; s < 5; ++s) {
             if (*p == static_cast<uint32_t>(a2))
                 return reinterpret_cast<stEmoticonItemInfo*>(base);
-            p += (188 / 4); // +=47 DWORD
+            p += (188 / 4);
         }
     }
     return nullptr;
@@ -387,7 +366,6 @@ int cltEmoticonKindInfo::IsEmoticonItem(uint16_t a2) {
         if (!GetEmoticonItemInfoByIndex(static_cast<uint8_t>(idx))) {
             ++idx; ofs += sizeof(stEmoticonItemInfo); continue;
         }
-        // 檢查當組 idList 的 20 個 WORD
         const uint16_t* list = reinterpret_cast<const uint16_t*>(
             reinterpret_cast<const uint8_t*>(m_items) + ofs
             );

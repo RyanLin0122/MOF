@@ -21,17 +21,18 @@ bool cltMapUseItemInfoKindInfo::IsDigitString(const char* s)
 
 // mofclient.c:311860 — cltMapUseItemInfoKindInfo::Initialize("mapuseiteminfo.txt")
 //
-// GT 控制流摘要：
+// GT 控制流摘要（嚴格逐位元組等價，含 GT 既有的 fp/heap 洩漏行為）：
 //   1) 設 v41 = 0；count_ = 0；fopen；若失敗 → 直接 return v41(=0)。
 //   2) 連續三次 fgets 跳過表頭；任一失敗 → 跳到 fclose / return 0。
 //   3) fgetpos → 預掃 fgets 直到 EOF 以決定 count_。
-//   4) 若 count_==0 → return 1（GT 在此會洩漏 fp，本 port 改為先 fclose 後 return）。
+//   4) 若 count_==0 → 直接 return 1（GT 在此 *不* 呼叫 fclose，會洩漏 fp；本 port 維持此行為）。
 //   5) operator new(228 * count_) + memset 0；fsetpos 回到資料起點。
 //   6) 若首次 fgets 為 NULL（無資料列）→ goto LABEL_40：v41=1 後 fclose / return 1。
 //   7) 進入 LABEL_10 解析迴圈：
 //        - 第 1 欄 ID 由 TranslateKindCode 寫入 +0；之後依 GT 偏移逐欄解析。
 //        - 任一欄位的 strtok 為 NULL → 透過 if-巢狀 fall-through 退出整個迴圈，
-//          結束後 fclose / return v41(=0)。
+//          結束後 fclose / return v41(=0)。GT 在此 *不* 呼叫 Free()，已配置的 table_
+//          會留在物件內（重入時會被下一次 operator new 覆蓋而真正洩漏）；本 port 維持此行為。
 //        - 第 25 欄 EaFileName(strcpy) 寫入 +100；第 26 欄 SubItemCount 寫入 +96。
 //        - 第 27..31 欄 SubItemID[0..4] 依序寫入 +4..+12；任一欄 strtok 為 NULL
 //          會 break 內層 while → 整體 return 0（與 GT 完全一致）。
@@ -89,9 +90,8 @@ int cltMapUseItemInfoKindInfo::Initialize(char* filename)
     count_ = 0;
     while (std::fgets(line, sizeof(line), fp)) ++count_;
 
-    // GT: if (!count_) return 1; （GT 在此洩漏 fp，本 port 先 fclose）
+    // GT: if (!count_) return 1; （GT 在此 *不* 呼叫 fclose，洩漏 fp；本 port 維持原行為以保等價）
     if (count_ == 0) {
-        g_clTextFileManager.fclose(fp);
         return 1;
     }
 
@@ -103,7 +103,6 @@ int cltMapUseItemInfoKindInfo::Initialize(char* filename)
     std::fsetpos(fp, &pos);
 
     int v41 = 0;          // 對應 GT v41：函式回傳值（0 失敗、1 成功）
-    int idx = 0;
     char* v9 = reinterpret_cast<char*>(table_);  // 對應 GT v9：游標指向當前 record 起點
 
     // GT: if (!_fgets(...)) goto LABEL_40; → v41=1; fclose; return 1
@@ -118,7 +117,8 @@ int cltMapUseItemInfoKindInfo::Initialize(char* filename)
         // [1] ID（M****）→ +0
         char* tok = std::strtok(line, DELIMS);
         if (!tok) break;
-        if (idx >= count_) break;  // 防呆：理論上 idx 永遠 < count_
+        // GT 沒有 idx >= count_ 的防呆檢查；count_ 由同一檔案預掃取得，
+        // 配合 fsetpos 重置，實際解析的列數必然 <= count_。
         *reinterpret_cast<uint16_t*>(v9 + 0) = TranslateKindCode(tok);
 
         // [2] 기획자(아이템 이름) — 僅檢查非空（內容丟棄）
@@ -265,7 +265,6 @@ int cltMapUseItemInfoKindInfo::Initialize(char* filename)
         }
         if (!got_all_five) break;
 
-        ++idx;
         v9 += 228;
 
         // GT: if (!_fgets) goto LABEL_40 (v41=1); else continue (re-enter LABEL_10)
@@ -276,15 +275,10 @@ int cltMapUseItemInfoKindInfo::Initialize(char* filename)
     }
 
     g_clTextFileManager.fclose(fp);
-
-    if (v41 == 1) {
-        return 1;
-    }
-
-    // GT 在解析失敗時並未 Free，但釋放配置可避免 reload/重入泄漏；
-    // 與 cltWeddingHallKindInfo / cltEnchantKindInfo 等 sibling 的保守做法一致。
-    Free();
-    return 0;
+    // GT verbatim：失敗 (v41==0) 時 *不* 呼叫 Free()；已配置的 table_/count_ 留在物件中。
+    // 此函式在 mofclient.c 真實流程中只會在啟動時被呼叫一次，所以洩漏不會被觀察到；
+    // 此處保留 GT 行為以維持嚴格邏輯等價。
+    return v41;
 }
 
 // mofclient.c:312097

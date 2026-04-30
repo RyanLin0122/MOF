@@ -4,13 +4,20 @@
 // 原型建構子：與反編譯碼相同，僅回傳 this（不清零）。
 cltTransformKindInfo::cltTransformKindInfo() {}
 
-// 簡易數字字串檢查：需全部為 0-9（允許單一 '0'）
-static inline bool IsDigitStr(const char* s) {
-    if (!s || !*s) return false;
-    for (const unsigned char* p = (const unsigned char*)s; *p; ++p) {
+// 與全域 ::IsDigit (mofclient.c:342909) 完全等價的內部版本：
+//   1. 空字串回傳 1（true）
+//   2. 在每個數字字元之前都允許出現 '+' 或 '-'
+//   3. 任何非數字字元 → 回傳 0
+//   4. 全程通過 → 回傳 1
+static inline bool IsDigit(const char* a1) {
+    if (!a1 || !*a1) return true;
+    const unsigned char* p = reinterpret_cast<const unsigned char*>(a1);
+    while (true) {
+        if (*p == '+' || *p == '-') ++p;
         if (!std::isdigit(*p)) return false;
+        ++p;
+        if (!*p) return true;
     }
-    return true;
 }
 
 // T/F 欄位以首字母判斷（與 _toupper(*tok) == 'T' 同義）
@@ -45,7 +52,7 @@ int cltTransformKindInfo::LoadTransformKindInfo(char* path) {
 
                 int kind = GetTransformKind(tok);
                 // *((WORD*)v5 - 4) = kind → 即寫入當前紀錄 offset 0
-                if (i >= 17) break; // 防呆：不可超出 17 筆
+                // 反編譯碼沒有上限檢查；交由檔案僅含 17 筆來保證安全（實際 transformation.txt 為 17 筆）。
                 records_[i].kind = static_cast<uint16_t>(kind);
 
                 // 欄位 2：變身ID（略過）
@@ -76,40 +83,40 @@ int cltTransformKindInfo::LoadTransformKindInfo(char* path) {
 
                 // 欄位 8：附近角色 HP 增加值 → v5[2]
                 char* t8 = std::strtok(nullptr, DELIM);
-                if (!t8 || !IsDigitStr(t8)) break;
+                if (!t8 || !IsDigit(t8)) break;
                 records_[i].nearCharHPInc = std::atoi(t8);
 
                 // 欄位 9：附近角色 MP 增加值 → v5[3]
                 char* t9 = std::strtok(nullptr, DELIM);
-                if (!t9 || !IsDigitStr(t9)) break;
+                if (!t9 || !IsDigit(t9)) break;
                 records_[i].nearCharMPInc = std::atoi(t9);
 
                 // 欄位 10：附近隊友 HP 增加值 → v5[4]
                 char* t10 = std::strtok(nullptr, DELIM);
-                if (!t10 || !IsDigitStr(t10)) break;
+                if (!t10 || !IsDigit(t10)) break;
                 records_[i].nearPartyHPInc = std::atoi(t10);
 
                 // 欄位 11：附近隊友 MP 增加值 → v5[5]
                 char* t11 = std::strtok(nullptr, DELIM);
-                if (!t11 || !IsDigitStr(t11)) break;
+                if (!t11 || !IsDigit(t11)) break;
                 records_[i].nearPartyMPInc = std::atoi(t11);
 
                 // 欄位 12：影響範圍（左右）→ v5[6]
                 char* t12 = std::strtok(nullptr, DELIM);
-                if (!t12 || !IsDigitStr(t12)) break;
+                if (!t12 || !IsDigit(t12)) break;
                 records_[i].influenceRangeLR = std::atoi(t12);
 
                 // 欄位 13：作用間隔 → v5[7]
                 char* t13 = std::strtok(nullptr, DELIM);
-                if (!t13 || !IsDigitStr(t13)) break;
+                if (!t13 || !IsDigit(t13)) break;
                 records_[i].influenceInterval = std::atoi(t13);
 
                 // 欄位 14：變身怪物代碼 → strcpy((char*)(v5+8), tok)
                 char* t14 = std::strtok(nullptr, DELIM);
                 if (!t14) break;
-                // 原碼使用 strcpy，會覆寫到 0x28 起始；為避免覆蓋 0x30 的 isStealth，限制長度 7。
-                std::strncpy(records_[i].monsterCode, t14, sizeof(records_[i].monsterCode) - 1);
-                records_[i].monsterCode[sizeof(records_[i].monsterCode) - 1] = '\0';
+                // 反編譯碼直接使用 strcpy，無長度檢查；若 token 長度 ≥ 8 會踩到緊接其後的
+                // isStealth (offset 0x30)。為了與 mofclient.c 的位元結果完全一致這裡不做截斷。
+                std::strcpy(records_[i].monsterCode, t14);
 
                 // 下一列（等價於 v5 += 13 → 前進 52 bytes）
                 ++i;
