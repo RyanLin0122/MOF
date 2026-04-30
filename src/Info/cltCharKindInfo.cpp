@@ -511,7 +511,10 @@ void* cltCharKindInfo::GetCharKindInfo(uint16_t a2)
 
 uint16_t cltCharKindInfo::GetRealCharID(uint16_t charKind)
 {
-    return charKind;
+    // GT 0x00565490：return *((WORD*)info + 3) = info+6 (monsterRegistryKind)；info==null → 0。
+    stCharKindInfo* info = static_cast<stCharKindInfo*>(GetCharKindInfo(charKind));
+    if (!info) return 0;
+    return info->monsterRegistryKind;
 }
 
 stCharKindInfo* cltCharKindInfo::GetMonsterNameByKind(unsigned short a2)
@@ -525,17 +528,16 @@ stCharKindInfo* cltCharKindInfo::GetMonsterNameByKind(unsigned short a2)
 
 int cltCharKindInfo::GetCharKindInfoByDropItemKind(uint16_t dropItemKindCode, stCharKindInfo** outChars)
 {
-    // mofclient.c 0x00565360：遍歷所有 slot，將 dropItemKind == 目標 的記錄寫入 outChars。
-    // 注意原始 binary 的回傳值固定為 0；呼叫端依目前 outChars 寫入位置遞推。
-    // 我們遵循「呼叫端期望實際數量」的常識，回傳寫入筆數。
-    if (!m_ppCharKindTable || !outChars) return 0;
-    int count = 0;
+    // GT 0x00565360：遍歷 0xFFFF slot；條件成立時 *a3 = v5 (覆蓋同一格、不遞增)，
+    // 函式固定回傳 0。呼叫端 (cltDropItemKindInfo loader) 以 if (v34) 包住後續判斷，
+    // 故迴圈體在 GT 行為下實質是 dead code。為達 byte-level 對齊，保持 GT 語意。
+    if (!m_ppCharKindTable) return 0;
     for (int i = 0; i < 0xFFFF; ++i) {
         stCharKindInfo* r = m_ppCharKindTable[i];
         if (r && r->dropItemKind == dropItemKindCode)
-            outChars[count++] = r;
+            *outChars = r;
     }
-    return count;
+    return 0;
 }
 
 // mofclient.c 0x00565280：對所有 slot 篩選「primary 怪物 entry」(kindCode ==
@@ -608,12 +610,9 @@ int cltCharKindInfo::GetDieDelayAniByKind(uint16_t kindCode)
 
 char* cltCharKindInfo::GetDeadSound(uint16_t kindCode)
 {
-    // mofclient.c 0x005656D0：return (char*)info + 163。
+    // GT 0x005656D0：info==null → 直接回 null (EAX 保持 0)。
     stCharKindInfo* info = static_cast<stCharKindInfo*>(GetCharKindInfo(kindCode));
-    if (!info) {
-        static char s_empty[1] = { '\0' };
-        return s_empty;
-    }
+    if (!info) return nullptr;
     return info->deadSound;
 }
 
@@ -700,12 +699,9 @@ uint8_t cltCharKindInfo::GetMoveSpeedConstant(uint16_t a2)
 
 char* cltCharKindInfo::GetAttackSound(uint16_t a2)
 {
-    // GT 0x005656B0：return (char*)info + 147 = atkSound[]。
+    // GT 0x005656B0：info==null → 直接回 null (EAX 保持 0)。
     stCharKindInfo* info = static_cast<stCharKindInfo*>(GetCharKindInfo(a2));
-    if (!info) {
-        static char s_empty[1] = { '\0' };
-        return s_empty;
-    }
+    if (!info) return nullptr;
     return info->atkSound;
 }
 
@@ -818,8 +814,8 @@ int cltCharKindInfo::GetCharKinds(char* a1, uint16_t* a2)
 
 uint16_t cltCharKindInfo::GetAniTotalFrame(uint16_t a2, int a3)
 {
-    // GT 0x00565B50：a3 >= 8 → 0；否則回 stCharKindInfo::aniTotalFrames[a3]。
-    if (a3 >= 8 || a3 < 0) return 0;
+    // GT 0x00565B50：只檢查 a3 >= 8 → 0；負值不檢查 (GT 會做越界讀)。
+    if (a3 >= 8) return 0;
     stCharKindInfo* info = static_cast<stCharKindInfo*>(GetCharKindInfo(a2));
     return info ? info->aniTotalFrames[a3] : static_cast<uint16_t>(0);
 }

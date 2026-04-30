@@ -104,9 +104,11 @@ int cltMoFC_EffectKindInfo::Initialize(char* fileName) {
 }
 
 stEffectKindInfo* cltMoFC_EffectKindInfo::GetEffectKindInfo(uint16_t code) {
-    // GT: return *((_DWORD *)this + code + 1)
-    //     即 table_[code]，無範圍檢查（GT 假設 code < 0x10000）。
-    return (code < TABLE_SIZE) ? table_[code] : nullptr;
+    // GT (mofclient.c:259684): return *((_DWORD *)this + code + 1)
+    //   直接偏移讀取，無任何邊界檢查；code == 0xFFFF 時 GT 會讀到
+    //   table 末端後一槽（UB，但實際路徑由 TranslateKindCode 限制
+    //   最大值為 0xCFFF，故不會發生）。此處保持與 GT 完全一致。
+    return table_[code];
 }
 
 stEffectKindInfo* cltMoFC_EffectKindInfo::GetEffectKindInfo(char* codeStr) {
