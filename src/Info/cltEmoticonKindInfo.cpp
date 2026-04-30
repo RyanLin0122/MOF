@@ -55,10 +55,16 @@ int cltEmoticonKindInfo::Initialize(char* filename) {
     std::fsetpos(fp, &pos);
 
     int idx = 0;
+    // ok 只在「fgets 自然讀到 EOF（在成功處理一列之後）」時才為 true，
+    // 對應反編譯 LABEL_32：v28 = InitEmoticonItem(); fclose; return v28。
+    // 任何 break（缺欄、'+' 出現在 resID、wordsTextId==0 等）都會讓 ok 維持 false，
+    // 落入 fclose; return 0; 路徑（GT v28 預設為 0）。
     bool ok = false;
 
     if (std::fgets(line, sizeof(line), fp)) {
+        bool advanced = false;
         do {
+            advanced = false;
             // 1) 說明（丟棄）
             if (!std::strtok(line, DELIMS)) break;
 
@@ -160,11 +166,16 @@ int cltEmoticonKindInfo::Initialize(char* filename) {
                 ++idx;
             }
 
+            // 反編譯：寫完一列後才會 fgets 下一列；若 fgets 失敗則 goto LABEL_32（成功）。
+            advanced = true;
         } while (std::fgets(line, sizeof(line), fp));
-        ok = true; // 正常到 EOF 視為成功
+        // 只有「上一輪有成功寫入一列且 fgets 失敗」才是 GT 的成功路徑。
+        // 任何中途 break 都會讓 advanced 在那一輪維持 false，最終 ok 為 false。
+        ok = advanced;
     }
     else {
-        ok = true; // 無資料列亦視為成功
+        // 反編譯：fsetpos 後第一次 fgets 即失敗（沒有資料列）→ goto LABEL_32 → InitEmoticonItem。
+        ok = true;
     }
 
     g_clTextFileManager.fclose(fp);
@@ -244,11 +255,15 @@ int cltEmoticonKindInfo::InitEmoticonItem() {
     //  - 找到「代表道具ID」相符的 5 連列
     //  - 將其「아이템 아이디」(record +4) 依序寫入組頭 idList[20] 的當頁區段
     //  - 並把 5 列的 188B 區塊拷到該組 +44 起，連續 5 次
+    //
+    // 反編譯重點：v34（writeCountTotal）只在進入第三段前歸 0，整個外層 for(g) 都不重置；
+    // 每個群組的 idList 寫入位置 = m_items + 2*(v34 + v33) bytes，其中 v33 = 492*g。
+    // 因此前一群組累積的匹配數，會把後一群組的 idList 寫入位置整體往後位移。
     if (m_itemCnt > 1) {
-        int wordOffsetWords = 492; // 以 WORD 計算的偏移：等於 984 bytes
+        int wordOffsetWords = 492; // v33：以 WORD 計算的群組起點偏移；等於 984 bytes/group
+        int writeCountTotal = 0;   // v34：跨群組累計的匹配計數，永不重置
         for (int g = 1; g < m_itemCnt; ++g) {
             const int groupOfs = g * sizeof(stEmoticonItemInfo);
-            int writeCountThisPage = 0;
 
             for (int r = baseIndex; r < rc; /*手動遞增*/) {
                 const uint16_t repInGroup =
@@ -259,11 +274,12 @@ int cltEmoticonKindInfo::InitEmoticonItem() {
                 const uint16_t repOfRow = *reinterpret_cast<const uint16_t*>(rowPtr + 2);
 
                 if (repInGroup == repOfRow) {
-                    // 寫入當組的 idList（WORD*）：位置 = 2 * (已寫數 + wordOffsetWords)
+                    // 寫入 idList（WORD*）：位置 = 2 * (writeCountTotal + wordOffsetWords) bytes，
+                    // 即 idList[writeCountTotal + 492*g] WORD（writeCountTotal 跨群組累計）
                     uint16_t* idListBase = reinterpret_cast<uint16_t*>(m_items);
                     uint16_t itemIdCode = *reinterpret_cast<const uint16_t*>(rowPtr + 4);
-                    idListBase[writeCountThisPage + wordOffsetWords] = itemIdCode;
-                    ++writeCountThisPage;
+                    idListBase[writeCountTotal + wordOffsetWords] = itemIdCode;
+                    ++writeCountTotal;
 
                     // 連續拷 5 次 188B 到組區（+44 起）
                     int times = 5;
