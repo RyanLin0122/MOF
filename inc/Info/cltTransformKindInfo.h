@@ -19,7 +19,12 @@
 //   0x1C: int nearPartyMPInc           ← 周邊隊友 MP 增加值
 //   0x20: int influenceRangeLR         ← 影響範圍（左右半徑）
 //   0x24: int influenceInterval        ← 影響給予間隔（ms）
-//   0x28: char monsterCode[8]          ← 怪物代碼短字串（如 J0593 / "0"）
+//   0x28: char monsterCode[8]          ← 怪물코드短字串（如 J0593 / "0"）
+//                                         注意：GT 用 strcpy(v5+8, tok) 寫入，
+//                                         **無長度限制**；若 token >7 chars
+//                                         會踩進緊鄰的 isStealth (offset 0x30)。
+//                                         此處 8 為 struct 欄寬（GT 反編譯步幅），
+//                                         與 strcpy 截斷與否無關。
 //   0x30: int isStealth                ← T/F（是否「隱身術」）
 // 合計 52 bytes；與反編譯碼中每筆步幅「+52」完全一致。
 // ---------------------------------------------------------------------
@@ -52,6 +57,7 @@ static_assert(sizeof(strTransformKindInfo) == 52, "strTransformKindInfo must be 
 class cltTransformKindInfo {
 public:
     cltTransformKindInfo();                 // 與原始碼一致：不做額外初始化
+    ~cltTransformKindInfo() {}              // 對齊 mofclient.c:10043 的符號（空 dtor）
     int  LoadTransformKindInfo(char* path); // 成功讀到 EOF 回傳 1；否則 0
 
     // 將 "TRFM_KIND_***" 轉為 1..17（未知回 0）

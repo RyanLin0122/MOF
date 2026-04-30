@@ -1,140 +1,132 @@
 #include "Info/cltMoFC_EffectKindInfo.h"
 
-// 如需在本檔直接提供全域，也可取消以下註解：
-// cltTextFileManager g_clTextFileManager;
+// ---------------------------------------------------------------------------
+// 與 mofclient.c (反組譯之 ground truth) 完全等價的還原實作。
+// 主要對照位置：
+//   cltMoFC_EffectKindInfo::cltMoFC_EffectKindInfo  mofclient.c:259539
+//   cltMoFC_EffectKindInfo::~cltMoFC_EffectKindInfo mofclient.c:259557
+//   cltMoFC_EffectKindInfo::Initialize              mofclient.c:259564
+//   cltMoFC_EffectKindInfo::GetEffectKindInfo (u16) mofclient.c:259682
+//   cltMoFC_EffectKindInfo::GetEffectKindInfo (str) mofclient.c:259688
+//   cltMoFC_EffectKindInfo::TranslateKindCode       mofclient.c:259697
+// ---------------------------------------------------------------------------
 
 cltMoFC_EffectKindInfo::cltMoFC_EffectKindInfo() {
-    // 與反編譯碼：memset((char*)this + 4, 0, 0x3FFFC) 行為等價
+    // GT: memset((char*)this + 4, 0, 0x3FFFC) — 將整張 table 指標清零。
+    // 32→64 bit 後 table_ 的 byte 大小不同，但邏輯（全部 nullptr）等價。
     std::memset(table_, 0, sizeof(table_));
 }
 
 cltMoFC_EffectKindInfo::~cltMoFC_EffectKindInfo() {
-    // 反編譯碼僅寫回 vftable，不釋放配置的節點（因此這裡也不釋放，維持行為一致）
-    // 若需避免外洩，請自行擴充清理程式，但這會偏離原行為。
-}
-
-static inline bool iequals(const char* a, const char* b) {
-#if defined(_WIN32)
-    return _stricmp(a, b) == 0;
-#else
-    return strcasecmp(a, b) == 0;
-#endif
+    // GT 僅寫回 vftable，未釋放 table_ 內任何節點（mofclient.c:259559）。
+    // 此處刻意不釋放，維持相同記憶體生命週期。
 }
 
 int cltMoFC_EffectKindInfo::Initialize(char* fileName) {
-    // 與反編譯碼一致的區域變數/流程控制
+    // 與 GT 對齊的局部變數
+    char Delimiter[4] = { '\t', '\n', '\0', '\0' };  // GT: strcpy(Delimiter,"\t\n");
+    int  v19 = 0;                                    // 回傳值
+    char Buffer[1024];
+    std::memset(Buffer, 0, sizeof(Buffer));
+
     FILE* stream = g_clTextFileManager.fopen(fileName);
-    int resultFlag = 0; // v19，只有在「讀到 EOF」的路徑才設為 1
     if (!stream) {
         return 0;
     }
 
-    // 與反編譯碼相同：先讀 3 行（通常是註解/標頭），再嘗試讀第 4 行開始資料
-    char line[1024];
-    if (std::fgets(line, 1023, stream) &&
-        std::fgets(line, 1023, stream) &&
-        std::fgets(line, 1023, stream)) {
+    // GT: 先讀 3 行（標頭/欄位名稱），三次任一失敗則整個 if 不進入，
+    //     最終 v19 = 0、執行 fclose 後返回 0。
+    if (std::fgets(Buffer, 1023, stream)
+        && std::fgets(Buffer, 1023, stream)
+        && std::fgets(Buffer, 1023, stream))
+    {
+        // GT: 嘗試讀第 4 行（首列資料）。
+        if (std::fgets(Buffer, 1023, stream)) {
+            for (;;) {
+                // [1] 스킬 이펙트 ID（技能特效ID） — kindCode @ +0
+                char* v5 = std::strtok(Buffer, Delimiter);
+                if (!v5) break;
 
-        if (std::fgets(line, 1023, stream)) {
-            const char* DELIM = "\t\n"; // 分隔符：Tab + 換行（與原碼一致）
+                uint16_t v6 = TranslateKindCode(v5);
+                if (!v6) break;       // 不合法種別碼 → 中止整體（v19=0）
 
-            while (true) {
-                // 逐列解析（欄位對照：韓文 → 中文）
-                // 1) "스킬 이펙트 ID"（技能特效ID），如 "E0001"
-                char* tok = std::strtok(line, DELIM);
-                if (!tok) break;
+                // GT: `v8 = *((_DWORD*)v2 + v6 + 1); if (v8) break;`
+                //     重複種別碼 → 中止整體，並保留原項目。
+                if (table_[v6] != nullptr) break;
 
-                uint16_t kind = TranslateKindCode(tok);
-                if (kind == 0) break; // 不合法則結束整體讀取（與原始行為一致）
+                // GT 順序：先 operator new、再寫入 table_[v6]、再 memset、
+                //          最後寫入 kindCode。後續任何 strtok 失敗都不會
+                //          delete 該節點（mofclient.c:259619-259663），
+                //          換言之 table_[v6] 即使欄位殘缺也已經指向該節點。
+                stEffectKindInfo* node = static_cast<stEffectKindInfo*>(
+                    ::operator new(sizeof(stEffectKindInfo)));
+                table_[v6] = node;
+                std::memset(node, 0, sizeof(stEffectKindInfo));
+                node->kindCode = v6;
 
-                // 查是否重複。原碼若遇到已存在的索引，會直接 break（整體中止）
-                if (kind < TABLE_SIZE && table_[kind] != nullptr) {
-                    break;
-                }
+                // [2] 스킬명（技能名稱） — GT 僅檢查 token 存在，不寫入。
+                if (!std::strtok(nullptr, Delimiter)) break;
 
-                // 建立節點（照 0x84 bytes 清零）
-                stEffectKindInfo* info = (stEffectKindInfo*)::operator new(sizeof(stEffectKindInfo));
-                std::memset(info, 0, sizeof(stEffectKindInfo));
-                info->kindCode = kind;
+                // [3] EA 파일명（EA 檔案名稱） — eaFile @ +2 (strcpy)
+                char* v12 = std::strtok(nullptr, Delimiter);
+                if (!v12) break;
+                std::strcpy(node->eaFile, v12);  // GT: strcpy(v11+2, v12)
 
-                // 2) "스킬명"（技能名）—原始程式碼有取 token 但不存（僅檢查存在）
-                if (!std::strtok(nullptr, DELIM)) {
-                    // 欄位缺失 → 中止整體（與原始行為一致）
-                    break;
-                }
+                // [4] 스킬 타입（技能類型） — skillType @ +130
+                char* v13 = std::strtok(nullptr, Delimiter);
+                if (!v13) break;
+                if      (!_stricmp(v13, "ONCE"))       node->skillType = 1;
+                else if (!_stricmp(v13, "DIRECT"))     node->skillType = 2;
+                else if (!_stricmp(v13, "SUSTAIN"))    node->skillType = 3;
+                else if (!_stricmp(v13, "SHOOTUNIT"))  node->skillType = 4;
+                else if (!_stricmp(v13, "SHOOTNOTEA")) node->skillType = 5;
+                else if (!_stricmp(v13, "ITEMONCE"))   node->skillType = 6;
+                // 其他字串：GT 保持 skillType = 0 並繼續解析。
 
-                // 3) "EA 파일명"（EA 檔案名）—存入 info->eaFile
-                char* ea = std::strtok(nullptr, DELIM);
-                if (!ea) {
-                    break;
-                }
-                std::strncpy(info->eaFile, ea, sizeof(info->eaFile) - 1);
-                info->eaFile[sizeof(info->eaFile) - 1] = '\0';
+                // [5] 이펙트 단계（特效階段） — GT 僅檢查 token 存在，不寫入。
+                if (!std::strtok(nullptr, Delimiter)) break;
 
-                // 4) "스킬 타입"（技能類型）—轉換為 1..6
-                char* typ = std::strtok(nullptr, DELIM);
-                if (!typ) {
-                    break;
-                }
-                if (iequals(typ, "ONCE"))       info->skillType = 1;
-                else if (iequals(typ, "DIRECT"))    info->skillType = 2;
-                else if (iequals(typ, "SUSTAIN"))   info->skillType = 3;
-                else if (iequals(typ, "SHOOTUNIT")) info->skillType = 4;
-                else if (iequals(typ, "SHOOTNOTEA"))info->skillType = 5;
-                else if (iequals(typ, "ITEMONCE"))  info->skillType = 6;
-                // 原始碼未處理其他字串（保留為 0）
-
-                // 5) "이펙트 단계"（特效階段）—原始程式碼僅檢查 token 存在，不保存
-                if (!std::strtok(nullptr, DELIM)) {
-                    // 缺欄 → 整體中止（與原行為一致）
-                    ::operator delete(info);
-                    break;
-                }
-
-                // 寫入表
-                table_[kind] = info;
-
-                // 讀下一行；若失敗（EOF），依原始碼將回傳值設為 1
-                if (!std::fgets(line, 1023, stream)) {
-                    resultFlag = 1; // v19 = 1（完成到 EOF）
+                // GT: 讀下一行；失敗則 v19 = 1（goto LABEL_28），成功則繼續。
+                if (!std::fgets(Buffer, 1023, stream)) {
+                    v19 = 1;
                     break;
                 }
             }
         }
         else {
-            // 連第 4 行都沒有 → 視為完成（v19 = 1）
-            resultFlag = 1;
+            // GT: 沒有任何資料行（4 次 fgets 失敗）→ v19 = 1（LABEL_28 路徑）
+            v19 = 1;
         }
     }
 
     g_clTextFileManager.fclose(stream);
-    return resultFlag;
+    return v19;
 }
 
 stEffectKindInfo* cltMoFC_EffectKindInfo::GetEffectKindInfo(uint16_t code) {
-    if (code < TABLE_SIZE) {
-        return table_[code];
-    }
-    return nullptr;
+    // GT: return *((_DWORD *)this + code + 1)
+    //     即 table_[code]，無範圍檢查（GT 假設 code < 0x10000）。
+    return (code < TABLE_SIZE) ? table_[code] : nullptr;
 }
 
 stEffectKindInfo* cltMoFC_EffectKindInfo::GetEffectKindInfo(char* codeStr) {
-    uint16_t k = TranslateKindCode(codeStr);
-    return GetEffectKindInfo(k);
+    // GT: TranslateKindCode → GetEffectKindInfo(uint16_t)
+    return GetEffectKindInfo(TranslateKindCode(codeStr));
 }
 
-uint16_t cltMoFC_EffectKindInfo::TranslateKindCode(char* s) {
-    // 反編譯碼條件：長度必須 == 5
-    if (!s || std::strlen(s) != 5) return 0;
+uint16_t cltMoFC_EffectKindInfo::TranslateKindCode(char* codeStr) {
+    // GT (mofclient.c:259697-259712)：
+    //   if (strlen(a2) != 5) return 0;
+    //   v3 = (_toupper(*a2) + 31) << 11;     // 32-bit int 計算
+    //   v4 = (uint16_t)_atoi(a2 + 1);        // 結果先截為 uint16
+    //   if (v4 < 0x800u) result = (uint16_t)(v3 | v4); else result = 0;
+    //   return result;                        // 回傳型別 unsigned __int16
+    if (!codeStr || std::strlen(codeStr) != 5) return 0;
 
-    // v3 = (toupper(s[0]) + 31) << 11 (16-bit 截斷)
-    int c0 = std::toupper(static_cast<unsigned char>(s[0]));
-    int group = (c0 + 31) << 11;
-
-    // 後四碼數字，必須 < 0x800
-    int num = std::atoi(s + 1);
-    if (num >= 0x800) return 0;
-
-    uint16_t result = static_cast<uint16_t>(group | num);
-    return result;
+    const int v3 = (std::toupper(static_cast<unsigned char>(codeStr[0])) + 31) << 11;
+    const uint16_t v4 = static_cast<uint16_t>(std::atoi(codeStr + 1));
+    if (v4 < 0x800u) {
+        return static_cast<uint16_t>(v3 | v4);   // 高位透過 uint16 cast 截斷
+    }
+    return 0;
 }

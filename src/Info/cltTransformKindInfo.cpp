@@ -4,20 +4,21 @@
 // 原型建構子：與反編譯碼相同，僅回傳 this（不清零）。
 cltTransformKindInfo::cltTransformKindInfo() {}
 
-// 與全域 ::IsDigit (mofclient.c:342909) 完全等價的內部版本：
-//   1. 空字串回傳 1（true）
+// GT: 全域 IsDigit (mofclient.c:342909) — 直接以 *a1 解參考，**無 nullptr 檢查**。
+//   1. *a1 == '\0' 直接回 1
 //   2. 在每個數字字元之前都允許出現 '+' 或 '-'
-//   3. 任何非數字字元 → 回傳 0
-//   4. 全程通過 → 回傳 1
-static inline bool IsDigit(const char* a1) {
-    if (!a1 || !*a1) return true;
-    const unsigned char* p = reinterpret_cast<const unsigned char*>(a1);
+//   3. 任何非數字字元 → 0
+//   4. 全程通過 → 1
+// 簽章與 GT 完全一致（int(char*)），不做防呆；呼叫端皆已檢查 strtok 結果非 null。
+static int IsDigit(char* a1) {
+    char* v1 = a1;
+    if (!*a1) return 1;
     while (true) {
-        if (*p == '+' || *p == '-') ++p;
-        if (!std::isdigit(*p)) return false;
-        ++p;
-        if (!*p) return true;
+        if (*v1 == '-' || *v1 == '+') ++v1;
+        if (!std::isdigit(static_cast<unsigned char>(*v1))) break;
+        if (!*++v1) return 1;
     }
+    return 0;
 }
 
 // T/F 欄位以首字母判斷（與 _toupper(*tok) == 'T' 同義）
@@ -32,7 +33,8 @@ int cltTransformKindInfo::LoadTransformKindInfo(char* path) {
     int result = 0; // 只有「正常讀到 EOF」才會設為 1（對齊反編譯的 v27）
 
     char line[1024];
-    const char* DELIM = "\t\n";
+    std::memset(line, 0, sizeof(line));     // 對齊 mofclient.c:339635 的 Buffer 預清零
+    const char* DELIM = "\t\n";             // 對齊 GT line 339638 的 stack delimiter（內容等價）
 
     // 跳過前三行（註解/表頭）
     if (std::fgets(line, 1023, fp) &&
@@ -114,8 +116,9 @@ int cltTransformKindInfo::LoadTransformKindInfo(char* path) {
                 // 欄位 14：變身怪物代碼 → strcpy((char*)(v5+8), tok)
                 char* t14 = std::strtok(nullptr, DELIM);
                 if (!t14) break;
-                // 反編譯碼直接使用 strcpy，無長度檢查；若 token 長度 ≥ 8 會踩到緊接其後的
-                // isStealth (offset 0x30)。為了與 mofclient.c 的位元結果完全一致這裡不做截斷。
+                // GT (mofclient.c:339722-339724) 用 strcpy 寫入 monsterCode 起點 (offset 0x28)，
+                // **無長度限制**；token >7 chars 會踩進緊鄰的 isStealth (offset 0x30)。
+                // 為與 GT byte-level 一致，這裡保留 strcpy 不做截斷。
                 std::strcpy(records_[i].monsterCode, t14);
 
                 // 下一列（等價於 v5 += 13 → 前進 52 bytes）

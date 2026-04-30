@@ -455,16 +455,24 @@ uint8_t cltCharKindInfo::GetMoveSpeedType(const char* s)
     return _stricmp(s, "VERY FAST") != 0 ? 4 : 6;
 }
 
-// mofclient.c 0x005655E0：原始 binary 對 FASTEST 回 5；對非五個已知字串會落入
-// 一段 LOBYTE 位元魔術，但實務上欄位值僅有 SLOWEST/SLOW/NORMAL/FAST/FASTEST。
-// GT 回傳 int (儘管欄位仍只用 8 bit)。
+// mofclient.c 0x005655E0：
+//   v2 = -stricmp(s, "FASTEST");
+//   LOBYTE(v2) = -(v2 != 0);  // 任何 stricmp != 0 → 低位元組變 0xFF
+//   return v2 + 5;
+// 此值最終以 *(BYTE*)(rec+145) 寫入；BYTE 取 (v2+5) 的低位元組：
+//   FASTEST     → 0 + 5             = 5
+//   未知字串    → (... | 0xFF) + 5  = ...0x04 (低位元組 4)
+// 實際 charkindinfo.txt 欄位含 "VERY FAST"/"VERY SLOW" 共 9 筆未知值，
+// 之前回 5 與 GT 不符 (差 1)；用「FASTEST=5、其他未匹配=4」正確還原 GT
+// byte-truncation 行為。
 int cltCharKindInfo::GetAttackSpeedType(const char* s)
 {
     if (!_stricmp(s, "SLOWEST")) return 1;
     if (!_stricmp(s, "SLOW"))    return 2;
     if (!_stricmp(s, "NORMAL"))  return 3;
     if (!_stricmp(s, "FAST"))    return 4;
-    return 5;  // FASTEST 與未知字串
+    if (!_stricmp(s, "FASTEST")) return 5;
+    return 4;  // 未知字串：低位元組 = (0xFF + 5) & 0xFF = 0x04
 }
 
 // mofclient.c 0x005655A0：moveSpeedType (1..6) → 移動常數。
