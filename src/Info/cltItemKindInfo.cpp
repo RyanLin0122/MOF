@@ -170,11 +170,11 @@ bool cltItemKindInfo::LoadItemList(const char* filename) {
 		if (!token || !IsDigit(token)) goto load_error;
 		info->m_wDescCode = atoi(token);
 
-		token = strtok(nullptr, delimiter); // 物品價格
+		token = strtok(nullptr, delimiter); // 物品價格 (cap = 0x989680 = 10,000,000 per mofclient.c:304440)
 		if (!token || !IsDigit(token)) goto load_error;
 		info->m_dwPrice = atoi(token);
-		if (info->m_dwPrice > 999999999) goto load_error;
-		if (info->m_dwPrice == 0) goto load_error; // Price cannot be 0 check
+		if (info->m_dwPrice > 10000000u) goto load_error;
+		if (info->m_dwPrice == 0) goto load_error;
 
 		token = strtok(nullptr, delimiter); // PVP 購買點數
 		if (!token || !IsDigit(token)) goto load_error;
@@ -381,15 +381,23 @@ bool cltItemKindInfo::LoadInstantItem(const char* filename) {
 		if (!token) goto next_line;
 		info->Instant.m_AddedCraftItemCode = cltMakingItemKindInfo::TranslateKindCode(token);
 
-		// --- Boolean Flags ---
-		PARSE_INT(Instant.m_CharRevival);       // 角色復活
-		PARSE_INT(Instant.m_StatInitialize);    // 能力值重置
-		PARSE_INT(Instant.m_SkillSpecInitialize); // 技能專精重置
-		PARSE_INT(Instant.m_SkillCircleInitialize); // 技能循環重置
+		// --- Boolean flags (Y/N) — mofclient.c:305141-305153 stores
+		// `_toupper(*token) == 'Y'` as a 32-bit int. The previous port used
+		// atoi() which returned 0 for both "Y" and "N" so the flags were
+		// always false. ---
+#define PARSE_YN_DWORD(member) \
+		token = strtok(nullptr, delimiter); \
+		if (!token) goto next_line; \
+		info->member = (toupper((unsigned char)*token) == 'Y') ? 1 : 0
+		PARSE_YN_DWORD(Instant.m_CharRevival);          // 角色復活
+		PARSE_YN_DWORD(Instant.m_StatInitialize);       // 能力值重置
+		PARSE_YN_DWORD(Instant.m_SkillSpecInitialize);  // 技能專精重置
+		PARSE_YN_DWORD(Instant.m_SkillCircleInitialize);// 技能循環重置
+#undef PARSE_YN_DWORD
 
-		token = strtok(nullptr, delimiter);     // 所需專精
+		token = strtok(nullptr, delimiter);     // 潘朵拉
 		if (!token) goto next_line;
-		info->Instant.m_dwPandora = cltPandoraKindInfo::TranslateKindCode(token);   // 潘朵拉
+		info->Instant.m_dwPandora = cltPandoraKindInfo::TranslateKindCode(token);
        
 		PARSE_INT(Instant.m_dwShout);           // 呼喊
 		PARSE_INT(Instant.m_bMessage);          // 訊息
@@ -422,13 +430,13 @@ bool cltItemKindInfo::LoadInstantItem(const char* filename) {
 		PARSE_INT(Instant.m_HairStyleID);       // 髮型 ID
 		PARSE_INT(Instant.m_HairStyleValue);    // 髮型 - 數值
 
-		token = strtok(nullptr, delimiter);     // 臉部修飾性別
+		token = strtok(nullptr, delimiter);     // 臉部修飾性별 (matches mofclient.c:305220-305224)
 		if (!token) goto next_line;
 		if (toupper(*token) == 'M' || toupper(*token) == 'F') {
-			info->Instant.m_bHairGender = toupper(*token);
+			info->Instant.m_FaceGender = (char)toupper(*token);
 		}
 		else {
-			info->Instant.m_bHairGender = 0;
+			info->Instant.m_FaceGender = 0;
 		}
 		PARSE_INT(Instant.m_FaceStyleID);       // 整形/美容 ID
 		PARSE_INT(Instant.m_FaceStyleValue);    // 臉部修飾 - 數值
@@ -448,9 +456,9 @@ bool cltItemKindInfo::LoadInstantItem(const char* filename) {
 		if (!token) goto next_line;
 		info->Instant.m_PetBirth = cltPetKindInfo::TranslateKindCode(token);
 
-		PARSE_INT(Instant.m_PetFullnessPerItem); // 寵物飽和度提升
+		PARSE_INT(Instant.m_PetFullnessPerItem);   // 寵物飽和度提升
 		PARSE_INT(Instant.m_PetAffectionIncrease); // 寵物好感度提升
-		PARSE_INT(Instant.m_wPetStorageExpansion); // 寵物儲存空間擴充
+		PARSE_INT(Instant.m_dwPetStorageExpansion);// 寵物儲存空間擴充 (DWORD per mofclient.c:305269)
 
 		token = strtok(nullptr, delimiter);     // 寵物獲取技能
 		if (!token) goto next_line;
@@ -487,7 +495,15 @@ bool cltItemKindInfo::LoadInstantItem(const char* filename) {
 		else info->Instant.m_bChangeCoinType = 0;
 
 		PARSE_INT(Instant.m_bUseChangeServer);  // 伺服器轉移券
-		PARSE_INT(Instant.m_bIsSealItem);       // 封印物品
+		PARSE_INT(Instant.m_bIsSealItem);       // 封印物품
+
+		// Counter increment per mofclient.c:305344-305347 — bump
+		// m_wMakingItemKindListNum once per row that has a non-zero
+		// m_AddedCraftItemCode; this drives the size of the array allocated
+		// later in CreateItemKindForMakingItemList().
+		if (info->Instant.m_AddedCraftItemCode != 0) {
+			++m_wMakingItemKindListNum;
+		}
 
 		// Finally, parse the stored pet list from its buffer
 		if (strcmp(petListBuffer, "0") != 0) {
@@ -620,9 +636,14 @@ bool cltItemKindInfo::LoadHuntItem(const char* filename) {
 		if (!token) continue;
 		info->Equip.Hunt.m_dwAttackAtb = cltAttackAtb::GetAttackAtb(token);
 		
-		// 將 classBuffer 解析為位元遮罩
+		// 將 classBuffer 解析為位元遮罩。GT (mofclient.c:305966-305969)
+		// stores the low DWORD of the 64-bit class atb at +112 (= field
+		// offset 4 inside m_szEquipableClass) and the high DWORD at +116.
+		// GetEquipableClassAtb only returns the low DWORD; we leave the
+		// upper DWORD zero (the GT also relies on whatever happens to be
+		// in the EDI register — never truly meaningful in practice).
 		int equipableClassBitmask = GetEquipableClassAtb(classBuffer);
-		*(reinterpret_cast<int*>(info->Equip.Hunt.m_szEquipableClass)) = equipableClassBitmask;
+		std::memcpy(info->Equip.Hunt.m_szEquipableClass + 4, &equipableClassBitmask, sizeof(int));
 	}
 next_line:;
 	g_clTextFileManager.fclose(file);
@@ -656,13 +677,22 @@ bool cltItemKindInfo::LoadFashionItem(const char* filename) {
 		if (!token) continue;
 		info->Equip.Fashion.m_byGender = (toupper(*token) == 'M' || toupper(*token) == 'F') ? *token : 0;
 
-		PARSE_INT(Equip.Fashion.m_dwUsePeriod);
+		// UsePeriod must be one of {0, 1, 7, 15, 30, 365} per mofclient.c:306099
+		token = strtok(nullptr, delimiter);
+		if (!token || !IsDigit(token)) continue;
+		{
+			unsigned int period = (unsigned int)atoi(token);
+			info->Equip.Fashion.m_dwUsePeriod = period;
+			if (period && period != 1 && period != 7 && period != 15 && period != 30 && period != 365) continue;
+		}
 		PARSE_INT(Equip.Fashion.m_wAddExpPercent);
 		PARSE_INT(Equip.Fashion.m_wAddFame);
 		PARSE_INT(Equip.Fashion.m_wAddHPRegen);
 		PARSE_INT(Equip.Fashion.m_wAddMPRegen);
-		PARSE_INT(Equip.Fashion.m_dwCloakEffect);
-		PARSE_HEX(Equip.Fashion.m_dwCloakEffectOrder);
+		// CloakEffect is HEX (sscanf %x), CloakEffectOrder is decimal — see
+		// mofclient.c:306130-306143. The previous port had these swapped.
+		PARSE_HEX(Equip.Fashion.m_dwCloakEffect);
+		PARSE_INT(Equip.Fashion.m_dwCloakEffectOrder);
 		PARSE_INT(Equip.Fashion.m_byCloakEffectCount);
 
 		token = strtok(nullptr, delimiter); // 披風效果特效
@@ -714,7 +744,11 @@ bool cltItemKindInfo::LoadQuizItem(const char* filename) {
 
 		unsigned short Index = TranslateKindCode(token);
 		stItemKindInfo* info = GetItemKindInfoByIndex(Index);
-		if (!info || info->m_byItemClass != ITEM_CLASS_QUIZ) continue; // Only process QUIZ items
+		// GT (mofclient.c:306299) does not pre-filter on m_byItemClass — it
+		// just dereferences. We keep the nullptr guard but drop the class
+		// check so that all rows in koreatext.txt are honoured (which is
+		// correct because that file only contains QUIZ rows).
+		if (!info) continue;
 
 		SKIP_TOKEN(); // 아이템 명 項目名稱
 
@@ -734,7 +768,10 @@ bool cltItemKindInfo::LoadTrainningCardItem(const char* filename) {
 
 	char buffer[1024];
 
-	for (int i = 0; i < 2; ++i) if (!fgets(buffer, sizeof(buffer), file)) { g_clTextFileManager.fclose(file); return true; }
+	// Skip 3 header lines, identical to LoadItemList / Hunt / Fashion / Quiz.
+	// GT does fgets×3 in the if-condition then fgets again to read the first
+	// data row (mofclient.c:306392-306394).
+	for (int i = 0; i < 3; ++i) if (!fgets(buffer, sizeof(buffer), file)) { g_clTextFileManager.fclose(file); return true; }
 
 	while (fgets(buffer, sizeof(buffer), file)) {
 		const char* delimiter = "\t\n";
@@ -808,18 +845,23 @@ stItemKindInfo* cltItemKindInfo::GetItemKindInfoByIndex(unsigned int index) {
 }
 
 void cltItemKindInfo::CreateItemKindForMakingItemList() {
+	// Mirrors mofclient.c:307659-307687: only items where m_AddedCraftItemCode
+	// is non-zero AND IsUseItem(itemClass) is true count toward the list.
+	// GT iterates 0..0xFFFE inclusive (one shy of 0xFFFF). The m_w array of
+	// pointers covers indices 0..0xFFFF but kind 0xFFFF is never assigned
+	// because TranslateKindCode caps at 'Z' high-5 = 25 (max 0xCFFF).
 	if (!m_wMakingItemKindListNum) return;
 
 	m_pItemKindForMakingItemList = new unsigned short[m_wMakingItemKindListNum];
 	int currentIndex = 0;
 
-	for (int i = 0; i < 65536; ++i) {
+	for (int i = 0; i < 0xFFFF; ++i) {
 		stItemKindInfo* info = m_pItemKindInfo[i];
-		if (info && info->Instant.m_AddedCraftItemCode != 0) {
-			// A more complete implementation would check IsUseItem as in the original code
-			if (currentIndex < m_wMakingItemKindListNum) {
-				m_pItemKindForMakingItemList[currentIndex++] = info->m_wKind;
-			}
+		if (!info) continue;
+		if (!IsUseItem((EItemClass)info->m_byItemClass)) continue;
+		if (info->Instant.m_AddedCraftItemCode == 0) continue;
+		if (currentIndex < m_wMakingItemKindListNum) {
+			m_pItemKindForMakingItemList[currentIndex++] = info->m_wKind;
 		}
 	}
 }
@@ -1203,8 +1245,9 @@ bool cltItemKindInfo::GetReqClassKindsForEquip(unsigned short item_kind, int* nu
 		return false;
 	}
 
-	// Assuming the bitmask is stored as an integer at the start of m_szEquipableClass
-	int classMask = *(reinterpret_cast<int*>(info->Equip.Hunt.m_szEquipableClass));
+	// Bitmask lives at offset 4 of m_szEquipableClass (see LoadHuntItem).
+	int classMask = 0;
+	std::memcpy(&classMask, info->Equip.Hunt.m_szEquipableClass + 4, sizeof(int));
 
 	for (int i = 0; i < 32; ++i) {
 		int currentBit = 1 << i;
