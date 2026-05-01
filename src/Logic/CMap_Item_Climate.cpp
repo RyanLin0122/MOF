@@ -21,7 +21,6 @@ void CMap_Item_Climate::Free() {
     m_wUnitCount = 0;
     if (m_dwTimerID) {
         g_clTimerManager.ReleaseTimer(m_dwTimerID);
-        m_dwTimerID = 0;
     }
 }
 
@@ -33,8 +32,7 @@ int CMap_Item_Climate::InitMapItemClimate(unsigned short itemID) {
     m_iActiveStatic = 0;
     m_wUseItemKind  = info->ID;                 // *((_WORD *)v3 + 0) = byte 0
     // *((_WORD *)v3 + 16) = byte 32 = low16(UnitCount)
-    unsigned short n = static_cast<unsigned short>(info->UnitCount);
-    if (n > kMaxUnits) n = kMaxUnits;
+    const unsigned short n = static_cast<unsigned short>(info->UnitCount);
     m_wUnitCount    = n;
     m_dwIconResId   = info->WeatherIconResID;   // *((_DWORD *)v3 + 6) = byte 24
     m_dwIconBlockId = info->BlockID2;           // *((_DWORD *)v3 + 15) = byte 60

@@ -63,10 +63,10 @@ void CItemClimateUnit::Reset() {
     const int sysW = g_Game_System_Info.ScreenWidth;
     const int sysH = g_Game_System_Info.ScreenHeight;
     if (m_iPattern == 1 || m_iPattern == 2) {
-        m_iX = (std::rand() % (sysW > 0 ? sysW : 1)) + dword_A73088;
-        m_iY = dword_A7308C - (std::rand() % (sysH > 0 ? sysH : 1));
+        m_iX = (std::rand() % sysW) + dword_A73088;
+        m_iY = dword_A7308C - (std::rand() % sysH);
         m_iX2 = dword_A73088 + m_iX;
-        m_iLandY = (std::rand() % (sysH > 0 ? sysH : 1)) - 80 + dword_A7308C;
+        m_iLandY = (std::rand() % sysH) - 80 + dword_A7308C;
         m_wField17 = m_wField18;
         m_fFrame = 0.0f;
         m_wCurFrame = 0;
@@ -120,7 +120,7 @@ void CItemClimateUnit::Poll() {
 
     const int sysW = g_Game_System_Info.ScreenWidth;
     if (m_iX - dword_A73088 >= 0) {
-        if (m_iX - dword_A73088 > sysW) {
+        if (sysW < m_iX - dword_A73088) {
             m_iX -= sysW;
         }
     } else {
