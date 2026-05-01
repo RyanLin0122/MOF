@@ -297,6 +297,14 @@ public:
     uint16_t GetSkillLevel(uint16_t code);                   // 依「上一級鏈」計算等級（至少 1）
     int      IsLastLevelSkill(uint16_t code);                // 反編譯語意
 
+    // (005945E0) cltSkillKindInfo::IsCircleSkillKind
+    //   GT 邏輯：result = GetSkillKindInfo_P(this, code);
+    //           if (result) result = (*((DWORD*)result + 64) != 0);  // 偏移 +256
+    //   GT 簽章為 static-style 但實際以 this 透過 GetSkillKindInfo_P 查 P 表。
+    //   為了讓 cltSpecialtyKindInfo::IsCircleSpecialty 直接呼叫（與 GT 同形），
+    //   採 static 形式並接受 cltSkillKindInfo* 作為第一參數。
+    static int IsCircleSkillKind(cltSkillKindInfo* self, uint16_t code);
+
     // 職業鏈判定（等級層級）
     int IsUnderTwoLevelClassSkill(int64_t atbMask);
     int IsTwoLevelClassSkill(int64_t atbMask);

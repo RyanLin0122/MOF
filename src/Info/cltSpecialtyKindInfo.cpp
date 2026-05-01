@@ -20,7 +20,10 @@ cltSkillKindInfo* cltSpecialtyKindInfo::m_pclSkillKindInfo = nullptr;
 // 建構 / 解構
 //   原始反編譯：構造子將 *(this)=0、*(this+1)=0；解構子呼叫 Free。
 // ──────────────────────────────────────────────────────────────────────────
-cltSpecialtyKindInfo::cltSpecialtyKindInfo() = default;
+cltSpecialtyKindInfo::cltSpecialtyKindInfo()
+    : m_table(nullptr)
+    , m_count(0)
+{}
 
 cltSpecialtyKindInfo::~cltSpecialtyKindInfo() {
     Free();
@@ -36,7 +39,7 @@ void cltSpecialtyKindInfo::InitializeStaticVariable(cltSkillKindInfo* a1) {
 // ──────────────────────────────────────────────────────────────────────────
 // (00596A30) cltSpecialtyKindInfo::Initialize
 //   - 跳過 3 行表頭
-//   - 紀錄第一筆資料的位置 (fgetpos)，先以空轉計 fgets 數量決定 m_entries 大小
+//   - 紀錄第一筆資料的位置 (fgetpos)，先以空轉計 fgets 數量決定 m_count 大小
 //   - 重設位置 (fsetpos) 後逐行解析
 //   - 任一欄解析失敗即關閉檔案並回傳 0；正常讀至 EOF 才回傳 1
 // ──────────────────────────────────────────────────────────────────────────
@@ -61,11 +64,14 @@ int cltSpecialtyKindInfo::Initialize(char* String2) {
     {
         std::fgetpos(Stream, &Position);
 
-        int count = 0;
-        while (std::fgets(Buffer, 1023, Stream)) ++count;
+        // GT: for (; fgets(...); ++*((DWORD*)this + 1)) ; — 直接累加 m_count
+        for (; std::fgets(Buffer, 1023, Stream); ++m_count)
+            ;
 
-        m_entries.assign(static_cast<size_t>(count), strSpecialtyKindInfo{});
-        std::memset(m_entries.data(), 0, sizeof(strSpecialtyKindInfo) * static_cast<size_t>(count));
+        // GT: operator new(156 * count) + memset(0)
+        m_table = static_cast<strSpecialtyKindInfo*>(
+            ::operator new(sizeof(strSpecialtyKindInfo) * static_cast<size_t>(m_count)));
+        std::memset(m_table, 0, sizeof(strSpecialtyKindInfo) * static_cast<size_t>(m_count));
 
         std::fsetpos(Stream, &Position);
 
@@ -80,8 +86,8 @@ int cltSpecialtyKindInfo::Initialize(char* String2) {
 
         // 對應 LABEL_8 主迴圈
         for (;;) {
-            strSpecialtyKindInfo* e = (idx < count) ? &m_entries[idx] : nullptr;
-            if (!e) break;  // 安全保險（行數應與 count 相符）
+            strSpecialtyKindInfo* e = (idx < m_count) ? &m_table[idx] : nullptr;
+            if (!e) break;  // 安全保險（行數應與 m_count 相符）
 
             char* tok;
 
@@ -197,20 +203,23 @@ int cltSpecialtyKindInfo::Initialize(char* String2) {
 
 // ──────────────────────────────────────────────────────────────────────────
 // (00596E70) cltSpecialtyKindInfo::Free
+//   GT: if (m_table) { operator delete(m_table); m_table = 0; } m_count = 0;
 // ──────────────────────────────────────────────────────────────────────────
 void cltSpecialtyKindInfo::Free() {
-    m_entries.clear();
-    m_entries.shrink_to_fit();
+    if (m_table) {
+        ::operator delete(static_cast<void*>(m_table));
+        m_table = nullptr;
+    }
+    m_count = 0;
 }
 
 // ──────────────────────────────────────────────────────────────────────────
 // (00596EA0) cltSpecialtyKindInfo::GetSpecialtyKindInfo
 // ──────────────────────────────────────────────────────────────────────────
 strSpecialtyKindInfo* cltSpecialtyKindInfo::GetSpecialtyKindInfo(uint16_t a2) {
-    const int n = static_cast<int>(m_entries.size());
-    if (n <= 0) return nullptr;
-    for (int i = 0; i < n; ++i) {
-        if (m_entries[i].wKind == a2) return &m_entries[i];
+    if (m_count <= 0) return nullptr;
+    for (int i = 0; i < m_count; ++i) {
+        if (m_table[i].wKind == a2) return &m_table[i];
     }
     return nullptr;
 }
@@ -232,10 +241,9 @@ int cltSpecialtyKindInfo::GetSpecialtyList(char a2, uint16_t* a3) {
 // ──────────────────────────────────────────────────────────────────────────
 int cltSpecialtyKindInfo::GetGenericSpecialtyList(uint16_t* a2) {
     int written = 0;
-    const int n = static_cast<int>(m_entries.size());
-    for (int i = 0; i < n; ++i) {
-        if (m_entries[i].byType == SPECIALTY_TYPE_GENERIC) {
-            *a2++ = m_entries[i].wKind;
+    for (int i = 0; i < m_count; ++i) {
+        if (m_table[i].byType == SPECIALTY_TYPE_GENERIC) {
+            *a2++ = m_table[i].wKind;
             ++written;
         }
     }
@@ -247,10 +255,9 @@ int cltSpecialtyKindInfo::GetGenericSpecialtyList(uint16_t* a2) {
 // ──────────────────────────────────────────────────────────────────────────
 int cltSpecialtyKindInfo::GetMakingSpecialtyList(uint16_t* a2) {
     int written = 0;
-    const int n = static_cast<int>(m_entries.size());
-    for (int i = 0; i < n; ++i) {
-        if (m_entries[i].byType == SPECIALTY_TYPE_MAKING) {
-            *a2++ = m_entries[i].wKind;
+    for (int i = 0; i < m_count; ++i) {
+        if (m_table[i].byType == SPECIALTY_TYPE_MAKING) {
+            *a2++ = m_table[i].wKind;
             ++written;
         }
     }
@@ -262,10 +269,9 @@ int cltSpecialtyKindInfo::GetMakingSpecialtyList(uint16_t* a2) {
 // ──────────────────────────────────────────────────────────────────────────
 int cltSpecialtyKindInfo::GetTransformSpecialtyList(uint16_t* a2) {
     int written = 0;
-    const int n = static_cast<int>(m_entries.size());
-    for (int i = 0; i < n; ++i) {
-        if (m_entries[i].byType == SPECIALTY_TYPE_TRANSFORM) {
-            *a2++ = m_entries[i].wKind;
+    for (int i = 0; i < m_count; ++i) {
+        if (m_table[i].byType == SPECIALTY_TYPE_TRANSFORM) {
+            *a2++ = m_table[i].wKind;
             ++written;
         }
     }
@@ -277,10 +283,9 @@ int cltSpecialtyKindInfo::GetTransformSpecialtyList(uint16_t* a2) {
 //   反編譯語意：若無任何記錄、或無記錄之 wRequiredSpecialtyKind 等於 a2，回傳 1。
 // ──────────────────────────────────────────────────────────────────────────
 int cltSpecialtyKindInfo::IsLastLevelSpecialty(uint16_t a2) {
-    const int n = static_cast<int>(m_entries.size());
-    if (n <= 0) return 1;
-    for (int i = 0; i < n; ++i) {
-        if (m_entries[i].wRequiredSpecialtyKind == a2) return 0;
+    if (m_count <= 0) return 1;
+    for (int i = 0; i < m_count; ++i) {
+        if (m_table[i].wRequiredSpecialtyKind == a2) return 0;
     }
     return 1;
 }
@@ -331,7 +336,7 @@ uint8_t cltSpecialtyKindInfo::GetSpecialtyType(char* String1) {
 //   字串長度必須為 5。第 1 字元 toupper 後 +31 左移 11；後 4 位數 atoi (<0x800)
 // ──────────────────────────────────────────────────────────────────────────
 uint16_t cltSpecialtyKindInfo::TranslateKindCode(char* a1) {
-    if (!a1 || std::strlen(a1) != 5) return 0;
+    if (std::strlen(a1) != 5) return 0;
     const int v2 = (std::toupper(static_cast<unsigned char>(*a1)) + 31) << 11;
     const uint16_t v3 = static_cast<uint16_t>(std::atoi(a1 + 1));
     if (v3 < 0x800u) return static_cast<uint16_t>(v2 | v3);
@@ -363,9 +368,8 @@ void cltSpecialtyKindInfo::SetMakingItemCategory(char* String1, uint32_t* a3) {
 //   原始邏輯：若 *v6 == 0 則該筆停止往後檢查（提前退出）。
 // ──────────────────────────────────────────────────────────────────────────
 int cltSpecialtyKindInfo::IsSpecialtySkillKind(uint16_t a2) {
-    const int n = static_cast<int>(m_entries.size());
-    for (int i = 0; i < n; ++i) {
-        const uint16_t* v6 = m_entries[i].wAcquiredSkillKinds;
+    for (int i = 0; i < m_count; ++i) {
+        const uint16_t* v6 = m_table[i].wAcquiredSkillKinds;
         for (int j = 0; j < 5; ++j) {
             if (!v6[j]) break;
             if (v6[j] == a2) return 1;
@@ -379,12 +383,11 @@ int cltSpecialtyKindInfo::IsSpecialtySkillKind(uint16_t a2) {
 //   同上掃描；中時回傳該筆的 wKind。
 // ──────────────────────────────────────────────────────────────────────────
 uint16_t cltSpecialtyKindInfo::GetSpecialtyKindBySkillKind(uint16_t a2) {
-    const int n = static_cast<int>(m_entries.size());
-    for (int i = 0; i < n; ++i) {
-        const uint16_t* v6 = m_entries[i].wAcquiredSkillKinds;
+    for (int i = 0; i < m_count; ++i) {
+        const uint16_t* v6 = m_table[i].wAcquiredSkillKinds;
         for (int j = 0; j < 5; ++j) {
             if (!v6[j]) break;
-            if (v6[j] == a2) return m_entries[i].wKind;
+            if (v6[j] == a2) return m_table[i].wKind;
         }
     }
     return 0;
@@ -415,24 +418,16 @@ int cltSpecialtyKindInfo::IsActiveSpeciaty(uint16_t a2) {
 
 // ──────────────────────────────────────────────────────────────────────────
 // (00597310) cltSpecialtyKindInfo::IsCircleSpecialty
-//   反編譯：result = cltSkillKindInfo::IsCircleSkillKind(m_pclSkillKindInfo, v3);
-//   IsCircleSkillKind 對 P 表查詢 → 取記錄 +256 (=*((DWORD*)result + 64)) 是否非零。
-//   專案中 cltSkillKindInfo 並未匯出 IsCircleSkillKind，這裡以 stSkillKindInfo 原始位元組
-//   讀取 +256 處的 DWORD 來等價判斷（若無 m_pclSkillKindInfo 或記錄不存在則回 0）。
+//   GT：result = cltSkillKindInfo::IsCircleSkillKind(m_pclSkillKindInfo, v3)
+//   直接呼叫 cltSkillKindInfo::IsCircleSkillKind，不額外做 m_pclSkillKindInfo
+//   null 檢查（與 GT 完全一致）。
 // ──────────────────────────────────────────────────────────────────────────
 int cltSpecialtyKindInfo::IsCircleSpecialty(uint16_t a2) {
     auto* info = GetSpecialtyKindInfo(a2);
     if (!info) return 0;
     const uint16_t v3 = info->wAcquiredSkillKinds[0];
     if (!v3) return 0;
-    if (!m_pclSkillKindInfo) return 0;
-
-    stSkillKindInfo* sk = m_pclSkillKindInfo->GetSkillKindInfo_P(v3);
-    if (!sk) return 0;
-
-    uint32_t flag = 0;
-    std::memcpy(&flag, reinterpret_cast<const uint8_t*>(sk) + 256, sizeof(flag));
-    return flag != 0 ? 1 : 0;
+    return cltSkillKindInfo::IsCircleSkillKind(m_pclSkillKindInfo, v3) ? 1 : 0;
 }
 
 // ──────────────────────────────────────────────────────────────────────────
@@ -444,13 +439,14 @@ int cltSpecialtyKindInfo::CanAddToQuickSlot(uint16_t a2) {
 
 // ──────────────────────────────────────────────────────────────────────────
 // (00597360) cltSpecialtyKindInfo::GetSpecialtyTotalPoint
-//   沿 kind → wRequiredSpecialtyKind 鏈累加 byRequiredSpecialtyPt，直到指向不存在記錄。
+//   GT：先累加再判斷，do { v3 += v4[+10]; v4 = Get(v4[+8]); } while(v4);
+//   若 a2 無效（v4=NULL），GT 會在第一次累加時對 NULL 做位移存取（崩潰），
+//   本還原版完全比照 GT，不在迴圈頂端做額外的 null 檢查。
 // ──────────────────────────────────────────────────────────────────────────
 int cltSpecialtyKindInfo::GetSpecialtyTotalPoint(uint16_t a2) {
     int v3 = 0;
     strSpecialtyKindInfo* v4 = GetSpecialtyKindInfo(a2);
     do {
-        if (!v4) break;
         v3 += v4->byRequiredSpecialtyPt;
         v4 = GetSpecialtyKindInfo(v4->wRequiredSpecialtyKind);
     } while (v4);

@@ -48,8 +48,11 @@ int cltPandoraKindInfo::Initialize(char* String2)
     char Buffer[1024];
     std::memset(Buffer, 0, sizeof(Buffer));
 
-    // strcpy(Delimiter, "\t\n")
-    char Delimiter[4] = { '\t', '\n', '\0', '\0' };
+    // GT：char Delimiter[2]; strcpy(Delimiter, "\t\n");
+    // GT 將 "\t\n\0"（3 bytes）寫入 2-byte 棧緩衝區，依賴 stack alignment 容納終止符。
+    // 此處比照原樣以維持與反編譯一致；終止字元落在後續對齊空間。
+    char Delimiter[2];
+    std::strcpy(Delimiter, "\t\n");
 
     int v24 = 0;  // 對應 mofclient.c:318291 v24（return value）
 
@@ -143,10 +146,10 @@ int cltPandoraKindInfo::Initialize(char* String2)
                 slot->MaxCount = static_cast<uint16_t>(std::atoi(tMax));
 
                 // 若 prob != 0，必須通過完整有效性驗證
+                // GT：直接呼叫 IsValidItem，不檢查 m_pclItemKindInfo 是否為 null。
                 if (slot->Probability) {
                     if (!slot->ItemID) { inner_break = true; break; }
-                    if (!cltPandoraKindInfo::m_pclItemKindInfo
-                        || !cltPandoraKindInfo::m_pclItemKindInfo->IsValidItem(slot->ItemID))
+                    if (!cltPandoraKindInfo::m_pclItemKindInfo->IsValidItem(slot->ItemID))
                     { inner_break = true; break; }
                     if (!slot->MinCount) { inner_break = true; break; }
                     if (!slot->MaxCount || slot->MaxCount < slot->MinCount)
@@ -244,7 +247,6 @@ int cltPandoraKindInfo::GenerateItem(uint16_t a2, uint16_t* a3, uint16_t* a4)
 //   lo 必 < 0x800，否則回 0
 uint16_t cltPandoraKindInfo::TranslateKindCode(char* a1)
 {
-    if (!a1) return 0;
     if (std::strlen(a1) != 5) return 0;
 
     int v2 = (std::toupper(static_cast<unsigned char>(a1[0])) + 31) << 11;

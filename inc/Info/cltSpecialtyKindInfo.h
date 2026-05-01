@@ -1,7 +1,6 @@
 #pragma once
 
 #include <cstdint>
-#include <vector>
 
 // Forward declarations
 class cltSkillKindInfo;
@@ -148,12 +147,15 @@ public:
     static cltSkillKindInfo*     m_pclSkillKindInfo;
 
     // 內部資料訪問（給 Python 模擬器與單元測試對照用，不影響原始語意）
-    int                          GetEntryCount() const { return static_cast<int>(m_entries.size()); }
+    int                          GetEntryCount() const { return m_count; }
     const strSpecialtyKindInfo*  GetEntryAt(int idx) const {
-        return (idx < 0 || idx >= static_cast<int>(m_entries.size())) ? nullptr : &m_entries[idx];
+        return (idx < 0 || idx >= m_count) ? nullptr : &m_table[idx];
     }
 
 private:
-    // 與反編譯一致：m_entries 對應 *(this)（資料指標）+ *(this+1)（個數）
-    std::vector<strSpecialtyKindInfo> m_entries;
+    // 與反編譯完全一致的 layout：
+    //   +0x00  m_table  strSpecialtyKindInfo*  資料陣列（operator new(156 * count)）
+    //   +0x04  m_count  int                    記錄數
+    strSpecialtyKindInfo* m_table;
+    int                   m_count;
 };

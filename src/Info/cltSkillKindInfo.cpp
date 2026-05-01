@@ -240,6 +240,20 @@ int cltSkillKindInfo::IsLastLevelSkill(uint16_t code)
 }
 
 // ──────────────────────────────────────────────────────────────────────────
+// (005945E0) cltSkillKindInfo::IsCircleSkillKind
+//   GT：
+//     result = cltSkillKindInfo::GetSkillKindInfo_P(this, code);
+//     if (result) result = (*((DWORD*)result + 64) != 0);  // 偏移 +256
+//     return result;
+// ──────────────────────────────────────────────────────────────────────────
+int cltSkillKindInfo::IsCircleSkillKind(cltSkillKindInfo* self, uint16_t code)
+{
+    stSkillKindInfo* result = self->GetSkillKindInfo_P(code);
+    if (!result) return 0;
+    return *reinterpret_cast<const uint32_t*>(result->raw + 256) != 0 ? 1 : 0;
+}
+
+// ──────────────────────────────────────────────────────────────────────────
 // 職業鏈條類別判定（等級層，依 strClassKindInfo 偏移使用）
 // ──────────────────────────────────────────────────────────────────────────
 static inline uint8_t _classLevel(const strClassKindInfo* info) {
