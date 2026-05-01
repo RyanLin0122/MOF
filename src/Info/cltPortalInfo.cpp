@@ -2,7 +2,9 @@
 
 int cltPortalInfo::Initialize(char* filename)
 {
-    Free();
+    // 對齊反編譯：本函式不在進入點呼叫 Free()，也不重設 count_。
+    // 依賴 ctor (table_=nullptr, count_=0) 保證初始狀態；若上層重複呼叫
+    // 會與 GT 同樣產生洩漏 / 累計，故意保留。
 
     const char* Delim = "\t\n";
     FILE* fp = g_clTextFileManager.fopen(filename);
@@ -19,17 +21,15 @@ int cltPortalInfo::Initialize(char* filename)
         return 0;
     }
 
-    // 記錄位置並計數
+    // 記錄位置並計數（GT 不重設 count_，依賴 ctor 已歸零）
     fpos_t pos{};
     std::fgetpos(fp, &pos);
-    count_ = 0;
     while (std::fgets(line, sizeof(line), fp)) ++count_;
 
-    // 配置表（每筆 40 bytes）；對齊反編譯：count_==0 仍呼叫 operator new
+    // 配置表（每筆 40 bytes）；對齊反編譯：count_==0 仍呼叫 operator new，
+    // 且 memset 為無條件呼叫（v6==0 時 size 為 0，行為定義良好）。
     table_ = static_cast<stPortalInfo*>(::operator new(sizeof(stPortalInfo) * count_));
-    if (count_ > 0) {
-        std::memset(table_, 0, sizeof(stPortalInfo) * count_);
-    }
+    std::memset(table_, 0, sizeof(stPortalInfo) * static_cast<std::size_t>(count_));
 
     // 回到資料起點
     std::fsetpos(fp, &pos);
@@ -149,11 +149,13 @@ stPortalInfo* cltPortalInfo::GetPortalInfoByID(uint16_t a2)
 int cltPortalInfo::GetPortalCntInMap(uint16_t a2, int* a3)
 {
     // 回傳值為個數；同時把索引逐一寫到 a3[]
+    // 對齊 GT：a3 不做 null 防護，匹配即 *a3 = i; ++a3。傳 nullptr 會 crash，
+    // 與反編譯一致（呼叫端必須提供有效緩衝）。
     int cnt = 0;
     if (table_ && count_ > 0) {
         for (int i = 0; i < count_; ++i) {
             if (table_[i].MapID_1 == a2) {
-                if (a3) a3[cnt] = i; // 反編譯把索引寫入遞增指標
+                a3[cnt] = i;
                 ++cnt;
             }
         }

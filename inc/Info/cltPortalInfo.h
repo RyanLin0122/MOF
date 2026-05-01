@@ -71,15 +71,26 @@ public:
     }
 
 private:
-    // 反編譯中的 IsDigit / IsAlphaNumeric
+    // 反編譯中的 IsDigit / IsAlphaNumeric（mofclient.c:342909 / :342945）
+    //
+    // 與標準 isdigit / isalnum 不同 —— 為精確還原 GT 的奇特語義：
+    //   - 空字串（首字節 == 0）→ true
+    //   - IsDigitString：每次迭代允許跳過一個 '+' (0x2B) 或 '-' (0x2D)
+    //     (不限起始位置；意即 "1+2" / "-12" / "12-" 都會通過)
+    //   - 兩者皆要求餘下字元都通過 isdigit / isalnum
     static bool IsDigitString(const char* s) {
-        if (!s || !*s) return false;
-        for (const unsigned char* p = reinterpret_cast<const unsigned char*>(s); *p; ++p)
-            if (!std::isdigit(*p)) return false;
-        return true;
+        if (!s) return false;            // GT 無 null 檢查；保留防呆
+        if (!*s) return true;            // GT：空字串 → 1
+        const unsigned char* v1 = reinterpret_cast<const unsigned char*>(s);
+        while (true) {
+            if (*v1 == '-' || *v1 == '+') ++v1;     // GT: 在迴圈內檢查
+            if (!std::isdigit(*v1)) return false;
+            if (!*++v1) return true;
+        }
     }
     static bool IsAlphaNumeric(const char* s) {
-        if (!s || !*s) return false;
+        if (!s) return false;            // GT 無 null 檢查；保留防呆
+        if (!*s) return true;            // GT：空字串 → 1
         for (const unsigned char* p = reinterpret_cast<const unsigned char*>(s); *p; ++p)
             if (!std::isalnum(*p)) return false;
         return true;

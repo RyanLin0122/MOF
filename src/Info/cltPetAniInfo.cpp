@@ -89,8 +89,9 @@ int cltPetAniInfo::Initialize(char* filename)
         while (IsAlphaNumeric(tok)) {
             if (!cur) { ok = 0; goto FAIL; }
 
+            // 對齊 GT：迴圈內無上限檢查（GT 直接 ++count 寫入固定偏移區，
+            // 100 個 frame 是版面上限而非執行期防護；理論上越界但實測資料不會觸發）。
             uint16_t& cnt = cur->count;
-            if (cnt >= kMaxFrames) break; // 超出上限：與安全一致，忽略後續
 
             bool hexok = false;
             cur->frameRes[cnt] = hex_to_u32(tok, hexok);

@@ -54,46 +54,49 @@ int cltMoF_ChatBallonInfo::Initialize(char* filename)
         // 指到目前要寫入的記錄（以 WORD 指標行為模擬反編譯寫入）
         uint16_t* p = reinterpret_cast<uint16_t*>(&table_[idx]);
 
+        // 失敗路徑對齊 GT：只 fclose 並 return 0，不呼叫 Free()，
+        // 也不重設 count_——保留半填 buffer 與膨脹後的 count_。
+
         // 1) ChatBallon ID（B****）
         char* tok = std::strtok(line, Delim);
-        if (!tok) { g_clTextFileManager.fclose(fp); Free(); return 0; }
+        if (!tok) { g_clTextFileManager.fclose(fp); return 0; }
         p[0] = TranslateItemKindCode(tok);
 
         // 2) 기획자용이름（僅跳過）
-        if (!std::strtok(nullptr, Delim)) { g_clTextFileManager.fclose(fp); Free(); return 0; }
+        if (!std::strtok(nullptr, Delim)) { g_clTextFileManager.fclose(fp); return 0; }
 
         // 3) 이미지 ID（HEX → 寫入偏移 +4 的 32-bit 區塊）
         tok = std::strtok(nullptr, Delim);
-        if (!tok) { g_clTextFileManager.fclose(fp); Free(); return 0; }
+        if (!tok) { g_clTextFileManager.fclose(fp); return 0; }
         {
             unsigned int hexv = 0;
-            if (std::sscanf(tok, "%x", &hexv) != 1) { g_clTextFileManager.fclose(fp); Free(); return 0; }
+            if (std::sscanf(tok, "%x", &hexv) != 1) { g_clTextFileManager.fclose(fp); return 0; }
             *reinterpret_cast<uint32_t*>(reinterpret_cast<uint8_t*>(p) + 4) = hexv;
         }
 
         // 4..14) 11 個區塊索引（WORD，從偏移 +8 開始連續存放）
         for (int i = 0; i < 11; ++i) {
             tok = std::strtok(nullptr, Delim);
-            if (!tok) { g_clTextFileManager.fclose(fp); Free(); return 0; }
+            if (!tok) { g_clTextFileManager.fclose(fp); return 0; }
             // p 在 WORD 對齊下，+4 bytes 對應到 p[2]，再加 i → p[2 + i]
             p[2 + i] = static_cast<uint16_t>(std::atoi(tok));
         }
 
         // 15) R（BYTE，位於 record 偏移 +30）
         tok = std::strtok(nullptr, Delim);
-        if (!tok) { g_clTextFileManager.fclose(fp); Free(); return 0; }
+        if (!tok) { g_clTextFileManager.fclose(fp); return 0; }
         *reinterpret_cast<uint8_t*>(reinterpret_cast<uint8_t*>(p) + 30) =
             static_cast<uint8_t>(std::atoi(tok));
 
         // 16) G（BYTE，偏移 +31）
         tok = std::strtok(nullptr, Delim);
-        if (!tok) { g_clTextFileManager.fclose(fp); Free(); return 0; }
+        if (!tok) { g_clTextFileManager.fclose(fp); return 0; }
         *reinterpret_cast<uint8_t*>(reinterpret_cast<uint8_t*>(p) + 31) =
             static_cast<uint8_t>(std::atoi(tok));
 
         // 17) B（BYTE，偏移 +32）
         tok = std::strtok(nullptr, Delim);
-        if (!tok) { g_clTextFileManager.fclose(fp); Free(); return 0; }
+        if (!tok) { g_clTextFileManager.fclose(fp); return 0; }
         *reinterpret_cast<uint8_t*>(reinterpret_cast<uint8_t*>(p) + 32) =
             static_cast<uint8_t>(std::atoi(tok));
 
