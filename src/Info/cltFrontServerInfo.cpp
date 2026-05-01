@@ -2,179 +2,211 @@
 #include <cstdio>
 #include <cstring>
 #include <cstdlib>
-#include <ctime>
 
 // ====== 全域物件預設值 ======
-unsigned int  g_DebugLevel = 0;          // 預設不顯示錯誤
+// dword_BE4BB4 (mofclient.c:206043) — 預設不顯示錯誤
+unsigned int  g_DebugLevel = 0;
 
 // Windows 相容（非 Windows 則退回 std::remove）
 #ifdef _WIN32
 #include <Windows.h>
 #endif
 
+// ----------------------------------------------------------------------------
+// ctor — mofclient.c:205920
+//   *((_WORD *)this + 120) = 0;     // m_wCount       (offset 240)
+//   *((_WORD *)this + 121) = 0;     // m_wIndex       (offset 242)
+//   *((_DWORD *)this + 61) = 1;     // m_dwFirstCall  (offset 244)
+//   memset(this, 0, 0xF0u);         // 只清前 240 bytes (m_aInfos)
+// ----------------------------------------------------------------------------
 cltFrontServerInfo::cltFrontServerInfo() {
-    // *((_WORD*)this + 120) = 0;  // m_wCount
-    // *((_WORD*)this + 121) = 0;  // m_wIndex
-    // *((_DWORD*)this + 61) = 1;  // m_dwFirstCall
-    m_wCount = 0;
-    m_wIndex = 0;
+    m_wCount      = 0;
+    m_wIndex      = 0;
     m_dwFirstCall = 1;
-
-    // memset(this, 0, 0xF0u); // 只清前 240 bytes（即 m_aInfos）
-    std::memset(m_aInfos, 0, sizeof(m_aInfos));
+    std::memset(m_aInfos, 0, sizeof(m_aInfos));   // 0xF0 = 240
 }
 
+// ----------------------------------------------------------------------------
+// Initialize — mofclient.c:205930 .. 206051
+// ----------------------------------------------------------------------------
 int cltFrontServerInfo::Initialize() {
-    // 忠實還原：NationCode==4 直接讀 dat；否則先解密到 tmp.dat
-    if (g_MoFFont.GetNationCode() == 4 ||
-        (FileCrypt::GetInstance()->DecoderFileCrypt("MofData/FrontServerList.dat", "tmp.dat")))
-    {
-        const char* path = (g_MoFFont.GetNationCode() == 4) ? "MofData/FrontServerList.dat" : "tmp.dat";
-        int ok = ParseFromFile(path);
+    // v18 對應反編譯區域變數 — 預設 0 (失敗)；唯有跑到 LABEL_25 才會置 1
+    int v18 = 0;
 
-        if (g_MoFFont.GetNationCode() != 4) {
-            DeleteFileCompat("tmp.dat");
-        }
-        return ok;
+    // 反編譯：(unsigned __int8)MoFFont::GetNationCode(...) == 4
+    const unsigned char nationCode = static_cast<unsigned char>(g_MoFFont.GetNationCode());
+
+    if (nationCode == 4 ||
+        FileCrypt::GetInstance()->DecoderFileCrypt("MofData/FrontServerList.dat", "tmp.dat"))
+    {
+        // 反編譯：NationCode==4 直接 fopen 原檔；否則 fopen tmp.dat
+        const char* path = (nationCode == 4) ? "MofData/FrontServerList.dat" : "tmp.dat";
+        v18 = ParseFromFile(path);
     }
-    else {
-        // 解密失敗處理（與反編譯一致）
-        if (g_DebugLevel == 2) {
+    else if (g_DebugLevel == 2) {
+        // 反編譯：dword_BE4BB4 == 2 才彈錯誤訊息
 #ifdef _WIN32
-            char buf[128];
-            std::snprintf(buf, sizeof(buf), "FrontServerInfo Error : %d", 1);
-            MessageBoxA(nullptr, buf, "Master of Fantasy", 0);
+        char Text[1024] = { 0 };
+        std::snprintf(Text, sizeof(Text), "FrontServerInfo Error : %d", 1);
+        MessageBoxA(nullptr, Text, "Master of Fantasy", 0);
 #else
-            std::fprintf(stderr, "FrontServerInfo Error : %d\n", 1);
+        std::fprintf(stderr, "FrontServerInfo Error : %d\n", 1);
 #endif
-        }
-        // 仍嘗試刪掉 tmp.dat（與原始流程對齊）
-        if (g_MoFFont.GetNationCode() != 4) {
-            DeleteFileCompat("tmp.dat");
-        }
-        return 0;
     }
+
+    // 反編譯：if (NationCode != 4) DeleteFileA("tmp.dat");
+    if (nationCode != 4) {
+        DeleteFileCompat("tmp.dat");
+    }
+    return v18;
 }
 
-int cltFrontServerInfo::InitializeFromFiles(const char* datPath, const char* tmpPath) {
-    // 完整重現：NationCode==4 直接讀 datPath；否則先解密 datPath -> tmpPath
-    if (g_MoFFont.GetNationCode() == 4 ||
-        (FileCrypt::GetInstance()->DecoderFileCrypt(datPath, tmpPath)))
-    {
-        const char* path = (g_MoFFont.GetNationCode() == 4) ? datPath : tmpPath;
-        int ok = ParseFromFile(path);
-
-        if (g_MoFFont.GetNationCode() != 4) {
-            DeleteFileCompat(tmpPath);
-        }
-        return ok;
-    }
-    else {
-        if (g_DebugLevel == 2) {
-#ifdef _WIN32
-            char buf[128];
-            std::snprintf(buf, sizeof(buf), "FrontServerInfo Error : %d", 1);
-            MessageBoxA(nullptr, buf, "Master of Fantasy", 0);
-#else
-            std::fprintf(stderr, "FrontServerInfo Error : %d\n", 1);
-#endif
-        }
-        if (g_MoFFont.GetNationCode() != 4) {
-            DeleteFileCompat(tmpPath);
-        }
-        return 0;
-    }
-}
-
+// ----------------------------------------------------------------------------
+// GetRandomServerInfo — mofclient.c:206056 .. 206067
+//   if ( !*((_DWORD *)this + 61) ) return 0;
+//   v2 = ++*((_WORD *)this + 121) < *((_WORD *)this + 120);
+//   *((_DWORD *)this + 61) = 0;
+//   if ( !v2 ) *((_WORD *)this + 121) = 0;
+//   return (char *)this + 24 * *((unsigned __int16 *)this + 121);
+// ----------------------------------------------------------------------------
 const stFrontServerInfo* cltFrontServerInfo::GetRandomServerInfo() {
     if (m_dwFirstCall == 0) {
-        return nullptr; // 與反編譯一致：旗標為 0 時回傳 0
+        return nullptr;
     }
-    // v2 = ++m_wIndex < m_wCount; m_dwFirstCall=0; if(!v2) m_wIndex=0;
     m_wIndex = static_cast<uint16_t>(m_wIndex + 1);
-    bool less = (m_wIndex < m_wCount);
+    const bool less = (m_wIndex < m_wCount);
     m_dwFirstCall = 0;
-    if (!less) m_wIndex = 0;
-    return (m_wCount > 0) ? &m_aInfos[m_wIndex] : nullptr;
+    if (!less) {
+        m_wIndex = 0;
+    }
+    // 忠實還原：原始實作不檢查 count 是否為 0 — 直接回傳對應槽位 (此時是 m_aInfos[0])
+    return &m_aInfos[m_wIndex];
 }
 
+// ----------------------------------------------------------------------------
+// ParseFromFile — 反編譯 mofclient.c:205966..206041 之解析子流程
+// 嚴格還原 v18 的成功/失敗語意：
+//   - 三行表頭任一行 fgets 失敗     → 直接回 0
+//   - 計數迴圈後第一筆資料 fgets 失敗 (檔案無資料行)
+//                                   → v18 = 1 (LABEL_25 入口)
+//   - 解析迴圈中遇到 token 缺漏      → break，v18 仍為 0
+//   - 解析迴圈中讀港埠 token 缺漏    → goto LABEL_28，v18 仍為 0
+//   - 解析迴圈讀完最後一行後 fgets EOF
+//                                   → goto LABEL_25，v18 = 1，符合條件則洗牌
+// ----------------------------------------------------------------------------
 int cltFrontServerInfo::ParseFromFile(const char* filePath) {
-    // 忠實使用 C I/O 與 strtok
+    int v18 = 0;
+    char Text[1024] = { 0 };
+    const char Delimiter[3] = { '\t', '\n', '\0' };  // 反編譯：strcpy(Delimiter, "\t\n")
+
     FILE* fp = std::fopen(filePath, "rb");
-    if (!fp) return 0;
+    if (!fp) {
+        return 0; // 對齊「v17/v2 為 NULL 則最終 fclose 跳過、return v18=0」的效果
+    }
 
-    char line[1024] = { 0 };
-    // 讀掉前三行表頭
-    if (!std::fgets(line, sizeof(line), fp) ||
-        !std::fgets(line, sizeof(line), fp) ||
-        !std::fgets(line, sizeof(line), fp))
+    // 反編譯：if ( fgets && fgets && fgets )  讀掉前三行表頭
+    if (std::fgets(Text, 1023, fp) &&
+        std::fgets(Text, 1023, fp) &&
+        std::fgets(Text, 1023, fp))
     {
-        std::fclose(fp);
-        return 0;
-    }
+        // 反編譯：fgetpos → for (; fgets; ++m_wCount) ; → fsetpos
+        std::fpos_t Position;
+        std::fgetpos(fp, &Position);
+        for (; std::fgets(Text, 1023, fp); ) {
+            ++m_wCount;
+        }
+        std::fsetpos(fp, &Position);
 
-    // 記下位置並先計數
-    std::fpos_t pos;
-    std::fgetpos(fp, &pos);
-    m_wCount = 0;
-    while (std::fgets(line, sizeof(line), fp)) {
-        ++m_wCount;
-    }
+        // 反編譯：if ( fgets(...) ) { while(strtok(buf,...)) {...} } else { goto LABEL_25; }
+        if (std::fgets(Text, 1023, fp)) {
+            // v16 = (char *)this; — 寫入指標起點即 m_aInfos[0]
+            char* v16 = reinterpret_cast<char*>(m_aInfos);
+            char* const v16End = v16 + sizeof(m_aInfos); // 防越界保護 (原始無此檢查)
 
-    // 回到起點重新解析
-    std::fsetpos(fp, &pos);
+            bool failure = false;     // break / goto LABEL_28 路徑 → v18 維持 0
+            bool reachedEof = false;  // goto LABEL_25 路徑 → v18 = 1
 
-    // 逐行解析（TAB/換行為分隔）
-    const char* delim = "\t\n";
-    uint16_t written = 0;
+            while (std::strtok(Text, Delimiter)) {              // 第 1 個 token: No.
+                char* v3 = std::strtok(nullptr, Delimiter);     // 第 2 個 token: Type
+                if (!v3) { failure = true; break; }
 
-    while (std::fgets(line, sizeof(line), fp)) {
-        // 第一個 token（No.）
-        char* tok = std::strtok(line, delim);
-        if (!tok) continue;
+                if (std::strncmp("TEST", v3, std::strlen(v3)) == 0) {
+                    // TEST 列：跳過 IP 與 Port 兩個 token，計數遞減
+                    if (!std::strtok(nullptr, Delimiter) ||
+                        !std::strtok(nullptr, Delimiter)) {
+                        failure = true; break;
+                    }
+                    --m_wCount;  // 反編譯：--*((_WORD *)this + 120) (允許 wrap-around)
+                }
+                else {
+                    // 非 TEST 列：寫入 m_aInfos[written]
+                    char* v4 = std::strtok(nullptr, Delimiter); // IP / Host
+                    if (!v4) { failure = true; break; }
 
-        // 第二個 token（Type）
-        char* typeTok = std::strtok(nullptr, delim);
-        if (!typeTok) break;
+                    // 原始：strcpy(v16, v4); — 無長度限制；此處加上越界保護
+                    if (v16 < v16End) {
+                        std::strcpy(v16, v4);
+                    }
 
-        // 忠實還原：strncmp("TEST", token, strlen(token)) == 0
-        if (std::strncmp("TEST", typeTok, std::strlen(typeTok)) == 0) {
-            // 跳過 IP 與 Port 兩個 token
-            if (!std::strtok(nullptr, delim) || !std::strtok(nullptr, delim)) break;
-            if (m_wCount > 0) --m_wCount; // 減計數
+                    char* v5 = std::strtok(nullptr, Delimiter); // Port
+                    if (!v5) {
+                        // 反編譯：goto LABEL_28 — 直接跳出且 v18 維持 0
+                        failure = true;
+                        break;
+                    }
+
+                    // 原始：*((_DWORD *)v16 + 5) = atoi(v5);  // offset 20 (Port)
+                    if (v16 < v16End) {
+                        *reinterpret_cast<int*>(v16 + 20) = std::atoi(v5);
+                    }
+                    v16 += 24;  // 下一筆 slot
+                }
+
+                // 反編譯：迴圈尾 if ( !fgets(...) ) goto LABEL_25;  (LABEL_25 ≡ EOF 成功)
+                if (!std::fgets(Text, 1023, fp)) {
+                    reachedEof = true;
+                    break;
+                }
+            }
+
+            if (!failure) {
+                // 對應 LABEL_25：v18 = 1，且 m_wCount > 1 才洗牌
+                v18 = 1;
+                if (m_wCount > 1) {
+                    ShuffleLikeDecompiled();
+                }
+            }
+            // (failure==true 路徑：v18 維持 0；不洗牌)
+            (void)reachedEof; // 僅作流程註記
         }
         else {
-            // 讀 IP/Host
-            char* hostTok = std::strtok(nullptr, delim);
-            if (!hostTok) break;
-
-            // 讀 Port
-            char* portTok = std::strtok(nullptr, delim);
-            if (!portTok) break;
-
-            if (written < 10) { // 原程式不檢查溢位；此處加上保護以避免越界
-                std::strcpy(m_aInfos[written].Host, hostTok); // 忠實用 strcpy（無截斷）
-                m_aInfos[written].Port = std::atoi(portTok);
-                ++written;
+            // 反編譯：if ( fgets ) { ... } else { LABEL_25 ... }
+            // 此分支對應「資料行為 0 筆」的成功狀態
+            v18 = 1;
+            if (m_wCount > 1) {  // 必為假 (count==0)，純為對齊原始程式架構
+                ShuffleLikeDecompiled();
             }
         }
     }
+    // 三行表頭讀取失敗 → v18 維持 0
 
     std::fclose(fp);
-
-    // 若有效筆數 > 1，做隨機交換（與反編譯一致的寫法）
-    if (m_wCount > 1) {
-        ShuffleLikeDecompiled();
-    }
-
-    return 1;
+    return v18;
 }
 
+// ----------------------------------------------------------------------------
+// ShuffleLikeDecompiled — mofclient.c:206018..206034
+//   for (i=0; i<m_wCount; ++i) {
+//       r = rand() % m_wCount;
+//       tmp = a[r];           // qmemcpy v20, this+24*r, 24
+//       a[r] = a[i];          // qmemcpy this+8*(3*r), v9, 24
+//       a[i] = tmp;           // qmemcpy v9, v20, 24
+//       v9 += 24; ++i;
+//   }
+// ----------------------------------------------------------------------------
 void cltFrontServerInfo::ShuffleLikeDecompiled() {
-    // 反編譯碼迴圈大意：
-    // for (i=0; i<m_wCount; ++i) swap(a[i], a[rand()%m_wCount])
     for (uint16_t i = 0; i < m_wCount && i < 10; ++i) {
-        uint16_t r = static_cast<uint16_t>(std::rand() % (m_wCount ? m_wCount : 1));
+        const uint16_t r = static_cast<uint16_t>(std::rand() % m_wCount);
         if (r < 10) {
             stFrontServerInfo tmp = m_aInfos[r];
             m_aInfos[r] = m_aInfos[i];
