@@ -96,25 +96,9 @@ public:
     unsigned __int16 count() const { return m_count; }
 
 private:
-    // ------- 反編譯中呼叫 cltItemKindInfo::TranslateKindCode (mofclient.c:306638) -------
-    //   if (strlen(a1) != 5) return 0;
-    //   v2 = (_toupper(*a1) + 31) << 11;
-    //   v3 = (unsigned __int16)atoi(a1 + 1);
-    //   if (v3 < 0x800u) return v2 | v3;  else return 0;
-    static unsigned __int16 TranslateItemKindCode(const char* s)
-    {
-        if (!s) return 0;
-        std::size_t n = 0;
-        while (s[n]) { if (++n > 5) break; }
-        if (n != 5) return 0;
-        int hi = ((std::toupper(static_cast<unsigned char>(s[0])) + 31) << 11);
-        // 反編譯把 atoi 結果存入 unsigned __int16 v3 → 強制截斷為 16-bit
-        unsigned __int16 lo = static_cast<unsigned __int16>(std::atoi(s + 1));
-        if (lo < 0x800u) return static_cast<unsigned __int16>(hi | lo);
-        return 0;
-    }
+    // 反編譯 mofclient.c:316961 直接呼叫 cltItemKindInfo::TranslateKindCode；
+    // 此處不再保留私有副本，改於 .cpp 透過 cltItemKindInfo:: 取用，與 GT 1:1。
 
-private:
     // 對應 *((_WORD*)this + 2)：實際資料筆數
     unsigned __int16 m_count;
 

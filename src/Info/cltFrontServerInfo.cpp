@@ -2,15 +2,11 @@
 #include <cstdio>
 #include <cstring>
 #include <cstdlib>
+#include <Windows.h>
 
 // ====== 全域物件預設值 ======
 // dword_BE4BB4 (mofclient.c:206043) — 預設不顯示錯誤
 unsigned int  g_DebugLevel = 0;
-
-// Windows 相容（非 Windows 則退回 std::remove）
-#ifdef _WIN32
-#include <Windows.h>
-#endif
 
 // ----------------------------------------------------------------------------
 // ctor — mofclient.c:205920
@@ -44,19 +40,15 @@ int cltFrontServerInfo::Initialize() {
         v18 = ParseFromFile(path);
     }
     else if (g_DebugLevel == 2) {
-        // 反編譯：dword_BE4BB4 == 2 才彈錯誤訊息
-#ifdef _WIN32
+        // 反編譯 mofclient.c:206043..206046：dword_BE4BB4 == 2 才彈錯誤訊息
         char Text[1024] = { 0 };
         std::snprintf(Text, sizeof(Text), "FrontServerInfo Error : %d", 1);
         MessageBoxA(nullptr, Text, "Master of Fantasy", 0);
-#else
-        std::fprintf(stderr, "FrontServerInfo Error : %d\n", 1);
-#endif
     }
 
-    // 反編譯：if (NationCode != 4) DeleteFileA("tmp.dat");
+    // 反編譯 mofclient.c:206048..206049：if (NationCode != 4) DeleteFileA("tmp.dat");
     if (nationCode != 4) {
-        DeleteFileCompat("tmp.dat");
+        DeleteFileA("tmp.dat");
     }
     return v18;
 }
@@ -120,8 +112,9 @@ int cltFrontServerInfo::ParseFromFile(const char* filePath) {
         // 反編譯：if ( fgets(...) ) { while(strtok(buf,...)) {...} } else { goto LABEL_25; }
         if (std::fgets(Text, 1023, fp)) {
             // v16 = (char *)this; — 寫入指標起點即 m_aInfos[0]
+            // 反編譯無越界保護：strcpy/atoi 直寫 v16；超過 10 筆時會踩到 m_wCount 等成員。
+            // 為與 GT 1:1，此處不做防護，忠實還原。
             char* v16 = reinterpret_cast<char*>(m_aInfos);
-            char* const v16End = v16 + sizeof(m_aInfos); // 防越界保護 (原始無此檢查)
 
             bool failure = false;     // break / goto LABEL_28 路徑 → v18 維持 0
             bool reachedEof = false;  // goto LABEL_25 路徑 → v18 = 1
@@ -143,10 +136,8 @@ int cltFrontServerInfo::ParseFromFile(const char* filePath) {
                     char* v4 = std::strtok(nullptr, Delimiter); // IP / Host
                     if (!v4) { failure = true; break; }
 
-                    // 原始：strcpy(v16, v4); — 無長度限制；此處加上越界保護
-                    if (v16 < v16End) {
-                        std::strcpy(v16, v4);
-                    }
+                    // 反編譯 mofclient.c:205999  strcpy(v16, v4);  — 無長度限制
+                    std::strcpy(v16, v4);
 
                     char* v5 = std::strtok(nullptr, Delimiter); // Port
                     if (!v5) {
@@ -155,10 +146,8 @@ int cltFrontServerInfo::ParseFromFile(const char* filePath) {
                         break;
                     }
 
-                    // 原始：*((_DWORD *)v16 + 5) = atoi(v5);  // offset 20 (Port)
-                    if (v16 < v16End) {
-                        *reinterpret_cast<int*>(v16 + 20) = std::atoi(v5);
-                    }
+                    // 反編譯 mofclient.c:206006  *((_DWORD *)v16 + 5) = atoi(v5);  // offset 20 (Port)
+                    *reinterpret_cast<int*>(v16 + 20) = std::atoi(v5);
                     v16 += 24;  // 下一筆 slot
                 }
 
@@ -203,22 +192,14 @@ int cltFrontServerInfo::ParseFromFile(const char* filePath) {
 //       a[i] = tmp;           // qmemcpy v9, v20, 24
 //       v9 += 24; ++i;
 //   }
+// 反編譯無 r<10 / i<10 之上限保護；m_wCount > 10 時會踩到 m_wCount 等尾端成員。
+// 為與 GT 1:1 等價，此處同樣不做防護。
 // ----------------------------------------------------------------------------
 void cltFrontServerInfo::ShuffleLikeDecompiled() {
-    for (uint16_t i = 0; i < m_wCount && i < 10; ++i) {
+    for (uint16_t i = 0; i < m_wCount; ++i) {
         const uint16_t r = static_cast<uint16_t>(std::rand() % m_wCount);
-        if (r < 10) {
-            stFrontServerInfo tmp = m_aInfos[r];
-            m_aInfos[r] = m_aInfos[i];
-            m_aInfos[i] = tmp;
-        }
+        stFrontServerInfo tmp = m_aInfos[r];
+        m_aInfos[r] = m_aInfos[i];
+        m_aInfos[i] = tmp;
     }
-}
-
-bool cltFrontServerInfo::DeleteFileCompat(const char* path) {
-#ifdef _WIN32
-    return ::DeleteFileA(path) != 0;
-#else
-    return std::remove(path) == 0;
-#endif
 }

@@ -61,7 +61,6 @@ private:
     // 內部工具
     int  ParseFromFile(const char* filePath);
     void ShuffleLikeDecompiled();
-    static bool DeleteFileCompat(const char* path);
 
 private:
     // ------------------------------------------------------------------------

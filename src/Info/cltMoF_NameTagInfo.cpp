@@ -1,4 +1,5 @@
 #include "Info/cltMoF_NameTagInfo.h"
+#include "Info/cltItemKindInfo.h"
 #include <cstdio>
 #include <cstdlib>
 #include <cstring>
@@ -89,7 +90,8 @@ int cltMoF_NameTagInfo::Initialize(char* filename)
                 // (1) NameTag ID
                 char* v8 = std::strtok(Buffer, Delimiter);
                 if (!v8) break;
-                v7[0] = TranslateItemKindCode(v8);
+                // 反編譯 mofclient.c:316961 直接呼叫 cltItemKindInfo::TranslateKindCode(v8)
+                v7[0] = cltItemKindInfo::TranslateKindCode(v8);
 
                 // (2) 기획자용이름  (skip)
                 if (!std::strtok(nullptr, Delimiter)) break;
