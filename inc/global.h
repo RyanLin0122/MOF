@@ -320,7 +320,9 @@ extern CUITutorial*             g_pUITutorial;
 extern CUIManager*              g_UIMgr;
 
 // Pet / Monster / Money
-extern cltPetKindInfo           g_clPetKindInfoBase;
+// 註：ground truth 只有單一 g_clPetKindInfo (cltClientPetKindInfo)，
+// 內嵌的 cltPetKindInfo 透過 g_clClientPetKindInfo.PetKindInfo() 取得；
+// 不存在獨立的 g_clPetKindInfoBase。
 extern cltClientPetKindInfo     g_clClientPetKindInfo;
 extern cltPortalInfo            g_clPortalInfo;
 extern cltClientPortalInfo      g_clClientPortalInfo;

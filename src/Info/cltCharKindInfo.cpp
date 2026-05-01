@@ -84,14 +84,17 @@ int cltCharKindInfo::Initialize(char* String2)
     std::memset(buffer, 0, sizeof(buffer));
     std::strcpy(delimiter, "\t\n");
 
+    // GT 0x005644D0：fopen 失敗時仍會呼叫 InitMonsterAinFrame，最後 return v110(=0)。
+    // 這裡先 fopen，所有後續流程（含 fclose 與 boss list 建立）都包在 if(stream)
+    // 內以對齊 GT；InitMonsterAinFrame 在最後無條件呼叫。
     stream = g_clTextFileManager.fopen(String2);
-    if (!stream)
-        return 0;
 
     CharKindParseExit exitWhy = CharKindParseExit::HeaderFail;
 
-    // mofclient.c：先讀 3 行 (title/註解/欄位名稱)。失敗即 HeaderFail。
-    if (std::fgets(buffer, 2023, stream) &&
+    // mofclient.c：所有解析、boss list 建立、fclose 都在 if(stream) 區塊內。
+    // 唯一無條件執行的是最後的 InitMonsterAinFrame()。
+    if (stream &&
+        std::fgets(buffer, 2023, stream) &&
         std::fgets(buffer, 2023, stream) &&
         std::fgets(buffer, 2023, stream))
     {
@@ -385,22 +388,25 @@ int cltCharKindInfo::Initialize(char* String2)
     }
 
 finalize:
-    // boss list 僅在「正常讀完」或「沒有第一筆資料」兩條路徑收尾。
-    if (exitWhy == CharKindParseExit::NormalEnd || exitWhy == CharKindParseExit::NoFirstData) {
-        if (m_nBossCount) {
-            m_pBossList = static_cast<stCharKindInfo**>(
-                ::operator new(sizeof(stCharKindInfo*) * m_nBossCount));
-            int idx = 0;
-            for (int i = 0; i < 0xFFFF; ++i) {
-                stCharKindInfo* r = m_ppCharKindTable[i];
-                if (r && r->bossKind && r->kindCode == r->monsterRegistryKind) {
-                    m_pBossList[idx++] = r;
+    if (stream) {
+        // boss list 僅在「正常讀完」或「沒有第一筆資料」兩條路徑收尾。
+        if (exitWhy == CharKindParseExit::NormalEnd || exitWhy == CharKindParseExit::NoFirstData) {
+            if (m_nBossCount) {
+                m_pBossList = static_cast<stCharKindInfo**>(
+                    ::operator new(sizeof(stCharKindInfo*) * m_nBossCount));
+                int idx = 0;
+                for (int i = 0; i < 0xFFFF; ++i) {
+                    stCharKindInfo* r = m_ppCharKindTable[i];
+                    if (r && r->bossKind && r->kindCode == r->monsterRegistryKind) {
+                        m_pBossList[idx++] = r;
+                    }
                 }
             }
         }
+        g_clTextFileManager.fclose(stream);
     }
 
-    g_clTextFileManager.fclose(stream);
+    // GT 0x005657F0：InitMonsterAinFrame 在 if(stream) 區塊外無條件呼叫。
     InitMonsterAinFrame();
 
     // 對齊 mofclient.c v110：HeaderFail/ErrorBreak/SkillOverflow → 0；其他 → 1。

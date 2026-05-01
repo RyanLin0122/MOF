@@ -14,21 +14,37 @@ namespace
 {
     constexpr std::size_t kLineBufferSize = 1024;
 
-    bool IsDigitString(const char* text)
+    // 1:1 對應 mofclient.c 全域 ::IsDigit (sub_0059FE90)。命名為 PetKindIsDigit
+    // 以避免與 cltItemKindInfo.h 中已存在但語意不同 (拒空字串/拒符號) 的 inline ::IsDigit 衝突。
+    // 行為:
+    //   - 空字串 → 1 (true)
+    //   - 任意位置出現 '+' 或 '-' 會被「跳過一次」(原始反編譯邏輯，即使位於中段也接受)
+    //   - 跳過的字元若不是 0..9 則回 0
+    //   - 走到結尾則回 1
+    int PetKindIsDigit(const char* text)
     {
         if (text == nullptr || *text == '\0')
         {
-            return false;
+            return 1;
         }
 
-        for (const unsigned char* p = reinterpret_cast<const unsigned char*>(text); *p != '\0'; ++p)
+        const unsigned char* p = reinterpret_cast<const unsigned char*>(text);
+        while (true)
         {
+            if (*p == '-' || *p == '+')
+            {
+                ++p;
+            }
             if (!std::isdigit(*p))
             {
-                return false;
+                return 0;
+            }
+            ++p;
+            if (*p == '\0')
+            {
+                return 1;
             }
         }
-        return true;
     }
 
     void ShowPetKindFormatWarning(const char* filePath)
@@ -132,14 +148,14 @@ int cltPetKindInfo::LoadPetKindInfo(char* filePath)
                 }
 
                 token = std::strtok(nullptr, delimiter); // wPetNameTextCode
-                if (token == nullptr || !IsDigitString(token))
+                if (token == nullptr || !PetKindIsDigit(token))
                 {
                     break;
                 }
                 current->wPetNameTextCode = static_cast<uint16_t>(std::atoi(token));
 
                 token = std::strtok(nullptr, delimiter); // wPetDescriptionTextCode
-                if (token == nullptr || !IsDigitString(token))
+                if (token == nullptr || !PetKindIsDigit(token))
                 {
                     break;
                 }
@@ -164,7 +180,7 @@ int cltPetKindInfo::LoadPetKindInfo(char* filePath)
                 std::strcpy(current->AnimationInfoFileGi, token);
 
                 token = std::strtok(nullptr, delimiter); // wDyeCount
-                if (token == nullptr || !IsDigitString(token))
+                if (token == nullptr || !PetKindIsDigit(token))
                 {
                     break;
                 }
@@ -181,14 +197,14 @@ int cltPetKindInfo::LoadPetKindInfo(char* filePath)
                 }
 
                 token = std::strtok(nullptr, delimiter); // wCharacterWidth
-                if (token == nullptr || !IsDigitString(token))
+                if (token == nullptr || !PetKindIsDigit(token))
                 {
                     break;
                 }
                 current->wCharacterWidth = static_cast<uint16_t>(std::atoi(token));
 
                 token = std::strtok(nullptr, delimiter); // wCharacterHeightPosY
-                if (token == nullptr || !IsDigitString(token))
+                if (token == nullptr || !PetKindIsDigit(token))
                 {
                     break;
                 }
@@ -202,7 +218,7 @@ int cltPetKindInfo::LoadPetKindInfo(char* filePath)
                 std::sscanf(token, "%x", &current->dwDotResourceId);
 
                 token = std::strtok(nullptr, delimiter); // wBlockId
-                if (token == nullptr || !IsDigitString(token))
+                if (token == nullptr || !PetKindIsDigit(token))
                 {
                     break;
                 }
@@ -216,7 +232,7 @@ int cltPetKindInfo::LoadPetKindInfo(char* filePath)
                 std::sscanf(token, "%x", &current->dwPetUiAlertResource);
 
                 token = std::strtok(nullptr, delimiter); // wBlockIdDuplicate
-                if (token == nullptr || !IsDigitString(token))
+                if (token == nullptr || !PetKindIsDigit(token))
                 {
                     break;
                 }
@@ -242,42 +258,42 @@ int cltPetKindInfo::LoadPetKindInfo(char* filePath)
                 }
 
                 token = std::strtok(nullptr, delimiter); // dwLoveExperience
-                if (token == nullptr || !IsDigitString(token))
+                if (token == nullptr || !PetKindIsDigit(token))
                 {
                     break;
                 }
                 current->dwLoveExperience = static_cast<uint32_t>(std::atoi(token));
 
                 token = std::strtok(nullptr, delimiter); // wSaturation
-                if (token == nullptr || !IsDigitString(token))
+                if (token == nullptr || !PetKindIsDigit(token))
                 {
                     break;
                 }
                 current->wSaturation = static_cast<uint16_t>(std::atoi(token));
 
                 token = std::strtok(nullptr, delimiter); // dwSaturationDecreasePerMinute
-                if (token == nullptr || !IsDigitString(token))
+                if (token == nullptr || !PetKindIsDigit(token))
                 {
                     break;
                 }
                 current->dwSaturationDecreasePerMinute = static_cast<uint32_t>(std::atoi(token));
 
                 token = std::strtok(nullptr, delimiter); // wPetStageBaseYCoordinate
-                if (token == nullptr || !IsDigitString(token))
+                if (token == nullptr || !PetKindIsDigit(token))
                 {
                     break;
                 }
                 current->wPetStageBaseYCoordinate = static_cast<uint16_t>(std::atoi(token));
 
                 token = std::strtok(nullptr, delimiter); // wPetTypeTextCode
-                if (token == nullptr || !IsDigitString(token))
+                if (token == nullptr || !PetKindIsDigit(token))
                 {
                     break;
                 }
                 current->wPetTypeTextCode = static_cast<uint16_t>(std::atoi(token));
 
                 token = std::strtok(nullptr, delimiter); // wPetBasicSkillNameTextCode
-                if (token == nullptr || !IsDigitString(token))
+                if (token == nullptr || !PetKindIsDigit(token))
                 {
                     break;
                 }
@@ -312,14 +328,14 @@ int cltPetKindInfo::LoadPetKindInfo(char* filePath)
                 current->dwPetNameChangePossible = static_cast<uint32_t>(std::atoi(token));
 
                 token = std::strtok(nullptr, delimiter); // bCharacterFrontBack
-                if (token == nullptr || !IsDigitString(token))
+                if (token == nullptr || !PetKindIsDigit(token))
                 {
                     break;
                 }
                 current->bCharacterFrontBack = static_cast<uint8_t>(std::atoi(token));
 
                 token = std::strtok(nullptr, delimiter); // dwPetPositionAdjustmentY
-                if (token == nullptr || !IsDigitString(token))
+                if (token == nullptr || !PetKindIsDigit(token))
                 {
                     break;
                 }
@@ -347,7 +363,7 @@ int cltPetKindInfo::LoadPetKindInfo(char* filePath)
                 std::sscanf(token, "%x", &current->dwPetStopResource);
 
                 token = std::strtok(nullptr, delimiter); // wPetStopBlockId
-                if (token == nullptr || !IsDigitString(token))
+                if (token == nullptr || !PetKindIsDigit(token))
                 {
                     break;
                 }
@@ -447,7 +463,7 @@ int cltPetKindInfo::LoadPetDyeKindInfo(char* filePath)
                 }
 
                 token = std::strtok(nullptr, delimiter); // 3. 染色索引
-                if (token == nullptr || !IsDigitString(token))
+                if (token == nullptr || !PetKindIsDigit(token))
                 {
                     break;
                 }

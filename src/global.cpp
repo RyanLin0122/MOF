@@ -226,7 +226,8 @@ clClientTransportKindInfo g_clClientTransportKindInfo;
 CEffectManager* g_pEffectManager_Before_Chr = nullptr;
 CEffectManager* g_pEffectManager_After_Chr = nullptr;
 
-cltPetKindInfo g_clPetKindInfoBase;
+// Ground truth (mofclient.c) 僅有 g_clPetKindInfo (cltClientPetKindInfo)；
+// 嵌入的 cltPetKindInfo 透過 g_clClientPetKindInfo.PetKindInfo() 取用。
 cltClientPetKindInfo g_clClientPetKindInfo;
 cltPortalInfo g_clPortalInfo;
 cltClientPortalInfo g_clClientPortalInfo;

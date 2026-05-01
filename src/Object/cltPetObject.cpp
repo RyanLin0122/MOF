@@ -112,7 +112,9 @@ int cltPetObject::GetActive() {
 }
 
 void cltPetObject::PetLevelUP(uint16_t petKind) {
-    m_pPetKindInfo = g_clPetKindInfoBase.GetPetKindInfo(petKind);
+    // Ground truth (mofclient.c) 透過 cltClientPetKindInfo 嵌入的 cltPetKindInfo 取資料
+    // (參見 mofclient.c:210141, unk_7C3A0C = &g_clPetKindInfo + 4)
+    m_pPetKindInfo = g_clClientPetKindInfo.PetKindInfo().GetPetKindInfo(petKind);
     if (!m_pPetKindInfo) {
         return;
     }
@@ -138,7 +140,7 @@ void cltPetObject::InitPet(ClientCharacter* owner, CCA* cca, uint16_t petKind, i
     }
     m_nPickupInterval = 500;
 
-    m_pPetKindInfo = g_clPetKindInfoBase.GetPetKindInfo(petKind);
+    m_pPetKindInfo = g_clClientPetKindInfo.PetKindInfo().GetPetKindInfo(petKind);
     if (!m_pPetKindInfo) {
         return;
     }

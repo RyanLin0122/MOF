@@ -12,6 +12,7 @@
 #include "System/cltPlayerAbility.h"
 #include "System/cltPetSystem.h"
 #include "Info/cltPetKindInfo.h"
+#include "Info/cltClientPetKindInfo.h"
 
 CSpiritSpeech::CSpiritSpeech()
 {
@@ -342,7 +343,8 @@ int CSpiritSpeech::CheckAllMonsterKill(std::uint16_t value)
 int CSpiritSpeech::CheckPetLowSatiety(std::uint16_t value)
 {
     std::uint16_t petKind = g_clPetSystem.GetPetKind();
-    strPetKindInfo* petInfo = g_clPetKindInfoBase.GetPetKindInfo(petKind);
+    // Ground truth: 透過 cltClientPetKindInfo 嵌入的 cltPetKindInfo (mofclient.c:210141)
+    strPetKindInfo* petInfo = g_clClientPetKindInfo.PetKindInfo().GetPetKindInfo(petKind);
     if (!petInfo)
         return 0;
 
@@ -356,7 +358,8 @@ int CSpiritSpeech::CheckPetLowSatiety(std::uint16_t value)
 int CSpiritSpeech::CheckPetFullSatiety(std::uint16_t value)
 {
     std::uint16_t petKind = g_clPetSystem.GetPetKind();
-    strPetKindInfo* petInfo = g_clPetKindInfoBase.GetPetKindInfo(petKind);
+    // Ground truth: 透過 cltClientPetKindInfo 嵌入的 cltPetKindInfo (mofclient.c:210141)
+    strPetKindInfo* petInfo = g_clClientPetKindInfo.PetKindInfo().GetPetKindInfo(petKind);
     if (!petInfo)
         return 0;
 
