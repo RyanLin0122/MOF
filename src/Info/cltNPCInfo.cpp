@@ -289,8 +289,9 @@ stNPCInfo* cltNPCInfo::GetNPCInfoByNpcName(char* a2, std::uint16_t a3)
 
     do {
         std::uint16_t nameTextID = *reinterpret_cast<std::uint16_t*>(base + v4 + 4);
-        char* npcName = m_pclTextManager ? m_pclTextManager->GetText(nameTextID) : nullptr;
-        int cmp = npcName ? std::strcmp(a2, npcName) : 1;
+        // GT: strcmp(a2, DCTTextManager::GetText(m_pclTextManager, nameTextID))
+        //   GT 不做 nullptr 保護；若 GetText 回傳 NULL 會崩 — 與反編譯一致。
+        int cmp = std::strcmp(a2, m_pclTextManager->GetText(nameTextID));
         if (cmp == 0) {
             int v6 = 0;
             if (v5 > 0) {
@@ -430,9 +431,8 @@ int cltNPCInfo::Initialize(char* String2)
     std::memset(String1, 0, sizeof(String1));
     v77 = 0;
     v76 = 0;
-    // GT 는 v86 을 초기화하지 않지만 (스택 garbage), 항상 v86[v76] 를 먼저 쓰고 인덱스를 늘리므로
-    // [0..v76-1] 범위만 읽힘. 결정성을 위해 0 으로 초기화.
-    std::memset(v86, 0, sizeof(v86));
+    // GT 는 v86 을 초기화하지 않음 (스택 garbage). 알고리즘은 v86[v76] 를 먼저 쓰고 v76 을 늘리므로
+    // [0..v76-1] 범위만 읽히어 garbage 가 노출되지 않음 → 추가 memset 불필요 (strict GT).
 
     std::FILE* Stream = g_clTextFileManager.fopen(String2);
     if (!Stream) return 0;

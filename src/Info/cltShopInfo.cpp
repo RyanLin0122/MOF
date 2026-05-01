@@ -16,6 +16,22 @@ constexpr char kDelim[] = "\t\n";
 constexpr int  kBufferSize = 4096;
 }
 
+// GT 全域 ::IsDigit (mofclient.c:342909 / sub_0059FEA0) 等價：
+//   · 첫 byte == 0 → return 1 (true)
+//   · 매 반복마다 한 번 '+' / '-' 를 건너뜀
+//   · 그 외 한 글자라도 isdigit 실패 시 false
+bool cltShopInfo::IsDigit(const char* a1) {
+    if (!a1) return false;
+    const char* v1 = a1;
+    if (!*v1) return true;
+    while (true) {
+        if (*v1 == '+' || *v1 == '-') ++v1;
+        if (!std::isdigit(static_cast<unsigned char>(*v1))) return false;
+        ++v1;
+        if (!*v1) return true;
+    }
+}
+
 // 0x590910
 cltShopInfo::cltShopInfo()
     : m_pShopList(nullptr),

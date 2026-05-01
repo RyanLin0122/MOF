@@ -137,6 +137,11 @@ public:
     int IsShopSellItem(stShopInfo* shop, std::uint16_t itemKind, std::uint16_t itemQty);
 
 private:
+    // GT 全域 ::IsDigit (mofclient.c:342909) 等價：空字串回傳 true；每次迭代允許吃掉 1 個 '+' / '-'。
+    // 與 cltItemKindInfo.h 內的 inline IsDigit 語意不同 (那版拒空字串、拒符號)，
+    // 因此這裡放一個與 GT 完全一致的私有版本，以避免 unqualified 名稱解析到全域版本。
+    static bool IsDigit(const char* a1);
+
     // 反編譯佈局 (32-bit) 之欄位語意：
     //   *(DWORD *)(this+0)   m_pShopList         (普通商店陣列指標)
     //   *(WORD  *)(this+4)   m_wTotalShopNum     (普通商店總數)

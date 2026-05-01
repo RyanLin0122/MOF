@@ -266,10 +266,9 @@ uint16_t* cltRegenMonsterKindInfo::GetRegenMonsterKindByMapID(uint16_t a2) {
             if (!v8) break;                    // 空槽 → 跳出寫入
             if (entryCharKind == v8) break;    // 與槽中 charKind 相同 → 跳出寫入
 
-            // 比較槽中 charKind 對應的 nameTextCode。
-            // 反編譯不檢查 slotInfo == NULL，直接 deref；維持 bug-for-bug 行為。
-            // 若 GetCharKindInfo(v8) 回傳 NULL，原 binary 也會 crash — 寫入 buffer 的
-            // charKind 必定來自先前成功 lookup，理論上不會走到此分支。
+            // GT 把槽值 (monsterRegistryKind, +6) 直接餵進 GetCharKindInfo —
+            // 屬 GT 的 registryKind/charKind 語意混用，此處原樣保留以維持 bug-for-bug。
+            // GT 不檢查 slotInfo == NULL，直接 deref；若 lookup 失敗原 binary 同樣 crash。
             unsigned char* slotInfo =
                 reinterpret_cast<unsigned char*>(g_pcltCharKindInfo->GetCharKindInfo(v8));
             if (entryNameCode == *reinterpret_cast<uint16_t*>(slotInfo + 2)) break;
