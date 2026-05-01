@@ -18,6 +18,7 @@
 #include "Info/cltEmblemKindInfo.h"
 #include "Info/cltSpecialtyKindInfo.h"
 #include "Info/cltMakingItemKindInfo.h"
+#include "Info/cltPandoraKindInfo.h"
 #include "Info/cltPetSkillKindInfo.h"
 #include "Info/cltCoupleRingKindInfo.h"
 #include "Info/cltTransformKindInfo.h"
@@ -400,6 +401,7 @@ cltLessonKindInfo g_clLessonKindInfo;
 cltEmblemKindInfo g_clEmblemKindInfo;
 cltSpecialtyKindInfo g_clSpecialtyKindInfo;
 cltMakingItemKindInfo g_clMakingItemKindInfo;
+cltPandoraKindInfo g_clPandoraKindInfo;
 cltPetSkillKindInfo g_clPetSkillKindInfo;
 cltCoupleRingKindInfo g_clCoupleRingKindInfo;
 cltTransformKindInfo g_clTransformKindInfo;

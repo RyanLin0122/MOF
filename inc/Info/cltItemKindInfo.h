@@ -488,6 +488,12 @@ public:
     cltItemKindInfo();
     ~cltItemKindInfo();
 
+    // 韓文: 제작 분류 → unsigned int 마스크
+    // 中文: 將 "POTION" / "SCROLL" / ... 等字串轉換為製作分類遮罩
+    // 對應 mofclient.c:306737  cltItemKindInfo::GetMakingCategory
+    // (cltSpecialtyKindInfo::SetMakingItemCategory 在解析 specialty.txt 時呼叫)
+    static int GetMakingCategory(const char* str);
+
     // Initializes the manager by loading all item data files.
     int Initialize(const char* itemkindinfo, const char* item_instant, const char* item_hunt,
         const char* item_fashion, const char* koreatext, const char* trainningcardinfo);
@@ -583,7 +589,6 @@ private:
 
     // Static helper functions for parsing string values into enums/attributes.
     static EEquipAtb GetEquipAtb(const char* str);
-    static int GetMakingCategory(const char* str);
     static EInstantEffectType GetInstantEffectType(const char* str);
     static bool GetAttackType(const char* str);
     int GetEquipableClassAtb(char* str);
