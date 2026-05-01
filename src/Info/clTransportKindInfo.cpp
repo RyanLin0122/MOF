@@ -64,7 +64,13 @@ clTransportKindInfo::~clTransportKindInfo()
 // -----------------------------------------------------------------------------
 int clTransportKindInfo::Initialize(char* String2)
 {
-    char Delimiter[2] = { '\t', '\n' };  // mofclient.c 340020：strcpy 寫入 "\t\n"
+    // mofclient.c 340007/340020：原 GT 是 `char Delimiter[2]; strcpy(Delimiter, "\t\n");`
+    // —— 把 3 bytes ('\t','\n','\0') 寫進 2-byte 緩衝區，技術上踩了 1 byte stack overflow，
+    // 但 strcpy 寫出的 '\0' 會落在相鄰 stack byte，使 Delimiter 在執行期「剛好」是 NUL-terminated。
+    // 還原版本不能照搬 [2] + 列舉初始化（會缺 '\0'，strtok 將越界讀直到撞到 0）。
+    // 改用較大 buffer + strcpy 完整保留「以 "\t\n" 為 delimiter」語意，且不踩 UB。
+    char Delimiter[8] = {};
+    std::strcpy(Delimiter, "\t\n");
     char Buffer[1024] = {};
     int  v26 = 0;
 

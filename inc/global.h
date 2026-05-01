@@ -298,8 +298,9 @@ class cltHelpSystem;
 extern cltHelpSystem            g_clHelpSystem;
 extern CSpiritSpeechParser      g_clSpiritSpeechParser;
 extern CSpiritGossipParser      g_clSpiritGossipParser;
-extern clTransportKindInfo      g_clTransportKindInfo;
-extern clClientTransportKindInfo g_clClientTransportKindInfo;
+// mofclient.c 24516 / 196923 / 208742 / 210185：GT 只有一個全域 g_clTransportKindInfo，
+// 實際型別是 clClientTransportKindInfo（IDA cast 隱藏了 derived 型別）。
+extern clClientTransportKindInfo g_clTransportKindInfo;
 
 extern ClientCharacterManager   g_ClientCharMgr;
 extern CAManager                g_CAManager;

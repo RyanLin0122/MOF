@@ -104,3 +104,14 @@ private:
     // 4-byte 對齊 padding  /  GT offset 8038
     std::uint16_t _pad;
 };
+
+// 即使 GT 寫死 `operator new(0x1F68u)` (= 8040 bytes) 配置 clTransportAniInfo，
+// 本還原版本一律以 `new clTransportAniInfo()` 呼叫，依賴 sizeof 自動取得正確大小。
+// 但仍加 static_assert 保證 sizeof 不會「縮小於 GT 預期」——若哪天有人把 vftable
+// 或對齊改掉導致 size < 0x1F68，會立刻在編譯期被攔下；上下界一併保護。
+//   * 32-bit：vftable(4) + 8032 + uint16 + pad = 8040 = 0x1F68 (GT 預期)
+//   * x64  ：vftable(8) + 8032 + uint16 + pad = 8044，因 8-byte 對齊取 8048 = 0x1F70
+static_assert(sizeof(clTransportAniInfo) >= 0x1F68,
+              "clTransportAniInfo must be at least 0x1F68 bytes (GT operator new size)");
+static_assert(sizeof(clTransportAniInfo) <= 0x1F70,
+              "clTransportAniInfo must not exceed 0x1F70 bytes (x64 worst-case)");

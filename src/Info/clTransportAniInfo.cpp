@@ -10,7 +10,6 @@
 #include "Info/clTransportAniInfo.h"
 
 #include <cstdio>
-#include <cstdlib>
 #include <cstring>
 #include <cctype>
 
@@ -74,20 +73,11 @@ clTransportAniInfo::~clTransportAniInfo()
 // -----------------------------------------------------------------------------
 int clTransportAniInfo::Init(char* String2)
 {
+    // mofclient.c 196721-196725：兩塊 10240-byte stack buffer（Buffer / String）。
     char Delimiter[8] = {};
     std::strcpy(Delimiter, "\t\n,[]");
-
-    // GT 用 stack 上 10240 bytes 兩塊；x64 改 heap 避免 stack 浪費（與
-    // cltPetAniInfo 相同對策）。
-    const std::size_t kBuf = 10240;
-    char* Buffer = static_cast<char*>(std::malloc(kBuf));
-    char* String = static_cast<char*>(std::malloc(kBuf));
-    if (!Buffer || !String)
-    {
-        if (Buffer) std::free(Buffer);
-        if (String) std::free(String);
-        return 0;
-    }
+    char Buffer[10240];
+    char String[10240];
 
     int v16 = 0;
     int v2  = 0;
@@ -95,7 +85,7 @@ int clTransportAniInfo::Init(char* String2)
     FILE* Stream = g_clTextFileManager.fopen(String2);
     if (Stream)
     {
-        if (std::fgets(Buffer, static_cast<int>(kBuf - 1), Stream))
+        if (std::fgets(Buffer, 10239, Stream))
         {
             stTransportAniBlock* cur = nullptr;  // mofclient.c 局部 v5
             do
@@ -145,7 +135,8 @@ int clTransportAniInfo::Init(char* String2)
                     if (!v8) break;
                     // mofclient.c 196784：*((_WORD*)this + 4018) = atoi(v8)
                     m_attackKey = static_cast<std::uint16_t>(std::atoi(v8));
-                    // 不更動 cur；下方 strtok 通常會回 null 直接進 LABEL_30。
+                    // 不更動 cur；GT 不在此處檢查 cur 是否為 NULL，下方
+                    // strtok 通常會回 null 直接進 LABEL_30。
                 }
 
                 char* v9 = std::strtok(nullptr, Delimiter);
@@ -153,8 +144,6 @@ int clTransportAniInfo::Init(char* String2)
                 {
                     while (Ai_IsAlphaNumeric(v9))
                     {
-                        if (!cur) break;  // 防 ATTACK_KEY 為首行的極端 case
-
                         // resource (hex) → cur->resource[count]
                         std::sscanf(v9, "%x", &cur->resource[cur->count]);
 
@@ -184,15 +173,13 @@ int clTransportAniInfo::Init(char* String2)
                 }
             LABEL_30:
                 v16 = 1;
-            } while (std::fgets(Buffer, static_cast<int>(kBuf - 1), Stream));
+            } while (std::fgets(Buffer, 10239, Stream));
 
             v2 = v16;
         }
         g_clTextFileManager.fclose(Stream);
     }
 
-    std::free(Buffer);
-    std::free(String);
     return v2;
 }
 

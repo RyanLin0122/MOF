@@ -224,8 +224,8 @@ CSpiritSpeechMgr g_clSpiritSpeechMgr;
 cltHelpSystem g_clHelpSystem;
 CSpiritSpeechParser g_clSpiritSpeechParser;
 CSpiritGossipParser g_clSpiritGossipParser;
-clTransportKindInfo g_clTransportKindInfo;
-clClientTransportKindInfo g_clClientTransportKindInfo;
+// mofclient.c：GT 只有一個 g_clTransportKindInfo，型別為 derived clClientTransportKindInfo。
+clClientTransportKindInfo g_clTransportKindInfo;
 CEffectManager* g_pEffectManager_Before_Chr = nullptr;
 CEffectManager* g_pEffectManager_After_Chr = nullptr;
 

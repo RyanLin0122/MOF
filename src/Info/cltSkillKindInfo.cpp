@@ -144,10 +144,8 @@ uint64_t cltSkillKindInfo::GetReqClasses(cltSkillKindInfo* /*self*/, char* s)
     if (!s) return 0;
     if (ieq(s, "NONE") || ieq(s, "0")) return 0;
 
-    // strtok 會破壞字串，複製一份
-    std::string buf = s;
-    char* ctx = buf.data();
-    char* tok = std::strtok(ctx, "|");
+    // GT: strtok 直接破壞傳入字串（呼叫端傳入即為可改寫的暫存）
+    char* tok = std::strtok(s, "|");
     uint64_t mask = 0;
     while (tok) {
         uint16_t cls = cltClassKindInfo::TranslateKindCode(tok);
@@ -172,9 +170,8 @@ int cltSkillKindInfo::GetReqWeaponClasses(cltSkillKindInfo* /*self*/, char* s, u
     if (ieq(s, "NONE") || ieq(s, "0")) return 0;
 
     int cnt = 0;
-    std::string buf = s;
-    char* ctx = buf.data();
-    char* tok = std::strtok(ctx, "|");
+    // GT: strtok 直接破壞傳入字串（呼叫端傳入即為可改寫的暫存）
+    char* tok = std::strtok(s, "|");
     // 反編譯：v4 初始化為 String1（即指標位址）；若 token 不在已知清單中，
     // v4 仍會被當索引使用（這是 GT 的危險行為）。為了安全又對應實作，這裡若
     // token 無法辨識則跳過，與 GT 對於合法資料下行為一致。
@@ -523,9 +520,11 @@ int cltSkillKindInfo::Initialize_P(char* filename)
         std::string linkSkillsStr;
         if (!NextTok(tok, DELIM)) break; linkSkillsStr = tok;
 
-        // 47) 攻擊目標屬性 (+252) — '0' → -1; 否則 cltAttackAtb::GetAttackTargetAtb
+        // 47) 攻擊目標屬性 (+252)
+        // GT (mofclient.c 330900): *v92 == 48 ? -1 : cltAttackAtb::GetAttackTargetAtb(v92);
+        // GT 只判斷字串第一個字元是否為 '0'，並非整串等於 "0"。
         if (!NextTok(tok, DELIM)) break;
-        P.triggerAttackTargetAtb = (tok[0] == '0' && tok[1] == '\0')
+        P.triggerAttackTargetAtb = (tok[0] == '0')
             ? -1
             : cltAttackAtb::GetAttackTargetAtb(tok);
 
@@ -600,29 +599,32 @@ int cltSkillKindInfo::Initialize_P(char* filename)
         if (!ok) break;
 
         // ── 後處理 ──────────────────────────────────────────────────────
-        // 類別遮罩 → acquireClassMask
-        R.acquireClassMask = GetReqClasses(this, (char*)acquireClass.c_str());
+        // 類別遮罩 → acquireClassMask；GT 會原地破壞字串，傳 .data() 即可
+        R.acquireClassMask = GetReqClasses(this, acquireClass.data());
 
         // 武器旗標 → reqWeaponFlags；數量 → reqWeaponCount
-        R.reqWeaponCount = GetReqWeaponClasses(this, (char*)needWeapon.c_str(), R.reqWeaponFlags);
+        R.reqWeaponCount = GetReqWeaponClasses(this, needWeapon.data(), R.reqWeaponFlags);
 
-        // 連動技能：以 '&' 切分；GT 將 v179（uint16）以 DWORD 寫入，
-        // count 在 linkSkillCount；上限 10。GT 在 TranslateKindCode 為 0 時直接 break 整個解析。
+        // 連動技能：以 '&' 切分；GT 將 v179（uint16）以 DWORD 寫入，count 在 +244。
+        // GT 失敗條件 (mofclient.c 331198~331213)：
+        //   (1) TranslateKindCode 回 0 → inner break → 落到 outer break，整列解析失敗
+        //   (2) linkSkillCount 已達 10 仍有未處理 token → while 條件不成立 → outer break，失敗
+        // 成功路徑：以 strtok 取得 NULL 時 goto LABEL_185 (跳過 outer break)。
         if (linkSkillsStr != "0") {
-            // GT 對 String 直接呼叫 strtok（不需要複製）；這裡也維持等價
             char* link_ctx = (char*)linkSkillsStr.c_str();
             char* link_tok = std::strtok(link_ctx, "&");
-            // GT 中 linkSkillCount 初值就是 0（記錄已 memset），不需顯式設為 0
-            bool link_ok = true;
-            while (link_tok && P.linkSkillCount < 10) {
-                uint16_t link_code = TranslateKindCode(link_tok);
-                if (!link_code) { link_ok = false; break; } // GT: 失敗直接退出整個解析
-                P.linkSkills[P.linkSkillCount] = link_code;
-                ++P.linkSkillCount;
-                link_tok = std::strtok(nullptr, "&");
-                if (!link_tok) break; // GT: 跳到 LABEL_185 (繼續下一行)
+            if (link_tok) {
+                bool link_done = false;
+                while (P.linkSkillCount < 10) {
+                    uint16_t link_code = TranslateKindCode(link_tok);
+                    if (!link_code) break;                 // GT (1)
+                    P.linkSkills[P.linkSkillCount++] = link_code;
+                    link_tok = std::strtok(nullptr, "&");
+                    if (!link_tok) { link_done = true; break; }   // GT goto LABEL_185
+                }
+                if (!link_done) break;                     // GT outer break (失敗)
             }
-            if (!link_ok) break;
+            // 第一個 strtok 即為 NULL：直接落到 LABEL_185（成功）
         }
 
         ++idx;
@@ -760,10 +762,12 @@ int cltSkillKindInfo::Initialize_A(char* filename)
         if (!NextTok(tok, DELIM) || !IsDigit(tok)) break;
         R.reqLevel = static_cast<uint16_t>(std::atoi(tok));
 
-        // 34) 사운드 (16 byte 字串，含 NUL)
+        // 34) 사운드 (寫入 +148, 16 byte 字串)
+        // GT (mofclient.c 331644)：strcpy((char *)(v7 + 148), v67);
+        // GT 直接 strcpy 不檢查長度；資料檔 sound 欄位固定為短字串 (例 "S0001")
+        // 故沒有實際溢位風險。為與 GT 嚴格一致此處沿用 strcpy。
         if (!NextTok(tok, DELIM)) break;
-        std::strncpy(A.soundName, tok, sizeof(A.soundName) - 1);
-        A.soundName[sizeof(A.soundName) - 1] = '\0';
+        std::strcpy(A.soundName, tok);
 
         // 35) 원거리 여부 ("LONG"=1, 其他=0)
         if (!NextTok(tok, DELIM)) break;
@@ -933,8 +937,8 @@ int cltSkillKindInfo::Initialize_A(char* filename)
         }
 
         // ── 後處理 ──────────────────────────────────────────────────────
-        R.acquireClassMask = GetReqClasses(this, (char*)acquireClass.c_str());
-        R.reqWeaponCount   = GetReqWeaponClasses(this, (char*)needWeapon.c_str(), R.reqWeaponFlags);
+        R.acquireClassMask = GetReqClasses(this, acquireClass.data());
+        R.reqWeaponCount   = GetReqWeaponClasses(this, needWeapon.data(), R.reqWeaponFlags);
 
         ++idx;
     }

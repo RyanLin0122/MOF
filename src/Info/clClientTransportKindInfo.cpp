@@ -9,8 +9,6 @@
 #include <cstring>
 #include <windows.h>
 
-#include "global.h"   // g_clTransportKindInfo
-
 clClientTransportKindInfo::clClientTransportKindInfo()
     : clTransportKindInfo()
 {
@@ -22,9 +20,8 @@ clClientTransportKindInfo::clClientTransportKindInfo()
 
 clClientTransportKindInfo::~clClientTransportKindInfo()
 {
-    // mofclient.c 195103 scalar deleting destructor 呼叫 ~clClientTransportKindInfo
-    // 但 ~clClientTransportKindInfo 反編譯體本身只還原 vftable；Free 由外部觸發。
-    Free();
+    // mofclient.c 195103：scalar deleting destructor 呼叫 ~clClientTransportKindInfo，
+    // 但反編譯體本身只還原 vftable；cache 釋放由外部呼叫 Free() 觸發，不在 dtor 內。
 }
 
 // -----------------------------------------------------------------------------
@@ -65,10 +62,6 @@ void clClientTransportKindInfo::Free()
 //   ani = new clTransportAniInfo();  cache = ani;
 //   if (!ani->Init(info->aniFileUp)) { MessageBox; return nullptr; }
 //   return cache;
-//
-// 還原差異：本專案將 g_clTransportKindInfo（base 全域，含 m_pList）與
-// g_clClientTransportKindInfo（derived 全域，含 cache）分為兩個 globals，
-// 因此 KindInfo 改由 g_clTransportKindInfo 查詢，而非 this。
 // -----------------------------------------------------------------------------
 clTransportAniInfo* clClientTransportKindInfo::GetTransportAniInfoUp(std::uint16_t a2)
 {
@@ -76,7 +69,7 @@ clTransportAniInfo* clClientTransportKindInfo::GetTransportAniInfoUp(std::uint16
     if (cacheSlot)
         return cacheSlot;
 
-    stTransportKindInfo* info = g_clTransportKindInfo.GetTransportKindInfo(a2);
+    stTransportKindInfo* info = GetTransportKindInfo(a2);
     if (!info)
         return nullptr;
 
@@ -107,7 +100,7 @@ clTransportAniInfo* clClientTransportKindInfo::GetTransportAniInfoDown(std::uint
     if (cacheSlot)
         return cacheSlot;
 
-    stTransportKindInfo* info = g_clTransportKindInfo.GetTransportKindInfo(a2);
+    stTransportKindInfo* info = GetTransportKindInfo(a2);
     if (!info)
         return nullptr;
 

@@ -61,8 +61,8 @@ void clTransportObject::InitTransport(ClientCharacter* pOwner, CCA* pCCA, std::u
     m_pKindInfo = g_clTransportKindInfo.GetTransportKindInfo(transportKind);
     if (m_pKindInfo)
     {
-        m_pAniInfoUp = g_clClientTransportKindInfo.GetTransportAniInfoUp(transportKind);
-        m_pAniInfoDown = g_clClientTransportKindInfo.GetTransportAniInfoDown(transportKind);
+        m_pAniInfoUp = g_clTransportKindInfo.GetTransportAniInfoUp(transportKind);
+        m_pAniInfoDown = g_clTransportKindInfo.GetTransportAniInfoDown(transportKind);
         if (m_pAniInfoUp && m_pAniInfoDown)
         {
             // Ground truth: 觸發 cltMyCharData::GetMyAccount 的副作用

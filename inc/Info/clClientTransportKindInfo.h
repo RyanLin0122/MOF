@@ -10,17 +10,20 @@ class clTransportAniInfo;
 //                195181 (GetTransportAniInfoDown)
 //
 // 從 clTransportKindInfo 派生：在 ground truth 中，全域 g_clTransportKindInfo
-// 實際上是 clClientTransportKindInfo 的單一實體，base 與 derived 共用一份
-// m_pList/m_nNum；本還原版本（global.cpp）將其拆為兩個 globals：
-//   g_clTransportKindInfo         —— 解析 TransportKindInfo.txt，持有 m_pList
-//   g_clClientTransportKindInfo   —— 持有兩個動畫快取陣列（524280 bytes）
-// 因此 GetTransportAniInfoUp/Down 在查 KindInfo 時改走 g_clTransportKindInfo
-// 而非 this（見 .cpp 註解）。
+// 實際上是 clClientTransportKindInfo 的單一實體（mofclient.c 196923 / 208742 /
+// 210185），base 與 derived 共用一份 m_pList/m_nNum，而 GetTransportAniInfoUp/
+// Down 直接以 this 呼叫 base method 取 KindInfo。本還原版本同樣只保留一個
+// 全域 g_clTransportKindInfo（型別為 clClientTransportKindInfo）。
 //
-// 大小 = base 12 bytes + 兩條 0xFFFF-entry 指標陣列 × 4 bytes
-//       = 12 + 65535*4 + 65535*4 = 524292 bytes
+// 大小（GT 32-bit）= base 12 bytes + 兩條 0xFFFF-entry 指標陣列 × 4 bytes
+//                  = 12 + 65535*4 + 65535*4 = 524292 bytes
+// 大小（x64 還原）= base 24 bytes (vftable=8 + m_pList=8 + m_nNum=4 + pad=4)
+//                  + 兩條 0xFFFF-entry 指標陣列 × 8 bytes
+//                  = 24 + 65535*8 + 65535*8 = 1048584 bytes (~1MB)
+// 由於 g_clTransportKindInfo 是唯一全域實體且配置在 BSS，OS 自動 zero-fill，
+// 實際 RAM commit 量在實際初始化前不會增加。
 //
-// 反編譯佐證：
+// 反編譯佐證（GT 32-bit byte 算術；x64 改以 member 存取，offset 自動雙倍）：
 //   v2 = (char*)this + 4*a2 + 12;        ← Up cache 起點 = offset 12
 //   v2 = (char*)this + 4*a2 + 262152;    ← Down cache 起點 = 12 + 262140
 //   Free 中 v2 = 0xFFFF, do { ... } while (--v2);
