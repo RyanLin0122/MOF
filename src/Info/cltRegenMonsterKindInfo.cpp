@@ -7,9 +7,9 @@
 // 반편역 mofclient.c:329365-329380
 // 5 글자, 첫 글자 알파벳 + 4 자리 십진수, atoi(s+1) < 0x800.
 // 與 cltCharKindInfo / cltMapInfo / cltExtraRegenMonsterKindInfo 同 body。
+// GT 不檢查 s == NULL，直接 strlen — 維持 bug-for-bug。
 // ---------------------------------------------------------------------------
 uint16_t cltRegenMonsterKindInfo::TranslateKindCode(char* s) {
-    if (!s) return 0;
     if (std::strlen(s) != 5) return 0;
     const int hi = (std::toupper(static_cast<unsigned char>(s[0])) + 31) << 11;
     const uint16_t num = static_cast<uint16_t>(std::atoi(s + 1));
@@ -61,8 +61,7 @@ int cltRegenMonsterKindInfo::Initialize(char* String2) {
     if (!v3) return 0;
 
     int v18 = 0;
-    char Buffer[1024];
-    std::memset(Buffer, 0, sizeof(Buffer));
+    char Buffer[1024];   // GT 不 memset，內容未初始化（fgets 自會塞入終止符）
 
     if (std::fgets(Buffer, 1023, v3)
         && std::fgets(Buffer, 1023, v4)
@@ -239,8 +238,9 @@ uint16_t* cltRegenMonsterKindInfo::GetRegenMapIDByMonsterKind(uint16_t a2) {
 //       清為 0 後再寫入。呼叫端 (CToolTip) 以 5 次迭代讀取，會在零位停止。
 // ---------------------------------------------------------------------------
 uint16_t* cltRegenMonsterKindInfo::GetRegenMonsterKindByMapID(uint16_t a2) {
-    // 反編譯逐字：清 10 bytes (this+10..+20)。本實作多清 2 bytes 以保零終止。
-    for (int i = 0; i < 6; ++i) m_kindsOut[i] = 0;
+    // 反編譯逐字：清 10 bytes (this+10..+19)，對應 m_kindsOut[0..4] 共 5 槽。
+    // 第 6 槽 m_kindsOut[5] 由 ctor 一次性清 0，本函式不再寫入，仍可作為呼叫端的零終止哨兵。
+    for (int i = 0; i < 5; ++i) m_kindsOut[i] = 0;
 
     if (m_count <= 0) return m_kindsOut;
 
@@ -267,13 +267,12 @@ uint16_t* cltRegenMonsterKindInfo::GetRegenMonsterKindByMapID(uint16_t a2) {
             if (entryCharKind == v8) break;    // 與槽中 charKind 相同 → 跳出寫入
 
             // 比較槽中 charKind 對應的 nameTextCode。
+            // 反編譯不檢查 slotInfo == NULL，直接 deref；維持 bug-for-bug 行為。
+            // 若 GetCharKindInfo(v8) 回傳 NULL，原 binary 也會 crash — 寫入 buffer 的
+            // charKind 必定來自先前成功 lookup，理論上不會走到此分支。
             unsigned char* slotInfo =
                 reinterpret_cast<unsigned char*>(g_pcltCharKindInfo->GetCharKindInfo(v8));
-            // 反編譯不檢查 slotInfo == NULL；維持 bug-for-bug 行為時要小心 deref。
-            // 若回傳 NULL 表示 buffer 中的 charKind 不存在於 g_pcltCharKindInfo，理論上不該發生。
-            if (slotInfo) {
-                if (entryNameCode == *reinterpret_cast<uint16_t*>(slotInfo + 2)) break;
-            }
+            if (entryNameCode == *reinterpret_cast<uint16_t*>(slotInfo + 2)) break;
 
             ++v7;
             if (v7 >= 5) { skipWrite = true; break; }

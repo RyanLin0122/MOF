@@ -185,13 +185,12 @@ void cltMoFC_EquipmentInfo::Init(std::uint16_t classKind) {
     }
 
     // ===== 配置 21 個 bucket (GT 211191..211222) =============================
-    // GT 用 operator new(4 * count)；當 count==0 時 GT 仍配置一個 0-byte block。
-    // 我們用 operator new(size_t) 並在 size==0 時改配置 sizeof(void*) 以避免
-    // 某些 STL 實作對 0-byte alloc 的差異。語意上 bucket 計數仍是 0，後續不
-    // 會去寫入該 bucket，因此額外配的位元組永遠不會被讀寫。
+    // GT 用 operator new(4 * count)；count==0 時也直接呼叫 operator new(0)。
+    // C++ 標準保證 operator new(0) 回傳合法非空指標 [basic.stc.dynamic.allocation]，
+    // 不需要額外 padding；忠實對齊 GT 即可。
     for (int i = 0; i < 21; ++i) {
-        std::size_t bytes = sizeof(stItemKindInfo*) * static_cast<std::size_t>(m_wCounts[i]);
-        if (bytes == 0) bytes = sizeof(stItemKindInfo*);
+        const std::size_t bytes =
+            sizeof(stItemKindInfo*) * static_cast<std::size_t>(m_wCounts[i]);
         m_ppLists[i] = static_cast<stItemKindInfo**>(::operator new(bytes));
     }
     // 第 22 槽 m_ppLists[21] 不 alloc — GT 也沒有 *((_DWORD *)this + 22) = new。

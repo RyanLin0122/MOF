@@ -1,5 +1,5 @@
-#include "Logic/clClientTransportKindInfo.h"
-#include "Logic/clTransportAniInfo.h"
+#include "Info/clClientTransportKindInfo.h"
+#include "Info/clTransportAniInfo.h"
 clTransportAniInfo* clClientTransportKindInfo::GetTransportAniInfoUp(std::uint16_t transportKind) {
     static clTransportAniInfo info;
     (void)transportKind;

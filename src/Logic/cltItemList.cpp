@@ -6,7 +6,7 @@
 
 #include "Network/CMofMsg.h"
 #include "Logic/cltBaseInventory.h"
-#include "Logic/cltShopInfo.h"
+#include "Info/cltShopInfo.h"
 #include "Info/cltItemKindInfo.h"
 
 cltShopInfo* cltItemList::m_pclShopInfo = nullptr;

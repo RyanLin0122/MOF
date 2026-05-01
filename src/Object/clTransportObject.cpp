@@ -3,9 +3,9 @@
 #include "Image/GameImage.h"
 #include "Character/CCA.h"
 #include "Character/ClientCharacter.h"
-#include "Logic/clTransportKindInfo.h"
-#include "Logic/clClientTransportKindInfo.h"
-#include "Logic/clTransportAniInfo.h"
+#include "Info/clTransportKindInfo.h"
+#include "Info/clClientTransportKindInfo.h"
+#include "Info/clTransportAniInfo.h"
 #include "Character/cltMyCharData.h"
 #include "global.h"
 #include <cmath>

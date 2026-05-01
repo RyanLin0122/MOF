@@ -758,7 +758,7 @@ void CToolTip::ProcessWorldMap(int mode)
                             goto NEXT_QUEST;
 
                         const char* mapName2 = g_DCTTextManager.GetText(npcMap->m_wFileName);
-                        const char* npcName2 = g_DCTTextManager.GetText(fallbackNpc->m_wNameCode);
+                        const char* npcName2 = g_DCTTextManager.GetText(fallbackNpc->m_wNameTextID);
                         sprintf(Buffer, "%s(%s)", npcName2, mapName2);
                         m_worldMapText[m_nWorldMapTextCount].m_TextColor = 0xFFFFFF00;
                         m_worldMapText[m_nWorldMapTextCount].SetText(Buffer);
@@ -799,10 +799,10 @@ void CToolTip::ProcessWorldMap(int mode)
                     {
                         // Special: 4 NPC loop (N0016~N0019)
                         uint16_t npcIds[4];
-                        npcIds[0] = g_clNPCInfo.GetNPCInfoByID(cltNPCInfo::TranslateKindCode("N0016"))->m_wKind;
-                        npcIds[1] = g_clNPCInfo.GetNPCInfoByID(cltNPCInfo::TranslateKindCode("N0017"))->m_wKind;
-                        npcIds[2] = g_clNPCInfo.GetNPCInfoByID(cltNPCInfo::TranslateKindCode("N0018"))->m_wKind;
-                        npcIds[3] = g_clNPCInfo.GetNPCInfoByID(cltNPCInfo::TranslateKindCode("N0019"))->m_wKind;
+                        npcIds[0] = g_clNPCInfo.GetNPCInfoByID(cltNPCInfo::TranslateKindCode("N0016"))->m_wKindCode;
+                        npcIds[1] = g_clNPCInfo.GetNPCInfoByID(cltNPCInfo::TranslateKindCode("N0017"))->m_wKindCode;
+                        npcIds[2] = g_clNPCInfo.GetNPCInfoByID(cltNPCInfo::TranslateKindCode("N0018"))->m_wKindCode;
+                        npcIds[3] = g_clNPCInfo.GetNPCInfoByID(cltNPCInfo::TranslateKindCode("N0019"))->m_wKindCode;
 
                         for (int n = 0; n < 4; ++n)
                         {
@@ -818,7 +818,7 @@ void CToolTip::ProcessWorldMap(int mode)
                                 continue;
 
                             const char* loopMapName = g_DCTTextManager.GetText(loopMap->m_wFileName);
-                            const char* loopNpcName = g_DCTTextManager.GetText(loopNpc->m_wNameCode);
+                            const char* loopNpcName = g_DCTTextManager.GetText(loopNpc->m_wNameTextID);
                             sprintf(Buffer2, "%s(%s)", loopNpcName, loopMapName);
                             m_worldMapText[m_nWorldMapTextCount].m_TextColor = 0xFFFFFF00;
                             m_worldMapText[m_nWorldMapTextCount].SetText(Buffer2);
@@ -850,7 +850,7 @@ void CToolTip::ProcessWorldMap(int mode)
 
                     {
                         const char* mapNameStr = g_DCTTextManager.GetText(npcMap->m_wFileName);
-                        const char* npcNameStr = g_DCTTextManager.GetText(npc->m_wNameCode);
+                        const char* npcNameStr = g_DCTTextManager.GetText(npc->m_wNameTextID);
                         sprintf(Buffer2, "%s(%s)", npcNameStr, mapNameStr);
                         m_worldMapText[m_nWorldMapTextCount].m_TextColor = 0xFFFFFF00;
                         m_worldMapText[m_nWorldMapTextCount].SetText(Buffer2);

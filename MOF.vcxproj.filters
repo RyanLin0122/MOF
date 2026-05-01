@@ -729,7 +729,7 @@
     <ClCompile Include="src\System\cltUsingItemSystem.cpp">
       <Filter>來源檔案</Filter>
     </ClCompile>
-    <ClCompile Include="src\Logic\cltLogicCompatibility.cpp">
+    <ClCompile Include="src\Info\cltShopInfo.cpp">
       <Filter>來源檔案</Filter>
     </ClCompile>
     <ClCompile Include="src\Logic\CShortKey.cpp">
@@ -957,7 +957,7 @@
     <ClCompile Include="src\Info\cltDropItemKindInfo.cpp">
       <Filter>來源檔案</Filter>
     </ClCompile>
-    <ClCompile Include="src\Logic\clClientTransportKindInfo.cpp">
+    <ClCompile Include="src\Info\clClientTransportKindInfo.cpp">
       <Filter>來源檔案</Filter>
     </ClCompile>
     <ClCompile Include="src\Logic\cltMapTitle.cpp">
@@ -975,10 +975,10 @@
     <ClCompile Include="src\Logic\cltPKFlagManager.cpp">
       <Filter>來源檔案</Filter>
     </ClCompile>
-    <ClCompile Include="src\Logic\clTransportAniInfo.cpp">
+    <ClCompile Include="src\Info\clTransportAniInfo.cpp">
       <Filter>來源檔案</Filter>
     </ClCompile>
-    <ClCompile Include="src\Logic\clTransportKindInfo.cpp">
+    <ClCompile Include="src\Info\clTransportKindInfo.cpp">
       <Filter>來源檔案</Filter>
     </ClCompile>
     <ClCompile Include="src\Logic\CSpiritSpeechMgr.cpp">
@@ -1871,7 +1871,7 @@
     <ClInclude Include="inc\System\cltQuickSlotSystem.h">
       <Filter>標頭檔</Filter>
     </ClInclude>
-    <ClInclude Include="inc\Logic\cltShopInfo.h">
+    <ClInclude Include="inc\Info\cltShopInfo.h">
       <Filter>標頭檔</Filter>
     </ClInclude>
     <ClInclude Include="inc\System\cltUsingItemSystem.h">
@@ -2081,7 +2081,7 @@
     <ClInclude Include="inc\Info\cltDropItemKindInfo.h">
       <Filter>標頭檔</Filter>
     </ClInclude>
-    <ClInclude Include="inc\Logic\clClientTransportKindInfo.h">
+    <ClInclude Include="inc\Info\clClientTransportKindInfo.h">
       <Filter>標頭檔</Filter>
     </ClInclude>
     <ClInclude Include="inc\Logic\cltMapTitle.h">
@@ -2099,10 +2099,10 @@
     <ClInclude Include="inc\Logic\cltPKFlagManager.h">
       <Filter>標頭檔</Filter>
     </ClInclude>
-    <ClInclude Include="inc\Logic\clTransportAniInfo.h">
+    <ClInclude Include="inc\Info\clTransportAniInfo.h">
       <Filter>標頭檔</Filter>
     </ClInclude>
-    <ClInclude Include="inc\Logic\clTransportKindInfo.h">
+    <ClInclude Include="inc\Info\clTransportKindInfo.h">
       <Filter>標頭檔</Filter>
     </ClInclude>
     <ClInclude Include="inc\Logic\CSpiritSpeechMgr.h">

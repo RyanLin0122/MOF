@@ -60,8 +60,8 @@
 #include "Logic/SpiritSpeechParser.h"
 #include "Logic/SpiritGossipParser.h"
 #include "Info/cltQuestKindInfo.h"
-#include "Logic/clTransportKindInfo.h"
-#include "Logic/clClientTransportKindInfo.h"
+#include "Info/clTransportKindInfo.h"
+#include "Info/clClientTransportKindInfo.h"
 #include "Character/cltMyCharData.h"
 #include "Logic/cltSystemMessage.h"
 #include "UI/CUITutorial.h"
@@ -72,6 +72,7 @@
 #include "Effect/CEffectManager.h"
 #include "Image/CDeviceManager.h"
 #include "Logic/cltCashShopItem.h"
+#include "Info/cltShopInfo.h"
 #include "System/cltBasicAppearSystem.h"
 #include "Logic/cltChattingMgr.h"
 #include "UI/CControlAlphaBox.h"
@@ -191,6 +192,7 @@ cltClassKindInfo g_clClassKindInfo;
 cltItemKindInfo g_clItemKindInfo;
 cltNPCInfo g_clNPCInfo;
 cltQuestKindInfo g_clQuestKindInfo;
+cltShopInfo g_clShopInfo;
 CSpiritSystem g_clSpiritSystem;
 cltQuestSystem g_clQuestSystem;
 CMeritoriousSystem g_clMeritoriousSystem;

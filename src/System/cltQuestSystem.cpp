@@ -1153,10 +1153,10 @@ char cltQuestSystem::GetNPCIDByLevel(std::uint8_t level, std::uint16_t* outNPCID
         stNPCInfo* pNPC = m_pclNPCInfo->GetNPCInfoByIndex(i);
         if (!pNPC)
             continue;
-        if (pNPC->_field_192)
+        if (pNPC->m_dwIsTestField)
             continue;
-        if (CanShowQuestAcceptMark(pNPC->m_wKind)) {
-            outNPCIDs[static_cast<std::uint8_t>(count)] = pNPC->m_wKind;
+        if (CanShowQuestAcceptMark(pNPC->m_wKindCode)) {
+            outNPCIDs[static_cast<std::uint8_t>(count)] = pNPC->m_wKindCode;
             count++;
         }
     }

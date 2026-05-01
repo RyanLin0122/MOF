@@ -1,4 +1,4 @@
-#include "Logic/clTransportAniInfo.h"
+#include "Info/clTransportAniInfo.h"
 void clTransportAniInfo::GetFrameInfo(unsigned int action, std::uint16_t curFrame, unsigned int* outRes, std::uint16_t* outFrame) {
     if (outRes) *outRes = action;
     if (outFrame) *outFrame = curFrame;

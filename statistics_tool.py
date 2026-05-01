@@ -24,6 +24,7 @@ FORCE_MISSING_CLASSES = [
     "CUIManager",
     "CUITutorial",
     "cltWorkingPassiveSkillSystem",
+    "cltSkillKindInfo",
     "clClientTransportKindInfo",
     "clTransportAnilInfo",
     "clTransportKindInfo",
@@ -39,18 +40,14 @@ FORCE_MISSING_CLASSES = [
     "CUIMessageBoxMultLineOKLarge",
     "CUIWorldMap",
     "CMessageBoxManager",
-    "cltShopInfo",
     "CQuizEventParser",
     "XJoyStick",
     "cltSystemMessage",
-    "cltSkillKindInfo",
-    "cltRegenMonsterKindInfo",
     "DCTAbuseWordManager",
     "CInterfaceDataCommunity",
     "CUITradeUser",
     "CUICircle",
-    "CUIMenu",
-    "cltMoFC_EquipmentInfo"
+    "CUIMenu"
 ]
 
 # 例外清單：放 class 名稱字串，這些 class 會被跳過

@@ -130,8 +130,8 @@ char* CSpiritQuestSpeech::CheckCompleteQuest()
             {
                 stNPCInfo* npcInfo = g_clNPCInfo.GetNPCInfoByID(npcId);
 
-                // NPC name is at byte offset 4 in stNPCInfo (low 16 bits of _reserved[0])
-                std::uint16_t npcNameCode = static_cast<std::uint16_t>(npcInfo->_reserved[0]);
+                // NPC name text id at offset 4
+                std::uint16_t npcNameCode = npcInfo->m_wNameTextID;
                 char* npcName = g_DCTTextManager.GetText(npcNameCode);
 
                 std::uint16_t mapNameCode = g_clNPCManager.GetMapName(npcId);

@@ -269,6 +269,10 @@ extern cltItemKindInfo          g_clItemKindInfo;
 extern cltNPCInfo               g_clNPCInfo;
 extern cltQuestKindInfo         g_clQuestKindInfo;
 
+// Logic — 商店資訊（cltShopInfo），mofclient.c 0x?? g_clShopInfo
+class cltShopInfo;
+extern cltShopInfo              g_clShopInfo;
+
 // System
 extern CSpiritSystem            g_clSpiritSystem;
 extern cltQuestSystem           g_clQuestSystem;

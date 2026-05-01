@@ -36,7 +36,8 @@ unsigned int cltNPCRecallSystem::CanUseNPCRecall(std::uint16_t mapKind, std::uin
 
     for (int i = 0; i < totalNPC; ++i) {
         stNPCInfo* info = m_pclNPCInfo->GetNPCInfoByIndex(i);
-        if (info && info->m_wKind == npcKind && info->m_dwNoRecall != 1) {
+        // GT mofclient.c:318088: *((_DWORD*)v7 + 47) != 1  (byte offset 188 = m_dwSummonTime)
+        if (info && info->m_wKindCode == npcKind && info->m_dwSummonTime != 1) {
             return 1601;
         }
     }
