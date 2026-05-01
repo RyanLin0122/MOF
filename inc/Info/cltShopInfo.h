@@ -99,7 +99,9 @@ static_assert(sizeof(strPackageShopInfo) == 404, "strPackageShopInfo must be 404
 class cltShopInfo {
 public:
     cltShopInfo();
-    ~cltShopInfo();
+    // GT: ~cltShopInfo 為編譯器自動產生的空解構子 (不呼叫 Free)。
+    //     程式生命週期內由外部代碼自行呼叫 Free；exit 時 OS 收回記憶體。
+    ~cltShopInfo() = default;
 
     // 主初始化：依序呼叫 Initialize_Shop(shopFile)；若成功再呼叫 Initialize_PackageShop(packageFile)。
     // 返回 1 = 雙方均成功，0 = 失敗。

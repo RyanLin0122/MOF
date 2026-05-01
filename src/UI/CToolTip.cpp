@@ -2190,7 +2190,7 @@ void CToolTip::SetVoidIndex(int from, int to)
 void CToolTip::PrintReqWeaponForSkill(stSkillKindInfo* pSkill, int checkEquipped)
 {
     uint16_t equipSubType = 0;
-    const int reqWeaponCount = *reinterpret_cast<uint32_t*>(pSkill->raw + 88);
+    const int reqWeaponCount = static_cast<int>(pSkill->reqWeaponCount);
     if (reqWeaponCount)
     {
         SetVoidIndex(m_nIndexCount + 1, m_nIndexCount + reqWeaponCount);
@@ -2211,7 +2211,7 @@ void CToolTip::PrintReqWeaponForSkill(stSkillKindInfo* pSkill, int checkEquipped
             // ground truth: 先掃描所有 15 種武器，判斷是否有任何一種匹配裝備
             for (int i = 0; i < 15; ++i)
             {
-                if (pSkill->raw[72 + i] && (i == equipMainType || i == equipSubType))
+                if (pSkill->reqWeaponFlags[i] && (i == equipMainType || i == equipSubType))
                 {
                     satisfied = 1;
                     break;
@@ -2222,7 +2222,7 @@ void CToolTip::PrintReqWeaponForSkill(stSkillKindInfo* pSkill, int checkEquipped
         // ground truth: 再用 satisfied flag 決定所有武器項目的統一顏色
         for (int i = 0; i < 15; ++i)
         {
-            if (pSkill->raw[72 + i])
+            if (pSkill->reqWeaponFlags[i])
             {
                 unsigned int color;
                 if (!checkEquipped || satisfied)

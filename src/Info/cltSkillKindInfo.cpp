@@ -6,18 +6,25 @@
 cltClassKindInfo* cltSkillKindInfo::m_pclClassKindInfo = nullptr;
 
 // ──────────────────────────────────────────────────────────────────────────
-// 小工具
+// 小工具（與 mofclient.c 內 IsDigit/IsAlphaNumeric 行為一致）
 // ──────────────────────────────────────────────────────────────────────────
-bool cltSkillKindInfo::IsDigits(const char* s) {
-    if (!s || !*s) return false;
-    for (const unsigned char* p = (const unsigned char*)s; *p; ++p)
-        if (!std::isdigit(*p)) return false;
+bool cltSkillKindInfo::IsDigit(const char* s) {
+    // 反編譯：空字串回 true；首字可為 '+' 或 '-' 一次；其餘必須全為 0-9
+    if (!s) return false;
+    if (!*s) return true;
+    const char* p = s;
+    if (*p == '+' || *p == '-') ++p;
+    while (*p) {
+        if (!std::isdigit(static_cast<unsigned char>(*p))) return false;
+        ++p;
+    }
     return true;
 }
-bool cltSkillKindInfo::IsHexLike(const char* s) {
-    if (!s || !*s) return false;
+bool cltSkillKindInfo::IsAlphaNumeric(const char* s) {
+    if (!s) return false;
+    if (!*s) return true;
     for (const unsigned char* p = (const unsigned char*)s; *p; ++p)
-        if (!std::isxdigit(*p)) return false;
+        if (!std::isalnum(*p)) return false;
     return true;
 }
 bool cltSkillKindInfo::NextTok(char*& out, const char* delims) {
@@ -82,7 +89,7 @@ int cltSkillKindInfo::GetWorkingType(const char* s)
     if (ieq(s, "HITTED_ONCE"))     return 3;
     if (ieq(s, "HITTED_SUSTAIN"))  return 4;
     if (ieq(s, "USESKILL_ONCE"))   return 5;
-    // 位元技巧的同義：其他→6；"USESKILL_SUSTAIN"→6
+    // 其他/USESKILL_SUSTAIN → 6
     return 6;
 }
 uint8_t cltSkillKindInfo::GetActiveEffectType(const char* s)
@@ -107,7 +114,7 @@ uint8_t cltSkillKindInfo::GetActiveEffectType(const char* s)
 uint8_t cltSkillKindInfo::GetActiveEffectType(uint16_t code)
 {
     stSkillKindInfo* rec = GetSkillKindInfo_A(code);
-    return rec ? rec->raw[112] : 0;
+    return rec ? rec->u.active.effectType : 0;
 }
 int cltSkillKindInfo::GetSkillClass(const char* s)
 {
@@ -116,12 +123,12 @@ int cltSkillKindInfo::GetSkillClass(const char* s)
 #else
     auto ieq = [](const char* a, const char* b) { return strcasecmp(a, b) == 0; };
 #endif
-    // 反編譯分支：SWORD=0, BOW=1, THEOLOGY=2, MAGIC=3, SPECIALTY=4
+    // SWORD=0, BOW=1, THEOLOGY=2, MAGIC=3, SPECIALTY/其他=4
     if (ieq(s, "SWORD"))     return 0;
     if (ieq(s, "BOW"))       return 1;
     if (ieq(s, "THEOLOGY"))  return 2;
     if (ieq(s, "MAGIC"))     return 3;
-    return 4; // SPECIALTY 與其他皆落到此
+    return 4;
 }
 
 // ──────────────────────────────────────────────────────────────────────────
@@ -146,8 +153,7 @@ uint64_t cltSkillKindInfo::GetReqClasses(cltSkillKindInfo* /*self*/, char* s)
         uint16_t cls = cltClassKindInfo::TranslateKindCode(tok);
         strClassKindInfo* info = m_pclClassKindInfo->GetClassKindInfo(cls);
         if (info) {
-            // 反編譯在某些地方以 DWORD[2] 讀，也以 QWORD 讀
-            // 這裡以 QWORD 讀取 +8 位移（等價 *((_QWORD*)info + 1)）
+            // 反編譯以兩個 DWORD 個別 OR 累加；等價於以 QWORD 讀取 +8 後 OR
             const uint64_t* q = reinterpret_cast<const uint64_t*>((const uint8_t*)info + 8);
             mask |= *q;
         }
@@ -155,7 +161,7 @@ uint64_t cltSkillKindInfo::GetReqClasses(cltSkillKindInfo* /*self*/, char* s)
     }
     return mask;
 }
-int cltSkillKindInfo::GetReqWeaponClasses(cltSkillKindInfo* /*self*/, char* s, uint8_t* const flags)
+int cltSkillKindInfo::GetReqWeaponClasses(cltSkillKindInfo* /*self*/, char* s, uint8_t* flags)
 {
 #ifdef _WIN32
     auto ieq = [](const char* a, const char* b) { return _stricmp(a, b) == 0; };
@@ -169,6 +175,9 @@ int cltSkillKindInfo::GetReqWeaponClasses(cltSkillKindInfo* /*self*/, char* s, u
     std::string buf = s;
     char* ctx = buf.data();
     char* tok = std::strtok(ctx, "|");
+    // 反編譯：v4 初始化為 String1（即指標位址）；若 token 不在已知清單中，
+    // v4 仍會被當索引使用（這是 GT 的危險行為）。為了安全又對應實作，這裡若
+    // token 無法辨識則跳過，與 GT 對於合法資料下行為一致。
     while (tok) {
         int idx = -1;
         if (ieq(tok, "LONG_SWORD"))      idx = 1;
@@ -186,7 +195,8 @@ int cltSkillKindInfo::GetReqWeaponClasses(cltSkillKindInfo* /*self*/, char* s, u
         else if (ieq(tok, "HOLYCROSS"))  idx = 13;
         else if (ieq(tok, "SHIELD"))     idx = 14;
 
-        if (idx >= 0) { flags[idx] = 1; ++cnt; }
+        if (idx >= 0) { flags[idx] = 1; }
+        ++cnt;  // GT 不論 token 是否辨識皆累加 v8
         tok = std::strtok(nullptr, "|");
     }
     return cnt;
@@ -206,7 +216,7 @@ stSkillKindInfo* cltSkillKindInfo::GetSkillKindInfo_A(uint16_t code) {
 }
 char* cltSkillKindInfo::UseSkillSound(uint16_t code) {
     stSkillKindInfo* r = GetSkillKindInfo(code);
-    return r ? reinterpret_cast<char*>(r->raw + 148) : nullptr;
+    return r ? r->u.active.soundName : nullptr;
 }
 
 // ──────────────────────────────────────────────────────────────────────────
@@ -217,40 +227,39 @@ uint16_t cltSkillKindInfo::GetSkillLevel(uint16_t code)
     uint16_t level = 1;
     stSkillKindInfo* r = GetSkillKindInfo(code);
     if (!r) return 0;
-    // 依「上一級技能碼」（+70）一路往回追
-    uint16_t prev_code = *reinterpret_cast<uint16_t*>(r->raw + 70);
+    // 依「上一級技能碼」(prevSkillCode @ +70) 一路往回追
+    uint16_t prev_code = r->prevSkillCode;
     while (prev_code != 0) {
         stSkillKindInfo* prev_rec = GetSkillKindInfo(prev_code);
         if (!prev_rec) break;
         ++level;
-        prev_code = *reinterpret_cast<uint16_t*>(prev_rec->raw + 70);
+        prev_code = prev_rec->prevSkillCode;
     }
     return level;
 }
 int cltSkillKindInfo::IsLastLevelSkill(uint16_t code)
 {
-    // 在 P/A 陣列中檢查是否存在「上一級=code」的記錄，若有則非最後一級
+    // 反編譯：先掃 P 表 prevSkillCode，若有等於 code 則 return 0；
+    //         否則掃 A 表 prevSkillCode，若有等於 code 則 return 0；皆無則 return 1。
     for (const auto& r : m_passive) {
-        if (*reinterpret_cast<const uint16_t*>(r.raw + 70) == code) return 0;
+        if (r.prevSkillCode == code) return 0;
     }
     for (const auto& r : m_active) {
-        if (*reinterpret_cast<const uint16_t*>(r.raw + 70) == code) return 0;
+        if (r.prevSkillCode == code) return 0;
     }
     return 1;
 }
 
 // ──────────────────────────────────────────────────────────────────────────
-// (005945E0) cltSkillKindInfo::IsCircleSkillKind
-//   GT：
-//     result = cltSkillKindInfo::GetSkillKindInfo_P(this, code);
-//     if (result) result = (*((DWORD*)result + 64) != 0);  // 偏移 +256
-//     return result;
+// IsCircleSkillKind  (005945E0)
+//   GT：result = GetSkillKindInfo_P(this, code);
+//       if (result) result = (passive.durationMin != 0);  // 偏移 +256
 // ──────────────────────────────────────────────────────────────────────────
 int cltSkillKindInfo::IsCircleSkillKind(cltSkillKindInfo* self, uint16_t code)
 {
     stSkillKindInfo* result = self->GetSkillKindInfo_P(code);
     if (!result) return 0;
-    return *reinterpret_cast<const uint32_t*>(result->raw + 256) != 0 ? 1 : 0;
+    return result->u.passive.durationMin != 0 ? 1 : 0;
 }
 
 // ──────────────────────────────────────────────────────────────────────────
@@ -301,10 +310,9 @@ int cltSkillKindInfo::GetClassActiveSkill(uint16_t startClass, uint16_t* out)
         // 取 class 遮罩（QWORD，在 +8）
         uint64_t clsMask = *reinterpret_cast<const uint64_t*>((const uint8_t*)cur + 8);
         for (const auto& r : m_active) {
-            if (*reinterpret_cast<const uint16_t*>(r.raw + 70) == 0) { // 非升級鏈（前置為 0）
-                uint64_t skillMask = *reinterpret_cast<const uint64_t*>(r.raw + 40);
-                if ((clsMask & skillMask) != 0) {
-                    out[outN++] = *reinterpret_cast<const uint16_t*>(r.raw + 0);
+            if (r.prevSkillCode == 0) { // 非升級鏈（前置為 0）
+                if ((clsMask & r.acquireClassMask) != 0) {
+                    out[outN++] = r.skillCode;
                 }
             }
         }
@@ -320,10 +328,9 @@ int cltSkillKindInfo::GetClassPassiveSkill(uint16_t startClass, uint16_t* out)
     {
         uint64_t clsMask = *reinterpret_cast<const uint64_t*>((const uint8_t*)cur + 8);
         for (const auto& r : m_passive) {
-            if (*reinterpret_cast<const uint16_t*>(r.raw + 70) == 0) {
-                uint64_t skillMask = *reinterpret_cast<const uint64_t*>(r.raw + 40);
-                if ((clsMask & skillMask) != 0) {
-                    out[outN++] = *reinterpret_cast<const uint16_t*>(r.raw + 0);
+            if (r.prevSkillCode == 0) {
+                if ((clsMask & r.acquireClassMask) != 0) {
+                    out[outN++] = r.skillCode;
                 }
             }
         }
@@ -333,40 +340,39 @@ int cltSkillKindInfo::GetClassPassiveSkill(uint16_t startClass, uint16_t* out)
 
 // ──────────────────────────────────────────────────────────────────────────
 // 主要初始化（P→A），並建立索引與等級
+//   反編譯：先 Initialize_P，再 Initialize_A，再以 skillCode 為 key 建立 m_idx，
+//           最後將 skillLevel 填入 GetSkillLevel 結果。
 // ──────────────────────────────────────────────────────────────────────────
 int cltSkillKindInfo::Initialize(char* pfile, char* afile)
 {
     if (!Initialize_P(pfile)) return 0;
     if (!Initialize_A(afile)) return 0;
 
-    // 檢查並建立索引：每一筆的 +0（技能碼）放入 m_idx[code]
+    // 建立索引：每一筆的 skillCode 放入 m_idx[code]
     for (auto& r : m_passive) {
-        uint16_t code = *reinterpret_cast<const uint16_t*>(r.raw + 0);
-        if (code == 0xFFFF) return 0;
-        if (m_idx[code])     return 0; // 重複的 Code
-        m_idx[code] = &r;
+        if (r.skillCode == 0xFFFF) return 0;
+        if (m_idx[r.skillCode])    return 0; // 重複的 Code
+        m_idx[r.skillCode] = &r;
     }
     for (auto& r : m_active) {
-        uint16_t code = *reinterpret_cast<const uint16_t*>(r.raw + 0);
-        if (code == 0xFFFF) return 0;
-        if (m_idx[code])     return 0; // 重複的 Code
-        m_idx[code] = &r;
+        if (r.skillCode == 0xFFFF) return 0;
+        if (m_idx[r.skillCode])    return 0;
+        m_idx[r.skillCode] = &r;
     }
 
-    // 回寫每筆的 +32 = 等級（沿鏈條追上去）
+    // 回寫每筆的 skillLevel = 等級（沿鏈條追上去）
     for (auto& r : m_passive) {
-        uint16_t code = *reinterpret_cast<uint16_t*>(r.raw + 0);
-        r.raw[32] = static_cast<uint8_t>(GetSkillLevel(code));
+        r.skillLevel = static_cast<uint8_t>(GetSkillLevel(r.skillCode));
     }
     for (auto& r : m_active) {
-        uint16_t code = *reinterpret_cast<uint16_t*>(r.raw + 0);
-        r.raw[32] = static_cast<uint8_t>(GetSkillLevel(code));
+        r.skillLevel = static_cast<uint8_t>(GetSkillLevel(r.skillCode));
     }
     return 1;
 }
 
 // ──────────────────────────────────────────────────────────────────────────
-// 逐檔初始化：被動（p_skillinfo.txt）
+// 逐檔初始化：被動（p_skillinfo.txt）共 93 欄
+// 解析順序與型別嚴格對應 GT (mofclient.c: 005913B0)
 // ──────────────────────────────────────────────────────────────────────────
 int cltSkillKindInfo::Initialize_P(char* filename)
 {
@@ -374,162 +380,262 @@ int cltSkillKindInfo::Initialize_P(char* filename)
     if (!fp) return 0;
 
     char line[4096]; const char* DELIM = "\t\n";
-    // Skip 3 header lines
+    // 跳過 3 行表頭
     for (int i = 0; i < 3; ++i) {
         if (!std::fgets(line, sizeof(line), fp)) {
             g_clTextFileManager.fclose(fp); return 0;
         }
     }
 
+    // 計算實際資料列數，並一次配置
     fpos_t pos; std::fgetpos(fp, &pos);
     size_t count = 0; while (std::fgets(line, sizeof(line), fp)) ++count;
     m_passive.assign(count, stSkillKindInfo{});
     std::fsetpos(fp, &pos);
 
+    int success = 0;       // GT v183：成功旗標
     size_t idx = 0;
     while (std::fgets(line, sizeof(line), fp)) {
+        // GT 在每一行內以一個 while(1) 包裹解析；任一檢查失敗即 break 結束整個函式。
         char* tok = std::strtok(line, DELIM);
-        if (!tok) continue; // 空行
+        if (!tok) break;
 
+        if (idx >= count) break;
         stSkillKindInfo& R = m_passive[idx];
-        std::memset(R.raw, 0, sizeof(R.raw)); //確保每次都是乾淨的
-
-        auto W_U16 = [&](int offset, uint16_t val) { *reinterpret_cast<uint16_t*>(R.raw + offset) = val; };
-        auto W_U32 = [&](int offset, uint32_t val) { *reinterpret_cast<uint32_t*>(R.raw + offset) = val; };
+        std::memset(&R, 0, sizeof(R));
+        auto& P = R.u.passive;
 
         // 1) ID
-        uint16_t code = TranslateKindCode(tok); W_U16(0, code);
-        if (!code || !IsPassiveSkill(code)) { g_clTextFileManager.fclose(fp); return 0; }
+        R.skillCode = TranslateKindCode(tok);
+        if (!R.skillCode || !IsPassiveSkill(R.skillCode)) break;
 
-        // 2) 초기ID
-        if (!NextTok(tok, DELIM)) break; W_U16(2, TranslateKindCode(tok));
+        // 2) 초기 ID
+        if (!NextTok(tok, DELIM)) break;
+        R.initialSkillCode = TranslateKindCode(tok);
+        if (!R.initialSkillCode) break;
 
-        // 3) 이름（略）
+        // 3) 이름（略過）
         if (!NextTok(tok, DELIM)) break;
 
         // 4) 이름 코드
-        if (!NextTok(tok, DELIM) || !IsDigits(tok)) break; W_U16(4, std::atoi(tok));
+        if (!NextTok(tok, DELIM) || !IsDigit(tok)) break;
+        R.nameCode = static_cast<uint16_t>(std::atoi(tok));
 
-        // 5) 圖標ID
-        if (!NextTok(tok, DELIM) || !IsHexLike(tok)) break; W_U32(8, std::strtoul(tok, nullptr, 16));
+        // 5) 圖標 ID (hex)
+        if (!NextTok(tok, DELIM) || !IsAlphaNumeric(tok)) break;
+        R.iconID = std::strtoul(tok, nullptr, 16);
 
         // 6) 圖標區塊
-        if (!NextTok(tok, DELIM) || !IsDigits(tok)) break; W_U16(12, std::atoi(tok));
+        if (!NextTok(tok, DELIM) || !IsDigit(tok)) break;
+        R.iconBlock = static_cast<uint16_t>(std::atoi(tok));
 
-        // 7) 小圖ID
-        if (!NextTok(tok, DELIM) || !IsHexLike(tok)) break; W_U32(16, std::strtoul(tok, nullptr, 16));
+        // 7) 小圖 ID (hex)
+        if (!NextTok(tok, DELIM) || !IsAlphaNumeric(tok)) break;
+        R.smallIconID = std::strtoul(tok, nullptr, 16);
 
         // 8) 小圖區塊
-        if (!NextTok(tok, DELIM) || !IsDigits(tok)) break; W_U16(20, std::atoi(tok));
+        if (!NextTok(tok, DELIM) || !IsDigit(tok)) break;
+        R.smallIconBlock = static_cast<uint16_t>(std::atoi(tok));
 
         // 9) 상위 스킬 코드
-        if (!NextTok(tok, DELIM)) break; W_U16(70, TranslateKindCode(tok));
+        if (!NextTok(tok, DELIM)) break;
+        R.prevSkillCode = TranslateKindCode(tok);
 
         // 10) 스킬 설명
-        if (!NextTok(tok, DELIM) || !IsDigits(tok)) break; W_U16(6, std::atoi(tok)); // 根據反編譯碼，這裡是說明碼，對應到+6
+        if (!NextTok(tok, DELIM) || !IsDigit(tok)) break;
+        R.descCode = static_cast<uint16_t>(std::atoi(tok));
 
         // 11) 스킬 짧은 설명
-        if (!NextTok(tok, DELIM) || !IsDigits(tok)) break; W_U16(112, std::atoi(tok)); // 根據反編譯碼，這裡是短說明碼，對應到+112
+        if (!NextTok(tok, DELIM) || !IsDigit(tok)) break;
+        P.shortDescCode = static_cast<uint16_t>(std::atoi(tok));
 
         // 12) 스킬 구매 타입
-        if (!NextTok(tok, DELIM)) break; W_U32(48, GetSkillClass(tok));
+        if (!NextTok(tok, DELIM)) break;
+        R.skillBuyClass = GetSkillClass(tok);
 
-        // 13~16) 四系點數
-        for (int ofs = 52; ofs <= 64; ofs += 4) {
-            if (!NextTok(tok, DELIM) || !IsDigits(tok)) goto parse_error;
-            W_U32(ofs, std::atoi(tok));
-        }
+        // 13~16) 4 系點數
+        if (!NextTok(tok, DELIM) || !IsDigit(tok)) break; R.needFigPt = std::atoi(tok);
+        if (!NextTok(tok, DELIM) || !IsDigit(tok)) break; R.needArcPt = std::atoi(tok);
+        if (!NextTok(tok, DELIM) || !IsDigit(tok)) break; R.needMagPt = std::atoi(tok);
+        if (!NextTok(tok, DELIM) || !IsDigit(tok)) break; R.needPriPt = std::atoi(tok);
 
-        // 17) 使用時必要武器
+        // 17) 사용시 필요 무기
         std::string needWeapon;
         if (!NextTok(tok, DELIM)) break; needWeapon = tok;
 
-        // 18~21)
-        if (!NextTok(tok, DELIM) || !IsDigits(tok)) break; W_U16(114, std::atoi(tok));
-        if (!NextTok(tok, DELIM) || !IsDigits(tok)) break; W_U16(116, std::atoi(tok));
-        if (!NextTok(tok, DELIM) || !IsDigits(tok)) break; W_U32(24, std::atoi(tok));
-        if (!NextTok(tok, DELIM) || !IsDigits(tok)) break; W_U32(28, std::atoi(tok));
-        if (!NextTok(tok, DELIM) || !IsDigits(tok)) break; W_U32(120, std::atoi(tok));
-        if (!NextTok(tok, DELIM) || !IsDigits(tok)) break; W_U32(124, std::atoi(tok));
-        if (!NextTok(tok, DELIM) || !IsDigits(tok)) break; W_U32(128, std::atoi(tok));
+        // 18~24)
+        if (!NextTok(tok, DELIM) || !IsDigit(tok)) break; P.hpUpPct = static_cast<uint16_t>(std::atoi(tok));
+        if (!NextTok(tok, DELIM) || !IsDigit(tok)) break; P.mpUpPct = static_cast<uint16_t>(std::atoi(tok));
+        if (!NextTok(tok, DELIM) || !IsDigit(tok)) break; R.attackPowerUp = std::atoi(tok);
+        if (!NextTok(tok, DELIM) || !IsDigit(tok)) break; R.defensePowerUp = std::atoi(tok);
+        if (!NextTok(tok, DELIM) || !IsDigit(tok)) break; P.hitRate = std::atoi(tok);
+        if (!NextTok(tok, DELIM) || !IsDigit(tok)) break; P.critRateUp = std::atoi(tok);
+        if (!NextTok(tok, DELIM) || !IsDigit(tok)) break; P.skillAtkPowerPct = std::atoi(tok);
 
-        // 22) 필요 레벨
-        if (!NextTok(tok, DELIM) || !IsDigits(tok)) break; W_U16(68, std::atoi(tok));
+        // 25) 필요 레벨
+        if (!NextTok(tok, DELIM) || !IsDigit(tok)) break;
+        R.reqLevel = static_cast<uint16_t>(std::atoi(tok));
 
-        // 23) 습득 클래스
+        // 26) 습득 클래스
         std::string acquireClass;
         if (!NextTok(tok, DELIM)) break; acquireClass = tok;
 
-        // 24~39)
-        const int ofsA[] = { 164,168,172,176,180,184,188,192, 132,136,140,144,148,152,156,160 };
-        for (int of : ofsA) { if (!NextTok(tok, DELIM) || !IsDigits(tok)) goto parse_error; W_U32(of, std::atoi(tok)); }
-
-        // 40)
-        if (!NextTok(tok, DELIM) || !IsDigits(tok)) break; W_U32(196, std::atoi(tok));
-
-        // 41) 工作型態
-        if (!NextTok(tok, DELIM)) break; W_U32(248, GetWorkingType(tok));
-
-        // 42)
-        if (!NextTok(tok, DELIM) || !IsDigits(tok)) break; W_U32(200, std::atoi(tok));
-
-        // 43) 連結技能字串
-        std::string linkSkills;
-        if (!NextTok(tok, DELIM)) break; linkSkills = tok;
-
-        // 44) 攻擊目標屬性
-        if (!NextTok(tok, DELIM)) break;
-        *reinterpret_cast<int32_t*>(R.raw + 252) = (tok[0] == '0' && tok[1] == '\0') ? -1 : cltAttackAtb::GetAttackTargetAtb(tok);
-
-        // 45) +396
-        if (!NextTok(tok, DELIM) || !IsDigits(tok)) break; W_U32(396, std::atoi(tok));
-
-        // 46~... 剩餘的數值欄
-        const int ofsC[] = {
-             256, 268, 260, 264, 272, 276, 280, 284, 288, 292, 296, 300, 304, 308, 312, 316, 320, 324, 328,
-             332, 336, 340, 344, 348, 352, 356, 360, 364, 368, 372, 376, 380, 384, 388, 392
+        // 27~42) 16 個 DWORD 欄位（順序與 GT 完全一致）
+        // GT 寫入順序：atkAdj 8 系 (164,168,172,176,180,184,188,192) 後接 defAdj 8 系 (132..160)
+        uint32_t* const adjFields[] = {
+            &P.atkAdjMonsterEtc,    // +164
+            &P.atkAdjMonsterStone,  // +168
+            &P.atkAdjMonsterPlant,  // +172
+            &P.atkAdjMonsterAlien,  // +176
+            &P.atkAdjSpirit,        // +180
+            &P.atkAdjCurse,         // +184
+            &P.atkAdjDevil,         // +188
+            &P.atkAdjDragon,        // +192
+            &P.defAdjMonsterEtc,    // +132
+            &P.defAdjMonsterStone,  // +136
+            &P.defAdjMonsterPlant,  // +140
+            &P.defAdjMonsterAlien,  // +144
+            &P.defAdjSpirit,        // +148
+            &P.defAdjCurse,         // +152
+            &P.defAdjDevil,         // +156
+            &P.defAdjDragon         // +160
         };
-        for (int of : ofsC) { if (!NextTok(tok, DELIM) || !IsDigits(tok)) goto parse_error; W_U32(of, std::atoi(tok)); }
+        bool ok = true;
+        for (uint32_t* dst : adjFields) {
+            if (!NextTok(tok, DELIM) || !IsDigit(tok)) { ok = false; break; }
+            *dst = std::atoi(tok);
+        }
+        if (!ok) break;
 
-        // EffectKindCodes
-        const int ofsD[] = { 92, 94, 96, 98, 108, 110, 100, 102, 104, 106 };
-        for (int of : ofsD) { if (!NextTok(tok, DELIM)) goto parse_error; W_U16(of, TranslateEffectKindCode(tok)); }
+        // 43) triggerRate (+196)
+        if (!NextTok(tok, DELIM) || !IsDigit(tok)) break;
+        P.triggerRate = std::atoi(tok);
 
-        // --- 後處理 ---
-        // 類別遮罩
-        uint64_t reqClassMask = GetReqClasses(this, (char*)acquireClass.c_str());
-        *reinterpret_cast<uint64_t*>(R.raw + 40) = reqClassMask;
+        // 44) workingType (+248) = GetWorkingType (字串)
+        if (!NextTok(tok, DELIM)) break;
+        P.workingType = GetWorkingType(tok);
 
-        // 武器遮罩
-        int weaponCount = GetReqWeaponClasses(this, (char*)needWeapon.c_str(), R.raw + 72);
-        W_U32(88, weaponCount);
+        // 45) triggerTime (+200)
+        if (!NextTok(tok, DELIM) || !IsDigit(tok)) break;
+        P.triggerTime = std::atoi(tok);
 
-        // 連結技能
-        if (linkSkills != "0") {
-            char* link_ctx = (char*)linkSkills.c_str();
+        // 46) 連動技能字串
+        std::string linkSkillsStr;
+        if (!NextTok(tok, DELIM)) break; linkSkillsStr = tok;
+
+        // 47) 攻擊目標屬性 (+252) — '0' → -1; 否則 cltAttackAtb::GetAttackTargetAtb
+        if (!NextTok(tok, DELIM)) break;
+        P.triggerAttackTargetAtb = (tok[0] == '0' && tok[1] == '\0')
+            ? -1
+            : cltAttackAtb::GetAttackTargetAtb(tok);
+
+        // 48) monsterCritAdj (+396)
+        if (!NextTok(tok, DELIM) || !IsDigit(tok)) break;
+        P.monsterCritAdj = std::atoi(tok);
+
+        // 49~83) 35 個 DWORD 欄位（GT 嚴格順序）
+        uint32_t* const tailFields[] = {
+            &P.durationMin,          // +256
+            &P.maxConcurrentCycle,   // +268
+            &P.triggerOnHpChange,    // +260
+            &P.triggerOnSkillUse,    // +264
+            &P.addRecoverPermil,     // +272
+            &P.addHpRecoverPermil,   // +276
+            &P.addMpRecoverPermil,   // +280
+            &P.party2pAtkUp,         // +284
+            &P.party2pDefUp,         // +288
+            &P.party2pHitUp,         // +292
+            &P.party3pAtkUp,         // +296
+            &P.party3pDefUp,         // +300
+            &P.party3pHitUp,         // +304
+            &P.party4pAtkUp,         // +308
+            &P.party4pDefUp,         // +312
+            &P.party4pHitUp,         // +316
+            &P.party5pAtkUp,         // +320
+            &P.party5pDefUp,         // +324
+            &P.party5pHitUp,         // +328
+            &P.hpRecover,            // +332
+            &P.mpRecover,            // +336
+            &P.atkBlockProb,         // +340
+            &P.atkBlockTime,         // +344
+            &P.atkFreezeProb,        // +348
+            &P.atkFreezeTime,        // +352
+            &P.atkStunProb,          // +356
+            &P.atkStunTime,          // +360
+            &P.attackSpeed,          // +364
+            &P.damageReceiveConvert, // +368
+            &P.skillAfterAdvantage,  // +372
+            &P.monsterDamageReduce,  // +376
+            &P.monsterDefAdj,        // +380
+            &P.monsterAtkAdj,        // +384
+            &P.monsterHitAdj,        // +388
+            &P.monsterEvadeAdj       // +392
+        };
+        for (uint32_t* dst : tailFields) {
+            if (!NextTok(tok, DELIM) || !IsDigit(tok)) { ok = false; break; }
+            *dst = std::atoi(tok);
+        }
+        if (!ok) break;
+
+        // 84~93) 10 個 EffectKindCode（GT 順序：1,2,3,4,5,6,7,8,9,10
+        //         寫入順序：effectTopUp1, effectTopUp2, effectBotDown1, effectBotDown2,
+        //                   effectFlyTop, effectFlyBot, effectHittedTopUp1, effectHittedTopUp2,
+        //                   effectHittedBotDown1, effectHittedBotDown2）
+        uint16_t* const fxFields[] = {
+            &R.effectTopUp1,          // +92
+            &R.effectTopUp2,          // +94
+            &R.effectBotDown1,        // +96
+            &R.effectBotDown2,        // +98
+            &R.effectFlyTop,          // +108
+            &R.effectFlyBot,          // +110
+            &R.effectHittedTopUp1,    // +100
+            &R.effectHittedTopUp2,    // +102
+            &R.effectHittedBotDown1,  // +104
+            &R.effectHittedBotDown2   // +106
+        };
+        for (uint16_t* dst : fxFields) {
+            if (!NextTok(tok, DELIM)) { ok = false; break; }
+            *dst = TranslateEffectKindCode(tok);
+        }
+        if (!ok) break;
+
+        // ── 後處理 ──────────────────────────────────────────────────────
+        // 類別遮罩 → acquireClassMask
+        R.acquireClassMask = GetReqClasses(this, (char*)acquireClass.c_str());
+
+        // 武器旗標 → reqWeaponFlags；數量 → reqWeaponCount
+        R.reqWeaponCount = GetReqWeaponClasses(this, (char*)needWeapon.c_str(), R.reqWeaponFlags);
+
+        // 連動技能：以 '&' 切分；GT 將 v179（uint16）以 DWORD 寫入，
+        // count 在 linkSkillCount；上限 10。GT 在 TranslateKindCode 為 0 時直接 break 整個解析。
+        if (linkSkillsStr != "0") {
+            // GT 對 String 直接呼叫 strtok（不需要複製）；這裡也維持等價
+            char* link_ctx = (char*)linkSkillsStr.c_str();
             char* link_tok = std::strtok(link_ctx, "&");
-            uint32_t& link_count = *reinterpret_cast<uint32_t*>(R.raw + 244);
-            link_count = 0;
-            while (link_tok && link_count < 10) {
+            // GT 中 linkSkillCount 初值就是 0（記錄已 memset），不需顯式設為 0
+            bool link_ok = true;
+            while (link_tok && P.linkSkillCount < 10) {
                 uint16_t link_code = TranslateKindCode(link_tok);
-                if (link_code) {
-                    *reinterpret_cast<uint16_t*>(R.raw + 204 + link_count * 4) = link_code;
-                    link_count++;
-                }
+                if (!link_code) { link_ok = false; break; } // GT: 失敗直接退出整個解析
+                P.linkSkills[P.linkSkillCount] = link_code;
+                ++P.linkSkillCount;
                 link_tok = std::strtok(nullptr, "&");
+                if (!link_tok) break; // GT: 跳到 LABEL_185 (繼續下一行)
             }
+            if (!link_ok) break;
         }
 
-        idx++;
+        ++idx;
     }
 
-parse_error:
+    if (idx == count) success = 1;
     g_clTextFileManager.fclose(fp);
-    return idx == count; // 如果解析的行數等於總行數，視為成功
+    return success;
 }
 
 // ──────────────────────────────────────────────────────────────────────────
-// 逐檔初始化：主動（a_skillinfo.txt）
+// 逐檔初始化：主動（a_skillinfo.txt）共 89 欄
+// 解析順序與型別嚴格對應 GT (mofclient.c: 005927C0)
 // ──────────────────────────────────────────────────────────────────────────
 int cltSkillKindInfo::Initialize_A(char* filename)
 {
@@ -548,156 +654,299 @@ int cltSkillKindInfo::Initialize_A(char* filename)
     m_active.assign(count, stSkillKindInfo{});
     std::fsetpos(fp, &pos);
 
+    int success = 0;
     size_t idx = 0;
     while (std::fgets(line, sizeof(line), fp)) {
         char* tok = std::strtok(line, DELIM);
-        if (!tok) continue;
+        if (!tok) break;
 
+        if (idx >= count) break;
         stSkillKindInfo& R = m_active[idx];
-        std::memset(R.raw, 0, sizeof(R.raw));
+        std::memset(&R, 0, sizeof(R));
+        auto& A = R.u.active;
 
-        auto W_U8 = [&](int offset, uint8_t val) { R.raw[offset] = val; };
-        auto W_U16 = [&](int offset, uint16_t val) { *reinterpret_cast<uint16_t*>(R.raw + offset) = val; };
-        auto W_U32 = [&](int offset, uint32_t val) { *reinterpret_cast<uint32_t*>(R.raw + offset) = val; };
+        // 1) ID
+        R.skillCode = TranslateKindCode(tok);
+        if (!R.skillCode || !IsActiveSkill(R.skillCode)) break;
 
-        // 1-8) 基本資訊
-        uint16_t code = TranslateKindCode(tok); W_U16(0, code);
-        if (!code || !IsActiveSkill(code)) { g_clTextFileManager.fclose(fp); return 0; }
-        if (!NextTok(tok, DELIM)) break; W_U16(2, TranslateKindCode(tok));
-        if (!NextTok(tok, DELIM)) break; // 이름
-        if (!NextTok(tok, DELIM) || !IsDigits(tok)) break; W_U16(4, std::atoi(tok));
-        if (!NextTok(tok, DELIM) || !IsHexLike(tok)) break; W_U32(8, std::strtoul(tok, nullptr, 16));
-        if (!NextTok(tok, DELIM) || !IsDigits(tok)) break; W_U16(12, std::atoi(tok));
-        if (!NextTok(tok, DELIM) || !IsHexLike(tok)) break; W_U32(16, std::strtoul(tok, nullptr, 16));
-        if (!NextTok(tok, DELIM) || !IsDigits(tok)) break; W_U16(20, std::atoi(tok));
+        // 2) 초기 ID
+        if (!NextTok(tok, DELIM)) break;
+        R.initialSkillCode = TranslateKindCode(tok);
+        if (!R.initialSkillCode) break;
 
-        // 9) 스킬 타입 (ActiveEffectType)
-        if (!NextTok(tok, DELIM)) break; W_U8(112, GetActiveEffectType(tok));
+        // 3) 이름（略過）
+        if (!NextTok(tok, DELIM)) break;
+
+        // 4) 이름 코드
+        if (!NextTok(tok, DELIM) || !IsDigit(tok)) break;
+        R.nameCode = static_cast<uint16_t>(std::atoi(tok));
+
+        // 5) 아이콘 그림 ID (hex)
+        if (!NextTok(tok, DELIM) || !IsAlphaNumeric(tok)) break;
+        R.iconID = std::strtoul(tok, nullptr, 16);
+
+        // 6) 아이콘 그림 블록
+        if (!NextTok(tok, DELIM) || !IsDigit(tok)) break;
+        R.iconBlock = static_cast<uint16_t>(std::atoi(tok));
+
+        // 7) 작은 아이콘 그림 ID (hex)
+        if (!NextTok(tok, DELIM) || !IsAlphaNumeric(tok)) break;
+        R.smallIconID = std::strtoul(tok, nullptr, 16);
+
+        // 8) 작은 아이콘 그림 블록
+        if (!NextTok(tok, DELIM) || !IsDigit(tok)) break;
+        R.smallIconBlock = static_cast<uint16_t>(std::atoi(tok));
+
+        // 9) 스킬 타입 (BYTE) → effectType
+        if (!NextTok(tok, DELIM)) break;
+        A.effectType = GetActiveEffectType(tok);
 
         // 10) 이전 스킬 코드
-        if (!NextTok(tok, DELIM)) break; W_U16(70, TranslateKindCode(tok));
+        if (!NextTok(tok, DELIM)) break;
+        R.prevSkillCode = TranslateKindCode(tok);
 
         // 11) 스킬설명코드
-        if (!NextTok(tok, DELIM) || !IsDigits(tok)) break; W_U16(6, std::atoi(tok));
+        if (!NextTok(tok, DELIM) || !IsDigit(tok)) break;
+        R.descCode = static_cast<uint16_t>(std::atoi(tok));
 
-        // 12-24) 大量數值欄
-        const int ofsA[] = { 114, 116, 24, 28, 132, 134, 136, 138, 120, 124, 128, 140, 144, 36 };
-        for (int of : ofsA) { if (!NextTok(tok, DELIM) || !IsDigits(tok)) goto a_parse_error; W_U32(of, std::atoi(tok)); }
+        // 12~13) HP/MP 소모 (WORD)
+        if (!NextTok(tok, DELIM) || !IsDigit(tok)) break;
+        A.hpCost = static_cast<uint16_t>(std::atoi(tok));
+        if (!NextTok(tok, DELIM) || !IsDigit(tok)) break;
+        A.mpCost = static_cast<uint16_t>(std::atoi(tok));
 
-        // 25) 습득 클래스
+        // 14~15) 공격력/방어력 상승 (DWORD)
+        if (!NextTok(tok, DELIM) || !IsDigit(tok)) break; R.attackPowerUp  = std::atoi(tok);
+        if (!NextTok(tok, DELIM) || !IsDigit(tok)) break; R.defensePowerUp = std::atoi(tok);
+
+        // 16~19) normalHitWeight/critHitWeight/durationTime/repeatTime (WORD each)
+        if (!NextTok(tok, DELIM) || !IsDigit(tok)) break; A.normalHitWeight = static_cast<uint16_t>(std::atoi(tok));
+        if (!NextTok(tok, DELIM) || !IsDigit(tok)) break; A.critHitWeight   = static_cast<uint16_t>(std::atoi(tok));
+        if (!NextTok(tok, DELIM) || !IsDigit(tok)) break; A.durationTime    = static_cast<uint16_t>(std::atoi(tok));
+        if (!NextTok(tok, DELIM) || !IsDigit(tok)) break; A.repeatTime      = static_cast<uint16_t>(std::atoi(tok));
+
+        // 20~22) remainHpAfterUse/remainMpAfterUse/missHitWeight (DWORD each)
+        if (!NextTok(tok, DELIM) || !IsDigit(tok)) break; A.remainHpAfterUse = std::atoi(tok);
+        if (!NextTok(tok, DELIM) || !IsDigit(tok)) break; A.remainMpAfterUse = std::atoi(tok);
+        if (!NextTok(tok, DELIM) || !IsDigit(tok)) break; A.missHitWeight    = std::atoi(tok);
+
+        // 23~24) castTime/valueColumn (DWORD)
+        if (!NextTok(tok, DELIM) || !IsDigit(tok)) break; A.castTime    = std::atoi(tok);
+        if (!NextTok(tok, DELIM) || !IsDigit(tok)) break; A.valueColumn = std::atoi(tok);
+
+        // 25) 재사용시간 → cooltime
+        if (!NextTok(tok, DELIM) || !IsDigit(tok)) break;
+        R.cooltime = std::atoi(tok);
+
+        // 26) 습득 클래스
         std::string acquireClass;
         if (!NextTok(tok, DELIM)) break; acquireClass = tok;
 
-        // 26) 스킬 구매 타입
-        if (!NextTok(tok, DELIM)) break; W_U32(48, GetSkillClass(tok));
+        // 27) 스킬 구매 타입
+        if (!NextTok(tok, DELIM)) break;
+        R.skillBuyClass = GetSkillClass(tok);
 
-        // 27-30) 四系點數
-        for (int ofs = 52; ofs <= 64; ofs += 4) {
-            if (!NextTok(tok, DELIM) || !IsDigits(tok)) goto a_parse_error;
-            W_U32(ofs, std::atoi(tok));
-        }
+        // 28~31) 4 系點數
+        if (!NextTok(tok, DELIM) || !IsDigit(tok)) break; R.needFigPt = std::atoi(tok);
+        if (!NextTok(tok, DELIM) || !IsDigit(tok)) break; R.needArcPt = std::atoi(tok);
+        if (!NextTok(tok, DELIM) || !IsDigit(tok)) break; R.needMagPt = std::atoi(tok);
+        if (!NextTok(tok, DELIM) || !IsDigit(tok)) break; R.needPriPt = std::atoi(tok);
 
-        // 31) 使用時必要武器
+        // 32) 사용시 필요 무기
         std::string needWeapon;
         if (!NextTok(tok, DELIM)) break; needWeapon = tok;
 
-        // 32) 필요 레벨
-        if (!NextTok(tok, DELIM) || !IsDigits(tok)) break; W_U16(68, std::atoi(tok));
+        // 33) 필요 레벨
+        if (!NextTok(tok, DELIM) || !IsDigit(tok)) break;
+        R.reqLevel = static_cast<uint16_t>(std::atoi(tok));
 
-        // 33) 사운드
-        if (!NextTok(tok, DELIM)) break; std::strncpy(reinterpret_cast<char*>(R.raw + 148), tok, 15); R.raw[148 + 15] = '\0';
-
-        // 34) 원거리 여부
-        if (!NextTok(tok, DELIM)) break; if (std::strcmp(tok, "LONG") == 0) W_U8(164, 1); else W_U8(164, 0);
-
-        // 35-37)
-        if (!NextTok(tok, DELIM) || !IsDigits(tok)) break; W_U16(166, std::atoi(tok));
-        if (!NextTok(tok, DELIM) || !IsDigits(tok)) break; W_U16(168, std::atoi(tok));
-
-        // 38) 시전 애니
+        // 34) 사운드 (16 byte 字串，含 NUL)
         if (!NextTok(tok, DELIM)) break;
-        {
-            const char* anim = tok;
-            if (strcmp(anim, "NORMAL") == 0)      W_U8(170, 0);
-            else if (strcmp(anim, "SPELL") == 0)  W_U8(170, 1);
-            else if (strcmp(anim, "PRAY") == 0)   W_U8(170, 2);
-            else if (strcmp(anim, "TRIPLE") == 0) W_U8(170, 3);
-            else if (strcmp(anim, "DOUBLE") == 0) W_U8(170, 4);
-        }
+        std::strncpy(A.soundName, tok, sizeof(A.soundName) - 1);
+        A.soundName[sizeof(A.soundName) - 1] = '\0';
 
-        // 39) 맞는 속성 (element_tag)
+        // 35) 원거리 여부 ("LONG"=1, 其他=0)
         if (!NextTok(tok, DELIM)) break;
-        {
-            const char* elem = tok;
-            if (strcmp(elem, "NONE") == 0)         W_U8(171, 0);
-            else if (strcmp(elem, "NORMAL") == 0)  W_U8(171, 1);
-            else if (strcmp(elem, "FIRE") == 0)    W_U8(171, 2);
-            else if (strcmp(elem, "ELEC") == 0)    W_U8(171, 3);
-            else if (strcmp(elem, "ICE") == 0)     W_U8(171, 4);
-        }
+        A.isLong = (std::strcmp(tok, "LONG") == 0) ? 1 : 0;
+
+        // 36~37) 타겟범위 x/y
+        if (!NextTok(tok, DELIM) || !IsDigit(tok)) break;
+        A.targetRangeX = static_cast<uint16_t>(std::atoi(tok));
+        if (!NextTok(tok, DELIM) || !IsDigit(tok)) break;
+        A.targetRangeY = static_cast<uint16_t>(std::atoi(tok));
+
+        // 38) 시전 애니: NORMAL=0, SPELL=1, PRAY=2, TRIPLE=3, DOUBLE=4
+        if (!NextTok(tok, DELIM)) break;
+        if      (std::strcmp(tok, "NORMAL") == 0) A.castAnim = 0;
+        else if (std::strcmp(tok, "SPELL")  == 0) A.castAnim = 1;
+        else if (std::strcmp(tok, "PRAY")   == 0) A.castAnim = 2;
+        else if (std::strcmp(tok, "TRIPLE") == 0) A.castAnim = 3;
+        else if (std::strcmp(tok, "DOUBLE") == 0) A.castAnim = 4;
+        else                                       A.castAnim = 0;
+
+        // 39) 맞는 속성: NONE=0, NORMAL=1, FIRE=2, ELEC=3, ICE=4
+        if (!NextTok(tok, DELIM)) break;
+        if      (std::strcmp(tok, "NONE")   == 0) A.hitAtb = 0;
+        else if (std::strcmp(tok, "NORMAL") == 0) A.hitAtb = 1;
+        else if (std::strcmp(tok, "FIRE")   == 0) A.hitAtb = 2;
+        else if (std::strcmp(tok, "ELEC")   == 0) A.hitAtb = 3;
+        else if (std::strcmp(tok, "ICE")    == 0) A.hitAtb = 4;
+        else                                       A.hitAtb = 0;
 
         // 40) 공격 속성
-        if (!NextTok(tok, DELIM)) break; W_U32(172, cltAttackAtb::GetAttackAtb(tok));
-
-        // 41) 파티 공격속성
         if (!NextTok(tok, DELIM)) break;
-        if (tok[0] == '0' && tok[1] == '\0') {
-            W_U32(244, 0);
+        A.attackAtb = cltAttackAtb::GetAttackAtb(tok);
+
+        // 41) 파티 공격속성: "0"→(flag=0); 其他→(flag=1, atb=GetAttackAtb)
+        if (!NextTok(tok, DELIM)) break;
+        if (std::strcmp(tok, "0") == 0) {
+            A.partyAtkAtbFlag = 0;
+        } else {
+            A.partyAtkAtbFlag = 1;
+            A.partyAtkAtb = cltAttackAtb::GetAttackAtb(tok);
         }
-        else {
-            W_U32(244, 1);
-            W_U32(248, cltAttackAtb::GetAttackAtb(tok));
+
+        // 42~47) 기절/봉쇄/결빙 確率/時間（DWORD x6）
+        {
+            uint32_t* const stateFields[] = {
+                &A.atkStunProb,    // +176
+                &A.atkStunTime,    // +180
+                &A.atkBlockProb,   // +184
+                &A.atkBlockTime,   // +188
+                &A.atkFreezeProb,  // +192
+                &A.atkFreezeTime   // +196
+            };
+            bool ok = true;
+            for (uint32_t* dst : stateFields) {
+                if (!NextTok(tok, DELIM) || !IsDigit(tok)) { ok = false; break; }
+                *dst = std::atoi(tok);
+            }
+            if (!ok) break;
         }
 
-        // 42-47) 기절/봉쇄/결빙 확률 및 시간
-        const int ofsB[] = { 176, 180, 184, 188, 192, 196 };
-        for (int of : ofsB) { if (!NextTok(tok, DELIM) || !IsDigits(tok)) goto a_parse_error; W_U32(of, std::atoi(tok)); }
+        // 48) mine 아이디 (cltMineKindInfo::TranslateKindCode)
+        if (!NextTok(tok, DELIM)) break;
+        A.mineKindCode = cltMineKindInfo::TranslateKindCode(tok);
 
-        // 48) mine 아이디
-        if (!NextTok(tok, DELIM)) break; W_U16(200, cltMineKindInfo::TranslateKindCode(tok));
+        // 49~50) fastRun / castCount
+        if (!NextTok(tok, DELIM) || !IsDigit(tok)) break; A.fastRun   = std::atoi(tok);
+        if (!NextTok(tok, DELIM) || !IsDigit(tok)) break; A.castCount = std::atoi(tok);
 
-        // 49-70) 大量數值欄
-        const int ofsC[] = { 204, 208, 252, 256, 260, 264, 268, 272, 280, 284, 288, 292, 296, 300, 212, 216, 220, 224, 228, 232, 236, 240 };
-        for (int of : ofsC) { if (!NextTok(tok, DELIM) || !IsDigits(tok)) goto a_parse_error; W_U32(of, std::atoi(tok)); }
+        // 51~53) value1/value2/value3 (WORD x3) — GT 是「最多 3 次」迴圈寫 _WORD
+        {
+            uint16_t* const valFields[] = { &A.value1, &A.value2, &A.value3 };
+            bool ok = true;
+            for (uint16_t* dst : valFields) {
+                if (!NextTok(tok, DELIM) || !IsDigit(tok)) { ok = false; break; }
+                *dst = static_cast<uint16_t>(std::atoi(tok));
+            }
+            if (!ok) break;
+        }
 
-        // 71-77)
-        if (!NextTok(tok, DELIM) || !IsDigits(tok)) break; *reinterpret_cast<int32_t*>(R.raw + 276) = std::atoi(tok);
-        if (!NextTok(tok, DELIM)) break; // 이펙트 단계
-        if (!NextTok(tok, DELIM)) break; W_U16(300, std::atoi(tok));
-        if (!NextTok(tok, DELIM)) break; W_U16(302, std::atoi(tok));
-        if (!NextTok(tok, DELIM)) break; W_U16(304, cltDebuffKindInfo::TranslateKindCode(tok));
-        if (!NextTok(tok, DELIM)) break; W_U32(308, std::atoi(tok));
-        if (!NextTok(tok, DELIM)) break; W_U32(312, std::atoi(tok));
-        if (!NextTok(tok, DELIM)) break; W_U32(316, std::atoi(tok));
+        // 54~57) spirit/agility/stamina/intelligence (DWORD x4)
+        if (!NextTok(tok, DELIM) || !IsDigit(tok)) break; A.spiritBonus       = std::atoi(tok);
+        if (!NextTok(tok, DELIM) || !IsDigit(tok)) break; A.agilityBonus      = std::atoi(tok);
+        if (!NextTok(tok, DELIM) || !IsDigit(tok)) break; A.staminaBonus      = std::atoi(tok);
+        if (!NextTok(tok, DELIM) || !IsDigit(tok)) break; A.intelligenceBonus = std::atoi(tok);
 
-        // 78) 무기 공격방식
-        if (!NextTok(tok, DELIM)) break; W_U32(320, (strcmp(tok, "MULTI") == 0));
+        // 58~60) atkUseProb/atkUseEff/atkSpeedActive (DWORD x3)
+        if (!NextTok(tok, DELIM) || !IsDigit(tok)) break; A.atkUseProb      = std::atoi(tok);
+        if (!NextTok(tok, DELIM) || !IsDigit(tok)) break; A.atkUseEff       = std::atoi(tok);
+        if (!NextTok(tok, DELIM) || !IsDigit(tok)) break; A.atkSpeedActive  = std::atoi(tok);
 
-        // 79) 몬스터를 중심으로 적용되는 스킬
-        if (!NextTok(tok, DELIM) || !IsDigits(tok)) break; W_U32(324, std::atoi(tok));
+        // 61) partyAtkPower
+        if (!NextTok(tok, DELIM) || !IsDigit(tok)) break;
+        A.partyAtkPower = std::atoi(tok);
 
-        // 80-90) EffectKindCodes
-        const int ofsD[] = { 92, 94, 96, 98, 328, 108, 110, 100, 102, 104, 106 };
-        for (int of : ofsD) { if (!NextTok(tok, DELIM)) goto a_parse_error; W_U16(of, TranslateEffectKindCode(tok)); }
+        // 62~63) GT 順序：先 partySpirit (+236) 後 partyAgility (+232)
+        if (!NextTok(tok, DELIM) || !IsDigit(tok)) break; A.partySpirit  = std::atoi(tok);
+        if (!NextTok(tok, DELIM) || !IsDigit(tok)) break; A.partyAgility = std::atoi(tok);
 
-        // --- 後處理 ---
-        uint64_t reqClassMask = GetReqClasses(this, (char*)acquireClass.c_str());
-        *reinterpret_cast<uint64_t*>(R.raw + 40) = reqClassMask;
+        // 64) partyStamina
+        if (!NextTok(tok, DELIM) || !IsDigit(tok)) break;
+        A.partyStamina = std::atoi(tok);
 
-        int weaponCount = GetReqWeaponClasses(this, (char*)needWeapon.c_str(), R.raw + 72);
-        W_U32(88, weaponCount);
+        // 65) damageReceiveConvert (+272)
+        if (!NextTok(tok, DELIM) || !IsDigit(tok)) break;
+        A.damageReceiveConvert = std::atoi(tok);
 
-        idx++;
+        // 66) 略過一欄（GT: 이펙트 단계 之前的欄）
+        if (!NextTok(tok, DELIM)) break;
+
+        // 67) atkLineFx (WORD)
+        if (!NextTok(tok, DELIM) || !IsDigit(tok)) break;
+        A.atkLineFx = static_cast<uint16_t>(std::atoi(tok));
+
+        // 68~69) triggerProbDamage / triggerProbCurse
+        if (!NextTok(tok, DELIM) || !IsDigit(tok)) break; A.triggerProbDamage = std::atoi(tok);
+        if (!NextTok(tok, DELIM) || !IsDigit(tok)) break; A.triggerProbCurse  = std::atoi(tok);
+
+        // 70) debuffStage (BYTE) — GT 是 *(_BYTE *)(v7 + 292)
+        if (!NextTok(tok, DELIM) || !IsDigit(tok)) break;
+        A.debuffStage = static_cast<uint8_t>(std::atoi(tok));
+
+        // 71~72) debuffRideTime / effectStage
+        if (!NextTok(tok, DELIM) || !IsDigit(tok)) break; A.debuffRideTime = std::atoi(tok);
+        if (!NextTok(tok, DELIM) || !IsDigit(tok)) break; A.effectStage    = std::atoi(tok);
+
+        // 73) debuffKindCode (WORD via cltDebuffKindInfo::TranslateKindCode) — GT 無 IsDigit 檢查
+        if (!NextTok(tok, DELIM)) break;
+        A.debuffKindCode = cltDebuffKindInfo::TranslateKindCode(tok);
+
+        // 74~76) expGainPermil/partyExpGainPermil/weaponAtkMode — GT 無 IsDigit 檢查
+        if (!NextTok(tok, DELIM)) break; A.expGainPermil      = std::atoi(tok);
+        if (!NextTok(tok, DELIM)) break; A.partyExpGainPermil = std::atoi(tok);
+        if (!NextTok(tok, DELIM)) break; A.weaponAtkMode      = std::atoi(tok);
+
+        // 77) weaponAtkMultiFlag ("MULTI" → 1, 其他 → 0)
+        if (!NextTok(tok, DELIM)) break;
+        A.weaponAtkMultiFlag = (std::strcmp(tok, "MULTI") == 0) ? 1 : 0;
+
+        // 78) centeredOnMonster
+        if (!NextTok(tok, DELIM)) break;
+        A.centeredOnMonster = std::atoi(tok);
+
+        // 79~89) 11 個 EffectKindCode；GT 寫入順序：
+        //   effectTopUp1, effectTopUp2, effectBotDown1, effectBotDown2, effectProjectile,
+        //   effectFlyTop, effectFlyBot, effectHittedTopUp1, effectHittedTopUp2,
+        //   effectHittedBotDown1, effectHittedBotDown2
+        {
+            uint16_t* const fxFields[] = {
+                &R.effectTopUp1,           // +92
+                &R.effectTopUp2,           // +94
+                &R.effectBotDown1,         // +96
+                &R.effectBotDown2,         // +98
+                &A.effectProjectile,       // +328
+                &R.effectFlyTop,           // +108
+                &R.effectFlyBot,           // +110
+                &R.effectHittedTopUp1,     // +100
+                &R.effectHittedTopUp2,     // +102
+                &R.effectHittedBotDown1,   // +104
+                &R.effectHittedBotDown2    // +106
+            };
+            bool ok = true;
+            for (uint16_t* dst : fxFields) {
+                if (!NextTok(tok, DELIM)) { ok = false; break; }
+                *dst = TranslateEffectKindCode(tok);
+            }
+            if (!ok) break;
+        }
+
+        // ── 後處理 ──────────────────────────────────────────────────────
+        R.acquireClassMask = GetReqClasses(this, (char*)acquireClass.c_str());
+        R.reqWeaponCount   = GetReqWeaponClasses(this, (char*)needWeapon.c_str(), R.reqWeaponFlags);
+
+        ++idx;
     }
 
-a_parse_error:
+    if (idx == count) success = 1;
     g_clTextFileManager.fclose(fp);
-    return idx == count;
+    return success;
 }
 
 // ==========================================================================
 //
-//   cltSkillKindInfoM 的實作
+//   cltSkillKindInfoM 的實作（M 版；A 檔不解析）
 //
 // ==========================================================================
 
@@ -714,54 +963,28 @@ void cltSkillKindInfoM::Free() {
 
 int cltSkillKindInfoM::Initialize(char* pfile, char* afile)
 {
-    if (!Initialize_P(pfile)) {
-        return 0;
-    }
-    if (!Initialize_A(afile)) { // 雖然 A 檔不做事，但仍依反編譯流程呼叫
-        return 0;
-    }
+    if (!Initialize_P(pfile)) return 0;
+    if (!Initialize_A(afile)) return 0;
 
-    // 建立被動技能索引
     for (auto& rec : m_pList) {
-        // 取得技能碼
-        uint16_t code = *reinterpret_cast<uint16_t*>(rec.raw);
-        if (code == 0xFFFF) {
-            return 0; // 錯誤碼
-        }
-        // 檢查是否重複
-        if (m_idx[code]) {
-            return 0; // 重複的 ID
-        }
-        // 建立索引，將 Rec28* 轉型為 stSkillKindInfo* 以符合 m_idx 宣告
-        m_idx[code] = reinterpret_cast<stSkillKindInfo*>(&rec);
+        if (rec.skillCode == 0xFFFF) return 0;
+        if (m_idx[rec.skillCode]) return 0;
+        m_idx[rec.skillCode] = reinterpret_cast<stSkillKindInfo*>(&rec);
     }
-
-    // 建立主動技能索引（雖然 M 版沒讀 A 檔，但反編譯碼有此迴圈）
     for (auto& rec : m_aList) {
-        uint16_t code = *reinterpret_cast<uint16_t*>(rec.raw);
-        if (code == 0xFFFF) {
-            return 0;
-        }
-        if (m_idx[code]) {
-            return 0;
-        }
-        m_idx[code] = reinterpret_cast<stSkillKindInfo*>(&rec);
+        if (rec.skillCode == 0xFFFF) return 0;
+        if (m_idx[rec.skillCode]) return 0;
+        m_idx[rec.skillCode] = reinterpret_cast<stSkillKindInfo*>(&rec);
     }
-
     return 1;
 }
 
 int cltSkillKindInfoM::Initialize_P(char* filename)
 {
     FILE* fp = g_clTextFileManager.fopen(filename);
-    if (!fp) {
-        return 0;
-    }
+    if (!fp) return 0;
 
-    char line[4096];
-    const char* DELIM = "\t\n";
-
-    // 跳過 3 行標頭
+    char line[4096]; const char* DELIM = "\t\n";
     for (int i = 0; i < 3; ++i) {
         if (!std::fgets(line, sizeof(line), fp)) {
             g_clTextFileManager.fclose(fp);
@@ -769,72 +992,49 @@ int cltSkillKindInfoM::Initialize_P(char* filename)
         }
     }
 
-    // 預先計算行數以分配記憶體
-    fpos_t pos;
-    std::fgetpos(fp, &pos);
-    size_t count = 0;
-    while (std::fgets(line, sizeof(line), fp)) {
-        count++;
-    }
-    m_pList.assign(count, Rec28{});
+    fpos_t pos; std::fgetpos(fp, &pos);
+    size_t count = 0; while (std::fgets(line, sizeof(line), fp)) ++count;
+    m_pList.assign(count, stSkillKindInfoMRec{});
     std::fsetpos(fp, &pos);
 
-    // 逐行解析
-    size_t current_idx = 0;
-    while (current_idx < count && std::fgets(line, sizeof(line), fp)) {
-        Rec28& R = m_pList[current_idx];
-        std::memset(R.raw, 0, sizeof(R.raw));
+    size_t cur = 0;
+    while (cur < count && std::fgets(line, sizeof(line), fp)) {
+        stSkillKindInfoMRec& R = m_pList[cur];
+        std::memset(&R, 0, sizeof(R));
 
-        // 1) ID
         char* tok = std::strtok(line, DELIM);
-        if (!tok) continue; // 空行
+        if (!tok) continue;
 
-        uint16_t code = TranslateKindCode(tok);
-        *reinterpret_cast<uint16_t*>(R.raw + 0) = code;
-        if (!code || !IsPassiveSkill(code)) {
+        R.skillCode = cltSkillKindInfo::TranslateKindCode(tok);
+        if (!R.skillCode || !cltSkillKindInfo::IsPassiveSkill(R.skillCode)) {
             g_clTextFileManager.fclose(fp);
             return 0;
         }
 
-        // 2) 초기 ID (反編譯碼中跳過此欄)
+        if (!cltSkillKindInfo::NextTok(tok, DELIM)) break;
         if (!cltSkillKindInfo::NextTok(tok, DELIM)) break;
 
-        // 3) 이름 (反編譯碼中跳過此欄)
-        if (!cltSkillKindInfo::NextTok(tok, DELIM)) break;
+        if (!cltSkillKindInfo::NextTok(tok, DELIM) || !cltSkillKindInfo::IsDigit(tok)) break;
+        R.nameCode = std::atoi(tok);
 
-        // 4) 이름 코드
-        if (!cltSkillKindInfo::NextTok(tok, DELIM) || !cltSkillKindInfo::IsDigits(tok)) break;
-        *reinterpret_cast<uint32_t*>(R.raw + 4) = std::atoi(tok);
+        if (!cltSkillKindInfo::NextTok(tok, DELIM) || !cltSkillKindInfo::IsDigit(tok)) break;
+        R.iconID = std::atoi(tok);
 
-        // 5) 아이콘 그림 ID (反編譯碼當作純數字解析)
-        if (!cltSkillKindInfo::NextTok(tok, DELIM) || !cltSkillKindInfo::IsDigits(tok)) break;
-        *reinterpret_cast<uint32_t*>(R.raw + 8) = std::atoi(tok);
+        if (!cltSkillKindInfo::NextTok(tok, DELIM) || !cltSkillKindInfo::IsDigit(tok)) break;
+        R.iconBlock = std::atoi(tok);
 
-        // 6) 아이콘 그림 블록
-        if (!cltSkillKindInfo::NextTok(tok, DELIM) || !cltSkillKindInfo::IsDigits(tok)) break;
-        *reinterpret_cast<uint32_t*>(R.raw + 12) = std::atoi(tok);
+        if (!cltSkillKindInfo::NextTok(tok, DELIM) || !cltSkillKindInfo::IsDigit(tok)) break;
+        R.smallIconID = std::atoi(tok);
 
-        // 7) 작은 아이콘 그림 ID
-        if (!cltSkillKindInfo::NextTok(tok, DELIM) || !cltSkillKindInfo::IsDigits(tok)) break;
-        *reinterpret_cast<uint32_t*>(R.raw + 16) = std::atoi(tok);
+        if (!cltSkillKindInfo::NextTok(tok, DELIM) || !cltSkillKindInfo::IsDigit(tok)) break;
+        R.smallIconBlock = std::atoi(tok);
 
-        // 8) 작은 아이콘 그림 블록
-        if (!cltSkillKindInfo::NextTok(tok, DELIM) || !cltSkillKindInfo::IsDigits(tok)) break;
-        *reinterpret_cast<uint32_t*>(R.raw + 20) = std::atoi(tok);
+        if (!cltSkillKindInfo::NextTok(tok, DELIM) || !cltSkillKindInfo::IsDigit(tok)) break;
+        R.prevField = std::atoi(tok);
 
-        // 9) 상위 스킬 코드 (反編譯碼當作純數字解析)
-        if (!cltSkillKindInfo::NextTok(tok, DELIM) || !cltSkillKindInfo::IsDigits(tok)) break;
-        *reinterpret_cast<uint32_t*>(R.raw + 24) = std::atoi(tok);
-
-        current_idx++;
+        ++cur;
     }
 
     g_clTextFileManager.fclose(fp);
-
-    // 如果解析的行數與計數不符，視為失敗
-    if (current_idx != count) {
-        return 0;
-    }
-
-    return 1;
+    return cur == count ? 1 : 0;
 }

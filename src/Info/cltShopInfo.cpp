@@ -33,15 +33,12 @@ bool cltShopInfo::IsDigit(const char* a1) {
 }
 
 // 0x590910
-cltShopInfo::cltShopInfo()
-    : m_pShopList(nullptr),
-      m_wTotalShopNum(0),
-      m_wCurItemCount(0),
-      m_pPackageShopList(nullptr),
-      m_iTotalPackageShopNum(0) {}
-
-cltShopInfo::~cltShopInfo() {
-    Free();
+// GT: 只清零 m_pShopList / m_wTotalShopNum / m_wCurItemCount 三個欄位 (offsets 0/4/6)。
+//     m_pPackageShopList、m_iTotalPackageShopNum 不在 ctor 內初始化 — 仰賴 BSS 全域零初始化。
+cltShopInfo::cltShopInfo() {
+    m_pShopList     = nullptr;
+    m_wTotalShopNum = 0;
+    m_wCurItemCount = 0;
 }
 
 // 0x590940
@@ -80,8 +77,9 @@ int cltShopInfo::Initialize_Shop(char* fileName) {
         ++m_wTotalShopNum;
     }
 
-    // 配置陣列並清零（反編譯：operator new + memset(0, 4*((1012*N)>>2)) 等價）
-    m_pShopList = new stShopInfo[m_wTotalShopNum];
+    // GT: operator new(1012 * count) + memset(0, 4*((1012*N)>>2))。stShopInfo 為 POD，
+    //     1012 為 4 的倍數，因此 memset 全幅清零。
+    m_pShopList = static_cast<stShopInfo*>(::operator new(sizeof(stShopInfo) * m_wTotalShopNum));
     std::memset(m_pShopList, 0, sizeof(stShopInfo) * m_wTotalShopNum);
 
     // 倒回資料起點
@@ -177,7 +175,9 @@ int cltShopInfo::Initialize_PackageShop(char* fileName) {
         ++m_iTotalPackageShopNum;
     }
 
-    m_pPackageShopList = new strPackageShopInfo[m_iTotalPackageShopNum];
+    // GT: operator new(404 * count) + memset(0, ...)
+    m_pPackageShopList = static_cast<strPackageShopInfo*>(
+        ::operator new(sizeof(strPackageShopInfo) * m_iTotalPackageShopNum));
     std::memset(m_pPackageShopList, 0, sizeof(strPackageShopInfo) * m_iTotalPackageShopNum);
 
     std::fsetpos(fp, &position);
@@ -257,16 +257,18 @@ int cltShopInfo::Initialize_PackageShop(char* fileName) {
 }
 
 // 0x590F30
+// GT: 配 operator new (raw)，故對應使用 operator delete (raw)。
+//     Free 不重置 m_wCurItemCount (僅在 Initialize_Shop 內由 GT 主動清 0)。
 void cltShopInfo::Free() {
     if (m_pShopList) {
-        delete[] m_pShopList;
+        ::operator delete(m_pShopList);
         m_pShopList = nullptr;
     }
     if (m_pPackageShopList) {
-        delete[] m_pPackageShopList;
+        ::operator delete(m_pPackageShopList);
         m_pPackageShopList = nullptr;
     }
-    m_wTotalShopNum = 0;
+    m_wTotalShopNum        = 0;
     m_iTotalPackageShopNum = 0;
 }
 
@@ -285,8 +287,9 @@ stShopInfo* cltShopInfo::GetShopInfoByIndex(int index) {
 
 // 0x590FB0
 // 編碼：strlen 必須 = 5；首字元 toupper；公式 ((c+31) << 11) | n，n = atoi(s+1) 須 < 0x800
+// GT: 不對 a1 做 nullptr 檢查 (caller 須保證非 null；傳入 NULL 會在 strlen 內崩潰)。
 std::uint16_t cltShopInfo::TranslateKindCode(char* code) {
-    if (!code || std::strlen(code) != 5) {
+    if (std::strlen(code) != 5) {
         return 0;
     }
     int high = (std::toupper(static_cast<unsigned char>(code[0])) + 31) << 11;

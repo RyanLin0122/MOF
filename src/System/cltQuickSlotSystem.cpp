@@ -36,7 +36,7 @@ std::uint16_t GetPreSkillKind(const stSkillKindInfo* skillInfo) {
         return 0;
     }
 
-    return *reinterpret_cast<const std::uint16_t*>(skillInfo->raw + 70);
+    return skillInfo->prevSkillCode;
 }
 }
 

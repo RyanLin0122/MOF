@@ -60,9 +60,9 @@ cltNPCInfo::cltNPCInfo()
 
 // ── mofclient.c:317492 (00581EB0) ──────────────────────────────────────────
 //   ((toupper(s[0]) + 31) << 11) | atoi(s + 1)；길이 != 5 또는 num >= 0x800 → 0
+//   GT: a1 에 대해 nullptr 검사를 하지 않음 (caller 가 non-null 을 보장).
 std::uint16_t cltNPCInfo::TranslateKindCode(const char* a1)
 {
-    if (!a1) return 0;
     if (std::strlen(a1) != 5) return 0;
     int v2 = (std::toupper(static_cast<unsigned char>(*a1)) + 31) << 11;
     std::uint16_t v3 = static_cast<std::uint16_t>(std::atoi(a1 + 1));
@@ -197,6 +197,9 @@ std::uint16_t cltNPCInfo::GetMapID(std::uint16_t a2)
 // ── mofclient.c:317656 (00582100) ──────────────────────────────────────────
 //   각 NPC의 m_wQuestIDs[0..69] 중 a2 와 일치하는 슬롯을 찾음
 //   *a3 ← 슬롯 index  /  return ← 해당 NPC 의 KindCode
+//   x64 노트: GT 가 v5 = (DWORD)pInfo + 200 처럼 pointer 를 int 로 보관.
+//     32-bit 에서는 정상이지만 64-bit 에서는 truncation 이 되므로
+//     포인터를 그대로 보관하도록 char* 로 보관한다 (의미는 동일).
 std::uint16_t cltNPCInfo::GetNPCIDByQuestID(std::uint16_t a2, int* a3)
 {
     int v3 = m_wTotalNPCNum;
@@ -205,10 +208,10 @@ std::uint16_t cltNPCInfo::GetNPCIDByQuestID(std::uint16_t a2, int* a3)
         return 0;
 
     auto* base = reinterpret_cast<char*>(m_pInfo);
-    int v5 = static_cast<int>(reinterpret_cast<std::uintptr_t>(base) + 200);
+    char* v5 = base + 200;
     while (true) {
         int v6 = 0;
-        auto* v7 = reinterpret_cast<std::uint16_t*>(static_cast<std::uintptr_t>(v5));
+        auto* v7 = reinterpret_cast<std::uint16_t*>(v5);
         do {
             if (*v7 == a2) {
                 *a3 = v6;
@@ -226,6 +229,9 @@ std::uint16_t cltNPCInfo::GetNPCIDByQuestID(std::uint16_t a2, int* a3)
 
 // ── mofclient.c:317695 (00582160) ──────────────────────────────────────────
 //   각 NPC 의 quest table 에서 questID 일치 시 → 해당 NPC 의 m_wNameTextID 반환
+//   x64 노트: GT 의 v4 = (DWORD)pInfo + 200 → 64-bit 환경에서는 truncation 발생.
+//     포인터를 그대로 char* 로 보관해 동작을 보존.
+//   GT: GetNPCInfoByID 의 결과에 nullptr 검사를 하지 않음 (직접 +2 로 dereference).
 std::uint16_t cltNPCInfo::GetNPCNameByQuestID(std::uint16_t a2)
 {
     int v2 = m_wTotalNPCNum;
@@ -233,15 +239,14 @@ std::uint16_t cltNPCInfo::GetNPCNameByQuestID(std::uint16_t a2)
     if (!static_cast<std::uint16_t>(v2))
         return 0;
     auto* base = reinterpret_cast<char*>(m_pInfo);
-    int v4 = static_cast<int>(reinterpret_cast<std::uintptr_t>(base) + 200);
+    char* v4 = base + 200;
     while (true) {
         int v5 = 0;
-        auto* v6 = reinterpret_cast<std::uint16_t*>(static_cast<std::uintptr_t>(v4));
+        auto* v6 = reinterpret_cast<std::uint16_t*>(v4);
         do {
             if (*v6 == a2) {
                 std::uint16_t kind = *reinterpret_cast<std::uint16_t*>(base + 500 * v3);
-                stNPCInfo* info = GetNPCInfoByID(kind);
-                return info ? info->m_wNameTextID : 0;
+                return GetNPCInfoByID(kind)->m_wNameTextID;
             }
             ++v5;
             ++v6;
@@ -275,6 +280,10 @@ stNPCInfo* cltNPCInfo::GetNPCInfoByShopID(std::uint16_t a2)
 //   (단, 같은 mapid (offset 12) 가 이미 들어있으면 skip)
 //   결과 1개 → 그것 반환
 //   다수 → mapid==a3 인 entry 찾고, 다음 index 반환  (없으면 stack[0])
+//   x64 노트: GT 가 stack[20] 을 int v13[20] (DWORD) 으로 선언하고 그 안에
+//     entry 포인터(*(_DWORD*)this + v4) 를 저장 — 32-bit 에서는 OK 지만
+//     64-bit 에서는 truncation 이 발생. 의미는 "entry 포인터의 배열" 이므로
+//     포인터를 그대로 보관하도록 char* v13[20] 으로 변경한다.
 stNPCInfo* cltNPCInfo::GetNPCInfoByNpcName(char* a2, std::uint16_t a3)
 {
     int v4 = 0;       // byte offset 누적 (per entry: 500)
@@ -283,8 +292,8 @@ stNPCInfo* cltNPCInfo::GetNPCInfoByNpcName(char* a2, std::uint16_t a3)
     if (!m_wTotalNPCNum)
         return nullptr;
 
-    int v13[20] = {};
-    int* v11 = v13;
+    char* v13[20] = {};
+    char** v11 = v13;
     auto* base = reinterpret_cast<char*>(m_pInfo);
 
     do {
@@ -295,9 +304,9 @@ stNPCInfo* cltNPCInfo::GetNPCInfoByNpcName(char* a2, std::uint16_t a3)
         if (cmp == 0) {
             int v6 = 0;
             if (v5 > 0) {
-                int* v7 = v13;
+                char** v7 = v13;
                 do {
-                    if (*reinterpret_cast<std::uint16_t*>(static_cast<std::uintptr_t>(*v7) + 12)
+                    if (*reinterpret_cast<std::uint16_t*>(*v7 + 12)
                         == *reinterpret_cast<std::uint16_t*>(base + v4 + 12))
                         break;
                     ++v6;
@@ -306,7 +315,7 @@ stNPCInfo* cltNPCInfo::GetNPCInfoByNpcName(char* a2, std::uint16_t a3)
             }
             if (v6 == v5) {
                 ++v5;
-                *v11++ = static_cast<int>(reinterpret_cast<std::uintptr_t>(base + v4));
+                *v11++ = base + v4;
                 if (v5 >= 20) break;
             }
         }
@@ -317,14 +326,14 @@ stNPCInfo* cltNPCInfo::GetNPCInfoByNpcName(char* a2, std::uint16_t a3)
     if (!v5) return nullptr;
     int v9 = 0;
     if (v5 - 1 <= 0)
-        return reinterpret_cast<stNPCInfo*>(static_cast<std::uintptr_t>(v13[0]));
-    int* i = v13;
-    while (*reinterpret_cast<std::uint16_t*>(static_cast<std::uintptr_t>(*i) + 12) != a3) {
+        return reinterpret_cast<stNPCInfo*>(v13[0]);
+    char** i = v13;
+    while (*reinterpret_cast<std::uint16_t*>(*i + 12) != a3) {
         if (++v9 >= v5 - 1)
-            return reinterpret_cast<stNPCInfo*>(static_cast<std::uintptr_t>(v13[0]));
+            return reinterpret_cast<stNPCInfo*>(v13[0]);
         ++i;
     }
-    return reinterpret_cast<stNPCInfo*>(static_cast<std::uintptr_t>(v13[v9 + 1]));
+    return reinterpret_cast<stNPCInfo*>(v13[v9 + 1]);
 }
 
 // ── mofclient.c:317815 (00582330) ──────────────────────────────────────────
@@ -454,12 +463,16 @@ int cltNPCInfo::Initialize(char* String2)
 
         auto* v7 = reinterpret_cast<char*>(m_pInfo);
 
-        if (std::fgets(Buffer, 10239, Stream))
+        // GT: 첫 데이터 행 fgets 가 실패 (= header 까지만 있고 데이터 0 행) 한 경우
+        //   v77 = 1 (성공) 으로 LABEL_85 → LABEL_86 진행. 누락 시 빈 npclist 가 실패로 잡힘.
+        if (!std::fgets(Buffer, 10239, Stream)) {
+            v77 = 1;
+            goto Lfail;
+        }
+        while (true)
         {
-            while (true)
-            {
-                // ── 1. NPC ID (offset 0, TranslateKindCode) ───────────────
-                char* v8 = std::strtok(Buffer, Delimiter);
+            // ── 1. NPC ID (offset 0, TranslateKindCode) ───────────────
+            char* v8 = std::strtok(Buffer, Delimiter);
                 if (!v8) goto Lfail;
                 *reinterpret_cast<std::uint16_t*>(v7) = TranslateKindCode(v8);
 
@@ -705,7 +718,6 @@ int cltNPCInfo::Initialize(char* String2)
                 }
 
             Lnextrow:;
-            }
         }
     }
 
