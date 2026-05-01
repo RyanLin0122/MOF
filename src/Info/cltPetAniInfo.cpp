@@ -24,8 +24,10 @@ bool cltPetAniInfo::ieq(const char* a, const char* b) {
 
 int cltPetAniInfo::Initialize(char* filename)
 {
-    // 與反編譯建構子同：資料區清空（保留 vtable）
-    std::memset(reinterpret_cast<char*>(this) + 4, 0, 0x1F60);
+    // 與反編譯建構子同：資料區清空（保留 vtable）。GT 是 32-bit 用
+    // memset(this+4, 0, 0x1F60)，x64 不能照搬 +4 否則會踩進 vtable 後半段。
+    // 改以成員存取清空，邏輯等價且 ABI 安全。
+    std::memset(set_, 0, sizeof(set_));
     attackKey_ = 0;
 
     const char* Delim = "\t\n,[]";

@@ -8,29 +8,23 @@
 
 #pragma pack(push, 1)
 // 每筆「角色對話氣泡」資訊（步距 = 18 WORD = 36 bytes；與反編譯一致）
+// 對應 Character_ChatBallon.txt 欄位順序：
+//   ChatBallon ID | 기획자이름(skip) | 이미지 ID |
+//   LEFT_TOP | CENTER_TOP | RIGHT_TOP | LEFT_MIDDLE | RIGHT_MIDDLE |
+//   CENTER_MIDDLE | LEFT_BOTTOM | RIGHT_BOTTOM |
+//   CENTER_BOTTOM_L | CENTER_BOTTOM_C | CENTER_BOTTOM_R |
+//   R(0~255) | G(0~255) | B(0~255)
 struct strChatBallonInfo
 {
-    // 0x00
-    uint16_t ChatBallonKind;     // ChatBallon ID（B**** 5碼→16位代碼）
-
-    // 0x02（保留：反編譯未寫入）
-    uint16_t _pad0;
-
-    // 0x04
-    uint32_t ImageIDHex;         // 이미지 ID（十六進位 %x）// 圖像ID(HEX)
-
-    // 0x08 ~ 0x1D（共 11 個 WORD）
-    // 依序：LEFT_TOP, CENTER_TOP, RIGHT_TOP, LEFT_MIDDLE, RIGHT_MIDDLE,
-    // CENTER_MIDDLE, LEFT_BOTTOM, RIGHT_BOTTOM, CENTER_BOTTOM_L, CENTER_BOTTOM_C, CENTER_BOTTOM_R
-    uint16_t Index[11];          // 區塊索引 // 對應各部位影格索引
-
-    // 0x1E ~ 0x20：RGB（1 byte 各自）
-    uint8_t  R;                  // R(0~255) // 字色R
-    uint8_t  G;                  // G(0~255) // 字色G
-    uint8_t  B;                  // B(0~255) // 字色B
-
-    // 0x21 ~ 0x23（保留，對齊到 36 bytes）
-    uint8_t  _pad1[3];
+    uint16_t ChatBallonKind;   // 韓: ChatBallon ID                中: 對話氣泡ID(B****→16位代碼)            offset: 0x00
+    uint16_t _pad0;            // 韓: (예약, 미기록)                中: 保留(反編譯未寫入)                    offset: 0x02
+    uint32_t ImageIDHex;       // 韓: 이미지 ID (%x)                中: 圖像ID(HEX 資源ID)                   offset: 0x04
+    uint16_t Index[11];        // 韓: LEFT_TOP/CENTER_TOP/RIGHT_TOP/LEFT_MIDDLE/RIGHT_MIDDLE/CENTER_MIDDLE/LEFT_BOTTOM/RIGHT_BOTTOM/CENTER_BOTTOM_L/CENTER_BOTTOM_C/CENTER_BOTTOM_R
+                               // 中: 11 個區塊影格索引(依上列順序)                                          offset: 0x08~0x1D
+    uint8_t  R;                // 韓: R(0~255)                      中: 字色 R                                 offset: 0x1E
+    uint8_t  G;                // 韓: G(0~255)                      中: 字色 G                                 offset: 0x1F
+    uint8_t  B;                // 韓: B(0~255)                      中: 字色 B                                 offset: 0x20
+    uint8_t  _pad1[3];         // 韓: (정렬용 패딩)                  中: 對齊填充至 36 bytes                    offset: 0x21~0x23
 };
 static_assert(sizeof(strChatBallonInfo) == 36, "strChatBallonInfo size must be 36 bytes");
 #pragma pack(pop)
