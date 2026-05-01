@@ -13,17 +13,6 @@ FORCE_IMPLEMENTED_CLASSES = [
 
 """
 要驗的:
-ClientCharacter
-ClientCharacterManager
-cltCharKindInfo
-cltMyCharData
-Map
-cltClimateUnit
-cltMap_Climate
-cltMap_WeddingFlower
-CItemClimateUnit
-CMap_Item_Climate
-cltMapCollisonInfo
 """
 # 排除UI正則表達式: CUI[a-zA-Z =0-9]+
 
