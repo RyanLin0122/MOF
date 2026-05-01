@@ -49,15 +49,14 @@ void cltClimateUnit::Reset() {
         m_iX = (std::rand() % (sysW + 200)) - 100 + dword_A73088;
         m_iY = (std::rand() % (sysH + 200)) - 100 + dword_A7308C;
     } else {
-        m_iX = (std::rand() % (sysW > 0 ? sysW : 1)) + dword_A73088;
-        m_iY = (std::rand() % (sysH > 0 ? sysH : 1)) + dword_A7308C;
+        m_iX = (std::rand() % sysW) + dword_A73088;
+        m_iY = (std::rand() % sysH) + dword_A7308C;
     }
     m_wCurFrame = m_wStartBlock;
     if (m_dwIsSnowing) {
         m_fFrame = static_cast<float>(m_wStartBlock + (std::rand() & 0xFFFF) % 5);
     } else {
-        const int range = (m_wRandRange > 0) ? m_wRandRange : 1;
-        m_fFrame = static_cast<float>(m_wStartBlock + (std::rand() & 0xFFFF) % range);
+        m_fFrame = static_cast<float>(m_wStartBlock + (std::rand() & 0xFFFF) % m_wRandRange);
     }
 }
 
@@ -90,8 +89,7 @@ void cltClimateUnit::PrepareDrawing() {
              0,  0,  1,  2,  3,  4,  3,  2,  1,  0
         };
         const int idx = static_cast<int>(m_fFrame);
-        const int safeIdx = (idx >= 0 && idx < 18) ? idx : 0;
-        const int sx = m_iX + kOffsets[safeIdx] - dword_A73088;
+        const int sx = m_iX + kOffsets[idx] - dword_A73088;
         const int sy = m_iY - dword_A7308C;
         img->m_wBlockID = m_wCurFrame;
         img->m_bFlag_447 = true;
@@ -140,8 +138,7 @@ void cltMap_Climate::InitClimate(int hasDrawBG, unsigned short climateKind, int 
     auto* info = g_Map.GetClimateKindByClimateKind(climateKind);
     if (!info) return;
     m_iActive    = 1;
-    unsigned short n = info->unitCount;
-    if (n > kMaxUnits) n = kMaxUnits;
+    const unsigned short n = info->unitCount;
     m_wUnitCount = n;
     for (unsigned short i = 0; i < n; ++i) {
         m_units[i].Init(hasDrawBG, climateKind, rangeY);
